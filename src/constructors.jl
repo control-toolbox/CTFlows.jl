@@ -1,6 +1,19 @@
 # --------------------------------------------------------------------------------------------
+# rhs: from a Hamiltonian
+function rhs(h::Hamiltonian)
+    function rhs!(dz::DCoTangent, z::CoTangent, λ, t::Time)
+        n = size(z, 1) ÷ 2
+        foo = isempty(λ) ? (z -> h(t, z[1:n], z[n+1:2*n])) : (z -> h(t, z[1:n], z[n+1:2*n], λ...))
+        dh = ctgradient(foo, z)
+        dz[1:n] = dh[n+1:2n]
+        dz[n+1:2n] = -dh[1:n]
+    end
+    return rhs!
+end
+
+# --------------------------------------------------------------------------------------------
 #
-function __Hamiltonian_Flow(alg, abstol, reltol, saveat; kwargs_Flow...)
+function hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
 
     function f(tspan::Tuple{Time,Time}, x0::State, p0::Adjoint, λ...; _t_stops_interne, DiffEqRHS, tstops=__tstops(), kwargs...)
         z0 = [x0; p0]
@@ -32,7 +45,7 @@ end
 
 # --------------------------------------------------------------------------------------------
 #
-function __Classical_Flow(alg, abstol, reltol, saveat; kwargs_Flow...)
+function classical_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
 
     # kwargs has priority wrt kwargs_flow
     function f(tspan::Tuple{Time,Time}, x0::State, λ...; _t_stops_interne, DiffEqRHS, tstops=__tstops(), kwargs...)
