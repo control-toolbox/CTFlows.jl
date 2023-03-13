@@ -1,8 +1,12 @@
 # ---------------------------------------------------------------------------------------------------
 #
-function CTFlows.plot(sol::OptimalControlFlowSolution; kwargs...)
+function CTFlows.plot(sol::OptimalControlFlowSolution; style::Symbol=:ocp, kwargs...)
     ocp_sol = CTFlows.OptimalControlSolution(sol) # from a flow (from ocp and control) solution to an OptimalControlSolution
-    CTBase.plot(ocp_sol)
+    if style==:ocp
+        CTBase.plot(ocp_sol; kwargs...)
+    else
+        Plots.plot(sol.ode_sol; kwargs...)
+    end
 end
 
 # ---------------------------------------------------------------------------------------------------
