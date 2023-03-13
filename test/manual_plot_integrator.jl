@@ -25,9 +25,6 @@ xf, pf  = f(t0, x0, p0, tf)
 
 sol = f((t0, tf), x0, p0; saveat=range(t0, tf, 101))
 
-u(t) = sol.feedback_control(x(t), p(t))
-println(u(tf))
-#println(sol.ode_sol.t)
-plot(sol)
+plot(sol, size=(900, 600))
 
 #nothing

@@ -84,4 +84,4 @@ tf = 0.20204744057041196
 f1sb0 = f1 * (t1, fs) * (t2, fb) * (t3, f0) # concatenation of the Hamiltonian flows
 flow_sol = f1sb0((t0, tf), x0, p0)
 
-plot(flow_sol)
+plot(flow_sol, size=(900, 600))
