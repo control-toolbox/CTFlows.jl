@@ -58,7 +58,8 @@ function Flow(ocp::OptimalControlModel{time_dependence, scalar_vectorial}, u_::F
 
     # construction of the OptimalControlFlow
     return OptimalControlFlow{DCoTangent, CoTangent, Time}(f, rhs!, u,   # no tstops, so value by default
-        ocp.control_dimension, ocp.control_labels, ocp.state_dimension, ocp.state_labels)
+        ocp.control_dimension, ocp.control_labels, ocp.state_dimension, 
+        ocp.state_labels, ocp.time_label)
 
 end
 
@@ -91,6 +92,7 @@ function Flow(ocp::OptimalControlModel{time_dependence, scalar_vectorial}, u_::F
 
     # construction of the OptimalControlFlow
     return OptimalControlFlow{DCoTangent, CoTangent, Time}(f, rhs!, u,   # no tstops, so value by default
-        ocp.control_dimension, ocp.control_labels, ocp.state_dimension, ocp.state_labels)
+        ocp.control_dimension, ocp.control_labels, ocp.state_dimension, 
+        ocp.state_labels, ocp.time_label)
 
 end

@@ -8,6 +8,7 @@ struct OptimalControlFlowSolution
     control_labels::Vector{String}
     state_dimension::Dimension
     state_labels::Vector{String}
+    time_label::String
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -22,6 +23,7 @@ function CTFlows.OptimalControlSolution(ocfs::OptimalControlFlowSolution)
     sol.state_dimension = n
     sol.control_dimension = ocfs.control_dimension
     sol.times = T
+    sol.time_label = ocfs.time_label
     sol.state = t -> x(t)
     sol.state_labels = ocfs.state_labels
     sol.adjoint = t -> p(t)

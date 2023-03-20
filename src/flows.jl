@@ -26,11 +26,13 @@ struct OptimalControlFlow{D, U, T}
     control_labels::Vector{String}
     state_dimension::Dimension
     state_labels::Vector{String}
+    time_label::String
 
     # constructor
     function OptimalControlFlow{D, U, T}(f::Function, rhs!::Function, u::Function, m::Dimension, 
-        u_labels::Vector{String}, n::Dimension, x_labels::Vector{String}, tstops::Times=Vector{Time}()) where {D, U, T} 
-        return new{D, U, T}(f, rhs!, tstops, u, m, u_labels, n, x_labels)
+        u_labels::Vector{String}, n::Dimension, x_labels::Vector{String}, time_label::String,
+        tstops::Times=Vector{Time}()) where {D, U, T} 
+        return new{D, U, T}(f, rhs!, tstops, u, m, u_labels, n, x_labels, time_label)
     end
 
 end
@@ -42,6 +44,6 @@ end
 function (F::OptimalControlFlow)(tspan::Tuple{Time,Time}, args...; kwargs...) 
     ode_sol = F.f(tspan, args...; _t_stops_interne=F.tstops, DiffEqRHS=F.rhs!, kwargs...)
     ocfs = OptimalControlFlowSolution(ode_sol, F.feedback_control, F.control_dimension,
-            F.control_labels, F.state_dimension, F.state_labels)
+            F.control_labels, F.state_dimension, F.state_labels, F.time_label)
     return ocfs
 end

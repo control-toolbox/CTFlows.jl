@@ -48,7 +48,8 @@ function concatenate(F:: OptimalControlFlow{D, U, T}, g::Tuple{MyNumber, Optimal
 
     # we choose default values and options of F
     return OptimalControlFlow{D, U, T}(F.f, rhs!, feedback_control, 
-        F.control_dimension, F.control_labels, F.state_dimension, F.state_labels, tstops)
+        F.control_dimension, F.control_labels, F.state_dimension, 
+        F.state_labels, F.time_label, tstops)
 
 end
 
