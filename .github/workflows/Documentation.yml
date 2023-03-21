@@ -1,18 +1,21 @@
 # [.github/workflows/Documentation.yml]
 name: Documentation
+
 on:
   push:
-    paths:
-      - 'docs/**'
     branches:
-      - main
-    tags: '*'
+      - doc
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@latest
+      - uses: julia-actions/add-julia-registry@v1
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          registry: control-toolbox/ct-registry
       - uses: julia-actions/julia-buildpkg@v1
         with:
           version: '1.8'
