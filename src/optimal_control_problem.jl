@@ -33,13 +33,13 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 #
-function Flow(ocp::OptimalControlModel{time_dependence, scalar_vectorial}, u_::Function; alg=__alg(), abstol=__abstol(), 
-    reltol=__reltol(), saveat=__saveat(), kwargs_Flow...) where {time_dependence, scalar_vectorial}
+function Flow(ocp::OptimalControlModel{time_dependence, dimension_usage}, u_::Function; alg=__alg(), abstol=__abstol(), 
+    reltol=__reltol(), saveat=__saveat(), kwargs_Flow...) where {time_dependence, dimension_usage}
 
     #  data
     p⁰ = -1.
-    f  = dynamics(ocp)
-    f⁰ = lagrange(ocp)
+    f  = ocp.dynamics
+    f⁰ = ocp.lagrange
     s  = ismin(ocp) ? 1.0 : -1.0 #
 
     # construction of the Hamiltonian
@@ -65,13 +65,13 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 #
-function Flow(ocp::OptimalControlModel{time_dependence, scalar_vectorial}, u_::Function, g_::Function, μ_::Function; alg=__alg(), 
-    abstol=__abstol(), reltol=__reltol(), saveat=__saveat(), kwargs_Flow...) where {time_dependence, scalar_vectorial}
+function Flow(ocp::OptimalControlModel{time_dependence, dimension_usage}, u_::Function, g_::Function, μ_::Function; alg=__alg(), 
+    abstol=__abstol(), reltol=__reltol(), saveat=__saveat(), kwargs_Flow...) where {time_dependence, dimension_usage}
 
     # data
     p⁰ = -1.
-    f  = dynamics(ocp)
-    f⁰ = lagrange(ocp)
+    f  = ocp.dynamics
+    f⁰ = ocp.lagrange
     s  = ismin(ocp) ? 1.0 : -1.0 #
 
     # construction of the Hamiltonian
