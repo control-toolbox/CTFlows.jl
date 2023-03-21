@@ -5,6 +5,10 @@ on:
     branches:
       - main
     tags: '*'
+  push:
+    branches:
+      - doc
+    tags: '*'
 jobs:
   build:
     runs-on: ubuntu-latest
