@@ -1,10 +1,12 @@
 module CTFlows
 
 #
-using OrdinaryDiffEq
 import Base: *, isempty, Base
 using CTBase
+using DocStringExtensions
+using OrdinaryDiffEq
 using Plots: plot, Plots
+
 #
 Base.isempty(p::OrdinaryDiffEq.SciMLBase.NullParameters) = true
 
@@ -24,7 +26,6 @@ const ctgradient = CTBase.ctgradient
 include("default.jl")
 include("solutions.jl")
 include("flows.jl")
-include("constructors.jl")
 #
 include("hamiltonian.jl")
 include("hamiltonian_vector_field.jl")

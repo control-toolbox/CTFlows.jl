@@ -1,10 +1,21 @@
-# ---------------------------------------------------------------------------------------------------
-#
+"""
+$(TYPEDSIGNATURES)
+
+Constructs the Hamiltonian: 
+
+H(t, x, p) = p f(t, x, u(t, x, p))
+"""
 function makeH(f::DynamicsFunction, u::ControlFunction)
     return (t, x, p) -> p'*f(t, x, u(t, x, p))
 end
 
-#
+"""
+$(TYPEDSIGNATURES)
+
+Constructs the Hamiltonian: 
+
+H(t, x, p) = p ⋅ f(t, x, u(t, x, p)) + s p⁰ f⁰(t, x, u(t, x, p))
+"""
 function makeH(f::DynamicsFunction, u::ControlFunction, f⁰::LagrangeFunction, p⁰::MyNumber, s::MyNumber)
     function H(t, x, p)
         u_ = u(t, x, p)
@@ -13,7 +24,13 @@ function makeH(f::DynamicsFunction, u::ControlFunction, f⁰::LagrangeFunction, 
     return H
 end
 
-#
+"""
+$(TYPEDSIGNATURES)
+
+Constructs the Hamiltonian: 
+
+H(t, x, p) = p ⋅ f(t, x, u(t, x, p)) + μ(t, x, p) ⋅ g(t, x, u(t, x, p))
+"""
 function makeH(f::DynamicsFunction, u::ControlFunction, g::MixedConstraintFunction, μ::MultiplierFunction)
     function H(t, x, p)
         u_ = u(t, x, p)
@@ -22,7 +39,13 @@ function makeH(f::DynamicsFunction, u::ControlFunction, g::MixedConstraintFuncti
     return H
 end
 
-#
+"""
+$(TYPEDSIGNATURES)
+
+Constructs the Hamiltonian: 
+
+H(t, x, p) = p ⋅ f(t, x, u(t, x, p)) + s p⁰ f⁰(t, x, u(t, x, p)) + μ(t, x, p) ⋅ g(t, x, u(t, x, p))
+"""
 function makeH(f::DynamicsFunction, u::ControlFunction, f⁰::LagrangeFunction, p⁰::MyNumber, s::MyNumber, g::MixedConstraintFunction, μ::MultiplierFunction)
     function H(t, x, p)
         u_ = u(t, x, p)
@@ -31,8 +54,21 @@ function makeH(f::DynamicsFunction, u::ControlFunction, f⁰::LagrangeFunction, 
     return H
 end
 
-# ---------------------------------------------------------------------------------------------------
-#
+"""
+$(TYPEDSIGNATURES)
+
+Flow from an optimal control problem and a control function in feedback form.
+
+# Example
+```jldoctest
+julia> f = Flow(ocp, (x, p) -> p)
+```
+
+!!! warning
+
+    The time dependence of the control function must be consistent with the time dependence of the optimal control problem.
+    The dimension of the output of the control function must be consistent with the dimension usage of the control of the optimal control problem.
+"""
 function Flow(ocp::OptimalControlModel{time_dependence, dimension_usage}, u_::Function; alg=__alg(), abstol=__abstol(), 
     reltol=__reltol(), saveat=__saveat(), kwargs_Flow...) where {time_dependence, dimension_usage}
 
@@ -58,13 +94,28 @@ function Flow(ocp::OptimalControlModel{time_dependence, dimension_usage}, u_::Fu
 
     # construction of the OptimalControlFlow
     return OptimalControlFlow{DCoTangent, CoTangent, Time}(f, rhs!, u,   # no tstops, so value by default
-        ocp.control_dimension, ocp.control_labels, ocp.state_dimension, 
-        ocp.state_labels, ocp.time_label)
+        ocp.control_dimension, ocp.control_names, ocp.state_dimension, 
+        ocp.state_names, ocp.time_name)
 
 end
 
-# ---------------------------------------------------------------------------------------------------
-#
+"""
+$(TYPEDSIGNATURES)
+
+Flow from an optimal control problem, a control function in feedback form, a state constraint and its 
+associated multiplier in feedback form.
+
+# Example
+```jldoctest
+julia> ocp = Model(time_dependence=:nonautonomous)
+julia> f = Flow(ocp, (t, x, p) -> p[1], (t, x) -> x[1] - 1, (t, x, p) -> x[1]+p[1])
+```
+
+!!! warning
+
+    The time dependence of the control function must be consistent with the time dependence of the optimal control problem.
+    The dimension of the output of the control function must be consistent with the dimension usage of the control of the optimal control problem.
+"""
 function Flow(ocp::OptimalControlModel{time_dependence, dimension_usage}, u_::Function, g_::Function, μ_::Function; alg=__alg(), 
     abstol=__abstol(), reltol=__reltol(), saveat=__saveat(), kwargs_Flow...) where {time_dependence, dimension_usage}
 
@@ -92,7 +143,7 @@ function Flow(ocp::OptimalControlModel{time_dependence, dimension_usage}, u_::Fu
 
     # construction of the OptimalControlFlow
     return OptimalControlFlow{DCoTangent, CoTangent, Time}(f, rhs!, u,   # no tstops, so value by default
-        ocp.control_dimension, ocp.control_labels, ocp.state_dimension, 
-        ocp.state_labels, ocp.time_label)
+        ocp.control_dimension, ocp.control_names, ocp.state_dimension, 
+        ocp.state_names, ocp.time_name)
 
 end
