@@ -12,11 +12,11 @@ Base.isempty(p::OrdinaryDiffEq.SciMLBase.NullParameters) = true
 
 # --------------------------------------------------------------------------------------------------
 # Aliases for types
-const CoTangent = MyVector
-const Control = MyVector
-const DState = MyVector
-const DAdjoint = MyVector
-const DCoTangent = MyVector
+const CoTangent = ctVector
+const Control = ctVector
+const DState = ctVector
+const DCostate = ctVector
+const DCoTangent = ctVector
 
 #
 const ctgradient = CTBase.ctgradient

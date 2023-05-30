@@ -21,18 +21,12 @@ struct OptimalControlFlow{D, U, T}
     rhs!::Function   # the right and side of the form: rhs!(du::D, u::U, p, t::T)
     tstops::Times    # specific times where the integrator must stop
                      # useful when the rhs is not smooth at such times
-    feedback_control::ControlFunction # the control law in feedback form, that is u(t, x, p)
-    control_dimension::Dimension
-    control_names::Vector{String}
-    state_dimension::Dimension
-    state_names::Vector{String}
-    time_name::String
+    feedback_control::ControlLaw # the control law in feedback form, that is u(t, x, p)
+    ocp::OptimalControlModel # the optimal control problem
 
     # constructor
-    function OptimalControlFlow{D, U, T}(f::Function, rhs!::Function, u::Function, m::Dimension, 
-        u_labels::Vector{String}, n::Dimension, x_labels::Vector{String}, time_name::String,
-        tstops::Times=Vector{Time}()) where {D, U, T} 
-        return new{D, U, T}(f, rhs!, tstops, u, m, u_labels, n, x_labels, time_name)
+    function OptimalControlFlow{D, U, T}(f::Function, rhs!::Function, u::Function, ocp::OptimalControlModel, tstops::Times=Vector{Time}()) where {D, U, T} 
+        return new{D, U, T}(f, rhs!, tstops, u, ocp)
     end
 
 end
@@ -43,9 +37,7 @@ end
 # # call F.f and then, construct a solution which contains all the need information for plotting
 function (F::OptimalControlFlow)(tspan::Tuple{Time,Time}, args...; kwargs...) 
     ode_sol = F.f(tspan, args...; _t_stops_interne=F.tstops, DiffEqRHS=F.rhs!, kwargs...)
-    ocfs = OptimalControlFlowSolution(ode_sol, F.feedback_control, F.control_dimension,
-            F.control_names, F.state_dimension, F.state_names, F.time_name)
-    return ocfs
+    return OptimalControlFlowSolution(ode_sol, F.feedback_control, F.ocp)
 end
 
 """
@@ -71,7 +63,7 @@ Returns a function that solves ODE problem associated to Hamiltonian vector fiel
 """
 function hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
 
-    function f(tspan::Tuple{Time,Time}, x0::State, p0::Adjoint, λ...; _t_stops_interne, DiffEqRHS, tstops=__tstops(), kwargs...)
+    function f(tspan::Tuple{Time,Time}, x0::State, p0::Costate, λ...; _t_stops_interne, DiffEqRHS, tstops=__tstops(), kwargs...)
         z0 = [x0; p0]
         args = isempty(λ) ? (DiffEqRHS, z0, tspan) : (DiffEqRHS, z0, tspan, λ)
         ode = OrdinaryDiffEq.ODEProblem(args...)
@@ -80,17 +72,17 @@ function hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
         return sol
     end
 
-    function f(t0::Time, x0::State, p0::Adjoint, tf::Time, λ...; _t_stops_interne, DiffEqRHS, tstops=__tstops(), kwargs...)
+    function f(t0::Time, x0::State, p0::Costate, tf::Time, λ...; _t_stops_interne, DiffEqRHS, tstops=__tstops(), kwargs...)
         sol = f((t0, tf), x0, p0, λ...; _t_stops_interne=_t_stops_interne, DiffEqRHS=DiffEqRHS, tstops=tstops, kwargs...)
         n = size(x0, 1)
         return sol[1:n, end], sol[n+1:2*n, end]
     end
 
-    function f(tspan::Tuple{Time,Time}, x0::MyNumber, p0::MyNumber, λ...; _t_stops_interne, DiffEqRHS, tstops=__tstops(), kwargs...)
+    function f(tspan::Tuple{Time,Time}, x0::ctNumber, p0::ctNumber, λ...; _t_stops_interne, DiffEqRHS, tstops=__tstops(), kwargs...)
         return f(tspan, [x0], [p0], λ...; _t_stops_interne=_t_stops_interne, DiffEqRHS=DiffEqRHS, tstops=tstops, kwargs...)
     end
 
-    function f(t0::Time, x0::MyNumber, p0::MyNumber, tf::Time, λ...; _t_stops_interne, DiffEqRHS, tstops=__tstops(), kwargs...)
+    function f(t0::Time, x0::ctNumber, p0::ctNumber, tf::Time, λ...; _t_stops_interne, DiffEqRHS, tstops=__tstops(), kwargs...)
         xf, pf = f(t0, [x0], [p0], tf, λ...; _t_stops_interne=_t_stops_interne, DiffEqRHS=DiffEqRHS, tstops=tstops, kwargs...)
         return xf[1], pf[1]
     end
@@ -121,11 +113,11 @@ function classical_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
         return sol[1:n, end]
     end
 
-    function f(tspan::Tuple{Time,Time}, x0::MyNumber, λ...; _t_stops_interne, DiffEqRHS, tstops=__tstops(), kwargs...)
+    function f(tspan::Tuple{Time,Time}, x0::ctNumber, λ...; _t_stops_interne, DiffEqRHS, tstops=__tstops(), kwargs...)
         return f(tspan, [x0], λ...; _t_stops_interne=_t_stops_interne, DiffEqRHS=DiffEqRHS, tstops=tstops, kwargs...)
     end
 
-    function f(t0::Time, x0::MyNumber, tf::Time, λ...; _t_stops_interne, DiffEqRHS, tstops=__tstops(), kwargs...)
+    function f(t0::Time, x0::ctNumber, tf::Time, λ...; _t_stops_interne, DiffEqRHS, tstops=__tstops(), kwargs...)
         xf = f(t0, [x0], tf, λ...; _t_stops_interne=_t_stops_interne, DiffEqRHS=DiffEqRHS, tstops=tstops, kwargs...)
         return xf[1]
     end

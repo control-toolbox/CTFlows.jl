@@ -5,7 +5,7 @@ Constructs the Hamiltonian:
 
 H(t, x, p) = p f(t, x, u(t, x, p))
 """
-function makeH(f::DynamicsFunction, u::ControlFunction)
+function makeH(f::Dynamics, u::ControlLaw)
     return (t, x, p) -> p'*f(t, x, u(t, x, p))
 end
 
@@ -16,7 +16,7 @@ Constructs the Hamiltonian:
 
 H(t, x, p) = p ⋅ f(t, x, u(t, x, p)) + s p⁰ f⁰(t, x, u(t, x, p))
 """
-function makeH(f::DynamicsFunction, u::ControlFunction, f⁰::LagrangeFunction, p⁰::MyNumber, s::MyNumber)
+function makeH(f::Dynamics, u::ControlLaw, f⁰::Lagrange, p⁰::ctNumber, s::ctNumber)
     function H(t, x, p)
         u_ = u(t, x, p)
         return p'*f(t, x, u_) + s*p⁰*f⁰(t, x, u_)
@@ -31,7 +31,7 @@ Constructs the Hamiltonian:
 
 H(t, x, p) = p ⋅ f(t, x, u(t, x, p)) + μ(t, x, p) ⋅ g(t, x, u(t, x, p))
 """
-function makeH(f::DynamicsFunction, u::ControlFunction, g::MixedConstraintFunction, μ::MultiplierFunction)
+function makeH(f::Dynamics, u::ControlLaw, g::MixedConstraint, μ::Multiplier)
     function H(t, x, p)
         u_ = u(t, x, p)
         return p'*f(t, x, u_) + μ(t, x, p)'*g(t, x, u_)
@@ -46,7 +46,7 @@ Constructs the Hamiltonian:
 
 H(t, x, p) = p ⋅ f(t, x, u(t, x, p)) + s p⁰ f⁰(t, x, u(t, x, p)) + μ(t, x, p) ⋅ g(t, x, u(t, x, p))
 """
-function makeH(f::DynamicsFunction, u::ControlFunction, f⁰::LagrangeFunction, p⁰::MyNumber, s::MyNumber, g::MixedConstraintFunction, μ::MultiplierFunction)
+function makeH(f::Dynamics, u::ControlLaw, f⁰::Lagrange, p⁰::ctNumber, s::ctNumber, g::MixedConstraint, μ::Multiplier)
     function H(t, x, p)
         u_ = u(t, x, p)
         return p'*f(t, x, u_) + s*p⁰*f⁰(t, x, u_) + μ(t, x, p)'*g(t, x, u_)
@@ -69,8 +69,8 @@ julia> f = Flow(ocp, (x, p) -> p)
     The time dependence of the control function must be consistent with the time dependence of the optimal control problem.
     The dimension of the output of the control function must be consistent with the dimension usage of the control of the optimal control problem.
 """
-function Flow(ocp::OptimalControlModel{time_dependence, dimension_usage}, u_::Function; alg=__alg(), abstol=__abstol(), 
-    reltol=__reltol(), saveat=__saveat(), kwargs_Flow...) where {time_dependence, dimension_usage}
+function Flow(ocp::OptimalControlModel{T, V}, u_::Function; alg=__alg(), abstol=__abstol(), 
+    reltol=__reltol(), saveat=__saveat(), kwargs_Flow...) where {T, V}
 
     #  data
     p⁰ = -1.
@@ -80,8 +80,8 @@ function Flow(ocp::OptimalControlModel{time_dependence, dimension_usage}, u_::Fu
 
     # construction of the Hamiltonian
     if f ≠ nothing
-        u = ControlFunction{time_dependence}(u_) # coherence is needed on the time dependence
-        h = Hamiltonian{:nonautonomous}(f⁰ ≠ nothing ? makeH(f, u, f⁰, p⁰, s) : makeH(f, u))
+        u = ControlLaw(u_, T, V) # consistency is needed
+        h = Hamiltonian(f⁰ ≠ nothing ? makeH(f, u, f⁰, p⁰, s) : makeH(f, u), NonAutonomous, V)
     else 
         error("no dynamics in ocp")
     end
@@ -93,9 +93,7 @@ function Flow(ocp::OptimalControlModel{time_dependence, dimension_usage}, u_::Fu
     f = hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
 
     # construction of the OptimalControlFlow
-    return OptimalControlFlow{DCoTangent, CoTangent, Time}(f, rhs!, u,   # no tstops, so value by default
-        ocp.control_dimension, ocp.control_names, ocp.state_dimension, 
-        ocp.state_names, ocp.time_name)
+    return OptimalControlFlow{DCoTangent, CoTangent, Time}(f, rhs!, u, ocp)
 
 end
 
@@ -116,9 +114,9 @@ julia> f = Flow(ocp, (t, x, p) -> p[1], (t, x) -> x[1] - 1, (t, x, p) -> x[1]+p[
     The time dependence of the control function must be consistent with the time dependence of the optimal control problem.
     The dimension of the output of the control function must be consistent with the dimension usage of the control of the optimal control problem.
 """
-function Flow(ocp::OptimalControlModel{time_dependence, dimension_usage}, u_::Function, g_::Function, μ_::Function; alg=__alg(), 
-    abstol=__abstol(), reltol=__reltol(), saveat=__saveat(), kwargs_Flow...) where {time_dependence, dimension_usage}
-
+function Flow(ocp::OptimalControlModel{T, V}, u_::Function, g_::Function, μ_::Function; alg=__alg(), abstol=__abstol(),
+    reltol=__reltol(), saveat=__saveat(), kwargs_Flow...) where {T, V}
+    
     # data
     p⁰ = -1.
     f  = ocp.dynamics
@@ -127,10 +125,10 @@ function Flow(ocp::OptimalControlModel{time_dependence, dimension_usage}, u_::Fu
 
     # construction of the Hamiltonian
     if f ≠ nothing
-        u = ControlFunction{time_dependence}(u_) # coherence is needed on the time dependence
-        g = MixedConstraintFunction{time_dependence}(g_)
-        μ = MultiplierFunction{time_dependence}(μ_)
-        h = Hamiltonian{:nonautonomous}(f⁰ ≠ nothing ? makeH(f, u, f⁰, p⁰, s, g, μ) : makeH(f, u, g, μ))
+        u = ControlLaw(u_, T, V) # consistency is needed
+        g = MixedConstraint(g_, T, V) # consistency is needed
+        μ = Multiplier(μ_, T, V) # consistency is needed
+        h = Hamiltonian(f⁰ ≠ nothing ? makeH(f, u, f⁰, p⁰, s, g, μ) : makeH(f, u, g, μ), NonAutonomous, V)
     else 
         error("no dynamics in ocp")
     end
@@ -142,8 +140,6 @@ function Flow(ocp::OptimalControlModel{time_dependence, dimension_usage}, u_::Fu
     f = hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
 
     # construction of the OptimalControlFlow
-    return OptimalControlFlow{DCoTangent, CoTangent, Time}(f, rhs!, u,   # no tstops, so value by default
-        ocp.control_dimension, ocp.control_names, ocp.state_dimension, 
-        ocp.state_names, ocp.time_name)
+    return OptimalControlFlow{DCoTangent, CoTangent, Time}(f, rhs!, u, ocp)
 
 end
