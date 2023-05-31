@@ -8,7 +8,7 @@ using OrdinaryDiffEq
     for name ∈ (
         :concatenation,
         :default,
-        :flow_function,
+        #:flow_function,
         :flow_hamiltonian_vector_field,
         :flow_hamiltonian,
         :flow_vector_field,

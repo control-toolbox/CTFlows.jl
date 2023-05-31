@@ -12,27 +12,33 @@ Base.isempty(p::OrdinaryDiffEq.SciMLBase.NullParameters) = true
 
 # --------------------------------------------------------------------------------------------------
 # Aliases for types
-const CoTangent = MyVector
-const Control = MyVector
-const DState = MyVector
-const DAdjoint = MyVector
-const DCoTangent = MyVector
+const CoTangent = ctVector
+const Control = ctVector
+const DState = ctVector
+const DCostate = ctVector
+const DCoTangent = ctVector
 
 #
 const ctgradient = CTBase.ctgradient
 
+# --------------------------------------------------------------------------------------------------
+rg(i::Integer, j::Integer) = i==j ? i : i:j
+
+abstract type AbstractFlow{D, U, T} end
+
+function AbstractFlow(::Type{TF}, f, rhs, tstops) where {TF <: AbstractFlow}
+    return TF(f, rhs, tstops)
+end
+
 # --------------------------------------------------------------------------------------------
 #
 include("default.jl")
-include("solutions.jl")
-include("flows.jl")
 #
 include("hamiltonian.jl")
-include("hamiltonian_vector_field.jl")
 include("vector_field.jl")
 include("optimal_control_problem.jl")
+#include("function.jl")
 #
-include("plot.jl")
 include("concatenation.jl")
 
 #

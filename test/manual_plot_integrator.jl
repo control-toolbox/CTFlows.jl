@@ -9,7 +9,7 @@ times = sol.times
 t0 = times[1]
 tf = times[end]
 x  = sol.state
-p  = sol.adjoint
+p  = sol.Costate
 x0 = x(t0)
 p0 = p(t0)
 
