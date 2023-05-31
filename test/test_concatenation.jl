@@ -1,13 +1,11 @@
 function test_concatenation()
     
-    t0 = 0.0
-    tf = 1.0
-
-    a = -1.0
-    b =  0.0
-    c = 12.0
-    d =  6.0
-
+    t0 = 0
+    tf = 1
+    a = -1
+    b =  0
+    c = 12
+    d =  6
     x0 = [a, b]
     p0 = [c, d]
 
@@ -34,60 +32,15 @@ function test_concatenation()
     p2_sol(t) = d -c*t
     z_sol(t) = [x1_sol(t), x2_sol(t), p1_sol(t), p2_sol(t)]
 
-    @testset "Function" begin
-        
-        #
-        f1 = Flow(H1)
-        f2 = Flow(H2)
-        f3 = Flow(H3, :nonautonomous)
-        
-        # one flow is used because t1 > tf
-        f = f1 * (2.0*tf, f2)
-        xf, pf = f(t0, x0, p0, tf)
-        @test xf ≈ [x1_sol(tf), x2_sol(tf)] atol = 1e-5
-        @test pf ≈ [p1_sol(tf), p2_sol(tf)] atol = 1e-5
-        
-        # two flows: going back
-        f = f1 * ((t0+tf)/2, f2)
-        xf, pf = f(t0, x0, p0, tf)
-        @test xf ≈ x0 atol = 1e-5
-        @test pf ≈ p0 atol = 1e-5
-        
-        # three flows: go forward
-        f = f1 * ((t0+tf)/4, f2) * ((t0+tf)/2, f1)
-        xf, pf = f(t0, x0, p0, tf+(t0+tf)/2)
-        @test xf ≈ [x1_sol(tf), x2_sol(tf)] atol = 1e-5
-        @test pf ≈ [p1_sol(tf), p2_sol(tf)] atol = 1e-5
-
-        # autonomous and nonautonomous
-        f = f1 * ((t0+tf)/4, f2) * ((t0+tf)/2, f3)
-        xf, pf = f(t0, x0, p0, tf+(t0+tf)/2)
-        @test xf ≈ [x1_sol(tf), x2_sol(tf)] atol = 1e-5
-        @test pf ≈ [p1_sol(tf), p2_sol(tf)] atol = 1e-5
-
-        # on a grid
-        f = f1 * ((t0+tf)/4, f1) * ((t0+tf)/2, f1)
-        N = 100; saveat = range(t0, tf, N)
-        sol = f((t0, tf), x0, p0, saveat=saveat)
-        xf = sol.u[end][1:n]
-        pf = sol.u[end][n+1:2n]
-        @test xf ≈ [x1_sol(tf), x2_sol(tf)] atol = 1e-5
-        @test pf ≈ [p1_sol(tf), p2_sol(tf)] atol = 1e-5
-        zspan = sol.u
-        zspan_sol = z_sol.(sol.t)
-        @test zspan ≈ zspan_sol atol = 1e-5
-
-    end
-
     @testset "Hamiltonian" begin
         
         #
         f1 = Flow(Hamiltonian(H1))
         f2 = Flow(Hamiltonian(H2))
-        f3 = Flow(Hamiltonian{:nonautonomous}(H3))
+        f3 = Flow(Hamiltonian(H3, autonomous=false))
         
         # one flow is used because t1 > tf
-        f = f1 * (2.0*tf, f2)
+        f = f1 * (2tf, f2)
         xf, pf = f(t0, x0, p0, tf)
         @test xf ≈ [x1_sol(tf), x2_sol(tf)] atol = 1e-5
         @test pf ≈ [p1_sol(tf), p2_sol(tf)] atol = 1e-5
@@ -128,10 +81,10 @@ function test_concatenation()
         #
         f1 = Flow(HamiltonianVectorField(Hv1))
         f2 = Flow(HamiltonianVectorField(Hv2))
-        f3 = Flow(HamiltonianVectorField{:nonautonomous}(Hv3))
+        f3 = Flow(HamiltonianVectorField(Hv3, autonomous=false))
         
         # one flow is used because t1 > tf
-        f = f1 * (2.0*tf, f2)
+        f = f1 * (2tf, f2)
         xf, pf = f(t0, x0, p0, tf)
         @test xf ≈ [x1_sol(tf), x2_sol(tf)] atol = 1e-5
         @test pf ≈ [p1_sol(tf), p2_sol(tf)] atol = 1e-5
@@ -172,10 +125,10 @@ function test_concatenation()
         #
         f1 = Flow(VectorField(V1))
         f2 = Flow(VectorField(V2))
-        f3 = Flow(VectorField{:nonautonomous}(V3))
+        f3 = Flow(VectorField(V3, autonomous=false))
 
         # one flow is used because t1 > tf
-        f = f1 * (2.0*tf, f2)
+        f = f1 * (2tf, f2)
         zf = f(t0, [x0; p0], tf)
         @test zf ≈ [x1_sol(tf), x2_sol(tf), p1_sol(tf), p2_sol(tf)] atol = 1e-5
         

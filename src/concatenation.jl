@@ -1,7 +1,7 @@
 # --------------------------------------------------------------------------------------------
 #
 # concatenate two flows with a prescribed switching time
-function concatenate(F::ClassicalFlow{D, U, T}, g::Tuple{ctNumber, ClassicalFlow{D, U, T}}) where {D, U, T}
+function concatenate(F::AbstractFlow{D, U, T}, g::Tuple{ctNumber, AbstractFlow{D, U, T}}) where {D, U, T}
 
     # concatenation of the right and sides
     t_switch, G = g
@@ -16,16 +16,16 @@ function concatenate(F::ClassicalFlow{D, U, T}, g::Tuple{ctNumber, ClassicalFlow
     tstops = unique(sort(tstops))
     
     # we choose default values and options of F
-    return ClassicalFlow{D, U, T}(F.f, rhs!, tstops)
+    return AbstractFlow(typeof(F), F.f, rhs!, tstops)
 
 end
 
-*(F::ClassicalFlow{D, U, T}, g::Tuple{ctNumber, ClassicalFlow{D, U, T}}) where {D, U, T} = concatenate(F, g)
+*(F::AbstractFlow{D, U, T}, g::Tuple{ctNumber, AbstractFlow{D, U, T}}) where {D, U, T} = concatenate(F, g)
 
 # --------------------------------------------------------------------------------------------
 #
 # concatenate two flows with a prescribed switching time
-function concatenate(F:: OptimalControlFlow{D, U, T}, g::Tuple{ctNumber, OptimalControlFlow{D, U, T}}) where {D, U, T}
+function concatenate(F::OptimalControlFlow{D, U, T}, g::Tuple{ctNumber, OptimalControlFlow{D, U, T}}) where {D, U, T}
 
     # concatenation of the right and sides
     t_switch, G = g
