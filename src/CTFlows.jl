@@ -24,18 +24,14 @@ const ctgradient = CTBase.ctgradient
 # --------------------------------------------------------------------------------------------------
 rg(i::Integer, j::Integer) = i==j ? i : i:j
 
-abstract type AbstractFlow{D, U, T} end
-
-function AbstractFlow(::Type{TF}, f, rhs, tstops) where {TF <: AbstractFlow}
-    return TF(f, rhs, tstops)
-end
+abstract type AbstractFlow{D, U, V, T} end
 
 # --------------------------------------------------------------------------------------------
 #
 include("default.jl")
 #
-include("hamiltonian.jl")
 include("vector_field.jl")
+include("hamiltonian.jl")
 include("optimal_control_problem.jl")
 #include("function.jl")
 #
@@ -45,6 +41,7 @@ include("concatenation.jl")
 export isnonautonomous
 export VectorField
 export Hamiltonian
+export HamiltonianLift
 export HamiltonianVectorField
 export Flow
 export plot
