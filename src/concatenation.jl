@@ -1,54 +1,49 @@
-# --------------------------------------------------------------------------------------------
-#
-# concatenate two flows with a prescribed switching time
-function concatenate(F::AbstractFlow{D, U, T}, g::Tuple{ctNumber, AbstractFlow{D, U, T}}) where {D, U, T}
-
-    # concatenation of the right and sides
-    t_switch, G = g
-    function rhs!(du::D, u::U, p, t::T)
+function __concat_rhs(F::AbstractFlow{D, U, V, T}, G::AbstractFlow{D, U, V, T}, t_switch) where {D, U, V, T}
+    function rhs!(du::D, u::U, p::V, t::T)
         t < t_switch ? F.rhs!(du, u, p, t) : G.rhs!(du, u, p, t)
     end
+    return rhs!
+end
 
-    # times to break integration 
+function __concat_tstops(F::AbstractFlow, G::AbstractFlow, t_switch)
     tstops = F.tstops
     append!(tstops, G.tstops)
     append!(tstops, t_switch)
     tstops = unique(sort(tstops))
-    
-    # we choose default values and options of F
-    return AbstractFlow(typeof(F), F.f, rhs!, tstops)
-
+    return tstops
 end
 
-*(F::AbstractFlow{D, U, T}, g::Tuple{ctNumber, AbstractFlow{D, U, T}}) where {D, U, T} = concatenate(F, g)
+function __concat_feedback_control(F::AbstractFlow, G::AbstractFlow, t_switch)
+    function _feedback_control(t, x, u, v)
+        t < t_switch ? F.feedback_control(t, x, u, v) : G.feedback_control(t, x, u, v)
+    end
+    feedback_control = ControlLaw(_feedback_control, NonAutonomous, NonFixed)
+    return feedback_control
+end
 
 # --------------------------------------------------------------------------------------------
-#
 # concatenate two flows with a prescribed switching time
-function concatenate(F::OptimalControlFlow{D, U, T}, g::Tuple{ctNumber, OptimalControlFlow{D, U, T}}) where {D, U, T}
+function concatenate(F::TF, g::Tuple{ctNumber, TF}) where {TF<:AbstractFlow}
 
-    # concatenation of the right and sides
     t_switch, G = g
-    function rhs!(du::D, u::U, p, t::T)
-        t < t_switch ? F.rhs!(du, u, p, t) : G.rhs!(du, u, p, t)
-    end
-
-    # times to break integration 
-    tstops = F.tstops
-    append!(tstops, G.tstops)
-    append!(tstops, t_switch)
-    tstops = unique(sort(tstops))
-
-    # control law in feedback form: must be a ControlLaw
-    # nonautonomous and vectorial usage for this function which only redirect the call
-    function _feedback_control(t, x, u)
-        t < t_switch ? F.feedback_control(t, x, u) : G.feedback_control(t, x, u)
-    end
-    feedback_control = ControlLaw(_feedback_control, NonAutonomous, Fixed)
-
-    # we choose default values and options of F
-    return OptimalControlFlow{D, U, T}(F.f, rhs!, feedback_control, F.ocp, tstops)
+    rhs!   = __concat_rhs(F, G, t_switch)       # concatenation of the right and sides
+    tstops = __concat_tstops(F, G, t_switch)    # times to break integration
+    return TF(F.f, rhs!, tstops)  # we choose default values and options of F
 
 end
 
-*(F:: OptimalControlFlow{D, U, T}, g::Tuple{ctNumber, OptimalControlFlow{D, U, T}}) where {D, U, T} = concatenate(F, g)
+*(F::TF, g::Tuple{ctNumber, TF}) where {TF<:AbstractFlow} = concatenate(F, g)
+
+# --------------------------------------------------------------------------------------------
+# concatenate two flows with a prescribed switching time
+function concatenate(F::TF, g::Tuple{ctNumber, TF}) where {TF<:OptimalControlFlow}
+
+    t_switch, G = g
+    rhs!       = __concat_rhs(F, G, t_switch)               # concatenation of the right and sides
+    tstops     = __concat_tstops(F, G, t_switch)            # times to break integration
+    feedback_u = __concat_feedback_control(F, G, t_switch)  # concatenation of the feedback control
+    return TF(F.f, rhs!, feedback_u, F.ocp, tstops) # we choose default values and options of F
+
+end
+
+*(F::TF, g::Tuple{ctNumber, TF}) where {TF<:OptimalControlFlow} = concatenate(F, g)

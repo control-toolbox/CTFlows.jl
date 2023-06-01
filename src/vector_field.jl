@@ -1,11 +1,10 @@
 # ---------------------------------------------------------------------------------------------------
-#
-struct VectorFieldFlow{D, U, T} <: AbstractFlow{D, U, T}
+struct VectorFieldFlow{D, U, V, T} <: AbstractFlow{D, U, V, T}
     f::Function     # f(args..., rhs): compute the flow
     rhs!::Function  # OrdinaryDiffEq rhs
     tstops::Times   # stopping times
-    VectorFieldFlow{D, U, T}(f, rhs!) where {D, U, T} = new{D, U, T}(f, rhs!, Vector{Time}())
-    VectorFieldFlow{D, U, T}(f, rhs!, tstops) where {D, U, T} = new{D, U, T}(f, rhs!, tstops)
+    VectorFieldFlow{D, U, V, T}(f, rhs!) where {D, U, V, T} = new{D, U, V, T}(f, rhs!, Vector{Time}())
+    VectorFieldFlow{D, U, V, T}(f, rhs!, tstops) where {D, U, V, T} = new{D, U, V, T}(f, rhs!, tstops)
 end
 
 # call F.f
@@ -26,18 +25,18 @@ function vector_field_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
         return sol
     end
 
-    function f(t0::Time, x0::State, t::Time, v::Variable=__variable(); _t_stops_interne, DiffEqRHS, tstops=__tstops(), kwargs...)
-        sol = f((t0, t), x0, v; _t_stops_interne=_t_stops_interne, DiffEqRHS=DiffEqRHS, tstops=tstops, kwargs...)
+    function f(t0::Time, x0::State, t::Time, v::Variable=__variable(); kwargs...)
+        sol = f((t0, t), x0, v; kwargs...)
         n = size(x0, 1)
         return sol[rg(1,n), end]
     end
 
-    function f(tspan::Tuple{Time,Time}, x0::ctNumber, v::Variable=__variable(); _t_stops_interne, DiffEqRHS, tstops=__tstops(), kwargs...)
-        return f(tspan, [x0], v; _t_stops_interne=_t_stops_interne, DiffEqRHS=DiffEqRHS, tstops=tstops, kwargs...)
+    function f(tspan::Tuple{Time,Time}, x0::ctNumber, v::Variable=__variable(); kwargs...)
+        return f(tspan, [x0], v; kwargs...)
     end
 
-    function f(t0::Time, x0::ctNumber, tf::Time, v::Variable=__variable(); _t_stops_interne, DiffEqRHS, tstops=__tstops(), kwargs...)
-        xf = f(t0, [x0], tf, v; _t_stops_interne=_t_stops_interne, DiffEqRHS=DiffEqRHS, tstops=tstops, kwargs...)
+    function f(t0::Time, x0::ctNumber, tf::Time, v::Variable=__variable(); kwargs...)
+        xf = f(t0, [x0], tf, v; kwargs...)
         return xf[1]
     end
 
@@ -49,7 +48,7 @@ end
 # Flow of a vector field
 function Flow(vf::VectorField; alg=__alg(), abstol=__abstol(), 
     reltol=__reltol(), saveat=__saveat(), kwargs_Flow...)
-
+    #
     f = vector_field_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
 
     function rhs!(dx::DState, x::State, v::Variable, t::Time)
@@ -57,6 +56,6 @@ function Flow(vf::VectorField; alg=__alg(), abstol=__abstol(),
         dx[rg(1,n)] = vf(t, x[rg(1,n)], v)
     end
 
-    return VectorFieldFlow{DState, State, Time}(f, rhs!)
+    return VectorFieldFlow{DState, State, Variable, Time}(f, rhs!)
 
 end
