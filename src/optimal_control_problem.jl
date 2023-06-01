@@ -61,10 +61,10 @@ struct OptimalControlFlow{D, U, V, T} <: AbstractFlow{D, U, V, T}
     # 
     f::Function      # the mere function which depends on the kind of flow (Hamiltonian or classical) 
                      # this function takes a right and side as input
-    rhs!::Function   # the right and side of the form: rhs!(du::D, u::U, p, t::T)
+    rhs!::Function   # the right and side of the form: rhs!(du::D, u::U, p::V, t::T)
     tstops::Times    # specific times  the integrator must stop
                      # useful when the rhs is not smooth at such times
-    feedback_control::ControlLaw # the control law in feedback form, that is u(t, x, p)
+    feedback_control::ControlLaw # the control law in feedback form, that is u(t, x, p, v)
     ocp::OptimalControlModel # the optimal control problem
 
     # constructor
@@ -101,14 +101,26 @@ julia> f = Flow(ocp, (x, p) -> p)
     The time dependence of the control function must be consistent with the time dependence of the optimal control problem.
     The dimension of the output of the control function must be consistent with the dimension usage of the control of the optimal control problem.
 """
-function Flow(ocp::OptimalControlModel{T, V}, u_::Function; alg=__alg(), abstol=__abstol(), 
+function Flow(ocp::OptimalControlModel{T, V}, u_::Union{Function, ControlLaw{T, V}}; alg=__alg(), abstol=__abstol(), 
     reltol=__reltol(), saveat=__saveat(), kwargs_Flow...) where {T, V}
-
+    #
     h, u = __create_hamiltonian(ocp, u_) # construction of the Hamiltonian
     return __ocp_Flow(ocp, h, u, alg, abstol, reltol, saveat; kwargs_Flow...)
-
 end
 
+# ---------------------------------------------------------------------------------------------------
+function __create_hamiltonian(ocp::OptimalControlModel{T, V}, u::ControlLaw{T, V}) where {T, V}
+    f, f⁰, p⁰, s = __get_data_for_ocp_flow(ocp) # data
+    @assert f ≠ nothing "no dynamics in ocp"
+    h = Hamiltonian(f⁰ ≠ nothing ? makeH(f, u, f⁰, p⁰, s) : makeH(f, u), NonAutonomous, NonFixed)
+    return h, u
+end
+
+function __create_hamiltonian(ocp::OptimalControlModel{T, V}, u::Function) where {T, V}
+    return __create_hamiltonian(ocp, ControlLaw(u, T, V))
+end
+
+# ---------------------------------------------------------------------------------------------------
 """
 $(TYPEDSIGNATURES)
 
@@ -128,21 +140,12 @@ julia> f = Flow(ocp, (t, x, p) -> p[1], (t, x) -> x[1] - 1, (t, x, p) -> x[1]+p[
 """
 function Flow(ocp::OptimalControlModel{T, V}, u_::Function, g_::Function, μ_::Function; alg=__alg(), abstol=__abstol(),
     reltol=__reltol(), saveat=__saveat(), kwargs_Flow...) where {T, V}
-    
+    #
     h, u = __create_hamiltonian(ocp, u_, g_, μ_) # construction of the Hamiltonian
     return __ocp_Flow(ocp, h, u, alg, abstol, reltol, saveat; kwargs_Flow...)
-
 end
 
 # ---------------------------------------------------------------------------------------------------
-function __create_hamiltonian(ocp::OptimalControlModel{T, V}, u_::Function) where {T, V}
-    f, f⁰, p⁰, s = __get_data_for_ocp_flow(ocp) # data
-    @assert f ≠ nothing "no dynamics in ocp"
-    u = ControlLaw(u_, T, V) # consistency is needed
-    h = Hamiltonian(f⁰ ≠ nothing ? makeH(f, u, f⁰, p⁰, s) : makeH(f, u), NonAutonomous, NonFixed)
-    return h, u
-end
-
 function __create_hamiltonian(ocp::OptimalControlModel{T, V}, u_::Function, g_::Function, μ_::Function) where {T, V}
     f, f⁰, p⁰, s = __get_data_for_ocp_flow(ocp) # data
     @assert f ≠ nothing "no dynamics in ocp"

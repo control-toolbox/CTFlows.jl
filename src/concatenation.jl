@@ -5,6 +5,10 @@ function __concat_rhs(F::AbstractFlow{D, U, V, T}, G::AbstractFlow{D, U, V, T}, 
     return rhs!
 end
 
+function __concat_rhs(F::ODEFlow, G::ODEFlow, t_switch)
+    return (x, v, t) -> (t < t_switch ? F.rhs(x, v, t) : G.rhs(x, v, t))
+end
+
 function __concat_tstops(F::AbstractFlow, G::AbstractFlow, t_switch)
     tstops = F.tstops
     append!(tstops, G.tstops)
