@@ -25,11 +25,12 @@ const ctgradient = CTBase.ctgradient
 # --------------------------------------------------------------------------------------------------
 rg(i::Integer, j::Integer) = i==j ? i : i:j
 
-abstract type AbstractFlow{D, U, V, T} end
+abstract type AbstractFlow{D, U} end
 
 # --------------------------------------------------------------------------------------------
 #
 include("default.jl")
+include("utils.jl")
 #
 include("vector_field.jl")
 include("hamiltonian.jl")

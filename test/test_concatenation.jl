@@ -202,6 +202,28 @@ function test_concatenation()
 
     end
 
+    @testset "Saut nul" begin
+
+        # Hamiltonien
+        f1 = Flow(Hamiltonian(H1))
+        f2 = Flow(Hamiltonian(H2))
+        f3 = Flow(Hamiltonian(H3, autonomous=false))
+        f = f1 * ((t0+tf)/4, [0, 0], f2) * ((t0+tf)/2, f3)
+        xf, pf = f(t0, x0, p0, tf+(t0+tf)/2)
+        @test xf ≈ [x1_sol(tf), x2_sol(tf)] atol = 1e-5
+        @test pf ≈ [p1_sol(tf), p2_sol(tf)] atol = 1e-5
+
+        # vector field
+        f1 = Flow(VectorField(V1))
+        f2 = Flow(VectorField(V2))
+        f3 = Flow(VectorField(V3, autonomous=false))
+        f = f1 * ((t0+tf)/4, [0, 0], f2) * ((t0+tf)/2, f3)
+        zf = f(t0, [x0; p0], tf+(t0+tf)/2)
+        @test zf ≈ [x1_sol(tf), x2_sol(tf), p1_sol(tf), p2_sol(tf)] atol = 1e-5
+
+    end
+
+    # THIS TEST MUST BE THE LAST ONE
     @testset "OCP" begin
         ocp() = begin
             n=1

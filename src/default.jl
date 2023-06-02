@@ -42,3 +42,10 @@ $(TYPEDSIGNATURES)
 See `tstops` from `OrdinaryDiffEq`.
 """
 __tstops() = Vector{Time}()
+
+"""
+$(TYPEDSIGNATURES)
+
+See `callback` from `OrdinaryDiffEq`.
+"""
+__callback() = nothing
