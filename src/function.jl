@@ -55,10 +55,10 @@ function Flow(dyn::Function; autonomous=true, variable=false,
     #
     f = ode_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
     rhs = @match (!autonomous, variable) begin
-        (true, true)  => ((x, v, t) -> dyn(t, x, v))
-        (true, false) => ((x, v, t) -> dyn(t, x))
-        (false, true) => ((x, v, t) -> dyn(x, v))
-        (false, false)=> ((x, v, t) -> dyn(x))
+        (true, true)  => ((x, v, t::Time) -> dyn(t, x, v))
+        (true, false) => ((x, v, t::Time) -> dyn(t, x))
+        (false, true) => ((x, v, t::Time) -> dyn(x, v))
+        (false, false)=> ((x, v, t::Time) -> dyn(x))
     end
     #
     return ODEFlow(f, rhs)

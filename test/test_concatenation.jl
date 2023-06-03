@@ -202,7 +202,7 @@ function test_concatenation()
 
     end
 
-    @testset "Saut nul" begin
+    @testset "Jump is 0" begin
 
         # Hamiltonien
         f1 = Flow(Hamiltonian(H1))
@@ -217,40 +217,94 @@ function test_concatenation()
         f1 = Flow(VectorField(V1))
         f2 = Flow(VectorField(V2))
         f3 = Flow(VectorField(V3, autonomous=false))
-        f = f1 * ((t0+tf)/4, [0, 0], f2) * ((t0+tf)/2, f3)
+        f = f1 * ((t0+tf)/4, [0, 0, 0, 0], f2) * ((t0+tf)/2, f3)
         zf = f(t0, [x0; p0], tf+(t0+tf)/2)
         @test zf ≈ [x1_sol(tf), x2_sol(tf), p1_sol(tf), p2_sol(tf)] atol = 1e-5
 
     end
 
-    # THIS TEST MUST BE THE LAST ONE
-    @testset "OCP" begin
-        ocp() = begin
-            n=1
-            m=1
-            t0=0
-            tf=1
-            x0=-1
-            xf=0
-            ocp = Model()
-            state!(ocp, n)
-            control!(ocp, m)
-            time!(ocp, [t0, tf])
-            constraint!(ocp, :initial, x0, :initial_constraint)
-            constraint!(ocp, :final,   xf, :final_constraint)
-            constraint!(ocp, :control, -1, 1, :control_constraint) 
-            dynamics!(ocp, (x, u) -> -x + u)
-            objective!(ocp, :lagrange, (x, u) -> abs(u))
-            f0 = Flow(ocp, (x, p) -> 0)
-            f1 = Flow(ocp, (x, p) -> 1)
-            p0 = 1/(x0-(xf-1)/exp(-tf))
-            t1 = -log(p0)
-            f = f0 * (t1, f1)
-            xf_, pf = f(t0, x0, p0, tf)
-            return xf, xf_
+    @testset "Bounce" begin
+        
+        # example from https://docs.sciml.ai/DiffEqDocs/stable/features/callback_functions/#DiscreteCallback-Examples
+        function dyn(du, u, p, t)
+            du[1] = -u[1]
         end
-        xf, xf_ = ocp()
-        @test xf_ ≈ xf atol=1e-6
+        u0 = [10]
+        prob = ODEProblem(dyn, u0, (0, 10))
+        dosetimes = [4, 8]
+        condition(u, t, integrator) = t ∈ dosetimes
+        affect!(integrator) = integrator.u[1] += 10
+        cb = DiscreteCallback(condition, affect!)
+        sol = solve(prob, Tsit5(), callback = cb, tstops = dosetimes)
+
+        #
+        x0   = 10
+
+        # vector field
+        V    = x -> -x
+        f    = Flow(VectorField(V))
+        fc   = f * (4, 10, f) * (8, 10, f)
+        sol2 = fc((0, 10), x0)
+
+        # vector field
+        f    = Flow(V)
+        fc   = f * (4, 10, f) * (6, f) * (8, 10, f) * (9, f)
+        sol3 = fc((0, 10), x0)
+
+        # test
+        N = 100
+        tspan = range(0, 10, N)
+        @test norm([sol(t)[1]-sol2(t) for t ∈ tspan])/N ≈ 0 atol=1e-3
+        @test norm([sol(t)[1]-sol3(t) for t ∈ tspan])/N ≈ 0 atol=1e-3
+
+        # -------
+        f  = Flow(Hamiltonian((x, p) -> 0.5p^2))
+        fc = f * (1, 1, f) * (1.5, f) * (2, 1, f) * (2.5, f) * (3, 1, f) * (3.5, f) * (4, 1, f)
+        xf, pf = f(0, 0, 0, 5)
+        @test xf ≈ 10 atol=1e-6
+        @test pf ≈ 4  atol=1e-6
+
+        # -------
+        f  = Flow(HamiltonianVectorField((x, p) -> [p[1], 0, 0, 0]))
+        fc = f * (1, [1, 0], f) * (1.5, f) * (2, [1, 0], f) * (2.5, f) * (3, [1, 0], f) * (3.5, f) * (4, [1, 0], f)
+        xf, pf = f(0, [0, 0], [0, 0], 5)
+        @test xf[1] ≈ 10 atol=1e-6
+        @test pf[1] ≈ 4  atol=1e-6
+
+    end
+
+    @testset "Bounce OCP" begin
+        ocp = Model()
+        state!(ocp, 2)
+        control!(ocp, 2)
+        time!(ocp, [0, 5])
+        constraint!(ocp, :initial, [0, 0])
+        dynamics!(ocp, (x, u) -> u)
+        objective!(ocp, :mayer, (x0, xf) -> xf)
+        f = Flow(ocp, (x, p) -> [p[1]/2, 0])
+        fc = f * (1, [1, 0], f) * (1.5, f) * (2, [1, 0], f) * (2.5, f) * (3, [1, 0], f) * (3.5, f) * (4, [1, 0], f)
+        xf, pf = f(0, [0, 0], [0, 0], 5)
+        @test xf[1] ≈ 10 atol=1e-6
+        @test pf[1] ≈ 4  atol=1e-6
+    end
+
+    @testset "Concat OCP" begin
+        ocp = Model()
+        state!(ocp, 1)
+        control!(ocp, 1)
+        time!(ocp, [0, 1])
+        constraint!(ocp, :initial, -1, :initial_constraint)
+        constraint!(ocp, :final,    0, :final_constraint)
+        constraint!(ocp, :control, -1, 1, :control_constraint) 
+        dynamics!(ocp, (x, u) -> -x + u)
+        objective!(ocp, :lagrange, (x, u) -> abs(u))
+        f0 = Flow(ocp, (x, p) -> 0)
+        f1 = Flow(ocp, (x, p) -> 1)
+        p0 = 1/(-1-(0-1)/exp(-1))
+        t1 = -log(p0)
+        f = f0 * (t1, f1)
+        xf_, pf = f(0, -1, p0, 1)
+        @test xf_ ≈ 0 atol=1e-6
     end
 
 end

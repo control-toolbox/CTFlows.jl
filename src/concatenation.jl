@@ -5,8 +5,12 @@ function __concat_rhs(F::AbstractFlow{D, U}, G::AbstractFlow{D, U}, t_switch::Ti
     return rhs!
 end
 
+function __concat_rhs(F::VectorFieldFlow, G::VectorFieldFlow, t_switch::Time)
+    return (x::State, v::Variable, t::Time) -> (t < t_switch ? F.rhs(x, v, t) : G.rhs(x, v, t))
+end
+
 function __concat_rhs(F::ODEFlow, G::ODEFlow, t_switch::Time)
-    return (x, v, t) -> (t < t_switch ? F.rhs(x, v, t) : G.rhs(x, v, t))
+    return (x, v, t::Time) -> (t < t_switch ? F.rhs(x, v, t) : G.rhs(x, v, t))
 end
 
 function __concat_tstops(F::AbstractFlow, G::AbstractFlow, t_switch::Time)
@@ -54,9 +58,6 @@ function concatenate(F::TF, g::Tuple{ctNumber, Any, TF})::TF where {TF<:Abstract
 
 end
 
-*(F::TF, g::Tuple{ctNumber, TF}) where {TF<:AbstractFlow} = concatenate(F, g)
-*(F::TF, g::Tuple{ctNumber, Any, TF}) where {TF<:AbstractFlow} = concatenate(F, g)
-
 # --------------------------------------------------------------------------------------------
 # concatenate two flows with a prescribed switching time
 function concatenate(F::TF, g::Tuple{ctNumber, TF})::TF where {TF<:OptimalControlFlow}
@@ -81,5 +82,6 @@ function concatenate(F::TF, g::Tuple{ctNumber, Any, TF})::TF where {TF<:OptimalC
 
 end
 
-*(F::TF, g::Tuple{ctNumber, TF}) where {TF<:OptimalControlFlow} = concatenate(F, g)
-*(F::TF, g::Tuple{ctNumber, Any, TF}) where {TF<:OptimalControlFlow} = concatenate(F, g)
+# --------------------------------------------------------------------------------------------
+*(F::TF, g::Tuple{ctNumber, TF}) where {TF<:AbstractFlow} = concatenate(F, g)
+*(F::TF, g::Tuple{ctNumber, Any, TF}) where {TF<:AbstractFlow} = concatenate(F, g)
