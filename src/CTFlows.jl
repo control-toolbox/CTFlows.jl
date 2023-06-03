@@ -14,7 +14,6 @@ Base.isempty(p::OrdinaryDiffEq.SciMLBase.NullParameters) = true
 # --------------------------------------------------------------------------------------------------
 # Aliases for types
 const CoTangent  = ctVector
-const Control    = ctVector
 const DState     = ctVector
 const DCostate   = ctVector
 const DCoTangent = ctVector
