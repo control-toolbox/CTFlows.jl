@@ -3,17 +3,15 @@ using Plots
 using OrdinaryDiffEq
 using CTBase
 
-#f  = Flow(Hamiltonian((x, p) -> 0.5p^2))
-#fc = f * (1, 1, f) * (1.5, f) * (2, 1, f) * (2.5, f) * (3, 1, f) * (3.5, f) * (4, 1, f)
-#sol = fc((0, 5), 0, 0)
-#plot(sol)
+f  = Flow(Hamiltonian((x, p) -> 0.5p^2))
+fc = f * (1, 1, f) * (1.5, f) * (2, 1, f) * (2.5, f) * (3, 1, f) * (3.5, f) * (4, 1, f)
+sol = fc((0, 5), 0, 0)
+p = plot(sol)
 
 f  = Flow(HamiltonianVectorField((x, p) -> [p[1], 0, 0, 0]))
 fc = f * (1, [1, 0], f) * (1.5, f) * (2, [1, 0], f) * (2.5, f) * (3, [1, 0], f) * (3.5, f) * (4, [1, 0], f)
 sol = fc((0, 5), [0, 0], [0, 0])
-plot(sol)
-
-#=
+pp = plot(sol)
 
 ocp = Model()
 state!(ocp, 2)
@@ -25,8 +23,9 @@ objective!(ocp, :mayer, (x0, xf) -> xf)
 f = Flow(ocp, (x, p) -> [p[1]/2, 0])
 fc = f * (1, [1, 0], f) * (1.5, f) * (2, [1, 0], f) * (2.5, f) * (3, [1, 0], f) * (3.5, f) * (4, [1, 0], f)
 sol = fc((0, 5), [0, 0], [0, 0])
-plot(sol)
-=#
+ppp = plot(sol)
+
+plot(p, pp, ppp)
 
 #=    
 function dyn(du, u, p, t)

@@ -229,9 +229,9 @@ function test_concatenation()
         function dyn(du, u, p, t)
             du[1] = -u[1]
         end
-        u0 = [10]
-        prob = ODEProblem(dyn, u0, (0, 10))
-        dosetimes = [4, 8]
+        u0 = [10.0]
+        prob = ODEProblem(dyn, u0, (0.0, 10.0))
+        dosetimes = [4.0, 8.0]
         condition(u, t, integrator) = t ∈ dosetimes
         affect!(integrator) = integrator.u[1] += 10
         cb = DiscreteCallback(condition, affect!)
@@ -260,14 +260,14 @@ function test_concatenation()
         # -------
         f  = Flow(Hamiltonian((x, p) -> 0.5p^2))
         fc = f * (1, 1, f) * (1.5, f) * (2, 1, f) * (2.5, f) * (3, 1, f) * (3.5, f) * (4, 1, f)
-        xf, pf = f(0, 0, 0, 5)
+        xf, pf = fc(0, 0, 0, 5)
         @test xf ≈ 10 atol=1e-6
         @test pf ≈ 4  atol=1e-6
 
         # -------
         f  = Flow(HamiltonianVectorField((x, p) -> [p[1], 0, 0, 0]))
         fc = f * (1, [1, 0], f) * (1.5, f) * (2, [1, 0], f) * (2.5, f) * (3, [1, 0], f) * (3.5, f) * (4, [1, 0], f)
-        xf, pf = f(0, [0, 0], [0, 0], 5)
+        xf, pf = fc(0, [0, 0], [0, 0], 5)
         @test xf[1] ≈ 10 atol=1e-6
         @test pf[1] ≈ 4  atol=1e-6
 
@@ -283,7 +283,7 @@ function test_concatenation()
         objective!(ocp, :mayer, (x0, xf) -> xf)
         f = Flow(ocp, (x, p) -> [p[1]/2, 0])
         fc = f * (1, [1, 0], f) * (1.5, f) * (2, [1, 0], f) * (2.5, f) * (3, [1, 0], f) * (3.5, f) * (4, [1, 0], f)
-        xf, pf = f(0, [0, 0], [0, 0], 5)
+        xf, pf = fc(0, [0, 0], [0, 0], 5)
         @test xf[1] ≈ 10 atol=1e-6
         @test pf[1] ≈ 4  atol=1e-6
     end
