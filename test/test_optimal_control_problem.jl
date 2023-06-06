@@ -41,11 +41,11 @@ function test_optimal_control_problem()
     
         # the solution
         x(t) = -exp(-t)
-        p(t) = 1-exp(t-1)
+        p(t) = exp(t-1) - 1
         u(t) = -x(t)
 
         # Hamiltonian flow
-        H(x, p, u, η) = p*u - u + η*(x + u) # pseudo-Hamiltonian
+        H(x, p, u, η) = p*u + u + η*(x + u) # pseudo-Hamiltonian
         η(x, p) = -(p + 1) # multiplier associated to the mixed constraint
         u(x, p) = -x
         H(x, p) = H(x, p, u(x, p), η(x, p))
