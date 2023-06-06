@@ -26,16 +26,16 @@ constraint!(ocp, :state, (x, v) -> x[1], r0, Inf, :state_con1)
 constraint!(ocp, :state, (x, v) -> x[2], 0, vmax, :state_con2)
 constraint!(ocp, :state, (x, v) -> x[3], m0, mf, :state_con3)
 objective!(ocp, :mayer,  (x0, xf, v) -> xf[1], :max)
-function FF0(x)
+function F0(x)
     r, v, m = x
     D = Cd * v^2 * exp(-β*(r - 1))
     return [ v, -D/m - 1/r^2, 0 ]
 end
-function FF1(x)
+function F1(x)
     r, v, m = x
     return [ 0, Tmax/m, -b*Tmax ]
 end
-dynamics!(ocp, (x, u, v) -> FF0(x) + u*FF1(x))
+dynamics!(ocp, (x, u, v) -> F0(x) + u*F1(x))
 
 # --------------------------------------------------------
 # Indirect
@@ -45,10 +45,8 @@ u0 = 0
 u1 = 1
 
 # singular control
-F0 = VectorField(x -> FF0(x))
-F1 = VectorField(x -> FF1(x))
-H0 = Hamiltonian((x, p) -> p'*F0(x))
-H1 = Hamiltonian((x, p) -> p'*F1(x))
+H0 = Lift(F0)
+H1 = Lift(F1)
 H01  = @Poisson {H0, H1}
 H001 = @Poisson {H0, H01}
 H101 = @Poisson {H1, H01}
@@ -56,8 +54,8 @@ us(x, p) = -H001(x, p) / H101(x, p)
 
 # boundary control
 g(x)    = vmax-x[2] # g(x) ≥ 0
-ub(x)   = -(F0⋅g)(x) / (F1⋅g)(x)
-μ(x, p) = H01(x, p) / (F1⋅g)(x)
+ub(x)   = -Lie(F0, g)(x) / Lie(F1, g)(x)
+μ(x, p) = H01(x, p) / Lie(F1, g)(x)
 
 # flows
 f0 = Flow(ocp, (x, p, v) -> u0)
@@ -108,5 +106,4 @@ f1sb0 = f1 * (t1, fs) * (t2, fb) * (t3, f0) # concatenation of the Hamiltonian f
 flow_sol = f1sb0((t0, tf), x0, p0)
 
 #
-ocp_sol = CTFlows.OptimalControlSolution(flow_sol)
-plot!(pp, ocp_sol)
+plot!(pp, flow_sol)

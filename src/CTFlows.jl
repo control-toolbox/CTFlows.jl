@@ -9,13 +9,11 @@ using Plots: plot, Plots
 using MLStyle
 
 #
-Base.isempty(p::OrdinaryDiffEq.SciMLBase.NullParameters) = true
+#Base.isempty(p::OrdinaryDiffEq.SciMLBase.NullParameters) = true
 
 # --------------------------------------------------------------------------------------------------
 # Aliases for types
 const CoTangent  = ctVector
-const DState     = ctVector
-const DCostate   = ctVector
 const DCoTangent = ctVector
 
 #
@@ -45,7 +43,7 @@ export Hamiltonian
 export HamiltonianLift
 export HamiltonianVectorField
 export Flow
-export plot
+export plot, plot!
 export *
 
 end

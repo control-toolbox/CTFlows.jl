@@ -52,12 +52,14 @@ function test_optimal_control_problem()
         f = Flow(Hamiltonian(H))
         xf, pf = f(t0, x0, p(t0), tf)
         @test xf ≈ x(tf) atol=1e-6
+        @test pf ≈ p(tf) atol=1e-6
 
         # ocp flow
         g(x, u) = x+u
         f = Flow(ocp, u, g, η)
         xf, pf = f(t0, x0, p(t0), tf)
         @test xf ≈ x(tf) atol=1e-6
+        @test pf ≈ p(tf) atol=1e-6
 
         # ocp flow with u a ControlLaw, g a MixedConstraint and η a Multiplier
         u = ControlLaw((x, p) -> -x)
@@ -66,6 +68,7 @@ function test_optimal_control_problem()
         f = Flow(ocp, u, g, η)
         xf, pf = f(t0, x0, p(t0), tf)
         @test xf ≈ x(tf) atol=1e-6
+        @test pf ≈ p(tf) atol=1e-6
 
         # ocp flow with u a FeedbackControl, g a MixedConstraint and η a Function
         u = FeedbackControl(x -> -x)
@@ -74,6 +77,7 @@ function test_optimal_control_problem()
         f = Flow(ocp, u, g, η)
         xf, pf = f(t0, x0, p(t0), tf)
         @test xf ≈ x(tf) atol=1e-6
+        @test pf ≈ p(tf) atol=1e-6
 
         # ocp flow with u a FeedbackControl, g a Function and η a Multiplier
         u = FeedbackControl(x -> -x)
@@ -82,6 +86,7 @@ function test_optimal_control_problem()
         f = Flow(ocp, u, g, η)
         xf, pf = f(t0, x0, p(t0), tf)
         @test xf ≈ x(tf) atol=1e-6
+        @test pf ≈ p(tf) atol=1e-6
 
     end
 

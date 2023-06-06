@@ -16,12 +16,15 @@ function test_concatenation()
     H1(x, p) = p[1] * x[2] + p[2] * control(x, p) - 0.5 * control(x, p)^2
     H2(x, p) = -H1(x, p)
     H3(t, x, p) = H1(x,p)
+    #
+    dx(x, p) = [x[2], control(x, p)]
+    dp(x, p) = [0.0, -p[1]]
     #   
-    Hv1(x, p) = [x[2], control(x, p), 0.0, -p[1]]
-    Hv2(x, p) = -Hv1(x, p)
+    Hv1(x, p) = dx(x, p), dp(x, p)
+    Hv2(x, p) = -dx(x, p), -dp(x, p)
     Hv3(t, x, p) = Hv1(x,p)
     #
-    V1(z) = Hv1(z[1:n], z[n+1:2n])
+    V1(z) = vcat(dx(z[1:n], z[n+1:2n]), dp(z[1:n], z[n+1:2n]))
     V2(z) = -V1(z)
     V3(t, z) = V1(z)
     #
@@ -265,7 +268,7 @@ function test_concatenation()
         @test pf ≈ 4  atol=1e-6
 
         # -------
-        f  = Flow(HamiltonianVectorField((x, p) -> [p[1], 0, 0, 0]))
+        f  = Flow(HamiltonianVectorField((x, p) -> ([p[1], 0], [0, 0])))
         fc = f * (1, [1, 0], f) * (1.5, f) * (2, [1, 0], f) * (2.5, f) * (3, [1, 0], f) * (3.5, f) * (4, [1, 0], f)
         xf, pf = fc(0, [0, 0], [0, 0], 5)
         @test xf[1] ≈ 10 atol=1e-6

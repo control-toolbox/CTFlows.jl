@@ -86,7 +86,7 @@ function Flow(hv::HamiltonianVectorField; alg=__alg(), abstol=__abstol(),
     f = hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
     function rhs!(dz::DCoTangent, z::CoTangent, v::Variable, t::Time)
         n = size(z, 1) ÷ 2
-        dz[:] = hv(t, z[rg(1,n)], z[rg(n+1,2n)], v)
+        dz[rg(1, n)], dz[rg(n+1, 2n)] = hv(t, z[rg(1,n)], z[rg(n+1,2n)], v)
     end
     return HamiltonianFlow(f, rhs!)
 end
