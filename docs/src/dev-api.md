@@ -1,4 +1,4 @@
-# API
+# Internal functions
 
 ```@meta
 CurrentModule = CTFlows 
@@ -7,5 +7,5 @@ CurrentModule = CTFlows
 ```@autodocs
 Modules = [CTFlows]
 Order = [:module, :type, :function, :macro]
-Private = false
+Public = false
 ```
