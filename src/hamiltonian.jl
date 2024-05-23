@@ -1,5 +1,6 @@
 # ---------------------------------------------------------------------------------------------------
-#
+# This is the flow returned by the function Flow
+# The call to the flow is given after.
 struct HamiltonianFlow <: AbstractFlow{DCoTangent, CoTangent}
     f::Function      # f(args..., rhs): compute the flow
     rhs!::Function   # OrdinaryDiffEq rhs
