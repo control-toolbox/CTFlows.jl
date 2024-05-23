@@ -5,22 +5,15 @@ using CTBase
 using OrdinaryDiffEq
 using LinearAlgebra
 
-#
-const AbstractSystem = CTFlows.AbstractSystem
-const AbstractFlow = CTFlows.AbstractFlow
-const System = CTFlows.System
-const HamiltonianSystem = CTFlows.HamiltonianSystem
-const HamiltonianFlow = CTFlows.HamiltonianFlow
-
-#
-struct DummySystem <: AbstractSystem end
-
 @testset verbose = true showtiming = true "CTFlows" begin
     for name ∈ (
+        :concatenation,
         :default,
-        :abstract_system,
-        :hamiltonian_system,
-        :hamiltonian_flow,
+        :flow_function,
+        :flow_hamiltonian_vector_field,
+        :flow_hamiltonian,
+        :flow_vector_field,
+        :optimal_control_problem,
         )
         @testset "$(name)" begin
             test_name = Symbol(:test_, name)

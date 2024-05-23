@@ -22,28 +22,32 @@ const ctgradient = CTBase.ctgradient
 # --------------------------------------------------------------------------------------------------
 rg(i::Integer, j::Integer) = i==j ? i : i:j
 
-abstract type AbstractFlow{D, U} end
+#abstract type AbstractFlow{D, U} end
 
 # --------------------------------------------------------------------------------------------
 #
 include("default.jl")
-include("utils.jl")
 #
-include("vector_field.jl")
-include("hamiltonian.jl")
-include("optimal_control_problem.jl")
-include("function.jl")
-#
-include("concatenation.jl")
+include("constructor.jl")
+include("systems/hamiltonian.jl")
+include("flows/hamiltonian.jl")
+# include("utils.jl")
+# #
+# include("vector_field.jl")
+# include("hamiltonian.jl")
+# include("optimal_control_problem.jl")
+# include("function.jl")
+# #
+# include("concatenation.jl")
 
 #
-export isnonautonomous
-export VectorField
+# export isnonautonomous
+# export VectorField
 export Hamiltonian
 export HamiltonianLift
-export HamiltonianVectorField
+# export HamiltonianVectorField
 export Flow
-export plot, plot!
-export *
+# export plot, plot!
+# export *
 
 end
