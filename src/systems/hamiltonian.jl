@@ -1,7 +1,7 @@
 """
 Hamiltonian system: the constructor builds the rhs.
 """
-struct HamiltonianSystem <: AbstractSystem
+struct HamiltonianSystem <: AbstractSystem{Tuple{State, Costate}, Variable}
     H::AbstractHamiltonian
     rhs!::Function    # OrdinaryDiffEq rhs
     function HamiltonianSystem(H::AbstractHamiltonian)
@@ -18,23 +18,18 @@ end
 
 #
 System(H::AbstractHamiltonian) = HamiltonianSystem(H)
+
 function is_variable(H::AbstractHamiltonian{time_dependence, variable_dependence}) where{time_dependence, variable_dependence}
     return variable_dependence==NonFixed
 end
 
 #
 is_hamiltonian(Σ::HamiltonianSystem) = true;
-
-state_type(Σ::HamiltonianSystem) = Tuple{State, Costate}
-
-variable_type(Σ::HamiltonianSystem) = Variable
-
-default_variable(Σ::HamiltonianSystem) = __variable
-
 is_variable(Σ::HamiltonianSystem) = is_variable(Σ.H)
+#default_variable(Σ::HamiltonianSystem) = __variable
 
 function convert_state_function(Σ::HamiltonianSystem) 
-    convert((x, p)::Tuple{State,Costate}) = [x; p]
+    convert(x::State, p::Costate) = [x; p]
     return convert
 end
 
@@ -51,9 +46,7 @@ end
 function convert_ode_u_function(Σ::HamiltonianSystem)
     function convert(u)
         n = size(u, 1) ÷ 2
-        return (u[rg(1,n)], u[rg(n+1,2n)])
+        return u[rg(1,n)], u[rg(n+1,2n)]
     end 
     return convert
 end
-
-rhs(Σ::HamiltonianSystem) = Σ.rhs!

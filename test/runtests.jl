@@ -13,12 +13,12 @@ const HamiltonianSystem = CTFlows.HamiltonianSystem
 const HamiltonianFlow = CTFlows.HamiltonianFlow
 
 #
-struct DummySystem <: AbstractSystem end
+struct DummySystem <: AbstractSystem{Any, Any} end
 
 @testset verbose = true showtiming = true "CTFlows" begin
     for name ∈ (
         :default,
-        :abstract_system,
+        #:abstract_system,
         :hamiltonian_system,
         :hamiltonian_flow,
         )

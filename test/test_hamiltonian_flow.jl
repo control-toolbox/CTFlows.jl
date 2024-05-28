@@ -1,5 +1,8 @@
 function test_hamiltonian_flow()
 
+    # g = CTFlows.myfun()
+    # println(g(1))
+
     # file flows/hamiltonian.jl
     @testset "HamiltonianFlow" begin
         f(x; rhs) = rhs(x)
@@ -23,7 +26,7 @@ function test_hamiltonian_flow()
         Σ = System(H)
 
         #
-        HF = CTFlows.construct_flow(Σ, f!)
+        HF = CTFlows._construct_flow(Σ, f!)
         @test HF isa HamiltonianFlow
 
         #
@@ -39,18 +42,18 @@ function test_hamiltonian_flow()
         v  = __variable()
 
         #
-        HF(dz, convert_state((x0, p0)), convert_variable(v), t0)
+        HF(dz, convert_state(x0, p0), convert_variable(v), t0)
         @test dz ≈ [x0[2], p0[2], 0, -p0[1]] atol=1e-12
 
     end
 
-    @testset "From _Flow" begin
+    @testset "From Flow of System" begin
 
         #
         H = (x, p) -> p[1] * x[2] + p[2] * p[2] - 0.5 * p[2]^2    
         H = Hamiltonian(H)
         Σ = System(H)
-        z = CTFlows._Flow(Σ)
+        z = CTFlows.Flow(Σ)
 
         #
         t0 = 0.0
@@ -58,14 +61,14 @@ function test_hamiltonian_flow()
         x0 = [-1.0, 0.0]
         p0 = [12.0, 6.0]
 
-        xf, pf = z(t0, (x0, p0), tf)
+        xf, pf = z(t0, x0, p0, tf)
         @test xf ≈ [0.0, 0.0] atol = 1e-5
         @test pf ≈ [12.0, -6.0] atol = 1e-5   
 
     end
 
 
-    @testset "From Flow" begin
+    @testset "From Flow of a Hamiltonian" begin
 
         #
         H = (x, p) -> p[1] * x[2] + p[2] * p[2] - 0.5 * p[2]^2    
@@ -78,7 +81,7 @@ function test_hamiltonian_flow()
         x0 = [-1.0, 0.0]
         p0 = [12.0, 6.0]
 
-        xf, pf = z(t0, (x0, p0), tf)
+        xf, pf = z(t0, x0, p0, tf)
         @test xf ≈ [0.0, 0.0] atol = 1e-5
         @test pf ≈ [12.0, -6.0] atol = 1e-5   
 
