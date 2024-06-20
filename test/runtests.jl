@@ -6,11 +6,20 @@ using OrdinaryDiffEq
 using LinearAlgebra
 
 #
-const AbstractSystem = CTFlows.AbstractSystem
-const AbstractFlow = CTFlows.AbstractFlow
+const GeneralVectorField = CTFlows.GeneralVectorField
+#
 const System = CTFlows.System
+const AbstractSystem = CTFlows.AbstractSystem
+const AbstractHamiltonianSystem = CTFlows.AbstractHamiltonianSystem
 const HamiltonianSystem = CTFlows.HamiltonianSystem
+const HamiltonianVectorFieldSystem = CTFlows.HamiltonianVectorFieldSystem
+const VectorFieldSystem = CTFlows.VectorFieldSystem
+const GeneralVectorFieldSystem = CTFlows.GeneralVectorFieldSystem
+#
+const AbstractFlow = CTFlows.AbstractFlow
 const HamiltonianFlow = CTFlows.HamiltonianFlow
+const VectorFieldFlow = CTFlows.VectorFieldFlow
+
 
 #
 struct DummySystem <: AbstractSystem{Any, Any} end
@@ -21,6 +30,8 @@ struct DummySystem <: AbstractSystem{Any, Any} end
         #:abstract_system,
         :hamiltonian_system,
         :hamiltonian_flow,
+        :vector_field_system,
+        :vector_field_flow,
         )
         @testset "$(name)" begin
             test_name = Symbol(:test_, name)
