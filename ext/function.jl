@@ -1,24 +1,7 @@
-# ---------------------------------------------------------------------------------------------------
-struct ODEFlow <: AbstractFlow{Any, Any}
-    f::Function     # f(args..., rhs): compute the flow
-    rhs::Function   # OrdinaryDiffEq rhs
-    tstops::Times   # stopping times
-    jumps::Vector{Tuple{Time, Any}} # specific jumps the integrator must perform
-    function ODEFlow(f, rhs!, 
-        tstops::Times=Vector{Time}(),
-        jumps::Vector{Tuple{Time, Any}}=Vector{Tuple{Time, Any}}())
-        return new(f, rhs!, tstops, jumps)
-    end
-end
-
-(F::ODEFlow)(args...; kwargs...) = begin
-    F.f(args...; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs, kwargs...)
-end
-
 """
 $(TYPEDSIGNATURES)
 
-Returns a function that solves any ODE problem with OrdinaryDiffEq.
+Returns a function that solves any ODE problem with DifferentialEquations.
 """
 function ode_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
 
@@ -27,13 +10,13 @@ function ode_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
         jumps, _t_stops_interne, DiffEqRHS, tstops=__tstops(), callback=__callback(), kwargs...)
 
         # ode
-        ode = isnothing(v) ? OrdinaryDiffEq.ODEProblem(DiffEqRHS, x0, tspan) : OrdinaryDiffEq.ODEProblem(DiffEqRHS, x0, tspan, v)
+        ode = isnothing(v) ? DifferentialEquations.ODEProblem(DiffEqRHS, x0, tspan) : DifferentialEquations.ODEProblem(DiffEqRHS, x0, tspan, v)
 
         # jumps and callbacks
         cb, t_stops_all = __callbacks(callback, jumps, nothing, _t_stops_interne, tstops)
 
         # solve
-        sol = OrdinaryDiffEq.solve(ode,
+        sol = DifferentialEquations.solve(ode,
             alg=alg, abstol=abstol, reltol=reltol, saveat=saveat, tstops=t_stops_all, callback=cb; 
             kwargs_Flow..., kwargs...)
 
