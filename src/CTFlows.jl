@@ -1,49 +1,50 @@
 module CTFlows
 
-#
-import Base: *, isempty, Base
-using CTBase
-using DocStringExtensions
-using OrdinaryDiffEq
-using Plots: plot, Plots
-using MLStyle
+    #
+    using CTBase
+    using DocStringExtensions
+    using MLStyle
+    #
+    import Base: *
 
-#
-#Base.isempty(p::OrdinaryDiffEq.SciMLBase.NullParameters) = true
+    # to be placed in CTBase
+    include("exceptions.jl")
 
-# --------------------------------------------------------------------------------------------------
-# Aliases for types
-const CoTangent  = ctVector
-const DCoTangent = ctVector
+    # --------------------------------------------------------------------------------------------------
+    # Aliases for types
+    const CoTangent  = ctVector
+    const DCoTangent = ctVector
 
-#
-const ctgradient = CTBase.ctgradient
+    # --------------------------------------------------------------------------------------------------
+    rg(i::Integer, j::Integer) = i==j ? i : i:j
+    abstract type AbstractFlow{D, U} end
 
-# --------------------------------------------------------------------------------------------------
-rg(i::Integer, j::Integer) = i==j ? i : i:j
+    #
+    include("types.jl")
 
-abstract type AbstractFlow{D, U} end
+    # to be extended
+    Flow(args...; kwargs...) = throw(ExtensionError("Please make: julia> using DifferentialEquations"))
+    default_algorithm = nothing
+    function set_default_algorithm(alg)
+        global default_algorithm = alg
+        nothing
+    end
+    #CTFlows.plot(sol::OptimalControlFlowSolution, args...; kwargs...) = throw(ExtensionError("Please make: julia> using Plots"))
+    #CTFlows.plot!(p, sol::OptimalControlFlowSolution, args...; kwargs...) = throw(ExtensionError("Please make: julia> using Plots"))
 
-# --------------------------------------------------------------------------------------------
-#
-include("default.jl")
-include("utils.jl")
-#
-include("vector_field.jl")
-include("hamiltonian.jl")
-include("optimal_control_problem.jl")
-include("function.jl")
-#
-include("concatenation.jl")
+    #
+    include("default.jl")
+    include("concatenation.jl")
+    include("optimal_control_problem_utils.jl")
 
-#
-export isnonautonomous
-export VectorField
-export Hamiltonian
-export HamiltonianLift
-export HamiltonianVectorField
-export Flow
-export plot, plot!
-export *
+    #
+    export isnonautonomous
+    export VectorField
+    export Hamiltonian
+    export HamiltonianLift
+    export HamiltonianVectorField
+    #export plot, plot!
+    export Flow
+    export *
 
 end

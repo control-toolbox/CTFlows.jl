@@ -1,22 +1,3 @@
-# ---------------------------------------------------------------------------------------------------
-# This is the flow returned by the function Flow
-# The call to the flow is given after.
-struct HamiltonianFlow <: AbstractFlow{DCoTangent, CoTangent}
-    f::Function      # f(args..., rhs): compute the flow
-    rhs!::Function   # OrdinaryDiffEq rhs
-    tstops::Times    # stopping times
-    jumps::Vector{Tuple{Time, Costate}} # specific jumps the integrator must perform
-    function HamiltonianFlow(f, rhs!, 
-        tstops::Times=Vector{Time}(), 
-        jumps::Vector{Tuple{Time, Costate}}=Vector{Tuple{Time, Costate}}())
-        return new(f, rhs!, tstops, jumps)
-    end
-end
-
-# call F.f
-(F::HamiltonianFlow)(args...; kwargs...) = begin
-    F.f(args...; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs!, kwargs...)
-end
 
 """
 $(TYPEDSIGNATURES)
@@ -29,14 +10,14 @@ function hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
         jumps, _t_stops_interne, DiffEqRHS, tstops=__tstops(), callback=__callback(), kwargs...)
 
         # ode
-        ode = OrdinaryDiffEq.ODEProblem(DiffEqRHS, [x0; p0], tspan, v)
+        ode = DifferentialEquations.ODEProblem(DiffEqRHS, [x0; p0], tspan, v)
 
         # jumps and callbacks
         n = size(x0, 1)
         cb, t_stops_all = __callbacks(callback, jumps, rg(n+1, 2n), _t_stops_interne, tstops)
 
         # solve
-        sol = OrdinaryDiffEq.solve(ode, 
+        sol = DifferentialEquations.solve(ode, 
             alg=alg, abstol=abstol, reltol=reltol, saveat=saveat, tstops=t_stops_all, callback=cb; 
             kwargs_Flow..., kwargs...)
 

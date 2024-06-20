@@ -1,6 +1,6 @@
 using CTFlows
 using Plots
-using OrdinaryDiffEq
+using DifferentialEquations
 using CTBase
 
 f  = Flow(Hamiltonian((x, p) -> 0.5p^2))
