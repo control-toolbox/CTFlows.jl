@@ -1,6 +1,7 @@
 using CTBase
 using CTFlows
 using DifferentialEquations
+using Plots
 
 # Parameters
 Cd = 310
@@ -18,14 +19,14 @@ x0 = [r0, v0, m0]
 # OCP model
 ocp = Model(variable=true)
 variable!(ocp, 1)
-time!(ocp, t0, Index(1)) # if not provided, final time is free
+time!(ocp, t0=t0, indf=1) # if not provided, final time is free
 state!(ocp, 3, "x", ["r", "v", "m"]) # state dim
 control!(ocp, 1) # control dim
-constraint!(ocp, :initial, x0)
-constraint!(ocp, :control, (u, v) -> u, 0, 1)
-constraint!(ocp, :state, (x, v) -> x[1], r0, Inf, :state_con1)
-constraint!(ocp, :state, (x, v) -> x[2], 0, vmax, :state_con2)
-constraint!(ocp, :state, (x, v) -> x[3], m0, mf, :state_con3)
+constraint!(ocp, :initial, lb=x0, ub=x0)
+constraint!(ocp, :control, f=(u, v) -> u,  lb=0,  ub=1)
+constraint!(ocp, :state, f=(x, v) -> x[1], lb=r0, ub=Inf,  label=:state_con1)
+constraint!(ocp, :state, f=(x, v) -> x[2], lb=0,  ub=vmax, label=:state_con2)
+constraint!(ocp, :state, f=(x, v) -> x[3], lb=m0, ub=mf,   label=:state_con3)
 objective!(ocp, :mayer,  (x0, xf, v) -> xf[1], :max)
 function F0(x)
     r, v, m = x
