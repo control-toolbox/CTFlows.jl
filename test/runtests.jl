@@ -1,8 +1,8 @@
 using Test
 using CTFlows
 using DifferentialEquations
-using Plots
 using CTBase
+using Plots
 using LinearAlgebra
 
 @testset verbose = true showtiming = true "CTFlows" begin

@@ -11,9 +11,9 @@ function test_optimal_control_problem()
         ocp = Model()
         state!(ocp, n)   # dimension of the state
         control!(ocp, m) # dimension of the control
-        time!(ocp, [t0, tf])
-        constraint!(ocp, :initial, x0, :initial_constraint)
-        constraint!(ocp, :final, xf, :final_constraint)
+        time!(ocp, t0=t0, tf=tf)
+        constraint!(ocp, :initial, lb=x0, ub=x0, label=:initial_constraint)
+        constraint!(ocp, :final, lb=xf, ub=xf, label=:final_constraint)
         dynamics!(ocp, (x, u) -> [x[2], u])
         objective!(ocp, :lagrange, (x, u) -> 0.5u^2) # default is to minimise
         f = Flow(ocp, (x, p) -> p[2])
@@ -33,9 +33,9 @@ function test_optimal_control_problem()
         ocp = Model()
         state!(ocp, n)   # dimension of the state
         control!(ocp, m) # dimension of the control
-        time!(ocp, [t0, tf])
-        constraint!(ocp, :initial, x0)
-        constraint!(ocp, :mixed, (x,u) -> x + u, -Inf, 0)
+        time!(ocp, t0=t0, tf=tf)
+        constraint!(ocp, :initial, lb=x0, ub=x0)
+        constraint!(ocp, :mixed, f=(x,u) -> x + u, lb=-Inf, ub=0)
         dynamics!(ocp, (x, u) -> u)
         objective!(ocp, :lagrange, (x, u) -> -u)
     
@@ -102,10 +102,10 @@ function test_optimal_control_problem()
         ocp = Model()
         state!(ocp, n)   # dimension of the state
         control!(ocp, m) # dimension of the control
-        time!(ocp, [t0, tf])
-        constraint!(ocp, :initial, x0)
-        constraint!(ocp, :final,   xf)
-        constraint!(ocp, :state, Index(1), -Inf, l)
+        time!(ocp, t0=t0, tf=tf)
+        constraint!(ocp, :initial, lb=x0, ub=x0)
+        constraint!(ocp, :final,   lb=xf, ub=xf)
+        constraint!(ocp, :state, rg=Index(1), lb=-Inf, ub=l)
         A = [ 0 1
             0 0 ]
         B = [ 0
