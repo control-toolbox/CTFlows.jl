@@ -8,7 +8,7 @@ function test_flow_function()
         x0 = [-1.0, 0.0]
         p0 = [12.0, 6.0]
         zf = z(t0, [x0; p0], tf)
-        @test zf ≈ [0.0, 0.0, 12.0, -6.0] atol=1e-5 
+        Test.@test zf ≈ [0.0, 0.0, 12.0, -6.0] atol=1e-5 
     end
 
     @testset "4D non autonomous, variable" begin
@@ -19,7 +19,7 @@ function test_flow_function()
         x0 = [-1.0, 0.0]
         p0 = [12.0, 6.0]
         zf = z(t0, [x0; p0], tf, -1.0)
-        @test zf ≈ [0.0, 0.0, 12.0, -6.0] atol=1e-5
+        Test.@test zf ≈ [0.0, 0.0, 12.0, -6.0] atol=1e-5
     end
 
     @testset "1D autonomous, non variable" begin
@@ -27,7 +27,7 @@ function test_flow_function()
         z = Flow(V)
         x0 = 1.0
         xf = z(0.0, x0, 2π)
-        @test xf ≈ x0*exp(4π) atol = 1e-5
+        Test.@test xf ≈ x0*exp(4π) atol = 1e-5
     end
 
     @testset "Ricatti" begin
@@ -49,7 +49,7 @@ function test_flow_function()
         f = Flow(ricatti, autonomous=true, variable=false)
         SS = f((tf, t0), zeros(size(A)))
         #
-        @test S.u[end] ≈ SS.u[end] atol=1e-5
+        Test.@test S.u[end] ≈ SS.u[end] atol=1e-5
 
         # computing x
         dyn(t, x) = A*x + B*Rm1*B'*S(t)*x
@@ -59,7 +59,7 @@ function test_flow_function()
         f = Flow(dyn, autonomous=false, variable=false)
         xx = f((t0, tf), x0)
         #
-        @test x.u[end] ≈ xx.u[end] atol=1e-5
+        Test.@test x.u[end] ≈ xx.u[end] atol=1e-5
 
         # computing u
         u(t) = Rm1*B'*S(t)*x(t) 
@@ -72,7 +72,7 @@ function test_flow_function()
         f = Flow(ϕ, autonomous=false, variable=false)
         pp = f((tf, t0), zeros(2))
         #
-        @test p.u[end] ≈ pp.u[end] atol=1e-5
+        Test.@test p.u[end] ≈ pp.u[end] atol=1e-5
 
         # computing objective
         ψ(t) = 0.5*(x(t)[1]^2 + x(t)[2]^2 + u(t)^2)
@@ -82,7 +82,7 @@ function test_flow_function()
         f = Flow((t, _) -> ψ(t), autonomous=false, variable=false)
         oo = f((t0, tf), 0)
         #
-        @test o.u[end] ≈ oo.u[end] atol=1e-5
+        Test.@test o.u[end] ≈ oo.u[end] atol=1e-5
 
     end
 

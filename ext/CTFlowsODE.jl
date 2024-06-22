@@ -2,7 +2,7 @@ module CTFlowsODE
 
     using CTBase
     using CTFlows
-    using DifferentialEquations
+    using OrdinaryDiffEq
     using DocStringExtensions
     using MLStyle
     #

@@ -10,14 +10,14 @@ function hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
         jumps, _t_stops_interne, DiffEqRHS, tstops=__tstops(), callback=__callback(), kwargs...)
 
         # ode
-        ode = DifferentialEquations.ODEProblem(DiffEqRHS, [x0; p0], tspan, v)
+        ode = OrdinaryDiffEq.ODEProblem(DiffEqRHS, [x0; p0], tspan, v)
 
         # jumps and callbacks
         n = size(x0, 1)
         cb, t_stops_all = __callbacks(callback, jumps, rg(n+1, 2n), _t_stops_interne, tstops)
 
         # solve
-        sol = DifferentialEquations.solve(ode, 
+        sol = OrdinaryDiffEq.solve(ode, 
             alg=alg, abstol=abstol, reltol=reltol, saveat=saveat, tstops=t_stops_all, callback=cb; 
             kwargs_Flow..., kwargs...)
 
