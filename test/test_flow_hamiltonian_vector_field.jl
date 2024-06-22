@@ -8,8 +8,8 @@ function test_flow_hamiltonian_vector_field()
         x0 = [-1.0, 0.0]
         p0 = [12.0, 6.0]
         xf, pf = z(t0, x0, p0, tf)
-        @test xf ≈ [0.0, 0.0] atol = 1e-5
-        @test pf ≈ [12.0, -6.0] atol = 1e-5        
+        Test.@test xf ≈ [0.0, 0.0] atol = 1e-5
+        Test.@test pf ≈ [12.0, -6.0] atol = 1e-5        
     end
 
     @testset "2D non autonomous, variable" begin
@@ -20,8 +20,8 @@ function test_flow_hamiltonian_vector_field()
         x0 = [-1.0, 0.0]
         p0 = [12.0, 6.0]
         xf, pf = z(t0, x0, p0, tf, -1.0)
-        @test xf ≈ [0.0, 0.0] atol = 1e-5
-        @test pf ≈ [12.0, -6.0] atol = 1e-5       
+        Test.@test xf ≈ [0.0, 0.0] atol = 1e-5
+        Test.@test pf ≈ [12.0, -6.0] atol = 1e-5       
     end
 
     @testset "1D autonomous, non variable" begin
@@ -30,8 +30,8 @@ function test_flow_hamiltonian_vector_field()
         x0 = 1.0
         p0 = 0.0
         xf, pf = z(0.0, x0, p0, 2π)
-        @test xf ≈ x0 atol = 1e-5
-        @test pf ≈ p0 atol = 1e-5 
+        Test.@test xf ≈ x0 atol = 1e-5
+        Test.@test pf ≈ p0 atol = 1e-5 
     end
 
 end

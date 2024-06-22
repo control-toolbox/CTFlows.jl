@@ -19,9 +19,9 @@ function test_optimal_control_problem()
         f = Flow(ocp, (x, p) -> p[2])
         p0 = [12, 6]
         xf_, pf = f(t0, x0, p0, tf)
-        @test xf_ ≈ xf atol=1e-6
+        Test.@test xf_ ≈ xf atol=1e-6
         sol = f((t0, tf), x0, p0)
-        @test plot(sol) isa Plots.Plot
+        Test.@test plot(sol) isa Plots.Plot
     end
 
     @testset "Double integrator energy - x₁ ≤ l" begin
@@ -51,15 +51,15 @@ function test_optimal_control_problem()
         H(x, p) = H(x, p, u(x, p), η(x, p))
         f = Flow(Hamiltonian(H))
         xf, pf = f(t0, x0, p(t0), tf)
-        @test xf ≈ x(tf) atol=1e-6
-        @test pf ≈ p(tf) atol=1e-6
+        Test.@test xf ≈ x(tf) atol=1e-6
+        Test.@test pf ≈ p(tf) atol=1e-6
 
         # ocp flow
         g(x, u) = x+u
         f = Flow(ocp, u, g, η)
         xf, pf = f(t0, x0, p(t0), tf)
-        @test xf ≈ x(tf) atol=1e-6
-        @test pf ≈ p(tf) atol=1e-6
+        Test.@test xf ≈ x(tf) atol=1e-6
+        Test.@test pf ≈ p(tf) atol=1e-6
 
         # ocp flow with u a ControlLaw, g a MixedConstraint and η a Multiplier
         u = ControlLaw((x, p) -> -x)
@@ -67,8 +67,8 @@ function test_optimal_control_problem()
         η = Multiplier((x, p) -> -(p+1))
         f = Flow(ocp, u, g, η)
         xf, pf = f(t0, x0, p(t0), tf)
-        @test xf ≈ x(tf) atol=1e-6
-        @test pf ≈ p(tf) atol=1e-6
+        Test.@test xf ≈ x(tf) atol=1e-6
+        Test.@test pf ≈ p(tf) atol=1e-6
 
         # ocp flow with u a FeedbackControl, g a MixedConstraint and η a Function
         u = FeedbackControl(x -> -x)
@@ -76,8 +76,8 @@ function test_optimal_control_problem()
         η = (x, p) -> -(p+1)
         f = Flow(ocp, u, g, η)
         xf, pf = f(t0, x0, p(t0), tf)
-        @test xf ≈ x(tf) atol=1e-6
-        @test pf ≈ p(tf) atol=1e-6
+        Test.@test xf ≈ x(tf) atol=1e-6
+        Test.@test pf ≈ p(tf) atol=1e-6
 
         # ocp flow with u a FeedbackControl, g a Function and η a Multiplier
         u = FeedbackControl(x -> -x)
@@ -85,8 +85,8 @@ function test_optimal_control_problem()
         η = Multiplier((x, p) -> -(p+1))
         f = Flow(ocp, u, g, η)
         xf, pf = f(t0, x0, p(t0), tf)
-        @test xf ≈ x(tf) atol=1e-6
-        @test pf ≈ p(tf) atol=1e-6
+        Test.@test xf ≈ x(tf) atol=1e-6
+        Test.@test pf ≈ p(tf) atol=1e-6
 
     end
 
@@ -139,8 +139,8 @@ function test_optimal_control_problem()
         ν2 = 18
         f = fs * (t1, ν1*[1, 0], fc) * (t2, ν2*[1, 0], fs)
         xf, pf = f(t0, x0, p0, tf)
-        @test xf ≈ x(tf) atol=1e-6
-        @test pf ≈ p(tf) atol=1e-6
+        Test.@test xf ≈ x(tf) atol=1e-6
+        Test.@test pf ≈ p(tf) atol=1e-6
 
     end
 

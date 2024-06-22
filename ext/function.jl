@@ -1,7 +1,7 @@
 """
 $(TYPEDSIGNATURES)
 
-Returns a function that solves any ODE problem with DifferentialEquations.
+Returns a function that solves any ODE problem with OrdinaryDiffEq.
 """
 function ode_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
 
@@ -10,13 +10,13 @@ function ode_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
         jumps, _t_stops_interne, DiffEqRHS, tstops=__tstops(), callback=__callback(), kwargs...)
 
         # ode
-        ode = isnothing(v) ? DifferentialEquations.ODEProblem(DiffEqRHS, x0, tspan) : DifferentialEquations.ODEProblem(DiffEqRHS, x0, tspan, v)
+        ode = isnothing(v) ? OrdinaryDiffEq.ODEProblem(DiffEqRHS, x0, tspan) : OrdinaryDiffEq.ODEProblem(DiffEqRHS, x0, tspan, v)
 
         # jumps and callbacks
         cb, t_stops_all = __callbacks(callback, jumps, nothing, _t_stops_interne, tstops)
 
         # solve
-        sol = DifferentialEquations.solve(ode,
+        sol = OrdinaryDiffEq.solve(ode,
             alg=alg, abstol=abstol, reltol=reltol, saveat=saveat, tstops=t_stops_all, callback=cb; 
             kwargs_Flow..., kwargs...)
 
