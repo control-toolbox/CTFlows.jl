@@ -12,7 +12,7 @@ module CTFlowsODE
     # Aliases
     const CoTangent  = ctVector
     const DCoTangent = ctVector
-    const ctgradient = CTBase.ctgradient
+    const ctgradient = CTBase.__ctgradient
     
     # from CTFlows
     const __variable           = CTFlows.__variable
