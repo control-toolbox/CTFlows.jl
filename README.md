@@ -7,10 +7,10 @@
 [co-url]: https://codecov.io/gh/control-toolbox/CTFlows.jl
 
 [doc-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
-[doc-dev-url]: http://control-toolbox.github.io/CTFlows.jl/dev
+[doc-dev-url]: https://control-toolbox.org/docs/ctflows/dev/
 
 [doc-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
-[doc-stable-url]: http://control-toolbox.github.io/CTFlows.jl/stable
+[doc-stable-url]: https://control-toolbox.org/docs/ctflows/stable/
 
 [down-img]: https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/CTFlows
 [down-url]: https://pkgs.genieframework.com?packages=CTFlows
