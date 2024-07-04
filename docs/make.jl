@@ -1,4 +1,5 @@
 using Documenter
+using DocumenterMermaid
 using CTFlows
 
 makedocs(
