@@ -23,7 +23,7 @@ module CTFlows
     include("types.jl")
 
     # to be extended
-    Flow(args...; kwargs...) = throw(ExtensionError("Please make: julia> using DifferentialEquations"))
+    Flow(args...; kwargs...) = throw(ExtensionError("Please make: julia> using OrdinaryDiffEq"))
     default_algorithm = nothing
     function set_default_algorithm(alg)
         global default_algorithm = alg
