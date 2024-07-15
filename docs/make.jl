@@ -12,10 +12,10 @@ makedocs(
         ],
     ),
     pages = [
-        "Introduction" => "index.md",
-        "API" => "api.md",
-        "Developers" => "dev-api.md",
-    ]
+        "Introduction"  => "index.md",
+        "API"           => "api.md",
+        "Developers"    => "dev.md",
+    ],
 )
 
 deploydocs(
