@@ -14,12 +14,9 @@ jobs:
     strategy:
       matrix:
         version:
-          #- '1.9'
           - '1.10'
         os:
           - ubuntu-latest
-          - macOS-latest
-          ##- windows-latest
         arch:
           - x64
     steps:
@@ -28,8 +25,4 @@ jobs:
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: julia-actions/add-julia-registry@v2
-        with:
-          key: ${{ secrets.SSH_KEY }}
-          registry: control-toolbox/ct-registry
       - uses: julia-actions/julia-runtest@latest
