@@ -29,8 +29,6 @@ module CTFlows
         global default_algorithm = alg
         nothing
     end
-    #CTFlows.plot(sol::OptimalControlFlowSolution, args...; kwargs...) = throw(ExtensionError("Please make: julia> using Plots"))
-    #CTFlows.plot!(p, sol::OptimalControlFlowSolution, args...; kwargs...) = throw(ExtensionError("Please make: julia> using Plots"))
 
     #
     include("default.jl")
@@ -43,7 +41,6 @@ module CTFlows
     export Hamiltonian
     export HamiltonianLift
     export HamiltonianVectorField
-    #export plot, plot!
     export Flow
     export *
 
