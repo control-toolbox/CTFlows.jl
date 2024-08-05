@@ -125,7 +125,7 @@ end
 end
 
 # call F.f and then, construct an optimal control solution
-function (F::OptimalControlFlow)(tspan::Tuple{Time,Time}, x0::State, p0::Costate, v::Variable=__variable(); kwargs...) 
+function (F::OptimalControlFlow)(tspan::Tuple{Time,Time}, x0::State, p0::Costate, v::Variable=__variable(x0, p0); kwargs...) 
     ode_sol  = F.f(tspan, x0, p0, v; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs!, kwargs...)
     flow_sol = OptimalControlFlowSolution(ode_sol, F.feedback_control, F.ocp, v)
     return CTFlows.OptimalControlSolution(flow_sol)

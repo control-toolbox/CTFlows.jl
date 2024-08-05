@@ -6,7 +6,7 @@ Returns a function that solves ODE problem associated to Hamiltonian vector fiel
 """
 function hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
 
-    function f(tspan::Tuple{Time,Time}, x0::State, p0::Costate, v::Variable=__variable(); 
+    function f(tspan::Tuple{Time,Time}, x0::State, p0::Costate, v::Variable=__variable(x0, p0); 
         jumps, _t_stops_interne, DiffEqRHS, tstops=__tstops(), callback=__callback(), kwargs...)
 
         # ode
@@ -24,7 +24,7 @@ function hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
         return sol
     end
 
-    function f(t0::Time, x0::State, p0::Costate, tf::Time, v::Variable=__variable(); kwargs...)
+    function f(t0::Time, x0::State, p0::Costate, tf::Time, v::Variable=__variable(x0, p0); kwargs...)
         sol = f((t0, tf), x0, p0, v; kwargs...)
         n = size(x0, 1)
         return sol[rg(1,n), end], sol[rg(n+1,2n), end]

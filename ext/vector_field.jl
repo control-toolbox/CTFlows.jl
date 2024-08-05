@@ -6,7 +6,7 @@ Returns a function that solves ODE problem associated to classical vector field.
 function vector_field_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
 
     # kwargs has priority wrt kwargs_flow
-    function f(tspan::Tuple{Time,Time}, x0::State, v::Variable=__variable(); 
+    function f(tspan::Tuple{Time,Time}, x0::State, v::Variable=__variable(x0); 
         jumps, _t_stops_interne, DiffEqRHS, tstops=__tstops(), callback=__callback(), kwargs...)
 
         # ode
@@ -24,7 +24,7 @@ function vector_field_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
 
     end
 
-    function f(t0::Time, x0::State, t::Time, v::Variable=__variable(); kwargs...)
+    function f(t0::Time, x0::State, t::Time, v::Variable=__variable(x0); kwargs...)
         sol = f((t0, t), x0, v; kwargs...)
         return sol.u[end]
     end
