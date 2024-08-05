@@ -124,9 +124,9 @@ end
     F.f(args...; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs!, kwargs...)
 end
 
-# call F.f and then, construct a solution which contains all the need information for plotting
-# it is a Hamiltonian usage
+# call F.f and then, construct an optimal control solution
 function (F::OptimalControlFlow)(tspan::Tuple{Time,Time}, x0::State, p0::Costate, v::Variable=__variable(); kwargs...) 
-    ode_sol = F.f(tspan, x0, p0, v; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs!, kwargs...)
-    return OptimalControlFlowSolution(ode_sol, F.feedback_control, F.ocp, v)
+    ode_sol  = F.f(tspan, x0, p0, v; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs!, kwargs...)
+    flow_sol = OptimalControlFlowSolution(ode_sol, F.feedback_control, F.ocp, v)
+    return CTFlows.OptimalControlSolution(flow_sol)
 end
