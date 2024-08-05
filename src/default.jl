@@ -1,7 +1,16 @@
 # --------------------------------------------------------------------------------------------
 # Default options for flows
 # --------------------------------------------------------------------------------------------
-__variable() = Real[]
+function __variable(x0, p0) 
+    z0 = [x0; p0]
+    T  = eltype(z0)
+    return Vector{T}()
+end
+
+function __variable(x0) 
+    T  = eltype(x0)
+    return Vector{T}()
+end
 
 """
 $(TYPEDSIGNATURES)
