@@ -165,8 +165,8 @@ function test_optimal_control_problem()
         F = Flow(ocp, u)
 
         # solution
-        tf = (1/2)^(1/4)
-        p0 = 2tf
+        tf = (3/2)^(1/4)
+        p0 = 2tf/3
 
         # tf is provided twice
         xf_, pf_ = F(t0, x0, p0, tf, tf)
@@ -199,8 +199,8 @@ function test_optimal_control_problem()
         F = Flow(ocp, u)
 
         # solution
-        tf = (1/2)^(1/4)
-        p0 = -2tf
+        tf = (3/2)^(1/4)
+        p0 = -2tf/3
 
         # tf is provided twice: it plays the role of the initial time
         x0_, pf_ = F(tf, xf, p0, t0, tf)
@@ -234,8 +234,8 @@ function test_optimal_control_problem()
 
         # solution
         t0 = 0
-        tf = (1/2)^(1/4)
-        p0 = 2tf
+        tf = (3/2)^(1/4)
+        p0 = 2tf/3
 
         # t0, tf are provided twice
         xf_, pf_ = F(t0, x0, p0, tf, [t0, tf])
