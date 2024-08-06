@@ -1,3 +1,8 @@
+
+#
+variable_dimension(ocp::OptimalControlModel) = ocp.variable_dimension
+
+
 #
 """
 $(TYPEDEF)
