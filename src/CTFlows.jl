@@ -8,7 +8,7 @@ module CTFlows
     import Base: *
 
     # to be placed in CTBase
-    include("exceptions.jl")
+    include("ctbase.jl")
 
     # --------------------------------------------------------------------------------------------------
     # Aliases for types

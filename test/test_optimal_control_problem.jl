@@ -144,4 +144,107 @@ function test_optimal_control_problem()
 
     end
 
+    @testset "tf variable" begin
+
+        t0 = 0
+        x0 = 0
+        xf = 1
+
+        @def ocp begin
+            tf ∈ R, variable
+            t ∈ [t0, tf], time
+            x ∈ R, state
+            u ∈ R, control
+            ẋ(t) == tf * u(t)
+            x(t0) == x0
+            x(tf) == xf
+            tf + 0.5∫(u(t)^2) → min
+        end
+
+        u = (x, p, tf) -> tf*p
+        F = Flow(ocp, u)
+
+        # solution
+        tf = (1/2)^(1/4)
+        p0 = 2tf
+
+        # tf is provided twice
+        xf_, pf_ = F(t0, x0, p0, tf, tf)
+        Test.@test xf ≈ xf_ atol=1e-6
+
+        # tf is provided once
+        xf_, pf_ = F(t0, x0, p0, tf)
+        Test.@test xf ≈ xf_ atol=1e-6
+
+    end
+
+    @testset "t0 variable" begin
+
+        t0 = 0
+        x0 = 0
+        xf = 1
+
+        @def ocp begin
+            tf ∈ R, variable
+            s ∈ [tf, t0], time
+            x ∈ R, state
+            u ∈ R, control
+            ẋ(s) == - tf * u(s)
+            x(tf) == xf
+            x(t0) == x0
+            tf - 0.5∫(u(s)^2) → min
+        end
+
+        u = (x, p, tf) -> tf*p
+        F = Flow(ocp, u)
+
+        # solution
+        tf = (1/2)^(1/4)
+        p0 = -2tf
+
+        # tf is provided twice: it plays the role of the initial time
+        x0_, pf_ = F(tf, xf, p0, t0, tf)
+        Test.@test x0 ≈ x0_ atol=1e-6
+
+        # tf is provided once
+        x0_, pf_ = F(tf, xf, p0, t0)
+        Test.@test x0 ≈ x0_ atol=1e-6
+
+    end
+
+
+    @testset "t0 and tf variable" begin
+
+        x0 = 0
+        xf = 1
+
+        @def ocp begin
+            v = (t0, tf) ∈ R^2, variable
+            t ∈ [t0, tf], time
+            x ∈ R, state
+            u ∈ R, control
+            ẋ(t) == tf * u(t) + t0
+            x(t0) == x0
+            x(tf) == xf
+            (t0^2 + tf) + 0.5∫(u(t)^2) → min
+        end
+
+        u = (x, p, v) -> v[2]*p
+        F = Flow(ocp, u)
+
+        # solution
+        t0 = 0
+        tf = (1/2)^(1/4)
+        p0 = 2tf
+
+        # t0, tf are provided twice
+        xf_, pf_ = F(t0, x0, p0, tf, [t0, tf])
+        Test.@test xf ≈ xf_ atol=1e-6
+
+        # t0, tf are provided once
+        xf_, pf_ = F(t0, x0, p0, tf)
+        Test.@test xf ≈ xf_ atol=1e-6
+
+    end
+
 end

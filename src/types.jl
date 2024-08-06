@@ -120,12 +120,21 @@ struct OptimalControlFlow <: AbstractFlow{DCoTangent, CoTangent}
 end
 
 # call F.f
-(F::OptimalControlFlow)(args...; kwargs...) = begin
-    F.f(args...; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs!, kwargs...)
+function (F::OptimalControlFlow)(
+    t0::Time, 
+    x0::State, 
+    p0::Costate, 
+    tf::Time, 
+    v::Variable=__variable(t0, x0, p0, tf, F.ocp); kwargs...)
+    F.f(t0, x0, p0, tf, v; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs!, kwargs...)
 end
 
 # call F.f and then, construct an optimal control solution
-function (F::OptimalControlFlow)(tspan::Tuple{Time,Time}, x0::State, p0::Costate, v::Variable=__variable(x0, p0); kwargs...) 
+function (F::OptimalControlFlow)(
+    tspan::Tuple{Time,Time}, 
+    x0::State, 
+    p0::Costate, 
+    v::Variable=__variable(tspan[1], x0, p0, tspan[2], F.ocp); kwargs...) 
     ode_sol  = F.f(tspan, x0, p0, v; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs!, kwargs...)
     flow_sol = OptimalControlFlowSolution(ode_sol, F.feedback_control, F.ocp, v)
     return CTFlows.OptimalControlSolution(flow_sol)

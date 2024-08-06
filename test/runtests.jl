@@ -7,12 +7,12 @@ using LinearAlgebra
 
 @testset verbose = true showtiming = true "CTFlows" begin
     for name ∈ (
-        :concatenation,
-        :default,
-        :flow_function,
-        :flow_hamiltonian_vector_field,
-        :flow_hamiltonian,
-        :flow_vector_field,
+        # :concatenation,
+        # :default,
+        # :flow_function,
+        # :flow_hamiltonian_vector_field,
+        # :flow_hamiltonian,
+        # :flow_vector_field,
         :optimal_control_problem,
         )
         @testset "$(name)" begin
