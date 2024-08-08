@@ -67,7 +67,7 @@ function concatenate(F::TF, g::Tuple{ctNumber, TF})::TF where {TF<:OptimalContro
     tstops     = __concat_tstops(F, G, t_switch)            # times to break integration
     feedback_u = __concat_feedback_control(F, G, t_switch)  # concatenation of the feedback control
     jumps      = __concat_jumps(F, G) # jumps
-    return TF(F.f, rhs!, feedback_u, F.ocp, tstops, jumps) # we choose default values and options of F
+    return OptimalControlFlow(F.f, rhs!, feedback_u, F.ocp, F.kwargs_Flow, tstops, jumps) # we choose default values and options of F
 
 end
 
@@ -78,7 +78,7 @@ function concatenate(F::TF, g::Tuple{ctNumber, Any, TF})::TF where {TF<:OptimalC
     tstops     = __concat_tstops(F, G, t_switch)            # times to break integration
     feedback_u = __concat_feedback_control(F, G, t_switch)  # concatenation of the feedback control
     jumps      = __concat_jumps(F, G, (t_switch, η_switch)) # jumps
-    return TF(F.f, rhs!, feedback_u, F.ocp, tstops, jumps)  # we choose default values and options of F
+    return OptimalControlFlow(F.f, rhs!, feedback_u, F.ocp, F.kwargs_Flow, tstops, jumps)  # we choose default values and options of F
 
 end
 

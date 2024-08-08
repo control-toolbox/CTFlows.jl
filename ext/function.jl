@@ -33,7 +33,7 @@ function ode_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
 end
 
 # --------------------------------------------------------------------------------------------
-function Flow(dyn::Function; autonomous=true, variable=false,
+function CTFlows.Flow(dyn::Function; autonomous=true, variable=false,
     alg=__alg(), abstol=__abstol(), reltol=__reltol(), saveat=__saveat(), kwargs_Flow...)
     #
     f = ode_usage(alg, abstol, reltol, saveat; kwargs_Flow...)

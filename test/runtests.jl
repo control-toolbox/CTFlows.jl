@@ -5,6 +5,8 @@ using CTBase
 using Plots
 using LinearAlgebra
 
+const CTFlowsODE = Base.get_extension(CTFlows, :CTFlowsODE)
+
 @testset verbose = true showtiming = true "CTFlows" begin
     for name ∈ (
         :concatenation,

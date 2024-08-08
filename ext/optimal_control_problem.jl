@@ -14,7 +14,7 @@ julia> f = Flow(ocp, (x, p) -> p)
     The time dependence of the control function must be consistent with the time dependence of the optimal control problem.
     The dimension of the output of the control function must be consistent with the dimension usage of the control of the optimal control problem.
 """
-function Flow(ocp::OptimalControlModel{T, V}, u_::Union{Function, ControlLaw{T, V}}; alg=__alg(), abstol=__abstol(), 
+function CTFlows.Flow(ocp::OptimalControlModel{T, V}, u_::Union{Function, ControlLaw{T, V}}; alg=__alg(), abstol=__abstol(), 
     reltol=__reltol(), saveat=__saveat(), kwargs_Flow...) where {T, V}
     #
     h, u = __create_hamiltonian(ocp, u_) # construction of the Hamiltonian
@@ -39,7 +39,7 @@ julia> f = Flow(ocp, (t, x, p) -> p[1], (t, x, u) -> x[1] - 1, (t, x, p) -> x[1]
     The time dependence of the control function must be consistent with the time dependence of the optimal control problem.
     The dimension of the output of the control function must be consistent with the dimension usage of the control of the optimal control problem.
 """
-function Flow(ocp::OptimalControlModel{T, V}, 
+function CTFlows.Flow(ocp::OptimalControlModel{T, V}, 
     u_::Union{Function, ControlLaw{T, V}, FeedbackControl{T, V}}, 
     g_::Union{Function, MixedConstraint{T, V}, StateConstraint{T, V}},
     μ_::Union{Function, Multiplier{T, V}}; 
@@ -55,5 +55,6 @@ function __ocp_Flow(ocp::OptimalControlModel{T, V}, h::Hamiltonian, u::ControlLa
     alg, abstol, reltol, saveat; kwargs_Flow...) where {T, V}
     rhs! = rhs(h) # right and side: same as for a flow from a Hamiltonian
     f = hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...) # flow function
-    return OptimalControlFlow(f, rhs!, u, ocp)
+    kwargs_Flow = (kwargs_Flow..., alg=alg, abstol=abstol, reltol=reltol, saveat=saveat)
+    return OptimalControlFlow(f, rhs!, u, ocp, kwargs_Flow)
 end

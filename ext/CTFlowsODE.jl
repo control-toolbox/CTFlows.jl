@@ -6,7 +6,9 @@ module CTFlowsODE
     using DocStringExtensions
     using MLStyle
     #
-    import CTFlows: Flow
+    import CTFlows: Flow, CTFlows
+    import Base: *
+    import CTBase: OptimalControlSolution, CTBase
     
     # --------------------------------------------------------------------------------------------------
     # Aliases
@@ -14,30 +16,24 @@ module CTFlowsODE
     const DCoTangent = ctVector
     const ctgradient = CTBase.__ctgradient
     
+    # types
+    abstract type AbstractFlow{D, U} end
+
     # from CTFlows
-    const __variable           = CTFlows.__variable
-    const __abstol             = CTFlows.__abstol
-    const __reltol             = CTFlows.__reltol
-    const __saveat             = CTFlows.__saveat
-    const __alg                = CTFlows.__alg
-    const __tstops             = CTFlows.__tstops
-    const __callback           = CTFlows.__callback
     const __create_hamiltonian = CTFlows.__create_hamiltonian
-    const HamiltonianFlow      = CTFlows.HamiltonianFlow
-    const VectorFieldFlow      = CTFlows.VectorFieldFlow
-    const ODEFlow              = CTFlows.ODEFlow
-    const OptimalControlFlow   = CTFlows.OptimalControlFlow
-    const rg                   = CTFlows.rg
 
-    # default
-    CTFlows.set_default_algorithm(Tsit5())
+    #
+    rg(i::Int, j::Int) = i==j ? i : i:j
 
-    # --------------------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------------------#
+    include("default.jl")
+    include("types.jl")
     include("utils.jl")
     #
     include("vector_field.jl")
     include("hamiltonian.jl")
     include("optimal_control_problem.jl")
     include("function.jl")
+    include("concatenation.jl")
 
 end

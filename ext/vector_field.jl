@@ -35,7 +35,7 @@ end
 
 # --------------------------------------------------------------------------------------------
 # Flow of a vector field
-function Flow(vf::VectorField; alg=__alg(), abstol=__abstol(), reltol=__reltol(), saveat=__saveat(), kwargs_Flow...)
+function CTFlows.Flow(vf::VectorField; alg=__alg(), abstol=__abstol(), reltol=__reltol(), saveat=__saveat(), kwargs_Flow...)
     f = vector_field_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
     rhs = (x::State, v::Variable, t::Time) -> vf(t, x, v)
     return VectorFieldFlow(f, rhs)
