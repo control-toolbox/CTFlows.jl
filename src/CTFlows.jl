@@ -7,9 +7,6 @@ module CTFlows
     #
     import Base: *
 
-    # to be placed in CTBase
-    include("ctbase.jl")
-
     # --------------------------------------------------------------------------------------------------
     # Aliases for types
     const CoTangent  = ctVector
@@ -23,7 +20,7 @@ module CTFlows
     include("types.jl")
 
     # to be extended
-    Flow(args...; kwargs...) = throw(ExtensionError("Please make: julia> using OrdinaryDiffEq"))
+    Flow(args...; kwargs...) = throw(ExtensionError(:OrdinaryDiffEq))
     default_algorithm = nothing
     function set_default_algorithm(alg)
         global default_algorithm = alg

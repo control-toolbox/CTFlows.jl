@@ -81,19 +81,23 @@ Construct an `OptimalControlSolution` from an `OptimalControlFlowSolution`.
 
 """
 function CTFlows.OptimalControlSolution(ocfs::OptimalControlFlowSolution)
+
     n = ocfs.ocp.state_dimension
     T = ocfs.ode_sol.t
     v = ocfs.variable
     x(t) = ocfs.ode_sol(t)[rg(1,n)]
     p(t) = ocfs.ode_sol(t)[rg(n+1,2n)]
     u(t) = ocfs.feedback_control(t, x(t), p(t), v)
-    sol = CTBase.OptimalControlSolution()
-    copy!(sol, ocfs.ocp)
-    sol.times   = T
-    sol.state   = t -> x(t)
-    sol.costate = t -> p(t)
-    sol.control = t -> u(t)
-    sol.variable = v
+
+    sol = CTBase.OptimalControlSolution(
+        ocfs.ocp; 
+        times = T, 
+        state = t -> x(t),
+        costate = t -> p(t),
+        control = t -> u(t),
+        variable = v
+    )
+
     return sol
 end
 
