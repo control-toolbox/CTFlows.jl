@@ -1,13 +1,13 @@
 function test_default()
 
-    Test.@test CTFlows.__abstol() isa Real
-    Test.@test CTFlows.__abstol() > 0
-    Test.@test CTFlows.__abstol() < 1
-    Test.@test CTFlows.__reltol() isa Real
-    Test.@test CTFlows.__reltol() > 0
-    Test.@test CTFlows.__reltol() < 1
-    Test.@test CTFlows.__saveat() isa Vector
-    Test.@test isnothing(CTFlows.__alg())
-    Test.@test CTFlows.__tstops() isa Vector{<:Time}
+    Test.@test CTFlowsODE.__abstol() isa Real
+    Test.@test CTFlowsODE.__abstol() > 0
+    Test.@test CTFlowsODE.__abstol() < 1
+    Test.@test CTFlowsODE.__reltol() isa Real
+    Test.@test CTFlowsODE.__reltol() > 0
+    Test.@test CTFlowsODE.__reltol() < 1
+    Test.@test CTFlowsODE.__saveat() isa Vector
+    Test.@test CTFlowsODE.__alg() isa Tsit5
+    Test.@test CTFlowsODE.__tstops() isa Vector{<:Time}
 
 end

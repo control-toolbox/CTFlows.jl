@@ -52,7 +52,7 @@ end
 
 # --------------------------------------------------------------------------------------------
 # Flow from a Hamiltonian
-function Flow(h::AbstractHamiltonian; alg=__alg(), abstol=__abstol(), 
+function CTFlows.Flow(h::AbstractHamiltonian; alg=__alg(), abstol=__abstol(), 
     reltol=__reltol(), saveat=__saveat(), kwargs_Flow...)
     #
     f = hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
@@ -62,7 +62,7 @@ end
 
 # --------------------------------------------------------------------------------------------
 # Flow from a Hamiltonian Vector Field
-function Flow(hv::HamiltonianVectorField; alg=__alg(), abstol=__abstol(), 
+function CTFlows.Flow(hv::HamiltonianVectorField; alg=__alg(), abstol=__abstol(), 
     reltol=__reltol(), saveat=__saveat(), kwargs_Flow...)
     #
     f = hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
