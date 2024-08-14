@@ -15,8 +15,8 @@
 [release-img]: https://img.shields.io/github/v/release/control-toolbox/CTFlows.jl.svg?style=round-square
 [release-url]: https://github.com/control-toolbox/CTFlows.jl/releases
 
-The `CTFlows.jl` package is part of the [control-toolbox ecosystem](https://github.com/control-toolbox).
-The control-toolbox ecosystem gathers `Julia` packages for mathematical control and applications. The root package is [`OptimalControl.jl`](https://github.com/control-toolbox/OptimalControl.jl) which aims to provide tools to modelise and solve optimal control problems by direct and indirect methods. [![doc OptimalControl.jl](https://img.shields.io/badge/doc-OptimalControl.jl-blue)](http://control-toolbox.org/OptimalControl.jl)
+The CTFlows.jl package is part of the [control-toolbox ecosystem](https://github.com/control-toolbox).
+The control-toolbox ecosystem gathers Julia packages for mathematical control and applications. The root package is [OptimalControl.jl](https://github.com/control-toolbox/OptimalControl.jl) which aims to provide tools to modelise and solve optimal control problems by direct and indirect methods. [![doc OptimalControl.jl](https://img.shields.io/badge/doc-OptimalControl.jl-blue)](http://control-toolbox.org/OptimalControl.jl)
 
 | **Documentation**  | **Code Status**  | **Release**  |
 |:-------------------|:-----------------|:-------------|
