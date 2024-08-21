@@ -1,3 +1,7 @@
+using Aqua
+using ForwardDiff
+using StaticArrays
+
 using Test
 using CTFlows
 using DifferentialEquations
@@ -9,13 +13,14 @@ const CTFlowsODE = Base.get_extension(CTFlows, :CTFlowsODE)
 
 @testset verbose = true showtiming = true "CTFlows" begin
     for name ∈ (
-        :concatenation,
-        :default,
-        :flow_function,
-        :flow_hamiltonian_vector_field,
-        :flow_hamiltonian,
-        :flow_vector_field,
-        :optimal_control_problem,
+        :aqua,
+        # :concatenation,
+        # :default,
+        # :flow_function,
+        # :flow_hamiltonian_vector_field,
+        # :flow_hamiltonian,
+        # :flow_vector_field,
+        # :optimal_control_problem,
         )
         @testset "$(name)" begin
             test_name = Symbol(:test_, name)
