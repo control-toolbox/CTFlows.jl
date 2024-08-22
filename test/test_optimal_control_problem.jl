@@ -101,7 +101,7 @@ function test_optimal_control_problem()
         f = fp * (t1, fm)
 
         sol = f((t0, tf), x0, p0, tf)
-        Test.@test sol.objective ≈ tf atol=1e-6
+        Test.@test objective(sol) ≈ tf atol=1e-6
 
     end
 
@@ -143,11 +143,11 @@ function test_optimal_control_problem()
         x(t) = [a+b*(t-t0)+β*(t-t0)^2/2.0-α*(t-t0)^3/6.0, b+β*(t-t0)-α*(t-t0)^2/2.0]
         p(t) = [α, -α*(t-t0)+β]
         u(t) = p(t)[2]
-        objective = 0.5*(α^2*(tf-t0)^3/3+β^2*(tf-t0)-α*β*(tf-t0)^2)
+        obj = 0.5*(α^2*(tf-t0)^3/3+β^2*(tf-t0)-α*β*(tf-t0)^2)
 
         # test
         sol = f((t0, tf), x0, p0)
-        Test.@test sol.objective ≈ objective atol=1e-6
+        Test.@test objective(sol) ≈ obj atol=1e-6
 
     end
 
@@ -178,7 +178,7 @@ function test_optimal_control_problem()
         x(t) = [a+ b*t + t^2/12*(3*tf-t), b + t/4*(2*tf-t)]
         p(t) = [α, -α*t+β]
         u(t) = p(t)[2]
-        objective = -0.5*x(tf)[1] + (1/3)*(tf^3/8)
+        obj = -0.5*x(tf)[1] + (1/3)*(tf^3/8)
 
         #
         f = Flow(ocp, (x, p) -> p[2])
@@ -186,7 +186,7 @@ function test_optimal_control_problem()
         # test
         p0 = p(t0)
         sol = f((t0, tf), x0, p0)
-        Test.@test sol.objective ≈ objective atol=1e-6
+        Test.@test objective(sol) ≈ obj atol=1e-6
 
     end
 

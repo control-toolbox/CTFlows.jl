@@ -4,12 +4,12 @@ using StaticArrays
 
 using Test
 using CTFlows
-using DifferentialEquations
+using OrdinaryDiffEq
 using CTBase
 using Plots
 using LinearAlgebra
 
-const CTFlowsODE = Base.get_extension(CTFlows, :CTFlowsODE)
+const CTFlowsODE = Base.get_extension(CTFlows, :CTFlowsODE) # to test functions from CTFlowsODE not in CTFlows
 
 @testset verbose = true showtiming = true "CTFlows" begin
     for name ∈ (

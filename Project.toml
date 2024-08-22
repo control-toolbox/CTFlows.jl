@@ -1,7 +1,7 @@
 name = "CTFlows"
 uuid = "1c39547c-7794-42f7-af83-d98194f657c2"
 authors = ["Olivier Cots <olivier.cots@toulouse-inp.fr>"]
-version = "0.5.0"
+version = "0.5.1"
 
 [deps]
 CTBase = "54762871-cc72-4466-b8e8-f6c8b58076cd"
@@ -15,7 +15,7 @@ OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 CTFlowsODE = "OrdinaryDiffEq"
 
 [compat]
-CTBase = "0.12"
+CTBase = "0.13"
 DocStringExtensions = "0.9"
 MLStyle = "0.4"
 OrdinaryDiffEq = "6"
