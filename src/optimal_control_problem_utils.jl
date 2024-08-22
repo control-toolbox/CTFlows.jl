@@ -52,8 +52,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 function __get_data_for_ocp_flow(ocp::OptimalControlModel)
-    f  = ocp.dynamics
-    f⁰ = ocp.lagrange
+    f  = dynamics(ocp)
+    f⁰ = lagrange(ocp)
     p⁰ = -1
     s  = is_min(ocp) ? 1.0 : -1.0
     return f, f⁰, p⁰, s

@@ -5,11 +5,11 @@ prob = Problem(:integrator, :dim2, :energy)
 ocp = prob.model
 sol = prob.solution
 
-times = sol.times
+times = time_grid(sol)
 t0 = times[1]
 tf = times[end]
-x  = sol.state
-p  = sol.Costate
+x  = state(sol)
+p  = costate(sol)
 x0 = x(t0)
 p0 = p(t0)
 
