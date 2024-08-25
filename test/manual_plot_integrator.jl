@@ -8,8 +8,8 @@ sol = prob.solution
 times = time_grid(sol)
 t0 = times[1]
 tf = times[end]
-x  = state(sol)
-p  = costate(sol)
+x = state(sol)
+p = costate(sol)
 x0 = x(t0)
 p0 = p(t0)
 
@@ -21,10 +21,10 @@ u(x, p) = p[2] # must be consistent with the model
 
 f = Flow(ocp, u)
 
-xf, pf  = f(t0, x0, p0, tf)
+xf, pf = f(t0, x0, p0, tf)
 
-sol = f((t0, tf), x0, p0; saveat=range(t0, tf, 101))
+sol = f((t0, tf), x0, p0; saveat = range(t0, tf, 101))
 
-plot(sol, size=(900, 600))
+plot(sol, size = (900, 600))
 
 #nothing

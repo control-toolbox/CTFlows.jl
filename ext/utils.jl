@@ -7,14 +7,15 @@ function __callbacks(callback, jumps, _rg, _t_stops_interne, tstops)
 
         t_jumps = [t for (t, _) in jumps]
         η_jumps = [η for (_, η) in jumps]
-        
+
         # add the jump η from η_jumps on p with z = (x, p) at time t from t_jumps
         function condition(out, u, t, integrator)
-            out[:] = t_jumps.-t
+            out[:] = t_jumps .- t
         end
 
         function affect!(integrator, event_index)
-            isnothing(_rg) ? integrator.u += η_jumps[event_index] : integrator.u[_rg] += η_jumps[event_index] 
+            isnothing(_rg) ? integrator.u += η_jumps[event_index] :
+            integrator.u[_rg] += η_jumps[event_index]
         end
 
         cbjumps = VectorContinuousCallback(condition, affect!, size(jumps, 1))

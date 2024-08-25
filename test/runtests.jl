@@ -21,7 +21,7 @@ const CTFlowsODE = Base.get_extension(CTFlows, :CTFlowsODE) # to test functions 
         :flow_hamiltonian,
         :flow_vector_field,
         :optimal_control_problem,
-        )
+    )
         @testset "$(name)" begin
             test_name = Symbol(:test_, name)
             include("$(test_name).jl")

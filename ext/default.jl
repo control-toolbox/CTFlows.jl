@@ -17,17 +17,20 @@ Default variable from ocp.
 """
 function __variable(t0, x0, p0, tf, ocp)
     # if tf is free and ocp has only one variable, then return tf
-    CTBase.has_free_final_time(ocp) && CTBase.variable_dimension(ocp)==1 && return tf
+    CTBase.has_free_final_time(ocp) && CTBase.variable_dimension(ocp) == 1 && return tf
 
     # if t0 is free and ocp has only one variable, then return t0
-    CTBase.has_free_initial_time(ocp) && CTBase.variable_dimension(ocp)==1 && return t0
+    CTBase.has_free_initial_time(ocp) && CTBase.variable_dimension(ocp) == 1 && return t0
 
     # if t0 and tf are free and ocp has only two variables, then return [t0, tf]
-    CTBase.has_free_final_time(ocp) && CTBase.has_free_initial_time(ocp) && CTBase.variable_dimension(ocp)==2 && return [t0, tf]
+    CTBase.has_free_final_time(ocp) &&
+        CTBase.has_free_initial_time(ocp) &&
+        CTBase.variable_dimension(ocp) == 2 &&
+        return [t0, tf]
 
     # otherwise return an empty vector of right type to avoid warning performance message from OrdinaryDiffEq
     z0 = [x0; p0]
-    T  = eltype(z0)
+    T = eltype(z0)
     return Vector{T}()
 end
 
@@ -36,9 +39,9 @@ $(TYPEDSIGNATURES)
 
 Default variable x0, p0.
 """
-function __variable(x0, p0) 
+function __variable(x0, p0)
     z0 = [x0; p0]
-    T  = eltype(z0)
+    T = eltype(z0)
     return Vector{T}()
 end
 
@@ -47,8 +50,8 @@ $(TYPEDSIGNATURES)
 
 Default variable from x0.
 """
-function __variable(x0) 
-    T  = eltype(x0)
+function __variable(x0)
+    T = eltype(x0)
     return Vector{T}()
 end
 
