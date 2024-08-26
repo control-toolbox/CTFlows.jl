@@ -7,7 +7,7 @@ function ode_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
 
     # kwargs has priority wrt kwargs_flow
     function f(
-        tspan::Tuple{Time,Time},
+        tspan::Tuple{Time, Time},
         x0,
         v = nothing;
         jumps,
@@ -48,7 +48,6 @@ function ode_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
     end
 
     return f
-
 end
 
 # --------------------------------------------------------------------------------------------

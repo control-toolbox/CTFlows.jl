@@ -3,7 +3,6 @@ module ResetTest
 # to use it
 # include("test/ResetTest.jl"); using .ResetTest
 
-
 #
 import Pkg: Operations.testdir, Operations.testfile, Pkg.Operations, Pkg
 

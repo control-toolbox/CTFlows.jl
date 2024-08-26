@@ -17,7 +17,7 @@ const DCoTangent = ctVector
 const ctgradient = CTBase.__ctgradient
 
 # types
-abstract type AbstractFlow{D,U} end
+abstract type AbstractFlow{D, U} end
 
 # from CTFlows
 const __create_hamiltonian = CTFlows.__create_hamiltonian

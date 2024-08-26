@@ -4,7 +4,6 @@ function __callbacks(callback, jumps, _rg, _t_stops_interne, tstops)
     # jumps and callbacks
     cb = nothing
     if size(jumps, 1) > 0
-
         t_jumps = [t for (t, _) in jumps]
         η_jumps = [η for (_, η) in jumps]
 
@@ -24,9 +23,7 @@ function __callbacks(callback, jumps, _rg, _t_stops_interne, tstops)
         cb = CallbackSet(cbjumps, callback)
 
     else
-
         cb = callback
-
     end
 
     # tstops
@@ -34,5 +31,4 @@ function __callbacks(callback, jumps, _rg, _t_stops_interne, tstops)
     t_stops_all = unique(sort(_t_stops_interne))
 
     return cb, t_stops_all
-
 end

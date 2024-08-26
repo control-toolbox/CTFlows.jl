@@ -1,7 +1,5 @@
 function test_optimal_control_problem()
-
     @testset "Double integrator - energy" begin
-
         t0 = 0
         tf = 1
         x0 = [-1, 0]
@@ -37,11 +35,9 @@ function test_optimal_control_problem()
         # on ne peut pas ajouter une variable pour un problème Fixed
         @test_throws MethodError f(t0, x0, p0, tf, 2)
         @test_throws MethodError f((t0, tf), x0, p0, 2)
-
     end
 
     @testset "tf variable: plot" begin
-
         t0 = 0
         x0 = 0
         xf = 1
@@ -65,11 +61,9 @@ function test_optimal_control_problem()
         f = Flow(ocp, (x, p, tf) -> tf * p; alg = Tsit5())
         sol = f((t0, tf), x0, p0, tf; alg = BS5())
         Test.@test plot(sol) isa Plots.Plot
-
     end
 
     @testset "objective: mayer" begin
-
         t0 = 0
         x0 = [-1, 0]
         xf = [0, 0]
@@ -110,11 +104,9 @@ function test_optimal_control_problem()
 
         sol = f((t0, tf), x0, p0, tf)
         Test.@test objective(sol) ≈ tf atol = 1e-6
-
     end
 
     @testset "objective: Lagrange" begin
-
         t0 = 0
         tf = 1
         x0 = [-1, 0]
@@ -142,7 +134,7 @@ function test_optimal_control_problem()
         a = x0[1]
         b = x0[2]
         C = [
-            -(tf - t0)^3/6 (tf-t0)^2/2
+            -(tf - t0)^3/6 (tf - t0)^2/2
             -(tf - t0)^2/2 (tf-t0)
         ]
         D = [-a - b * (tf - t0), -b] + xf
@@ -165,11 +157,9 @@ function test_optimal_control_problem()
         # test
         sol = f((t0, tf), x0, p0)
         Test.@test objective(sol) ≈ obj atol = 1e-6
-
     end
 
     @testset "objective: Bolza" begin
-
         t0 = 0
         tf = 1
         x0 = [0, 0]
@@ -208,7 +198,6 @@ function test_optimal_control_problem()
         p0 = p(t0)
         sol = f((t0, tf), x0, p0)
         Test.@test objective(sol) ≈ obj atol = 1e-6
-
     end
 
     @testset "Double integrator energy - x₁ ≤ l" begin
@@ -274,7 +263,6 @@ function test_optimal_control_problem()
         xf, pf = f(t0, x0, p(t0), tf)
         Test.@test xf ≈ x(tf) atol = 1e-6
         Test.@test pf ≈ p(tf) atol = 1e-6
-
     end
 
     @testset "State constraint" begin
@@ -345,11 +333,9 @@ function test_optimal_control_problem()
         xf, pf = f(t0, x0, p0, tf)
         Test.@test xf ≈ x(tf) atol = 1e-6
         Test.@test pf ≈ p(tf) atol = 1e-6
-
     end
 
     @testset "tf variable" begin
-
         t0 = 0
         x0 = 0
         xf = 1
@@ -379,11 +365,9 @@ function test_optimal_control_problem()
         # tf is provided once
         xf_, pf_ = F(t0, x0, p0, tf)
         Test.@test xf ≈ xf_ atol = 1e-6
-
     end
 
     @testset "t0 variable" begin
-
         t0 = 0
         x0 = 0
         xf = 1
@@ -413,12 +397,9 @@ function test_optimal_control_problem()
         # tf is provided once
         x0_, pf_ = F(tf, xf, p0, t0)
         Test.@test x0 ≈ x0_ atol = 1e-6
-
     end
 
-
     @testset "t0 and tf variable" begin
-
         x0 = 0
         xf = 1
 
@@ -448,7 +429,5 @@ function test_optimal_control_problem()
         # t0, tf are provided once
         xf_, pf_ = F(t0, x0, p0, tf)
         Test.@test xf ≈ xf_ atol = 1e-6
-
     end
-
 end

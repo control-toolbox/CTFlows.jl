@@ -1,7 +1,6 @@
 function test_flow_vector_field()
-
     @testset "4D autonomous, non variable" begin
-        V(z) = [z[2], z[2+2], 0.0, -z[2+1]]
+        V(z) = [z[2], z[2 + 2], 0.0, -z[2 + 1]]
         z = Flow(VectorField(V))
         t0 = 0.0
         tf = 1.0
@@ -12,7 +11,7 @@ function test_flow_vector_field()
     end
 
     @testset "4D non autonomous, variable" begin
-        V(t, z, l) = [z[2], (2 + l) * z[2+2], 0.0, -z[2+1]]
+        V(t, z, l) = [z[2], (2 + l) * z[2 + 2], 0.0, -z[2 + 1]]
         z = Flow(VectorField(V, autonomous = false, variable = true))
         t0 = 0.0
         tf = 1.0
@@ -38,5 +37,4 @@ function test_flow_vector_field()
         xf = z(0.0, x0, 2π)
         Test.@test xf ≈ x0 * exp(4π) atol = 1e-5
     end
-
 end

@@ -1,5 +1,4 @@
 function test_flow_hamiltonian()
-
     @testset "2D autonomous, non variable" begin
         H(x, p) = p[1] * x[2] + p[2] * p[2] - 0.5 * p[2]^2
         z = Flow(Hamiltonian(H))
@@ -33,5 +32,4 @@ function test_flow_hamiltonian()
         Test.@test xf ≈ x0 atol = 1e-5
         Test.@test pf ≈ p0 atol = 1e-5
     end
-
 end

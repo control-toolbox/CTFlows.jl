@@ -7,7 +7,7 @@ function vector_field_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
 
     # kwargs has priority wrt kwargs_flow
     function f(
-        tspan::Tuple{Time,Time},
+        tspan::Tuple{Time, Time},
         x0::State,
         v::Variable = __variable(x0);
         jumps,
@@ -38,7 +38,6 @@ function vector_field_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
         )
 
         return sol
-
     end
 
     function f(t0::Time, x0::State, t::Time, v::Variable = __variable(x0); kwargs...)
@@ -47,7 +46,6 @@ function vector_field_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
     end
 
     return f
-
 end
 
 # --------------------------------------------------------------------------------------------
@@ -60,9 +58,7 @@ function CTFlows.Flow(
     saveat = __saveat(),
     kwargs_Flow...,
 )
-
     f = vector_field_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
     rhs = (x::State, v::Variable, t::Time) -> vf(t, x, v)
     return VectorFieldFlow(f, rhs)
-
 end
