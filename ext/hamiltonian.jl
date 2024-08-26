@@ -5,9 +5,8 @@ $(TYPEDSIGNATURES)
 Returns a function that solves ODE problem associated to Hamiltonian vector field.
 """
 function hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
-
     function f(
-        tspan::Tuple{Time,Time},
+        tspan::Tuple{Time, Time},
         x0::State,
         p0::Costate,
         v::Variable = __variable(x0, p0);
@@ -24,8 +23,7 @@ function hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
 
         # jumps and callbacks
         n = size(x0, 1)
-        cb, t_stops_all =
-            __callbacks(callback, jumps, rg(n + 1, 2n), _t_stops_interne, tstops)
+        cb, t_stops_all = __callbacks(callback, jumps, rg(n + 1, 2n), _t_stops_interne, tstops)
 
         # solve
         sol = OrdinaryDiffEq.solve(
@@ -57,7 +55,6 @@ function hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
     end
 
     return f
-
 end
 
 """
@@ -70,8 +67,8 @@ function rhs(h::AbstractHamiltonian)
         n = size(z, 1) ÷ 2
         foo(z) = h(t, z[rg(1, n)], z[rg(n + 1, 2n)], v)
         dh = ctgradient(foo, z)
-        dz[1:n] = dh[n+1:2n]
-        dz[n+1:2n] = -dh[1:n]
+        dz[1:n] = dh[(n + 1):(2n)]
+        dz[(n + 1):(2n)] = -dh[1:n]
     end
     return rhs!
 end

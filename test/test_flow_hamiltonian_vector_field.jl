@@ -1,5 +1,4 @@
 function test_flow_hamiltonian_vector_field()
-
     @testset "2D autonomous, non variable" begin
         Hv(x, p) = [x[2], p[2]], [0.0, -p[1]]
         z = Flow(HamiltonianVectorField(Hv))
@@ -33,5 +32,4 @@ function test_flow_hamiltonian_vector_field()
         Test.@test xf ≈ x0 atol = 1e-5
         Test.@test pf ≈ p0 atol = 1e-5
     end
-
 end

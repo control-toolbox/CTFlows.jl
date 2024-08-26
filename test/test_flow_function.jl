@@ -1,7 +1,6 @@
 function test_flow_function()
-
     @testset "4D autonomous, non variable" begin
-        V(z) = [z[2], z[2+2], 0.0, -z[2+1]]
+        V(z) = [z[2], z[2 + 2], 0.0, -z[2 + 1]]
         z = Flow(V)
         t0 = 0.0
         tf = 1.0
@@ -12,7 +11,7 @@ function test_flow_function()
     end
 
     @testset "4D non autonomous, variable" begin
-        V(t, z, l) = [z[2], (2 + l) * z[2+2], 0.0, -z[2+1]]
+        V(t, z, l) = [z[2], (2 + l) * z[2 + 2], 0.0, -z[2 + 1]]
         z = Flow(V, autonomous = false, variable = true)
         t0 = 0.0
         tf = 1.0
@@ -92,18 +91,11 @@ function test_flow_function()
         # computing objective
         ψ(t) = 0.5 * (x(t)[1]^2 + x(t)[2]^2 + u(t)^2)
         #
-        o = solve(
-            ODEProblem((_, _, t) -> ψ(t), 0, (t0, tf)),
-            Tsit5(),
-            reltol = 1e-8,
-            abstol = 1e-8,
-        )
+        o = solve(ODEProblem((_, _, t) -> ψ(t), 0, (t0, tf)), Tsit5(), reltol = 1e-8, abstol = 1e-8)
         #
         f = Flow((t, _) -> ψ(t), autonomous = false, variable = false)
         oo = f((t0, tf), 0)
         #
         Test.@test o.u[end] ≈ oo.u[end] atol = 1e-5
-
     end
-
 end
