@@ -2,7 +2,7 @@
 name: 'Developers '
 about: Suggest internal modifications
 title: "[Dev] title"
-labels: internal dev
+labels: ''
 assignees: ocots
 
 ---
