@@ -1,6 +1,4 @@
 using Aqua
-using ForwardDiff
-using StaticArrays
 
 using Test
 using CTFlows
