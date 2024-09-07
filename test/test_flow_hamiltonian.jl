@@ -13,7 +13,7 @@ function test_flow_hamiltonian()
 
     @testset "2D non autonomous, variable" begin
         H(t, x, p, l) = p[1] * x[2] + p[2] * p[2] + 0.5 * l * p[2]^2
-        z = Flow(Hamiltonian(H, autonomous = false, variable = true))
+        z = Flow(Hamiltonian(H; autonomous=false, variable=true))
         t0 = 0.0
         tf = 1.0
         x0 = [-1.0, 0.0]

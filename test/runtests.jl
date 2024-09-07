@@ -10,7 +10,7 @@ using LinearAlgebra
 const CTFlowsODE = Base.get_extension(CTFlows, :CTFlowsODE) # to test functions from CTFlowsODE not in CTFlows
 
 @testset verbose = true showtiming = true "CTFlows" begin
-    for name ∈ (
+    for name in (
         :aqua,
         :concatenation,
         :default,

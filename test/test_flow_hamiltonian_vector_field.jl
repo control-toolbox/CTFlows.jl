@@ -13,7 +13,7 @@ function test_flow_hamiltonian_vector_field()
 
     @testset "2D non autonomous, variable" begin
         Hv(t, x, p, l) = [x[2], (2 + l) * p[2]], [0.0, -p[1]]
-        z = Flow(HamiltonianVectorField(Hv, autonomous = false, variable = true))
+        z = Flow(HamiltonianVectorField(Hv; autonomous=false, variable=true))
         t0 = 0.0
         tf = 1.0
         x0 = [-1.0, 0.0]

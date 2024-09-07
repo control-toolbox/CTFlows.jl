@@ -12,7 +12,7 @@ function test_flow_vector_field()
 
     @testset "4D non autonomous, variable" begin
         V(t, z, l) = [z[2], (2 + l) * z[2 + 2], 0.0, -z[2 + 1]]
-        z = Flow(VectorField(V, autonomous = false, variable = true))
+        z = Flow(VectorField(V; autonomous=false, variable=true))
         t0 = 0.0
         tf = 1.0
         x0 = [-1.0, 0.0]
