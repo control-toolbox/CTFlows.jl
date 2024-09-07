@@ -7,34 +7,36 @@ function ode_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
 
     # kwargs has priority wrt kwargs_flow
     function f(
-        tspan::Tuple{Time, Time},
+        tspan::Tuple{Time,Time},
         x0,
-        v = nothing;
+        v=nothing;
         jumps,
         _t_stops_interne,
         DiffEqRHS,
-        tstops = __tstops(),
-        callback = __callback(),
+        tstops=__tstops(),
+        callback=__callback(),
         kwargs...,
     )
 
         # ode
-        ode =
-            isnothing(v) ? OrdinaryDiffEq.ODEProblem(DiffEqRHS, x0, tspan) :
+        ode = if isnothing(v)
+            OrdinaryDiffEq.ODEProblem(DiffEqRHS, x0, tspan)
+        else
             OrdinaryDiffEq.ODEProblem(DiffEqRHS, x0, tspan, v)
+        end
 
         # jumps and callbacks
         cb, t_stops_all = __callbacks(callback, jumps, nothing, _t_stops_interne, tstops)
 
         # solve
         sol = OrdinaryDiffEq.solve(
-            ode,
-            alg = alg,
-            abstol = abstol,
-            reltol = reltol,
-            saveat = saveat,
-            tstops = t_stops_all,
-            callback = cb;
+            ode;
+            alg=alg,
+            abstol=abstol,
+            reltol=reltol,
+            saveat=saveat,
+            tstops=t_stops_all,
+            callback=cb,
             kwargs_Flow...,
             kwargs...,
         )
@@ -42,7 +44,7 @@ function ode_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
         return sol
     end
 
-    function f(t0::Time, x0, tf::Time, v = nothing; kwargs...)
+    function f(t0::Time, x0, tf::Time, v=nothing; kwargs...)
         sol = f((t0, tf), x0, v; kwargs...)
         return sol.u[end]
     end
@@ -53,12 +55,12 @@ end
 # --------------------------------------------------------------------------------------------
 function CTFlows.Flow(
     dyn::Function;
-    autonomous = true,
-    variable = false,
-    alg = __alg(),
-    abstol = __abstol(),
-    reltol = __reltol(),
-    saveat = __saveat(),
+    autonomous=true,
+    variable=false,
+    alg=__alg(),
+    abstol=__abstol(),
+    reltol=__reltol(),
+    saveat=__saveat(),
     kwargs_Flow...,
 )
     #

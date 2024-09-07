@@ -17,16 +17,16 @@ mf = 0.6
 x0 = [r0, v0, m0]
 
 # OCP model
-ocp = Model(variable = true)
+ocp = Model(; variable=true)
 variable!(ocp, 1)
-time!(ocp, t0 = t0, indf = 1) # if not provided, final time is free
+time!(ocp; t0=t0, indf=1) # if not provided, final time is free
 state!(ocp, 3, "x", ["r", "v", "m"]) # state dim
 control!(ocp, 1) # control dim
-constraint!(ocp, :initial, lb = x0, ub = x0)
-constraint!(ocp, :control, f = (u, v) -> u, lb = 0, ub = 1)
-constraint!(ocp, :state, f = (x, v) -> x[1], lb = r0, ub = Inf, label = :state_con1)
-constraint!(ocp, :state, f = (x, v) -> x[2], lb = 0, ub = vmax, label = :state_con2)
-constraint!(ocp, :state, f = (x, v) -> x[3], lb = m0, ub = mf, label = :state_con3)
+constraint!(ocp, :initial; lb=x0, ub=x0)
+constraint!(ocp, :control; f=(u, v) -> u, lb=0, ub=1)
+constraint!(ocp, :state; f=(x, v) -> x[1], lb=r0, ub=Inf, label=:state_con1)
+constraint!(ocp, :state; f=(x, v) -> x[2], lb=0, ub=vmax, label=:state_con2)
+constraint!(ocp, :state; f=(x, v) -> x[3], lb=m0, ub=mf, label=:state_con3)
 objective!(ocp, :mayer, (x0, xf, v) -> xf[1], :max)
 function F0(x)
     r, v, m = x
@@ -75,7 +75,7 @@ tf = 0.20204744057041196
 f1sb0 = f1 * (t1, fs) * (t2, fb) * (t3, f0) # concatenation of the Hamiltonian flows
 flow_sol = f1sb0((t0, tf), x0, p0)
 
-pp = plot(flow_sol, size = (900, 600))
+pp = plot(flow_sol; size=(900, 600))
 
 # Abstract model
 f(x, u, v) = F0(x) + u * F1(x)

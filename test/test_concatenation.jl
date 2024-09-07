@@ -39,7 +39,7 @@ function test_concatenation()
         #
         f1 = Flow(Hamiltonian(H1))
         f2 = Flow(Hamiltonian(H2))
-        f3 = Flow(Hamiltonian(H3, autonomous = false))
+        f3 = Flow(Hamiltonian(H3; autonomous=false))
 
         # one flow is used because t1 > tf
         f = f1 * (2tf, f2)
@@ -69,7 +69,7 @@ function test_concatenation()
         f = f1 * ((t0 + tf) / 4, f1) * ((t0 + tf) / 2, f1)
         N = 100
         saveat = range(t0, tf, N)
-        sol = f((t0, tf), x0, p0, saveat = saveat)
+        sol = f((t0, tf), x0, p0; saveat=saveat)
         xf = sol.u[end][1:n]
         pf = sol.u[end][(n + 1):(2n)]
         Test.@test xf ≈ [x1_sol(tf), x2_sol(tf)] atol = 1e-5
@@ -84,7 +84,7 @@ function test_concatenation()
         #
         f1 = Flow(HamiltonianVectorField(Hv1))
         f2 = Flow(HamiltonianVectorField(Hv2))
-        f3 = Flow(HamiltonianVectorField(Hv3, autonomous = false))
+        f3 = Flow(HamiltonianVectorField(Hv3; autonomous=false))
 
         # one flow is used because t1 > tf
         f = f1 * (2tf, f2)
@@ -114,7 +114,7 @@ function test_concatenation()
         f = f1 * ((t0 + tf) / 4, f1) * ((t0 + tf) / 2, f1)
         N = 100
         saveat = range(t0, tf, N)
-        sol = f((t0, tf), x0, p0, saveat = saveat)
+        sol = f((t0, tf), x0, p0; saveat=saveat)
         xf = sol.u[end][1:n]
         pf = sol.u[end][(n + 1):(2n)]
         Test.@test xf ≈ [x1_sol(tf), x2_sol(tf)] atol = 1e-5
@@ -129,7 +129,7 @@ function test_concatenation()
         #
         f1 = Flow(VectorField(V1))
         f2 = Flow(VectorField(V2))
-        f3 = Flow(VectorField(V3, autonomous = false))
+        f3 = Flow(VectorField(V3; autonomous=false))
 
         # one flow is used because t1 > tf
         f = f1 * (2tf, f2)
@@ -155,7 +155,7 @@ function test_concatenation()
         f = f1 * ((t0 + tf) / 4, f1) * ((t0 + tf) / 2, f1)
         N = 100
         saveat = range(t0, tf, N)
-        sol = f((t0, tf), [x0; p0], saveat = saveat)
+        sol = f((t0, tf), [x0; p0]; saveat=saveat)
         xf = sol.u[end][1:n]
         pf = sol.u[end][(n + 1):(2n)]
         Test.@test xf ≈ [x1_sol(tf), x2_sol(tf)] atol = 1e-5
@@ -170,7 +170,7 @@ function test_concatenation()
         #
         f1 = Flow(V1)
         f2 = Flow(V2)
-        f3 = Flow(V3, autonomous = false)
+        f3 = Flow(V3; autonomous=false)
 
         # one flow is used because t1 > tf
         f = f1 * (2tf, f2)
@@ -196,7 +196,7 @@ function test_concatenation()
         f = f1 * ((t0 + tf) / 4, f1) * ((t0 + tf) / 2, f1)
         N = 100
         saveat = range(t0, tf, N)
-        sol = f((t0, tf), [x0; p0], saveat = saveat)
+        sol = f((t0, tf), [x0; p0]; saveat=saveat)
         xf = sol.u[end][1:n]
         pf = sol.u[end][(n + 1):(2n)]
         Test.@test xf ≈ [x1_sol(tf), x2_sol(tf)] atol = 1e-5
@@ -211,7 +211,7 @@ function test_concatenation()
         # Hamiltonien
         f1 = Flow(Hamiltonian(H1))
         f2 = Flow(Hamiltonian(H2))
-        f3 = Flow(Hamiltonian(H3, autonomous = false))
+        f3 = Flow(Hamiltonian(H3; autonomous=false))
         f = f1 * ((t0 + tf) / 4, [0, 0], f2) * ((t0 + tf) / 2, f3)
         xf, pf = f(t0, x0, p0, tf + (t0 + tf) / 2)
         Test.@test xf ≈ [x1_sol(tf), x2_sol(tf)] atol = 1e-5
@@ -220,7 +220,7 @@ function test_concatenation()
         # vector field
         f1 = Flow(VectorField(V1))
         f2 = Flow(VectorField(V2))
-        f3 = Flow(VectorField(V3, autonomous = false))
+        f3 = Flow(VectorField(V3; autonomous=false))
         f = f1 * ((t0 + tf) / 4, [0, 0, 0, 0], f2) * ((t0 + tf) / 2, f3)
         zf = f(t0, [x0; p0], tf + (t0 + tf) / 2)
         Test.@test zf ≈ [x1_sol(tf), x2_sol(tf), p1_sol(tf), p2_sol(tf)] atol = 1e-5
@@ -230,7 +230,7 @@ function test_concatenation()
 
         # example from https://docs.sciml.ai/DiffEqDocs/stable/features/callback_functions/#DiscreteCallback-Examples
         function dyn(du, u, p, t)
-            du[1] = -u[1]
+            return du[1] = -u[1]
         end
         u0 = [10.0]
         prob = ODEProblem(dyn, u0, (0.0, 10.0))
@@ -238,7 +238,7 @@ function test_concatenation()
         condition(u, t, integrator) = t ∈ dosetimes
         affect!(integrator) = integrator.u[1] += 10
         cb = DiscreteCallback(condition, affect!)
-        sol = solve(prob, Tsit5(), callback = cb, tstops = dosetimes)
+        sol = solve(prob, Tsit5(); callback=cb, tstops=dosetimes)
 
         #
         x0 = 10
@@ -257,12 +257,20 @@ function test_concatenation()
         # test
         N = 100
         tspan = range(0, 10, N)
-        Test.@test norm([sol(t)[1] - sol2(t) for t ∈ tspan]) / N ≈ 0 atol = 1e-3
-        Test.@test norm([sol(t)[1] - sol3(t) for t ∈ tspan]) / N ≈ 0 atol = 1e-3
+        Test.@test norm([sol(t)[1] - sol2(t) for t in tspan]) / N ≈ 0 atol = 1e-3
+        Test.@test norm([sol(t)[1] - sol3(t) for t in tspan]) / N ≈ 0 atol = 1e-3
 
         # -------
         f = Flow(Hamiltonian((x, p) -> 0.5p^2))
-        fc = f * (1, 1, f) * (1.5, f) * (2, 1, f) * (2.5, f) * (3, 1, f) * (3.5, f) * (4, 1, f)
+        fc =
+            f *
+            (1, 1, f) *
+            (1.5, f) *
+            (2, 1, f) *
+            (2.5, f) *
+            (3, 1, f) *
+            (3.5, f) *
+            (4, 1, f)
         xf, pf = fc(0, 0, 0, 5)
         Test.@test xf ≈ 10 atol = 1e-6
         Test.@test pf ≈ 4 atol = 1e-6
@@ -287,8 +295,8 @@ function test_concatenation()
         ocp = Model()
         state!(ocp, 2)
         control!(ocp, 2)
-        time!(ocp, t0 = 0, tf = 5)
-        constraint!(ocp, :initial, lb = [0, 0], ub = [0, 0])
+        time!(ocp; t0=0, tf=5)
+        constraint!(ocp, :initial; lb=[0, 0], ub=[0, 0])
         dynamics!(ocp, (x, u) -> u)
         objective!(ocp, :mayer, (x0, xf) -> xf)
         f = Flow(ocp, (x, p) -> [p[1] / 2, 0])
@@ -310,10 +318,10 @@ function test_concatenation()
         ocp = Model()
         state!(ocp, 1)
         control!(ocp, 1)
-        time!(ocp, t0 = 0, tf = 1)
-        constraint!(ocp, :initial, lb = -1, ub = -1, label = :initial_constraint)
-        constraint!(ocp, :final, lb = 0, ub = 0, label = :final_constraint)
-        constraint!(ocp, :control, lb = -1, ub = 1, label = :control_constraint)
+        time!(ocp; t0=0, tf=1)
+        constraint!(ocp, :initial; lb=-1, ub=-1, label=:initial_constraint)
+        constraint!(ocp, :final; lb=0, ub=0, label=:final_constraint)
+        constraint!(ocp, :control; lb=-1, ub=1, label=:control_constraint)
         dynamics!(ocp, (x, u) -> -x + u)
         objective!(ocp, :lagrange, (x, u) -> abs(u))
         f0 = Flow(ocp, ControlLaw((x, p) -> 0))

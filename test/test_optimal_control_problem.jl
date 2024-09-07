@@ -23,7 +23,7 @@ function test_optimal_control_problem()
             ∫(0.5u(t)^2) → min
         end
 
-        f = Flow(ocp, (x, p) -> p[2]; alg = BS5())
+        f = Flow(ocp, (x, p) -> p[2]; alg=BS5())
         p0 = [12, 6]
 
         xf_, pf = f(t0, x0, p0, tf)
@@ -58,8 +58,8 @@ function test_optimal_control_problem()
         p0 = 2tf / 3
 
         #
-        f = Flow(ocp, (x, p, tf) -> tf * p; alg = Tsit5())
-        sol = f((t0, tf), x0, p0, tf; alg = BS5())
+        f = Flow(ocp, (x, p, tf) -> tf * p; alg=Tsit5())
+        sol = f((t0, tf), x0, p0, tf; alg=BS5())
         Test.@test plot(sol) isa Plots.Plot
     end
 
@@ -209,9 +209,9 @@ function test_optimal_control_problem()
         ocp = Model()
         state!(ocp, n)   # dimension of the state
         control!(ocp, m) # dimension of the control
-        time!(ocp, t0 = t0, tf = tf)
-        constraint!(ocp, :initial, lb = x0, ub = x0)
-        constraint!(ocp, :mixed, f = (x, u) -> x + u, lb = -Inf, ub = 0)
+        time!(ocp; t0=t0, tf=tf)
+        constraint!(ocp, :initial; lb=x0, ub=x0)
+        constraint!(ocp, :mixed; f=(x, u) -> x + u, lb=-Inf, ub=0)
         dynamics!(ocp, (x, u) -> u)
         objective!(ocp, :lagrange, (x, u) -> -u)
 
@@ -277,10 +277,10 @@ function test_optimal_control_problem()
         ocp = Model()
         state!(ocp, n)   # dimension of the state
         control!(ocp, m) # dimension of the control
-        time!(ocp, t0 = t0, tf = tf)
-        constraint!(ocp, :initial, lb = x0, ub = x0)
-        constraint!(ocp, :final, lb = xf, ub = xf)
-        constraint!(ocp, :state, rg = Index(1), lb = -Inf, ub = l)
+        time!(ocp; t0=t0, tf=tf)
+        constraint!(ocp, :initial; lb=x0, ub=x0)
+        constraint!(ocp, :final; lb=xf, ub=xf)
+        constraint!(ocp, :state; rg=Index(1), lb=-Inf, ub=l)
         A = [
             0 1
             0 0

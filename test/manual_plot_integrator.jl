@@ -23,8 +23,8 @@ f = Flow(ocp, u)
 
 xf, pf = f(t0, x0, p0, tf)
 
-sol = f((t0, tf), x0, p0; saveat = range(t0, tf, 101))
+sol = f((t0, tf), x0, p0; saveat=range(t0, tf, 101))
 
-plot(sol, size = (900, 600))
+plot(sol; size=(900, 600))
 
 #nothing
