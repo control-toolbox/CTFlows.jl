@@ -18,7 +18,9 @@ end
 
 # call F.f
 function (F::HamiltonianFlow)(args...; kwargs...)
-    F.f(args...; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs!, kwargs...)
+    return F.f(
+        args...; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs!, kwargs...
+    )
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -39,7 +41,9 @@ end
 
 # call F.f
 function (F::VectorFieldFlow)(args...; kwargs...)
-    F.f(args...; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs, kwargs...)
+    return F.f(
+        args...; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs, kwargs...
+    )
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -59,7 +63,9 @@ struct ODEFlow <: AbstractFlow{Any,Any}
 end
 
 function (F::ODEFlow)(args...; kwargs...)
-    F.f(args...; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs, kwargs...)
+    return F.f(
+        args...; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs, kwargs...
+    )
 end
 
 # ---------------------------------------------------------------------------------------------------
