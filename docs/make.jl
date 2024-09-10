@@ -2,9 +2,12 @@ using Documenter
 using DocumenterMermaid
 using CTFlows
 
+repo_url = "github.com/control-toolbox/OptimalControlProblems.jl"
+
 makedocs(;
     sitename="CTFlows.jl",
     format=Documenter.HTML(;
+        repolink = "https://"*repo_url,
         prettyurls=false,
         assets=[
             asset("https://control-toolbox.org/assets/css/documentation.css"),
@@ -14,4 +17,6 @@ makedocs(;
     pages=["Introduction" => "index.md", "API" => "api.md", "Developers" => "dev.md"],
 )
 
-deploydocs(; repo="github.com/control-toolbox/CTFlows.jl.git", devbranch="main")
+deploydocs(;
+    repo=repo_url*".git", devbranch="main"
+)
