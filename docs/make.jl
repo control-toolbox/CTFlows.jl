@@ -2,7 +2,7 @@ using Documenter
 using DocumenterMermaid
 using CTFlows
 
-repo_url = "github.com/control-toolbox/OptimalControlProblems.jl"
+repo_url = "github.com/control-toolbox/CTFlows.jl"
 
 makedocs(;
     sitename="CTFlows.jl",
