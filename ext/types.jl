@@ -156,7 +156,7 @@ struct OptimalControlFlow{VD} <: AbstractFlow{DCoTangent,CoTangent}
         rhs!::Function,
         u::ControlLaw,
         ocp::OptimalControlModel{<:TimeDependence,VD},
-        kwargs_Flow,
+        kwargs_Flow;
         tstops::Times=Vector{Time}(),
         jumps::Vector{Tuple{Time,Costate}}=Vector{Tuple{Time,Costate}}(),
     ) where {VD<:VariableDependence}

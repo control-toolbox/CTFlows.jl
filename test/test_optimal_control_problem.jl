@@ -211,7 +211,7 @@ function test_optimal_control_problem()
         control!(ocp, m) # dimension of the control
         time!(ocp; t0=t0, tf=tf)
         constraint!(ocp, :initial; lb=x0, ub=x0)
-        constraint!(ocp, :mixed; f=(x, u) -> x + u, lb=-Inf, ub=0)
+        constraint!(ocp, :mixed; f=(x, u) -> x + u, lb=(-Inf), ub=0)
         dynamics!(ocp, (x, u) -> u)
         objective!(ocp, :lagrange, (x, u) -> -u)
 
@@ -280,7 +280,7 @@ function test_optimal_control_problem()
         time!(ocp; t0=t0, tf=tf)
         constraint!(ocp, :initial; lb=x0, ub=x0)
         constraint!(ocp, :final; lb=xf, ub=xf)
-        constraint!(ocp, :state; rg=Index(1), lb=-Inf, ub=l)
+        constraint!(ocp, :state; rg=Index(1), lb=(-Inf), ub=l)
         A = [
             0 1
             0 0
