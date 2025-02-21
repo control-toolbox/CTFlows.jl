@@ -50,7 +50,7 @@ function __mayer(ocp::OptimalControlModel{T, V}) where {T,V}
 end
 
 # ---------------------------------------------------------------------------------------------------
-function __create_hamiltonian(ocp::OptimalControlModel{T,V}, u::ControlLaw{T,V}) where {T,V}
+function __create_hamiltonian(ocp::OptimalControlModel{T,V}, u::ControlLaw{<:Function,T,V}) where {T,V}
     f, f⁰, p⁰, s = __get_data_for_ocp_flow(ocp) # data
     @assert f ≠ nothing "no dynamics in ocp"
     h = Hamiltonian(
@@ -66,9 +66,9 @@ end
 # ---------------------------------------------------------------------------------------------------
 function __create_hamiltonian(
     ocp::OptimalControlModel{T,V},
-    u::ControlLaw{T,V},
-    g::MixedConstraint{T,V},
-    μ::Multiplier{T,V},
+    u::ControlLaw{<:Function,T,V},
+    g::MixedConstraint{<:Function,T,V},
+    μ::Multiplier{<:Function,T,V},
 ) where {T,V}
     f, f⁰, p⁰, s = __get_data_for_ocp_flow(ocp) # data
     @assert f ≠ nothing "no dynamics in ocp"
@@ -85,7 +85,7 @@ function __create_hamiltonian(ocp::OptimalControlModel{T,V}, u::Function, g, μ)
 end
 
 function __create_hamiltonian(
-    ocp::OptimalControlModel{T,V}, u_::FeedbackControl{T,V}, g, μ
+    ocp::OptimalControlModel{T,V}, u_::FeedbackControl{<:Function,T,V}, g, μ
 ) where {T,V}
     u = @match (T, V) begin
         (Autonomous, Fixed) => ControlLaw((x, p) -> u_(x), T, V)
@@ -97,13 +97,13 @@ function __create_hamiltonian(
 end
 
 function __create_hamiltonian(
-    ocp::OptimalControlModel{T,V}, u::ControlLaw{T,V}, g::Function, μ
+    ocp::OptimalControlModel{T,V}, u::ControlLaw{<:Function,T,V}, g::Function, μ
 ) where {T,V}
     return __create_hamiltonian(ocp, u, MixedConstraint(g, T, V), μ)
 end
 
 function __create_hamiltonian(
-    ocp::OptimalControlModel{T,V}, u::ControlLaw{T,V}, g_::StateConstraint{T,V}, μ
+    ocp::OptimalControlModel{T,V}, u::ControlLaw{<:Function,T,V}, g_::StateConstraint{<:Function,T,V}, μ
 ) where {T,V}
     g = @match (T, V) begin
         (Autonomous, Fixed) => MixedConstraint((x, u) -> g_(x), T, V)
@@ -115,7 +115,7 @@ function __create_hamiltonian(
 end
 
 function __create_hamiltonian(
-    ocp::OptimalControlModel{T,V}, u::ControlLaw{T,V}, g::MixedConstraint{T,V}, μ::Function
+    ocp::OptimalControlModel{T,V}, u::ControlLaw{<:Function,T,V}, g::MixedConstraint{<:Function,T,V}, μ::Function
 ) where {T,V}
     return __create_hamiltonian(ocp, u, g, Multiplier(μ, T, V))
 end

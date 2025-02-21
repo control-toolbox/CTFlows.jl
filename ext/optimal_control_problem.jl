@@ -16,7 +16,7 @@ julia> f = Flow(ocp, (x, p) -> p)
 """
 function CTFlows.Flow(
     ocp::OptimalControlModel{T,V},
-    u_::Union{Function,ControlLaw{T,V}};
+    u_::Union{Function,ControlLaw{<:Function,T,V}};
     alg=__alg(),
     abstol=__abstol(),
     reltol=__reltol(),
@@ -47,9 +47,9 @@ julia> f = Flow(ocp, (t, x, p) -> p[1], (t, x, u) -> x[1] - 1, (t, x, p) -> x[1]
 """
 function CTFlows.Flow(
     ocp::OptimalControlModel{T,V},
-    u_::Union{Function,ControlLaw{T,V},FeedbackControl{T,V}},
-    g_::Union{Function,MixedConstraint{T,V},StateConstraint{T,V}},
-    μ_::Union{Function,Multiplier{T,V}};
+    u_::Union{Function,ControlLaw{<:Function,T,V},FeedbackControl{<:Function,T,V}},
+    g_::Union{Function,MixedConstraint{<:Function,T,V},StateConstraint{<:Function,T,V}},
+    μ_::Union{Function,Multiplier{<:Function,T,V}};
     alg=__alg(),
     abstol=__abstol(),
     reltol=__reltol(),
