@@ -1,4 +1,5 @@
 function test_optimal_control_problem()
+
     @testset "Double integrator - energy" begin
         t0 = 0
         tf = 1
