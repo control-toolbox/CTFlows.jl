@@ -104,13 +104,17 @@ function CTBase.OptimalControlSolution(ocfs::OptimalControlFlowSolution; kwargs.
     p(t) = ocfs.ode_sol(t)[rg(n + 1, 2n)]
     u(t) = ocfs.feedback_control(t, x(t), p(t), v)
 
-    # the objmust be computed and pass to OptimalControlSolution
+    # the obj must be computed and pass to OptimalControlSolution
     t0 = T[1]
     tf = T[end]
-    obj = has_mayer_cost(ocp) ? mayer(ocp)(x(t0), x(tf), v) : 0
+
+    may = __mayer(ocp)
+    lag = __lagrange(ocp)
+
+    obj = has_mayer_cost(ocp) ? may(x(t0), x(tf), v) : 0
     if has_lagrange_cost(ocp)
         try
-            ϕ(_, _, t) = [lagrange(ocp)(t, x(t), u(t), v)]
+            ϕ(_, _, t) = [lag(t, x(t), u(t), v)]
             tspan = (t0, tf)
             x0 = [0.0]
             prob = ODEProblem(ϕ, x0, tspan)
