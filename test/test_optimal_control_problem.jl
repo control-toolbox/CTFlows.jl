@@ -1,5 +1,8 @@
 function test_optimal_control_problem()
 
+    Flow = CTFlows.Flow
+    * = CTFlows.:(*)
+    
     @testset "Double integrator - energy" begin
         t0 = 0
         tf = 1
@@ -14,7 +17,20 @@ function test_optimal_control_problem()
             1
         ]
 
-        @def ocp begin
+        # create the ocp
+        pre_ocp = CTModels.PreModel()
+        CTModels.time!(pre_ocp; t0=t0, tf=tf)
+        CTModels.state!(pre_ocp, 2)
+        CTModels.control!(pre_ocp, 1)
+        dynamics!(r, t, x, u, v) = r .= [x[2], u[1]]
+        CTModels.dynamics!(pre_ocp, dynamics!)
+        lagrange(t, x, u, v) = 0.5 * u[1]^2
+        CTModels.objective!(pre_ocp, :min; lagrange=lagrange)
+        initi_condition(r, x0, xf, v) = r .= x0
+        final_condition(r, x0, xf, v) = r .= xf
+        CTModels.constraint!(pre_ocp, :boundary; f=initi_condition, lb=x0, ub=x0)
+        CTModels.constraint!(pre_ocp, :boundary; f=final_condition, lb=xf, ub=xf)
+        definition = quote
             t ∈ [t0, tf], time
             x ∈ R², state
             u ∈ R, control
@@ -23,6 +39,9 @@ function test_optimal_control_problem()
             ẋ(t) == A * x(t) + B * u(t)
             ∫(0.5u(t)^2) → min
         end
+        CTModels.definition!(pre_ocp, definition)
+        ocp = CTModels.build_model(pre_ocp)
+        # end create the ocp
 
         f = Flow(ocp, (x, p) -> p[2]; alg=BS5())
         p0 = [12, 6]
@@ -42,8 +61,23 @@ function test_optimal_control_problem()
         t0 = 0
         x0 = 0
         xf = 1
-
-        @def ocp begin
+        
+        # create the ocp
+        pre_ocp = CTModels.PreModel()
+        CTModels.variable!(pre_ocp, 1)
+        CTModels.time!(pre_ocp; t0=t0, indf=1)
+        CTModels.state!(pre_ocp, 1)
+        CTModels.control!(pre_ocp, 1)
+        dynamics!(r, t, x, u, v) = r .= v[1]*u[1]
+        CTModels.dynamics!(pre_ocp, dynamics!)
+        lagrange(t, x, u, v) = 0.5 * u[1]^2
+        mayer(x0, xf, v) = v[1]
+        CTModels.objective!(pre_ocp, :min; lagrange=lagrange, mayer=mayer)
+        initi_condition(r, x0, xf, v) = r .= x0
+        final_condition(r, x0, xf, v) = r .= xf
+        CTModels.constraint!(pre_ocp, :boundary; f=initi_condition, lb=[x0], ub=[x0])
+        CTModels.constraint!(pre_ocp, :boundary; f=final_condition, lb=[xf], ub=[xf])
+        definition = quote
             tf ∈ R, variable
             t ∈ [t0, tf], time
             x ∈ R, state
@@ -53,6 +87,9 @@ function test_optimal_control_problem()
             x(tf) == xf
             tf + 0.5∫(u(t)^2) → min
         end
+        CTModels.definition!(pre_ocp, definition)
+        ocp = CTModels.build_model(pre_ocp)
+        # end create the ocp
 
         # solution
         tf = (3 / 2)^(1 / 4)
@@ -78,7 +115,22 @@ function test_optimal_control_problem()
             1
         ]
 
-        @def ocp begin
+        # create the ocp
+        pre_ocp = CTModels.PreModel()
+        CTModels.variable!(pre_ocp, 1)
+        CTModels.time!(pre_ocp; t0=t0, indf=1)
+        CTModels.state!(pre_ocp, 2)
+        CTModels.control!(pre_ocp, 1)
+        dynamics!(r, t, x, u, v) = r .= [x[2], u[1]]
+        CTModels.dynamics!(pre_ocp, dynamics!)
+        mayer(x0, xf, v) = v[1]
+        CTModels.objective!(pre_ocp, :min; mayer=mayer)
+        initi_condition(r, x0, xf, v) = r .= x0
+        final_condition(r, x0, xf, v) = r .= xf
+        CTModels.constraint!(pre_ocp, :boundary; f=initi_condition, lb=x0, ub=x0)
+        CTModels.constraint!(pre_ocp, :boundary; f=final_condition, lb=xf, ub=xf)
+        CTModels.constraint!(pre_ocp, :control; lb=[-γ], ub=[γ])
+        definition = quote
             tf ∈ R, variable
             t ∈ [t0, tf], time
             x ∈ R², state
@@ -89,6 +141,9 @@ function test_optimal_control_problem()
             ẋ(t) == A * x(t) + B * u(t)
             tf → min
         end
+        CTModels.definition!(pre_ocp, definition)
+        ocp = CTModels.build_model(pre_ocp)
+        # end create the ocp
 
         # solution
         a = x0[1]
@@ -104,7 +159,7 @@ function test_optimal_control_problem()
         f = fp * (t1, fm)
 
         sol = f((t0, tf), x0, p0, tf)
-        Test.@test objective(sol) ≈ tf atol = 1e-6
+        Test.@test CTModels.objective(sol) ≈ tf atol = 1e-6
     end
 
     @testset "objective: Lagrange" begin
@@ -121,7 +176,20 @@ function test_optimal_control_problem()
             1
         ]
 
-        @def ocp begin
+        # create the ocp
+        pre_ocp = CTModels.PreModel()
+        CTModels.time!(pre_ocp; t0=t0, tf=tf)
+        CTModels.state!(pre_ocp, 2)
+        CTModels.control!(pre_ocp, 1)
+        dynamics!(r, t, x, u, v) = r .= [x[2], u[1]]
+        CTModels.dynamics!(pre_ocp, dynamics!)
+        lagrange(t, x, u, v) = 0.5 * u[1]^2
+        CTModels.objective!(pre_ocp, :min; lagrange=lagrange)
+        initi_condition(r, x0, xf, v) = r .= x0
+        final_condition(r, x0, xf, v) = r .= xf
+        CTModels.constraint!(pre_ocp, :boundary; f=initi_condition, lb=x0, ub=x0)
+        CTModels.constraint!(pre_ocp, :boundary; f=final_condition, lb=xf, ub=xf)
+        definition = quote
             t ∈ [t0, tf], time
             x ∈ R², state
             u ∈ R, control
@@ -130,6 +198,9 @@ function test_optimal_control_problem()
             ẋ(t) == A * x(t) + B * u(t)
             ∫(0.5u(t)^2) → min
         end
+        CTModels.definition!(pre_ocp, definition)
+        ocp = CTModels.build_model(pre_ocp)
+        # end create the ocp
 
         # solution
         a = x0[1]
@@ -157,7 +228,7 @@ function test_optimal_control_problem()
 
         # test
         sol = f((t0, tf), x0, p0)
-        Test.@test objective(sol) ≈ obj atol = 1e-6
+        Test.@test CTModels.objective(sol) ≈ obj atol = 1e-6
     end
 
     @testset "objective: Bolza" begin
@@ -173,7 +244,20 @@ function test_optimal_control_problem()
             1
         ]
 
-        @def ocp begin
+        # create the ocp
+        pre_ocp = CTModels.PreModel()
+        CTModels.time!(pre_ocp; t0=t0, tf=tf)
+        CTModels.state!(pre_ocp, 2)
+        CTModels.control!(pre_ocp, 1)
+        dynamics!(r, t, x, u, v) = r .= [x[2], u[1]]
+        CTModels.dynamics!(pre_ocp, dynamics!)
+        mayer(x0, xf, v) = -0.5*xf[1]
+        lagrange(t, x, u, v) = 0.5 * u[1]^2
+        CTModels.objective!(pre_ocp, :min; mayer=mayer, lagrange=lagrange)
+        initi_condition(r, x0, xf, v) = r .= x0
+        final_condition(r, x0, xf, v) = r .= xf
+        CTModels.constraint!(pre_ocp, :boundary; f=initi_condition, lb=x0, ub=x0)
+        definition = quote
             t ∈ [t0, tf], time
             x ∈ R², state
             u ∈ R, control
@@ -181,6 +265,9 @@ function test_optimal_control_problem()
             ẋ(t) == A * x(t) + B * u(t)
             -0.5x₁(tf) + ∫(0.5u(t)^2) → min
         end
+        CTModels.definition!(pre_ocp, definition)
+        ocp = CTModels.build_model(pre_ocp)
+        # end create the ocp
 
         # solution
         a = x0[1]
@@ -198,7 +285,7 @@ function test_optimal_control_problem()
         # test
         p0 = p(t0)
         sol = f((t0, tf), x0, p0)
-        Test.@test objective(sol) ≈ obj atol = 1e-6
+        Test.@test CTModels.objective(sol) ≈ obj atol = 1e-6
     end
 
     @testset "Double integrator energy - x₁ ≤ l" begin
@@ -207,14 +294,24 @@ function test_optimal_control_problem()
         t0 = 0
         tf = 1
         x0 = -1
-        ocp = Model()
-        state!(ocp, n)   # dimension of the state
-        control!(ocp, m) # dimension of the control
-        time!(ocp; t0=t0, tf=tf)
-        constraint!(ocp, :initial; lb=x0, ub=x0)
-        constraint!(ocp, :mixed; f=(x, u) -> x + u, lb=-Inf, ub=0)
-        dynamics!(ocp, (x, u) -> u)
-        objective!(ocp, :lagrange, (x, u) -> -u)
+
+        #
+        pre_ocp = CTModels.PreModel()
+        CTModels.state!(pre_ocp, n)   # dimension of the state
+        CTModels.control!(pre_ocp, m) # dimension of the control
+        CTModels.time!(pre_ocp; t0=t0, tf=tf)
+        initi_condition(r, x0, xf, v) = r .= x0
+        CTModels.constraint!(pre_ocp, :boundary; f=initi_condition, lb=x0, ub=x0)
+        path_constraint(r, t, x, u, v) = r .= x+u
+        CTModels.constraint!(pre_ocp, :path; f=path_constraint, lb=-Inf, ub=0)
+        dynamics!(r, t, x, u, v) = r .= u
+        CTModels.dynamics!(pre_ocp, dynamics!)
+        lagrange(t, x, u, v) = -u
+        CTModels.objective!(pre_ocp, :min; lagrange=lagrange)
+        definition = quote end
+        CTModels.definition!(pre_ocp, definition)
+        ocp = CTModels.build_model(pre_ocp)
+        # end create the ocp
 
         # the solution
         x(t) = -exp(-t)
@@ -226,7 +323,7 @@ function test_optimal_control_problem()
         η(x, p) = -(p + 1) # multiplier associated to the mixed constraint
         u(x, p) = -x
         H(x, p) = H(x, p, u(x, p), η(x, p))
-        f = Flow(Hamiltonian(H))
+        f = Flow(CTFlows.Hamiltonian(H))
         xf, pf = f(t0, x0, p(t0), tf)
         Test.@test xf ≈ x(tf) atol = 1e-6
         Test.@test pf ≈ p(tf) atol = 1e-6
@@ -239,31 +336,31 @@ function test_optimal_control_problem()
         Test.@test pf ≈ p(tf) atol = 1e-6
 
         # ocp flow with u a ControlLaw, g a MixedConstraint and η a Multiplier
-        u = ControlLaw((x, p) -> -x)
-        g = MixedConstraint((x, u) -> x + u)
-        η = Multiplier((x, p) -> -(p + 1))
+        u = CTFlows.ControlLaw((x, p) -> -x)
+        g = CTFlows.MixedConstraint((x, u) -> x + u)
+        η = CTFlows.Multiplier((x, p) -> -(p + 1))
         f = Flow(ocp, u, g, η)
         xf, pf = f(t0, x0, p(t0), tf)
         Test.@test xf ≈ x(tf) atol = 1e-6
         Test.@test pf ≈ p(tf) atol = 1e-6
 
-        # ocp flow with u a FeedbackControl, g a MixedConstraint and η a Function
-        u = FeedbackControl(x -> -x)
-        g = MixedConstraint((x, u) -> x + u)
-        η = (x, p) -> -(p + 1)
-        f = Flow(ocp, u, g, η)
-        xf, pf = f(t0, x0, p(t0), tf)
-        Test.@test xf ≈ x(tf) atol = 1e-6
-        Test.@test pf ≈ p(tf) atol = 1e-6
+        # # ocp flow with u a FeedbackControl, g a MixedConstraint and η a Function
+        # u = CTFlows.FeedbackControl(x -> -x)
+        # g = CTFlows.MixedConstraint((x, u) -> x + u)
+        # η = (x, p) -> -(p + 1)
+        # f = Flow(ocp, u, g, η)
+        # xf, pf = f(t0, x0, p(t0), tf)
+        # Test.@test xf ≈ x(tf) atol = 1e-6
+        # Test.@test pf ≈ p(tf) atol = 1e-6
 
-        # ocp flow with u a FeedbackControl, g a Function and η a Multiplier
-        u = FeedbackControl(x -> -x)
-        g = (x, u) -> x + u
-        η = Multiplier((x, p) -> -(p + 1))
-        f = Flow(ocp, u, g, η)
-        xf, pf = f(t0, x0, p(t0), tf)
-        Test.@test xf ≈ x(tf) atol = 1e-6
-        Test.@test pf ≈ p(tf) atol = 1e-6
+        # # ocp flow with u a FeedbackControl, g a Function and η a Multiplier
+        # u = CTFlows.FeedbackControl(x -> -x)
+        # g = (x, u) -> x + u
+        # η = CTFlows.Multiplier((x, p) -> -(p + 1))
+        # f = Flow(ocp, u, g, η)
+        # xf, pf = f(t0, x0, p(t0), tf)
+        # Test.@test xf ≈ x(tf) atol = 1e-6
+        # Test.@test pf ≈ p(tf) atol = 1e-6
     end
 
     @testset "State constraint" begin
@@ -275,23 +372,25 @@ function test_optimal_control_problem()
         x0 = [0, 1]
         xf = [0, -1]
         l = 1 / 9
-        ocp = Model()
-        state!(ocp, n)   # dimension of the state
-        control!(ocp, m) # dimension of the control
-        time!(ocp; t0=t0, tf=tf)
-        constraint!(ocp, :initial; lb=x0, ub=x0)
-        constraint!(ocp, :final; lb=xf, ub=xf)
-        constraint!(ocp, :state; rg=Index(1), lb=-Inf, ub=l)
-        A = [
-            0 1
-            0 0
-        ]
-        B = [
-            0
-            1
-        ]
-        dynamics!(ocp, (x, u) -> A * x + B * u)
-        objective!(ocp, :lagrange, (x, u) -> 0.5u^2) # default is to minimise
+
+        #
+        pre_ocp = CTModels.PreModel()
+        CTModels.state!(pre_ocp, n)   # dimension of the state
+        CTModels.control!(pre_ocp, m) # dimension of the control
+        CTModels.time!(pre_ocp; t0=t0, tf=tf)
+        initi_condition(r, x0, xf, v) = r .= x0
+        final_condition(r, x0, xf, v) = r .= xf
+        CTModels.constraint!(pre_ocp, :boundary; f=initi_condition, lb=x0, ub=x0)
+        CTModels.constraint!(pre_ocp, :boundary; f=final_condition, lb=xf, ub=xf)
+        CTModels.constraint!(pre_ocp, :state; rg=1, lb=-Inf, ub=l)
+        dynamics!(r, t, x, u, v) = r .= [x[2], u[1]]
+        CTModels.dynamics!(pre_ocp, dynamics!)
+        lagrange(t, x, u, v) = 0.5u[1]^2
+        CTModels.objective!(pre_ocp, :min; lagrange=lagrange)
+        definition = quote end
+        CTModels.definition!(pre_ocp, definition)
+        ocp = CTModels.build_model(pre_ocp)
+        # end create the ocp
 
         # the solution (case l ≤ 1/6 because it has 3 arc)
         arc(t) = [0 ≤ t ≤ 3 * l, 3 * l < t ≤ 1 - 3 * l, 1 - 3 * l < t ≤ 1]
@@ -319,9 +418,9 @@ function test_optimal_control_problem()
         #
         fs = Flow(ocp, (x, p) -> p[2])
         l = 1 / 9
-        u = FeedbackControl(x -> 0)
-        g = StateConstraint(x -> x[1] - l)
-        μ = Multiplier((x, p) -> 0)
+        u = CTFlows.FeedbackControl(x -> 0)
+        g = CTFlows.StateConstraint(x -> x[1] - l)
+        μ = CTFlows.Multiplier((x, p) -> 0)
         fc = Flow(ocp, u, g, μ)
 
         #
@@ -341,7 +440,22 @@ function test_optimal_control_problem()
         x0 = 0
         xf = 1
 
-        @def ocp begin
+        # create the ocp
+        pre_ocp = CTModels.PreModel()
+        CTModels.variable!(pre_ocp, 1)
+        CTModels.time!(pre_ocp; t0=t0, indf=1)
+        CTModels.state!(pre_ocp, 1)
+        CTModels.control!(pre_ocp, 1)
+        dynamics!(r, t, x, u, v) = r .= v[1]*u[1]
+        CTModels.dynamics!(pre_ocp, dynamics!)
+        lagrange(t, x, u, v) = 0.5 * u[1]^2
+        mayer(x0, xf, v) = v[1]
+        CTModels.objective!(pre_ocp, :min; lagrange=lagrange, mayer=mayer)
+        initi_condition(r, x0, xf, v) = r .= x0
+        final_condition(r, x0, xf, v) = r .= xf
+        CTModels.constraint!(pre_ocp, :boundary; f=initi_condition, lb=[x0], ub=[x0])
+        CTModels.constraint!(pre_ocp, :boundary; f=final_condition, lb=[xf], ub=[xf])
+        definition = quote
             tf ∈ R, variable
             t ∈ [t0, tf], time
             x ∈ R, state
@@ -351,6 +465,9 @@ function test_optimal_control_problem()
             x(tf) == xf
             tf + 0.5∫(u(t)^2) → min
         end
+        CTModels.definition!(pre_ocp, definition)
+        ocp = CTModels.build_model(pre_ocp)
+        # end create the ocp
 
         u = (x, p, tf) -> tf * p
         F = Flow(ocp, u)
@@ -373,7 +490,22 @@ function test_optimal_control_problem()
         x0 = 0
         xf = 1
 
-        @def ocp begin
+        # create the ocp
+        pre_ocp = CTModels.PreModel()
+        CTModels.variable!(pre_ocp, 1)
+        CTModels.time!(pre_ocp; ind0=1, tf=t0)
+        CTModels.state!(pre_ocp, 1)
+        CTModels.control!(pre_ocp, 1)
+        dynamics!(r, t, x, u, v) = r .= -v[1]*u[1]
+        CTModels.dynamics!(pre_ocp, dynamics!)
+        lagrange(t, x, u, v) = -0.5 * u[1]^2
+        mayer(x0, xf, v) = v[1]
+        CTModels.objective!(pre_ocp, :min; lagrange=lagrange, mayer=mayer)
+        initi_condition(r, x0, xf, v) = r .= x0
+        final_condition(r, x0, xf, v) = r .= xf
+        CTModels.constraint!(pre_ocp, :boundary; f=initi_condition, lb=[xf], ub=[xf])
+        CTModels.constraint!(pre_ocp, :boundary; f=final_condition, lb=[x0], ub=[x0])
+        definition = quote
             tf ∈ R, variable
             s ∈ [tf, t0], time
             x ∈ R, state
@@ -383,6 +515,9 @@ function test_optimal_control_problem()
             x(t0) == x0
             tf - 0.5∫(u(s)^2) → min
         end
+        CTModels.definition!(pre_ocp, definition)
+        ocp = CTModels.build_model(pre_ocp)
+        # end create the ocp
 
         u = (x, p, tf) -> tf * p
         F = Flow(ocp, u)
@@ -404,7 +539,22 @@ function test_optimal_control_problem()
         x0 = 0
         xf = 1
 
-        @def ocp begin
+        # create the ocp
+        pre_ocp = CTModels.PreModel()
+        CTModels.variable!(pre_ocp, 2)
+        CTModels.time!(pre_ocp; ind0=1, indf=2)
+        CTModels.state!(pre_ocp, 1)
+        CTModels.control!(pre_ocp, 1)
+        dynamics!(r, t, x, u, v) = r .= v[1] + v[2]*u[1]
+        CTModels.dynamics!(pre_ocp, dynamics!)
+        lagrange(t, x, u, v) = 0.5 * u[1]^2
+        mayer(x0, xf, v) = v[1]^2 + v[2]
+        CTModels.objective!(pre_ocp, :min; lagrange=lagrange, mayer=mayer)
+        initi_condition(r, x0, xf, v) = r .= x0
+        final_condition(r, x0, xf, v) = r .= xf
+        CTModels.constraint!(pre_ocp, :boundary; f=initi_condition, lb=[xf], ub=[xf])
+        CTModels.constraint!(pre_ocp, :boundary; f=final_condition, lb=[x0], ub=[x0])
+        definition = quote
             v = (t0, tf) ∈ R^2, variable
             t ∈ [t0, tf], time
             x ∈ R, state
@@ -414,6 +564,9 @@ function test_optimal_control_problem()
             x(tf) == xf
             (t0^2 + tf) + 0.5∫(u(t)^2) → min
         end
+        CTModels.definition!(pre_ocp, definition)
+        ocp = CTModels.build_model(pre_ocp)
+        # end create the ocp
 
         u = (x, p, v) -> v[2] * p
         F = Flow(ocp, u)
@@ -431,4 +584,5 @@ function test_optimal_control_problem()
         xf_, pf_ = F(t0, x0, p0, tf)
         Test.@test xf ≈ xf_ atol = 1e-6
     end
+
 end

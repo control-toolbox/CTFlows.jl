@@ -51,7 +51,7 @@ end
 # --------------------------------------------------------------------------------------------
 # Flow of a vector field
 function CTFlows.Flow(
-    vf::VectorField;
+    vf::CTFlows.VectorField;
     alg=__alg(),
     abstol=__abstol(),
     reltol=__reltol(),

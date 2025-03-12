@@ -1,4 +1,7 @@
 function test_flow_function()
+
+    Flow = CTFlows.Flow
+
     @testset "4D autonomous, non variable" begin
         V(z) = [z[2], z[2 + 2], 0.0, -z[2 + 1]]
         z = Flow(V)

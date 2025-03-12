@@ -1,12 +1,15 @@
 name = "CTFlows"
 uuid = "1c39547c-7794-42f7-af83-d98194f657c2"
 authors = ["Olivier Cots <olivier.cots@toulouse-inp.fr>"]
-version = "0.7.0"
+version = "0.8.0"
 
 [deps]
 CTBase = "54762871-cc72-4466-b8e8-f6c8b58076cd"
+CTModels = "34c4fa32-2049-4079-8329-de33c2a22e2d"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 MLStyle = "d8e11817-5142-5d16-987a-aa16d5891078"
+MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
 
 [weakdeps]
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
@@ -15,8 +18,11 @@ OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 CTFlowsODE = "OrdinaryDiffEq"
 
 [compat]
-CTBase = "0.14"
+CTBase = "0.15"
+CTModels = "0.2"
 DocStringExtensions = "0.9"
+ForwardDiff = "0.10"
 MLStyle = "0.4"
+MacroTools = "0.5"
 OrdinaryDiffEq = "6"
 julia = "1.10"

@@ -55,8 +55,8 @@ end
 # --------------------------------------------------------------------------------------------
 function CTFlows.Flow(
     dyn::Function;
-    autonomous=true,
-    variable=false,
+    autonomous=__autonomous(),
+    variable=__variable(),
     alg=__alg(),
     abstol=__abstol(),
     reltol=__reltol(),
