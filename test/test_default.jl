@@ -7,5 +7,5 @@ function test_default()
     Test.@test CTFlowsODE.__reltol() < 1
     Test.@test CTFlowsODE.__saveat() isa Vector
     Test.@test CTFlowsODE.__alg() isa Tsit5
-    Test.@test CTFlowsODE.__tstops() isa Vector{<:Time}
+    Test.@test CTFlowsODE.__tstops() isa Vector{<:CTFlows.Time}
 end
