@@ -32,7 +32,7 @@ function __concat_feedback_control(F::AbstractFlow, G::AbstractFlow, t_switch::T
             G.feedback_control(t, x, u, v)
         end
     end
-    feedback_control = ControlLaw(_feedback_control, NonAutonomous, NonFixed)
+    feedback_control = CTFlows.ControlLaw(_feedback_control, CTFlows.NonAutonomous, CTFlows.NonFixed)
     return feedback_control
 end
 

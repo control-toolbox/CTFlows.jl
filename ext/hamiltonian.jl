@@ -64,7 +64,7 @@ $(TYPEDSIGNATURES)
 
 The right and side from a Hamiltonian.
 """
-function rhs(h::AbstractHamiltonian)
+function rhs(h::CTFlows.AbstractHamiltonian)
     function rhs!(dz::DCoTangent, z::CoTangent, v::Variable, t::Time)
         n = size(z, 1) ÷ 2
         foo(z) = h(t, z[rg(1, n)], z[rg(n + 1, 2n)], v)
@@ -78,7 +78,7 @@ end
 # --------------------------------------------------------------------------------------------
 # Flow from a Hamiltonian
 function CTFlows.Flow(
-    h::AbstractHamiltonian;
+    h::CTFlows.AbstractHamiltonian;
     alg=__alg(),
     abstol=__abstol(),
     reltol=__reltol(),
@@ -94,7 +94,7 @@ end
 # --------------------------------------------------------------------------------------------
 # Flow from a Hamiltonian Vector Field
 function CTFlows.Flow(
-    hv::HamiltonianVectorField;
+    hv::CTFlows.HamiltonianVectorField;
     alg=__alg(),
     abstol=__abstol(),
     reltol=__reltol(),

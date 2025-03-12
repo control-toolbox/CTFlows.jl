@@ -1,7 +1,10 @@
 function test_flow_hamiltonian_vector_field()
+
+    Flow = CTFlows.Flow
+
     @testset "2D autonomous, non variable" begin
         Hv(x, p) = [x[2], p[2]], [0.0, -p[1]]
-        z = Flow(HamiltonianVectorField(Hv))
+        z = Flow(CTFlows.HamiltonianVectorField(Hv))
         t0 = 0.0
         tf = 1.0
         x0 = [-1.0, 0.0]
@@ -13,7 +16,7 @@ function test_flow_hamiltonian_vector_field()
 
     @testset "2D non autonomous, variable" begin
         Hv(t, x, p, l) = [x[2], (2 + l) * p[2]], [0.0, -p[1]]
-        z = Flow(HamiltonianVectorField(Hv; autonomous=false, variable=true))
+        z = Flow(CTFlows.HamiltonianVectorField(Hv; autonomous=false, variable=true))
         t0 = 0.0
         tf = 1.0
         x0 = [-1.0, 0.0]
@@ -25,7 +28,7 @@ function test_flow_hamiltonian_vector_field()
 
     @testset "1D autonomous, non variable" begin
         H1v(x, p) = 2p, -2x
-        z = Flow(HamiltonianVectorField(H1v))
+        z = Flow(CTFlows.HamiltonianVectorField(H1v))
         x0 = 1.0
         p0 = 0.0
         xf, pf = z(0.0, x0, p0, 2π)

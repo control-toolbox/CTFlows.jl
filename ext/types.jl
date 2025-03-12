@@ -1,3 +1,14 @@
+const ctNumber = CTModels.ctNumber
+const ctVector = Union{ctNumber,CTModels.ctVector}
+const Time     = ctNumber
+const Times    = AbstractVector{<:Time}
+const State    = ctVector
+const Costate  = ctVector
+const Control  = ctVector
+const Variable = ctVector
+const DState   = ctVector
+const DCostate = ctVector
+
 # ---------------------------------------------------------------------------------------------------
 # This is the flow returned by the function Flow
 # The call to the flow is given after.
@@ -82,8 +93,8 @@ $(TYPEDFIELDS)
 struct OptimalControlFlowSolution
     # 
     ode_sol::Any
-    feedback_control::ControlLaw # the control law in state-costate feedback form, that is u(t, x, p, v)
-    ocp::OptimalControlModel
+    feedback_control::CTFlows.ControlLaw # the control law in state-costate feedback form, that is u(t, x, p, v)
+    ocp::CTModels.Model
     variable::Variable
 end
 
@@ -95,9 +106,9 @@ $(TYPEDSIGNATURES)
 Construct an `OptimalControlSolution` from an `OptimalControlFlowSolution`.
 
 """
-function CTBase.OptimalControlSolution(ocfs::OptimalControlFlowSolution; kwargs...)
+function CTModels.Solution(ocfs::OptimalControlFlowSolution; kwargs...)
     ocp = ocfs.ocp
-    n = state_dimension(ocp)
+    n = CTModels.state_dimension(ocp)
     T = ocfs.ode_sol.t
     v = ocfs.variable
     x(t) = ocfs.ode_sol(t)[rg(1, n)]
@@ -108,11 +119,11 @@ function CTBase.OptimalControlSolution(ocfs::OptimalControlFlowSolution; kwargs.
     t0 = T[1]
     tf = T[end]
 
-    may = __mayer(ocp)
-    lag = __lagrange(ocp)
+    may = CTFlows.__mayer(ocp)
+    lag = CTFlows.__lagrange(ocp)
 
-    obj = has_mayer_cost(ocp) ? may(x(t0), x(tf), v) : 0
-    if has_lagrange_cost(ocp)
+    obj = CTModels.has_mayer_cost(ocp) ? may(x(t0), x(tf), v) : 0
+    if CTModels.has_lagrange_cost(ocp)
         try
             ϕ(_, _, t) = [lag(t, x(t), u(t), v)]
             tspan = (t0, tf)
@@ -126,17 +137,41 @@ function CTBase.OptimalControlSolution(ocfs::OptimalControlFlowSolution; kwargs.
         end
     end
 
-    # we provide the variable only if the problem is NonFixed
-    kwargs_OCS = CTBase.is_fixed(ocp) ? () : (variable=v,)
-    kwargs_OCS = (
-        kwargs_OCS...,
-        time_grid=T,
-        state=t -> x(t),
-        costate=t -> p(t),
-        control=t -> u(t),
-        objective=obj,
+    #
+    N = length(T)
+    X = zeros(N, n)
+    for i in 1:N
+        t = T[i]
+        X[i, :] .= x(t)
+    end
+    P = zeros(N-1, n)
+    for i in 1:N-1
+        t = T[i]
+        P[i, :] .= p(t)
+    end
+    m = CTModels.control_dimension(ocp)
+    U = zeros(N, m)
+    for i in 1:N
+        t = T[i]
+        U[i, :] .= u(t)
+    end
+    v = v isa Number ? Float64[v] : v
+    kwargs_OCS = obj==NaN ? () : (objective=obj,)
+
+    sol = CTModels.build_solution(
+        ocp,
+        Vector{Float64}(T), #::Vector{Float64},
+        X, #::Matrix{Float64},
+        U, #::Matrix{Float64},
+        Float64.(v), #::Vector{Float64},
+        P; #::Matrix{Float64};
+        iterations=-1,
+        constraints_violation=-1.0,
+        message="no message",
+        stopping=:nostoppingmessage,
+        success=true,    
+        kwargs_OCS...
     )
-    sol = CTBase.OptimalControlSolution(ocp; kwargs_OCS...)
 
     return sol
 end
@@ -150,26 +185,31 @@ struct OptimalControlFlow{VD} <: AbstractFlow{DCoTangent,CoTangent}
     tstops::Times    # specific times  the integrator must stop
     # useful when the rhs is not smooth at such times
     jumps::Vector{Tuple{Time,Costate}} # specific jumps the integrator must perform
-    feedback_control::ControlLaw # the control law in feedback form, that is u(t, x, p, v)
-    ocp::OptimalControlModel{<:TimeDependence,VD} # the optimal control problem
+    feedback_control::CTFlows.ControlLaw # the control law in feedback form, that is u(t, x, p, v)
+    ocp::CTModels.Model # the optimal control problem
     kwargs_Flow::Any     #
 
     # constructor
     function OptimalControlFlow(
         f::Function,
         rhs!::Function,
-        u::ControlLaw,
-        ocp::OptimalControlModel{<:TimeDependence,VD},
+        u::CTFlows.ControlLaw,
+        ocp::CTModels.Model,
         kwargs_Flow,
         tstops::Times=Vector{Time}(),
         jumps::Vector{Tuple{Time,Costate}}=Vector{Tuple{Time,Costate}}(),
-    ) where {VD<:VariableDependence}
+    )
+        VD = if CTModels.variable_dimension(ocp)==0
+            CTFlows.Fixed
+        else
+            CTFlows.NonFixed
+        end
         return new{VD}(f, rhs!, tstops, jumps, u, ocp, kwargs_Flow)
     end
 end
 
 # call F.f
-function (F::OptimalControlFlow{Fixed})(
+function (F::OptimalControlFlow{CTFlows.Fixed})(
     t0::Time, x0::State, p0::Costate, tf::Time; kwargs...
 )
     return F.f(
@@ -184,7 +224,7 @@ function (F::OptimalControlFlow{Fixed})(
     )
 end
 
-function (F::OptimalControlFlow{NonFixed})(
+function (F::OptimalControlFlow{CTFlows.NonFixed})(
     t0::Time,
     x0::State,
     p0::Costate,
@@ -206,7 +246,7 @@ function (F::OptimalControlFlow{NonFixed})(
 end
 
 # call F.f and then, construct an optimal control solution
-function (F::OptimalControlFlow{Fixed})(
+function (F::OptimalControlFlow{CTFlows.Fixed})(
     tspan::Tuple{Time,Time}, x0::State, p0::Costate; kwargs...
 )
     ode_sol = F.f(
@@ -215,10 +255,10 @@ function (F::OptimalControlFlow{Fixed})(
     flow_sol = OptimalControlFlowSolution(
         ode_sol, F.feedback_control, F.ocp, __variable(x0, p0)
     )
-    return CTBase.OptimalControlSolution(flow_sol; F.kwargs_Flow..., kwargs...)
+    return CTModels.Solution(flow_sol; F.kwargs_Flow..., kwargs...)
 end
 
-function (F::OptimalControlFlow{NonFixed})(
+function (F::OptimalControlFlow{CTFlows.NonFixed})(
     tspan::Tuple{Time,Time},
     x0::State,
     p0::Costate,
@@ -236,5 +276,5 @@ function (F::OptimalControlFlow{NonFixed})(
         kwargs...,
     )
     flow_sol = OptimalControlFlowSolution(ode_sol, F.feedback_control, F.ocp, v)
-    return CTBase.OptimalControlSolution(flow_sol; F.kwargs_Flow..., kwargs...)
+    return CTModels.Solution(flow_sol; F.kwargs_Flow..., kwargs...)
 end

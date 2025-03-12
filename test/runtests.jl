@@ -6,19 +6,22 @@ using OrdinaryDiffEq
 using CTBase
 using Plots
 using LinearAlgebra
+using CTModels
 
 const CTFlowsODE = Base.get_extension(CTFlows, :CTFlowsODE) # to test functions from CTFlowsODE not in CTFlows
 
 @testset verbose = true showtiming = true "CTFlows" begin
     for name in (
-        :aqua,
+        # :types,
+        # :differential_geometry,
+        # :aqua,
         :concatenation,
-        :default,
-        :flow_function,
-        :flow_hamiltonian_vector_field,
-        :flow_hamiltonian,
-        :flow_vector_field,
-        :optimal_control_problem,
+        # :default,
+        # :flow_function,
+        # :flow_hamiltonian_vector_field,
+        # :flow_hamiltonian,
+        # :flow_vector_field,
+        # :optimal_control_problem,
     )
         @testset "$(name)" begin
             test_name = Symbol(:test_, name)

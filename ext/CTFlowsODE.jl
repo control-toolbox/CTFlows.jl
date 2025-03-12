@@ -2,19 +2,20 @@ module CTFlowsODE
 
 using CTBase
 using CTFlows
+using CTModels
 using OrdinaryDiffEq
 using DocStringExtensions
 using MLStyle
 #
 import CTFlows: Flow, CTFlows
 import Base: *
-import CTBase: OptimalControlSolution, CTBase
+import CTModels: Solution, CTModels
 
 # --------------------------------------------------------------------------------------------------
 # Aliases
-const CoTangent = ctVector
-const DCoTangent = ctVector
-const ctgradient = CTBase.__ctgradient
+const CoTangent  = CTFlows.ctVector
+const DCoTangent = CTFlows.ctVector
+const ctgradient = CTFlows.ctgradient
 
 # types
 abstract type AbstractFlow{D,U} end
@@ -24,6 +25,10 @@ const __create_hamiltonian = CTFlows.__create_hamiltonian
 
 #
 rg(i::Int, j::Int) = i == j ? i : i:j
+
+#
+const __autonomous = CTFlows.__autonomous
+const __variable = CTFlows.__variable
 
 # --------------------------------------------------------------------------------------------#
 include("default.jl")
