@@ -110,9 +110,6 @@ function CTModels.Solution(ocfs::OptimalControlFlowSolution; kwargs...)
     ocp = ocfs.ocp
     n = CTModels.state_dimension(ocp)
     T = ocfs.ode_sol.t
-
-    println("time grid = ", T)
-
     v = ocfs.variable
     x(t) = ocfs.ode_sol(t)[rg(1, n)]
     p(t) = ocfs.ode_sol(t)[rg(n + 1, 2n)]
@@ -141,38 +138,24 @@ function CTModels.Solution(ocfs::OptimalControlFlowSolution; kwargs...)
     end
 
     #
-    N = length(T)
-    X = zeros(N, n)
-    for i in 1:N
-        t = T[i]
-        X[i, :] .= x(t)
-    end
-    P = zeros(N-1, n)
-    for i in 1:N-1
-        t = T[i]
-        P[i, :] .= p(t)
-    end
-    m = CTModels.control_dimension(ocp)
-    U = zeros(N, m)
-    for i in 1:N
-        t = T[i]
-        U[i, :] .= u(t)
-    end
-    v = v isa Number ? Float64[v] : v
+    v = v isa Number ? Float64[v] : Float64.(v)
+    X = deepcopy(t -> x(t))
+    U = deepcopy(t -> u(t))
+    P = deepcopy(t -> p(t))
     kwargs_OCS = obj==NaN ? () : (objective=obj,)
 
     sol = CTModels.build_solution(
         ocp,
         Vector{Float64}(T), #::Vector{Float64},
-        X, #::Matrix{Float64},
-        U, #::Matrix{Float64},
-        Float64.(v), #::Vector{Float64},
-        P; #::Matrix{Float64};
+        X,
+        U,
+        v, #::Vector{Float64},
+        P;
         iterations=-1,
         constraints_violation=-1.0,
         message="no message",
         stopping=:nostoppingmessage,
-        success=true,    
+        success=true,
         kwargs_OCS...
     )
 

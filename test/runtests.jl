@@ -29,6 +29,7 @@ const CTFlowsODE = Base.get_extension(CTFlows, :CTFlowsODE) # to test functions 
     )
         @testset "$(name)" begin
             test_name = Symbol(:test_, name)
+            println("testing: ", string(name))
             include("$(test_name).jl")
             @eval $test_name()
         end
