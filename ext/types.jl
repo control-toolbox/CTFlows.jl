@@ -138,38 +138,24 @@ function CTModels.Solution(ocfs::OptimalControlFlowSolution; kwargs...)
     end
 
     #
-    N = length(T)
-    X = zeros(N, n)
-    for i in 1:N
-        t = T[i]
-        X[i, :] .= x(t)
-    end
-    P = zeros(N-1, n)
-    for i in 1:N-1
-        t = T[i]
-        P[i, :] .= p(t)
-    end
-    m = CTModels.control_dimension(ocp)
-    U = zeros(N, m)
-    for i in 1:N
-        t = T[i]
-        U[i, :] .= u(t)
-    end
-    v = v isa Number ? Float64[v] : v
+    v = v isa Number ? Float64[v] : Float64.(v)
+    X = deepcopy(t -> x(t))
+    U = deepcopy(t -> u(t))
+    P = deepcopy(t -> p(t))
     kwargs_OCS = obj==NaN ? () : (objective=obj,)
 
     sol = CTModels.build_solution(
         ocp,
         Vector{Float64}(T), #::Vector{Float64},
-        X, #::Matrix{Float64},
-        U, #::Matrix{Float64},
-        Float64.(v), #::Vector{Float64},
-        P; #::Matrix{Float64};
+        X,
+        U,
+        v, #::Vector{Float64},
+        P;
         iterations=-1,
         constraints_violation=-1.0,
         message="no message",
         stopping=:nostoppingmessage,
-        success=true,    
+        success=true,
         kwargs_OCS...
     )
 
@@ -229,7 +215,7 @@ function (F::OptimalControlFlow{CTFlows.NonFixed})(
     x0::State,
     p0::Costate,
     tf::Time,
-    v::Variable=__variable(t0, x0, p0, tf, F.ocp);
+    v::Variable=__thevariable(t0, x0, p0, tf, F.ocp);
     kwargs...,
 )
     return F.f(
@@ -253,7 +239,7 @@ function (F::OptimalControlFlow{CTFlows.Fixed})(
         tspan, x0, p0; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs!, kwargs...
     )
     flow_sol = OptimalControlFlowSolution(
-        ode_sol, F.feedback_control, F.ocp, __variable(x0, p0)
+        ode_sol, F.feedback_control, F.ocp, __thevariable(x0, p0)
     )
     return CTModels.Solution(flow_sol; F.kwargs_Flow..., kwargs...)
 end
@@ -262,7 +248,7 @@ function (F::OptimalControlFlow{CTFlows.NonFixed})(
     tspan::Tuple{Time,Time},
     x0::State,
     p0::Costate,
-    v::Variable=__variable(tspan[1], x0, p0, tspan[2], F.ocp);
+    v::Variable=__thevariable(tspan[1], x0, p0, tspan[2], F.ocp);
     kwargs...,
 )
     ode_sol = F.f(

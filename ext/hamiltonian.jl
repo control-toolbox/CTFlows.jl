@@ -9,7 +9,7 @@ function hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
         tspan::Tuple{Time,Time},
         x0::State,
         p0::Costate,
-        v::Variable=__variable(x0, p0);
+        v::Variable=__thevariable(x0, p0);
         jumps,
         _t_stops_interne,
         DiffEqRHS,
@@ -48,7 +48,7 @@ function hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
         x0::State,
         p0::Costate,
         tf::Time,
-        v::Variable=__variable(x0, p0);
+        v::Variable=__thevariable(x0, p0);
         kwargs...,
     )
         sol = f((t0, tf), x0, p0, v; kwargs...)
