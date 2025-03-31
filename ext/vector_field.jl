@@ -9,7 +9,7 @@ function vector_field_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
     function f(
         tspan::Tuple{Time,Time},
         x0::State,
-        v::Variable=__variable(x0);
+        v::Variable=__thevariable(x0);
         jumps,
         _t_stops_interne,
         DiffEqRHS,
@@ -40,7 +40,7 @@ function vector_field_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
         return sol
     end
 
-    function f(t0::Time, x0::State, t::Time, v::Variable=__variable(x0); kwargs...)
+    function f(t0::Time, x0::State, t::Time, v::Variable=__thevariable(x0); kwargs...)
         sol = f((t0, t), x0, v; kwargs...)
         return sol.u[end]
     end

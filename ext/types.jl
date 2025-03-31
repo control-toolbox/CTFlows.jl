@@ -110,6 +110,9 @@ function CTModels.Solution(ocfs::OptimalControlFlowSolution; kwargs...)
     ocp = ocfs.ocp
     n = CTModels.state_dimension(ocp)
     T = ocfs.ode_sol.t
+
+    println("time grid = ", T)
+
     v = ocfs.variable
     x(t) = ocfs.ode_sol(t)[rg(1, n)]
     p(t) = ocfs.ode_sol(t)[rg(n + 1, 2n)]
@@ -229,7 +232,7 @@ function (F::OptimalControlFlow{CTFlows.NonFixed})(
     x0::State,
     p0::Costate,
     tf::Time,
-    v::Variable=__variable(t0, x0, p0, tf, F.ocp);
+    v::Variable=__thevariable(t0, x0, p0, tf, F.ocp);
     kwargs...,
 )
     return F.f(
@@ -253,7 +256,7 @@ function (F::OptimalControlFlow{CTFlows.Fixed})(
         tspan, x0, p0; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs!, kwargs...
     )
     flow_sol = OptimalControlFlowSolution(
-        ode_sol, F.feedback_control, F.ocp, __variable(x0, p0)
+        ode_sol, F.feedback_control, F.ocp, __thevariable(x0, p0)
     )
     return CTModels.Solution(flow_sol; F.kwargs_Flow..., kwargs...)
 end
@@ -262,7 +265,7 @@ function (F::OptimalControlFlow{CTFlows.NonFixed})(
     tspan::Tuple{Time,Time},
     x0::State,
     p0::Costate,
-    v::Variable=__variable(tspan[1], x0, p0, tspan[2], F.ocp);
+    v::Variable=__thevariable(tspan[1], x0, p0, tspan[2], F.ocp);
     kwargs...,
 )
     ode_sol = F.f(
