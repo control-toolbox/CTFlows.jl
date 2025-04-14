@@ -12,7 +12,7 @@
 [doc-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
 [doc-stable-url]: https://control-toolbox.org/CTFlows.jl/stable/
 
-[release-img]: https://juliahub.com/docs/General/CTFlows/stable/version.svg
+[release-img]: https://img.shields.io/github/v/release/control-toolbox/CTFlows.jl.svg
 [release-url]: https://github.com/control-toolbox/CTFlows.jl/releases
 
 [pkg-eval-img]: https://img.shields.io/badge/Julia-package-purple
@@ -39,9 +39,8 @@ The control-toolbox ecosystem gathers Julia packages for mathematical control an
 :-------------------|:------------------|
 | Documentation     | [![Documentation][doc-stable-img]][doc-stable-url] [![Documentation][doc-dev-img]][doc-dev-url]                   | 
 | Code Status       | [![Build Status][ci-img]][ci-url] [![Covering Status][co-img]][co-url] [![Aqua.jl][aqua-img]][aqua-url] [![Code Style: Blue][blue-img]][blue-url] [![pkgeval][pkg-eval-img]][pkg-eval-url] |
-| Dependencies      | [![deps][deps-img]][deps-url] |
-| Licence           | [![License: MIT][licence-img]][licence-url]   |
 | Release           | [![Release][release-img]][release-url]        |
+| Licence           | [![License: MIT][licence-img]][licence-url]   |
 
 ## Installation
 
