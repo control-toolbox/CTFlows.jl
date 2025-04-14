@@ -15,7 +15,7 @@
 [release-img]: https://juliahub.com/docs/General/CTFlows/stable/version.svg
 [release-url]: https://github.com/control-toolbox/CTFlows.jl/releases
 
-[pkg-eval-img]: https://juliahub.com/docs/General/CTFlows/stable/pkgeval.svg
+[pkg-eval-img]: https://img.shields.io/badge/Julia-package-purple
 [pkg-eval-url]: https://juliahub.com/ui/Packages/General/CTFlows
 
 [deps-img]: https://juliahub.com/docs/General/CTFlows/stable/deps.svg
