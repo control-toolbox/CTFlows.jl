@@ -13,6 +13,13 @@ __alg() = Tsit5()
 """
 $(TYPEDSIGNATURES)
 
+Default internal norm.
+"""
+__internalnorm() = (x, y) -> norm(x)
+
+"""
+$(TYPEDSIGNATURES)
+
 Default variable from ocp.
 """
 function __thevariable(t0, x0, p0, tf, ocp)

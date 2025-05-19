@@ -21,10 +21,11 @@ function CTFlows.Flow(
     abstol=__abstol(),
     reltol=__reltol(),
     saveat=__saveat(),
+    internalnorm=__internalnorm(),
     kwargs_Flow...,
 )
     h, u = __create_hamiltonian(ocp, u_) # construction of the Hamiltonian
-    return __ocp_Flow(ocp, h, u, alg, abstol, reltol, saveat; kwargs_Flow...)
+    return __ocp_Flow(ocp, h, u, alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...)
 end
 
 function CTFlows.Flow(
@@ -36,10 +37,11 @@ function CTFlows.Flow(
     abstol=__abstol(),
     reltol=__reltol(),
     saveat=__saveat(),
+    internalnorm=__internalnorm(),
     kwargs_Flow...,
 )
     h, u = __create_hamiltonian(ocp, u_; autonomous=autonomous, variable=variable) # construction of the Hamiltonian
-    return __ocp_Flow(ocp, h, u, alg, abstol, reltol, saveat; kwargs_Flow...)
+    return __ocp_Flow(ocp, h, u, alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -69,10 +71,11 @@ function CTFlows.Flow(
     abstol=__abstol(),
     reltol=__reltol(),
     saveat=__saveat(),
+    internalnorm=__internalnorm(),
     kwargs_Flow...,
 ) where {T,V}
     h, u = __create_hamiltonian(ocp, u_, g_, μ_) # construction of the Hamiltonian
-    return __ocp_Flow(ocp, h, u, alg, abstol, reltol, saveat; kwargs_Flow...)
+    return __ocp_Flow(ocp, h, u, alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...)
 end
 
 function CTFlows.Flow(
@@ -86,10 +89,11 @@ function CTFlows.Flow(
     abstol=__abstol(),
     reltol=__reltol(),
     saveat=__saveat(),
+    internalnorm=__internalnorm(),
     kwargs_Flow...,
 )
     h, u = __create_hamiltonian(ocp, u_, g_, μ_; autonomous=autonomous, variable=variable) # construction of the Hamiltonian
-    return __ocp_Flow(ocp, h, u, alg, abstol, reltol, saveat; kwargs_Flow...)
+    return __ocp_Flow(ocp, h, u, alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...)
 end
 
 # ---------------------------------------------------------------------------------------------------
@@ -100,11 +104,12 @@ function __ocp_Flow(
     alg,
     abstol,
     reltol,
-    saveat;
+    saveat,
+    internalnorm;
     kwargs_Flow...,
 )
     rhs! = rhs(h) # right and side: same as for a flow from a Hamiltonian
-    f = hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...) # flow function
-    kwargs_Flow = (kwargs_Flow..., alg=alg, abstol=abstol, reltol=reltol, saveat=saveat)
+    f = hamiltonian_usage(alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...) # flow function
+    kwargs_Flow = (kwargs_Flow..., alg=alg, abstol=abstol, reltol=reltol, saveat=saveat, internalnorm=internalnorm)
     return OptimalControlFlow(f, rhs!, u, ocp, kwargs_Flow)
 end
