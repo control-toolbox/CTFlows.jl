@@ -3,7 +3,7 @@ $(TYPEDSIGNATURES)
 
 Returns a function that solves ODE problem associated to classical vector field.
 """
-function vector_field_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
+function vector_field_usage(alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...)
 
     # kwargs has priority wrt kwargs_flow
     function f(
@@ -31,6 +31,7 @@ function vector_field_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
             abstol=abstol,
             reltol=reltol,
             saveat=saveat,
+            internalnorm=internalnorm,
             tstops=t_stops_all,
             callback=cb,
             kwargs_Flow...,
@@ -56,9 +57,10 @@ function CTFlows.Flow(
     abstol=__abstol(),
     reltol=__reltol(),
     saveat=__saveat(),
+    internalnorm=__internalnorm(),
     kwargs_Flow...,
 )
-    f = vector_field_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
+    f = vector_field_usage(alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...)
     rhs = (x::State, v::Variable, t::Time) -> vf(t, x, v)
     return VectorFieldFlow(f, rhs)
 end

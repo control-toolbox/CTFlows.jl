@@ -4,7 +4,7 @@ $(TYPEDSIGNATURES)
 
 Returns a function that solves ODE problem associated to Hamiltonian vector field.
 """
-function hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
+function hamiltonian_usage(alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...)
     function f(
         tspan::Tuple{Time,Time},
         x0::State,
@@ -34,6 +34,7 @@ function hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
             abstol=abstol,
             reltol=reltol,
             saveat=saveat,
+            internalnorm=internalnorm,
             tstops=t_stops_all,
             callback=cb,
             kwargs_Flow...,
@@ -83,10 +84,11 @@ function CTFlows.Flow(
     abstol=__abstol(),
     reltol=__reltol(),
     saveat=__saveat(),
+    internalnorm=__internalnorm(),
     kwargs_Flow...,
 )
     #
-    f = hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
+    f = hamiltonian_usage(alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...)
     rhs! = rhs(h)
     return HamiltonianFlow(f, rhs!)
 end
@@ -99,10 +101,11 @@ function CTFlows.Flow(
     abstol=__abstol(),
     reltol=__reltol(),
     saveat=__saveat(),
+    internalnorm=__internalnorm(),
     kwargs_Flow...,
 )
     #
-    f = hamiltonian_usage(alg, abstol, reltol, saveat; kwargs_Flow...)
+    f = hamiltonian_usage(alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...)
     function rhs!(dz::DCoTangent, z::CoTangent, v::Variable, t::Time)
         n = size(z, 1) ÷ 2
         return dz[rg(1, n)], dz[rg(n + 1, 2n)] = hv(t, z[rg(1, n)], z[rg(n + 1, 2n)], v)

@@ -5,6 +5,7 @@ using CTFlows
 using CTModels
 using OrdinaryDiffEq
 using DocStringExtensions
+using LinearAlgebra
 using MLStyle
 #
 import CTFlows: Flow, CTFlows
