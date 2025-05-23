@@ -20,7 +20,7 @@ CTFlowsODE = "OrdinaryDiffEq"
 
 [compat]
 CTBase = "0.16"
-CTModels = "0.3"
+CTModels = "0.4"
 DocStringExtensions = "0.9"
 ForwardDiff = "0.10"
 LinearAlgebra = "1"
