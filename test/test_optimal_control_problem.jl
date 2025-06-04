@@ -40,7 +40,8 @@ function test_optimal_control_problem()
             ∫(0.5u(t)^2) → min
         end
         CTModels.definition!(pre_ocp, definition)
-        ocp = CTModels.build_model(pre_ocp)
+        CTModels.time_dependence!(pre_ocp; autonomous=true)
+        ocp = CTModels.build(pre_ocp)
         # end create the ocp
 
         f = Flow(ocp, (x, p) -> p[2]; alg=BS5())
@@ -88,7 +89,8 @@ function test_optimal_control_problem()
             tf + 0.5∫(u(t)^2) → min
         end
         CTModels.definition!(pre_ocp, definition)
-        ocp = CTModels.build_model(pre_ocp)
+        CTModels.time_dependence!(pre_ocp; autonomous=true)
+        ocp = CTModels.build(pre_ocp)
         # end create the ocp
 
         # solution
@@ -142,7 +144,8 @@ function test_optimal_control_problem()
             tf → min
         end
         CTModels.definition!(pre_ocp, definition)
-        ocp = CTModels.build_model(pre_ocp)
+        CTModels.time_dependence!(pre_ocp; autonomous=true)
+        ocp = CTModels.build(pre_ocp)
         # end create the ocp
 
         # solution
@@ -199,7 +202,8 @@ function test_optimal_control_problem()
             ∫(0.5u(t)^2) → min
         end
         CTModels.definition!(pre_ocp, definition)
-        ocp = CTModels.build_model(pre_ocp)
+        CTModels.time_dependence!(pre_ocp; autonomous=true)
+        ocp = CTModels.build(pre_ocp)
         # end create the ocp
 
         # solution
@@ -266,7 +270,8 @@ function test_optimal_control_problem()
             -0.5x₁(tf) + ∫(0.5u(t)^2) → min
         end
         CTModels.definition!(pre_ocp, definition)
-        ocp = CTModels.build_model(pre_ocp)
+        CTModels.time_dependence!(pre_ocp; autonomous=true)
+        ocp = CTModels.build(pre_ocp)
         # end create the ocp
 
         # solution
@@ -310,7 +315,8 @@ function test_optimal_control_problem()
         CTModels.objective!(pre_ocp, :min; lagrange=lagrange)
         definition = quote end
         CTModels.definition!(pre_ocp, definition)
-        ocp = CTModels.build_model(pre_ocp)
+        CTModels.time_dependence!(pre_ocp; autonomous=true)
+        ocp = CTModels.build(pre_ocp)
         # end create the ocp
 
         # the solution
@@ -389,7 +395,8 @@ function test_optimal_control_problem()
         CTModels.objective!(pre_ocp, :min; lagrange=lagrange)
         definition = quote end
         CTModels.definition!(pre_ocp, definition)
-        ocp = CTModels.build_model(pre_ocp)
+        CTModels.time_dependence!(pre_ocp; autonomous=true)
+        ocp = CTModels.build(pre_ocp)
         # end create the ocp
 
         # the solution (case l ≤ 1/6 because it has 3 arc)
@@ -466,7 +473,8 @@ function test_optimal_control_problem()
             tf + 0.5∫(u(t)^2) → min
         end
         CTModels.definition!(pre_ocp, definition)
-        ocp = CTModels.build_model(pre_ocp)
+        CTModels.time_dependence!(pre_ocp; autonomous=true)
+        ocp = CTModels.build(pre_ocp)
         # end create the ocp
 
         u = (x, p, tf) -> tf * p
@@ -516,7 +524,8 @@ function test_optimal_control_problem()
             tf - 0.5∫(u(s)^2) → min
         end
         CTModels.definition!(pre_ocp, definition)
-        ocp = CTModels.build_model(pre_ocp)
+        CTModels.time_dependence!(pre_ocp; autonomous=true)
+        ocp = CTModels.build(pre_ocp)
         # end create the ocp
 
         u = (x, p, tf) -> tf * p
@@ -565,7 +574,8 @@ function test_optimal_control_problem()
             (t0^2 + tf) + 0.5∫(u(t)^2) → min
         end
         CTModels.definition!(pre_ocp, definition)
-        ocp = CTModels.build_model(pre_ocp)
+        CTModels.time_dependence!(pre_ocp; autonomous=true)
+        ocp = CTModels.build(pre_ocp)
         # end create the ocp
 
         u = (x, p, v) -> v[2] * p
