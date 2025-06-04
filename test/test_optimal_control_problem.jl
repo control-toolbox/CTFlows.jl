@@ -626,6 +626,11 @@ function test_optimal_control_problem()
         xf, pf = f(t0, x0, p0, tf)
         Test.@test xf ≈ [0, 0] atol = 1e-6
 
+        u_t = (t, x, p) -> p[2]
+        f = Flow(ocp, u_t; autonomous=false)
+        xf, pf = f(t0, x0, p0, tf)
+        Test.@test xf ≈ [0, 0] atol = 1e-6
+
     end
 
 
