@@ -318,7 +318,8 @@ function test_concatenation()
         CTModels.constraint!(pre_ocp, :boundary; f=initi_condition, lb=x0, ub=x0)
         definition = quote end
         CTModels.definition!(pre_ocp, definition)
-        ocp = CTModels.build_model(pre_ocp)
+        CTModels.time_dependence!(pre_ocp; autonomous=true)
+        ocp = CTModels.build(pre_ocp)
         # end create the ocp
 
         f = Flow(ocp, (x, p) -> [p[1] / 2, 0])
@@ -357,7 +358,8 @@ function test_concatenation()
         CTModels.constraint!(pre_ocp, :control; lb=-1, ub=1)
         definition = quote end
         CTModels.definition!(pre_ocp, definition)
-        ocp = CTModels.build_model(pre_ocp)
+        CTModels.time_dependence!(pre_ocp; autonomous=true)
+        ocp = CTModels.build(pre_ocp)
         # end create the ocp
 
         # ocp = Model()
