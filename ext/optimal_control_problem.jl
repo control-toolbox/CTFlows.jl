@@ -31,7 +31,7 @@ end
 function CTFlows.Flow(
     ocp::CTModels.Model,
     u_::Function;
-    autonomous::Bool=__autonomous(),
+    autonomous::Bool=__autonomous(ocp),
     variable::Bool=__variable(ocp),
     alg=__alg(),
     abstol=__abstol(),
@@ -83,7 +83,7 @@ function CTFlows.Flow(
     u_::Function,
     g_::Function,
     μ_::Function;
-    autonomous::Bool=__autonomous(),
+    autonomous::Bool=__autonomous(ocp),
     variable::Bool=__variable(ocp),
     alg=__alg(),
     abstol=__abstol(),

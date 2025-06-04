@@ -595,4 +595,72 @@ function test_optimal_control_problem()
         Test.@test xf ≈ xf_ atol = 1e-6
     end
 
+    @testset "Autonomous case" begin    
+
+        t0 = 0
+        tf = 1
+        x0 = [-1, 0]
+
+        ocp = @def begin
+
+            t ∈ [ t0, tf ], time
+            x = (q, v) ∈ R², state
+            u ∈ R, control
+
+            x(t0) == x0
+            x(tf) == [ 0, 0 ]
+            ẋ(t)  == [ v(t), u(t) ]
+
+            ∫( 0.5u(t)^2 ) → min
+
+        end
+
+        u = (x, p) -> p[2]
+        p0 = [12, 6]
+
+        f = Flow(ocp, u; autonomous=true)
+        xf, pf = f(t0, x0, p0, tf)
+        Test.@test xf ≈ [0, 0] atol = 1e-6
+
+        f = Flow(ocp, u)
+        xf, pf = f(t0, x0, p0, tf)
+        Test.@test xf ≈ [0, 0] atol = 1e-6
+
+    end
+
+
+    @testset "Non autonomous case" begin    
+
+        t0 = 0
+        tf = π/4
+        x0 = 0
+        xf = tan(π/4) - 2log(√(2)/2)
+
+        ocp = @def begin
+
+            t ∈ [t0, tf], time
+            x ∈ R, state
+            u ∈ R, control
+
+            x(t0) == x0
+            x(tf) == xf
+            ẋ(t) == u(t) * (1 + tan(t)) # The dynamics depend explicitly on t
+
+            0.5∫( u(t)^2 ) → min
+
+        end
+
+        u = (t, x, p) -> p * (1 + tan(t))
+        p0 = 1
+
+        f = Flow(ocp, u; autonomous=false)
+        xf, pf = f(t0, x0, p0, tf)
+        Test.@test xf - (tan(π/4) - 2log(√(2)/2)) ≈ 0 atol = 1e-6
+
+        f = Flow(ocp, u)
+        xf, pf = f(t0, x0, p0, tf)
+        Test.@test xf - (tan(π/4) - 2log(√(2)/2)) ≈ 0 atol = 1e-6
+
+    end
+
 end
