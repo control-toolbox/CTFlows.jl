@@ -32,9 +32,9 @@ const __autonomous = CTFlows.__autonomous
 const __variable = CTFlows.__variable
 
 # --------------------------------------------------------------------------------------------#
-include("default.jl")
-include("types.jl")
-include("utils.jl")
+include("ext_default.jl")
+include("ext_types.jl")
+include("ext_utils.jl")
 #
 include("vector_field.jl")
 include("hamiltonian.jl")
