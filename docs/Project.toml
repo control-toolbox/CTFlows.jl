@@ -1,8 +1,12 @@
 [deps]
+CTModels = "34c4fa32-2049-4079-8329-de33c2a22e2d"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 DocumenterMermaid = "a078cd44-4d9c-4618-b545-3ab9d77f9177"
+OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 
 [compat]
+CTModels = "0.5"
 Documenter = "1"
 DocumenterMermaid = "0.2"
+OrdinaryDiffEq = "6.98"
 julia = "1.10"

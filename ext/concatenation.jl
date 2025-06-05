@@ -1,3 +1,20 @@
+"""
+Concatenate the right-hand sides of two flows `F` and `G`, switching at time `t_switch`.
+
+# Arguments
+- `F`, `G`: Two flows of the same type.
+- `t_switch::Time`: The switching time.
+
+# Returns
+- A function `rhs!` that dispatches to `F.rhs!` before `t_switch`, and to `G.rhs!` after.
+
+# Example
+```julia-repl
+rhs = __concat_rhs(F, G, 1.0)
+rhs!(du, u, p, 0.5)  # uses F.rhs!
+rhs!(du, u, p, 1.5)  # uses G.rhs!
+```
+"""
 function __concat_rhs(
     F::AbstractFlow{D,U}, G::AbstractFlow{D,U}, t_switch::Time
 ) where {D,U}
@@ -7,15 +24,64 @@ function __concat_rhs(
     return rhs!
 end
 
+"""
+Concatenate vector field right-hand sides with time-based switching.
+
+# Arguments
+- `F`, `G`: VectorFieldFlow instances.
+- `t_switch::Time`: Switching time.
+
+# Returns
+- A function of the form `(x, v, t) -> ...`.
+
+# Example
+```julia-repl
+rhs = __concat_rhs(F, G, 2.0)
+rhs(x, v, 1.0)  # uses F.rhs
+rhs(x, v, 3.0)  # uses G.rhs
+```
+"""
 function __concat_rhs(F::VectorFieldFlow, G::VectorFieldFlow, t_switch::Time)
     return (x::State, v::Variable, t::Time) ->
         (t < t_switch ? F.rhs(x, v, t) : G.rhs(x, v, t))
 end
 
+"""
+Concatenate ODE right-hand sides with a switch at `t_switch`.
+
+# Arguments
+- `F`, `G`: ODEFlow instances.
+- `t_switch::Time`: Time at which to switch between flows.
+
+# Returns
+- A function of the form `(x, v, t) -> ...`.
+
+# Example
+```julia-repl
+rhs = __concat_rhs(F, G, 0.5)
+rhs(x, v, 0.4)  # F.rhs
+rhs(x, v, 0.6)  # G.rhs
+```
+"""
 function __concat_rhs(F::ODEFlow, G::ODEFlow, t_switch::Time)
     return (x, v, t::Time) -> (t < t_switch ? F.rhs(x, v, t) : G.rhs(x, v, t))
 end
 
+"""
+Concatenate the `tstops` (discontinuity times) of two flows and add the switching time.
+
+# Arguments
+- `F`, `G`: Flows with `tstops` vectors.
+- `t_switch::Time`: Switching time to include.
+
+# Returns
+- A sorted vector of unique `tstops`.
+
+# Example
+```julia-repl
+__concat_tstops(F, G, 1.0)
+```
+"""
 function __concat_tstops(F::AbstractFlow, G::AbstractFlow, t_switch::Time)
     tstops = F.tstops
     append!(tstops, G.tstops)
@@ -24,6 +90,23 @@ function __concat_tstops(F::AbstractFlow, G::AbstractFlow, t_switch::Time)
     return tstops
 end
 
+"""
+Concatenate feedback control laws of two optimal control flows.
+
+# Arguments
+- `F`, `G`: OptimalControlFlow instances.
+- `t_switch::Time`: Switching time.
+
+# Returns
+- A `ControlLaw` that dispatches to `F` or `G` depending on `t`.
+
+# Example
+```julia-repl
+u = __concat_feedback_control(F, G, 2.0)
+u(1.5, x, u, v)  # from F
+u(2.5, x, u, v)  # from G
+```
+"""
 function __concat_feedback_control(F::AbstractFlow, G::AbstractFlow, t_switch::Time)
     function _feedback_control(t, x, u, v)
         return if t < t_switch
@@ -36,6 +119,22 @@ function __concat_feedback_control(F::AbstractFlow, G::AbstractFlow, t_switch::T
     return feedback_control
 end
 
+"""
+Concatenate the `jumps` of two flows, with optional extra jump at `t_switch`.
+
+# Arguments
+- `F`, `G`: Flows with jump events.
+- `jump`: Optional tuple `(t_switch, η_switch)` to insert.
+
+# Returns
+- Combined list of jumps.
+
+# Example
+```julia-repl
+__concat_jumps(F, G)
+__concat_jumps(F, G, (1.0, η))
+```
+"""
 function __concat_jumps(
     F::AbstractFlow, G::AbstractFlow, jump::Union{Nothing,Tuple{Time,Any}}=nothing
 )
@@ -46,7 +145,21 @@ function __concat_jumps(
 end
 
 # --------------------------------------------------------------------------------------------
-# concatenate two flows with a prescribed switching time
+"""
+Concatenate two `AbstractFlow` instances with a prescribed switching time.
+
+# Arguments
+- `F::AbstractFlow`: First flow.
+- `g::Tuple{ctNumber,AbstractFlow}`: Switching time and second flow.
+
+# Returns
+- A new flow that transitions from `F` to `G` at `t_switch`.
+
+# Example
+```julia-repl
+F * (1.0, G)
+```
+"""
 function concatenate(F::TF, g::Tuple{ctNumber,TF})::TF where {TF<:AbstractFlow}
     t_switch, G = g
     rhs! = __concat_rhs(F, G, t_switch)       # concatenation of the right and sides
@@ -55,6 +168,21 @@ function concatenate(F::TF, g::Tuple{ctNumber,TF})::TF where {TF<:AbstractFlow}
     return TF(F.f, rhs!, tstops, jumps)  # we choose default values and options of F
 end
 
+"""
+Concatenate two `AbstractFlow`s and insert a jump at the switching time.
+
+# Arguments
+- `F::AbstractFlow`
+- `g::Tuple{ctNumber,Any,AbstractFlow}`: `(t_switch, η_switch, G)`
+
+# Returns
+- A concatenated flow with the jump included.
+
+# Example
+```julia-repl
+F * (1.0, η, G)
+```
+"""
 function concatenate(F::TF, g::Tuple{ctNumber,Any,TF})::TF where {TF<:AbstractFlow}
     t_switch, η_switch, G = g
     rhs! = __concat_rhs(F, G, t_switch)       # concatenation of the right and sides
@@ -64,7 +192,21 @@ function concatenate(F::TF, g::Tuple{ctNumber,Any,TF})::TF where {TF<:AbstractFl
 end
 
 # --------------------------------------------------------------------------------------------
-# concatenate two flows with a prescribed switching time
+"""
+Concatenate two `OptimalControlFlow`s at a switching time.
+
+# Arguments
+- `F::OptimalControlFlow`
+- `g::Tuple{ctNumber,OptimalControlFlow}`
+
+# Returns
+- A combined flow with switched dynamics and feedback control.
+
+# Example
+```julia-repl
+F * (1.0, G)
+```
+"""
 function concatenate(F::TF, g::Tuple{ctNumber,TF})::TF where {TF<:OptimalControlFlow}
     t_switch, G = g
     rhs! = __concat_rhs(F, G, t_switch)               # concatenation of the right and sides
@@ -74,6 +216,21 @@ function concatenate(F::TF, g::Tuple{ctNumber,TF})::TF where {TF<:OptimalControl
     return OptimalControlFlow(F.f, rhs!, feedback_u, F.ocp, F.kwargs_Flow, tstops, jumps) # we choose default values and options of F
 end
 
+"""
+Concatenate two `OptimalControlFlow`s and a jump at switching time.
+
+# Arguments
+- `F::OptimalControlFlow`
+- `g::Tuple{ctNumber,Any,OptimalControlFlow}`
+
+# Returns
+- A combined flow with jump and control law switching.
+
+# Example
+```julia-repl
+F * (1.0, η, G)
+```
+"""
 function concatenate(F::TF, g::Tuple{ctNumber,Any,TF})::TF where {TF<:OptimalControlFlow}
     t_switch, η_switch, G = g
     rhs! = __concat_rhs(F, G, t_switch)               # concatenation of the right and sides
@@ -83,6 +240,36 @@ function concatenate(F::TF, g::Tuple{ctNumber,Any,TF})::TF where {TF<:OptimalCon
     return OptimalControlFlow(F.f, rhs!, feedback_u, F.ocp, F.kwargs_Flow, tstops, jumps)  # we choose default values and options of F
 end
 
-# --------------------------------------------------------------------------------------------
+"""
+Shorthand for `concatenate(F, g)` when `g` is a tuple `(t_switch, G)`.
+
+# Arguments
+- `F::AbstractFlow`: The first flow.
+- `g::Tuple{ctNumber, AbstractFlow}`: Tuple containing the switching time and second flow.
+
+# Returns
+- A new flow that switches from `F` to `G` at `t_switch`.
+
+# Example
+```julia-repl
+F * (1.0, G)
+```
+"""
 *(F::TF, g::Tuple{ctNumber,TF}) where {TF<:AbstractFlow} = concatenate(F, g)
+
+"""
+Shorthand for `concatenate(F, g)` when `g` is a tuple `(t_switch, η_switch, G)` including a jump.
+
+# Arguments
+- `F::AbstractFlow`: The first flow.
+- `g::Tuple{ctNumber, Any, AbstractFlow}`: Tuple with switching time, jump value, and second flow.
+
+# Returns
+- A flow with a jump at `t_switch` and a switch from `F` to `G`.
+
+# Example
+```julia-repl
+F * (1.0, η, G)
+```
+"""
 *(F::TF, g::Tuple{ctNumber,Any,TF}) where {TF<:AbstractFlow} = concatenate(F, g)
