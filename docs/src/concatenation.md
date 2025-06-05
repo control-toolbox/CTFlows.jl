@@ -4,7 +4,7 @@
 
 ```@index
 Pages   = ["concatenation.md"]
-Modules = [CTFlows, CTFlowsODE]
+Modules = [CTFlows, CTFlowsODE, Base]
 Order = [:module, :constant, :type, :function, :macro]
 ```
 
