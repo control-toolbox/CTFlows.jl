@@ -16,7 +16,6 @@ repo_url = "github.com/control-toolbox/CTFlows.jl"
 
 API_PAGES = [
     "concatenation.md",
-    "ctflows.md",
     "ctflowsode.md",
     "default.md",
     "differential_geometry.md",

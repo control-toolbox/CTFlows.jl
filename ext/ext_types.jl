@@ -10,8 +10,27 @@ const DState   = ctVector
 const DCostate = ctVector
 
 # ---------------------------------------------------------------------------------------------------
-# This is the flow returned by the function Flow
-# The call to the flow is given after.
+"""
+A flow object for integrating Hamiltonian dynamics in optimal control.
+
+Represents the time evolution of a Hamiltonian system using the canonical form of Hamilton's equations.
+The struct holds the numerical integration setup and metadata for event handling.
+
+# Fields
+- `f::Function`: Flow integrator function, called like `f(t0, x0, p0, tf; ...)`.
+- `rhs!::Function`: Right-hand side of the ODE system, used by solvers.
+- `tstops::Times`: List of times at which integration should pause or apply discrete effects.
+- `jumps::Vector{Tuple{Time,Costate}}`: List of jump discontinuities for the costate at given times.
+
+# Usage
+Instances of `HamiltonianFlow` are callable and forward arguments to the underlying flow function `f`.
+
+# Example
+```julia-repl
+flow = HamiltonianFlow(f, rhs!)
+xf, pf = flow(0.0, x0, p0, 1.0)
+```
+"""
 struct HamiltonianFlow <: AbstractFlow{DCoTangent,CoTangent}
     f::Function      # f(args..., rhs): compute the flow
     rhs!::Function   # DifferentialEquations rhs
@@ -35,6 +54,24 @@ function (F::HamiltonianFlow)(args...; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+A flow object for integrating general vector field dynamics.
+
+Used for systems where the vector field is given explicitly, rather than derived from a Hamiltonian.
+Useful in settings like controlled systems or classical mechanics outside the Hamiltonian framework.
+
+# Fields
+- `f::Function`: Flow integrator function.
+- `rhs::Function`: ODE right-hand side function.
+- `tstops::Times`: Event times (e.g., to trigger callbacks).
+- `jumps::Vector{Tuple{Time,State}}`: Discrete jump events on the state trajectory.
+
+# Example
+```julia-repl
+flow = VectorFieldFlow(f, rhs)
+xf = flow(0.0, x0, 1.0)
+```
+"""
 struct VectorFieldFlow <: AbstractFlow{DState,State}
     f::Function     # f(args..., rhs): compute the flow
     rhs::Function  # DifferentialEquations rhs
@@ -58,6 +95,23 @@ function (F::VectorFieldFlow)(args...; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+Generic flow object for arbitrary ODE systems with jumps and events.
+
+A catch-all flow for general-purpose ODE integration. Supports dynamic typing and arbitrary state structures.
+
+# Fields
+- `f::Function`: Integrator function called with time span and initial conditions.
+- `rhs::Function`: Right-hand side for the differential equation.
+- `tstops::Times`: Times at which the integrator is forced to stop.
+- `jumps::Vector{Tuple{Time,Any}}`: User-defined jumps applied to the state during integration.
+
+# Example
+```julia-repl
+flow = ODEFlow(f, rhs)
+result = flow(0.0, u0, 1.0)
+```
+"""
 struct ODEFlow <: AbstractFlow{Any,Any}
     f::Function     # f(args..., rhs): compute the flow
     rhs::Function   # DifferentialEquations rhs
@@ -81,14 +135,22 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
-$(TYPEDEF)
+Wraps the low-level ODE solution, control feedback law, model structure, and problem parameters.
 
-Type of an optimal control flow solution.
+# Fields
+- `ode_sol::Any`: The ODE solution (from DifferentialEquations.jl).
+- `feedback_control::ControlLaw`: Feedback control law `u(t, x, p, v)`.
+- `ocp::Model`: The optimal control model used.
+- `variable::Variable`: External or design parameters of the control problem.
 
-**Fields**
+# Usage
+You can evaluate the flow solution like a callable ODE solution.
 
-$(TYPEDFIELDS)
-
+# Example
+```julia-repl
+sol = OptimalControlFlowSolution(ode_sol, u, model, v)
+x = sol(t)
+```
 """
 struct OptimalControlFlowSolution
     # 
@@ -103,8 +165,21 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Construct an `OptimalControlSolution` from an `OptimalControlFlowSolution`.
+Constructs an `OptimalControlSolution` from an `OptimalControlFlowSolution`.
 
+This evaluates the objective (Mayer and/or Lagrange costs), extracts the time-dependent state,
+costate, and control trajectories, and builds a full `CTModels.Solution`.
+
+Returns a `CTModels.Solution` ready for evaluation, reporting, or analysis.
+
+# Keyword Arguments
+- `alg`: Optional solver for computing Lagrange integral, if needed.
+- Additional kwargs passed to the internal solver.
+
+# Example
+```julia-repl
+sol = Solution(optflow_solution)
+```
 """
 function CTModels.Solution(ocfs::OptimalControlFlowSolution; kwargs...)
     ocp = ocfs.ocp
@@ -163,6 +238,34 @@ function CTModels.Solution(ocfs::OptimalControlFlowSolution; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------------
+"""
+A flow object representing the solution of an optimal control problem.
+
+Supports Hamiltonian-based and classical formulations. Provides call overloads for different control settings:
+- Fixed external variables
+- Parametric (non-fixed) control problems
+
+# Fields
+- `f::Function`: Main integrator that receives the RHS and other arguments.
+- `rhs!::Function`: ODE right-hand side.
+- `tstops::Times`: Times where the solver should stop (e.g., nonsmooth dynamics).
+- `jumps::Vector{Tuple{Time,Costate}}`: Costate jump conditions.
+- `feedback_control::ControlLaw`: Feedback law `u(t, x, p, v)`.
+- `ocp::Model`: The optimal control problem definition.
+- `kwargs_Flow::Any`: Extra solver arguments.
+
+# Call Signatures
+- `F(t0, x0, p0, tf; kwargs...)`: Solves with fixed variable dimension.
+- `F(t0, x0, p0, tf, v; kwargs...)`: Solves with parameter `v`.
+- `F(tspan, x0, p0; ...)`: Solves and returns a full `OptimalControlSolution`.
+
+# Example
+```julia-repl
+flow = OptimalControlFlow(...)
+sol = flow(0.0, x0, p0, 1.0)
+opt_sol = flow((0.0, 1.0), x0, p0)
+```
+"""
 struct OptimalControlFlow{VD} <: AbstractFlow{DCoTangent,CoTangent}
     # 
     f::Function      # the mere function which depends on the kind of flow (Hamiltonian or classical) 
