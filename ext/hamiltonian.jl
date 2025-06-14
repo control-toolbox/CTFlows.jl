@@ -1,8 +1,29 @@
-
 """
 $(TYPEDSIGNATURES)
 
-Returns a function that solves ODE problem associated to Hamiltonian vector field.
+Constructs a solver function for Hamiltonian systems, with configurable solver options.
+
+Returns a callable object that integrates Hamilton's equations from an initial state `(x0, p0)`
+over a time span `tspan = (t0, tf)`, with optional external parameters.
+
+The returned function has two methods:
+- `f(tspan, x0, p0, v=default_variable; kwargs...)` → returns the full trajectory (solution object).
+- `f(t0, x0, p0, tf, v=default_variable; kwargs...)` → returns only the final `(x, p)` state.
+
+Internally, it uses `OrdinaryDiffEq.solve` and supports events and callbacks.
+
+# Arguments
+- `alg`: integration algorithm (e.g. `Tsit5()`).
+- `abstol`, `reltol`: absolute and relative tolerances.
+- `saveat`: time points for saving.
+- `internalnorm`: norm used for adaptive integration.
+- `kwargs_Flow...`: additional keyword arguments for the solver.
+
+# Example
+```julia-repl
+julia> flowfun = hamiltonian_usage(Tsit5(), 1e-8, 1e-8, 0.1, norm)
+julia> xf, pf = flowfun(0.0, x0, p0, 1.0)
+```
 """
 function hamiltonian_usage(alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...)
     function f(
@@ -63,7 +84,22 @@ end
 """
 $(TYPEDSIGNATURES)
 
-The right and side from a Hamiltonian.
+Constructs the right-hand side of Hamilton's equations from a scalar Hamiltonian function.
+
+Given a Hamiltonian `h(t, x, p, l)` (or `h(x, p)` in the autonomous case), returns
+an in-place function `rhs!(dz, z, v, t)` suitable for numerical integration.
+
+This function computes the canonical Hamiltonian vector field using automatic differentiation:
+```julia-repl
+dz[1:n]     =  ∂H/∂p
+dz[n+1:2n]  = -∂H/∂x
+```
+
+# Arguments
+- `h`: a subtype of `CTFlows.AbstractHamiltonian` defining the scalar Hamiltonian.
+
+# Returns
+- `rhs!`: a function for use in an ODE solver.
 """
 function rhs(h::CTFlows.AbstractHamiltonian)
     function rhs!(dz::DCoTangent, z::CoTangent, v::Variable, t::Time)
@@ -77,7 +113,28 @@ function rhs(h::CTFlows.AbstractHamiltonian)
 end
 
 # --------------------------------------------------------------------------------------------
-# Flow from a Hamiltonian
+"""
+$(TYPEDSIGNATURES)
+
+Constructs a Hamiltonian flow from a scalar Hamiltonian.
+
+This method builds a numerical integrator that simulates the evolution of a Hamiltonian system
+given a Hamiltonian function `h(t, x, p, l)` or `h(x, p)`.
+
+Internally, it computes the right-hand side of Hamilton’s equations via automatic differentiation
+and returns a `HamiltonianFlow` object.
+
+# Keyword Arguments
+- `alg`, `abstol`, `reltol`, `saveat`, `internalnorm`: solver options.
+- `kwargs_Flow...`: forwarded to the solver.
+
+# Example
+```julia-repl
+julia> H(x, p) = dot(p, p) + dot(x, x)
+julia> flow = CTFlows.Flow(CTFlows.Hamiltonian(H))
+julia> xf, pf = flow(0.0, x0, p0, 1.0)
+```
+"""
 function CTFlows.Flow(
     h::CTFlows.AbstractHamiltonian;
     alg=__alg(),
@@ -94,7 +151,27 @@ function CTFlows.Flow(
 end
 
 # --------------------------------------------------------------------------------------------
-# Flow from a Hamiltonian Vector Field
+"""
+$(TYPEDSIGNATURES)
+
+Constructs a Hamiltonian flow from a precomputed Hamiltonian vector field.
+
+This method assumes you already provide the Hamiltonian vector field `(dx/dt, dp/dt)`
+instead of deriving it from a scalar Hamiltonian.
+
+Returns a `HamiltonianFlow` object that integrates the given system.
+
+# Keyword Arguments
+- `alg`, `abstol`, `reltol`, `saveat`, `internalnorm`: solver options.
+- `kwargs_Flow...`: forwarded to the solver.
+
+# Example
+```julia-repl
+julia> hv(t, x, p, l) = (∇ₚH, -∇ₓH)
+julia> flow = CTFlows.Flow(CTFlows.HamiltonianVectorField(hv))
+julia> xf, pf = flow(0.0, x0, p0, 1.0, l)
+```
+"""
 function CTFlows.Flow(
     hv::CTFlows.HamiltonianVectorField;
     alg=__alg(),

@@ -1,4 +1,30 @@
-# ---------------------------------------------------------------------------------------------------
+"""
+$(TYPEDSIGNATURES)
+
+Constructs the combined callback and stopping times for flow integration.
+
+This internal utility assembles a `CallbackSet` for the ODE integrator, handling both:
+- discrete **jumps** in the state or costate (via `VectorContinuousCallback`), and
+- user-defined callbacks.
+
+Additionally, it merges stopping times into a sorted, unique list used for `tstops`.
+
+# Arguments
+- `callback`: A user-defined callback (e.g. for logging or monitoring).
+- `jumps`: A vector of tuples `(t, η)` representing discrete updates at time `t`.
+- `_rg`: An optional index range where the jump `η` should be applied (e.g. only to `p` in `(x, p)`).
+- `_t_stops_interne`: Internal list of event times (mutable, extended in place).
+- `tstops`: Additional stopping times from the outer solver context.
+
+# Returns
+- `cb`: A `CallbackSet` combining jumps and user callback.
+- `t_stops_all`: Sorted and deduplicated list of all stopping times.
+
+# Example
+```julia-repl
+julia> cb, tstops = __callbacks(mycb, [(1.0, [0.0, -1.0])], 3:4, [], [2.0])
+```
+"""
 function __callbacks(callback, jumps, _rg, _t_stops_interne, tstops)
 
     # jumps and callbacks
