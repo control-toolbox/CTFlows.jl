@@ -11,6 +11,8 @@ const DCostate = ctVector
 
 # ---------------------------------------------------------------------------------------------------
 """
+$(TYPEDEF)
+
 A flow object for integrating Hamiltonian dynamics in optimal control.
 
 Represents the time evolution of a Hamiltonian system using the canonical form of Hamilton's equations.
@@ -27,8 +29,8 @@ Instances of `HamiltonianFlow` are callable and forward arguments to the underly
 
 # Example
 ```julia-repl
-flow = HamiltonianFlow(f, rhs!)
-xf, pf = flow(0.0, x0, p0, 1.0)
+julia> flow = HamiltonianFlow(f, rhs!)
+julia> xf, pf = flow(0.0, x0, p0, 1.0)
 ```
 """
 struct HamiltonianFlow <: AbstractFlow{DCoTangent,CoTangent}
@@ -55,6 +57,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+$(TYPEDEF)
+
 A flow object for integrating general vector field dynamics.
 
 Used for systems where the vector field is given explicitly, rather than derived from a Hamiltonian.
@@ -68,8 +72,8 @@ Useful in settings like controlled systems or classical mechanics outside the Ha
 
 # Example
 ```julia-repl
-flow = VectorFieldFlow(f, rhs)
-xf = flow(0.0, x0, 1.0)
+julia> flow = VectorFieldFlow(f, rhs)
+julia> xf = flow(0.0, x0, 1.0)
 ```
 """
 struct VectorFieldFlow <: AbstractFlow{DState,State}
@@ -96,6 +100,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+$(TYPEDEF)
+
 Generic flow object for arbitrary ODE systems with jumps and events.
 
 A catch-all flow for general-purpose ODE integration. Supports dynamic typing and arbitrary state structures.
@@ -108,8 +114,8 @@ A catch-all flow for general-purpose ODE integration. Supports dynamic typing an
 
 # Example
 ```julia-repl
-flow = ODEFlow(f, rhs)
-result = flow(0.0, u0, 1.0)
+julia> flow = ODEFlow(f, rhs)
+julia> result = flow(0.0, u0, 1.0)
 ```
 """
 struct ODEFlow <: AbstractFlow{Any,Any}
@@ -135,6 +141,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+$(TYPEDEF)
+
 Wraps the low-level ODE solution, control feedback law, model structure, and problem parameters.
 
 # Fields
@@ -148,8 +156,8 @@ You can evaluate the flow solution like a callable ODE solution.
 
 # Example
 ```julia-repl
-sol = OptimalControlFlowSolution(ode_sol, u, model, v)
-x = sol(t)
+julia> sol = OptimalControlFlowSolution(ode_sol, u, model, v)
+julia> x = sol(t)
 ```
 """
 struct OptimalControlFlowSolution
@@ -178,7 +186,7 @@ Returns a `CTModels.Solution` ready for evaluation, reporting, or analysis.
 
 # Example
 ```julia-repl
-sol = Solution(optflow_solution)
+julia> sol = Solution(optflow_solution)
 ```
 """
 function CTModels.Solution(ocfs::OptimalControlFlowSolution; kwargs...)
@@ -239,6 +247,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+$(TYPEDEF)
+
 A flow object representing the solution of an optimal control problem.
 
 Supports Hamiltonian-based and classical formulations. Provides call overloads for different control settings:
@@ -261,9 +271,9 @@ Supports Hamiltonian-based and classical formulations. Provides call overloads f
 
 # Example
 ```julia-repl
-flow = OptimalControlFlow(...)
-sol = flow(0.0, x0, p0, 1.0)
-opt_sol = flow((0.0, 1.0), x0, p0)
+julia> flow = OptimalControlFlow(...)
+julia> sol = flow(0.0, x0, p0, 1.0)
+julia> opt_sol = flow((0.0, 1.0), x0, p0)
 ```
 """
 struct OptimalControlFlow{VD} <: AbstractFlow{DCoTangent,CoTangent}

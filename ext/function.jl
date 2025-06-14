@@ -24,8 +24,8 @@ A function `f` that can be called in two ways:
 
 # Example
 ```julia-repl
-f = ode_usage(Tsit5(), 1e-6, 1e-6, 0.1, InternalNorm())
-sol = f((0.0, 1.0), [1.0, 0.0], [0.0]; jumps=[], _t_stops_interne=[], DiffEqRHS=my_rhs)
+julia> f = ode_usage(Tsit5(), 1e-6, 1e-6, 0.1, InternalNorm())
+julia> sol = f((0.0, 1.0), [1.0, 0.0], [0.0]; jumps=[], _t_stops_interne=[], DiffEqRHS=my_rhs)
 ```
 """
 function ode_usage(alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...)
@@ -109,9 +109,9 @@ Depending on the `(autonomous, variable)` flags:
 
 # Example
 ```julia-repl
-dyn(t, x, v) = [-x[1] + v[1] * sin(t)]
-flow = CTFlows.Flow(dyn; autonomous=true, variable=true)
-xT = flow((0.0, 1.0), [1.0], [0.1])
+julia> dyn(t, x, v) = [-x[1] + v[1] * sin(t)]
+julia> flow = CTFlows.Flow(dyn; autonomous=true, variable=true)
+julia> xT = flow((0.0, 1.0), [1.0], [0.1])
 ```
 """
 function CTFlows.Flow(

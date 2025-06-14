@@ -1,4 +1,6 @@
 """
+$(TYPEDSIGNATURES)
+
 Return `true` if the given model defines a minimization problem, `false` otherwise.
 """
 function __is_min(ocp::CTModels.Model)
@@ -6,6 +8,8 @@ function __is_min(ocp::CTModels.Model)
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Return a `Dynamics` object built from the model's right-hand side function.
 
 The returned function computes the state derivative `dx/dt = f(t, x, u, v)`, 
@@ -18,6 +22,8 @@ function __dynamics(ocp::CTModels.Model)
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Return a `Lagrange` object if the model includes an integrand cost; otherwise, return `nothing`.
 
 The resulting function can be used to compute the running cost of the optimal control problem.
@@ -28,6 +34,8 @@ function __lagrange(ocp::CTModels.Model)
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Return a `Mayer` object if the model includes a terminal cost; otherwise, return `nothing`.
 
 The resulting function can be used to compute the final cost in the objective.
@@ -39,6 +47,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+$(TYPEDSIGNATURES)
+
 Construct and return the Hamiltonian for the given model and control law.
 
 The Hamiltonian is built using model dynamics (and possibly a running cost) and returned as a callable function.
@@ -53,6 +63,8 @@ function __create_hamiltonian(ocp::CTModels.Model, u::ControlLaw{<:Function,T,V}
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Helper method to construct the Hamiltonian when control is given as a plain function.
 
 The function is wrapped in a `ControlLaw`, and the flags `autonomous` and `variable` define its behavior type.
@@ -69,6 +81,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+$(TYPEDSIGNATURES)
+
 Construct the Hamiltonian for a constrained optimal control problem.
 
 This function supports multiple input types for the control law (`u`), path constraints (`g`), and multipliers (`μ`), 
@@ -104,13 +118,13 @@ The function normalizes these inputs to the appropriate types internally using m
 - `(H, u)`: Tuple containing the Hamiltonian object `H` and the processed control law `u`.
 
 # Examples
-<pre-julia>
+```julia-repl
 # Using a raw function control law with autonomous system and fixed parameters
 H, u_processed = __create_hamiltonian(ocp, u_function, g_function, μ_function; autonomous=true, variable=false)
 
 # Using a FeedbackControl control law
 H, u_processed = __create_hamiltonian(ocp, feedback_control, g_constraint, μ_multiplier)
-</pre-julia>
+```
 """
 function __create_hamiltonian(
     ocp::CTModels.Model,
@@ -129,6 +143,8 @@ function __create_hamiltonian(
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Overload for control law as a raw function with autonomous and variable flags.
 """
 function __create_hamiltonian(ocp::CTModels.Model, u::Function, g, μ; autonomous::Bool, variable::Bool)
@@ -142,6 +158,8 @@ function __create_hamiltonian(ocp::CTModels.Model, u::Function, g, μ; autonomou
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Overload for feedback control laws that adapts the signature based on autonomy and variability.
 """
 function __create_hamiltonian(
@@ -157,6 +175,8 @@ function __create_hamiltonian(
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Overload that wraps plain constraint functions into MixedConstraint objects.
 """
 function __create_hamiltonian(
@@ -166,6 +186,8 @@ function __create_hamiltonian(
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Overload that converts StateConstraint objects into MixedConstraint with appropriate signature adaptation.
 """
 function __create_hamiltonian(
@@ -181,6 +203,8 @@ function __create_hamiltonian(
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Overload that wraps multiplier functions into Multiplier objects.
 """
 function __create_hamiltonian(
@@ -191,6 +215,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+$(TYPEDSIGNATURES)
+
 Return internal components needed to construct the OCP Hamiltonian.
 
 Returns a tuple `(f, f⁰, p⁰, s)` where:
@@ -209,6 +235,8 @@ end
 
 # ---------------------------------------------------------------------------------------------------
 """
+$(TYPEDSIGNATURES)
+
 Construct the Hamiltonian:
 
 H(t, x, p) = p ⋅ f(t, x, u(t, x, p))
@@ -220,6 +248,8 @@ function makeH(f::Dynamics, u::ControlLaw)
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Construct the Hamiltonian:
 
 H(t, x, p) = p ⋅ f(t, x, u(t, x, p)) + s p⁰ f⁰(t, x, u(t, x, p))
@@ -235,6 +265,8 @@ function makeH(f::Dynamics, u::ControlLaw, f⁰::Lagrange, p⁰::ctNumber, s::ct
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Construct the Hamiltonian:
 
 H(t, x, p) = p ⋅ f(t, x, u(t, x, p)) + μ(t, x, p) ⋅ g(t, x, u(t, x, p))
@@ -250,6 +282,8 @@ function makeH(f::Dynamics, u::ControlLaw, g::MixedConstraint, μ::Multiplier)
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Construct the Hamiltonian:
 
 H(t, x, p) = p ⋅ f(t, x, u(t, x, p)) 

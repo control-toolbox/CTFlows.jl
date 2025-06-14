@@ -29,47 +29,63 @@ const DState = ctVector
 const DCostate = ctVector
 
 # --------------------------------------------------------------------------------------------------
-"""Base abstract type representing the dependence of a function on time.
+"""
+$(TYPEDEF)
+
+Base abstract type representing the dependence of a function on time.
 
 Used as a trait to distinguish autonomous vs. non-autonomous functions."""
 abstract type TimeDependence end
 
-"""Indicates the function is autonomous: it does not explicitly depend on time `t`.
+"""
+$(TYPEDEF)
+
+Indicates the function is autonomous: it does not explicitly depend on time `t`.
 
 For example, dynamics of the form `f(x, u, p)`."""
 abstract type Autonomous <: TimeDependence end
 
-"""Indicates the function is non-autonomous: it explicitly depends on time `t`.
+"""
+$(TYPEDEF)
+
+Indicates the function is non-autonomous: it explicitly depends on time `t`.
 
 For example, dynamics of the form `f(t, x, u, p)`."""
 abstract type NonAutonomous <: TimeDependence end
 
-"""Base abstract type representing whether a function depends on an additional variable argument.
+"""
+$(TYPEDEF)
+
+Base abstract type representing whether a function depends on an additional variable argument.
 
 Used to distinguish fixed-argument functions from those with auxiliary parameters."""
 abstract type VariableDependence end
 
-"""Indicates the function has an additional variable argument `v`.
+"""
+$(TYPEDEF)
+
+Indicates the function has an additional variable argument `v`.
 
 For example, functions of the form `f(t, x, p, v)` where `v` is a multiplier or auxiliary parameter."""
 abstract type NonFixed <: VariableDependence end
 
-"""Indicates the function has fixed standard arguments only.
+"""
+$(TYPEDEF)
+
+Indicates the function has fixed standard arguments only.
 
 For example, functions of the form `f(t, x, p)` without any extra variable argument."""
 abstract type Fixed <: VariableDependence end
 
 # --------------------------------------------------------------------------------------------------
 """
-    struct Mayer{TF, VD}
-        f::TF
-    end
+$(TYPEDEF)
 
 Encodes the Mayer cost function in optimal control problems.
 
 This terminal cost term is usually of the form `φ(x(tf))` or `φ(t, x(tf), v)`, depending on whether it's autonomous and/or variable-dependent.
 
-# Arguments
+# Fields
 - `f`: a callable of the form:
     - `f(x)`
     - `f(x, v)`
@@ -78,26 +94,31 @@ This terminal cost term is usually of the form `φ(x(tf))` or `φ(t, x(tf), v)`,
 
 # Example
 ```julia-repl
-φ(x) = norm(x)^2
-m = Mayer{typeof(φ), Fixed}(φ)
-m([1.0, 2.0])
+julia> φ(x) = norm(x)^2
+julia> m = Mayer{typeof(φ), Fixed}(φ)
+julia> m([1.0, 2.0])
 ```
 """
 struct Mayer{TF<:Function, VD<:VariableDependence}
     f::TF
 end
 
+"""
+$(TYPEDEF)
+"""
 abstract type AbstractHamiltonian{TD<:TimeDependence,VD<:VariableDependence} end
+
+"""
+$(TYPEDEF)
+"""
 abstract type AbstractVectorField{TD<:TimeDependence,VD<:VariableDependence} end
 
 """
-    struct Hamiltonian{TF, TD, VD} <: AbstractHamiltonian{TD, VD}
-        f::TF
-    end
+$(TYPEDEF)
 
 Encodes the Hamiltonian function `H = ⟨p, f⟩ + L` in optimal control.
 
-# Arguments
+# Fields
 - `f`: a callable of the form:
     - `f(x, p)`
     - `f(t, x, p)`
@@ -110,9 +131,9 @@ Encodes the Hamiltonian function `H = ⟨p, f⟩ + L` in optimal control.
 
 # Example
 ```julia-repl
-Hf(x, p) = dot(p, [x[2], -x[1]])
-H = Hamiltonian{typeof(Hf), Autonomous, Fixed}(Hf)
-H([1.0, 0.0], [1.0, 1.0])
+julia> Hf(x, p) = dot(p, [x[2], -x[1]])
+julia> H = Hamiltonian{typeof(Hf), Autonomous, Fixed}(Hf)
+julia> H([1.0, 0.0], [1.0, 1.0])
 ```
 """
 struct Hamiltonian{TF<:Function, TD<:TimeDependence, VD<:VariableDependence} <: AbstractHamiltonian{TD, VD}
@@ -120,13 +141,11 @@ struct Hamiltonian{TF<:Function, TD<:TimeDependence, VD<:VariableDependence} <: 
 end
 
 """
-    struct VectorField{TF, TD, VD} <: AbstractVectorField{TD, VD}
-        f::TF
-    end
+$(TYPEDEF)
 
 Represents a dynamical system `dx/dt = f(...)` as a vector field.
 
-# Arguments
+# Fields
 - `f`: a callable of the form:
     - `f(x)`
     - `f(t, x)`
@@ -145,21 +164,19 @@ struct VectorField{TF<:Function, TD<:TimeDependence, VD<:VariableDependence} <: 
 end
 
 """
-    struct HamiltonianVectorField{TF, TD, VD} <: AbstractVectorField{TD, VD}
-        f::TF
-    end
+$(TYPEDEF)
 
 Represents the Hamiltonian vector field associated to a Hamiltonian function,
 typically defined as `(∂H/∂p, -∂H/∂x)`.
 
-# Arguments
+# Fields
 - `f`: a callable implementing the Hamiltonian vector field.
 
 # Example
 ```julia-repl
-f(x, p) = [p[2], -p[1], -x[1], -x[2]]
-XH = HamiltonianVectorField{typeof(f), Autonomous, Fixed}(f)
-XH([1.0, 0.0], [0.5, 0.5])
+julia> f(x, p) = [p[2], -p[1], -x[1], -x[2]]
+julia> XH = HamiltonianVectorField{typeof(f), Autonomous, Fixed}(f)
+julia> XH([1.0, 0.0], [0.5, 0.5])
 ```
 """
 struct HamiltonianVectorField{TF<:Function, TD<:TimeDependence, VD<:VariableDependence} <: AbstractVectorField{TD, VD}
@@ -167,9 +184,7 @@ struct HamiltonianVectorField{TF<:Function, TD<:TimeDependence, VD<:VariableDepe
 end
 
 """
-    struct HamiltonianLift{TV, TD, VD} <: AbstractHamiltonian{TD, VD}
-        X::TV
-    end
+$(TYPEDEF)
 
 Lifts a vector field `X` into a Hamiltonian function using the canonical symplectic structure.
 
@@ -182,9 +197,9 @@ Use `HamiltonianLift(X::VectorField)` where `X` is a `VectorField{...}`.
 # Example
 ```julia-repl
 f(x) = [x[2], -x[1]]
-X = VectorField{typeof(f), Autonomous, Fixed}(f)
-H = HamiltonianLift(X)
-H([1.0, 0.0], [0.5, 0.5])
+julia> X = VectorField{typeof(f), Autonomous, Fixed}(f)
+julia> H = HamiltonianLift(X)
+julia> H([1.0, 0.0], [0.5, 0.5])
 ```
 """
 struct HamiltonianLift{TV<:VectorField, TD<:TimeDependence, VD<:VariableDependence} <: AbstractHamiltonian{TD, VD}
@@ -195,13 +210,11 @@ struct HamiltonianLift{TV<:VectorField, TD<:TimeDependence, VD<:VariableDependen
 end
 
 """
-    struct Lagrange{TF, TD, VD}
-        f::TF
-    end
+$(TYPEDEF)
 
 Encodes the integrand `L(t, x, u, ...)` of the cost functional in Bolza optimal control problems.
 
-# Arguments
+# Fields
 - `f`: a callable such as:
     - `f(x, u)`
     - `f(t, x, u)`
@@ -210,9 +223,9 @@ Encodes the integrand `L(t, x, u, ...)` of the cost functional in Bolza optimal 
 
 # Example
 ```julia-repl
-L(x, u) = dot(x, x) + dot(u, u)
-lag = Lagrange{typeof(L), Autonomous, Fixed}(L)
-lag([1.0, 2.0], [0.5, 0.5])
+julia> L(x, u) = dot(x, x) + dot(u, u)
+julia> lag = Lagrange{typeof(L), Autonomous, Fixed}(L)
+julia> lag([1.0, 2.0], [0.5, 0.5])
 ```
 """
 struct Lagrange{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
@@ -220,13 +233,11 @@ struct Lagrange{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
 end
 
 """
-    struct Dynamics{TF, TD, VD}
-        f::TF
-    end
+$(TYPEDEF)
 
 Represents the system dynamics `dx/dt = f(...)`.
 
-# Arguments
+# Fields
 - `f`: a callable of the form:
     - `f(x, u)`
     - `f(t, x, u)`
@@ -235,9 +246,9 @@ Represents the system dynamics `dx/dt = f(...)`.
 
 # Example
 ```julia-repl
-f(x, u) = x + u
-dyn = Dynamics{typeof(f), Autonomous, Fixed}(f)
-dyn([1.0], [2.0])
+julia> f(x, u) = x + u
+julia> dyn = Dynamics{typeof(f), Autonomous, Fixed}(f)
+julia> dyn([1.0], [2.0])
 ```
 """
 struct Dynamics{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
@@ -245,20 +256,18 @@ struct Dynamics{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
 end
 
 """
-    struct StateConstraint{TF, TD, VD}
-        f::TF
-    end
+$(TYPEDEF)
 
 Encodes a pure state constraint `g(x) = 0` or `g(t, x) = 0`.
 
-# Arguments
+# Fields
 - `f`: a callable depending on time or not, with or without variable dependency.
 
 # Example
 ```julia-repl
-g(x) = x[1]^2 + x[2]^2 - 1
-c = StateConstraint{typeof(g), Autonomous, Fixed}(g)
-c([1.0, 0.0])
+julia> g(x) = x[1]^2 + x[2]^2 - 1
+julia> c = StateConstraint{typeof(g), Autonomous, Fixed}(g)
+julia> c([1.0, 0.0])
 ```
 """
 struct StateConstraint{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
@@ -266,17 +275,15 @@ struct StateConstraint{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
 end
 
 """
-    struct MixedConstraint{TF, TD, VD}
-        f::TF
-    end
+$(TYPEDEF)
 
 Encodes a constraint on both state and control: `g(x, u) = 0` or `g(t, x, u) = 0`.
 
 # Example
 ```julia-repl
-g(x, u) = x[1] + u[1] - 1
-mc = MixedConstraint{typeof(g), Autonomous, Fixed}(g)
-mc([0.3], [0.7])
+julia> g(x, u) = x[1] + u[1] - 1
+julia> mc = MixedConstraint{typeof(g), Autonomous, Fixed}(g)
+julia> mc([0.3], [0.7])
 ```
 """
 struct MixedConstraint{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
@@ -284,17 +291,15 @@ struct MixedConstraint{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
 end
 
 """
-    struct FeedbackControl{TF, TD, VD}
-        f::TF
-    end
+$(TYPEDEF)
 
 Represents a feedback control law: `u = f(x)` or `u = f(t, x)`.
 
 # Example
 ```julia-repl
-f(x) = -x
-u = FeedbackControl{typeof(f), Autonomous, Fixed}(f)
-u([1.0, -1.0])
+julia> f(x) = -x
+julia> u = FeedbackControl{typeof(f), Autonomous, Fixed}(f)
+julia> u([1.0, -1.0])
 ```
 """
 struct FeedbackControl{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
@@ -302,17 +307,15 @@ struct FeedbackControl{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
 end
 
 """
-    struct ControlLaw{TF, TD, VD}
-        f::TF
-    end
+$(TYPEDEF)
 
 Represents a generic open-loop or closed-loop control law.
 
 # Example
 ```julia-repl
-f(t, x) = -x * exp(-t)
-u = ControlLaw{typeof(f), NonAutonomous, Fixed}(f)
-u(1.0, [2.0])
+julia> f(t, x) = -x * exp(-t)
+julia> u = ControlLaw{typeof(f), NonAutonomous, Fixed}(f)
+julia> u(1.0, [2.0])
 ```
 """
 struct ControlLaw{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
@@ -320,17 +323,15 @@ struct ControlLaw{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
 end
 
 """
-    struct Multiplier{TF, TD, VD}
-        f::TF
-    end
+$(TYPEDEF)
 
 Encodes a Lagrange multiplier associated with a constraint.
 
 # Example
 ```julia-repl
-λ(t) = [sin(t), cos(t)]
-μ = Multiplier{typeof(λ), NonAutonomous, Fixed}(λ)
-μ(π / 2)
+julia> λ(t) = [sin(t), cos(t)]
+julia> μ = Multiplier{typeof(λ), NonAutonomous, Fixed}(λ)
+julia> μ(π / 2)
 ```
 """
 struct Multiplier{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
@@ -339,7 +340,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 """
-    Mayer(f::Function; variable::Bool=__variable())
+$(TYPEDSIGNATURES)
 
 Construct a Mayer cost functional wrapper.
 
@@ -356,7 +357,7 @@ function Mayer(f::Function; variable::Bool=__variable())
 end
 
 """
-    Mayer(f::Function, VD::Type{<:VariableDependence})
+$(TYPEDSIGNATURES)
 
 Construct a Mayer cost functional wrapper with explicit variable dependence type `VD`.
 """
@@ -364,41 +365,21 @@ function Mayer(f::Function, VD::Type{<:VariableDependence})
     return Mayer{typeof(f),VD}(f)
 end
 
-"""
-    (F::Mayer{<:Function, Fixed})(x0::State, xf::State) -> ctNumber
-
-Evaluate Mayer cost function for autonomous, fixed-variable case.
-
-- `x0`: initial state
-- `xf`: final state
-
-Returns the cost as a scalar number.
-"""
 function (F::Mayer{<:Function,Fixed})(x0::State, xf::State)::ctNumber
     return F.f(x0, xf)
 end
 
-"""
-    (F::Mayer{<:Function, Fixed})(x0::State, xf::State, v::Variable) -> ctNumber
-
-Evaluate Mayer cost function ignoring extra variable `v` for fixed variable case.
-"""
 function (F::Mayer{<:Function,Fixed})(x0::State, xf::State, v::Variable)::ctNumber
     return F.f(x0, xf)
 end
 
-"""
-    (F::Mayer{<:Function, NonFixed})(x0::State, xf::State, v::Variable) -> ctNumber
-
-Evaluate Mayer cost function for non-fixed variable case, passing extra variable `v`.
-"""
 function (F::Mayer{<:Function,NonFixed})(x0::State, xf::State, v::Variable)::ctNumber
     return F.f(x0, xf, v)
 end
 
 # --------------------------------------------------------------------------------------------------
 """
-    Hamiltonian(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+$(TYPEDSIGNATURES)
 
 Construct a Hamiltonian function wrapper.
 
@@ -415,7 +396,7 @@ function Hamiltonian(f::Function; autonomous::Bool=__autonomous(), variable::Boo
 end
 
 """
-    Hamiltonian(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+$(TYPEDSIGNATURES)
 
 Construct a Hamiltonian function wrapper with explicit time and variable dependence types.
 """
@@ -423,81 +404,40 @@ function Hamiltonian(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:Variabl
     return Hamiltonian{typeof(f),TD,VD}(f)
 end
 
-"""
-    (F::Hamiltonian{<:Function, Autonomous, Fixed})(x::State, p::Costate) -> ctNumber
-
-Evaluate autonomous Hamiltonian without extra variable.
-
-Arguments:
-- `x`: state vector
-- `p`: costate vector
-
-Returns Hamiltonian value as scalar.
-"""
 function (F::Hamiltonian{<:Function,Autonomous,Fixed})(x::State, p::Costate)::ctNumber
     return F.f(x, p)
 end
 
-"""
-    (F::Hamiltonian{<:Function, Autonomous, Fixed})(t::Time, x::State, p::Costate, v::Variable) -> ctNumber
-
-Evaluate autonomous Hamiltonian ignoring time and variable `v`.
-"""
 function (F::Hamiltonian{<:Function,Autonomous,Fixed})(
     t::Time, x::State, p::Costate, v::Variable
 )::ctNumber
     return F.f(x, p)
 end
 
-"""
-    (F::Hamiltonian{<:Function, Autonomous, NonFixed})(x::State, p::Costate, v::Variable) -> ctNumber
-
-Evaluate autonomous Hamiltonian with extra variable `v`.
-"""
 function (F::Hamiltonian{<:Function,Autonomous,NonFixed})(
     x::State, p::Costate, v::Variable
 )::ctNumber
     return F.f(x, p, v)
 end
 
-"""
-    (F::Hamiltonian{<:Function, Autonomous, NonFixed})(t::Time, x::State, p::Costate, v::Variable) -> ctNumber
-
-Evaluate autonomous Hamiltonian ignoring time but using variable `v`.
-"""
 function (F::Hamiltonian{<:Function,Autonomous,NonFixed})(
     t::Time, x::State, p::Costate, v::Variable
 )::ctNumber
     return F.f(x, p, v)
 end
 
-"""
-    (F::Hamiltonian{<:Function, NonAutonomous, Fixed})(t::Time, x::State, p::Costate) -> ctNumber
-
-Evaluate non-autonomous Hamiltonian without extra variable.
-"""
 function (F::Hamiltonian{<:Function,NonAutonomous,Fixed})(
     t::Time, x::State, p::Costate
 )::ctNumber
     return F.f(t, x, p)
 end
 
-"""
-    (F::Hamiltonian{<:Function, NonAutonomous, Fixed})(t::Time, x::State, p::Costate, v::Variable) -> ctNumber
-
-Evaluate non-autonomous Hamiltonian ignoring variable `v`.
-"""
 function (F::Hamiltonian{<:Function,NonAutonomous,Fixed})(
     t::Time, x::State, p::Costate, v::Variable
 )::ctNumber
     return F.f(t, x, p)
 end
 
-"""
-    (F::Hamiltonian{<:Function, NonAutonomous, NonFixed})(t::Time, x::State, p::Costate, v::Variable) -> ctNumber
-
-Evaluate non-autonomous Hamiltonian with extra variable `v`.
-"""
 function (F::Hamiltonian{<:Function,NonAutonomous,NonFixed})(
     t::Time, x::State, p::Costate, v::Variable
 )::ctNumber
@@ -506,7 +446,7 @@ end
 
 # ---------------------------------------------------------------------------
 """
-    HamiltonianLift(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+$(TYPEDSIGNATURES)
 
 Construct a HamiltonianLift from a vector field function.
 
@@ -523,7 +463,7 @@ function HamiltonianLift(f::Function; autonomous::Bool=__autonomous(), variable:
 end
 
 """
-    HamiltonianLift(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+$(TYPEDSIGNATURES)
 
 Construct a HamiltonianLift with explicit time and variable dependence types.
 """
@@ -531,79 +471,42 @@ function HamiltonianLift(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:Var
     return HamiltonianLift(VectorField(f, TD, VD))
 end
 
-"""
-    (H::HamiltonianLift{<:VectorField, Autonomous, Fixed})(x::State, p::Costate) -> ctNumber
-
-Evaluate HamiltonianLift for autonomous, fixed-variable vector field.
-
-Returns `p' * X(x)`.
-"""
 function (H::HamiltonianLift{<:VectorField,Autonomous,Fixed})(
     x::State, p::Costate
 )::ctNumber
     return p' * H.X(x)
 end
 
-"""
-    (H::HamiltonianLift{<:VectorField, Autonomous, Fixed})(t::Time, x::State, p::Costate, v::Variable) -> ctNumber
-
-Evaluate HamiltonianLift ignoring time and variable `v`.
-"""
 function (H::HamiltonianLift{<:VectorField,Autonomous,Fixed})(
     t::Time, x::State, p::Costate, v::Variable
 )::ctNumber
     return p' * H.X(x)
 end
 
-"""
-    (H::HamiltonianLift{<:VectorField, Autonomous, NonFixed})(x::State, p::Costate, v::Variable) -> ctNumber
-
-Evaluate HamiltonianLift with extra variable `v`.
-"""
 function (H::HamiltonianLift{<:VectorField,Autonomous,NonFixed})(
     x::State, p::Costate, v::Variable
 )::ctNumber
     return p' * H.X(x, v)
 end
 
-"""
-    (H::HamiltonianLift{<:VectorField, Autonomous, NonFixed})(t::Time, x::State, p::Costate, v::Variable) -> ctNumber
-
-Evaluate HamiltonianLift ignoring time, passing variable `v`.
-"""
 function (H::HamiltonianLift{<:VectorField,Autonomous,NonFixed})(
     t::Time, x::State, p::Costate, v::Variable
 )::ctNumber
     return p' * H.X(x, v)
 end
 
-"""
-    (H::HamiltonianLift{<:VectorField, NonAutonomous, Fixed})(t::Time, x::State, p::Costate) -> ctNumber
-
-Evaluate HamiltonianLift for non-autonomous, fixed-variable vector field.
-"""
 function (H::HamiltonianLift{<:VectorField,NonAutonomous,Fixed})(
     t::Time, x::State, p::Costate
 )::ctNumber
     return p' * H.X(t, x)
 end
 
-"""
-    (H::HamiltonianLift{<:VectorField, NonAutonomous, Fixed})(t::Time, x::State, p::Costate, v::Variable) -> ctNumber
-
-Evaluate HamiltonianLift ignoring variable `v`.
-"""
 function (H::HamiltonianLift{<:VectorField,NonAutonomous,Fixed})(
     t::Time, x::State, p::Costate, v::Variable
 )::ctNumber
     return p' * H.X(t, x)
 end
 
-"""
-    (H::HamiltonianLift{<:VectorField, NonAutonomous, NonFixed})(t::Time, x::State, p::Costate, v::Variable) -> ctNumber
-
-Evaluate HamiltonianLift with extra variable `v`.
-"""
 function (H::HamiltonianLift{<:VectorField,NonAutonomous,NonFixed})(
     t::Time, x::State, p::Costate, v::Variable
 )::ctNumber
@@ -612,7 +515,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 """
-    HamiltonianVectorField(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+$(TYPEDSIGNATURES)
 
 Construct a Hamiltonian vector field from a function `f`.
 
@@ -628,7 +531,7 @@ function HamiltonianVectorField(f::Function; autonomous::Bool=__autonomous(), va
 end
 
 """
-    HamiltonianVectorField(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+$(TYPEDSIGNATURES)
 
 Construct a Hamiltonian vector field with explicit time and variable dependence.
 """
@@ -636,79 +539,42 @@ function HamiltonianVectorField(f::Function, TD::Type{<:TimeDependence}, VD::Typ
     return HamiltonianVectorField{typeof(f),TD,VD}(f)
 end
 
-"""
-    (F::HamiltonianVectorField{<:Function, Autonomous, Fixed})(x::State, p::Costate) -> Tuple{DState, DCostate}
-
-Evaluate autonomous Hamiltonian vector field without extra variable.
-
-Returns tuple of derivatives `(dx/dt, dp/dt)`.
-"""
 function (F::HamiltonianVectorField{<:Function,Autonomous,Fixed})(
     x::State, p::Costate
 )::Tuple{DState,DCostate}
     return F.f(x, p)
 end
 
-"""
-    (F::HamiltonianVectorField{<:Function, Autonomous, Fixed})(t::Time, x::State, p::Costate, v::Variable) -> Tuple{DState, DCostate}
-
-Evaluate autonomous Hamiltonian vector field ignoring time and variable `v`.
-"""
 function (F::HamiltonianVectorField{<:Function,Autonomous,Fixed})(
     t::Time, x::State, p::Costate, v::Variable
 )::Tuple{DState,DCostate}
     return F.f(x, p)
 end
 
-"""
-    (F::HamiltonianVectorField{<:Function, Autonomous, NonFixed})(x::State, p::Costate, v::Variable) -> Tuple{DState, DCostate}
-
-Evaluate autonomous Hamiltonian vector field with extra variable `v`.
-"""
 function (F::HamiltonianVectorField{<:Function,Autonomous,NonFixed})(
     x::State, p::Costate, v::Variable
 )::Tuple{DState,DCostate}
     return F.f(x, p, v)
 end
 
-"""
-    (F::HamiltonianVectorField{<:Function, Autonomous, NonFixed})(t::Time, x::State, p::Costate, v::Variable) -> Tuple{DState, DCostate}
-
-Evaluate autonomous Hamiltonian vector field ignoring time, passing variable `v`.
-"""
 function (F::HamiltonianVectorField{<:Function,Autonomous,NonFixed})(
     t::Time, x::State, p::Costate, v::Variable
 )::Tuple{DState,DCostate}
     return F.f(x, p, v)
 end
 
-"""
-    (F::HamiltonianVectorField{<:Function, NonAutonomous, Fixed})(t::Time, x::State, p::Costate) -> Tuple{DState, DCostate}
-
-Evaluate non-autonomous Hamiltonian vector field without extra variable.
-"""
 function (F::HamiltonianVectorField{<:Function,NonAutonomous,Fixed})(
     t::Time, x::State, p::Costate
 )::Tuple{DState,DCostate}
     return F.f(t, x, p)
 end
 
-"""
-    (F::HamiltonianVectorField{<:Function, NonAutonomous, Fixed})(t::Time, x::State, p::Costate, v::Variable) -> Tuple{DState, DCostate}
-
-Evaluate non-autonomous Hamiltonian vector field ignoring variable `v`.
-"""
 function (F::HamiltonianVectorField{<:Function,NonAutonomous,Fixed})(
     t::Time, x::State, p::Costate, v::Variable
 )::Tuple{DState,DCostate}
     return F.f(t, x, p)
 end
 
-"""
-    (F::HamiltonianVectorField{<:Function, NonAutonomous, NonFixed})(t::Time, x::State, p::Costate, v::Variable) -> Tuple{DState, DCostate}
-
-Evaluate non-autonomous Hamiltonian vector field with extra variable `v`.
-"""
 function (F::HamiltonianVectorField{<:Function,NonAutonomous,NonFixed})(
     t::Time, x::State, p::Costate, v::Variable
 )::Tuple{DState,DCostate}
@@ -717,7 +583,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 """
-    VectorField(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+$(TYPEDSIGNATURES)
 
 Create a `VectorField` object wrapping the function `f`.
 
@@ -734,9 +600,9 @@ The `VectorField` object can be called with different argument signatures depend
 
 # Examples
 ```julia-repl
-f(x) = [-x[2], x[1]]
-vf = VectorField(f, autonomous=true, variable=false)
-vf([1.0, 0.0])  # returns [-0.0, 1.0]
+julia> f(x) = [-x[2], x[1]]
+julia> vf = VectorField(f, autonomous=true, variable=false)
+julia> vf([1.0, 0.0])  # returns [-0.0, 1.0]
 ```
 """
 function VectorField(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
@@ -746,7 +612,7 @@ function VectorField(f::Function; autonomous::Bool=__autonomous(), variable::Boo
 end
 
 """
-    VectorField(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+$(TYPEDSIGNATURES)
 
 Create a `VectorField` object with explicit time and variable dependence types.
 
@@ -808,7 +674,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 """
-    Lagrange(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+$(TYPEDSIGNATURES)
 
 Create a `Lagrange` object representing a Lagrangian cost function.
 
@@ -825,9 +691,9 @@ The `Lagrange` object can be called with different argument signatures depending
 
 # Examples
 ```julia-repl
-f(x, u) = sum(abs2, x) + sum(abs2, u)
-lag = Lagrange(f, autonomous=true, variable=false)
-lag([1.0, 2.0], [0.5, 0.5])  # returns 5.25
+julia> f(x, u) = sum(abs2, x) + sum(abs2, u)
+julia> lag = Lagrange(f, autonomous=true, variable=false)
+julia> lag([1.0, 2.0], [0.5, 0.5])  # returns 5.25
 ```
 """
 function Lagrange(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
@@ -837,7 +703,7 @@ function Lagrange(f::Function; autonomous::Bool=__autonomous(), variable::Bool=_
 end
 
 """
-    Lagrange(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+$(TYPEDSIGNATURES)
 
 Create a `Lagrange` object with explicit time and variable dependence.
 
@@ -903,7 +769,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 """
-    Dynamics(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+$(TYPEDSIGNATURES)
 
 Create a `Dynamics` object representing system dynamics.
 
@@ -920,9 +786,9 @@ The `Dynamics` object can be called with various signatures depending on time an
 
 # Examples
 ```julia-repl
-f(x, u) = [x[2], -x[1] + u[1]]
-dyn = Dynamics(f, autonomous=true, variable=false)
-dyn([1.0, 0.0], [0.0])  # returns [0.0, -1.0]
+julia> f(x, u) = [x[2], -x[1] + u[1]]
+julia> dyn = Dynamics(f, autonomous=true, variable=false)
+julia> dyn([1.0, 0.0], [0.0])  # returns [0.0, -1.0]
 ```
 """
 function Dynamics(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
@@ -932,7 +798,7 @@ function Dynamics(f::Function; autonomous::Bool=__autonomous(), variable::Bool=_
 end
 
 """
-    Dynamics(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+$(TYPEDSIGNATURES)
 
 Create a `Dynamics` object with explicit time and variable dependence.
 
@@ -997,7 +863,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 """
-    StateConstraint(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+$(TYPEDSIGNATURES)
 
 Construct a `StateConstraint` object wrapping the function `f`.
 
@@ -1012,7 +878,7 @@ Construct a `StateConstraint` object wrapping the function `f`.
 # Example
 
 ```julia-repl
-sc = StateConstraint(x -> x .- 1)  # Autonomous, fixed variable by default
+julia> sc = StateConstraint(x -> x .- 1)  # Autonomous, fixed variable by default
 ```
 """
 function StateConstraint(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
@@ -1022,7 +888,7 @@ function StateConstraint(f::Function; autonomous::Bool=__autonomous(), variable:
 end
 
 """
-    StateConstraint(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+$(TYPEDSIGNATURES)
 
 Construct a `StateConstraint` specifying the time and variable dependence types explicitly.
 
@@ -1080,7 +946,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 """
-    MixedConstraint(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+$(TYPEDSIGNATURES)
 
 Construct a `MixedConstraint` object wrapping the function `f`.
 
@@ -1095,7 +961,7 @@ Construct a `MixedConstraint` object wrapping the function `f`.
 # Example
 
 ```julia-repl
-mc = MixedConstraint((x, u) -> x + u)
+julia> mc = MixedConstraint((x, u) -> x + u)
 ```
 """
 function MixedConstraint(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
@@ -1105,7 +971,7 @@ function MixedConstraint(f::Function; autonomous::Bool=__autonomous(), variable:
 end
 
 """
-    MixedConstraint(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+$(TYPEDSIGNATURES)
 
 Construct a `MixedConstraint` specifying the time and variable dependence types explicitly.
 """
@@ -1157,7 +1023,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 """
-    FeedbackControl(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+$(TYPEDSIGNATURES)
 
 Construct a `FeedbackControl` wrapping the function `f`.
 
@@ -1172,7 +1038,7 @@ Construct a `FeedbackControl` wrapping the function `f`.
 # Example
 
 ```julia-repl
-fb = FeedbackControl(x -> -x)
+julia> fb = FeedbackControl(x -> -x)
 ```
 """
 function FeedbackControl(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
@@ -1182,7 +1048,7 @@ function FeedbackControl(f::Function; autonomous::Bool=__autonomous(), variable:
 end
 
 """
-    FeedbackControl(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+$(TYPEDSIGNATURES)
 
 Construct a `FeedbackControl` specifying time and variable dependence types.
 """
@@ -1232,7 +1098,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 """
-    ControlLaw(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+$(TYPEDSIGNATURES)
 
 Construct a `ControlLaw` wrapping the function `f`.
 
@@ -1247,7 +1113,7 @@ Construct a `ControlLaw` wrapping the function `f`.
 # Example
 
 ```julia-repl
-cl = ControlLaw((x, p) -> -p)
+julia> cl = ControlLaw((x, p) -> -p)
 ```
 """
 function ControlLaw(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
@@ -1257,7 +1123,7 @@ function ControlLaw(f::Function; autonomous::Bool=__autonomous(), variable::Bool
 end
 
 """
-    ControlLaw(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+$(TYPEDSIGNATURES)
 
 Construct a `ControlLaw` specifying time and variable dependence types.
 """
@@ -1309,7 +1175,7 @@ end
 
 # --------------------------------------------------------------------------------------------------
 """
-    Multiplier(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+$(TYPEDSIGNATURES)
 
 Construct a `Multiplier` wrapping the function `f`.
 
@@ -1324,7 +1190,7 @@ Construct a `Multiplier` wrapping the function `f`.
 # Example
 
 ```julia-repl
-m = Multiplier((x, p) -> p .* x)
+julia> m = Multiplier((x, p) -> p .* x)
 ```
 """
 function Multiplier(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
@@ -1334,7 +1200,7 @@ function Multiplier(f::Function; autonomous::Bool=__autonomous(), variable::Bool
 end
 
 """
-    Multiplier(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+$(TYPEDSIGNATURES)
 
 Construct a `Multiplier` specifying time and variable dependence types.
 """

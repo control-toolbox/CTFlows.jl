@@ -21,8 +21,8 @@ Internally, it uses `OrdinaryDiffEq.solve` and supports events and callbacks.
 
 # Example
 ```julia-repl
-flowfun = hamiltonian_usage(Tsit5(), 1e-8, 1e-8, 0.1, norm)
-xf, pf = flowfun(0.0, x0, p0, 1.0)
+julia> flowfun = hamiltonian_usage(Tsit5(), 1e-8, 1e-8, 0.1, norm)
+julia> xf, pf = flowfun(0.0, x0, p0, 1.0)
 ```
 """
 function hamiltonian_usage(alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...)
@@ -130,9 +130,9 @@ and returns a `HamiltonianFlow` object.
 
 # Example
 ```julia-repl
-H(x, p) = dot(p, p) + dot(x, x)
-flow = CTFlows.Flow(CTFlows.Hamiltonian(H))
-xf, pf = flow(0.0, x0, p0, 1.0)
+julia> H(x, p) = dot(p, p) + dot(x, x)
+julia> flow = CTFlows.Flow(CTFlows.Hamiltonian(H))
+julia> xf, pf = flow(0.0, x0, p0, 1.0)
 ```
 """
 function CTFlows.Flow(
@@ -167,9 +167,9 @@ Returns a `HamiltonianFlow` object that integrates the given system.
 
 # Example
 ```julia-repl
-hv(t, x, p, l) = (∇ₚH, -∇ₓH)
-flow = CTFlows.Flow(CTFlows.HamiltonianVectorField(hv))
-xf, pf = flow(0.0, x0, p0, 1.0, l)
+julia> hv(t, x, p, l) = (∇ₚH, -∇ₓH)
+julia> flow = CTFlows.Flow(CTFlows.HamiltonianVectorField(hv))
+julia> xf, pf = flow(0.0, x0, p0, 1.0, l)
 ```
 """
 function CTFlows.Flow(

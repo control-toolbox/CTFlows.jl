@@ -1,4 +1,6 @@
 """
+$(TYPEDSIGNATURES)
+
 Constructs the combined callback and stopping times for flow integration.
 
 This internal utility assembles a `CallbackSet` for the ODE integrator, handling both:
@@ -20,7 +22,7 @@ Additionally, it merges stopping times into a sorted, unique list used for `tsto
 
 # Example
 ```julia-repl
-cb, tstops = __callbacks(mycb, [(1.0, [0.0, -1.0])], 3:4, [], [2.0])
+julia> cb, tstops = __callbacks(mycb, [(1.0, [0.0, -1.0])], 3:4, [], [2.0])
 ```
 """
 function __callbacks(callback, jumps, _rg, _t_stops_interne, tstops)

@@ -25,4 +25,6 @@ include("optimal_control_problem_utils.jl")
 # export HamiltonianVectorField
 # export Flow
 
+export @Lie
+
 end

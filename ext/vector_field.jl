@@ -22,9 +22,9 @@ Internally uses `OrdinaryDiffEq.solve`, with support for stopping times and jump
 
 # Example
 ```julia-repl
-vf = (t, x, v) -> -v * x
-flowfun = vector_field_usage(Tsit5(), 1e-8, 1e-8, 0.1, norm)
-xf = flowfun(0.0, 1.0, 1.0, 2.0)
+julia> vf = (t, x, v) -> -v * x
+julia> flowfun = vector_field_usage(Tsit5(), 1e-8, 1e-8, 0.1, norm)
+julia> xf = flowfun(0.0, 1.0, 1.0, 2.0)
 ```
 """
 function vector_field_usage(alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...)
@@ -89,9 +89,9 @@ parametric dynamics, as well as jump discontinuities and event stopping.
 
 # Example
 ```julia-repl
-vf(t, x, v) = -v * x
-flow = CTFlows.Flow(CTFlows.VectorField(vf))
-x1 = flow(0.0, 1.0, 1.0)
+julia> vf(t, x, v) = -v * x
+julia> flow = CTFlows.Flow(CTFlows.VectorField(vf))
+julia> x1 = flow(0.0, 1.0, 1.0)
 ```
 """
 function CTFlows.Flow(

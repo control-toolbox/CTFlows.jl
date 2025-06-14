@@ -1,4 +1,6 @@
 """
+$(TYPEDSIGNATURES)
+
 Concatenate the right-hand sides of two flows `F` and `G`, switching at time `t_switch`.
 
 # Arguments
@@ -10,9 +12,9 @@ Concatenate the right-hand sides of two flows `F` and `G`, switching at time `t_
 
 # Example
 ```julia-repl
-rhs = __concat_rhs(F, G, 1.0)
-rhs!(du, u, p, 0.5)  # uses F.rhs!
-rhs!(du, u, p, 1.5)  # uses G.rhs!
+julia> rhs = __concat_rhs(F, G, 1.0)
+julia> rhs!(du, u, p, 0.5)  # uses F.rhs!
+julia> rhs!(du, u, p, 1.5)  # uses G.rhs!
 ```
 """
 function __concat_rhs(
@@ -25,6 +27,8 @@ function __concat_rhs(
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Concatenate vector field right-hand sides with time-based switching.
 
 # Arguments
@@ -36,9 +40,9 @@ Concatenate vector field right-hand sides with time-based switching.
 
 # Example
 ```julia-repl
-rhs = __concat_rhs(F, G, 2.0)
-rhs(x, v, 1.0)  # uses F.rhs
-rhs(x, v, 3.0)  # uses G.rhs
+julia> rhs = __concat_rhs(F, G, 2.0)
+julia> rhs(x, v, 1.0)  # uses F.rhs
+julia> rhs(x, v, 3.0)  # uses G.rhs
 ```
 """
 function __concat_rhs(F::VectorFieldFlow, G::VectorFieldFlow, t_switch::Time)
@@ -47,6 +51,8 @@ function __concat_rhs(F::VectorFieldFlow, G::VectorFieldFlow, t_switch::Time)
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Concatenate ODE right-hand sides with a switch at `t_switch`.
 
 # Arguments
@@ -58,9 +64,9 @@ Concatenate ODE right-hand sides with a switch at `t_switch`.
 
 # Example
 ```julia-repl
-rhs = __concat_rhs(F, G, 0.5)
-rhs(x, v, 0.4)  # F.rhs
-rhs(x, v, 0.6)  # G.rhs
+julia> rhs = __concat_rhs(F, G, 0.5)
+julia> rhs(x, v, 0.4)  # F.rhs
+julia> rhs(x, v, 0.6)  # G.rhs
 ```
 """
 function __concat_rhs(F::ODEFlow, G::ODEFlow, t_switch::Time)
@@ -68,6 +74,8 @@ function __concat_rhs(F::ODEFlow, G::ODEFlow, t_switch::Time)
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Concatenate the `tstops` (discontinuity times) of two flows and add the switching time.
 
 # Arguments
@@ -79,7 +87,7 @@ Concatenate the `tstops` (discontinuity times) of two flows and add the switchin
 
 # Example
 ```julia-repl
-__concat_tstops(F, G, 1.0)
+julia> __concat_tstops(F, G, 1.0)
 ```
 """
 function __concat_tstops(F::AbstractFlow, G::AbstractFlow, t_switch::Time)
@@ -91,6 +99,8 @@ function __concat_tstops(F::AbstractFlow, G::AbstractFlow, t_switch::Time)
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Concatenate feedback control laws of two optimal control flows.
 
 # Arguments
@@ -102,9 +112,9 @@ Concatenate feedback control laws of two optimal control flows.
 
 # Example
 ```julia-repl
-u = __concat_feedback_control(F, G, 2.0)
-u(1.5, x, u, v)  # from F
-u(2.5, x, u, v)  # from G
+julia> u = __concat_feedback_control(F, G, 2.0)
+julia> u(1.5, x, u, v)  # from F
+julia> u(2.5, x, u, v)  # from G
 ```
 """
 function __concat_feedback_control(F::AbstractFlow, G::AbstractFlow, t_switch::Time)
@@ -120,6 +130,8 @@ function __concat_feedback_control(F::AbstractFlow, G::AbstractFlow, t_switch::T
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Concatenate the `jumps` of two flows, with optional extra jump at `t_switch`.
 
 # Arguments
@@ -131,8 +143,8 @@ Concatenate the `jumps` of two flows, with optional extra jump at `t_switch`.
 
 # Example
 ```julia-repl
-__concat_jumps(F, G)
-__concat_jumps(F, G, (1.0, η))
+julia> __concat_jumps(F, G)
+julia> __concat_jumps(F, G, (1.0, η))
 ```
 """
 function __concat_jumps(
@@ -146,6 +158,8 @@ end
 
 # --------------------------------------------------------------------------------------------
 """
+$(TYPEDSIGNATURES)
+
 Concatenate two `AbstractFlow` instances with a prescribed switching time.
 
 # Arguments
@@ -157,7 +171,7 @@ Concatenate two `AbstractFlow` instances with a prescribed switching time.
 
 # Example
 ```julia-repl
-F * (1.0, G)
+julia> F * (1.0, G)
 ```
 """
 function concatenate(F::TF, g::Tuple{ctNumber,TF})::TF where {TF<:AbstractFlow}
@@ -169,6 +183,8 @@ function concatenate(F::TF, g::Tuple{ctNumber,TF})::TF where {TF<:AbstractFlow}
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Concatenate two `AbstractFlow`s and insert a jump at the switching time.
 
 # Arguments
@@ -180,7 +196,7 @@ Concatenate two `AbstractFlow`s and insert a jump at the switching time.
 
 # Example
 ```julia-repl
-F * (1.0, η, G)
+julia> F * (1.0, η, G)
 ```
 """
 function concatenate(F::TF, g::Tuple{ctNumber,Any,TF})::TF where {TF<:AbstractFlow}
@@ -193,6 +209,8 @@ end
 
 # --------------------------------------------------------------------------------------------
 """
+$(TYPEDSIGNATURES)
+
 Concatenate two `OptimalControlFlow`s at a switching time.
 
 # Arguments
@@ -204,7 +222,7 @@ Concatenate two `OptimalControlFlow`s at a switching time.
 
 # Example
 ```julia-repl
-F * (1.0, G)
+julia> F * (1.0, G)
 ```
 """
 function concatenate(F::TF, g::Tuple{ctNumber,TF})::TF where {TF<:OptimalControlFlow}
@@ -217,6 +235,8 @@ function concatenate(F::TF, g::Tuple{ctNumber,TF})::TF where {TF<:OptimalControl
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Concatenate two `OptimalControlFlow`s and a jump at switching time.
 
 # Arguments
@@ -228,7 +248,7 @@ Concatenate two `OptimalControlFlow`s and a jump at switching time.
 
 # Example
 ```julia-repl
-F * (1.0, η, G)
+julia> F * (1.0, η, G)
 ```
 """
 function concatenate(F::TF, g::Tuple{ctNumber,Any,TF})::TF where {TF<:OptimalControlFlow}
@@ -241,6 +261,8 @@ function concatenate(F::TF, g::Tuple{ctNumber,Any,TF})::TF where {TF<:OptimalCon
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Shorthand for `concatenate(F, g)` when `g` is a tuple `(t_switch, G)`.
 
 # Arguments
@@ -252,12 +274,14 @@ Shorthand for `concatenate(F, g)` when `g` is a tuple `(t_switch, G)`.
 
 # Example
 ```julia-repl
-F * (1.0, G)
+julia> F * (1.0, G)
 ```
 """
 *(F::TF, g::Tuple{ctNumber,TF}) where {TF<:AbstractFlow} = concatenate(F, g)
 
 """
+$(TYPEDSIGNATURES)
+
 Shorthand for `concatenate(F, g)` when `g` is a tuple `(t_switch, η_switch, G)` including a jump.
 
 # Arguments
@@ -269,7 +293,7 @@ Shorthand for `concatenate(F, g)` when `g` is a tuple `(t_switch, η_switch, G)`
 
 # Example
 ```julia-repl
-F * (1.0, η, G)
+julia> F * (1.0, η, G)
 ```
 """
 *(F::TF, g::Tuple{ctNumber,Any,TF}) where {TF<:AbstractFlow} = concatenate(F, g)

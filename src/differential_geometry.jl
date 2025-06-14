@@ -1,45 +1,66 @@
 """
 $(TYPEDSIGNATURES)
 
-Return the HamiltonianLift of a VectorField.
+Construct the Hamiltonian lift of a `VectorField`.
 
-# Example
-```@example
-julia> HL = Lift(VectorField(x -> [x[1]^2,x[2]^2], autonomous=true, variable=false))
-julia> HL([1, 0], [0, 1])
-0
-julia> HL = Lift(VectorField((t, x, v) -> [t+x[1]^2,x[2]^2+v], autonomous=false, variable=true))
-julia> HL(1, [1, 0], [0, 1], 1)
-1
+# Arguments
+- `X::VectorField`: The vector field to lift. Its signature determines if it is autonomous and/or variable.
+
+# Returns
+- A `HamiltonianLift` callable object representing the Hamiltonian lift of `X`.
+
+# Examples
+```julia-repl
+julia> HL = Lift(VectorField(x -> [x[1]^2, x[2]^2], autonomous=true, variable=false))
+julia> HL([1, 0], [0, 1])  # returns 0
+
+julia> HL2 = Lift(VectorField((t, x, v) -> [t + x[1]^2, x[2]^2 + v], autonomous=false, variable=true))
+julia> HL2(1, [1, 0], [0, 1], 1)  # returns 1
+
 julia> H = Lift(x -> 2x)
-julia> H(1, 1)
-2
-julia> H = Lift((t, x, v) -> 2x + t - v, autonomous=false, variable=true)
-julia> H(1, 1, 1, 1)
-2
-julia> H = Lift((t, x, v) -> 2x + t - v, NonAutonomous, NonFixed)
-julia> H(1, 1, 1, 1)
-2
+julia> H(1, 1)  # returns 2
+
+julia> H2 = Lift((t, x, v) -> 2x + t - v, autonomous=false, variable=true)
+julia> H2(1, 1, 1, 1)  # returns 2
+
+# Alternative syntax using symbols for autonomy and variability
+julia> H3 = Lift((t, x, v) -> 2x + t - v, NonAutonomous, NonFixed)
+julia> H3(1, 1, 1, 1)  # returns 2
 ```
 """
 function Lift(X::VectorField)::HamiltonianLift
     return HamiltonianLift(X)
 end
 
+
 """
 $(TYPEDSIGNATURES)
 
-Return the Lift of a function.
-Dependencies are specified with boolean : autonomous and variable.
+Construct the Hamiltonian lift of a function.
 
-# Example
-```@example
+# Arguments
+- `X::Function`: The function representing the vector field.
+- `autonomous::Bool=true`: Whether the function is autonomous (time-independent).
+- `variable::Bool=false`: Whether the function depends on an additional variable argument.
+
+# Returns
+- A callable function computing the Hamiltonian lift, 
+(and variants depending on `autonomous` and `variable`).
+
+# Details
+Depending on the `autonomous` and `variable` flags, the returned function has one of the following call signatures:
+- `(x, p)` if `autonomous=true` and `variable=false`
+- `(x, p, v)` if `autonomous=true` and `variable=true`
+- `(t, x, p)` if `autonomous=false` and `variable=false`
+- `(t, x, p, v)` if `autonomous=false` and `variable=true`
+
+# Examples
+```julia-repl
 julia> H = Lift(x -> 2x)
-julia> H(1, 1)
-2
-julia> H = Lift((t, x, v) -> 2x + t - v, autonomous=false, variable=true)
-julia> H(1, 1, 1, 1)
-2
+julia> H(1, 1)  # returns 2
+
+julia> H2 = Lift((t, x, v) -> 2x + t - v, autonomous=false, variable=true)
+julia> H2(1, 1, 1, 1)  # returns 2
 ```
 """
 function Lift(X::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())::Function
@@ -59,12 +80,10 @@ end
 # (X⋅f)(t, x) = ∂ₓf(t, x)⋅X(t, x)
 # (g⋅f)(x) = f'(x)⋅G(x) with G the vector of g
 """
-$(TYPEDSIGNATURES)
+Lie derivative of a scalar function along a vector field in the autonomous case.
 
-Lie derivative of a scalar function along a vector field : L_X(f) = X⋅f, in autonomous case
-
-# Example
-```@example
+Example:
+```julia-repl
 julia> φ = x -> [x[2], -x[1]]
 julia> X = VectorField(φ)
 julia> f = x -> x[1]^2 + x[2]^2
@@ -79,12 +98,10 @@ function ⋅(
 end
 
 """
-$(TYPEDSIGNATURES)
+Lie derivative of a scalar function along a vector field in the nonautonomous case.
 
-Lie derivative of a scalar function along a vector field : L_X(f) = X⋅f, in nonautonomous case
-
-# Example
-```@example
+Example:
+```julia-repl
 julia> φ = (t, x, v) -> [t + x[2] + v[1], -x[1] + v[2]]
 julia> X = VectorField(φ, NonAutonomous, NonFixed)
 julia> f = (t, x, v) -> t + x[1]^2 + x[2]^2
@@ -99,13 +116,10 @@ function ⋅(
 end
 
 """
-$(TYPEDSIGNATURES)
+Lie derivative of a scalar function along a function (considered autonomous and non-variable).
 
-Lie derivative of a scalar function along a function.
-In this case both functions will be considered autonomous and non-variable.
-
-# Example
-```@example
+Example:
+```julia-repl
 julia> φ = x -> [x[2], -x[1]]
 julia> f = x -> x[1]^2 + x[2]^2
 julia> (φ⋅f)([1, 2])
@@ -121,12 +135,10 @@ function ⋅(X::Function, f::Function)::Function
 end
 
 """
-$(TYPEDSIGNATURES)
-
 Lie derivative of a scalar function along a vector field.
 
-# Example
-```@example
+Example:
+```julia-repl
 julia> φ = x -> [x[2], -x[1]]
 julia> X = VectorField(φ)
 julia> f = x -> x[1]^2 + x[2]^2
@@ -142,13 +154,10 @@ julia> Lie(X, f)(1, [1, 2], [2, 1])
 Lie(X::VectorField, f::Function)::Function = X ⋅ f
 
 """
-$(TYPEDSIGNATURES)
+Lie derivative of a scalar function along a function with specified dependencies.
 
-Lie derivative of a scalar function along a function.
-Dependencies are specified with boolean : autonomous and variable.
-
-# Example
-```@example
+Example:
+```julia-repl
 julia> φ = x -> [x[2], -x[1]]
 julia> f = x -> x[1]^2 + x[2]^2
 julia> Lie(φ,f)([1, 2])
@@ -165,35 +174,26 @@ function Lie(
     return Lie(VectorField(X; autonomous=autonomous, variable=variable), f)
 end
 
-# ---------------------------------------------------------------------------
-# partial derivative wrt time
 """
-$(TYPEDSIGNATURES)
+Partial derivative with respect to time of a function.
 
-Partial derivative wrt time of a function.
-
-# Example
-```@example
+Example:
+```julia-repl
 julia> ∂ₜ((t,x) -> t*x)(0,8)
 8
 ```
 """
 ∂ₜ(f) = (t, args...) -> ctgradient(y -> f(y, args...), t)
 
-# ---------------------------------------------------------------------------
-# "Directional derivative" of a vector field: internal and only used to compute
-# efficiently the Lie bracket of two vector fields
 """
-$(TYPEDSIGNATURES)
+"Directional derivative" of a vector field in the autonomous case,
+used internally for computing the Lie bracket.
 
-"Directional derivative" of a vector field: internal and only used to compute
-efficiently the Lie bracket of two vector fields, autonomous case
-
-# Example
-```@example
+Example:
+```julia-repl
 julia> X = VectorField(x -> [x[2], -x[1]])
 julia> Y = VectorField(x -> [x[1], x[2]])
-julia> CTBase.:(⅋)(X, Y)([1, 2])
+julia> (X ⅋ Y)([1, 2])
 [2, -1]
 ```
 """
@@ -212,16 +212,14 @@ function ⅋(
 end
 
 """
-$(TYPEDSIGNATURES)
+"Directional derivative" of a vector field in the nonautonomous case,
+used internally for computing the Lie bracket.
 
-"Directional derivative" of a vector field: internal and only used to compute
-efficiently the Lie bracket of two vector fields, nonautonomous case
-
-# Example
-```@example
+Example:
+```julia-repl
 julia> X = VectorField((t, x, v) -> [t + v[1] + v[2] + x[2], -x[1]], NonFixed, NonAutonomous)
 julia> Y = VectorField((t, x, v) ->  [v[1] + v[2] + x[1], x[2]], NonFixed, NonAutonomous)
-julia> CTBase.:(⅋)(X, Y)(1, [1, 2], [2, 3])
+julia> (X ⅋ Y)(1, [1, 2], [2, 3])
 [8, -1]
 ```
 """
@@ -243,12 +241,10 @@ end
 # Lie bracket of two vector fields: [X, Y] = Lie(X, Y)
 # [X, Y]⋅f = (X∘Y - Y∘X)⋅f = (X⅋Y - Y⅋X)⋅f
 """
-$(TYPEDSIGNATURES)
+Lie bracket of two vector fields in the autonomous case.
 
-Lie bracket of two vector fields: [X, Y] = Lie(X, Y), autonomous case
-
-# Example
-```@example
+Example:
+```julia-repl
 julia> f = x -> [x[2], 2x[1]]
 julia> g = x -> [3x[2], -x[1]]
 julia> X = VectorField(f)
@@ -266,18 +262,16 @@ function Lie(
 end
 
 """
-$(TYPEDSIGNATURES)
+Lie bracket of two vector fields in the nonautonomous case.
 
-Lie bracket of two vector fields: [X, Y] = Lie(X, Y), nonautonomous case
-
-# Example
-```@example
+Example:
+```julia-repl
 julia> f = (t, x, v) -> [t + x[2] + v, -2x[1] - v]
 julia> g = (t, x, v) -> [t + 3x[2] + v, -x[1] - v]
 julia> X = VectorField(f, NonAutonomous, NonFixed)
 julia> Y = VectorField(g, NonAutonomous, NonFixed)
 julia> Lie(X, Y)(1, [1, 2], 1)
-[-7,12]
+[-7, 12]
 ```
 """
 function Lie(
@@ -296,20 +290,19 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Poisson bracket of two Hamiltonian functions (subtype of AbstractHamiltonian) : {f, g} = Poisson(f, g), autonomous case
+Poisson bracket of two Hamiltonian functions (subtype of AbstractHamiltonian). Autonomous case.
+
+Returns a Hamiltonian representing the Poisson bracket `{f, g}` of two autonomous Hamiltonian functions `f` and `g`.
 
 # Example
-```@example
+```julia-repl
 julia> f = (x, p) -> x[2]^2 + 2x[1]^2 + p[1]^2
-julia> g = (x, p) -> 3x[2]^2 + -x[1]^2 + p[2]^2 + p[1]
+julia> g = (x, p) -> 3x[2]^2 - x[1]^2 + p[2]^2 + p[1]
 julia> F = Hamiltonian(f)
 julia> G = Hamiltonian(g)
-julia> Poisson(f, g)([1, 2], [2, 1])
--20            
-julia> Poisson(f, G)([1, 2], [2, 1])
--20
-julia> Poisson(F, g)([1, 2], [2, 1])
--20
+julia> Poisson(f, g)([1, 2], [2, 1])     # -20
+julia> Poisson(f, G)([1, 2], [2, 1])     # -20
+julia> Poisson(F, g)([1, 2], [2, 1])     # -20
 ```
 """
 function Poisson(
@@ -320,35 +313,32 @@ function Poisson(
         ff, gg = @match n begin
             1 => (z -> f(z[1], z[2], args...), z -> g(z[1], z[2], args...))
             _ => (
-                z -> f(z[1:n], z[(n + 1):(2n)], args...),
-                z -> g(z[1:n], z[(n + 1):(2n)], args...),
+                z -> f(z[1:n], z[n+1:2n], args...),
+                z -> g(z[1:n], z[n+1:2n], args...),
             )
         end
         df = ctgradient(ff, [x; p])
         dg = ctgradient(gg, [x; p])
-        return df[(n + 1):(2n)]' * dg[1:n] - df[1:n]' * dg[(n + 1):(2n)]
+        return df[n+1:2n]' * dg[1:n] - df[1:n]' * dg[n+1:2n]
     end
     return Hamiltonian(fg, Autonomous, V)
 end
 
-# f(t, z) = p⋅X(x), g(t, z) = p⋅Y(x), z = (x, p) => {f, g}(t, z) = p⋅[X,Y](t, x) 
-# {f, g}(t, z) = ∂₂g(t, z)⋅F(t, z)
-# actually, z = (x, p)
 """
 $(TYPEDSIGNATURES)
 
-Poisson bracket of two Hamiltonian functions (subtype of AbstractHamiltonian) : {f, g} = Poisson(f, g), non autonomous case
+Poisson bracket of two Hamiltonian functions. Non-autonomous case.
+
+Returns a Hamiltonian representing `{f, g}` where `f` and `g` are time-dependent.
 
 # Example
-```@example
+```julia-repl
 julia> f = (t, x, p, v) -> t*v[1]*x[2]^2 + 2x[1]^2 + p[1]^2 + v[2]
-julia> g = (t, x, p, v) -> 3x[2]^2 + -x[1]^2 + p[2]^2 + p[1] + t - v[2]
+julia> g = (t, x, p, v) -> 3x[2]^2 - x[1]^2 + p[2]^2 + p[1] + t - v[2]
 julia> F = Hamiltonian(f, autonomous=false, variable=true)
 julia> G = Hamiltonian(g, autonomous=false, variable=true)
-julia> Poisson(F, G)(2, [1, 2], [2, 1], [4, 4])
--76
-julia> Poisson(f, g, NonAutonomous, NonFixed)(2, [1, 2], [2, 1], [4, 4])
--76
+julia> Poisson(F, G)(2, [1, 2], [2, 1], [4, 4])     # -76
+julia> Poisson(f, g, NonAutonomous, NonFixed)(2, [1, 2], [2, 1], [4, 4])     # -76
 ```
 """
 function Poisson(
@@ -359,13 +349,13 @@ function Poisson(
         ff, gg = @match n begin
             1 => (z -> f(t, z[1], z[2], args...), z -> g(t, z[1], z[2], args...))
             _ => (
-                z -> f(t, z[1:n], z[(n + 1):(2n)], args...),
-                z -> g(t, z[1:n], z[(n + 1):(2n)], args...),
+                z -> f(t, z[1:n], z[n+1:2n], args...),
+                z -> g(t, z[1:n], z[n+1:2n], args...),
             )
         end
         df = ctgradient(ff, [x; p])
         dg = ctgradient(gg, [x; p])
-        return df[(n + 1):(2n)]' * dg[1:n] - df[1:n]' * dg[(n + 1):(2n)]
+        return df[n+1:2n]' * dg[1:n] - df[1:n]' * dg[n+1:2n]
     end
     return Hamiltonian(fg, NonAutonomous, V)
 end
@@ -373,22 +363,23 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Poisson bracket of two HamiltonianLift functions : {f, g} = Poisson(f, g)
+Poisson bracket of two HamiltonianLift vector fields.
+
+Returns the HamiltonianLift corresponding to the Lie bracket of vector fields `f.X` and `g.X`.
 
 # Example
-```@example
-julia> f = x -> [x[1]^2+x[2]^2, 2x[1]^2]
-julia> g = x -> [3x[2]^2, x[2]-x[1]^2]
+```julia-repl
+julia> f = x -> [x[1]^2 + x[2]^2, 2x[1]^2]
+julia> g = x -> [3x[2]^2, x[2] - x[1]^2]
 julia> F = Lift(f)
 julia> G = Lift(g)
-julia> Poisson(F, G)([1, 2], [2, 1])
--64
-julia> f = (t, x, v) -> [t*v[1]*x[2]^2, 2x[1]^2 + + v[2]]
-julia> g = (t, x, v) -> [3x[2]^2 + -x[1]^2, t - v[2]]
+julia> Poisson(F, G)([1, 2], [2, 1])     # -64
+
+julia> f = (t, x, v) -> [t*v[1]*x[2]^2, 2x[1]^2 + v[2]]
+julia> g = (t, x, v) -> [3x[2]^2 - x[1]^2, t - v[2]]
 julia> F = Lift(f, NonAutonomous, NonFixed)
 julia> G = Lift(g, NonAutonomous, NonFixed)
-julia> Poisson(F, G)(2, [1, 2], [2, 1], [4, 4])
-100
+julia> Poisson(F, G)(2, [1, 2], [2, 1], [4, 4])     # 100
 ```
 """
 function Poisson(
@@ -400,19 +391,19 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Poisson bracket of two functions : {f, g} = Poisson(f, g)
-Dependencies are specified with boolean : autonomous and variable.
+Poisson bracket of two functions. The time and variable dependence are specified with keyword arguments.
+
+Returns a Hamiltonian computed from the functions promoted as Hamiltonians.
 
 # Example
-```@example
+```julia-repl
 julia> f = (x, p) -> x[2]^2 + 2x[1]^2 + p[1]^2
-julia> g = (x, p) -> 3x[2]^2 + -x[1]^2 + p[2]^2 + p[1]
-julia> Poisson(f, g)([1, 2], [2, 1])
--20            
+julia> g = (x, p) -> 3x[2]^2 - x[1]^2 + p[2]^2 + p[1]
+julia> Poisson(f, g)([1, 2], [2, 1])     # -20
+
 julia> f = (t, x, p, v) -> t*v[1]*x[2]^2 + 2x[1]^2 + p[1]^2 + v[2]
-julia> g = (t, x, p, v) -> 3x[2]^2 + -x[1]^2 + p[2]^2 + p[1] + t - v[2]
-julia> Poisson(f, g, autonomous=false, variable=true)(2, [1, 2], [2, 1], [4, 4])
--76
+julia> g = (t, x, p, v) -> 3x[2]^2 - x[1]^2 + p[2]^2 + p[1] + t - v[2]
+julia> Poisson(f, g, autonomous=false, variable=true)(2, [1, 2], [2, 1], [4, 4])     # -76
 ```
 """
 function Poisson(
@@ -427,20 +418,21 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Poisson bracket of a function and an Hamiltonian function (subtype of AbstractHamiltonian) : {f, g} = Poisson(f, g)
+Poisson bracket of a function and a Hamiltonian.
+
+Returns a Hamiltonian representing `{f, g}` where `g` is already a Hamiltonian.
 
 # Example
-```@example
+```julia-repl
 julia> f = (x, p) -> x[2]^2 + 2x[1]^2 + p[1]^2
-julia> g = (x, p) -> 3x[2]^2 + -x[1]^2 + p[2]^2 + p[1]
-julia> G = Hamiltonian(g)          
-julia> Poisson(f, G)([1, 2], [2, 1])
--20
+julia> g = (x, p) -> 3x[2]^2 - x[1]^2 + p[2]^2 + p[1]
+julia> G = Hamiltonian(g)
+julia> Poisson(f, G)([1, 2], [2, 1])     # -20
+
 julia> f = (t, x, p, v) -> t*v[1]*x[2]^2 + 2x[1]^2 + p[1]^2 + v[2]
-julia> g = (t, x, p, v) -> 3x[2]^2 + -x[1]^2 + p[2]^2 + p[1] + t - v[2]
+julia> g = (t, x, p, v) -> 3x[2]^2 - x[1]^2 + p[2]^2 + p[1] + t - v[2]
 julia> G = Hamiltonian(g, autonomous=false, variable=true)
-julia> Poisson(f, G)(2, [1, 2], [2, 1], [4, 4])
--76
+julia> Poisson(f, G)(2, [1, 2], [2, 1], [4, 4])     # -76
 ```
 """
 function Poisson(
@@ -452,20 +444,21 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Poisson bracket of an Hamiltonian function (subtype of AbstractHamiltonian) and a function : {f, g} = Poisson(f, g), autonomous case
+Poisson bracket of a Hamiltonian and a function.
+
+Returns a Hamiltonian representing `{f, g}` where `f` is already a Hamiltonian.
 
 # Example
-```@example
+```julia-repl
 julia> f = (x, p) -> x[2]^2 + 2x[1]^2 + p[1]^2
-julia> g = (x, p) -> 3x[2]^2 + -x[1]^2 + p[2]^2 + p[1]
+julia> g = (x, p) -> 3x[2]^2 - x[1]^2 + p[2]^2 + p[1]
 julia> F = Hamiltonian(f)
-julia> Poisson(F, g)([1, 2], [2, 1])
--20
+julia> Poisson(F, g)([1, 2], [2, 1])     # -20
+
 julia> f = (t, x, p, v) -> t*v[1]*x[2]^2 + 2x[1]^2 + p[1]^2 + v[2]
-julia> g = (t, x, p, v) -> 3x[2]^2 + -x[1]^2 + p[2]^2 + p[1] + t - v[2]
+julia> g = (t, x, p, v) -> 3x[2]^2 - x[1]^2 + p[2]^2 + p[1] + t - v[2]
 julia> F = Hamiltonian(f, autonomous=false, variable=true)
-julia> Poisson(F, g)(2, [1, 2], [2, 1], [4, 4])
--76
+julia> Poisson(F, g)(2, [1, 2], [2, 1], [4, 4])     # -76
 ```
 """
 function Poisson(
@@ -482,166 +475,198 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Macros for Lie and Poisson brackets
+Compute Lie or Poisson brackets.
 
-# Example
-```@example
-julia> F0 = VectorField(x -> [x[1], x[2], (1-x[3])])
+This macro provides a unified notation to define recursively nested Lie brackets (for vector fields) or Poisson brackets (for Hamiltonians).
+
+### Syntax
+
+- `@Lie [F, G]`: computes the Lie bracket `[F, G]` of two vector fields.
+- `@Lie [[F, G], H]`: supports arbitrarily nested Lie brackets.
+- `@Lie {H, K}`: computes the Poisson bracket `{H, K}` of two Hamiltonians.
+- `@Lie {{H, K}, L}`: supports arbitrarily nested Poisson brackets.
+- `@Lie expr autonomous = false`: specifies a non-autonomous system.
+- `@Lie expr variable = true`: indicates presence of an auxiliary variable `v`.
+
+Keyword-like arguments can be provided to control the evaluation context for Poisson brackets with raw functions:
+- `autonomous = Bool`: whether the system is time-independent (default: `true`).
+- `variable = Bool`: whether the system depends on an extra variable `v` (default: `false`).
+
+### Bracket type detection
+
+- Square brackets `[...]` denote Lie brackets between `VectorField` objects.
+- Curly brackets `{...}` denote Poisson brackets between `Hamiltonian` objects or between raw functions.
+- The macro automatically dispatches to `Lie` or `Poisson` depending on the input pattern.
+
+### Return
+
+A callable object representing the specified Lie or Poisson bracket expression. The returned function can be evaluated like any other vector field or Hamiltonian.
+
+---
+
+### Examples
+
+#### ■ Lie brackets with `VectorField` (autonomous)
+```julia-repl
 julia> F1 = VectorField(x -> [0, -x[3], x[2]])
-julia> @Lie [F0, F1]([1, 2, 3])
-[0, 5, 4]
-#
-julia> F0 = VectorField((t, x) -> [t+x[1], x[2], (1-x[3])], autonomous=false)
-julia> F1 = VectorField((t, x) -> [t, -x[3], x[2]], autonomous=false)
-julia> @Lie [F0, F1](1, [1, 2, 3])
-#
-julia> F0 = VectorField((x, v) -> [x[1]+v, x[2], (1-x[3])], variable=true)
-julia> F1 = VectorField((x, v) -> [0, -x[3]-v, x[2]], variable=true)
-julia> @Lie [F0, F1]([1, 2, 3], 2)
-#
-julia> F0 = VectorField((t, x, v) -> [t+x[1]+v, x[2], (1-x[3])], autonomous=false, variable=true)
-julia> F1 = VectorField((t, x, v) -> [t, -x[3]-v, x[2]], autonomous=false, variable=true)
-julia> @Lie [F0, F1](1, [1, 2, 3], 2)
-#
-julia> H0 = Hamiltonian((x, p) -> 0.5*(2x[1]^2+x[2]^2+p[1]^2))
-julia> H1 = Hamiltonian((x, p) -> 0.5*(3x[1]^2+x[2]^2+p[2]^2))
-julia> @Lie {H0, H1}([1, 2, 3], [1, 0, 7])
-3.0
-#
-julia> H0 = Hamiltonian((t, x, p) -> 0.5*(x[1]^2+x[2]^2+p[1]^2), autonomous=false)
-julia> H1 = Hamiltonian((t, x, p) -> 0.5*(x[1]^2+x[2]^2+p[2]^2), autonomous=false)
-julia> @Lie {H0, H1}(1, [1, 2, 3], [1, 0, 7])
-#
-julia> H0 = Hamiltonian((x, p, v) -> 0.5*(x[1]^2+x[2]^2+p[1]^2+v), variable=true)
-julia> H1 = Hamiltonian((x, p, v) -> 0.5*(x[1]^2+x[2]^2+p[2]^2+v), variable=true)
-julia> @Lie {H0, H1}([1, 2, 3], [1, 0, 7], 2)
-#
-julia> H0 = Hamiltonian((t, x, p, v) -> 0.5*(x[1]^2+x[2]^2+p[1]^2+v), autonomous=false, variable=true)
-julia> H1 = Hamiltonian((t, x, p, v) -> 0.5*(x[1]^2+x[2]^2+p[2]^2+v), autonomous=false, variable=true)
-julia> @Lie {H0, H1}(1, [1, 2, 3], [1, 0, 7], 2)
-#
+julia> F2 = VectorField(x -> [x[3], 0, -x[1]])
+julia> L = @Lie [F1, F2]
+julia> L([1.0, 2.0, 3.0])
+3-element Vector{Float64}:
+  2.0
+ -1.0
+  0.0
+```
+
+#### ■ Lie brackets with `VectorField` (non-autonomous, with auxiliary variable)
+```julia-repl
+julia> F1 = VectorField((t, x, v) -> [0, -x[3], x[2]]; autonomous=false, variable=true)
+julia> F2 = VectorField((t, x, v) -> [x[3], 0, -x[1]]; autonomous=false, variable=true)
+julia> L = @Lie [F1, F2]
+julia> L(0.0, [1.0, 2.0, 3.0], 1.0)
+3-element Vector{Float64}:
+  2.0
+ -1.0
+  0.0
+```
+
+#### ■ Poisson brackets with `Hamiltonian` (autonomous)
+```julia-repl
+julia> H1 = Hamiltonian((x, p) -> x[1]^2 + p[2]^2)
+julia> H2 = Hamiltonian((x, p) -> x[2]^2 + p[1]^2)
+julia> P = @Lie {H1, H2}
+julia> P([1.0, 1.0], [3.0, 2.0])
+-4.0
+```
+
+#### ■ Poisson brackets with `Hamiltonian` (non-autonomous, with variable)
+```julia-repl
+julia> H1 = Hamiltonian((t, x, p, v) -> x[1]^2 + p[2]^2 + v; autonomous=false, variable=true)
+julia> H2 = Hamiltonian((t, x, p, v) -> x[2]^2 + p[1]^2 + v; autonomous=false, variable=true)
+julia> P = @Lie {H1, H2}
+julia> P(1.0, [1.0, 3.0], [4.0, 2.0], 3.0)
+8.0
+```
+
+#### ■ Poisson brackets from raw functions
+```julia-repl
+julia> H1 = (x, p) -> x[1]^2 + p[2]^2
+julia> H2 = (x, p) -> x[2]^2 + p[1]^2
+julia> P = @Lie {H1, H2}
+julia> P([1.0, 1.0], [3.0, 2.0])
+-4.0
+```
+
+#### ■ Poisson bracket with non-autonomous raw functions
+```julia-repl
+julia> H1 = (t, x, p) -> x[1]^2 + p[2]^2 + t
+julia> H2 = (t, x, p) -> x[2]^2 + p[1]^2 + t
+julia> P = @Lie {H1, H2} autonomous = false
+julia> P(3.0, [1.0, 2.0], [4.0, 1.0])
+-8.0
+```
+
+#### ■ Nested brackets
+```julia-repl
+julia> F = VectorField(x -> [-x[1], x[2], x[3]])
+julia> G = VectorField(x -> [x[3], -x[2], 0])
+julia> H = VectorField(x -> [0, 0, -x[1]])
+julia> nested = @Lie [[F, G], H]
+julia> nested([1.0, 2.0, 3.0])
+3-element Vector{Float64}:
+  2.0
+  0.0
+ -6.0
+```
+
+```julia-repl
+julia> H1 = (x, p) -> x[2]*x[1]^2 + p[1]^2
+julia> H2 = (x, p) -> x[1]*p[2]^2
+julia> H3 = (x, p) -> x[1]*p[2] + x[2]*p[1]
+julia> nested_poisson = @Lie {{H1, H2}, H3}
+julia> nested_poisson([1.0, 2.0], [0.5, 1.0])
+14.0
+```
+
+#### ■ Mixed expressions with arithmetic
+```julia-repl
+julia> F1 = VectorField(x -> [0, -x[3], x[2]])
+julia> F2 = VectorField(x -> [x[3], 0, -x[1]])
+julia> x = [1.0, 2.0, 3.0]
+julia> @Lie [F1, F2](x) + 3 * [F1, F2](x)
+3-element Vector{Float64}:
+  8.0
+ -4.0
+  0.0
+```
+
+```julia-repl
+julia> H1 = (x, p) -> x[1]^2
+julia> H2 = (x, p) -> p[1]^2
+julia> H3 = (x, p) -> x[1]*p[1]
+julia> x = [1.0, 2.0, 3.0]
+julia> p = [3.0, 2.0, 1.0]
+julia> @Lie {H1, H2}(x, p) + 2 * {H2, H3}(x, p)
+24.0
 ```
 """
-macro Lie(expr::Expr)
-    fun(x) = @match (@capture(x, [a_, b_]), @capture(x, {c_, d_})) begin
-        (true, false) => :(Lie($a, $b))
-        (false, true) => :(Poisson($c, $d))
-        (false, false) => x
-        _ => error("internal error")
+macro Lie(expr::Expr, args...)
+    autonomous = true
+    variable = false
+
+    # Parse keyword args
+    for arg in args
+        @match arg begin
+            :(autonomous = $a) => (autonomous = a)
+            :(variable = $a)   => (variable = a)
+            _ => throw(ArgumentError("Invalid argument: $arg"))
+        end
     end
 
-    return esc(postwalk(fun, expr))
-end
+    # Check for mixed usage of Lie and Poisson brackets
+    has_lie = Ref(false)
+    has_poisson = Ref(false)
 
-"""
-$(TYPEDSIGNATURES)
-
-Macros for Poisson brackets
-
-# Example
-```@example
-julia> H0 = (x, p) -> 0.5*(x[1]^2+x[2]^2+p[1]^2)
-julia> H1 = (x, p) -> 0.5*(x[1]^2+x[2]^2+p[2]^2)
-julia> @Lie {H0, H1}([1, 2, 3], [1, 0, 7]) autonomous=true variable=false
-#
-julia> H0 = (t, x, p) -> 0.5*(x[1]^2+x[2]^2+p[1]^2)
-julia> H1 = (t, x, p) -> 0.5*(x[1]^2+x[2]^2+p[2]^2)
-julia> @Lie {H0, H1}(1, [1, 2, 3], [1, 0, 7]) autonomous=false variable=false
-#
-julia> H0 = (x, p, v) -> 0.5*(x[1]^2+x[2]^2+p[1]^2+v)
-julia> H1 = (x, p, v) -> 0.5*(x[1]^2+x[2]^2+p[2]^2+v)
-julia> @Lie {H0, H1}([1, 2, 3], [1, 0, 7], 2) autonomous=true variable=true
-#
-julia> H0 = (t, x, p, v) -> 0.5*(x[1]^2+x[2]^2+p[1]^2+v)
-julia> H1 = (t, x, p, v) -> 0.5*(x[1]^2+x[2]^2+p[2]^2+v)
-julia> @Lie {H0, H1}(1, [1, 2, 3], [1, 0, 7], 2) autonomous=false variable=true
-```
-"""
-macro Lie(expr::Expr, arg1, arg2)
-    local autonomous = true
-    local variable = false
-
-    @match arg1 begin
-        :(autonomous = $a) => begin
-            autonomous = a
+    function check_mixed_usage(x)
+        function walker(e)
+            if @capture(e, [_, _])
+                has_lie[] = true
+            elseif @capture(e, {_, _})
+                has_poisson[] = true
+            end
+            return e
         end
-        :(variable = $a) => begin
-            variable = a
+        postwalk(walker, x)
+
+        if has_lie[] && has_poisson[]
+            throw(ArgumentError("Cannot mix Lie and Poisson brackets in the same expression."))
         end
-        _ => throw(CTBase.IncorrectArgument("Invalid argument: " * string(arg1)))
+        return nothing
     end
 
-    @match arg2 begin
-        :(autonomous = $a) => begin
-            autonomous = a
-        end
-        :(variable = $a) => begin
-            variable = a
-        end
-        _ => throw(CTBase.IncorrectArgument("Invalid argument: " * string(arg2)))
-    end
+    check_mixed_usage(expr)
 
+    # Transform Lie and Poisson bracket expressions
     function fun(x)
-        @match (@capture(x, [a_, b_]), @capture(x, {c_, d_})) begin
-            #(true, false) => :(    Lie($a, $b; autonomous=$autonomous, variable=$variable))
-            (false, true) => quote
-                if ($c isa Function && $d isa Function)
-                    Poisson($c, $d; autonomous=$autonomous, variable=$variable)
+        is_lie, is_poisson = @capture(x, [a_, b_]), @capture(x, {c_, d_})
+
+        if is_lie
+            # Just return Lie call with interpolation
+            return :(Lie($a, $b))
+        elseif is_poisson
+            # Return a quoted block with if...else for runtime type checks
+            return quote
+                if isa($c, Function) && isa($d, Function)
+                    Poisson(
+                        Hamiltonian($c; autonomous=$(autonomous), variable=$(variable)),
+                        Hamiltonian($d; autonomous=$(autonomous), variable=$(variable))
+                    )
                 else
                     Poisson($c, $d)
                 end
             end
-            (false, false) => x
-            _ => error("internal error")
-        end
-    end
-
-    return esc(postwalk(fun, expr))
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Macros for Lie and Poisson brackets
-
-# Example
-```@example
-julia> H0 = (t, x, p) -> 0.5*(x[1]^2+x[2]^2+p[1]^2)
-julia> H1 = (t, x, p) -> 0.5*(x[1]^2+x[2]^2+p[2]^2)
-julia> @Lie {H0, H1}(1, [1, 2, 3], [1, 0, 7]) autonomous=false
-#
-julia> H0 = (x, p, v) -> 0.5*(x[1]^2+x[2]^2+p[1]^2+v)
-julia> H1 = (x, p, v) -> 0.5*(x[1]^2+x[2]^2+p[2]^2+v)
-julia> @Lie {H0, H1}([1, 2, 3], [1, 0, 7], 2) variable=true
-#
-```
-"""
-macro Lie(expr::Expr, arg)
-    local autonomous = true
-    local variable = false
-
-    @match arg begin
-        :(autonomous = $a) => begin
-            autonomous = a
-        end
-        :(variable = $a) => begin
-            variable = a
-        end
-        _ => throw(CTBase.IncorrectArgument("Invalid argument: " * string(arg)))
-    end
-
-    function fun(x)
-        @match (@capture(x, [a_, b_]), @capture(x, {c_, d_})) begin
-            #(true, false) => :(    Lie($a, $b; autonomous=$autonomous, variable=$variable))
-            (false, true) => quote
-                if ($c isa Function && $d isa Function)
-                    Poisson($c, $d; autonomous=$autonomous, variable=$variable)
-                else
-                    Poisson($c, $d)
-                end
-            end
-            (false, false) => x
-            _ => error("internal error")
+        else
+            return x
         end
     end
 
