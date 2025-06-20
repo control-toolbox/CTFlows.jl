@@ -1,7 +1,7 @@
 name = "CTFlows"
 uuid = "1c39547c-7794-42f7-af83-d98194f657c2"
 authors = ["Olivier Cots <olivier.cots@toulouse-inp.fr>"]
-version = "0.8.6"
+version = "0.8.7"
 
 [deps]
 CTBase = "54762871-cc72-4466-b8e8-f6c8b58076cd"
@@ -20,7 +20,7 @@ CTFlowsODE = "OrdinaryDiffEq"
 
 [compat]
 CTBase = "0.16"
-CTModels = "0.5"
+CTModels = "0.6"
 DocStringExtensions = "0.9"
 ForwardDiff = "0.10"
 LinearAlgebra = "1"

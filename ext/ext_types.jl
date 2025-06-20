@@ -236,9 +236,9 @@ function CTModels.Solution(ocfs::OptimalControlFlowSolution; kwargs...)
         P;
         iterations=-1,
         constraints_violation=-1.0,
-        message="no message",
-        stopping=:nostoppingmessage,
-        success=true,
+        message="Solution obtained from flow",
+        status=:nostatusmessage,
+        successful=true,
         kwargs_OCS...
     )
 
