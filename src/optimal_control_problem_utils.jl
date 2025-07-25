@@ -17,7 +17,9 @@ wrapped to return either a scalar or vector depending on the model's state dimen
 """
 function __dynamics(ocp::CTModels.Model)
     n = CTModels.state_dimension(ocp)
-    dyn = (t, x, u, v) -> (r = zeros(eltype(x), n); CTModels.dynamics(ocp)(r, t, x, u, v); n==1 ? r[1] : r)
+    dyn =
+        (t, x, u, v) ->
+            (r=zeros(eltype(x), n); CTModels.dynamics(ocp)(r, t, x, u, v); n==1 ? r[1] : r)
     return Dynamics(dyn, NonAutonomous, NonFixed)
 end
 
@@ -55,10 +57,14 @@ The Hamiltonian is built using model dynamics (and possibly a running cost) and 
 
 Returns a tuple `(H, u)` where `H` is the Hamiltonian function and `u` is the control law.
 """
-function __create_hamiltonian(ocp::CTModels.Model, u::ControlLaw{<:Function,T,V}) where {T,V}
+function __create_hamiltonian(
+    ocp::CTModels.Model, u::ControlLaw{<:Function,T,V}
+) where {T,V}
     f, f⁰, p⁰, s = __get_data_for_ocp_flow(ocp) # data
     @assert f ≠ nothing "no dynamics in ocp"
-    h = Hamiltonian(f⁰ ≠ nothing ? makeH(f, u, f⁰, p⁰, s) : makeH(f, u), NonAutonomous, NonFixed)
+    h = Hamiltonian(
+        f⁰ ≠ nothing ? makeH(f, u, f⁰, p⁰, s) : makeH(f, u), NonAutonomous, NonFixed
+    )
     return h, u
 end
 
@@ -69,12 +75,14 @@ Helper method to construct the Hamiltonian when control is given as a plain func
 
 The function is wrapped in a `ControlLaw`, and the flags `autonomous` and `variable` define its behavior type.
 """
-function __create_hamiltonian(ocp::CTModels.Model, u::Function; autonomous::Bool, variable::Bool)
+function __create_hamiltonian(
+    ocp::CTModels.Model, u::Function; autonomous::Bool, variable::Bool
+)
     T, V = @match (autonomous, variable) begin
-        (true, false)   => (Autonomous, Fixed)
-        (true, true)    => (Autonomous, NonFixed)
-        (false, false)  => (NonAutonomous, Fixed)
-        _               => (NonAutonomous, NonFixed)
+        (true, false) => (Autonomous, Fixed)
+        (true, true) => (Autonomous, NonFixed)
+        (false, false) => (NonAutonomous, Fixed)
+        _ => (NonAutonomous, NonFixed)
     end
     return __create_hamiltonian(ocp, ControlLaw(u, T, V))
 end
@@ -147,12 +155,14 @@ $(TYPEDSIGNATURES)
 
 Overload for control law as a raw function with autonomous and variable flags.
 """
-function __create_hamiltonian(ocp::CTModels.Model, u::Function, g, μ; autonomous::Bool, variable::Bool)
+function __create_hamiltonian(
+    ocp::CTModels.Model, u::Function, g, μ; autonomous::Bool, variable::Bool
+)
     T, V = @match (autonomous, variable) begin
-        (true, false)   => (Autonomous, Fixed)
-        (true, true)    => (Autonomous, NonFixed)
-        (false, false)  => (NonAutonomous, Fixed)
-        _               => (NonAutonomous, NonFixed)
+        (true, false) => (Autonomous, Fixed)
+        (true, true) => (Autonomous, NonFixed)
+        (false, false) => (NonAutonomous, Fixed)
+        _ => (NonAutonomous, NonFixed)
     end
     return __create_hamiltonian(ocp, ControlLaw(u, T, V), g, μ)
 end
@@ -191,7 +201,10 @@ $(TYPEDSIGNATURES)
 Overload that converts StateConstraint objects into MixedConstraint with appropriate signature adaptation.
 """
 function __create_hamiltonian(
-    ocp::CTModels.Model, u::ControlLaw{<:Function,T,V}, g_::StateConstraint{<:Function,T,V}, μ
+    ocp::CTModels.Model,
+    u::ControlLaw{<:Function,T,V},
+    g_::StateConstraint{<:Function,T,V},
+    μ,
 ) where {T,V}
     g = @match (T, V) begin
         (Autonomous, Fixed) => MixedConstraint((x, u) -> g_(x), T, V)
@@ -208,7 +221,10 @@ $(TYPEDSIGNATURES)
 Overload that wraps multiplier functions into Multiplier objects.
 """
 function __create_hamiltonian(
-    ocp::CTModels.Model, u::ControlLaw{<:Function,T,V}, g::MixedConstraint{<:Function,T,V}, μ::Function
+    ocp::CTModels.Model,
+    u::ControlLaw{<:Function,T,V},
+    g::MixedConstraint{<:Function,T,V},
+    μ::Function,
 ) where {T,V}
     return __create_hamiltonian(ocp, u, g, Multiplier(μ, T, V))
 end

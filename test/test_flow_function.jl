@@ -1,5 +1,4 @@
 function test_flow_function()
-
     Flow = CTFlows.Flow
 
     @testset "4D autonomous, non variable" begin

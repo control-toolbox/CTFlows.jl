@@ -21,12 +21,12 @@ tf=1
 x0=[0, 1]
 l = 1/9
 @def ocp begin
-    t ∈ [ t0, tf ], time
+    t ∈ [t0, tf], time
     x ∈ R², state
     u ∈ R, control
     x(t0) == x0
     x(tf) == [0, -1]
-    x₁(t) ≤ l,                      (x_con)
+    x₁(t) ≤ l, (x_con)
     ẋ(t) == [x₂(t), u(t)]
     0.5∫(u(t)^2) → min
 end
@@ -35,14 +35,16 @@ t1 = 3l
 t2 = 1 - 3l
 p0 = [-18, -6]
 
-fs = Flow(ocp, 
-    (x, p) -> p[2]      # control along regular arc
-    )
-fc = Flow(ocp, 
+fs = Flow(
+    ocp,
+    (x, p) -> p[2],      # control along regular arc
+)
+fc = Flow(
+    ocp,
     (x, p) -> 0,        # control along boundary arc
     (x, u) -> l-x[1],   # state constraint
-    (x, p) -> 0         # Lagrange multiplier
-    )
+    (x, p) -> 0,         # Lagrange multiplier
+)
 
 ν = 18  # jump value of p1 at t1 and t2
 

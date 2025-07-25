@@ -1,7 +1,6 @@
 function test_flow_hamiltonian()
-
     Flow = CTFlows.Flow
-    
+
     @testset "2D autonomous, non variable" begin
         H(x, p) = p[1] * x[2] + p[2] * p[2] - 0.5 * p[2]^2
         z = Flow(CTFlows.Hamiltonian(H))

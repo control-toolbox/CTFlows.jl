@@ -18,7 +18,7 @@ Alias for `CTFlows.ctVector`, representing cotangent vectors in continuous-time 
 
 Used for denoting adjoint states or costates in optimal control formulations.
 """
-const CoTangent  = CTFlows.ctVector
+const CoTangent = CTFlows.ctVector
 
 """
 Alias for `CTFlows.ctVector`, representing derivative cotangent vectors.

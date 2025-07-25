@@ -1,5 +1,4 @@
 function test_concatenation()
-
     Flow = CTFlows.Flow
     * = CTFlows.:(*)
 
@@ -82,7 +81,6 @@ function test_concatenation()
         zspan = sol.u
         zspan_sol = z_sol.(sol.t)
         Test.@test zspan ≈ zspan_sol atol = 1e-5
-
     end
 
     @testset "Hamiltonian vector field" begin
@@ -128,7 +126,6 @@ function test_concatenation()
         zspan = sol.u
         zspan_sol = z_sol.(sol.t)
         Test.@test zspan ≈ zspan_sol atol = 1e-5
-
     end
 
     @testset "Vector field" begin
@@ -170,7 +167,6 @@ function test_concatenation()
         zspan = sol.u
         zspan_sol = z_sol.(sol.t)
         Test.@test zspan ≈ zspan_sol atol = 1e-5
-
     end
 
     @testset "Function" begin
@@ -212,7 +208,6 @@ function test_concatenation()
         zspan = sol.u
         zspan_sol = z_sol.(sol.t)
         Test.@test zspan ≈ zspan_sol atol = 1e-5
-
     end
 
     @testset "Jump is 0" begin
@@ -233,7 +228,6 @@ function test_concatenation()
         f = f1 * ((t0 + tf) / 4, [0, 0, 0, 0], f2) * ((t0 + tf) / 2, f3)
         zf = f(t0, [x0; p0], tf + (t0 + tf) / 2)
         Test.@test zf ≈ [x1_sol(tf), x2_sol(tf), p1_sol(tf), p2_sol(tf)] atol = 1e-5
-
     end
 
     @testset "Bounce" begin
@@ -299,7 +293,6 @@ function test_concatenation()
         xf, pf = fc(0, [0, 0], [0, 0], 5)
         Test.@test xf[1] ≈ 10 atol = 1e-6
         Test.@test pf[1] ≈ 4 atol = 1e-6
-
     end
 
     @testset "Bounce OCP" begin
@@ -335,7 +328,6 @@ function test_concatenation()
         xf, pf = fc(0, [0, 0], [0, 0], 5)
         Test.@test xf[1] ≈ 10 atol = 1e-6
         Test.@test pf[1] ≈ 4 atol = 1e-6
-
     end
 
     @testset "Concat OCP" begin
@@ -352,7 +344,7 @@ function test_concatenation()
         initi_condition(r, x0, xf, v) = r .= x0
         final_condition(r, x0, xf, v) = r .= xf
         x0 = -1
-        xf =  0
+        xf = 0
         CTModels.constraint!(pre_ocp, :boundary; f=initi_condition, lb=x0, ub=x0)
         CTModels.constraint!(pre_ocp, :boundary; f=final_condition, lb=xf, ub=xf)
         CTModels.constraint!(pre_ocp, :control; lb=-1, ub=1)
@@ -379,7 +371,5 @@ function test_concatenation()
         f = f0 * (t1, f1)
         xf_, pf = f(0, -1, p0, 1)
         Test.@test xf_ ≈ 0 atol = 1e-6
-
     end
-
 end

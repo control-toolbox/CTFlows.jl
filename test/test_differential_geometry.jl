@@ -311,7 +311,8 @@ function test_differential_geometry()
             x = [1, 2]
 
             # check real intrinsic order 2 definition of Lie bracket
-            Test.@test ((CTFlows.@Lie [X, Y]) ⋅ f)(x) == ((X ⋅ (Y ⋅ f))(x) - (Y ⋅ (X ⋅ f))(x))
+            Test.@test ((CTFlows.@Lie [X, Y]) ⋅ f)(x) ==
+                ((X ⋅ (Y ⋅ f))(x) - (Y ⋅ (X ⋅ f))(x))
         end
     end
 
@@ -778,7 +779,7 @@ function test_differential_geometry()
         Test.@test CTFlows.@Lie [F0, F1](t, x, v) - [F1, F2](t, x, v) == [-2, -3, -2]
         Test.@test CTFlows.@Lie [F0, F1](t, x, v) .* [F1, F2](t, x, v) == [0, 4, 0]
         Test.@test CTFlows.@Lie [1, 1, 1] +
-                        ([[F0, F1], F1](t, x, v) + [F1, F2](t, x, v) + [1, 1, 1]) ==
+                                ([[F0, F1], F1](t, x, v) + [F1, F2](t, x, v) + [1, 1, 1]) ==
             [4, 5, -5]
 
         # poisson
@@ -810,7 +811,8 @@ function test_differential_geometry()
         Test.@test CTFlows.@Lie {H0, H1}(t, x, p, v) + 4 * {H1, H2}(t, x, p, v) == -15
         Test.@test CTFlows.@Lie {H0, H1}(t, x, p, v) - {H1, H2}(t, x, p, v) == 7.5
         Test.@test CTFlows.@Lie {H0, H1}(t, x, p, v) * {H1, H2}(t, x, p, v) == -13.5
-        Test.@test CTFlows.@Lie 4 + ({{H0, H1}, H1}(t, x, p, v) + -2 * {H1, H2}(t, x, p, v) + 21) ==
-            39
+        Test.@test CTFlows.@Lie 4 + (
+            {{H0, H1}, H1}(t, x, p, v) + -2 * {H1, H2}(t, x, p, v) + 21
+        ) == 39
     end
 end # test_differential_geometry

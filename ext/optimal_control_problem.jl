@@ -131,7 +131,9 @@ julia> f = Flow(ocp, (t, x, p) -> t + p, (t, x, u) -> x - 1, (t, x, p) -> x+p)
 function CTFlows.Flow(
     ocp::CTModels.Model,
     u::Union{CTFlows.ControlLaw{<:Function,T,V},CTFlows.FeedbackControl{<:Function,T,V}},
-    g::Union{CTFlows.MixedConstraint{<:Function,T,V},CTFlows.StateConstraint{<:Function,T,V}},
+    g::Union{
+        CTFlows.MixedConstraint{<:Function,T,V},CTFlows.StateConstraint{<:Function,T,V}
+    },
     μ::Union{CTFlows.Multiplier{<:Function,T,V}};
     alg=__alg(),
     abstol=__abstol(),
@@ -222,6 +224,13 @@ function __ocp_Flow(
 )
     rhs! = rhs(h)
     f = hamiltonian_usage(alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...)
-    kwargs_Flow = (kwargs_Flow..., alg=alg, abstol=abstol, reltol=reltol, saveat=saveat, internalnorm=internalnorm)
+    kwargs_Flow = (
+        kwargs_Flow...,
+        alg=alg,
+        abstol=abstol,
+        reltol=reltol,
+        saveat=saveat,
+        internalnorm=internalnorm,
+    )
     return OptimalControlFlow(f, rhs!, u, ocp, kwargs_Flow)
 end

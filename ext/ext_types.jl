@@ -1,12 +1,12 @@
 const ctNumber = CTModels.ctNumber
 const ctVector = Union{ctNumber,CTModels.ctVector}
-const Time     = ctNumber
-const Times    = AbstractVector{<:Time}
-const State    = ctVector
-const Costate  = ctVector
-const Control  = ctVector
+const Time = ctNumber
+const Times = AbstractVector{<:Time}
+const State = ctVector
+const Costate = ctVector
+const Control = ctVector
 const Variable = ctVector
-const DState   = ctVector
+const DState = ctVector
 const DCostate = ctVector
 
 # ---------------------------------------------------------------------------------------------------
@@ -239,7 +239,7 @@ function CTModels.Solution(ocfs::OptimalControlFlowSolution; kwargs...)
         message="Solution obtained from flow",
         status=:nostatusmessage,
         successful=true,
-        kwargs_OCS...
+        kwargs_OCS...,
     )
 
     return sol
