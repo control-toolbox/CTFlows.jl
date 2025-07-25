@@ -1,5 +1,4 @@
 function test_saveat()
-
     Flow = CTFlows.Flow
 
     # with OrdinaryDiffEq, simple test
@@ -7,13 +6,13 @@ function test_saveat()
     u0 = [1, 0]
     tspan = (0, 2π)
     prob = ODEProblem(f, u0, tspan)
-    sol = solve(prob, Tsit5(), reltol = 1e-8, abstol = 1e-8)
+    sol = solve(prob, Tsit5(); reltol=1e-8, abstol=1e-8)
     @test sol(π/2) ≈ [0, -1] atol=1e-3
 
     # with OrdinaryDiffEq, test saveat    
     times = [π\4, π/2, π]
-    sol = solve(prob, Tsit5(), reltol = 1e-8, abstol = 1e-8, saveat=times)
-    for t ∈ [π\4, π/2, π]
+    sol = solve(prob, Tsit5(); reltol=1e-8, abstol=1e-8, saveat=times)
+    for t in [π\4, π/2, π]
         @test sol(t)[1] ≈ cos(t) atol=1e-3
     end
 
@@ -29,7 +28,7 @@ function test_saveat()
     # with CTFlows, test saveat
     times = [π\4, π/2, π]
     sol = φ((t0, tf), u0; saveat=times)
-    for t ∈ [π\4, π/2, π]
+    for t in [π\4, π/2, π]
         @test sol(t)[1] ≈ cos(t) atol=1e-3
     end
 
@@ -38,9 +37,8 @@ function test_saveat()
     tf = 1
     x0 = -1
     xf = 0
-    α  = 1.5
+    α = 1.5
     ocp = @def begin
-
         t ∈ [t0, tf], time
         x ∈ R, state
         u ∈ R, control
@@ -50,18 +48,17 @@ function test_saveat()
 
         ẋ(t) == -x(t) + α * x(t)^2 + u(t)
 
-        ∫( 0.5u(t)^2 ) → min
-        
+        ∫(0.5u(t)^2) → min
     end
     u(x, p) = p
     φu = Flow(ocp, u)
     expo(p0, tf; saveat=[]) = φu((t0, tf), x0, p0; saveat=saveat)
     p0 = 0
-    times = range(t0, tf, length=3)
+    times = range(t0, tf; length=3)
     sol_saveat = expo(p0, tf; saveat=times)
     x_saveat = CTModels.state(sol_saveat)
     p_saveat = CTModels.costate(sol_saveat)
-    for t ∈ times
+    for t in times
         if (t == t0)
             @test x0 ≈ x_saveat(t) atol=1e-3
             @test p0 ≈ p_saveat(t) atol=1e-3
@@ -73,5 +70,4 @@ function test_saveat()
             @test p(t) ≈ p_saveat(t) atol=1e-3
         end
     end
-
 end

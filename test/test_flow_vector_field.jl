@@ -1,7 +1,6 @@
 function test_flow_vector_field()
-
     Flow = CTFlows.Flow
-    
+
     @testset "4D autonomous, non variable" begin
         V(z) = [z[2], z[2 + 2], 0.0, -z[2 + 1]]
         z = Flow(CTFlows.VectorField(V))
@@ -49,5 +48,4 @@ function test_flow_vector_field()
         x = Flow((t, x) -> [x[2], u(t)]; autonomous=false) # the vector field depends on t
         Test.@test x(t0, x0, tf) ≈ [0, 0] atol = 1e-5
     end
-
 end

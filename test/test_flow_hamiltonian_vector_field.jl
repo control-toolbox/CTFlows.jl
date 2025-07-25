@@ -1,5 +1,4 @@
 function test_flow_hamiltonian_vector_field()
-
     Flow = CTFlows.Flow
 
     @testset "2D autonomous, non variable" begin

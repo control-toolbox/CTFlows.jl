@@ -22,14 +22,13 @@ vmax = 0.1  # maximal authorized speed
 mf = 0.6    # final mass to target
 
 ocp = @def begin # definition of the optimal control problem
-
     tf ∈ R, variable
     t ∈ [t0, tf], time
     x = (r, v, m) ∈ R³, state
     u ∈ R, control
 
-    x(t0) == [ r0, v0, m0 ]
-    m(tf) == mf,         (1)
+    x(t0) == [r0, v0, m0]
+    m(tf) == mf, (1)
     0 ≤ u(t) ≤ 1
     r(t) ≥ r0
     0 ≤ v(t) ≤ vmax
@@ -37,7 +36,6 @@ ocp = @def begin # definition of the optimal control problem
     ẋ(t) == F0(x(t)) + u(t) * F1(x(t))
 
     r(tf) → max
-
 end;
 
 # Dynamics
@@ -49,19 +47,19 @@ const b = 2
 F0(x) = begin
     r, v, m = x
     D = Cd * v^2 * exp(-β*(r - 1)) # Drag force
-    return [ v, -D/m - 1/r^2, 0 ]
+    return [v, -D/m - 1/r^2, 0]
 end
 
 F1(x) = begin
     r, v, m = x
-    return [ 0, Tmax/m, -b*Tmax ]
+    return [0, Tmax/m, -b*Tmax]
 end
 
 # Solve the problem
 direct_sol = CTDirect.solve(ocp; grid_size=100)
 
 # Plot the solution
-plt = plot(direct_sol, solution_label="(direct)", size=(800, 800))
+plt = plot(direct_sol; solution_label="(direct)", size=(800, 800))
 
 # Structure of the solution
 t = time_grid(direct_sol)
@@ -73,20 +71,20 @@ H1 = Lift(F1)           # H1(x, p) = p' * F1(x)
 φ(t) = H1(x(t), p(t))   # switching function
 g(x) = vmax - x[2]      # state constraint v ≤ vmax
 
-u_plot  = plot(t, u,     label = "u(t)")
-H1_plot = plot(t, φ,     label = "H₁(x(t), p(t))")
-g_plot  = plot(t, g ∘ x, label = "g(x(t))")
+u_plot = plot(t, u; label="u(t)")
+H1_plot = plot(t, φ; label="H₁(x(t), p(t))")
+g_plot = plot(t, g ∘ x; label="g(x(t))")
 
-plot(u_plot, H1_plot, g_plot, layout=(3,1), size=(500, 500))
+plot(u_plot, H1_plot, g_plot; layout=(3, 1), size=(500, 500))
 
 # Controls
 u0 = 0                                  # off control
 u1 = 1                                  # bang control
 
 H0 = Lift(F0)                           # H0(x, p) = p' * F0(x)
-H01  = @Lie { H0, H1 }
-H001 = @Lie { H0, H01 }
-H101 = @Lie { H1, H01 }
+H01 = @Lie {H0, H1}
+H001 = @Lie {H0, H01}
+H101 = @Lie {H1, H01}
 us(x, p) = -H001(x, p) / H101(x, p)     # singular control
 
 ub(x) = -(F0⋅g)(x) / (F1⋅g)(x)          # boundary control
@@ -99,28 +97,26 @@ fs = Flow(ocp, (x, p, tf) -> us(x, p))
 fb = Flow(ocp, (x, p, tf) -> ub(x), (x, u, tf) -> g(x), (x, p, tf) -> μ(x, p))
 
 # Shooting function
-x0 = [ r0, v0, m0 ] # initial state
+x0 = [r0, v0, m0] # initial state
 
 function shoot!(s, p0, t1, t2, t3, tf)
-
     x1, p1 = f1(t0, x0, p0, t1)
     x2, p2 = fs(t1, x1, p1, t2)
     x3, p3 = fb(t2, x2, p2, t3)
     xf, pf = f0(t3, x3, p3, tf)
 
     s[1] = xf[3] - mf                             # final mass constraint
-    s[2:3] = pf[1:2] - [ 1, 0 ]                   # transversality conditions
+    s[2:3] = pf[1:2] - [1, 0]                   # transversality conditions
     s[4] = H1(x1, p1)                             # H1 = H01 = 0
     s[5] = H01(x1, p1)                            # at the entrance of the singular arc
     s[6] = g(x2)                                  # g = 0 when entering the boundary arc
     s[7] = H0(xf, pf)                             # since tf is free
-
 end
 
 # Initial guess
 η = 1e-3
-t13 = t[ abs.(φ.(t)) .≤ η ]
-t23 = t[ 0 .≤ (g ∘ x).(t) .≤ η ]
+t13 = t[abs.(φ.(t)) .≤ η]
+t23 = t[0 .≤ (g ∘ x).(t) .≤ η]
 p0 = p(t0)
 t1 = min(t13...)
 t2 = min(t23...)
@@ -139,7 +135,7 @@ s = similar(p0, 7)
 shoot!(s, p0, t1, t2, t3, tf)
 println("\nNorm of the shooting function: ‖s‖ = ", norm(s), "\n")
 
-ξ = [ p0 ; t1 ; t2 ; t3 ; tf ] # initial guess
+ξ = [p0; t1; t2; t3; tf] # initial guess
 
 # auxiliary function with aggregated inputs
 nle! = (s, ξ, λ) -> shoot!(s, ξ[1:3], ξ[4], ξ[5], ξ[6], ξ[7])

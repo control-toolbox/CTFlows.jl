@@ -2,7 +2,7 @@
 const ctNumber = CTModels.ctNumber
 
 """Scalar or vector type used in continuous-time models (scalar or vector-valued)."""
-const ctVector = Union{ctNumber, CTModels.ctVector}
+const ctVector = Union{ctNumber,CTModels.ctVector}
 
 """Alias for scalar time variables."""
 const Time = ctNumber
@@ -99,7 +99,7 @@ julia> m = Mayer{typeof(φ), Fixed}(φ)
 julia> m([1.0, 2.0])
 ```
 """
-struct Mayer{TF<:Function, VD<:VariableDependence}
+struct Mayer{TF<:Function,VD<:VariableDependence}
     f::TF
 end
 
@@ -136,7 +136,8 @@ julia> H = Hamiltonian{typeof(Hf), Autonomous, Fixed}(Hf)
 julia> H([1.0, 0.0], [1.0, 1.0])
 ```
 """
-struct Hamiltonian{TF<:Function, TD<:TimeDependence, VD<:VariableDependence} <: AbstractHamiltonian{TD, VD}
+struct Hamiltonian{TF<:Function,TD<:TimeDependence,VD<:VariableDependence} <:
+       AbstractHamiltonian{TD,VD}
     f::TF
 end
 
@@ -159,7 +160,8 @@ vf = VectorField{typeof(f), Autonomous, Fixed}(f)
 vf([1.0, 0.0])
 ```
 """
-struct VectorField{TF<:Function, TD<:TimeDependence, VD<:VariableDependence} <: AbstractVectorField{TD, VD}
+struct VectorField{TF<:Function,TD<:TimeDependence,VD<:VariableDependence} <:
+       AbstractVectorField{TD,VD}
     f::TF
 end
 
@@ -179,7 +181,8 @@ julia> XH = HamiltonianVectorField{typeof(f), Autonomous, Fixed}(f)
 julia> XH([1.0, 0.0], [0.5, 0.5])
 ```
 """
-struct HamiltonianVectorField{TF<:Function, TD<:TimeDependence, VD<:VariableDependence} <: AbstractVectorField{TD, VD}
+struct HamiltonianVectorField{TF<:Function,TD<:TimeDependence,VD<:VariableDependence} <:
+       AbstractVectorField{TD,VD}
     f::TF
 end
 
@@ -202,10 +205,13 @@ julia> H = HamiltonianLift(X)
 julia> H([1.0, 0.0], [0.5, 0.5])
 ```
 """
-struct HamiltonianLift{TV<:VectorField, TD<:TimeDependence, VD<:VariableDependence} <: AbstractHamiltonian{TD, VD}
+struct HamiltonianLift{TV<:VectorField,TD<:TimeDependence,VD<:VariableDependence} <:
+       AbstractHamiltonian{TD,VD}
     X::TV
-    function HamiltonianLift(X::VectorField{<:Function, TD, VD}) where {TD<:TimeDependence, VD<:VariableDependence}
-        return new{typeof(X), TD, VD}(X)
+    function HamiltonianLift(
+        X::VectorField{<:Function,TD,VD}
+    ) where {TD<:TimeDependence,VD<:VariableDependence}
+        return new{typeof(X),TD,VD}(X)
     end
 end
 
@@ -228,7 +234,7 @@ julia> lag = Lagrange{typeof(L), Autonomous, Fixed}(L)
 julia> lag([1.0, 2.0], [0.5, 0.5])
 ```
 """
-struct Lagrange{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
+struct Lagrange{TF<:Function,TD<:TimeDependence,VD<:VariableDependence}
     f::TF
 end
 
@@ -251,7 +257,7 @@ julia> dyn = Dynamics{typeof(f), Autonomous, Fixed}(f)
 julia> dyn([1.0], [2.0])
 ```
 """
-struct Dynamics{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
+struct Dynamics{TF<:Function,TD<:TimeDependence,VD<:VariableDependence}
     f::TF
 end
 
@@ -270,7 +276,7 @@ julia> c = StateConstraint{typeof(g), Autonomous, Fixed}(g)
 julia> c([1.0, 0.0])
 ```
 """
-struct StateConstraint{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
+struct StateConstraint{TF<:Function,TD<:TimeDependence,VD<:VariableDependence}
     f::TF
 end
 
@@ -286,7 +292,7 @@ julia> mc = MixedConstraint{typeof(g), Autonomous, Fixed}(g)
 julia> mc([0.3], [0.7])
 ```
 """
-struct MixedConstraint{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
+struct MixedConstraint{TF<:Function,TD<:TimeDependence,VD<:VariableDependence}
     f::TF
 end
 
@@ -302,7 +308,7 @@ julia> u = FeedbackControl{typeof(f), Autonomous, Fixed}(f)
 julia> u([1.0, -1.0])
 ```
 """
-struct FeedbackControl{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
+struct FeedbackControl{TF<:Function,TD<:TimeDependence,VD<:VariableDependence}
     f::TF
 end
 
@@ -318,7 +324,7 @@ julia> u = ControlLaw{typeof(f), NonAutonomous, Fixed}(f)
 julia> u(1.0, [2.0])
 ```
 """
-struct ControlLaw{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
+struct ControlLaw{TF<:Function,TD<:TimeDependence,VD<:VariableDependence}
     f::TF
 end
 
@@ -334,7 +340,7 @@ julia> μ = Multiplier{typeof(λ), NonAutonomous, Fixed}(λ)
 julia> μ(π / 2)
 ```
 """
-struct Multiplier{TF<:Function, TD<:TimeDependence, VD<:VariableDependence}
+struct Multiplier{TF<:Function,TD<:TimeDependence,VD<:VariableDependence}
     f::TF
 end
 
@@ -361,7 +367,7 @@ $(TYPEDSIGNATURES)
 
 Construct a Mayer cost functional wrapper with explicit variable dependence type `VD`.
 """
-function Mayer(f::Function, VD::Type{<:VariableDependence}) 
+function Mayer(f::Function, VD::Type{<:VariableDependence})
     return Mayer{typeof(f),VD}(f)
 end
 
@@ -389,7 +395,9 @@ Construct a Hamiltonian function wrapper.
 
 Returns a `Hamiltonian{TF, TD, VD}` callable struct.
 """
-function Hamiltonian(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+function Hamiltonian(
+    f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable()
+)
     TD = autonomous ? Autonomous : NonAutonomous
     VD = variable ? NonFixed : Fixed
     return Hamiltonian{typeof(f),TD,VD}(f)
@@ -400,7 +408,9 @@ $(TYPEDSIGNATURES)
 
 Construct a Hamiltonian function wrapper with explicit time and variable dependence types.
 """
-function Hamiltonian(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+function Hamiltonian(
+    f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence}
+)
     return Hamiltonian{typeof(f),TD,VD}(f)
 end
 
@@ -456,7 +466,9 @@ Construct a HamiltonianLift from a vector field function.
 
 Returns a `HamiltonianLift` wrapping the vector field.
 """
-function HamiltonianLift(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+function HamiltonianLift(
+    f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable()
+)
     TD = autonomous ? Autonomous : NonAutonomous
     VD = variable ? NonFixed : Fixed
     return HamiltonianLift(VectorField(f, TD, VD))
@@ -467,7 +479,9 @@ $(TYPEDSIGNATURES)
 
 Construct a HamiltonianLift with explicit time and variable dependence types.
 """
-function HamiltonianLift(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+function HamiltonianLift(
+    f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence}
+)
     return HamiltonianLift(VectorField(f, TD, VD))
 end
 
@@ -524,7 +538,9 @@ Construct a Hamiltonian vector field from a function `f`.
 
 Returns a `HamiltonianVectorField{TF, TD, VD}` callable struct.
 """
-function HamiltonianVectorField(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+function HamiltonianVectorField(
+    f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable()
+)
     TD = autonomous ? Autonomous : NonAutonomous
     VD = variable ? NonFixed : Fixed
     return HamiltonianVectorField{typeof(f),TD,VD}(f)
@@ -535,7 +551,9 @@ $(TYPEDSIGNATURES)
 
 Construct a Hamiltonian vector field with explicit time and variable dependence.
 """
-function HamiltonianVectorField(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+function HamiltonianVectorField(
+    f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence}
+)
     return HamiltonianVectorField{typeof(f),TD,VD}(f)
 end
 
@@ -605,7 +623,9 @@ julia> vf = VectorField(f, autonomous=true, variable=false)
 julia> vf([1.0, 0.0])  # returns [-0.0, 1.0]
 ```
 """
-function VectorField(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+function VectorField(
+    f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable()
+)
     TD = autonomous ? Autonomous : NonAutonomous
     VD = variable ? NonFixed : Fixed
     return VectorField{typeof(f),TD,VD}(f)
@@ -624,7 +644,9 @@ Create a `VectorField` object with explicit time and variable dependence types.
 # Returns
 - A `VectorField{typeof(f),TD,VD}` object.
 """
-function VectorField(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+function VectorField(
+    f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence}
+)
     return VectorField{typeof(f),TD,VD}(f)
 end
 
@@ -670,7 +692,6 @@ function (F::VectorField{<:Function,NonAutonomous,NonFixed})(
 )::ctVector
     return F.f(t, x, v)
 end
-
 
 # --------------------------------------------------------------------------------------------------
 """
@@ -765,7 +786,6 @@ function (F::Lagrange{<:Function,NonAutonomous,NonFixed})(
 )::ctNumber
     return F.f(t, x, u, v)
 end
-
 
 # --------------------------------------------------------------------------------------------------
 """
@@ -881,7 +901,9 @@ Construct a `StateConstraint` object wrapping the function `f`.
 julia> sc = StateConstraint(x -> x .- 1)  # Autonomous, fixed variable by default
 ```
 """
-function StateConstraint(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+function StateConstraint(
+    f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable()
+)
     TD = autonomous ? Autonomous : NonAutonomous
     VD = variable ? NonFixed : Fixed
     return StateConstraint{typeof(f),TD,VD}(f)
@@ -900,7 +922,9 @@ Construct a `StateConstraint` specifying the time and variable dependence types 
 # Returns
 - A `StateConstraint` instance parameterized accordingly.
 """
-function StateConstraint(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+function StateConstraint(
+    f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence}
+)
     return StateConstraint{typeof(f),TD,VD}(f)
 end
 
@@ -964,7 +988,9 @@ Construct a `MixedConstraint` object wrapping the function `f`.
 julia> mc = MixedConstraint((x, u) -> x + u)
 ```
 """
-function MixedConstraint(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+function MixedConstraint(
+    f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable()
+)
     TD = autonomous ? Autonomous : NonAutonomous
     VD = variable ? NonFixed : Fixed
     return MixedConstraint{typeof(f),TD,VD}(f)
@@ -975,7 +1001,9 @@ $(TYPEDSIGNATURES)
 
 Construct a `MixedConstraint` specifying the time and variable dependence types explicitly.
 """
-function MixedConstraint(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+function MixedConstraint(
+    f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence}
+)
     return MixedConstraint{typeof(f),TD,VD}(f)
 end
 
@@ -1041,7 +1069,9 @@ Construct a `FeedbackControl` wrapping the function `f`.
 julia> fb = FeedbackControl(x -> -x)
 ```
 """
-function FeedbackControl(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+function FeedbackControl(
+    f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable()
+)
     TD = autonomous ? Autonomous : NonAutonomous
     VD = variable ? NonFixed : Fixed
     return FeedbackControl{typeof(f),TD,VD}(f)
@@ -1052,7 +1082,9 @@ $(TYPEDSIGNATURES)
 
 Construct a `FeedbackControl` specifying time and variable dependence types.
 """
-function FeedbackControl(f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence})
+function FeedbackControl(
+    f::Function, TD::Type{<:TimeDependence}, VD::Type{<:VariableDependence}
+)
     return FeedbackControl{typeof(f),TD,VD}(f)
 end
 
@@ -1116,7 +1148,9 @@ Construct a `ControlLaw` wrapping the function `f`.
 julia> cl = ControlLaw((x, p) -> -p)
 ```
 """
-function ControlLaw(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+function ControlLaw(
+    f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable()
+)
     TD = autonomous ? Autonomous : NonAutonomous
     VD = variable ? NonFixed : Fixed
     return ControlLaw{typeof(f),TD,VD}(f)
@@ -1193,7 +1227,9 @@ Construct a `Multiplier` wrapping the function `f`.
 julia> m = Multiplier((x, p) -> p .* x)
 ```
 """
-function Multiplier(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
+function Multiplier(
+    f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable()
+)
     TD = autonomous ? Autonomous : NonAutonomous
     VD = variable ? NonFixed : Fixed
     return Multiplier{typeof(f),TD,VD}(f)

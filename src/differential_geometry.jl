@@ -32,7 +32,6 @@ function Lift(X::VectorField)::HamiltonianLift
     return HamiltonianLift(X)
 end
 
-
 """
 $(TYPEDSIGNATURES)
 
@@ -63,7 +62,9 @@ julia> H2 = Lift((t, x, v) -> 2x + t - v, autonomous=false, variable=true)
 julia> H2(1, 1, 1, 1)  # returns 2
 ```
 """
-function Lift(X::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())::Function
+function Lift(
+    X::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable()
+)::Function
     return @match (autonomous, variable) begin
         (true, false) => (x, p) -> p' * X(x)
         (true, true) => (x, p, v) -> p' * X(x, v)
@@ -205,9 +206,7 @@ function ⅋(
             ctgradient(y -> Y(y, args...), x) * X(x, args...)
         else
             ctjacobian(y -> Y(y, args...), x) * X(x, args...)
-        end,
-        Autonomous,
-        V,
+        end, Autonomous, V
     )
 end
 
@@ -313,13 +312,13 @@ function Poisson(
         ff, gg = @match n begin
             1 => (z -> f(z[1], z[2], args...), z -> g(z[1], z[2], args...))
             _ => (
-                z -> f(z[1:n], z[n+1:2n], args...),
-                z -> g(z[1:n], z[n+1:2n], args...),
+                z -> f(z[1:n], z[(n + 1):2n], args...),
+                z -> g(z[1:n], z[(n + 1):2n], args...),
             )
         end
         df = ctgradient(ff, [x; p])
         dg = ctgradient(gg, [x; p])
-        return df[n+1:2n]' * dg[1:n] - df[1:n]' * dg[n+1:2n]
+        return df[(n + 1):2n]' * dg[1:n] - df[1:n]' * dg[(n + 1):2n]
     end
     return Hamiltonian(fg, Autonomous, V)
 end
@@ -349,13 +348,13 @@ function Poisson(
         ff, gg = @match n begin
             1 => (z -> f(t, z[1], z[2], args...), z -> g(t, z[1], z[2], args...))
             _ => (
-                z -> f(t, z[1:n], z[n+1:2n], args...),
-                z -> g(t, z[1:n], z[n+1:2n], args...),
+                z -> f(t, z[1:n], z[(n + 1):2n], args...),
+                z -> g(t, z[1:n], z[(n + 1):2n], args...),
             )
         end
         df = ctgradient(ff, [x; p])
         dg = ctgradient(gg, [x; p])
-        return df[n+1:2n]' * dg[1:n] - df[1:n]' * dg[n+1:2n]
+        return df[(n + 1):2n]' * dg[1:n] - df[1:n]' * dg[(n + 1):2n]
     end
     return Hamiltonian(fg, NonAutonomous, V)
 end
@@ -618,7 +617,7 @@ macro Lie(expr::Expr, args...)
     for arg in args
         @match arg begin
             :(autonomous = $a) => (autonomous = a)
-            :(variable = $a)   => (variable = a)
+            :(variable = $a) => (variable = a)
             _ => throw(ArgumentError("Invalid argument: $arg"))
         end
     end
@@ -639,7 +638,9 @@ macro Lie(expr::Expr, args...)
         postwalk(walker, x)
 
         if has_lie[] && has_poisson[]
-            throw(ArgumentError("Cannot mix Lie and Poisson brackets in the same expression."))
+            throw(
+                ArgumentError("Cannot mix Lie and Poisson brackets in the same expression.")
+            )
         end
         return nothing
     end
@@ -658,8 +659,8 @@ macro Lie(expr::Expr, args...)
             return quote
                 if isa($c, Function) && isa($d, Function)
                     Poisson(
-                        Hamiltonian($c; autonomous=$(autonomous), variable=$(variable)),
-                        Hamiltonian($d; autonomous=$(autonomous), variable=$(variable))
+                        Hamiltonian($c; autonomous=($(autonomous)), variable=($(variable))),
+                        Hamiltonian($d; autonomous=($(autonomous)), variable=($(variable))),
                     )
                 else
                     Poisson($c, $d)
