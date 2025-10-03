@@ -223,19 +223,15 @@ function CTModels.Solution(ocfs::OptimalControlFlowSolution; kwargs...)
         end
     end
 
-    #
-    X = deepcopy(t -> x(t))
-    U = deepcopy(t -> u(t))
-    P = deepcopy(t -> p(t))
+    # 
     kwargs_OCS = obj==NaN ? () : (objective=obj,)
-
     sol = CTModels.build_solution(
         ocp,
         Vector{Float64}(T), #::Vector{Float64},
-        X,
-        U,
+        deepcopy(t -> x(t)),
+        deepcopy(t -> u(t)),
         v isa Number ? Float64[v] : Float64.(v), #::Vector{Float64},
-        P;
+        deepcopy(t -> p(t));
         iterations=-1,
         constraints_violation=-1.0,
         message="Solution obtained from flow",
