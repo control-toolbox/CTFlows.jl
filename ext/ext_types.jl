@@ -224,7 +224,6 @@ function CTModels.Solution(ocfs::OptimalControlFlowSolution; kwargs...)
     end
 
     #
-    v = v isa Number ? Float64[v] : Float64.(v)
     X = deepcopy(t -> x(t))
     U = deepcopy(t -> u(t))
     P = deepcopy(t -> p(t))
@@ -235,7 +234,7 @@ function CTModels.Solution(ocfs::OptimalControlFlowSolution; kwargs...)
         Vector{Float64}(T), #::Vector{Float64},
         X,
         U,
-        v, #::Vector{Float64},
+        v isa Number ? Float64[v] : Float64.(v), #::Vector{Float64},
         P;
         iterations=-1,
         constraints_violation=-1.0,
