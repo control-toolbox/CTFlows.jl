@@ -196,7 +196,10 @@ function CTModels.Solution(ocfs::OptimalControlFlowSolution; kwargs...)
     v = ocfs.variable
     x(t) = ocfs.ode_sol(t)[rg(1, n)]
     p(t) = ocfs.ode_sol(t)[rg(n + 1, 2n)]
-    u(t) = ocfs.feedback_control(t, x(t), p(t), v)
+    function make_control(v)
+        return t -> ocfs.feedback_control(t, x(t), p(t), v)
+    end
+    u = make_control(v)
 
     # the obj must be computed and pass to OptimalControlSolution
     t0 = T[1]
@@ -220,20 +223,15 @@ function CTModels.Solution(ocfs::OptimalControlFlowSolution; kwargs...)
         end
     end
 
-    #
-    v = v isa Number ? Float64[v] : Float64.(v)
-    X = deepcopy(t -> x(t))
-    U = deepcopy(t -> u(t))
-    P = deepcopy(t -> p(t))
+    # 
     kwargs_OCS = obj==NaN ? () : (objective=obj,)
-
     sol = CTModels.build_solution(
         ocp,
         Vector{Float64}(T), #::Vector{Float64},
-        X,
-        U,
-        v, #::Vector{Float64},
-        P;
+        deepcopy(t -> x(t)),
+        deepcopy(t -> u(t)),
+        v isa Number ? Float64[v] : Float64.(v), #::Vector{Float64},
+        deepcopy(t -> p(t));
         iterations=-1,
         constraints_violation=-1.0,
         message="Solution obtained from flow",
