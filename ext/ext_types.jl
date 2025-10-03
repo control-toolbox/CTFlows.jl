@@ -196,7 +196,10 @@ function CTModels.Solution(ocfs::OptimalControlFlowSolution; kwargs...)
     v = ocfs.variable
     x(t) = ocfs.ode_sol(t)[rg(1, n)]
     p(t) = ocfs.ode_sol(t)[rg(n + 1, 2n)]
-    u(t) = ocfs.feedback_control(t, x(t), p(t), v)
+    function make_control(v)
+        return t -> ocfs.feedback_control(t, x(t), p(t), v)
+    end
+    u = make_control(v)
 
     # the obj must be computed and pass to OptimalControlSolution
     t0 = T[1]
