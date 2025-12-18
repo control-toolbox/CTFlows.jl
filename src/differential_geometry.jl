@@ -1,3 +1,136 @@
+# ==============================================================================
+# Prefix System for Differential Geometry Functions
+# ==============================================================================
+
+"""
+Prefix reference for differential geometry functions.
+Allows customization of which module provides ad, Poisson, etc.
+"""
+const DIFFGEO_PREFIX = Ref(:CTFlows)
+
+"""
+$(TYPEDSIGNATURES)
+
+Get the current differential geometry prefix.
+"""
+diffgeo_prefix() = DIFFGEO_PREFIX[]
+
+"""
+$(TYPEDSIGNATURES)
+
+Set the differential geometry prefix.
+"""
+function diffgeo_prefix!(p::Symbol)
+    DIFFGEO_PREFIX[] = p
+    return nothing
+end
+
+# ==============================================================================
+# Unified ad() Function - Lie Derivative and Lie Bracket
+# ==============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Unified function for Lie derivative and Lie bracket using directional derivatives.
+
+# Arguments
+- `X::Function`: Vector field
+- `foo::Function`: Either a scalar function (for Lie derivative) or vector field (for Lie bracket)
+- `backend`: Automatic differentiation backend (default: `AutoForwardDiff()`)
+- `autonomous::Bool`: Whether functions are time-independent (default: `true`)
+- `variable::Bool`: Whether functions depend on extra variable (default: `false`)
+
+# Returns
+- A function computing either:
+  - Lie derivative `ad(X, f)(x) = ∇f(x)' * X(x)` if `foo` is scalar
+  - Lie bracket `ad(X, Y)(x) = J_Y(x)*X(x) - J_X(x)*Y(x)` if `foo` is vector
+
+# Mathematical Approach
+Uses directional derivatives: `D_X foo(x) = d/dt [foo(x + t*X(x))]|_{t=0}`
+
+# Examples
+```julia-repl
+# Lie derivative
+julia> X(x) = [x[2], -x[1]]
+julia> f(x) = x[1]^2 + x[2]^2
+julia> Lf = ad(X, f)
+julia> Lf([1.0, 2.0])  # Returns 0.0
+
+# Lie bracket
+julia> Y(x) = [x[1], x[2]]
+julia> Z = ad(X, Y)
+julia> Z([1.0, 2.0])  # Returns vector
+```
+"""
+function ad(X::Function, foo::Function; backend=AutoForwardDiff(), autonomous::Bool=true, variable::Bool=false)
+    if autonomous && !variable
+        # Autonomous, no variable: (x) signature
+        function L(x)
+            X_x = X(x)
+            g(t) = foo(x + t * X_x)
+            dfoo = derivative(g, backend, 0.0)
+            return _ad(X, foo, dfoo, x, X_x, backend)
+        end
+        return L
+    elseif autonomous && variable
+        # Autonomous with variable: (x, v) signature
+        function L(x, v)
+            X_x = X(x, v)
+            g(t) = foo(x + t * X_x, v)
+            dfoo = derivative(g, backend, 0.0)
+            return _ad(X, foo, dfoo, x, X_x, backend, v)
+        end
+        return L
+    elseif !autonomous && !variable
+        # Non-autonomous, no variable: (t, x) signature
+        function L(t, x)
+            X_x = X(t, x)
+            g(s) = foo(t, x + s * X_x)
+            dfoo = derivative(g, backend, 0.0)
+            return _ad(X, foo, dfoo, x, X_x, backend, t)
+        end
+        return L
+    else
+        # Non-autonomous with variable: (t, x, v) signature
+        function L(t, x, v)
+            X_x = X(t, x, v)
+            g(s) = foo(t, x + s * X_x, v)
+            dfoo = derivative(g, backend, 0.0)
+            return _ad(X, foo, dfoo, x, X_x, backend, t, v)
+        end
+        return L
+    end
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Internal dispatch for Lie derivative (scalar case).
+"""
+function _ad(X::Function, foo::Function, dfoo::Number, x, X_x, backend, args...)
+    return dfoo  # Already ∇f(x)' * X(x)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Internal dispatch for Lie bracket (vector case).
+"""
+function _ad(X::Function, foo::Function, dfoo::AbstractVector, x, X_x, backend, args...)
+    # dfoo = J_Y(x) * X(x)
+    # Compute J_X(x) * Y(x) using directional derivative
+    Y_x = foo(x, args...)
+    h(t) = X(x + t * Y_x, args...)
+    dX = derivative(h, backend, 0.0)
+    
+    return dfoo - dX  # J_Y(x)*X(x) - J_X(x)*Y(x)
+end
+
+# ==============================================================================
+# Existing Functions
+# ==============================================================================
+
 """
 $(TYPEDSIGNATURES)
 
