@@ -217,6 +217,56 @@ end
 Lie derivative of a scalar function along a vector field in the autonomous case.
 
 Example:
+```julia-repl
+julia> φ = x -> [x[2], -x[1]]
+julia> X = VectorField(φ)
+julia> f = x -> x[1]^2 + x[2]^2
+julia> (X⋅f)([1, 2])
+0
+```
+"""
+function ⋅(
+    X::VectorField{<:Function,Autonomous,<:VariableDependence}, f::Function
+)::Function
+    return (x, args...) -> ctgradient(y -> f(y, args...), x)' * X(x, args...)
+end
+
+"""
+Lie derivative of a scalar function along a vector field in the nonautonomous case.
+
+Example:
+```julia-repl
+julia> φ = (t, x, v) -> [t + x[2] + v[1], -x[1] + v[2]]
+julia> X = VectorField(φ, NonAutonomous, NonFixed)
+julia> f = (t, x, v) -> t + x[1]^2 + x[2]^2
+julia> (X⋅f)(1, [1, 2], [2, 1])
+10
+```
+"""
+function ⋅(
+    X::VectorField{<:Function,NonAutonomous,<:VariableDependence}, f::Function
+)::Function
+    return (t, x, args...) -> ctgradient(y -> f(t, y, args...), x)' * X(t, x, args...)
+end
+
+"""
+Lie derivative of a scalar function along a function (considered autonomous and non-variable).
+
+Example:
+```julia-repl
+julia> φ = x -> [x[2], -x[1]]
+julia> f = x -> x[1]^2 + x[2]^2
+julia> (φ⋅f)([1, 2])
+0
+julia> φ = (t, x, v) -> [t + x[2] + v[1], -x[1] + v[2]]
+julia> f = (t, x, v) -> t + x[1]^2 + x[2]^2
+julia> (φ⋅f)(1, [1, 2], [2, 1])
+MethodError
+```
+"""
+function ⋅(X::Function, f::Function)::Function
+    return ⋅(VectorField(X, Autonomous, Fixed), f)
+end
 
 """
 Lie derivative of a scalar function along a vector field.
