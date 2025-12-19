@@ -90,6 +90,22 @@ end
         @test PB_macro([3.0, 4.0], [5.0, 6.0], [2.0]) ≈ 6.0 atol = 1e-6
     end
 
+    @testset "Backend parameter" begin
+        using DifferentiationInterface
+        # Test that Poisson accepts backend parameter
+        H(x, p) = 0.5 * (p[1]^2 + p[2]^2)
+        G(x, p) = x[1]
+        backend = AutoForwardDiff()
+        PB = CTFlows.Poisson(H, G; backend=backend)
+        @test PB([1.0, 2.0], [3.0, 4.0]) ≈ 3.0 atol = 1e-6
+
+        # Test that ad accepts backend parameter
+        X(x) = [x[2], -x[1]]
+        f(x) = x[1]^2 + x[2]^2
+        Lf = CTFlows.ad(X, f; backend=backend)
+        @test Lf([1.0, 2.0]) ≈ 0.0 atol = 1e-6
+    end
+
     @testset "Nested Brackets (Jacobi Identity check)" begin
         # [X, [Y, Z]] + [Y, [Z, X]] + [Z, [X, Y]] = 0
         X(x) = [0, x[3], -x[2]]

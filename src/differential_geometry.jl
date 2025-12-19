@@ -189,8 +189,9 @@ Poisson bracket of two Hamiltonian functions (pure functions).
 # Arguments
 - `H::Function`: First Hamiltonian function
 - `G::Function`: Second Hamiltonian function
-- `autonomous::Bool=true`: Whether functions are time-independent
-- `variable::Bool=false`: Whether functions depend on extra variable
+- `backend`: Automatic differentiation backend (default: `__backend()` = `AutoForwardDiff()`)
+- `autonomous::Bool`: Whether functions are time-independent (default: `__autonomous()` = `true`)
+- `variable::Bool`: Whether functions depend on extra variable (default: `__variable()` = `false`)
 
 # Returns
 - A function computing the Poisson bracket `{H, G}(x, p) = ∇ₚH'·∇ₓG - ∇ₓH'·∇ₚG`
@@ -204,39 +205,43 @@ julia> PB([1.0, 2.0], [0.5, 0.5])  # Returns Poisson bracket value
 ```
 """
 function Poisson(
-    H::Function, G::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable()
+    H::Function,
+    G::Function;
+    backend=__backend(),
+    autonomous::Bool=__autonomous(),
+    variable::Bool=__variable(),
 )
     if autonomous && !variable
         return function (x, p)
             # {H, G} = ∇ₚH'·∇ₓG - ∇ₓH'·∇ₚG
-            grad_x_H = ctgradient(y -> H(y, p), x)
-            grad_p_H = ctgradient(q -> H(x, q), p)
-            grad_x_G = ctgradient(y -> G(y, p), x)
-            grad_p_G = ctgradient(q -> G(x, q), p)
+            grad_x_H = gradient(y -> H(y, p), backend, x)
+            grad_p_H = gradient(q -> H(x, q), backend, p)
+            grad_x_G = gradient(y -> G(y, p), backend, x)
+            grad_p_G = gradient(q -> G(x, q), backend, p)
             return grad_p_H' * grad_x_G - grad_x_H' * grad_p_G
         end
     elseif autonomous && variable
         return function (x, p, v)
-            grad_x_H = ctgradient(y -> H(y, p, v), x)
-            grad_p_H = ctgradient(q -> H(x, q, v), p)
-            grad_x_G = ctgradient(y -> G(y, p, v), x)
-            grad_p_G = ctgradient(q -> G(x, q, v), p)
+            grad_x_H = gradient(y -> H(y, p, v), backend, x)
+            grad_p_H = gradient(q -> H(x, q, v), backend, p)
+            grad_x_G = gradient(y -> G(y, p, v), backend, x)
+            grad_p_G = gradient(q -> G(x, q, v), backend, p)
             return grad_p_H' * grad_x_G - grad_x_H' * grad_p_G
         end
     elseif !autonomous && !variable
         return function (t, x, p)
-            grad_x_H = ctgradient(y -> H(t, y, p), x)
-            grad_p_H = ctgradient(q -> H(t, x, q), p)
-            grad_x_G = ctgradient(y -> G(t, y, p), x)
-            grad_p_G = ctgradient(q -> G(t, x, q), p)
+            grad_x_H = gradient(y -> H(t, y, p), backend, x)
+            grad_p_H = gradient(q -> H(t, x, q), backend, p)
+            grad_x_G = gradient(y -> G(t, y, p), backend, x)
+            grad_p_G = gradient(q -> G(t, x, q), backend, p)
             return grad_p_H' * grad_x_G - grad_x_H' * grad_p_G
         end
     else
         return function (t, x, p, v)
-            grad_x_H = ctgradient(y -> H(t, y, p, v), x)
-            grad_p_H = ctgradient(q -> H(t, x, q, v), p)
-            grad_x_G = ctgradient(y -> G(t, y, p, v), x)
-            grad_p_G = ctgradient(q -> G(t, x, q, v), p)
+            grad_x_H = gradient(y -> H(t, y, p, v), backend, x)
+            grad_p_H = gradient(q -> H(t, x, q, v), backend, p)
+            grad_x_G = gradient(y -> G(t, y, p, v), backend, x)
+            grad_p_G = gradient(q -> G(t, x, q, v), backend, p)
             return grad_p_H' * grad_x_G - grad_x_H' * grad_p_G
         end
     end
