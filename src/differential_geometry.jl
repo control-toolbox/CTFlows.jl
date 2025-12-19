@@ -43,9 +43,9 @@ Unified function for Lie derivative and Lie bracket using directional derivative
 # Arguments
 - `X::Function`: Vector field
 - `foo::Function`: Either a scalar function (for Lie derivative) or vector field (for Lie bracket)
-- `backend`: Automatic differentiation backend (default: `AutoForwardDiff()`)
-- `autonomous::Bool`: Whether functions are time-independent (default: `true`)
-- `variable::Bool`: Whether functions depend on extra variable (default: `false`)
+- `backend`: Automatic differentiation backend (default: `__backend()` = `AutoForwardDiff()`)
+- `autonomous::Bool`: Whether functions are time-independent (default: `__autonomous()` = `true`)
+- `variable::Bool`: Whether functions depend on extra variable (default: `__variable()` = `false`)
 
 # Returns
 - A function computing either:
@@ -72,7 +72,7 @@ julia> Z([1.0, 2.0])  # Returns vector
 function ad(
     X::Function,
     foo::Function;
-    backend=AutoForwardDiff(),
+    backend=__backend(),
     autonomous::Bool=__autonomous(),
     variable::Bool=__variable(),
 )
