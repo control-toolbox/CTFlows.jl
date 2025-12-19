@@ -73,8 +73,8 @@ function ad(
     X::Function,
     foo::Function;
     backend=AutoForwardDiff(),
-    autonomous::Bool=true,
-    variable::Bool=false,
+    autonomous::Bool=__autonomous(),
+    variable::Bool=__variable(),
 )
     if autonomous && !variable
         # Autonomous, no variable: (x) signature
@@ -288,8 +288,8 @@ julia> PB([1.0, 2.0], [0.5, 0.5])
 """
 macro Lie(expr::Expr, args...)
     # Parse options
-    autonomous = true
-    variable = false
+    autonomous = __autonomous()
+    variable = __variable()
 
     for arg in args
         if @capture(arg, autonomous = val_)
