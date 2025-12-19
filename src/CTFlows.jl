@@ -7,6 +7,7 @@ using DocStringExtensions
 using MLStyle
 using MacroTools: @capture, postwalk, striplines
 using ForwardDiff: ForwardDiff
+using ADTypes: AbstractADType
 using DifferentiationInterface
 using DifferentiationInterface: AutoForwardDiff, derivative, gradient
 

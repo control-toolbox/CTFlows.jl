@@ -16,7 +16,7 @@ Compute the derivative of a scalar function `f` at a scalar point `x`.
 julia> ctgradient(x -> x^2, 3.0)  # returns 6.0
 ```
 """
-function ctgradient(f::Function, backend, x::ctNumber)
+function ctgradient(f::Function, backend::AbstractADType, x::ctNumber)
     return derivative(f, backend, x)
 end
 
@@ -54,7 +54,7 @@ Compute the gradient of a scalar function `f` at a vector point `x`.
 julia> ctgradient(x -> sum(x.^2), [1.0, 2.0])  # returns [2.0, 4.0]
 ```
 """
-function ctgradient(f::Function, backend, x)
+function ctgradient(f::Function, backend::AbstractADType, x)
     return gradient(f, backend, x)
 end
 

@@ -72,7 +72,7 @@ julia> Z([1.0, 2.0])  # Returns vector
 function ad(
     X::Function,
     foo::Function;
-    backend=__backend(),
+    backend::AbstractADType=__backend(),
     autonomous::Bool=__autonomous(),
     variable::Bool=__variable(),
 )
@@ -100,7 +100,7 @@ function ad(
     foo::Function,
     ::Type{TD},
     ::Type{VD};
-    backend=__backend(),
+    backend::AbstractADType=__backend(),
 ) where {TD<:TimeDependence,VD<:VariableDependence}
     return _ad(X, foo, backend, TD, VD)
 end
@@ -292,7 +292,7 @@ julia> PB([1.0, 2.0], [0.5, 0.5])  # Returns Poisson bracket value
 function Poisson(
     H::Function,
     G::Function;
-    backend=__backend(),
+    backend::AbstractADType=__backend(),
     autonomous::Bool=__autonomous(),
     variable::Bool=__variable(),
 )
@@ -318,7 +318,7 @@ function Poisson(
     G::Function,
     ::Type{TD},
     ::Type{VD};
-    backend=__backend(),
+    backend::AbstractADType=__backend(),
 ) where {TD<:TimeDependence,VD<:VariableDependence}
     return _Poisson(H, G, backend, TD, VD)
 end
