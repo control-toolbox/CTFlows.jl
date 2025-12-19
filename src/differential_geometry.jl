@@ -76,56 +76,122 @@ function ad(
     autonomous::Bool=__autonomous(),
     variable::Bool=__variable(),
 )
-    if autonomous && !variable
-        # Autonomous, no variable: (x) signature
-        return function (x)
-            X_x = X(x)
-            g(t) = foo(x + t * X_x)
-            dfoo = derivative(g, backend, 0.0)
-            return _ad(X, foo, dfoo, x, X_x, backend)
-        end
-    elseif autonomous && variable
-        # Autonomous with variable: (x, v) signature
-        return function (x, v)
-            X_x = X(x, v)
-            g(t) = foo(x + t * X_x, v)
-            dfoo = derivative(g, backend, 0.0)
-            return _ad(X, foo, dfoo, x, X_x, backend, v)
-        end
-    elseif !autonomous && !variable
-        # Non-autonomous, no variable: (t, x) signature
-        return function (t, x)
-            X_x = X(t, x)
-            g(s) = foo(t, x + s * X_x)
-            dfoo = derivative(g, backend, 0.0)
-            return _ad(X, foo, dfoo, x, X_x, backend, t)
-        end
-    else
-        # Non-autonomous with variable: (t, x, v) signature
-        return function (t, x, v)
-            X_x = X(t, x, v)
-            g(s) = foo(t, x + s * X_x, v)
-            dfoo = derivative(g, backend, 0.0)
-            return _ad(X, foo, dfoo, x, X_x, backend, t, v)
-        end
+    TD = autonomous ? Autonomous : NonAutonomous
+    VD = variable ? NonFixed : Fixed
+    return ad(X, foo, TD, VD; backend=backend)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Unified function for Lie derivative and Lie bracket with explicit type parameters.
+
+This method accepts types directly for better performance through compile-time dispatch.
+
+# Arguments
+- `X::Function`: Vector field
+- `foo::Function`: Either a scalar function (for Lie derivative) or vector field (for Lie bracket)
+- `TD::Type{<:TimeDependence}`: Time dependence type (Autonomous or NonAutonomous)
+- `VD::Type{<:VariableDependence}`: Variable dependence type (Fixed or NonFixed)
+- `backend`: Automatic differentiation backend (default: `__backend()`)
+"""
+function ad(
+    X::Function,
+    foo::Function,
+    ::Type{TD},
+    ::Type{VD};
+    backend=__backend(),
+) where {TD<:TimeDependence,VD<:VariableDependence}
+    return _ad(X, foo, backend, TD, VD)
+end
+
+# ==============================================================================
+# Internal ad() implementations with type dispatch
+# ==============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Internal implementation: Autonomous, Fixed (signature: x -> ...)
+"""
+function _ad(
+    X::Function, foo::Function, backend, ::Type{Autonomous}, ::Type{Fixed}
+)
+    return function (x)
+        X_x = X(x)
+        g(t) = foo(x + t * X_x)
+        dfoo = derivative(g, backend, 0.0)
+        return _ad_result(X, foo, dfoo, x, X_x, backend)
     end
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Internal dispatch for Lie derivative (scalar case).
+Internal implementation: Autonomous, NonFixed (signature: (x, v) -> ...)
 """
-function _ad(X::Function, foo::Function, dfoo::Number, x, X_x, backend, args...)
+function _ad(
+    X::Function, foo::Function, backend, ::Type{Autonomous}, ::Type{NonFixed}
+)
+    return function (x, v)
+        X_x = X(x, v)
+        g(t) = foo(x + t * X_x, v)
+        dfoo = derivative(g, backend, 0.0)
+        return _ad_result(X, foo, dfoo, x, X_x, backend, v)
+    end
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Internal implementation: NonAutonomous, Fixed (signature: (t, x) -> ...)
+"""
+function _ad(
+    X::Function, foo::Function, backend, ::Type{NonAutonomous}, ::Type{Fixed}
+)
+    return function (t, x)
+        X_x = X(t, x)
+        g(s) = foo(t, x + s * X_x)
+        dfoo = derivative(g, backend, 0.0)
+        return _ad_result(X, foo, dfoo, x, X_x, backend, t)
+    end
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Internal implementation: NonAutonomous, NonFixed (signature: (t, x, v) -> ...)
+"""
+function _ad(
+    X::Function, foo::Function, backend, ::Type{NonAutonomous}, ::Type{NonFixed}
+)
+    return function (t, x, v)
+        X_x = X(t, x, v)
+        g(s) = foo(t, x + s * X_x, v)
+        dfoo = derivative(g, backend, 0.0)
+        return _ad_result(X, foo, dfoo, x, X_x, backend, t, v)
+    end
+end
+
+# ==============================================================================
+# Result computation dispatch (Lie derivative vs Lie bracket)
+# ==============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Compute result for Lie derivative (scalar case).
+"""
+function _ad_result(X::Function, foo::Function, dfoo::Number, x, X_x, backend, args...)
     return dfoo  # Already ∇f(x)' * X(x)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Internal dispatch for Lie bracket (vector case).
+Compute result for Lie bracket (vector case).
 """
-function _ad(
+function _ad_result(
     X::Function, foo::Function, dfoo::AbstractVector, x, X_x, backend, args...
 )
     # dfoo = J_Y(x) * X(x)
@@ -148,8 +214,8 @@ Construct the Hamiltonian lift of a vector field (pure function).
 
 # Arguments
 - `f::Function`: Vector field function
-- `autonomous::Bool=true`: Whether the function is autonomous (time-independent)
-- `variable::Bool=false`: Whether the function depends on an additional variable argument
+- `autonomous::Bool`: Whether the function is autonomous (default: `__autonomous()` = `true`)
+- `variable::Bool`: Whether the function depends on an additional variable (default: `__variable()` = `false`)
 
 # Returns
 - A callable function computing the Hamiltonian lift `H(x, p) = p' * f(x)`
@@ -166,16 +232,35 @@ julia> H2(1.0, [1.0, 2.0], [0.5, 0.5])  # Returns 1.5
 ```
 """
 function Lift(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
-    if autonomous && !variable
-        return (x, p) -> p' * f(x)
-    elseif autonomous && variable
-        return (x, p, v) -> p' * f(x, v)
-    elseif !autonomous && !variable
-        return (t, x, p) -> p' * f(t, x)
-    else
-        return (t, x, p, v) -> p' * f(t, x, v)
-    end
+    TD = autonomous ? Autonomous : NonAutonomous
+    VD = variable ? NonFixed : Fixed
+    return Lift(f, TD, VD)
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Construct the Hamiltonian lift with explicit type parameters.
+
+# Arguments
+- `f::Function`: Vector field function
+- `TD::Type{<:TimeDependence}`: Time dependence type
+- `VD::Type{<:VariableDependence}`: Variable dependence type
+"""
+function Lift(
+    f::Function,
+    ::Type{TD},
+    ::Type{VD},
+) where {TD<:TimeDependence,VD<:VariableDependence}
+    return _Lift(f, TD, VD)
+end
+
+# Internal implementations
+_Lift(f::Function, ::Type{Autonomous}, ::Type{Fixed}) = (x, p) -> p' * f(x)
+_Lift(f::Function, ::Type{Autonomous}, ::Type{NonFixed}) = (x, p, v) -> p' * f(x, v)
+_Lift(f::Function, ::Type{NonAutonomous}, ::Type{Fixed}) = (t, x, p) -> p' * f(t, x)
+_Lift(f::Function, ::Type{NonAutonomous}, ::Type{NonFixed}) =
+    (t, x, p, v) -> p' * f(t, x, v)
 
 # ==============================================================================
 # Poisson Bracket (V3: works with pure Functions)
@@ -211,39 +296,71 @@ function Poisson(
     autonomous::Bool=__autonomous(),
     variable::Bool=__variable(),
 )
-    if autonomous && !variable
-        return function (x, p)
-            # {H, G} = ∇ₚH'·∇ₓG - ∇ₓH'·∇ₚG
-            grad_x_H = ctgradient(y -> H(y, p), backend, x)
-            grad_p_H = ctgradient(q -> H(x, q), backend, p)
-            grad_x_G = ctgradient(y -> G(y, p), backend, x)
-            grad_p_G = ctgradient(q -> G(x, q), backend, p)
-            return grad_p_H' * grad_x_G - grad_x_H' * grad_p_G
-        end
-    elseif autonomous && variable
-        return function (x, p, v)
-            grad_x_H = ctgradient(y -> H(y, p, v), backend, x)
-            grad_p_H = ctgradient(q -> H(x, q, v), backend, p)
-            grad_x_G = ctgradient(y -> G(y, p, v), backend, x)
-            grad_p_G = ctgradient(q -> G(x, q, v), backend, p)
-            return grad_p_H' * grad_x_G - grad_x_H' * grad_p_G
-        end
-    elseif !autonomous && !variable
-        return function (t, x, p)
-            grad_x_H = ctgradient(y -> H(t, y, p), backend, x)
-            grad_p_H = ctgradient(q -> H(t, x, q), backend, p)
-            grad_x_G = ctgradient(y -> G(t, y, p), backend, x)
-            grad_p_G = ctgradient(q -> G(t, x, q), backend, p)
-            return grad_p_H' * grad_x_G - grad_x_H' * grad_p_G
-        end
-    else
-        return function (t, x, p, v)
-            grad_x_H = ctgradient(y -> H(t, y, p, v), backend, x)
-            grad_p_H = ctgradient(q -> H(t, x, q, v), backend, p)
-            grad_x_G = ctgradient(y -> G(t, y, p, v), backend, x)
-            grad_p_G = ctgradient(q -> G(t, x, q, v), backend, p)
-            return grad_p_H' * grad_x_G - grad_x_H' * grad_p_G
-        end
+    TD = autonomous ? Autonomous : NonAutonomous
+    VD = variable ? NonFixed : Fixed
+    return Poisson(H, G, TD, VD; backend=backend)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Poisson bracket with explicit type parameters.
+
+# Arguments
+- `H::Function`: First Hamiltonian function
+- `G::Function`: Second Hamiltonian function
+- `TD::Type{<:TimeDependence}`: Time dependence type
+- `VD::Type{<:VariableDependence}`: Variable dependence type
+- `backend`: Automatic differentiation backend (default: `__backend()`)
+"""
+function Poisson(
+    H::Function,
+    G::Function,
+    ::Type{TD},
+    ::Type{VD};
+    backend=__backend(),
+) where {TD<:TimeDependence,VD<:VariableDependence}
+    return _Poisson(H, G, backend, TD, VD)
+end
+
+# Internal implementations
+function _Poisson(H::Function, G::Function, backend, ::Type{Autonomous}, ::Type{Fixed})
+    return function (x, p)
+        grad_x_H = ctgradient(y -> H(y, p), backend, x)
+        grad_p_H = ctgradient(q -> H(x, q), backend, p)
+        grad_x_G = ctgradient(y -> G(y, p), backend, x)
+        grad_p_G = ctgradient(q -> G(x, q), backend, p)
+        return grad_p_H' * grad_x_G - grad_x_H' * grad_p_G
+    end
+end
+
+function _Poisson(H::Function, G::Function, backend, ::Type{Autonomous}, ::Type{NonFixed})
+    return function (x, p, v)
+        grad_x_H = ctgradient(y -> H(y, p, v), backend, x)
+        grad_p_H = ctgradient(q -> H(x, q, v), backend, p)
+        grad_x_G = ctgradient(y -> G(y, p, v), backend, x)
+        grad_p_G = ctgradient(q -> G(x, q, v), backend, p)
+        return grad_p_H' * grad_x_G - grad_x_H' * grad_p_G
+    end
+end
+
+function _Poisson(H::Function, G::Function, backend, ::Type{NonAutonomous}, ::Type{Fixed})
+    return function (t, x, p)
+        grad_x_H = ctgradient(y -> H(t, y, p), backend, x)
+        grad_p_H = ctgradient(q -> H(t, x, q), backend, p)
+        grad_x_G = ctgradient(y -> G(t, y, p), backend, x)
+        grad_p_G = ctgradient(q -> G(t, x, q), backend, p)
+        return grad_p_H' * grad_x_G - grad_x_H' * grad_p_G
+    end
+end
+
+function _Poisson(H::Function, G::Function, backend, ::Type{NonAutonomous}, ::Type{NonFixed})
+    return function (t, x, p, v)
+        grad_x_H = ctgradient(y -> H(t, y, p, v), backend, x)
+        grad_p_H = ctgradient(q -> H(t, x, q, v), backend, p)
+        grad_x_G = ctgradient(y -> G(t, y, p, v), backend, x)
+        grad_p_G = ctgradient(q -> G(t, x, q, v), backend, p)
+        return grad_p_H' * grad_x_G - grad_x_H' * grad_p_G
     end
 end
 
@@ -273,10 +390,12 @@ $(TYPEDSIGNATURES)
 
 Macro for Lie brackets and Poisson brackets with mathematical notation.
 
+Uses type dispatch for better performance - expands to typed method calls.
+
 # Syntax
-- `@Lie [X, Y]` - Lie bracket (expands to `CTFlows.ad(X, Y)`)
-- `@Lie {H, G}` - Poisson bracket (expands to `CTFlows.Poisson(H, G)`)
-- `@Lie {H, G} autonomous=false` - With options
+- `@Lie [X, Y]` - Lie bracket (expands to `CTFlows.ad(X, Y, Autonomous, Fixed)`)
+- `@Lie {H, G}` - Poisson bracket (expands to `CTFlows.Poisson(H, G, Autonomous, Fixed)`)
+- `@Lie {H, G} autonomous=false` - With options (expands to `CTFlows.Poisson(H, G, NonAutonomous, Fixed)`)
 
 # Examples
 ```julia-repl
@@ -292,7 +411,7 @@ julia> PB([1.0, 2.0], [0.5, 0.5])
 ```
 """
 macro Lie(expr::Expr, args...)
-    # Parse options
+    # Parse options - default values
     autonomous = __autonomous()
     variable = __variable()
 
@@ -304,24 +423,24 @@ macro Lie(expr::Expr, args...)
         end
     end
 
+    # Convert Bool to Type at compile time
+    TD = autonomous ? :Autonomous : :NonAutonomous
+    VD = variable ? :NonFixed : :Fixed
+
     prefix = diffgeo_prefix()
 
     function fun(x)
         is_lie, is_poisson = @capture(x, [a_, b_]), @capture(x, {c_, d_})
 
         if is_lie
-            # Lie bracket: @Lie [X, Y] -> CTFlows.ad(X, Y; autonomous=..., variable=...)
+            # Lie bracket: @Lie [X, Y] -> CTFlows.ad(X, Y, CTFlows.Autonomous, CTFlows.Fixed)
             return :(
-                $prefix.ad(
-                $a, $b; autonomous=$(autonomous), variable=$(variable)
-            )
+                $prefix.ad($a, $b, $prefix.$TD, $prefix.$VD)
             )
         elseif is_poisson
-            # Poisson bracket: @Lie {H, G} -> CTFlows.Poisson(H, G; autonomous=..., variable=...)
+            # Poisson bracket: @Lie {H, G} -> CTFlows.Poisson(H, G, CTFlows.Autonomous, CTFlows.Fixed)
             return :(
-                $prefix.Poisson(
-                $c, $d; autonomous=$(autonomous), variable=$(variable)
-            )
+                $prefix.Poisson($c, $d, $prefix.$TD, $prefix.$VD)
             )
         else
             return x
