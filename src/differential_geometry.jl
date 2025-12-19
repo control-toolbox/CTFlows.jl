@@ -9,22 +9,80 @@
 # ==============================================================================
 
 """
-Prefix reference for differential geometry functions.
-Allows customization of which module provides ad, Poisson, etc.
+Prefix reference for differential geometry functions in the `@Lie` macro.
+
+This constant stores a Symbol indicating which module should be used when the `@Lie` macro
+expands Lie bracket `[X, Y]` and Poisson bracket `{H, G}` expressions. By default, it points
+to `:CTFlows`, but can be changed via [`diffgeo_prefix!`](@ref) to support custom modules.
+
+# Example
+
+```julia-repl
+julia> using CTFlows
+
+julia> CTFlows.diffgeo_prefix()
+:CTFlows
+
+julia> CTFlows.diffgeo_prefix!(:MyModule)
+
+julia> CTFlows.diffgeo_prefix()
+:MyModule
+```
+
+See also: [`diffgeo_prefix`](@ref), [`diffgeo_prefix!`](@ref), [`@Lie`](@ref)
 """
 const DIFFGEO_PREFIX = Ref(:CTFlows)
 
 """
 $(TYPEDSIGNATURES)
 
-Get the current differential geometry prefix.
+Get the current differential geometry module prefix used by the `@Lie` macro.
+
+# Returns
+
+- `Symbol`: The current prefix (default: `:CTFlows`)
+
+# Example
+
+```julia-repl
+julia> using CTFlows
+
+julia> CTFlows.diffgeo_prefix()
+:CTFlows
+```
+
+See also: [`diffgeo_prefix!`](@ref), [`@Lie`](@ref)
 """
 diffgeo_prefix() = DIFFGEO_PREFIX[]
 
 """
 $(TYPEDSIGNATURES)
 
-Set the differential geometry prefix.
+Set the differential geometry module prefix for the `@Lie` macro.
+
+This changes which module the `@Lie` macro will reference when expanding bracket expressions.
+Useful when integrating with custom differential geometry implementations.
+
+# Arguments
+
+- `p::Symbol`: The new module prefix (e.g., `:MyCustomModule`)
+
+# Example
+
+```julia-repl
+julia> using CTFlows
+
+julia> CTFlows.diffgeo_prefix!(:MyModule)
+
+julia> CTFlows.diffgeo_prefix()
+:MyModule
+
+julia> # Now @Lie macros will expand to MyModule.ad(...) instead of CTFlows.ad(...)
+
+julia> CTFlows.diffgeo_prefix!(:CTFlows)  # Reset to default
+```
+
+See also: [`diffgeo_prefix`](@ref), [`@Lie`](@ref)
 """
 function diffgeo_prefix!(p::Symbol)
     DIFFGEO_PREFIX[] = p
@@ -57,17 +115,30 @@ Uses directional derivatives: `D_X foo(x) = d/dt [foo(x + t*X(x))]|_{t=0}`
 
 # Examples
 ```julia-repl
-# Lie derivative
-julia> X(x) = [x[2], -x[1]]
-julia> f(x) = x[1]^2 + x[2]^2
-julia> Lf = ad(X, f)
-julia> Lf([1.0, 2.0])  # Returns 0.0
+julia> using CTFlows
 
-# Lie bracket
+# Lie derivative of a scalar function
+julia> X(x) = [x[2], -x[1]]
+
+julia> f(x) = x[1]^2 + x[2]^2
+
+julia> Lf = CTFlows.ad(X, f)
+
+julia> Lf([1.0, 2.0])
+0.0
+
+# Lie bracket of two vector fields
 julia> Y(x) = [x[1], x[2]]
-julia> Z = ad(X, Y)
-julia> Z([1.0, 2.0])  # Returns vector
+
+julia> Z = CTFlows.ad(X, Y)
+
+julia> Z([1.0, 2.0])
+2-element Vector{Float64}:
+ -1.0
+  2.0
 ```
+
+See also: [`Lift`](@ref), [`Poisson`](@ref), [`@Lie`](@ref)
 """
 function ad(
     X::Function,
