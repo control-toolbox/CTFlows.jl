@@ -40,25 +40,6 @@ function ctgradient(f::Function, x)
     return ForwardDiff.gradient(f, x)
 end
 
-"""
-$(TYPEDSIGNATURES)
-
-Compute the gradient of a `VectorField` at a given point.
-
-# Arguments
-- `X::VectorField`: A vector field object with a callable function `X.f`.
-- `x`: A scalar or vector input.
-
-# Returns
-- The derivative or gradient depending on the type of `x`.
-
-# Example
-```julia-repl
-julia> X = VectorField(x -> x^2)
-julia> ctgradient(X, 2.0)  # returns 4.0
-```
-"""
-ctgradient(X::VectorField, x) = ctgradient(X.f, x)
 
 """
 $(TYPEDSIGNATURES)
@@ -102,22 +83,3 @@ julia> ctjacobian(f, [1.0, 2.0])  # returns [2.0 0.0; 0.0 4.0]
 """
 ctjacobian(f::Function, x) = ForwardDiff.jacobian(f, x)
 
-"""
-$(TYPEDSIGNATURES)
-
-Compute the Jacobian of a `VectorField` at a given point.
-
-# Arguments
-- `X::VectorField`: A vector field object with a callable function `X.f`.
-- `x`: A scalar or vector input.
-
-# Returns
-- A matrix representing the Jacobian of `X` at `x`.
-
-# Example
-```julia-repl
-julia> X = VectorField(x -> [x[1]^2, x[2]])
-julia> ctjacobian(X, [1.0, 3.0])  # returns [2.0 0.0; 0.0 1.0]
-```
-"""
-ctjacobian(X::VectorField, x) = ctjacobian(X.f, x)
