@@ -73,6 +73,16 @@ end
         # Macro check
         PB_macro = CTFlows.@Lie {H, G}
         @test PB_macro([1.0, 2.0], [3.0, 4.0]) ≈ 3.0 atol = 1e-6
+
+        # Scalar case
+        H_scalar(x, p) = 0.5 * (p^2 + x^2)
+        G_scalar(x, p) = x
+        # {H, G} = ∂H/∂p * ∂G/∂x - ∂H/∂x * ∂G/∂p
+        # ∂H/∂p = p, ∂G/∂x = 1 -> p*1 = p
+        # ∂H/∂x = x, ∂G/∂p = 0 -> x*0 = 0
+        # {H, G} = p
+        PB_scalar = CTFlows.Poisson(H_scalar, G_scalar)
+        @test PB_scalar(1.0, 3.0) ≈ 3.0 atol = 1e-6
     end
 
     @testset "Variable dependence" begin

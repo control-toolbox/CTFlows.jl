@@ -214,34 +214,34 @@ function Poisson(
     if autonomous && !variable
         return function (x, p)
             # {H, G} = ∇ₚH'·∇ₓG - ∇ₓH'·∇ₚG
-            grad_x_H = gradient(y -> H(y, p), backend, x)
-            grad_p_H = gradient(q -> H(x, q), backend, p)
-            grad_x_G = gradient(y -> G(y, p), backend, x)
-            grad_p_G = gradient(q -> G(x, q), backend, p)
+            grad_x_H = ctgradient(y -> H(y, p), backend, x)
+            grad_p_H = ctgradient(q -> H(x, q), backend, p)
+            grad_x_G = ctgradient(y -> G(y, p), backend, x)
+            grad_p_G = ctgradient(q -> G(x, q), backend, p)
             return grad_p_H' * grad_x_G - grad_x_H' * grad_p_G
         end
     elseif autonomous && variable
         return function (x, p, v)
-            grad_x_H = gradient(y -> H(y, p, v), backend, x)
-            grad_p_H = gradient(q -> H(x, q, v), backend, p)
-            grad_x_G = gradient(y -> G(y, p, v), backend, x)
-            grad_p_G = gradient(q -> G(x, q, v), backend, p)
+            grad_x_H = ctgradient(y -> H(y, p, v), backend, x)
+            grad_p_H = ctgradient(q -> H(x, q, v), backend, p)
+            grad_x_G = ctgradient(y -> G(y, p, v), backend, x)
+            grad_p_G = ctgradient(q -> G(x, q, v), backend, p)
             return grad_p_H' * grad_x_G - grad_x_H' * grad_p_G
         end
     elseif !autonomous && !variable
         return function (t, x, p)
-            grad_x_H = gradient(y -> H(t, y, p), backend, x)
-            grad_p_H = gradient(q -> H(t, x, q), backend, p)
-            grad_x_G = gradient(y -> G(t, y, p), backend, x)
-            grad_p_G = gradient(q -> G(t, x, q), backend, p)
+            grad_x_H = ctgradient(y -> H(t, y, p), backend, x)
+            grad_p_H = ctgradient(q -> H(t, x, q), backend, p)
+            grad_x_G = ctgradient(y -> G(t, y, p), backend, x)
+            grad_p_G = ctgradient(q -> G(t, x, q), backend, p)
             return grad_p_H' * grad_x_G - grad_x_H' * grad_p_G
         end
     else
         return function (t, x, p, v)
-            grad_x_H = gradient(y -> H(t, y, p, v), backend, x)
-            grad_p_H = gradient(q -> H(t, x, q, v), backend, p)
-            grad_x_G = gradient(y -> G(t, y, p, v), backend, x)
-            grad_p_G = gradient(q -> G(t, x, q, v), backend, p)
+            grad_x_H = ctgradient(y -> H(t, y, p, v), backend, x)
+            grad_p_H = ctgradient(q -> H(t, x, q, v), backend, p)
+            grad_x_G = ctgradient(y -> G(t, y, p, v), backend, x)
+            grad_p_G = ctgradient(q -> G(t, x, q, v), backend, p)
             return grad_p_H' * grad_x_G - grad_x_H' * grad_p_G
         end
     end
