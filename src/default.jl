@@ -44,3 +44,22 @@ Used to check whether the problem is parameterized by an external vector `v`.
 function __variable(ocp::CTModels.Model)::Bool
     return CTModels.variable_dimension(ocp) > 0
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the default automatic differentiation backend.
+
+Used for computing derivatives in differential geometry operations (Lie derivatives, Lie brackets, etc.).
+
+# Returns
+- An instance of `AutoForwardDiff()` from DifferentiationInterface.jl.
+
+# Example
+```julia-repl
+julia> backend = __backend()
+julia> typeof(backend)
+AutoForwardDiff
+```
+"""
+__backend() = AutoForwardDiff()

@@ -1,3 +1,8 @@
+using Pkg
+Pkg.activate(@__DIR__)
+Pkg.develop(PackageSpec(; path=joinpath(@__DIR__, "..")))
+Pkg.instantiate()
+
 using Documenter
 using DocumenterMermaid
 using CTFlows
@@ -41,7 +46,13 @@ makedocs(;
             asset("https://control-toolbox.org/assets/js/documentation.js"),
         ],
     ),
-    pages=["Introduction" => "index.md", "API" => API_PAGES],
+    pages=[
+        "Introduction" => "index.md",
+        "User Guide" => [
+            "Differential Geometry" => "differential-geometry-guide.md",
+        ],
+        "API" => API_PAGES,
+    ],
 )
 
 deploydocs(; repo=repo_url * ".git", devbranch="main")

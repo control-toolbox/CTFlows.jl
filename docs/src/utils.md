@@ -42,5 +42,4 @@ Order = [:module, :constant, :type, :function, :macro]
 
 ```@docs
 CTFlows.ctgradient
-CTFlows.ctjacobian
 ```

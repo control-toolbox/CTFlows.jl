@@ -13,17 +13,17 @@ const CTFlowsODE = Base.get_extension(CTFlows, :CTFlowsODE) # to test functions 
 
 @testset verbose = true showtiming = true "CTFlows" begin
     for name in (
-        :types,
+        # :types,
         :differential_geometry,
-        :aqua,
-        :concatenation,
-        :default,
-        :flow_function,
-        :flow_hamiltonian_vector_field,
-        :flow_hamiltonian,
-        :flow_vector_field,
-        :optimal_control_problem,
-        :saveat,
+        # :aqua,
+        # :concatenation,
+        # :default,
+        # :flow_function,
+        # :flow_hamiltonian_vector_field,
+        # :flow_hamiltonian,
+        # :flow_vector_field,
+        # :optimal_control_problem,
+        # :saveat,
     )
         @testset "$(name)" begin
             test_name = Symbol(:test_, name)

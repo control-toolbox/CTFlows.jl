@@ -1,818 +1,449 @@
-function test_differential_geometry()
+using CTFlows
+using Test
+using LinearAlgebra
 
-    #
-    Hamiltonian = CTFlows.Hamiltonian
-    VectorField = CTFlows.VectorField
-    HamiltonianLift = CTFlows.HamiltonianLift
-    Lift = CTFlows.Lift
-    Lie = CTFlows.Lie
-    ⅋ = CTFlows.:(⅋)
-    ⋅ = CTFlows.:(⋅)
-    Poisson = CTFlows.Poisson
+# Helper for testing
+function isapprox_vec(a, b; atol=1e-6)
+    return norm(a - b) < atol
+end
 
-    #
-    ∅ = Vector{Real}()
-    dummy_function() = nothing
+@testset "Differential Geometry V3" begin
 
-    @testset "Lifts" begin
-        @testset "HamiltonianLift from VectorField" begin
-            HL = HamiltonianLift(
-                VectorField(x -> [x[1]^2, x[2]^2]; autonomous=true, variable=false)
-            )
-            @test HL([1, 0], [0, 1]) == 0
-            @test HL(1, [1, 0], [0, 1], 1) == 0
-            HL = HamiltonianLift(
-                VectorField((x, v) -> [x[1]^2, x[2]^2 + v]; autonomous=true, variable=true)
-            )
-            @test HL([1, 0], [0, 1], 1) == 1
-            @test HL(1, [1, 0], [0, 1], 1) == 1
-            HL = HamiltonianLift(
-                VectorField(
-                    (t, x) -> [t + x[1]^2, x[2]^2]; autonomous=false, variable=false
-                ),
-            )
-            @test HL(1, [1, 0], [0, 1]) == 0
-            @test HL(1, [1, 0], [0, 1], 1) == 0
-            HL = HamiltonianLift(
-                VectorField(
-                    (t, x, v) -> [t + x[1]^2, x[2]^2 + v]; autonomous=false, variable=true
-                ),
-            )
-            @test HL(1, [1, 0], [0, 1], 1) == 1
-        end
+    @testset "ad() - Lie Derivative" begin
+        # Autonomous
+        X(x) = [x[2], -x[1]]
+        f(x) = x[1]^2 + x[2]^2
+        Lf = CTFlows.ad(X, f)
+        @test Lf([1.0, 2.0]) ≈ 0.0 atol = 1e-6
 
-        @testset "HamiltonianLift from Function" begin
-            HL = HamiltonianLift(x -> [x[1]^2, x[2]^2]; autonomous=true, variable=false)
-            @test HL([1, 0], [0, 1]) == 0
-            @test HL(1, [1, 0], [0, 1], 1) == 0
-            HL = HamiltonianLift(
-                (x, v) -> [x[1]^2, x[2]^2 + v]; autonomous=true, variable=true
-            )
-            @test HL([1, 0], [0, 1], 1) == 1
-            @test HL(1, [1, 0], [0, 1], 1) == 1
-            HL = HamiltonianLift(
-                (t, x) -> [t + x[1]^2, x[2]^2]; autonomous=false, variable=false
-            )
-            @test HL(1, [1, 0], [0, 1]) == 0
-            @test HL(1, [1, 0], [0, 1], 1) == 0
-            HL = HamiltonianLift(
-                (t, x, v) -> [t + x[1]^2, x[2]^2 + v]; autonomous=false, variable=true
-            )
-            @test HL(1, [1, 0], [0, 1], 1) == 1
-            HL = HamiltonianLift(x -> [x[1]^2, x[2]^2]; autonomous=true, variable=false)
-            @test HL([1, 0], [0, 1]) == 0
-            @test HL(1, [1, 0], [0, 1], 1) == 0
-            HL = HamiltonianLift(
-                (x, v) -> [x[1]^2, x[2]^2 + v]; autonomous=true, variable=true
-            )
-            @test HL([1, 0], [0, 1], 1) == 1
-            @test HL(1, [1, 0], [0, 1], 1) == 1
-            HL = HamiltonianLift(
-                (t, x) -> [t + x[1]^2, x[2]^2]; autonomous=false, variable=false
-            )
-            @test HL(1, [1, 0], [0, 1]) == 0
-            @test HL(1, [1, 0], [0, 1], 1) == 0
-            HL = HamiltonianLift(
-                (t, x, v) -> [t + x[1]^2, x[2]^2 + v]; autonomous=false, variable=true
-            )
-            @test HL(1, [1, 0], [0, 1], 1) == 1
-        end
+        # Non-autonomous
+        X_na(t, x) = [t * x[2], -x[1]]
+        f_na(t, x) = t + x[1]^2
+        Lf_na = CTFlows.ad(X_na, f_na; autonomous=false)
+        # Lf(t, x) = ∂f/∂x * X + ∂f/∂t (Wait, Lie derivative usually only space derivative?)
+        # Standard definition L_X f = ∇f · X. Time derivative is separate usually.
+        # Implementation check:
+        # ad uses derivative(g, ...). g(s) = foo(t, x + s*X)
+        # d/ds g(0) = ∇x foo · X. Correct.
 
-        @testset "from VectorFields" begin
-
-            # autonomous case
-            X = VectorField(x -> 2x)
-            H = Lift(X)
-            Test.@test H(1, 1) == 2
-            Test.@test H([1, 2], [3, 4]) == 22
-            Test.@test_throws MethodError H([1, 2], 1)
-            Test.@test_throws MethodError H(1, [1, 2])
-
-            # nonautonomous case
-            X = VectorField((t, x) -> 2x; autonomous=false, variable=false)
-            H = Lift(X)
-            Test.@test H(1, 1, 1) == 2
-            Test.@test H(1, [1, 2], [3, 4]) == 22
-
-            # autonomous nonfixed case
-            X = VectorField((x, v) -> 2x; autonomous=true, variable=true)
-            H = Lift(X)
-            Test.@test H(1, 1, 1) == 2
-            Test.@test H([1, 2], [3, 4], 1) == 22
-            Test.@test_throws MethodError H([1, 2], 1)
-            Test.@test_throws MethodError H(1, [1, 2])
-
-            # nonautonomous nonfixed case
-            X = VectorField((t, x, v) -> 2x; autonomous=false, variable=true)
-            H = Lift(X)
-            Test.@test H(1, 1, 1, 1) == 2
-            Test.@test H(1, [1, 2], [3, 4], 1) == 22
-        end
-
-        @testset "from Function" begin
-
-            # autonomous case
-            X::Function = x -> 2x
-            H = Lift(X)
-            Test.@test H(1, 1) == 2
-            Test.@test H([1, 2], [3, 4]) == 22
-
-            # nonautonomous case
-            Xt::Function = (t, x) -> 2x
-            H = Lift(Xt; autonomous=false)
-            Test.@test H(1, 1, 1) == 2
-            Test.@test H(1, [1, 2], [3, 4]) == 22
-
-            # autonomous nonfixed case
-            Xv::Function = (x, v) -> 2x
-            H = Lift(Xv; variable=true)
-            Test.@test H(1, 1, 1) == 2
-            Test.@test H([1, 2], [3, 4], 1) == 22
-
-            # nonautonomous nonfixed case
-            Xtv::Function = (t, x, v) -> 2x
-            H = Lift(Xtv; autonomous=false, variable=true)
-            Test.@test H(1, 1, 1, 1) == 2
-            Test.@test H(1, [1, 2], [3, 4], 1) == 22
-
-            # overload
-            F::Function = x -> 2x
-            H_F(x, p) = Lift(F)(x, p)
-            H_F(y) = H_F(y, y)
-            Test.@test H_F(1) == 2
-        end
-    end # tests for Lift
-
-    @testset "Directional derivative of a scalar function" begin
-
-        # autonomous, dim 2
-        φ = x -> [x[2], -x[1]]
-        X = VectorField(φ)
-        f = x -> x[1]^2 + x[2]^2
-        Test.@test (X ⋅ f)([1, 2]) == 0
-        Test.@test (X ⋅ f)([1, 2]) == Lie(X, f)([1, 2])
-        Test.@test Lie(φ, f)([1, 2]) == 0
-
-        # autonomous, dim 1
-        φ = x -> 2x
-        X = VectorField(φ)
-        f = x -> x^2
-        Test.@test (X ⋅ f)(1) == 4
-        Test.@test (φ ⋅ f)(1) == 4
-        Test.@test Lie(φ, f)(1) == 4
-
-        # nonautonomous, dim 2
-        φ = (t, x) -> [t + x[2], -x[1]]
-        X = VectorField(φ; autonomous=false, variable=false)
-        f = (t, x) -> t + x[1]^2 + x[2]^2
-        Test.@test (X ⋅ f)(1, [1, 2]) == 2
-        Test.@test Lie(φ, f; autonomous=false, variable=false)(1, [1, 2]) == 2
-
-        # nonautonomous, dim 1
-        φ = (t, x) -> 2x + t
-        X = VectorField(φ; autonomous=false, variable=false)
-        f = (t, x) -> t + x^2
-        Test.@test (X ⋅ f)(1, 1) == 6
-        Test.@test Lie(φ, f; autonomous=false, variable=false)(1, 1) == 6
-
-        # autonomous, nonfixed, dim 2
-        φ = (x, v) -> [x[2] + v[1], -x[1] + v[2]]
-        X = VectorField(φ; autonomous=true, variable=true)
-        f = (x, v) -> x[1]^2 + x[2]^2
-        Test.@test (X ⋅ f)([1, 2], [2, 1]) == 8
-        Test.@test Lie(φ, f; autonomous=true, variable=true)([1, 2], [2, 1]) == 8
-
-        # autonomous, nonfixed, dim 1
-        φ = (x, v) -> 2x + v
-        X = VectorField(φ; autonomous=true, variable=true)
-        f = (x, v) -> x^2
-        Test.@test (X ⋅ f)(1, 1) == 6
-        Test.@test Lie(φ, f; autonomous=true, variable=true)(1, 1) == 6
-
-        # nonautonomous, nonfixed, dim 2
-        φ = (t, x, v) -> [t + x[2] + v[1], -x[1] + v[2]]
-        X = VectorField(φ; autonomous=false, variable=true)
-        f = (t, x, v) -> t + x[1]^2 + x[2]^2
-        Test.@test (X ⋅ f)(1, [1, 2], [2, 1]) == 10
-        Test.@test Lie(φ, f; autonomous=false, variable=true)(1, [1, 2], [2, 1]) == 10
-
-        # nonautonomous, nonfixed, dim 1
-        φ = (t, x, v) -> 2x + t + v
-        X = VectorField(φ; autonomous=false, variable=true)
-        f = (t, x, v) -> t + x^2
-        Test.@test (X ⋅ f)(1, 1, 1) == 8
-        Test.@test Lie(φ, f; autonomous=false, variable=true)(1, 1, 1) == 8
+        # ∂f/∂x = [2x1, 0]
+        # X = [t*x2, -x1]
+        # dot = 2x1*t*x2
+        # t=2, x=[1, 2] -> 2*1*2*2 = 8
+        @test Lf_na(2.0, [1.0, 2.0]) ≈ 8.0 atol = 1e-6
     end
 
-    @testset "Directional derivative of a vector field" begin
+    @testset "ad() - Lie Bracket" begin
+        # Autonomous
+        X(x) = [x[2], 0.0]
+        Y(x) = [0.0, x[1]]
+        # [X, Y] = J_Y*X - J_X*Y
+        # J_Y = [0 0; 1 0], X = [x2, 0] -> J_Y*X = [0, x2]
+        # J_X = [0 1; 0 0], Y = [0, x1] -> J_X*Y = [x1, 0]
+        # [X, Y] = [0, x2] - [x1, 0] = [-x1, x2]
+        XY = CTFlows.ad(X, Y)
+        @test isapprox_vec(XY([1.0, 2.0]), [-1.0, 2.0])
 
-        # autonomous, dim 2
-        X = VectorField(x -> [x[2], -x[1]])
-        Y = VectorField(x -> [x[1], x[2]])
-        Test.@test (X ⅋ Y)([1, 2]) == [2, -1]
-
-        # autonomous, dim 1
-        X = VectorField(x -> 2x)
-        Y = VectorField(x -> 3x)
-        Test.@test (X ⅋ Y)(1) == 6
-
-        # nonautonomous, dim 2
-        X = VectorField((t, x) -> [t + x[2], -x[1]]; autonomous=false, variable=false)
-        Y = VectorField((t, x) -> [t + x[1], x[2]]; autonomous=false, variable=false)
-        Test.@test (X ⅋ Y)(1, [1, 2]) == [3, -1]
-
-        # nonautonomous, dim 1
-        X = VectorField((t, x) -> 2x + t; autonomous=false, variable=false)
-        Y = VectorField((t, x) -> 3x + t; autonomous=false, variable=false)
-        Test.@test (X ⅋ Y)(1, 1) == 9
-
-        # autonomous, nonfixed, dim 1
-        X = VectorField((x, v) -> 2x + v; autonomous=true, variable=true)
-        Y = VectorField((x, v) -> 3x + v; autonomous=true, variable=true)
-        Test.@test (X ⅋ Y)(1, 1) == 9
-
-        # nonautonomous, nonfixed, dim 1
-        X = VectorField((t, x, v) -> t + 2x + v; autonomous=false, variable=true)
-        Y = VectorField((t, x, v) -> t + 3x + v; autonomous=false, variable=true)
-        Test.@test (X ⅋ Y)(1, 1, 1) == 12
-
-        # autonomous, nonfixed, dim 2
-        X = VectorField(
-            (x, v) -> [v[1] + v[2] + x[2], -x[1]]; autonomous=true, variable=true
-        )
-        Y = VectorField(
-            (x, v) -> [v[1] + v[2] + x[1], x[2]]; autonomous=true, variable=true
-        )
-        Test.@test (X ⅋ Y)([1, 2], [2, 3]) == [7, -1]
-
-        # nonautonomous, nonfixed, dim 2
-        X = VectorField(
-            (t, x, v) -> [t + v[1] + v[2] + x[2], -x[1]]; autonomous=false, variable=true
-        )
-        Y = VectorField(
-            (t, x, v) -> [v[1] + v[2] + x[1], x[2]]; autonomous=false, variable=true
-        )
-        Test.@test (X ⅋ Y)(1, [1, 2], [2, 3]) == [8, -1]
+        # Macro check
+        XY_macro = CTFlows.@Lie [X, Y]
+        @test isapprox_vec(XY_macro([1.0, 2.0]), [-1.0, 2.0])
     end
 
-    @testset "Lie bracket - length 2" begin
-        @testset "autonomous case" begin
-            f = x -> [x[2], 2x[1]]
-            g = x -> [3x[2], -x[1]]
-            X = VectorField(f)
-            Y = VectorField(g)
-            Test.@test Lie(X, Y)([1, 2]) == [7, -14]
-        end
+    @testset "Lift()" begin
+        f(x) = [x[1], x[2]]
+        H = CTFlows.Lift(f)
+        # H(x, p) = p' * f(x) = p1*x1 + p2*x2
+        @test H([1.0, 2.0], [3.0, 4.0]) ≈ 1.0 * 3.0 + 2.0 * 4.0 atol = 1e-6
 
-        @testset "nonautonomous case" begin
-            f = (t, x) -> [t + x[2], -2x[1]]
-            g = (t, x) -> [t + 3x[2], -x[1]]
-            X = VectorField(f; autonomous=false, variable=false)
-            Y = VectorField(g; autonomous=false, variable=false)
-            Test.@test Lie(X, Y)(1, [1, 2]) == [-5, 11]
-        end
-
-        @testset "autonomous nonfixed case" begin
-            f = (x, v) -> [x[2] + v, 2x[1]]
-            g = (x, v) -> [3x[2], v - x[1]]
-            X = VectorField(f; autonomous=true, variable=true)
-            Y = VectorField(g; variable=true)
-            Test.@test Lie(X, Y)([1, 2], 1) == [6, -15]
-        end
-
-        @testset "nonautonomous nonfixed case" begin
-            f = (t, x, v) -> [t + x[2] + v, -2x[1] - v]
-            g = (t, x, v) -> [t + 3x[2] + v, -x[1] - v]
-            X = VectorField(f; autonomous=false, variable=true)
-            Y = VectorField(g; autonomous=false, variable=true)
-            Test.@test Lie(X, Y)(1, [1, 2], 1) == [-7, 12]
-        end
-
-        @testset "mri example" begin
-            Γ = 2
-            γ = 1
-            δ = γ - Γ
-            F0 = VectorField(x -> [-Γ * x[1], -Γ * x[2], γ * (1 - x[3])])
-            F1 = VectorField(x -> [0, -x[3], x[2]])
-            F2 = VectorField(x -> [x[3], 0, -x[1]])
-            F01 = Lie(F0, F1)
-            F02 = Lie(F0, F2)
-            F12 = Lie(F1, F2)
-            x = [1, 2, 3]
-            Test.@test F01(x) ≈ -[0, γ - δ * x[3], -δ * x[2]] atol = 1e-6
-            Test.@test F02(x) ≈ -[-γ + δ * x[3], 0, δ * x[1]] atol = 1e-6
-            Test.@test F12(x) ≈ -[-x[2], x[1], 0] atol = 1e-6
-        end
-
-        @testset "intrinsic definition" begin
-            X = VectorField(x -> [x[2]^2, -2x[1] * x[2]])
-            Y = VectorField(x -> [x[1] * (1 + x[2]), 3x[2]^3])
-            f = x -> x[1]^4 + 2x[2]^3
-            x = [1, 2]
-
-            # check real intrinsic order 2 definition of Lie bracket
-            Test.@test ((CTFlows.@Lie [X, Y]) ⋅ f)(x) ==
-                ((X ⋅ (Y ⋅ f))(x) - (Y ⋅ (X ⋅ f))(x))
-        end
+        # Non-autonomous
+        g(t, x) = [t * x[1], x[2]]
+        Hg = CTFlows.Lift(g; autonomous=false)
+        @test Hg(2.0, [1.0, 2.0], [3.0, 4.0]) ≈ 3.0 * (2.0 * 1.0) + 4.0 * 2.0 atol = 1e-6
     end
 
-    @testset "Poisson bracket" begin
-        @testset "autonomous case" begin
-            f = (x, p) -> x[2]^2 + 2x[1]^2 + p[1]^2
-            g = (x, p) -> 3x[2]^2 + -x[1]^2 + p[2]^2 + p[1]
-            h = (x, p) -> x[2]^2 + -2x[1]^2 + p[1]^2 - 2p[2]^2
-            f₊g = (x, p) -> f(x, p) + g(x, p)
-            fg = (x, p) -> f(x, p) * g(x, p)
-            #
-            F = Hamiltonian(f)
-            G = Hamiltonian(g)
-            H = Hamiltonian(h)
-            F₊G = Hamiltonian(f₊g)
-            FG = Hamiltonian(fg)
-            #
-            Test.@test Poisson(f, g)([1, 2], [2, 1]) == -20
-            Test.@test Poisson(f, G)([1, 2], [2, 1]) == -20
-            Test.@test Poisson(F, g)([1, 2], [2, 1]) == -20
-            #
-            Test.@test Poisson(F, Hamiltonian((x, p) -> 42))([1, 2], [2, 1]) == 0
-            Test.@test Poisson(F, G)([1, 2], [2, 1]) == -20
-            Test.@test Poisson(F, G)([1, 2], [2, 1]) == -Poisson(G, F)([1, 2], [2, 1]) # anticommutativity
-            Test.@test Poisson(F₊G, H)([1, 2], [2, 1]) ==
-                Poisson(F, H)([1, 2], [2, 1]) + Poisson(G, H)([1, 2], [2, 1]) # bilinearity 1
-            Test.@test Poisson(H, F₊G)([1, 2], [2, 1]) ==
-                Poisson(H, F)([1, 2], [2, 1]) + Poisson(H, G)([1, 2], [2, 1]) # bilinearity 2
-            Test.@test Poisson(FG, H)([1, 2], [2, 1]) ==
-                Poisson(F, H)([1, 2], [2, 1]) * G([1, 2], [2, 1]) +
-                       F([1, 2], [2, 1]) * Poisson(G, H)([1, 2], [2, 1]) # Liebniz's rule
-            Test.@test Poisson(F, Poisson(G, H))([1, 2], [2, 1]) +
-                       Poisson(G, Poisson(H, F))([1, 2], [2, 1]) +
-                       Poisson(H, Poisson(F, G))([1, 2], [2, 1]) == 0 # Jacobi identity
-        end
+    @testset "Poisson()" begin
+        H(x, p) = 0.5 * (p[1]^2 + p[2]^2)
+        G(x, p) = x[1]
+        # {H, G} = ∂H/∂p * ∂G/∂x - ∂H/∂x * ∂G/∂p
+        # ∂H/∂p = [p1, p2], ∂G/∂x = [1, 0] -> dot = p1
+        # ∂H/∂x = [0, 0] -> term 2 is 0
+        PB = CTFlows.Poisson(H, G)
+        @test PB([1.0, 2.0], [3.0, 4.0]) ≈ 3.0 atol = 1e-6
 
-        @testset "nonautonomous case" begin
-            f = (t, x, p) -> t * x[2]^2 + 2x[1]^2 + p[1]^2 + t
-            g = (t, x, p) -> 3x[2]^2 + -x[1]^2 + p[2]^2 + p[1] - t
-            h = (t, x, p) -> x[2]^2 + -2x[1]^2 + p[1]^2 - 2p[2]^2 + t
-            f₊g = (t, x, p) -> f(t, x, p) + g(t, x, p)
-            fg = (t, x, p) -> f(t, x, p) * g(t, x, p)
-            F = Hamiltonian(f; autonomous=false)
-            G = Hamiltonian(g; autonomous=false)
-            H = Hamiltonian(h; autonomous=false)
-            F₊G = Hamiltonian(f₊g; autonomous=false)
-            FG = Hamiltonian(fg; autonomous=false)
-            #
-            Test.@test Poisson(f, g; autonomous=false)(2, [1, 2], [2, 1]) == -28
-            Test.@test Poisson(f, G)(2, [1, 2], [2, 1]) == -28
-            Test.@test Poisson(F, g)(2, [1, 2], [2, 1]) == -28
-            #
-            Test.@test Poisson(F, Hamiltonian((t, x, p) -> 42; autonomous=false))(
-                2, [1, 2], [2, 1]
-            ) == 0
-            Test.@test Poisson(F, G)(2, [1, 2], [2, 1]) == -28
-            Test.@test Poisson(F, G)(2, [1, 2], [2, 1]) == -Poisson(G, F)(2, [1, 2], [2, 1]) # anticommutativity
-            Test.@test Poisson(F₊G, H)(2, [1, 2], [2, 1]) ==
-                Poisson(F, H)(2, [1, 2], [2, 1]) + Poisson(G, H)(2, [1, 2], [2, 1]) # bilinearity 1
-            Test.@test Poisson(H, F₊G)(2, [1, 2], [2, 1]) ==
-                Poisson(H, F)(2, [1, 2], [2, 1]) + Poisson(H, G)(2, [1, 2], [2, 1]) # bilinearity 2
-            Test.@test Poisson(FG, H)(2, [1, 2], [2, 1]) ==
-                Poisson(F, H)(2, [1, 2], [2, 1]) * G(2, [1, 2], [2, 1]) +
-                       F(2, [1, 2], [2, 1]) * Poisson(G, H)(2, [1, 2], [2, 1]) # Liebniz's rule
-            Test.@test Poisson(F, Poisson(G, H))(2, [1, 2], [2, 1]) +
-                       Poisson(G, Poisson(H, F))(2, [1, 2], [2, 1]) +
-                       Poisson(H, Poisson(F, G))(2, [1, 2], [2, 1]) == 0 # Jacobi identity
-        end
+        # Macro check
+        PB_macro = CTFlows.@Lie {H, G}
+        @test PB_macro([1.0, 2.0], [3.0, 4.0]) ≈ 3.0 atol = 1e-6
 
-        @testset "autonomous nonfixed case" begin
-            f = (x, p, v) -> v[1] * x[2]^2 + 2x[1]^2 + p[1]^2 + v[2]
-            g = (x, p, v) -> 3x[2]^2 + -x[1]^2 + p[2]^2 + p[1] - v[2]
-            h = (x, p, v) -> x[2]^2 + -2x[1]^2 + p[1]^2 - 2p[2]^2 + v[2]
-            f₊g = (x, p, v) -> f(x, p, v) + g(x, p, v)
-            fg = (x, p, v) -> f(x, p, v) * g(x, p, v)
-            F = Hamiltonian(f; variable=true)
-            G = Hamiltonian(g; variable=true)
-            H = Hamiltonian(h; variable=true)
-            F₊G = Hamiltonian(f₊g; variable=true)
-            FG = Hamiltonian(fg; variable=true)
-            Test.@test Poisson(F, Hamiltonian((x, p, v) -> 42; variable=true))(
-                [1, 2], [2, 1], [4, 4]
-            ) == 0
-            Test.@test Poisson(F, G)([1, 2], [2, 1], [4, 4]) == -44
-            Test.@test Poisson(F, G)([1, 2], [2, 1], [4, 4]) ==
-                -Poisson(G, F)([1, 2], [2, 1], [4, 4]) # anticommutativity
-            Test.@test Poisson(F₊G, H)([1, 2], [2, 1], [4, 4]) ==
-                Poisson(F, H)([1, 2], [2, 1], [4, 4]) +
-                       Poisson(G, H)([1, 2], [2, 1], [4, 4]) # bilinearity 1
-            Test.@test Poisson(H, F₊G)([1, 2], [2, 1], [4, 4]) ==
-                Poisson(H, F)([1, 2], [2, 1], [4, 4]) +
-                       Poisson(H, G)([1, 2], [2, 1], [4, 4]) # bilinearity 2
-            Test.@test Poisson(FG, H)([1, 2], [2, 1], [4, 4]) ==
-                Poisson(F, H)([1, 2], [2, 1], [4, 4]) * G([1, 2], [2, 1], [4, 4]) +
-                       F([1, 2], [2, 1], [4, 4]) * Poisson(G, H)([1, 2], [2, 1], [4, 4]) # Liebniz's rule
-            Test.@test Poisson(F, Poisson(G, H))([1, 2], [2, 1], [4, 4]) +
-                       Poisson(G, Poisson(H, F))([1, 2], [2, 1], [4, 4]) +
-                       Poisson(H, Poisson(F, G))([1, 2], [2, 1], [4, 4]) == 0 # Jacobi identity
-        end
-
-        @testset "nonautonomous nonfixed case" begin
-            f = (t, x, p, v) -> t * v[1] * x[2]^2 + 2x[1]^2 + p[1]^2 + v[2]
-            g = (t, x, p, v) -> 3x[2]^2 + -x[1]^2 + p[2]^2 + p[1] + t - v[2]
-            h = (t, x, p, v) -> x[2]^2 + -2x[1]^2 + p[1]^2 - 2p[2]^2 + t + v[2]
-            f₊g = (t, x, p, v) -> f(t, x, p, v) + g(t, x, p, v)
-            fg = (t, x, p, v) -> f(t, x, p, v) * g(t, x, p, v)
-            F = Hamiltonian(f; autonomous=false, variable=true)
-            G = Hamiltonian(g; autonomous=false, variable=true)
-            H = Hamiltonian(h; autonomous=false, variable=true)
-            F₊G = Hamiltonian(f₊g; autonomous=false, variable=true)
-            FG = Hamiltonian(fg; autonomous=false, variable=true)
-            Test.@test Poisson(
-                F, Hamiltonian((t, x, p, v) -> 42; autonomous=false, variable=true)
-            )(
-                2, [1, 2], [2, 1], [4, 4]
-            ) == 0
-            Test.@test Poisson(F, G)(2, [1, 2], [2, 1], [4, 4]) == -76
-            Test.@test Poisson(F, G)(2, [1, 2], [2, 1], [4, 4]) ==
-                -Poisson(G, F)(2, [1, 2], [2, 1], [4, 4]) # anticommutativity
-            Test.@test Poisson(F₊G, H)(2, [1, 2], [2, 1], [4, 4]) ==
-                Poisson(F, H)(2, [1, 2], [2, 1], [4, 4]) +
-                       Poisson(G, H)(2, [1, 2], [2, 1], [4, 4]) # bilinearity 1
-            Test.@test Poisson(H, F₊G)(2, [1, 2], [2, 1], [4, 4]) ==
-                Poisson(H, F)(2, [1, 2], [2, 1], [4, 4]) +
-                       Poisson(H, G)(2, [1, 2], [2, 1], [4, 4]) # bilinearity 2
-            Test.@test Poisson(FG, H)(2, [1, 2], [2, 1], [4, 4]) ==
-                Poisson(F, H)(2, [1, 2], [2, 1], [4, 4]) *
-                       G(2, [1, 2], [2, 1], [4, 4]) +
-                       F(2, [1, 2], [2, 1], [4, 4]) *
-                       Poisson(G, H)(2, [1, 2], [2, 1], [4, 4]) # Liebniz's rule
-            Test.@test Poisson(F, Poisson(G, H))(2, [1, 2], [2, 1], [4, 4]) +
-                       Poisson(G, Poisson(H, F))(2, [1, 2], [2, 1], [4, 4]) +
-                       Poisson(H, Poisson(F, G))(2, [1, 2], [2, 1], [4, 4]) == 0 # Jacobi identity
-        end
+        # Scalar case
+        H_scalar(x, p) = 0.5 * (p^2 + x^2)
+        G_scalar(x, p) = x
+        # {H, G} = ∂H/∂p * ∂G/∂x - ∂H/∂x * ∂G/∂p
+        # ∂H/∂p = p, ∂G/∂x = 1 -> p*1 = p
+        # ∂H/∂x = x, ∂G/∂p = 0 -> x*0 = 0
+        # {H, G} = p
+        PB_scalar = CTFlows.Poisson(H_scalar, G_scalar)
+        @test PB_scalar(1.0, 3.0) ≈ 3.0 atol = 1e-6
     end
 
-    @testset "poisson bracket of Lifts" begin
-        @testset "autonomous case" begin
-            f = x -> [x[1] + x[2]^2, x[1], 0]
-            g = x -> [0, x[2], x[1]^2 + 4 * x[2]]
-            F = Lift(f)
-            G = Lift(g)
-            F_ = (x, p) -> p' * f(x)
-            G_ = (x, p) -> p' * g(x)
-            Test.@test Poisson(F, G)([1, 2, 3], [4, 0, 4]) ≈
-                Poisson(F_, G_)([1, 2, 3], [4, 0, 4]) atol = 1e-6
-            Test.@test Poisson(F, G_)([1, 2, 3], [4, 0, 4]) ≈
-                Poisson(F_, G)([1, 2, 3], [4, 0, 4]) atol = 1e-6
-        end
+    @testset "Variable dependence" begin
+        # H(x, p, v)
+        H(x, p, v) = v[1] * p[1] * x[1]
+        G(x, p, v) = x[1]
+        # {H, G} -> ∂H/∂p * ∂G/∂x ...
+        # ∂H/∂p = [v*x1, 0], ∂G/∂x = [1, 0] -> v*x1
+        PB = CTFlows.Poisson(H, G; variable=true)
+        # v=2, x=[3, 4], p=[5, 6] -> 2*3 = 6
+        @test PB([3.0, 4.0], [5.0, 6.0], [2.0]) ≈ 6.0 atol = 1e-6
 
-        @testset "nonautonomous case" begin
-            f = (t, x) -> [t * x[1] + x[2]^2, x[1], 0]
-            g = (t, x) -> [0, x[2], t * x[1]^2 + 4 * x[2]]
-            F = Lift(f; autonomous=false, variable=false)
-            G = Lift(g; autonomous=false, variable=false)
-            F_ = (t, x, p) -> p' * f(t, x)
-            G_ = (t, x, p) -> p' * g(t, x)
-            Test.@test Poisson(F, G; autonomous=false, variable=false)(
-                2, [1, 2, 3], [4, 0, 4]
-            ) ≈ Poisson(F_, G_; autonomous=false, variable=false)(
-                2, [1, 2, 3], [4, 0, 4]
-            ) atol = 1e-6
-            Test.@test Poisson(F, G_; autonomous=false, variable=false)(
-                2, [1, 2, 3], [4, 0, 4]
-            ) ≈ Poisson(F_, G; autonomous=false, variable=false)(
-                2, [1, 2, 3], [4, 0, 4]
-            ) atol = 1e-6
-        end
-
-        @testset "autonomous nonfixed case" begin
-            f = (x, v) -> [x[1] + v * x[2]^2, x[1], 0]
-            g = (x, v) -> [0, x[2], x[1]^2 + v * 4 * x[2]]
-            F = Lift(f; autonomous=true, variable=true)
-            G = Lift(g; autonomous=true, variable=true)
-            F_ = (x, p, v) -> p' * f(x, v)
-            G_ = (x, p, v) -> p' * g(x, v)
-            Test.@test Poisson(F, G; autonomous=true, variable=true)(
-                [1, 2, 3], [4, 0, 4], 1
-            ) ≈ Poisson(F_, G_; autonomous=true, variable=true)(
-                [1, 2, 3], [4, 0, 4], 1
-            ) atol = 1e-6
-            Test.@test Poisson(F, G_; autonomous=true, variable=true)(
-                [1, 2, 3], [4, 0, 4], 1
-            ) ≈ Poisson(F_, G; autonomous=true, variable=true)(
-                [1, 2, 3], [4, 0, 4], 1
-            ) atol = 1e-6
-        end
-
-        @testset "nonautonomous nonfixed case" begin
-            f = (t, x, v) -> [t * x[1] + v * x[2]^2, x[1], 0]
-            g = (t, x, v) -> [0, x[2], t * x[1]^2 + v * 4 * x[2]]
-            F = Lift(f; autonomous=false, variable=true)
-            G = Lift(g; autonomous=false, variable=true)
-            F_ = (t, x, p, v) -> p' * f(t, x, v)
-            G_ = (t, x, p, v) -> p' * g(t, x, v)
-            Test.@test Poisson(F, G; autonomous=false, variable=true)(
-                2, [1, 2, 3], [4, 0, 4], 1
-            ) ≈ Poisson(F_, G_; autonomous=false, variable=true)(
-                2, [1, 2, 3], [4, 0, 4], 1
-            ) atol = 1e-6
-            Test.@test Poisson(F, G_; autonomous=false, variable=true)(
-                2, [1, 2, 3], [4, 0, 4], 1
-            ) ≈ Poisson(F_, G; autonomous=false, variable=true)(
-                2, [1, 2, 3], [4, 0, 4], 1
-            ) atol = 1e-6
-        end
+        # Macro with options
+        PB_macro = CTFlows.@Lie {H, G} variable = true
+        @test PB_macro([3.0, 4.0], [5.0, 6.0], [2.0]) ≈ 6.0 atol = 1e-6
     end
 
-    # macros
+    @testset "Backend parameter" begin
+        using DifferentiationInterface
+        # Test that Poisson accepts backend parameter
+        H(x, p) = 0.5 * (p[1]^2 + p[2]^2)
+        G(x, p) = x[1]
+        backend = AutoForwardDiff()
+        PB = CTFlows.Poisson(H, G; backend=backend)
+        @test PB([1.0, 2.0], [3.0, 4.0]) ≈ 3.0 atol = 1e-6
 
-    @testset "lie macro" begin
+        # Test that ad accepts backend parameter
+        X(x) = [x[2], -x[1]]
+        f(x) = x[1]^2 + x[2]^2
+        Lf = CTFlows.ad(X, f; backend=backend)
+        @test Lf([1.0, 2.0]) ≈ 0.0 atol = 1e-6
+    end
 
-        # parameters
-        t = 1
-        x = [1, 2, 3]
-        Γ = 2
-        γ = 1
+    @testset "Nested Brackets (Jacobi Identity check)" begin
+        # [X, [Y, Z]] + [Y, [Z, X]] + [Z, [X, Y]] = 0
+        X(x) = [0, x[3], -x[2]]
+        Y(x) = [-x[3], 0, x[1]]
+        Z(x) = [x[2], -x[1], 0]
+
+        # We need to compose functions for nested brackets
+        # Let's verify expansion
+        XYZ = CTFlows.@Lie [X, [Y, Z]]
+        YZX = CTFlows.@Lie [Y, [Z, X]]
+        ZXY = CTFlows.@Lie [Z, [X, Y]]
+
+        x0 = [1.0, 2.0, 3.0]
+        sum_jacobi = XYZ(x0) + YZX(x0) + ZXY(x0)
+        @test isapprox_vec(sum_jacobi, [0.0, 0.0, 0.0])
+    end
+
+    @testset "Prefix System" begin
+        # Save current prefix
+        old_prefix = CTFlows.diffgeo_prefix()
+
+        # Change prefix
+        CTFlows.diffgeo_prefix!(:MyModule)
+        @test CTFlows.diffgeo_prefix() == :MyModule
+
+        # Check macro expansion uses new prefix (conceptually)
+        # We can't easily test macro expansion result availability unless MyModule exists
+        # But we tested the set/get mechanism
+
+        # Restore prefix
+        CTFlows.diffgeo_prefix!(old_prefix)
+        @test CTFlows.diffgeo_prefix() == :CTFlows
+    end
+
+    @testset "∂ₜ time derivative" begin
+        f(t, x) = t^2 * x[1]
+        df = CTFlows.∂ₜ(f)
+        # ∂f/∂t = 2t * x1
+        @test df(3.0, [2.0]) ≈ 2 * 3.0 * 2.0 atol = 1e-6
+    end
+
+    # ============================================================================
+    # PRIORITY 1: Type-Based API Tests
+    # ============================================================================
+
+    @testset "Type-Based API - ad()" begin
+        # Test that explicit type dispatch works correctly
+        X(x) = [x[2], -x[1]]
+        f(x) = x[1]^2 + x[2]^2
+
+        # Autonomous, Fixed
+        Lf_typed = CTFlows.ad(X, f, CTFlows.Autonomous, CTFlows.Fixed)
+        Lf_kwargs = CTFlows.ad(X, f; autonomous=true, variable=false)
+        @test Lf_typed([1.0, 2.0]) ≈ Lf_kwargs([1.0, 2.0]) atol = 1e-6
+
+        # NonAutonomous, Fixed
+        X_na(t, x) = [t * x[2], -x[1]]
+        f_na(t, x) = t + x[1]^2
+        Lf_na_typed = CTFlows.ad(X_na, f_na, CTFlows.NonAutonomous, CTFlows.Fixed)
+        Lf_na_kwargs = CTFlows.ad(X_na, f_na; autonomous=false, variable=false)
+        @test Lf_na_typed(2.0, [1.0, 2.0]) ≈ Lf_na_kwargs(2.0, [1.0, 2.0]) atol = 1e-6
+
+        # Autonomous, NonFixed (with variable)
+        X_v(x, v) = [v[1] * x[2], -x[1]]
+        f_v(x, v) = v[1] * x[1]^2 + x[2]^2
+        Lf_v_typed = CTFlows.ad(X_v, f_v, CTFlows.Autonomous, CTFlows.NonFixed)
+        Lf_v_kwargs = CTFlows.ad(X_v, f_v; autonomous=true, variable=true)
+        @test Lf_v_typed([1.0, 2.0], [2.0]) ≈ Lf_v_kwargs([1.0, 2.0], [2.0]) atol = 1e-6
+
+        # NonAutonomous, NonFixed
+        X_nav(t, x, v) = [t * v[1] * x[2], -x[1]]
+        f_nav(t, x, v) = t + v[1] * x[1]^2
+        Lf_nav_typed = CTFlows.ad(X_nav, f_nav, CTFlows.NonAutonomous, CTFlows.NonFixed)
+        Lf_nav_kwargs = CTFlows.ad(X_nav, f_nav; autonomous=false, variable=true)
+        @test Lf_nav_typed(2.0, [1.0, 2.0], [2.0]) ≈ Lf_nav_kwargs(2.0, [1.0, 2.0], [2.0]) atol = 1e-6
+    end
+
+    @testset "Type-Based API - Lift()" begin
+        # Autonomous, Fixed
+        f(x) = [x[1]^2, x[2]]
+        H_typed = CTFlows.Lift(f, CTFlows.Autonomous, CTFlows.Fixed)
+        H_kwargs = CTFlows.Lift(f; autonomous=true, variable=false)
+        @test H_typed([1.0, 2.0], [3.0, 4.0]) ≈ H_kwargs([1.0, 2.0], [3.0, 4.0]) atol = 1e-6
+
+        # NonAutonomous, Fixed
+        g(t, x) = [t * x[1], x[2]]
+        Hg_typed = CTFlows.Lift(g, CTFlows.NonAutonomous, CTFlows.Fixed)
+        Hg_kwargs = CTFlows.Lift(g; autonomous=false, variable=false)
+        @test Hg_typed(2.0, [1.0, 2.0], [3.0, 4.0]) ≈ Hg_kwargs(2.0, [1.0, 2.0], [3.0, 4.0]) atol = 1e-6
+
+        # Autonomous, NonFixed
+        h(x, v) = [v[1] * x[1], x[2]]
+        Hh_typed = CTFlows.Lift(h, CTFlows.Autonomous, CTFlows.NonFixed)
+        Hh_kwargs = CTFlows.Lift(h; autonomous=true, variable=true)
+        @test Hh_typed([1.0, 2.0], [3.0, 4.0], [2.0]) ≈ Hh_kwargs([1.0, 2.0], [3.0, 4.0], [2.0]) atol = 1e-6
+    end
+
+    @testset "Type-Based API - Poisson()" begin
+        # Autonomous, Fixed
+        H(x, p) = 0.5 * (p[1]^2 + p[2]^2)
+        G(x, p) = x[1]
+        PB_typed = CTFlows.Poisson(H, G, CTFlows.Autonomous, CTFlows.Fixed)
+        PB_kwargs = CTFlows.Poisson(H, G; autonomous=true, variable=false)
+        @test PB_typed([1.0, 2.0], [3.0, 4.0]) ≈ PB_kwargs([1.0, 2.0], [3.0, 4.0]) atol = 1e-6
+
+        # NonAutonomous, Fixed
+        H_na(t, x, p) = t + 0.5 * (p[1]^2 + p[2]^2)
+        G_na(t, x, p) = x[1]
+        PB_na_typed = CTFlows.Poisson(H_na, G_na, CTFlows.NonAutonomous, CTFlows.Fixed)
+        PB_na_kwargs = CTFlows.Poisson(H_na, G_na; autonomous=false, variable=false)
+        @test PB_na_typed(1.0, [1.0, 2.0], [3.0, 4.0]) ≈ PB_na_kwargs(1.0, [1.0, 2.0], [3.0, 4.0]) atol = 1e-6
+    end
+
+    # ============================================================================
+    # PRIORITY 2: Edge Cases Tests
+    # ============================================================================
+
+    @testset "Edge Cases - 1D (Scalar)" begin
+        # ad() with scalars
+        X_1d(x) = -x
+        f_1d(x) = x^2
+        Lf_1d = CTFlows.ad(X_1d, f_1d)
+        # L_X(f) = df/dx * X = 2x * (-x) = -2x^2
+        # At x=3: -2*9 = -18
+        @test Lf_1d(3.0) ≈ -18.0 atol = 1e-6
+
+        # Poisson() with scalars (already tested above, but explicit)
+        H_1d(x, p) = 0.5 * (p^2 + x^2)
+        G_1d(x, p) = x
+        PB_1d = CTFlows.Poisson(H_1d, G_1d)
+        @test PB_1d(1.0, 3.0) ≈ 3.0 atol = 1e-6
+
+        # Lift() with scalar
+        f_1d_vec(x) = -2 * x  # returns scalar (treated as 1D vector)
+        H_1d = CTFlows.Lift(f_1d_vec)
+        @test H_1d(2.0, 3.0) ≈ -12.0 atol = 1e-6
+    end
+
+    @testset "Edge Cases - High Dimensional (3D, 4D)" begin
+        # 3D Lie bracket
+        X_3d(x) = [0, x[3], -x[2]]
+        Y_3d(x) = [-x[3], 0, x[1]]
+        XY_3d = CTFlows.ad(X_3d, Y_3d)
+        # Known result for rotational vector fields
+        @test length(XY_3d([1.0, 2.0, 3.0])) == 3
+
+        # 4D Poisson bracket
+        H_4d(x, p) = sum(p .^ 2) + sum(x .^ 2)
+        G_4d(x, p) = x[1] * p[1]
+        PB_4d = CTFlows.Poisson(H_4d, G_4d)
+        result_4d = PB_4d([1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0])
+        @test result_4d isa Number  # Just check it computes
+    end
+
+    @testset "Edge Cases - Trivial Cases" begin
+        # Zero vector field
+        X_zero(x) = [0.0, 0.0]
+        f(x) = x[1]^2 + x[2]^2
+        Lf_zero = CTFlows.ad(X_zero, f)
+        @test Lf_zero([1.0, 2.0]) ≈ 0.0 atol = 1e-10
+
+        # Constant function (gradient = 0)
+        X(x) = [x[2], -x[1]]
+        f_const(x) = 42.0
+        Lf_const = CTFlows.ad(X, f_const)
+        @test Lf_const([1.0, 2.0]) ≈ 0.0 atol = 1e-10
+
+        # Zero Hamiltonian
+        H_zero(x, p) = 0.0
+        G(x, p) = x[1]
+        PB_zero = CTFlows.Poisson(H_zero, G)
+        @test PB_zero([1.0, 2.0], [3.0, 4.0]) ≈ 0.0 atol = 1e-10
+    end
+
+    @testset "Edge Cases - Commuting Vector Fields" begin
+        # [X, Y] = 0 for commuting fields
+        X(x) = [1.0, 0.0]  # Constant field in x direction
+        Y(x) = [0.0, 1.0]  # Constant field in y direction
+        XY = CTFlows.ad(X, Y)
+        # Commuting vector fields should have zero Lie bracket
+        @test isapprox_vec(XY([1.0, 2.0]), [0.0, 0.0])
+    end
+
+    # ============================================================================
+    # PACKAGE 1: Mathematical Properties (from backup analysis)
+    # ============================================================================
+
+    @testset "Poisson - Mathematical Properties" begin
+        # Setup test functions
+        f(x, p) = x[2]^2 + 2x[1]^2 + p[1]^2
+        g(x, p) = 3x[2]^2 + -x[1]^2 + p[2]^2 + p[1]
+        h(x, p) = x[2]^2 + -2x[1]^2 + p[1]^2 - 2p[2]^2
+        f_plus_g(x, p) = f(x, p) + g(x, p)
+        f_times_g(x, p) = f(x, p) * g(x, p)
+        const_42(x, p) = 42.0
+
+        x_test = [1, 2]
+        p_test = [2, 1]
+
+        # Property 1: Constant function has zero Poisson bracket
+        @test CTFlows.Poisson(f, const_42)(x_test, p_test) ≈ 0.0 atol = 1e-10
+
+        # Property 2: Anticommutativity - {F, G} = -{G, F}
+        PB_fg = CTFlows.Poisson(f, g)(x_test, p_test)
+        PB_gf = CTFlows.Poisson(g, f)(x_test, p_test)
+        @test PB_fg ≈ -PB_gf atol = 1e-10
+
+        # Property 3: Bilinearity (left) - {F+G, H} = {F, H} + {G, H}
+        PB_fpg_h = CTFlows.Poisson(f_plus_g, h)(x_test, p_test)
+        PB_f_h = CTFlows.Poisson(f, h)(x_test, p_test)
+        PB_g_h = CTFlows.Poisson(g, h)(x_test, p_test)
+        @test PB_fpg_h ≈ PB_f_h + PB_g_h atol = 1e-10
+
+        # Property 4: Bilinearity (right) - {H, F+G} = {H, F} + {H, G}
+        PB_h_fpg = CTFlows.Poisson(h, f_plus_g)(x_test, p_test)
+        PB_h_f = CTFlows.Poisson(h, f)(x_test, p_test)
+        PB_h_g = CTFlows.Poisson(h, g)(x_test, p_test)
+        @test PB_h_fpg ≈ PB_h_f + PB_h_g atol = 1e-10
+
+        # Property 5: Leibniz's rule - {FG, H} = {F, H}·G + F·{G, H}
+        PB_ftg_h = CTFlows.Poisson(f_times_g, h)(x_test, p_test)
+        leibniz_rhs = PB_f_h * g(x_test, p_test) + f(x_test, p_test) * PB_g_h
+        @test PB_ftg_h ≈ leibniz_rhs atol = 1e-10
+
+        # Property 6: Jacobi identity - {F, {G, H}} + {G, {H, F}} + {H, {F, G}} = 0
+        PB_gh = CTFlows.Poisson(g, h)
+        PB_hf = CTFlows.Poisson(h, f)
+        PB_fg_func = CTFlows.Poisson(f, g)
+
+        PB_f_gh = CTFlows.Poisson(f, PB_gh)(x_test, p_test)
+        PB_g_hf = CTFlows.Poisson(g, PB_hf)(x_test, p_test)
+        PB_h_fg = CTFlows.Poisson(h, PB_fg_func)(x_test, p_test)
+
+        jacobi_sum = PB_f_gh + PB_g_hf + PB_h_fg
+        @test abs(jacobi_sum) < 1e-10
+    end
+
+    @testset "Poisson of Lifts - Composition" begin
+        # Test that Poisson(Lift(f), Lift(g)) gives correct results
+        f(x) = [x[1] + x[2]^2, x[1], 0]
+        g(x) = [0, x[2], x[1]^2 + 4 * x[2]]
+
+        # Create Lifts
+        F = CTFlows.Lift(f)
+        G = CTFlows.Lift(g)
+
+        # Explicit Hamiltonians
+        F_explicit(x, p) = p' * f(x)
+        G_explicit(x, p) = p' * g(x)
+
+        x_test = [1.0, 2.0, 3.0]
+        p_test = [4.0, 0.0, 4.0]
+
+        # Poisson of Lifts should equal Poisson of explicit Hamiltonians
+        @test CTFlows.Poisson(F, G)(x_test, p_test) ≈
+              CTFlows.Poisson(F_explicit, G_explicit)(x_test, p_test) atol = 1e-6
+
+        # Mixed case: Lift + explicit
+        @test CTFlows.Poisson(F, G_explicit)(x_test, p_test) ≈
+              CTFlows.Poisson(F_explicit, G)(x_test, p_test) atol = 1e-6
+
+        # Non-autonomous case
+        f_na(t, x) = [t * x[1] + x[2]^2, x[1], 0]
+        g_na(t, x) = [0, x[2], t * x[1]^2 + 4 * x[2]]
+
+        F_na = CTFlows.Lift(f_na; autonomous=false)
+        G_na = CTFlows.Lift(g_na; autonomous=false)
+        F_na_explicit(t, x, p) = p' * f_na(t, x)
+        G_na_explicit(t, x, p) = p' * g_na(t, x)
+
+        t_test = 2.0
+        @test CTFlows.Poisson(F_na, G_na; autonomous=false)(t_test, x_test, p_test) ≈
+              CTFlows.Poisson(F_na_explicit, G_na_explicit; autonomous=false)(t_test, x_test, p_test) atol = 1e-6
+    end
+
+    # ============================================================================
+    # PACKAGE 2: Physical Examples & Theoretical Validation
+    # ============================================================================
+
+    @testset "MRI Example - Bloch Equations" begin
+        # Physical constants for magnetic resonance imaging
+        Γ = 2.0  # Relaxation rate
+        γ = 1.0  # Gyromagnetic ratio
         δ = γ - Γ
-        v = 1
 
-        # autonomous
-        F0 = VectorField(x -> [-Γ * x[1], -Γ * x[2], γ * (1 - x[3])])
-        F1 = VectorField(x -> [0, -x[3], x[2]])
-        F2 = VectorField(x -> [x[3], 0, -x[1]])
-        F01_ = Lie(F0, F1)
-        F011_ = Lie(F01_, F1)
-        F01__ = CTFlows.@Lie [F0, F1]
-        F011__ = CTFlows.@Lie [[F0, F1], F1]
+        # Bloch equation vector fields
+        F0(x) = [-Γ * x[1], -Γ * x[2], γ * (1 - x[3])]
+        F1(x) = [0.0, -x[3], x[2]]
+        F2(x) = [x[3], 0.0, -x[1]]
 
-        Test.@test F01_(x) ≈ F01__(x) atol = 1e-6
-        Test.@test F011_(x) ≈ F011__(x) atol = 1e-6
-        #
-        get_F0 = () -> F0
-        F011___ = CTFlows.@Lie [[get_F0(), F1], F1]
-        Test.@test F011_(x) ≈ F011___(x) atol = 1e-6
+        # Compute Lie brackets
+        F01 = CTFlows.ad(F0, F1)
+        F02 = CTFlows.ad(F0, F2)
+        F12 = CTFlows.ad(F1, F2)
 
-        # nonautonomous
-        F0 = VectorField(
-            (t, x) -> [-Γ * x[1], -Γ * x[2], γ * (1 - x[3])];
-            autonomous=false,
-            variable=false,
-        )
-        F1 = VectorField((t, x) -> [0, -x[3], x[2]]; autonomous=false, variable=false)
-        F2 = VectorField((t, x) -> [x[3], 0, -x[1]]; autonomous=false, variable=false)
-        F01_ = Lie(F0, F1)
-        F011_ = Lie(F01_, F1)
-        F01__ = CTFlows.@Lie [F0, F1]
-        F011__ = CTFlows.@Lie [[F0, F1], F1]
+        x = [1.0, 2.0, 3.0]
 
-        Test.@test F01_(t, x) ≈ F01__(t, x) atol = 1e-6
-        Test.@test F011_(t, x) ≈ F011__(t, x) atol = 1e-6
-        #
-        get_F0 = () -> F0
-        F011___ = CTFlows.@Lie [[get_F0(), F1], F1]
-        Test.@test F011_(t, x) ≈ F011___(t, x) atol = 1e-6
-
-        # autonomous nonfixed
-        F0 = VectorField(
-            (x, v) -> [-Γ * x[1], -Γ * x[2], γ * (1 - x[3])]; autonomous=true, variable=true
-        )
-        F1 = VectorField((x, v) -> [0, -x[3], x[2]]; autonomous=true, variable=true)
-        F2 = VectorField((x, v) -> [x[3], 0, -x[1]]; autonomous=true, variable=true)
-        F01_ = Lie(F0, F1)
-        F011_ = Lie(F01_, F1)
-        F01__ = CTFlows.@Lie [F0, F1]
-        F011__ = CTFlows.@Lie [[F0, F1], F1]
-
-        Test.@test F01_(x, v) ≈ F01__(x, v) atol = 1e-6
-        Test.@test F011_(x, v) ≈ F011__(x, v) atol = 1e-6
-        #
-        get_F0 = () -> F0
-        F011___ = CTFlows.@Lie [[get_F0(), F1], F1]
-        Test.@test F011_(x, v) ≈ F011___(x, v) atol = 1e-6
-
-        # nonautonomous nonfixed
-        F0 = VectorField(
-            (t, x, v) -> [-Γ * x[1], -Γ * x[2], γ * (1 - x[3])];
-            autonomous=false,
-            variable=true,
-        )
-        F1 = VectorField((t, x, v) -> [0, -x[3], x[2]]; autonomous=false, variable=true)
-        F2 = VectorField((t, x, v) -> [x[3], 0, -x[1]]; autonomous=false, variable=true)
-        F01_ = Lie(F0, F1)
-        F011_ = Lie(F01_, F1)
-        F01__ = CTFlows.@Lie [F0, F1]
-        F011__ = CTFlows.@Lie [[F0, F1], F1]
-
-        Test.@test F01_(t, x, v) ≈ F01__(t, x, v) atol = 1e-6
-        Test.@test F011_(t, x, v) ≈ F011__(t, x, v) atol = 1e-6
-        #
-        get_F0 = () -> F0
-        F011___ = CTFlows.@Lie [[get_F0(), F1], F1]
-        Test.@test F011_(t, x, v) ≈ F011___(t, x, v) atol = 1e-6
+        # Verify known analytical results for Bloch equations
+        # WHY: These are well-known results in MRI physics
+        @test F01(x) ≈ -[0.0, γ - δ * x[3], -δ * x[2]] atol = 1e-6
+        @test F02(x) ≈ -[-γ + δ * x[3], 0.0, δ * x[1]] atol = 1e-6
+        @test F12(x) ≈ -[-x[2], x[1], 0.0] atol = 1e-6
     end
 
-    @testset "poisson macro" begin
-        # parameters
-        t = 1
-        x = [1, 2, 3]
-        p = [1, 0, 7]
-        Γ = 2
-        γ = 1
-        δ = γ - Γ
-        v = 2
+    @testset "Lie Bracket - Intrinsic Definition" begin
+        # Verify intrinsic definition: [X, Y]·f = X·(Y·f) - Y·(X·f)
+        # WHY: This is the fundamental commutator property of Lie brackets
 
-        # autonomous
-        H0 = Hamiltonian((x, p) -> 0.5 * (x[1]^2 + x[2]^2 + p[1]^2))
-        H1 = Hamiltonian((x, p) -> 0.5 * (x[1]^2 + x[2]^2 + p[2]^2))
-        P01 = Poisson(H0, H1)
-        P011 = Poisson(P01, H1)
-        P01_ = CTFlows.@Lie {H0, H1}
-        P011_ = CTFlows.@Lie {{H0, H1}, H1}
-        Test.@test P01(x, p) ≈ P01_(x, p) atol = 1e-6
-        Test.@test P011(x, p) ≈ P011_(x, p) atol = 1e-6
-        get_H0 = () -> H0
-        P011__ = CTFlows.@Lie {{get_H0(), H1}, H1}
-        Test.@test P011_(x, p) ≈ P011__(x, p) atol = 1e-6
+        X(x) = [x[2]^2, -2x[1] * x[2]]
+        Y(x) = [x[1] * (1 + x[2]), 3x[2]^3]
+        f(x) = x[1]^4 + 2x[2]^3
 
-        # nonautonomous
-        H0 = Hamiltonian((t, x, p) -> 0.5 * (x[1]^2 + x[2]^2 + p[1]^2); autonomous=false)
-        H1 = Hamiltonian(
-            (t, x, p) -> 0.5 * (x[1]^2 + x[2]^2 + p[2]^2); autonomous=false, variable=false
-        )
-        P01 = Poisson(H0, H1)
-        P011 = Poisson(P01, H1)
-        P01_ = CTFlows.@Lie {H0, H1}
-        P011_ = CTFlows.@Lie {{H0, H1}, H1}
-        Test.@test P01(t, x, p) ≈ P01_(t, x, p) atol = 1e-6
-        Test.@test P011(t, x, p) ≈ P011_(t, x, p) atol = 1e-6
-        get_H0 = () -> H0
-        P011__ = CTFlows.@Lie {{get_H0(), H1}, H1}
-        Test.@test P011_(t, x, p) ≈ P011__(t, x, p) atol = 1e-6
+        x_test = [1.0, 2.0]
 
-        # autonomous nonfixed
-        H0 = Hamiltonian((x, p, v) -> 0.5 * (x[1]^2 + x[2]^2 + p[1]^2 + v); variable=true)
-        H1 = Hamiltonian((x, p, v) -> 0.5 * (x[1]^2 + x[2]^2 + p[2]^2 + v); variable=true)
-        P01 = Poisson(H0, H1)
-        P011 = Poisson(P01, H1)
-        P01_ = CTFlows.@Lie {H0, H1}
-        P011_ = CTFlows.@Lie {{H0, H1}, H1}
-        Test.@test P01(x, p, v) ≈ P01_(x, p, v) atol = 1e-6
-        Test.@test P011(x, p, v) ≈ P011_(x, p, v) atol = 1e-6
-        get_H0 = () -> H0
-        P011__ = CTFlows.@Lie {{get_H0(), H1}, H1}
-        Test.@test P011_(x, p, v) ≈ P011__(x, p, v) atol = 1e-6
+        # Method 1: Direct computation of [X,Y]·f
+        XY = CTFlows.ad(X, Y)
+        XY_dot_f = CTFlows.ad(XY, f)
+        result_direct = XY_dot_f(x_test)
 
-        # nonautonomous nonfixed
-        H0 = Hamiltonian(
-            (t, x, p, v) -> 0.5 * (x[1]^2 + x[2]^2 + p[1]^2 + v);
-            autonomous=false,
-            variable=true,
-        )
-        H1 = Hamiltonian(
-            (t, x, p, v) -> 0.5 * (x[1]^2 + x[2]^2 + p[2]^2 + v);
-            autonomous=false,
-            variable=true,
-        )
-        P01 = Poisson(H0, H1)
-        P011 = Poisson(P01, H1)
-        P01_ = CTFlows.@Lie {H0, H1}
-        P011_ = CTFlows.@Lie {{H0, H1}, H1}
-        Test.@test P01(t, x, p, v) ≈ P01_(t, x, p, v) atol = 1e-6
-        Test.@test P011(t, x, p, v) ≈ P011_(t, x, p, v) atol = 1e-6
-        get_H0 = () -> H0
-        P011__ = CTFlows.@Lie {{get_H0(), H1}, H1}
-        Test.@test P011_(t, x, p, v) ≈ P011__(t, x, p, v) atol = 1e-6
+        # Method 2: Commutator of directional derivatives X·(Y·f) - Y·(X·f)
+        Y_dot_f = CTFlows.ad(Y, f)
+        X_dot_f = CTFlows.ad(X, f)
+        X_dot_Yf = CTFlows.ad(X, Y_dot_f)
+        Y_dot_Xf = CTFlows.ad(Y, X_dot_f)
+        result_commutator = X_dot_Yf(x_test) - Y_dot_Xf(x_test)
+
+        # Both methods should give the same result
+        @test result_direct ≈ result_commutator atol = 1e-6
     end
 
-    @testset "poisson macro with functions" begin
-        # parameters
-        t = 1
-        x = [1, 2, 3]
-        p = [1, 0, 7]
-        Γ = 2
-        γ = 1
-        δ = γ - Γ
-        v = 2
-
-        # autonomous
-        H0 = (x, p) -> 0.5 * (x[1]^2 + x[2]^2 + p[1]^2)
-        H1 = (x, p) -> 0.5 * (x[1]^2 + x[2]^2 + p[2]^2)
-        P01 = Poisson(H0, H1)
-        P011 = Poisson(P01, H1)
-        P01_ = CTFlows.@Lie {H0, H1}
-        P011_ = CTFlows.@Lie {{H0, H1}, H1}
-        Test.@test P01(x, p) ≈ P01_(x, p) atol = 1e-6
-        Test.@test P011(x, p) ≈ P011_(x, p) atol = 1e-6
-        get_H0 = () -> H0
-        P011__ = CTFlows.@Lie {{get_H0(), H1}, H1}
-        Test.@test P011_(x, p) ≈ P011__(x, p) atol = 1e-6
-
-        # nonautonomous
-        H0 = (t, x, p) -> 0.5 * (x[1]^2 + x[2]^2 + p[1]^2)
-        H1 = (t, x, p) -> 0.5 * (x[1]^2 + x[2]^2 + p[2]^2)
-        P01 = Poisson(H0, H1; autonomous=false)
-        P011 = Poisson(P01, H1)
-        P01_val = CTFlows.@Lie {H0, H1}(t, x, p) autonomous = false
-        P01_ = CTFlows.@Lie {H0, H1} autonomous = false
-        P011_ = CTFlows.@Lie {{H0, H1}, H1} autonomous = false
-        Test.@test P01(t, x, p) ≈ P01_(t, x, p) atol = 1e-6
-        Test.@test P01_val ≈ P01_(t, x, p) atol = 1e-6
-        Test.@test P011(t, x, p) ≈ P011_(t, x, p) atol = 1e-6
-        get_H0 = () -> H0
-        P011__ = CTFlows.@Lie {{get_H0(), H1}, H1} autonomous = false variable = false
-        Test.@test P011_(t, x, p) ≈ P011__(t, x, p) atol = 1e-6
-
-        # autonomous nonfixed
-        H0 = (x, p, v) -> 0.5 * (x[1]^2 + x[2]^2 + p[1]^2 + v)
-        H1 = (x, p, v) -> 0.5 * (x[1]^2 + x[2]^2 + p[2]^2 + v)
-        P01 = Poisson(H0, H1; variable=true)
-        P011 = Poisson(P01, H1)
-        P01_ = CTFlows.@Lie {H0, H1} variable = true
-        P011_ = CTFlows.@Lie {{H0, H1}, H1} variable = true
-        Test.@test P01(x, p, v) ≈ P01_(x, p, v) atol = 1e-6
-        Test.@test P011(x, p, v) ≈ P011_(x, p, v) atol = 1e-6
-        get_H0 = () -> H0
-        P011__ = CTFlows.@Lie {{get_H0(), H1}, H1} autonomous = true variable = true
-        Test.@test P011_(x, p, v) ≈ P011__(x, p, v) atol = 1e-6
-
-        # nonautonomous nonfixed
-        H0 = (t, x, p, v) -> 0.5 * (x[1]^2 + x[2]^2 + p[1]^2 + v)
-        H1 = (t, x, p, v) -> 0.5 * (x[1]^2 + x[2]^2 + p[2]^2 + v)
-        P01 = Poisson(H0, H1; autonomous=false, variable=true)
-        P011 = Poisson(P01, H1)
-        P01_ = CTFlows.@Lie {H0, H1} autonomous = false variable = true
-        P011_ = CTFlows.@Lie {{H0, H1}, H1} autonomous = false variable = true
-        Test.@test P01(t, x, p, v) ≈ P01_(t, x, p, v) atol = 1e-6
-        Test.@test P011(t, x, p, v) ≈ P011_(t, x, p, v) atol = 1e-6
-        get_H0 = () -> H0
-        P011__ = CTFlows.@Lie {{get_H0(), H1}, H1} autonomous = false variable = true
-        Test.@test P011_(t, x, p, v) ≈ P011__(t, x, p, v) atol = 1e-6
-    end
-
-    @testset "lie and poisson macros operation (sum,diff,...)" begin
-        # parameters
-        t = 1
-        x = [1, 2, 3]
-        p = [1, 0, 7]
-        Γ = 2
-        γ = 1
-        δ = γ - Γ
-        v = 1
-
-        # lie
-        # autonomous
-        F0 = VectorField(x -> [-Γ * x[1], -Γ * x[2], γ * (1 - x[3])])
-        F1 = VectorField(x -> [0, -x[3], x[2]])
-        F2 = VectorField(x -> [x[3], 0, -x[1]])
-        Test.@test CTFlows.@Lie [F0, F1](x) + 4 * [F1, F2](x) == [8, -8, -2]
-        Test.@test CTFlows.@Lie [F0, F1](x) - [F1, F2](x) == [-2, -3, -2]
-        Test.@test CTFlows.@Lie [F0, F1](x) .* [F1, F2](x) == [0, 4, 0]
-        Test.@test CTFlows.@Lie [1, 1, 1] + ([[F0, F1], F1](x) + [F1, F2](x) + [1, 1, 1]) ==
-            [4, 5, -5]
-
-        # nonautonomous nonfixed
-        F0 = VectorField(
-            (t, x, v) -> [-Γ * x[1], -Γ * x[2], γ * (1 - x[3])];
-            autonomous=false,
-            variable=true,
-        )
-        F1 = VectorField((t, x, v) -> [0, -x[3], x[2]]; autonomous=false, variable=true)
-        F2 = VectorField((t, x, v) -> [x[3], 0, -x[1]]; autonomous=false, variable=true)
-        Test.@test CTFlows.@Lie [F0, F1](t, x, v) + 4 * [F1, F2](t, x, v) == [8, -8, -2]
-        Test.@test CTFlows.@Lie [F0, F1](t, x, v) - [F1, F2](t, x, v) == [-2, -3, -2]
-        Test.@test CTFlows.@Lie [F0, F1](t, x, v) .* [F1, F2](t, x, v) == [0, 4, 0]
-        Test.@test CTFlows.@Lie [1, 1, 1] +
-                                ([[F0, F1], F1](t, x, v) + [F1, F2](t, x, v) + [1, 1, 1]) ==
-            [4, 5, -5]
-
-        # poisson
-        # autonomous
-        H0 = Hamiltonian((x, p) -> 0.5 * (2x[1]^2 + x[2]^2 + p[1]^2))
-        H1 = Hamiltonian((x, p) -> 0.5 * (3x[1]^2 + x[2]^2 + p[2]^2))
-        H2 = Hamiltonian((x, p) -> 0.5 * (4x[1]^2 + x[2]^2 + p[1]^3 + p[2]^2))
-        Test.@test CTFlows.@Lie {H0, H1}(x, p) + 4 * {H1, H2}(x, p) == -15
-        Test.@test CTFlows.@Lie {H0, H1}(x, p) - {H1, H2}(x, p) == 7.5
-        Test.@test CTFlows.@Lie {H0, H1}(x, p) * {H1, H2}(x, p) == -13.5
-        Test.@test CTFlows.@Lie 4 + ({{H0, H1}, H1}(x, p) + -2 * {H1, H2}(x, p) + 21) == 39
-
-        # nonautonomous nonfixed
-        H0 = Hamiltonian(
-            (t, x, p, v) -> 0.5 * (2x[1]^2 + x[2]^2 + p[1]^2);
-            autonomous=false,
-            variable=true,
-        )
-        H1 = Hamiltonian(
-            (t, x, p, v) -> 0.5 * (3x[1]^2 + x[2]^2 + p[2]^2);
-            autonomous=false,
-            variable=true,
-        )
-        H2 = Hamiltonian(
-            (t, x, p, v) -> 0.5 * (4x[1]^2 + x[2]^2 + p[1]^3 + p[2]^2);
-            autonomous=false,
-            variable=true,
-        )
-        Test.@test CTFlows.@Lie {H0, H1}(t, x, p, v) + 4 * {H1, H2}(t, x, p, v) == -15
-        Test.@test CTFlows.@Lie {H0, H1}(t, x, p, v) - {H1, H2}(t, x, p, v) == 7.5
-        Test.@test CTFlows.@Lie {H0, H1}(t, x, p, v) * {H1, H2}(t, x, p, v) == -13.5
-        Test.@test CTFlows.@Lie 4 + (
-            {{H0, H1}, H1}(t, x, p, v) + -2 * {H1, H2}(t, x, p, v) + 21
-        ) == 39
-    end
-end # test_differential_geometry
+end

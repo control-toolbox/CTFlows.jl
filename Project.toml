@@ -4,8 +4,10 @@ authors = ["Olivier Cots <olivier.cots@toulouse-inp.fr>"]
 version = "0.8.9"
 
 [deps]
+ADTypes = "47edcb42-4c32-4615-8424-f2b9edc5f35b"
 CTBase = "54762871-cc72-4466-b8e8-f6c8b58076cd"
 CTModels = "34c4fa32-2049-4079-8329-de33c2a22e2d"
+DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -19,12 +21,14 @@ OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 CTFlowsODE = "OrdinaryDiffEq"
 
 [compat]
+ADTypes = "1"
 CTBase = "0.16"
 CTModels = "0.6"
+DifferentiationInterface = "0.7"
 DocStringExtensions = "0.9"
 ForwardDiff = "0.10, 1.0"
 LinearAlgebra = "1"
 MLStyle = "0.4"
 MacroTools = "0.5"
-OrdinaryDiffEq = "6"
+OrdinaryDiffEq = "6, 7"
 julia = "1.10"
