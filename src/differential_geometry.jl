@@ -803,11 +803,30 @@ $(TYPEDSIGNATURES)
 
 Partial derivative with respect to time of a function.
 
+Computes `∂f/∂t` for a function `f(t, ...)`.
+
+# Arguments
+
+- `f::Function`: A function with time as its first argument
+
+# Returns
+
+- A function `(t, args...) -> ∂f/∂t` that computes the partial derivative with respect to time
+
 # Example
+
 ```julia-repl
-julia> ∂ₜ((t,x) -> t*x)(0,8)
-8
+julia> using CTFlows
+
+julia> f(t, x) = t^2 * x[1]
+
+julia> df = CTFlows.∂ₜ(f)
+
+julia> df(3.0, [2.0])
+12.0
 ```
+
+See also: [`ctgradient`](@ref)
 """
 ∂ₜ(f) = (t, args...) -> ctgradient(y -> f(y, args...), t)
 
@@ -823,22 +842,38 @@ Macro for Lie brackets and Poisson brackets with mathematical notation.
 Uses type dispatch for better performance - expands to typed method calls.
 
 # Syntax
+
 - `@Lie [X, Y]` - Lie bracket (expands to `CTFlows.ad(X, Y, Autonomous, Fixed)`)
 - `@Lie {H, G}` - Poisson bracket (expands to `CTFlows.Poisson(H, G, Autonomous, Fixed)`)
 - `@Lie {H, G} autonomous=false` - With options (expands to `CTFlows.Poisson(H, G, NonAutonomous, Fixed)`)
 
 # Examples
+
 ```julia-repl
+julia> using CTFlows
+
 julia> X(x) = [x[2], -x[1]]
+
 julia> Y(x) = [x[1], x[2]]
-julia> Z = @Lie [X, Y]
+
+julia> Z = CTFlows.@Lie [X, Y]
+
 julia> Z([1.0, 2.0])
+2-element Vector{Float64}:
+ -1.0
+  2.0
 
 julia> H(x, p) = x[1]^2 + p[1]^2
+
 julia> G(x, p) = x[2]^2 + p[2]^2
-julia> PB = @Lie {H, G}
+
+julia> PB = CTFlows.@Lie {H, G}
+
 julia> PB([1.0, 2.0], [0.5, 0.5])
+0.0
 ```
+
+See also: [`ad`](@ref), [`Poisson`](@ref)
 """
 macro Lie(expr::Expr, args...)
     # Parse options - default values
