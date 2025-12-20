@@ -734,6 +734,25 @@ function _Poisson(H::Function, G::Function, backend, ::Type{Autonomous}, ::Type{
     end
 end
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Internal implementation of Poisson bracket for non-autonomous, time-fixed Hamiltonians.
+
+Computes `{H, G}(t, x, p) = ∇ₚ H(t,x,p) · ∇ₓ G(t,x,p) - ∇ₓ H(t,x,p) · ∇ₚ G(t,x,p)`.
+
+# Implementation
+
+Uses `ctgradient` to compute partial derivatives with respect to `x` and `p` separately.
+Time `t` is held constant during gradient computation.
+
+# Note
+
+This is an internal function. Users should call [`Poisson`](@ref) instead.
+
+See also: [`Poisson`](@ref), [`ctgradient`](@ref)
+"""
 function _Poisson(H::Function, G::Function, backend, ::Type{NonAutonomous}, ::Type{Fixed})
     return function (t, x, p)
         grad_x_H = ctgradient(y -> H(t, y, p), backend, x)
@@ -744,6 +763,27 @@ function _Poisson(H::Function, G::Function, backend, ::Type{NonAutonomous}, ::Ty
     end
 end
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Internal implementation of Poisson bracket for non-autonomous, variable-dependent Hamiltonians.
+
+Computes `{H, G}(t, x, p, v) = ∇ₚ H(t,x,p,v) · ∇ₓ G(t,x,p,v) - ∇ₓ H(t,x,p,v) · ∇ₚ G(t,x,p,v)`.
+
+This is the most general case, handling time-dependent Hamiltonians with extra variables.
+
+# Implementation
+
+Uses `ctgradient` to compute partial derivatives with respect to `x` and `p` separately.
+Time `t` and variable `v` are held constant during gradient computation.
+
+# Note
+
+This is an internal function. Users should call [`Poisson`](@ref) instead.
+
+See also: [`Poisson`](@ref), [`ctgradient`](@ref)
+"""
 function _Poisson(H::Function, G::Function, backend, ::Type{NonAutonomous}, ::Type{NonFixed})
     return function (t, x, p, v)
         grad_x_H = ctgradient(y -> H(t, y, p, v), backend, x)
