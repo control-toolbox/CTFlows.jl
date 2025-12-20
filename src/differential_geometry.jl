@@ -158,13 +158,37 @@ $(TYPEDSIGNATURES)
 Unified function for Lie derivative and Lie bracket with explicit type parameters.
 
 This method accepts types directly for better performance through compile-time dispatch.
+Prefer this form when the time and variable dependence are known at compile time.
 
 # Arguments
+
 - `X::Function`: Vector field
 - `foo::Function`: Either a scalar function (for Lie derivative) or vector field (for Lie bracket)
-- `TD::Type{<:TimeDependence}`: Time dependence type (Autonomous or NonAutonomous)
-- `VD::Type{<:VariableDependence}`: Variable dependence type (Fixed or NonFixed)
-- `backend`: Automatic differentiation backend (default: `__backend()`)
+- `TD::Type{<:TimeDependence}`: Time dependence type (`Autonomous` or `NonAutonomous`)
+- `VD::Type{<:VariableDependence}`: Variable dependence type (`Fixed` or `NonFixed`)
+- `backend::AbstractADType`: Automatic differentiation backend (default: `__backend()`)
+
+# Returns
+
+- A function with the appropriate signature based on `TD` and `VD`
+
+# Example
+
+```julia-repl
+julia> using CTFlows
+
+julia> X(x) = [x[2], -x[1]]
+
+julia> f(x) = x[1]^2 + x[2]^2
+
+# Type-based dispatch for better performance
+julia> Lf = CTFlows.ad(X, f, CTFlows.Autonomous, CTFlows.Fixed)
+
+julia> Lf([1.0, 2.0])
+0.0
+```
+
+See also: [`ad`](@ref)
 """
 function ad(
     X::Function,
@@ -183,7 +207,28 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Internal implementation: Autonomous, Fixed (signature: x -> ...)
+Internal implementation of `ad` for autonomous, time-fixed functions.
+
+Computes the Lie derivative or Lie bracket for functions with signature `(x) -> ...`.
+
+This is the most common case: time-independent vector fields and functions without
+extra parameters.
+
+# Implementation
+
+Uses directional derivative: `d/dt [foo(x + t*X(x))]|_{t=0}` via automatic differentiation.
+
+# Returns
+
+- A function `(x) -> result` where `result` is:
+  - A scalar if `foo` is a scalar function (Lie derivative)
+  - A vector if `foo` is a vector field (Lie bracket)
+
+# Note
+
+This is an internal function. Users should call [`ad`](@ref) instead.
+
+See also: [`ad`](@ref), [`_ad_result`](@ref)
 """
 function _ad(
     X::Function, foo::Function, backend, ::Type{Autonomous}, ::Type{Fixed}
@@ -199,7 +244,28 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Internal implementation: Autonomous, NonFixed (signature: (x, v) -> ...)
+Internal implementation of `ad` for autonomous, variable-dependent functions.
+
+Computes the Lie derivative or Lie bracket for functions with signature `(x, v) -> ...`.
+
+This variant is used when the vector field or scalar function depends on an extra
+variable `v` (e.g., control parameter, model parameter).
+
+# Implementation
+
+Uses directional derivative: `d/dt [foo(x + t*X(x,v), v)]|_{t=0}` via automatic differentiation.
+
+# Returns
+
+- A function `(x, v) -> result` where `result` is:
+  - A scalar if `foo` is a scalar function (Lie derivative)
+  - A vector if `foo` is a vector field (Lie bracket)
+
+# Note
+
+This is an internal function. Users should call [`ad`](@ref) instead.
+
+See also: [`ad`](@ref), [`_ad_result`](@ref)
 """
 function _ad(
     X::Function, foo::Function, backend, ::Type{Autonomous}, ::Type{NonFixed}
@@ -215,7 +281,28 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Internal implementation: NonAutonomous, Fixed (signature: (t, x) -> ...)
+Internal implementation of `ad` for non-autonomous, time-fixed functions.
+
+Computes the Lie derivative or Lie bracket for functions with signature `(t, x) -> ...`.
+
+This variant is used when the vector field or scalar function explicitly depends on time `t`.
+
+# Implementation
+
+Uses directional derivative: `d/ds [foo(t, x + s*X(t,x))]|_{s=0}` via automatic differentiation.
+Note that time `t` is held constant during the directional derivative.
+
+# Returns
+
+- A function `(t, x) -> result` where `result` is:
+  - A scalar if `foo` is a scalar function (Lie derivative)
+  - A vector if `foo` is a vector field (Lie bracket)
+
+# Note
+
+This is an internal function. Users should call [`ad`](@ref) instead.
+
+See also: [`ad`](@ref), [`_ad_result`](@ref)
 """
 function _ad(
     X::Function, foo::Function, backend, ::Type{NonAutonomous}, ::Type{Fixed}
@@ -231,7 +318,28 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Internal implementation: NonAutonomous, NonFixed (signature: (t, x, v) -> ...)
+Internal implementation of `ad` for non-autonomous, variable-dependent functions.
+
+Computes the Lie derivative or Lie bracket for functions with signature `(t, x, v) -> ...`.
+
+This is the most general case, handling time-dependent vector fields with extra variables.
+
+# Implementation
+
+Uses directional derivative: `d/ds [foo(t, x + s*X(t,x,v), v)]|_{s=0}` via automatic differentiation.
+Time `t` and variable `v` are held constant during the directional derivative.
+
+# Returns
+
+- A function `(t, x, v) -> result` where `result` is:
+  - A scalar if `foo` is a scalar function (Lie derivative)
+  - A vector if `foo` is a vector field (Lie bracket)
+
+# Note
+
+This is an internal function. Users should call [`ad`](@ref) instead.
+
+See also: [`ad`](@ref), [`_ad_result`](@ref)
 """
 function _ad(
     X::Function, foo::Function, backend, ::Type{NonAutonomous}, ::Type{NonFixed}
@@ -251,7 +359,30 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Compute result for Lie derivative (scalar case).
+Compute final result for Lie derivative (scalar function case).
+
+When `foo` is a scalar function, the directional derivative `d/dt [foo(x + t*X(x))]|_{t=0}`
+directly gives the Lie derivative `∇f(x)' * X(x)`, so we just return it.
+
+# Arguments
+
+- `X::Function`: The vector field
+- `foo::Function`: The scalar function
+- `dfoo::Number`: The computed directional derivative (already equals Lie derivative)
+- `x`: Current point
+- `X_x`: Value of `X(x)` (precomputed)
+- `backend`: AD backend
+- `args...`: Additional arguments (time and/or variable)
+
+# Returns
+
+- `Number`: The Lie derivative value `L_X f(x) = ∇f(x)' * X(x)`
+
+# Note
+
+This is an internal dispatch function. Users should call [`ad`](@ref) instead.
+
+See also: [`ad`](@ref), [`_ad`](@ref)
 """
 function _ad_result(X::Function, foo::Function, dfoo::Number, x, X_x, backend, args...)
     return dfoo  # Already ∇f(x)' * X(x)
@@ -260,7 +391,30 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Compute result for Lie bracket (vector case).
+Compute final result for Lie bracket (vector field case).
+
+When `foo` is a vector field `Y`, the directional derivative gives `J_Y(x) * X(x)`.
+We must subtract `J_X(x) * Y(x)` to get the full Lie bracket `[X, Y](x)`.
+
+# Arguments
+
+- `X::Function`: The first vector field
+- `foo::Function`: The second vector field (Y)
+- `dfoo::AbstractVector`: The computed `J_Y(x) * X(x)`
+- `x`: Current point
+- `X_x`: Value of `X(x)` (precomputed)
+- `backend`: AD backend
+- `args...`: Additional arguments (time and/or variable)
+
+# Returns
+
+- `AbstractVector`: The Lie bracket `[X, Y](x) = J_Y(x)*X(x) - J_X(x)*Y(x)`
+
+# Note
+
+This is an internal dispatch function. Users should call [`ad`](@ref) instead.
+
+See also: [`ad`](@ref), [`_ad`](@ref)
 """
 function _ad_result(
     X::Function, foo::Function, dfoo::AbstractVector, x, X_x, backend, args...
@@ -284,23 +438,36 @@ $(TYPEDSIGNATURES)
 Construct the Hamiltonian lift of a vector field (pure function).
 
 # Arguments
+
 - `f::Function`: Vector field function
 - `autonomous::Bool`: Whether the function is autonomous (default: `__autonomous()` = `true`)
 - `variable::Bool`: Whether the function depends on an additional variable (default: `__variable()` = `false`)
 
 # Returns
+
 - A callable function computing the Hamiltonian lift `H(x, p) = p' * f(x)`
 
 # Examples
+
 ```julia-repl
+julia> using CTFlows
+
 julia> f(x) = [x[1]^2, x[2]^2]
-julia> H = Lift(f)
-julia> H([1.0, 2.0], [0.5, 0.5])  # Returns 2.5
+
+julia> H = CTFlows.Lift(f)
+
+julia> H([1.0, 2.0], [0.5, 0.5])
+2.5
 
 julia> g(t, x) = [t*x[1], x[2]]
-julia> H2 = Lift(g; autonomous=false)
-julia> H2(1.0, [1.0, 2.0], [0.5, 0.5])  # Returns 1.5
+
+julia> H2 = CTFlows.Lift(g; autonomous=false)
+
+julia> H2(1.0, [1.0, 2.0], [0.5, 0.5])
+1.5
 ```
+
+See also: [`ad`](@ref), [`Poisson`](@ref)
 """
 function Lift(f::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable())
     TD = autonomous ? Autonomous : NonAutonomous
@@ -313,10 +480,33 @@ $(TYPEDSIGNATURES)
 
 Construct the Hamiltonian lift with explicit type parameters.
 
+This method uses compile-time type dispatch for better performance when the
+time and variable dependence are known statically.
+
 # Arguments
+
 - `f::Function`: Vector field function
-- `TD::Type{<:TimeDependence}`: Time dependence type
-- `VD::Type{<:VariableDependence}`: Variable dependence type
+- `TD::Type{<:TimeDependence}`: Time dependence type (`Autonomous` or `NonAutonomous`)
+- `VD::Type{<:VariableDependence}`: Variable dependence type (`Fixed` or `NonFixed`)
+
+# Returns
+
+- A function computing `H(x, p, ...) = p' * f(x, ...)`
+
+# Example
+
+```julia-repl
+julia> using CTFlows
+
+julia> f(x) = [x[1]^2, x[2]]
+
+julia> H = CTFlows.Lift(f, CTFlows.Autonomous, CTFlows.Fixed)
+
+julia> H([1.0, 2.0], [0.5, 0.5])
+1.5
+```
+
+See also: [`Lift`](@ref)
 """
 function Lift(
     f::Function,
@@ -327,9 +517,65 @@ function Lift(
 end
 
 # Internal implementations
+
+"""
+$(TYPEDSIGNATURES)
+
+Internal implementation of Hamiltonian lift for autonomous, time-fixed vector fields.
+
+Constructs `H(x, p) = p' * f(x)` where `f` is a vector field.
+
+# Note
+
+This is an internal function. Users should call [`Lift`](@ref) instead.
+
+See also: [`Lift`](@ref)
+"""
 _Lift(f::Function, ::Type{Autonomous}, ::Type{Fixed}) = (x, p) -> p' * f(x)
+
+"""
+$(TYPEDSIGNATURES)
+
+Internal implementation of Hamiltonian lift for autonomous, variable-dependent vector fields.
+
+Constructs `H(x, p, v) = p' * f(x, v)` where `f` depends on an extra variable `v`.
+
+# Note
+
+This is an internal function. Users should call [`Lift`](@ref) instead.
+
+See also: [`Lift`](@ref)
+"""
 _Lift(f::Function, ::Type{Autonomous}, ::Type{NonFixed}) = (x, p, v) -> p' * f(x, v)
+
+"""
+$(TYPEDSIGNATURES)
+
+Internal implementation of Hamiltonian lift for non-autonomous, time-fixed vector fields.
+
+Constructs `H(t, x, p) = p' * f(t, x)` where `f` depends on time `t`.
+
+# Note
+
+This is an internal function. Users should call [`Lift`](@ref) instead.
+
+See also: [`Lift`](@ref)
+"""
 _Lift(f::Function, ::Type{NonAutonomous}, ::Type{Fixed}) = (t, x, p) -> p' * f(t, x)
+
+"""
+$(TYPEDSIGNATURES)
+
+Internal implementation of Hamiltonian lift for non-autonomous, variable-dependent vector fields.
+
+Constructs `H(t, x, p, v) = p' * f(t, x, v)` where `f` depends on time and an extra variable.
+
+# Note
+
+This is an internal function. Users should call [`Lift`](@ref) instead.
+
+See also: [`Lift`](@ref)
+"""
 _Lift(f::Function, ::Type{NonAutonomous}, ::Type{NonFixed}) =
     (t, x, p, v) -> p' * f(t, x, v)
 
@@ -343,22 +589,33 @@ $(TYPEDSIGNATURES)
 Poisson bracket of two Hamiltonian functions (pure functions).
 
 # Arguments
+
 - `H::Function`: First Hamiltonian function
 - `G::Function`: Second Hamiltonian function
-- `backend`: Automatic differentiation backend (default: `__backend()` = `AutoForwardDiff()`)
+- `backend::AbstractADType`: Automatic differentiation backend (default: `__backend()` = `AutoForwardDiff()`)
 - `autonomous::Bool`: Whether functions are time-independent (default: `__autonomous()` = `true`)
 - `variable::Bool`: Whether functions depend on extra variable (default: `__variable()` = `false`)
 
 # Returns
+
 - A function computing the Poisson bracket `{H, G}(x, p) = ∇ₚH'·∇ₓG - ∇ₓH'·∇ₚG`
 
 # Examples
+
 ```julia-repl
-julia> H(x, p) = x[1]^2 + p[1]^2
-julia> G(x, p) = x[2]^2 + p[2]^2
-julia> PB = Poisson(H, G)
-julia> PB([1.0, 2.0], [0.5, 0.5])  # Returns Poisson bracket value
+julia> using CTFlows
+
+julia> H(x, p) = 0.5 * (p[1]^2 + p[2]^2)
+
+julia> G(x, p) = x[1]
+
+julia> PB = CTFlows.Poisson(H, G)
+
+julia> PB([1.0, 2.0], [3.0, 4.0])
+3.0
 ```
+
+See also: [`Lift`](@ref), [`ad`](@ref), [`@Lie`](@ref)
 """
 function Poisson(
     H::Function,
@@ -375,14 +632,39 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Poisson bracket with explicit type parameters.
+Poisson bracket with explicit type parameters for compile-time dispatch.
+
+This method uses type parameters for better performance when time and variable
+dependence are known statically.
 
 # Arguments
+
 - `H::Function`: First Hamiltonian function
 - `G::Function`: Second Hamiltonian function
-- `TD::Type{<:TimeDependence}`: Time dependence type
-- `VD::Type{<:VariableDependence}`: Variable dependence type
-- `backend`: Automatic differentiation backend (default: `__backend()`)
+- `TD::Type{<:TimeDependence}`: Time dependence type (`Autonomous` or `NonAutonomous`)
+- `VD::Type{<:VariableDependence}`: Variable dependence type (`Fixed` or `NonFixed`)
+- `backend::AbstractADType`: Automatic differentiation backend (default: `__backend()`)
+
+# Returns
+
+- A function computing `{H, G}(x, p, ...) = ∇ₚ H · ∇ₓ G - ∇ₓ H · ∇ₚ G`
+
+# Example
+
+```julia-repl
+julia> using CTFlows
+
+julia> H(x, p) = 0.5 * (p[1]^2 + p[2]^2)
+
+julia> G(x, p) = x[1]
+
+julia> PB = CTFlows.Poisson(H, G, CTFlows.Autonomous, CTFlows.Fixed)
+
+julia> PB([1.0, 2.0], [3.0, 4.0])
+3.0
+```
+
+See also: [`Poisson`](@ref)
 """
 function Poisson(
     H::Function,
