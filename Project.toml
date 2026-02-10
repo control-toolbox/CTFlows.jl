@@ -29,9 +29,9 @@ test = ["Aqua", "CTParser", "OrdinaryDiffEq", "Plots", "Test"]
 
 [compat]
 Aqua = "0.8"
-CTBase = "0.16, 0.17"
-CTModels = "0.6, 0.7"
-CTParser = "0.7"
+CTBase = "0.16, 0.17, 0.18"
+CTModels = "0.6, 0.7, 0.8"
+CTParser = "0.7, 0.8"
 DocStringExtensions = "0.9"
 ForwardDiff = "0.10, 1.0"
 LinearAlgebra = "1"
