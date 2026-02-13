@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.14-beta] - 2025-02-13
+
+### Changed
+
+- Updated version to 0.8.14-beta
+- Updated CTModels compatibility from 0.8 to 0.9
+
 ## [0.8.13-beta] - 2025-02-10
 
 ### Changed
