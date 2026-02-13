@@ -30,7 +30,7 @@ test = ["Aqua", "CTParser", "OrdinaryDiffEq", "Plots", "Test"]
 [compat]
 Aqua = "0.8"
 CTBase = "0.18"
-CTModels = "0.8"
+CTModels = "0.9"
 CTParser = "0.8"
 DocStringExtensions = "0.9"
 ForwardDiff = "0.10, 1.0"
