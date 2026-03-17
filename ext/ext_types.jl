@@ -237,6 +237,7 @@ function CTModels.Solution(ocfs::OptimalControlFlowSolution; kwargs...)
         message="Solution obtained from flow",
         status=:nostatusmessage,
         successful=true,
+        control_interpolation=:linear, # use linear interpolation for the control
         kwargs_OCS...,
     )
 
