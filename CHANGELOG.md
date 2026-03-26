@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.17-beta] - 2026-03-26
+
+### Changed
+
+- Refactored @Lie macro for improved maintainability and testability
+- Extracted helper functions: __is_mixed_usage(), __parse_lie_args(), __transform_lie_poisson_expression()
+- Added comprehensive documentation with examples for all helper functions
+- Added 40+ new tests covering macro functionality and error cases
+- Replaced ArgumentError with CTBase.Exceptions.IncorrectArgument for better error handling
+- Qualified function calls with CTFlows. to avoid namespace conflicts
+- Improved code structure with separation of concerns
+
 ## [0.8.16-beta] - 2026-03-17
 
 ### Changed
