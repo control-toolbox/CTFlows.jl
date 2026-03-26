@@ -469,6 +469,161 @@ end
 # ---------------------------------------------------------------------------
 # Macros
 
+# Helper function to detect mixed usage of Lie and Poisson brackets
+"""
+$(TYPEDSIGNATURES)
+
+Helper function to detect mixed usage of Lie and Poisson brackets in an expression.
+
+This function walks through an expression tree and checks whether it contains both:
+- Lie bracket notation `[_, _]` (square brackets)
+- Poisson bracket notation `{_, _}` (curly braces)
+
+Mixing these two types of brackets in the same expression is not allowed and will
+trigger an error in the `@Lie` macro.
+
+# Arguments
+- `x::Expr`: An expression to analyze
+
+# Returns
+- `Bool`: `true` if the expression contains both Lie and Poisson brackets, `false` otherwise
+
+# Examples
+```julia
+julia> CTFlows.__is_mixed_usage(:([F0, F1]))
+false
+
+julia> CTFlows.__is_mixed_usage(:({H0, H1}))
+false
+
+julia> CTFlows.__is_mixed_usage(:([F0, F1] + {H0, H1}))
+true
+```
+"""
+function __is_mixed_usage(x)
+    has_lie = Ref(false)
+    has_poisson = Ref(false)
+    
+    function walker(e)
+        if @capture(e, [_, _])
+            has_lie[] = true
+        elseif @capture(e, {_, _})
+            has_poisson[] = true
+        end
+        return e
+    end
+    postwalk(walker, x)
+
+    return has_lie[] && has_poisson[]
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Helper function to parse keyword arguments for the `@Lie` macro.
+
+This function parses the keyword arguments and returns the autonomous and variable flags.
+If an invalid argument is encountered, it returns an error expression that can be thrown.
+
+# Arguments
+- `args...`: Variable arguments passed to the macro
+
+# Returns
+- `Tuple{Bool, Bool, Union{Expr, Nothing}}`: 
+  - `autonomous`: Whether the system is time-independent
+  - `variable`: Whether the system depends on an extra variable `v`
+  - `error_expr`: An expression to throw an error if invalid arguments are found, or `nothing` if parsing succeeded
+
+# Examples
+```julia
+julia> autonomous, variable, error = CTFlows.__parse_lie_args()
+(true, false, nothing)
+
+julia> autonomous, variable, error = CTFlows.__parse_lie_args(:(autonomous = false))
+(false, false, nothing)
+
+julia> autonomous, variable, error = CTFlows.__parse_lie_args(:(invalid_arg = true))
+(true, true, :(throw(CTBase.Exceptions.IncorrectArgument("Invalid argument: invalid_arg = true"))))
+```
+"""
+function __parse_lie_args(args...)
+    autonomous = true
+    variable = false
+    error_expr = nothing
+    
+    for arg in args
+        @match arg begin
+            :(autonomous = $a) => (autonomous = a)
+            :(variable = $a) => (variable = a)
+            _ => begin
+                error_expr = :(throw(CTBase.Exceptions.IncorrectArgument("Invalid argument: $($(arg))")))
+                break
+            end
+        end
+    end
+    
+    return autonomous, variable, error_expr
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Helper function to transform Lie and Poisson bracket expressions into their corresponding function calls.
+
+This function walks through an expression and transforms:
+- Lie bracket notation `[a, b]` into `CTFlows.Lie(a, b)` calls
+- Poisson bracket notation `{c, d}` into `CTFlows.Poisson(c, d)` calls with appropriate Hamiltonian wrapping
+
+For Poisson brackets with raw functions, it generates runtime type checks to determine whether to wrap the functions in `Hamiltonian` objects.
+
+# Arguments
+- `x::Expr`: An expression to transform
+- `autonomous::Bool`: Whether the system is time-independent
+- `variable::Bool`: Whether the system depends on an extra variable `v`
+
+# Returns
+- `Expr`: The transformed expression with Lie/Poisson function calls
+
+# Examples
+```julia
+julia> expr = :([F0, F1])
+julia> result = CTFlows.__transform_lie_poisson_expression(expr, true, false)
+:(CTFlows.Lie(F0, F1))
+
+julia> expr = :({f, g})
+julia> result = CTFlows.__transform_lie_poisson_expression(expr, true, false)
+quote
+    if isa(f, Function) && isa(g, Function)
+        CTFlows.Poisson(CTFlows.Hamiltonian(f; autonomous=true, variable=false), CTFlows.Hamiltonian(g; autonomous=true, variable=false))
+    else
+        CTFlows.Poisson(f, g)
+    end
+end
+```
+"""
+function __transform_lie_poisson_expression(x, autonomous, variable)
+    is_lie, is_poisson = @capture(x, [a_, b_]), @capture(x, {c_, d_})
+
+    if is_lie
+        # Just return Lie call with interpolation
+        return :(CTFlows.Lie($a, $b))
+    elseif is_poisson
+        # Return a quoted block with if...else for runtime type checks
+        return quote
+            if isa($c, Function) && isa($d, Function)
+                CTFlows.Poisson(
+                    CTFlows.Hamiltonian($c; autonomous=($(autonomous)), variable=($(variable))),
+                    CTFlows.Hamiltonian($d; autonomous=($(autonomous)), variable=($(variable))),
+                )
+            else
+                CTFlows.Poisson($c, $d)
+            end
+        end
+    else
+        return x
+    end
+end
+
 # @Lie [X, Y], for Lie brackets
 # @Lie {X, Y}, for Poisson brackets
 """
@@ -610,66 +765,21 @@ julia> @Lie {H1, H2}(x, p) + 2 * {H2, H3}(x, p)
 ```
 """
 macro Lie(expr::Expr, args...)
-    autonomous = true
-    variable = false
-
-    # Parse keyword args
-    for arg in args
-        @match arg begin
-            :(autonomous = $a) => (autonomous = a)
-            :(variable = $a) => (variable = a)
-            _ => throw(ArgumentError("Invalid argument: $arg"))
-        end
+    # Parse keyword arguments
+    autonomous, variable, error_expr = __parse_lie_args(args...)
+    
+    # Return early if there was an error in argument parsing
+    if error_expr !== nothing
+        return error_expr
     end
 
     # Check for mixed usage of Lie and Poisson brackets
-    has_lie = Ref(false)
-    has_poisson = Ref(false)
-
-    function check_mixed_usage(x)
-        function walker(e)
-            if @capture(e, [_, _])
-                has_lie[] = true
-            elseif @capture(e, {_, _})
-                has_poisson[] = true
-            end
-            return e
-        end
-        postwalk(walker, x)
-
-        if has_lie[] && has_poisson[]
-            throw(
-                ArgumentError("Cannot mix Lie and Poisson brackets in the same expression.")
-            )
-        end
-        return nothing
+    if __is_mixed_usage(expr)
+        return :(throw(
+            CTBase.Exceptions.IncorrectArgument("Cannot mix Lie and Poisson brackets in the same expression.")
+        ))
     end
-
-    check_mixed_usage(expr)
 
     # Transform Lie and Poisson bracket expressions
-    function fun(x)
-        is_lie, is_poisson = @capture(x, [a_, b_]), @capture(x, {c_, d_})
-
-        if is_lie
-            # Just return Lie call with interpolation
-            return :(Lie($a, $b))
-        elseif is_poisson
-            # Return a quoted block with if...else for runtime type checks
-            return quote
-                if isa($c, Function) && isa($d, Function)
-                    Poisson(
-                        Hamiltonian($c; autonomous=($(autonomous)), variable=($(variable))),
-                        Hamiltonian($d; autonomous=($(autonomous)), variable=($(variable))),
-                    )
-                else
-                    Poisson($c, $d)
-                end
-            end
-        else
-            return x
-        end
-    end
-
-    return esc(postwalk(fun, expr))
+    return esc(postwalk(e -> __transform_lie_poisson_expression(e, autonomous, variable), expr))
 end
