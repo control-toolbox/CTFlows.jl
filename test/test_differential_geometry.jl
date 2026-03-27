@@ -821,12 +821,12 @@ function test_differential_geometry()
         Test.@test CTFlows.__is_mixed_usage(:([F0, F1])) == false
         Test.@test CTFlows.__is_mixed_usage(:([[F0, F1], F2])) == false
         Test.@test CTFlows.__is_mixed_usage(:([F0, F1] + [F2, F3])) == false
-        
+
         # Test that pure Poisson bracket expressions return false
         Test.@test CTFlows.__is_mixed_usage(:({H0, H1})) == false
         Test.@test CTFlows.__is_mixed_usage(:({{H0, H1}, H2})) == false
         Test.@test CTFlows.__is_mixed_usage(:({H0, H1} + {H2, H3})) == false
-        
+
         # Test that mixed expressions return true
         Test.@test CTFlows.__is_mixed_usage(:([F0, F1] + {H0, H1})) == true
         Test.@test CTFlows.__is_mixed_usage(:({H0, H1} * [F0, F1])) == true
@@ -840,25 +840,27 @@ function test_differential_geometry()
         Test.@test autonomous == true
         Test.@test variable == false
         Test.@test error === nothing
-        
+
         # Test valid autonomous argument
         autonomous, variable, error = CTFlows.__parse_lie_args(:(autonomous = false))
         Test.@test autonomous == false
         Test.@test variable == false
         Test.@test error === nothing
-        
+
         # Test valid variable argument
         autonomous, variable, error = CTFlows.__parse_lie_args(:(variable = true))
         Test.@test autonomous == true
         Test.@test variable == true
         Test.@test error === nothing
-        
+
         # Test both valid arguments
-        autonomous, variable, error = CTFlows.__parse_lie_args(:(autonomous = false), :(variable = true))
+        autonomous, variable, error = CTFlows.__parse_lie_args(
+            :(autonomous = false), :(variable = true)
+        )
         Test.@test autonomous == false
         Test.@test variable == true
         Test.@test error === nothing
-        
+
         # Test invalid argument
         autonomous, variable, error = CTFlows.__parse_lie_args(:(invalid_arg = true))
         Test.@test autonomous == true  # default value preserved
@@ -867,9 +869,11 @@ function test_differential_geometry()
         Test.@test error isa Expr
         Test.@test error.head == :call
         Test.@test occursin("Invalid argument: \$(invalid_arg = true)", string(error))
-        
+
         # Test mixed valid and invalid arguments (should stop at first invalid)
-        autonomous, variable, error = CTFlows.__parse_lie_args(:(autonomous = false), :(invalid_arg = true), :(variable = true))
+        autonomous, variable, error = CTFlows.__parse_lie_args(
+            :(autonomous = false), :(invalid_arg = true), :(variable = true)
+        )
         Test.@test autonomous == false  # first valid argument processed
         Test.@test variable == false    # default value preserved (not true!)
         Test.@test error !== nothing
@@ -882,7 +886,7 @@ function test_differential_geometry()
         lie_expr = :([F0, F1])
         result = CTFlows.__transform_lie_poisson_expression(lie_expr, true, false)
         Test.@test result == :(CTFlows.Lie(F0, F1))
-        
+
         # Test Poisson bracket with functions (should generate runtime checks)
         f = :f
         g = :g
@@ -894,7 +898,7 @@ function test_differential_geometry()
         result_str = string(result)
         Test.@test occursin("if", result_str)
         Test.@test occursin("isa", result_str)
-        
+
         # Test Poisson bracket with autonomous=false, variable=true
         result = CTFlows.__transform_lie_poisson_expression(poisson_expr, false, true)
         Test.@test result.head in (:quote, :block)
@@ -902,19 +906,19 @@ function test_differential_geometry()
         result_str = string(result)
         Test.@test occursin("autonomous = false", result_str)
         Test.@test occursin("variable = true", result_str)
-        
+
         # Test non-bracket expression (should return unchanged)
         other_expr = :(x + y)
         result = CTFlows.__transform_lie_poisson_expression(other_expr, true, false)
         Test.@test result == other_expr
-        
+
         # Test nested expressions (the function works on single nodes)
         nested_expr = :([F0, F1] + [F2, F3])
         # Test individual components
         first_bracket = :([F0, F1])
         result = CTFlows.__transform_lie_poisson_expression(first_bracket, true, false)
         Test.@test result == :(CTFlows.Lie(F0, F1))
-        
+
         second_bracket = :([F2, F3])
         result = CTFlows.__transform_lie_poisson_expression(second_bracket, true, false)
         Test.@test result == :(CTFlows.Lie(F2, F3))
@@ -924,26 +928,32 @@ function test_differential_geometry()
         # Test invalid arguments
         F0 = VectorField(x -> [x[2], -x[1]])
         F1 = VectorField(x -> [-x[2], x[1]])
-        
+
         # Test that invalid arguments throw IncorrectArgument
-        Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F0, F1] invalid_arg = true
-        Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F0, F1] wrong_keyword = false
-        Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F0, F1] something_else = 42
+        Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F0, F1] invalid_arg =
+            true
+        Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F0, F1] wrong_keyword =
+            false
+        Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F0, F1] something_else =
+            42
 
         # Test mixing Lie and Poisson brackets - focus on cases that will be detected
         # The detection happens during the postwalk, so we need expressions where both brackets exist
         f = (x, p) -> x[1] * p[1]
         g = (x, p) -> x[2] * p[2]
-        
+
         # Simple direct mixing that should be detected
         Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [f, g] + {f, g}
         Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [f, g] * {f, g}
         Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [f, g] - {f, g}
-        
+
         # Nested mixing cases
-        Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie ([f, g] + {f, g}) + [f, g]
-        Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie {f, g} + ([f, g] + {f, g})
-        
+        Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie (
+            [f, g] + {f, g}
+        ) + [f, g]
+        Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie {f, g} +
+            ([f, g] + {f, g})
+
         # Test with VectorField and Hamiltonian functions
         Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F0, F1] + {f, g}
         Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [f, g] + {F0, F1}  # This should fail at runtime but we want the mixing error

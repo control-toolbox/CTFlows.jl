@@ -503,7 +503,7 @@ true
 function __is_mixed_usage(x)
     has_lie = Ref(false)
     has_poisson = Ref(false)
-    
+
     function walker(e)
         if @capture(e, [_, _])
             has_lie[] = true
@@ -550,18 +550,20 @@ function __parse_lie_args(args...)
     autonomous = true
     variable = false
     error_expr = nothing
-    
+
     for arg in args
         @match arg begin
             :(autonomous = $a) => (autonomous = a)
             :(variable = $a) => (variable = a)
             _ => begin
-                error_expr = :(throw(CTBase.Exceptions.IncorrectArgument("Invalid argument: $($(arg))")))
+                error_expr = :(throw(
+                    CTBase.Exceptions.IncorrectArgument("Invalid argument: $($(arg))"),
+                ))
                 break
             end
         end
     end
-    
+
     return autonomous, variable, error_expr
 end
 
@@ -612,8 +614,12 @@ function __transform_lie_poisson_expression(x, autonomous, variable)
         return quote
             if isa($c, Function) && isa($d, Function)
                 CTFlows.Poisson(
-                    CTFlows.Hamiltonian($c; autonomous=($(autonomous)), variable=($(variable))),
-                    CTFlows.Hamiltonian($d; autonomous=($(autonomous)), variable=($(variable))),
+                    CTFlows.Hamiltonian(
+                        $c; autonomous=($(autonomous)), variable=($(variable))
+                    ),
+                    CTFlows.Hamiltonian(
+                        $d; autonomous=($(autonomous)), variable=($(variable))
+                    ),
                 )
             else
                 CTFlows.Poisson($c, $d)
@@ -767,7 +773,7 @@ julia> @Lie {H1, H2}(x, p) + 2 * {H2, H3}(x, p)
 macro Lie(expr::Expr, args...)
     # Parse keyword arguments
     autonomous, variable, error_expr = __parse_lie_args(args...)
-    
+
     # Return early if there was an error in argument parsing
     if error_expr !== nothing
         return error_expr
@@ -776,10 +782,14 @@ macro Lie(expr::Expr, args...)
     # Check for mixed usage of Lie and Poisson brackets
     if __is_mixed_usage(expr)
         return :(throw(
-            CTBase.Exceptions.IncorrectArgument("Cannot mix Lie and Poisson brackets in the same expression.")
+            CTBase.Exceptions.IncorrectArgument(
+                "Cannot mix Lie and Poisson brackets in the same expression."
+            ),
         ))
     end
 
     # Transform Lie and Poisson bracket expressions
-    return esc(postwalk(e -> __transform_lie_poisson_expression(e, autonomous, variable), expr))
+    return esc(
+        postwalk(e -> __transform_lie_poisson_expression(e, autonomous, variable), expr)
+    )
 end
