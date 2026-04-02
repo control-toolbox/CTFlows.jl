@@ -608,6 +608,126 @@ function test_differential_geometry()
         Test.@test F011_(t, x, v) ≈ F011___(t, x, v) atol = 1e-6
     end
 
+    @testset "lie macro with functions" begin
+        # parameters
+        t = 1
+        x = [1, 2, 3]
+        Γ = 2
+        γ = 1
+        δ = γ - Γ
+        v = 1
+
+        # autonomous
+        f0 = x -> [-Γ * x[1], -Γ * x[2], γ * (1 - x[3])]
+        f1 = x -> [0, -x[3], x[2]]
+        F01 = Lie(VectorField(f0), VectorField(f1))
+        F011 = Lie(F01, VectorField(f1))
+        F01_ = CTFlows.@Lie [f0, f1]
+        F011_ = CTFlows.@Lie [[f0, f1], f1]
+        Test.@test F01(x) ≈ F01_(x) atol = 1e-6
+        Test.@test F011(x) ≈ F011_(x) atol = 1e-6
+        #
+        get_f0 = () -> f0
+        F011__ = CTFlows.@Lie [[get_f0(), f1], f1]
+        Test.@test F011(x) ≈ F011__(x) atol = 1e-6
+
+        # nonautonomous
+        f0 = (t, x) -> [-Γ * x[1], -Γ * x[2], γ * (1 - x[3])]
+        f1 = (t, x) -> [0, -x[3], x[2]]
+        F01 = Lie(VectorField(f0; autonomous=false), VectorField(f1; autonomous=false))
+        F011 = Lie(F01, VectorField(f1; autonomous=false))
+        F01_val = CTFlows.@Lie [f0, f1](t, x) autonomous = false
+        F01_ = CTFlows.@Lie [f0, f1] autonomous = false
+        F011_ = CTFlows.@Lie [[f0, f1], f1] autonomous = false
+        Test.@test F01(t, x) ≈ F01_(t, x) atol = 1e-6
+        Test.@test F01_val ≈ F01_(t, x) atol = 1e-6
+        Test.@test F011(t, x) ≈ F011_(t, x) atol = 1e-6
+        #
+        get_f0 = () -> f0
+        F011__ = CTFlows.@Lie [[get_f0(), f1], f1] autonomous = false variable = false
+        Test.@test F011(t, x) ≈ F011__(t, x) atol = 1e-6
+
+        # autonomous nonfixed
+        f0 = (x, v) -> [-Γ * x[1], -Γ * x[2], γ * (1 - x[3])]
+        f1 = (x, v) -> [0, -x[3], x[2]]
+        F01 = Lie(VectorField(f0; variable=true), VectorField(f1; variable=true))
+        F011 = Lie(F01, VectorField(f1; variable=true))
+        F01_ = CTFlows.@Lie [f0, f1] variable = true
+        F011_ = CTFlows.@Lie [[f0, f1], f1] variable = true
+        Test.@test F01(x, v) ≈ F01_(x, v) atol = 1e-6
+        Test.@test F011(x, v) ≈ F011_(x, v) atol = 1e-6
+        #
+        get_f0 = () -> f0
+        F011__ = CTFlows.@Lie [[get_f0(), f1], f1] autonomous = true variable = true
+        Test.@test F011(x, v) ≈ F011__(x, v) atol = 1e-6
+
+        # nonautonomous nonfixed
+        f0 = (t, x, v) -> [-Γ * x[1], -Γ * x[2], γ * (1 - x[3])]
+        f1 = (t, x, v) -> [0, -x[3], x[2]]
+        F01 = Lie(
+            VectorField(f0; autonomous=false, variable=true),
+            VectorField(f1; autonomous=false, variable=true),
+        )
+        F011 = Lie(F01, VectorField(f1; autonomous=false, variable=true))
+        F01_ = CTFlows.@Lie [f0, f1] autonomous = false variable = true
+        F011_ = CTFlows.@Lie [[f0, f1], f1] autonomous = false variable = true
+        Test.@test F01(t, x, v) ≈ F01_(t, x, v) atol = 1e-6
+        Test.@test F011(t, x, v) ≈ F011_(t, x, v) atol = 1e-6
+        #
+        get_f0 = () -> f0
+        F011__ = CTFlows.@Lie [[get_f0(), f1], f1] autonomous = false variable = true
+        Test.@test F011(t, x, v) ≈ F011__(t, x, v) atol = 1e-6
+    end
+
+    @testset "lie macro with mixed types (Function + VectorField)" begin
+        # parameters
+        t = 1
+        x = [1, 2, 3]
+        v = 1
+
+        # Test autonomous: Function + VectorField
+        f0 = x -> [x[2], -x[1], 0]
+        F1 = VectorField(x -> [0, -x[3], x[2]])
+        F01_mixed1 = CTFlows.@Lie [f0, F1]
+        F01_ref = Lie(VectorField(f0), F1)
+        Test.@test F01_mixed1(x) ≈ F01_ref(x) atol = 1e-6
+
+        # Test autonomous: VectorField + Function
+        F0 = VectorField(x -> [x[2], -x[1], 0])
+        f1 = x -> [0, -x[3], x[2]]
+        F01_mixed2 = CTFlows.@Lie [F0, f1]
+        F01_ref2 = Lie(F0, VectorField(f1))
+        Test.@test F01_mixed2(x) ≈ F01_ref2(x) atol = 1e-6
+
+        # Test nonautonomous: Function + VectorField
+        f0_na = (t, x) -> [t + x[2], -x[1], 0]
+        F1_na = VectorField((t, x) -> [0, -x[3], x[2]]; autonomous=false)
+        F01_mixed3 = CTFlows.@Lie [f0_na, F1_na] autonomous = false
+        F01_ref3 = Lie(VectorField(f0_na; autonomous=false), F1_na)
+        Test.@test F01_mixed3(t, x) ≈ F01_ref3(t, x) atol = 1e-6
+
+        # Test nonautonomous: VectorField + Function
+        F0_na = VectorField((t, x) -> [t + x[2], -x[1], 0]; autonomous=false)
+        f1_na = (t, x) -> [0, -x[3], x[2]]
+        F01_mixed4 = CTFlows.@Lie [F0_na, f1_na] autonomous = false
+        F01_ref4 = Lie(F0_na, VectorField(f1_na; autonomous=false))
+        Test.@test F01_mixed4(t, x) ≈ F01_ref4(t, x) atol = 1e-6
+
+        # Test autonomous nonfixed: Function + VectorField
+        f0_v = (x, v) -> [v + x[2], -x[1], 0]
+        F1_v = VectorField((x, v) -> [0, -x[3], x[2]]; variable=true)
+        F01_mixed5 = CTFlows.@Lie [f0_v, F1_v] variable = true
+        F01_ref5 = Lie(VectorField(f0_v; variable=true), F1_v)
+        Test.@test F01_mixed5(x, v) ≈ F01_ref5(x, v) atol = 1e-6
+
+        # Test nonautonomous nonfixed: Function + VectorField
+        f0_tv = (t, x, v) -> [t + v + x[2], -x[1], 0]
+        F1_tv = VectorField((t, x, v) -> [0, -x[3], x[2]]; autonomous=false, variable=true)
+        F01_mixed6 = CTFlows.@Lie [f0_tv, F1_tv] autonomous = false variable = true
+        F01_ref6 = Lie(VectorField(f0_tv; autonomous=false, variable=true), F1_tv)
+        Test.@test F01_mixed6(t, x, v) ≈ F01_ref6(t, x, v) atol = 1e-6
+    end
+
     @testset "poisson macro" begin
         # parameters
         t = 1
@@ -836,92 +956,127 @@ function test_differential_geometry()
 
     @testset "__parse_lie_args function" begin
         # Test default values (no arguments)
-        autonomous, variable, error = CTFlows.__parse_lie_args()
+        autonomous, variable, has_autonomous, has_variable, error = CTFlows.__parse_lie_args()
         Test.@test autonomous == true
         Test.@test variable == false
+        Test.@test has_autonomous == false
+        Test.@test has_variable == false
         Test.@test error === nothing
 
         # Test valid autonomous argument
-        autonomous, variable, error = CTFlows.__parse_lie_args(:(autonomous = false))
+        autonomous, variable, has_autonomous, has_variable, error = CTFlows.__parse_lie_args(:(autonomous = false))
         Test.@test autonomous == false
         Test.@test variable == false
+        Test.@test has_autonomous == true
+        Test.@test has_variable == false
         Test.@test error === nothing
 
         # Test valid variable argument
-        autonomous, variable, error = CTFlows.__parse_lie_args(:(variable = true))
+        autonomous, variable, has_autonomous, has_variable, error = CTFlows.__parse_lie_args(:(variable = true))
         Test.@test autonomous == true
         Test.@test variable == true
+        Test.@test has_autonomous == false
+        Test.@test has_variable == true
         Test.@test error === nothing
 
         # Test both valid arguments
-        autonomous, variable, error = CTFlows.__parse_lie_args(
+        autonomous, variable, has_autonomous, has_variable, error = CTFlows.__parse_lie_args(
             :(autonomous = false), :(variable = true)
         )
         Test.@test autonomous == false
         Test.@test variable == true
+        Test.@test has_autonomous == true
+        Test.@test has_variable == true
         Test.@test error === nothing
 
         # Test invalid argument
-        autonomous, variable, error = CTFlows.__parse_lie_args(:(invalid_arg = true))
+        autonomous, variable, has_autonomous, has_variable, error = CTFlows.__parse_lie_args(:(invalid_arg = true))
         Test.@test autonomous == true  # default value preserved
-        Test.@test variable == false  # default value preserved (not true!)
+        Test.@test variable == false  # default value preserved
+        Test.@test has_autonomous == false  # no valid autonomous arg
+        Test.@test has_variable == false  # no valid variable arg
         Test.@test error !== nothing
         Test.@test error isa Expr
         Test.@test error.head == :call
         Test.@test occursin("Invalid argument: \$(invalid_arg = true)", string(error))
 
         # Test mixed valid and invalid arguments (should stop at first invalid)
-        autonomous, variable, error = CTFlows.__parse_lie_args(
+        autonomous, variable, has_autonomous, has_variable, error = CTFlows.__parse_lie_args(
             :(autonomous = false), :(invalid_arg = true), :(variable = true)
         )
         Test.@test autonomous == false  # first valid argument processed
         Test.@test variable == false    # default value preserved (not true!)
+        Test.@test has_autonomous == true  # autonomous was provided
+        Test.@test has_variable == false  # variable not reached due to error
         Test.@test error !== nothing
     end
 
     @testset "__transform_lie_poisson_expression function" begin
-        # Test Lie bracket transformation
+        # Test Lie bracket transformation (should generate runtime checks)
         F0 = :F0
         F1 = :F1
         lie_expr = :([F0, F1])
-        result = CTFlows.__transform_lie_poisson_expression(lie_expr, true, false)
-        Test.@test result == :(CTFlows.Lie(F0, F1))
+        result = CTFlows.__transform_lie_poisson_expression(lie_expr, true, false, false, false)
+        Test.@test result.head in (:quote, :block)  # Should be a quoted block
+        Test.@test length(result.args) >= 2  # Should contain if statement and branches
+        # Check that it contains the expected structure
+        result_str = string(result)
+        Test.@test occursin("if", result_str)
+        Test.@test occursin("isa", result_str)
+        Test.@test occursin("_Lie_bracket", result_str)
+
+        # Test Lie bracket with autonomous=false, variable=true (user provided both)
+        result = CTFlows.__transform_lie_poisson_expression(lie_expr, false, true, true, true)
+        Test.@test result.head in (:quote, :block)
+        # Check that the _Lie_bracket calls have the correct parameters
+        result_str = string(result)
+        Test.@test occursin("autonomous = false", result_str)
+        Test.@test occursin("variable = true", result_str)
+        Test.@test occursin("_Lie_bracket", result_str)
+        Test.@test occursin("__check_bracket_consistency", result_str)
 
         # Test Poisson bracket with functions (should generate runtime checks)
         f = :f
         g = :g
         poisson_expr = :({f, g})
-        result = CTFlows.__transform_lie_poisson_expression(poisson_expr, true, false)
+        result = CTFlows.__transform_lie_poisson_expression(poisson_expr, true, false, false, false)
         Test.@test result.head in (:quote, :block)  # Can be either depending on Julia version
         Test.@test length(result.args) >= 2  # Should contain if statement and branches
         # Check that it contains the expected structure
         result_str = string(result)
         Test.@test occursin("if", result_str)
         Test.@test occursin("isa", result_str)
+        Test.@test occursin("Poisson", result_str)
 
-        # Test Poisson bracket with autonomous=false, variable=true
-        result = CTFlows.__transform_lie_poisson_expression(poisson_expr, false, true)
+        # Test Poisson bracket with autonomous=false, variable=true (user provided both)
+        result = CTFlows.__transform_lie_poisson_expression(poisson_expr, false, true, true, true)
         Test.@test result.head in (:quote, :block)
-        # Check that the Hamiltonian calls have the correct parameters
+        # Check that the Poisson calls have the correct parameters
         result_str = string(result)
         Test.@test occursin("autonomous = false", result_str)
         Test.@test occursin("variable = true", result_str)
+        Test.@test occursin("Poisson", result_str)
+        Test.@test occursin("__check_bracket_consistency", result_str)
 
         # Test non-bracket expression (should return unchanged)
         other_expr = :(x + y)
-        result = CTFlows.__transform_lie_poisson_expression(other_expr, true, false)
+        result = CTFlows.__transform_lie_poisson_expression(other_expr, true, false, false, false)
         Test.@test result == other_expr
 
         # Test nested expressions (the function works on single nodes)
         nested_expr = :([F0, F1] + [F2, F3])
         # Test individual components
         first_bracket = :([F0, F1])
-        result = CTFlows.__transform_lie_poisson_expression(first_bracket, true, false)
-        Test.@test result == :(CTFlows.Lie(F0, F1))
+        result = CTFlows.__transform_lie_poisson_expression(first_bracket, true, false, false, false)
+        Test.@test result.head in (:quote, :block)
+        result_str = string(result)
+        Test.@test occursin("_Lie_bracket", result_str)
 
         second_bracket = :([F2, F3])
-        result = CTFlows.__transform_lie_poisson_expression(second_bracket, true, false)
-        Test.@test result == :(CTFlows.Lie(F2, F3))
+        result = CTFlows.__transform_lie_poisson_expression(second_bracket, true, false, false, false)
+        Test.@test result.head in (:quote, :block)
+        result_str = string(result)
+        Test.@test occursin("_Lie_bracket", result_str)
     end
 
     @testset "Error cases for @Lie macro" begin
@@ -957,5 +1112,135 @@ function test_differential_geometry()
         # Test with VectorField and Hamiltonian functions
         Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F0, F1] + {f, g}
         Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [f, g] + {F0, F1}  # This should fail at runtime but we want the mixing error
+    end
+
+    @testset "lie macro consistency checks" begin
+        # Create test VectorFields and Hamiltonians with different TD/VD combinations
+        F_auto = VectorField(x -> [x[2], -x[1]])  # Autonomous, Fixed
+        F_nonaut = VectorField((t, x) -> [x[2], -x[1]]; autonomous=false)  # NonAutonomous, Fixed
+        F_fixed = VectorField(x -> [x[2], -x[1]])  # Autonomous, Fixed
+        F_nonfixed = VectorField((x, v) -> [x[2] + v, -x[1]]; variable=true)  # Autonomous, NonFixed
+        
+        H_auto = Hamiltonian((x, p) -> x[1]^2 + p[1]^2)  # Autonomous, Fixed
+        H_nonaut = Hamiltonian((t, x, p) -> x[1]^2 + p[1]^2; autonomous=false)  # NonAutonomous, Fixed
+        H_fixed = Hamiltonian((x, p) -> x[1]^2 + p[1]^2)  # Autonomous, Fixed
+        H_nonfixed = Hamiltonian((x, p, v) -> x[1]^2 + p[1]^2 + v; variable=true)  # Autonomous, NonFixed
+        
+        f_func = x -> [x[2], -x[1]]
+        h_func = (x, p) -> x[1]^2 + p[1]^2
+        
+        # ====================================================================
+        # Lie brackets - TD mismatches
+        # ====================================================================
+        Test.@testset "Lie brackets - TD mismatches" begin
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F_auto, F_nonaut]
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F_nonaut, F_auto]
+        end
+        
+        # ====================================================================
+        # Lie brackets - VD mismatches
+        # ====================================================================
+        Test.@testset "Lie brackets - VD mismatches" begin
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F_fixed, F_nonfixed]
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F_nonfixed, F_fixed]
+        end
+        
+        # ====================================================================
+        # Lie brackets - user args conflict with typed operands
+        # ====================================================================
+        Test.@testset "Lie brackets - user args conflict" begin
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F_auto, F_auto] autonomous=false
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F_nonaut, F_nonaut] autonomous=true
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F_fixed, F_fixed] variable=true
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F_nonfixed, F_nonfixed] variable=false
+        end
+        
+        # ====================================================================
+        # Lie brackets - mixed Function + VectorField conflicts
+        # ====================================================================
+        Test.@testset "Lie brackets - mixed Function + VectorField conflicts" begin
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [f_func, F_nonaut] autonomous=true
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F_auto, f_func] autonomous=false
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [f_func, F_nonfixed] variable=false
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [F_fixed, f_func] variable=true
+        end
+        
+        # ====================================================================
+        # Poisson brackets - TD mismatches
+        # ====================================================================
+        Test.@testset "Poisson brackets - TD mismatches" begin
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie {H_auto, H_nonaut}
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie {H_nonaut, H_auto}
+        end
+        
+        # ====================================================================
+        # Poisson brackets - VD mismatches
+        # ====================================================================
+        Test.@testset "Poisson brackets - VD mismatches" begin
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie {H_fixed, H_nonfixed}
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie {H_nonfixed, H_fixed}
+        end
+        
+        # ====================================================================
+        # Poisson brackets - user args conflict with typed operands
+        # ====================================================================
+        Test.@testset "Poisson brackets - user args conflict" begin
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie {H_auto, H_auto} autonomous=false
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie {H_nonaut, H_nonaut} autonomous=true
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie {H_fixed, H_fixed} variable=true
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie {H_nonfixed, H_nonfixed} variable=false
+        end
+        
+        # ====================================================================
+        # Poisson brackets - mixed Function + Hamiltonian conflicts
+        # ====================================================================
+        Test.@testset "Poisson brackets - mixed Function + Hamiltonian conflicts" begin
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie {h_func, H_nonaut} autonomous=true
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie {H_auto, h_func} autonomous=false
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie {h_func, H_nonfixed} variable=false
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie {H_fixed, h_func} variable=true
+        end
+        
+        # ====================================================================
+        # Nested brackets - errors propagate
+        # ====================================================================
+        Test.@testset "Nested brackets - errors propagate" begin
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [[F_auto, F_nonaut], F_auto]
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie [[F_auto, F_auto], F_nonaut]
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie {{H_auto, H_nonaut}, H_auto}
+            Test.@test_throws CTBase.Exceptions.IncorrectArgument CTFlows.@Lie {{H_auto, H_auto}, H_nonaut}
+        end
+        
+        # ====================================================================
+        # Valid cases (no errors)
+        # ====================================================================
+        Test.@testset "Valid cases - no errors" begin
+            # Same TD/VD, no user args
+            Test.@test CTFlows.@Lie [F_auto, F_auto] isa VectorField
+            Test.@test CTFlows.@Lie [F_nonaut, F_nonaut] isa VectorField
+            Test.@test CTFlows.@Lie [F_fixed, F_fixed] isa VectorField
+            Test.@test CTFlows.@Lie [F_nonfixed, F_nonfixed] isa VectorField
+            
+            # Same TD/VD, consistent user args
+            Test.@test (CTFlows.@Lie [F_auto, F_auto] autonomous=true) isa VectorField
+            Test.@test (CTFlows.@Lie [F_nonaut, F_nonaut] autonomous=false) isa VectorField
+            Test.@test (CTFlows.@Lie [F_fixed, F_fixed] variable=false) isa VectorField
+            Test.@test (CTFlows.@Lie [F_nonfixed, F_nonfixed] variable=true) isa VectorField
+            
+            # Function + typed object (function inherits)
+            Test.@test CTFlows.@Lie [f_func, F_auto] isa VectorField
+            Test.@test CTFlows.@Lie [F_auto, f_func] isa VectorField
+            
+            # Both functions
+            Test.@test CTFlows.@Lie [f_func, f_func] isa VectorField
+            
+            # Poisson valid cases
+            Test.@test CTFlows.@Lie {H_auto, H_auto} isa Hamiltonian
+            Test.@test CTFlows.@Lie {h_func, H_auto} isa Hamiltonian
+            
+            # Nested valid cases
+            Test.@test CTFlows.@Lie [[F_auto, F_auto], F_auto] isa VectorField
+            Test.@test CTFlows.@Lie {{H_nonaut, H_nonaut}, H_nonaut} isa Hamiltonian
+        end
     end
 end # test_differential_geometry
