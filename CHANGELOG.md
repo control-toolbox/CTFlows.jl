@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.19-beta] - 2026-04-02
+
+### Added
+- Runtime consistency checks for @Lie macro to prevent silent argument ignoring
+- Automatic detection of TimeDependence (TD) and VariableDependence (VD) mismatches between typed operands
+- Clear error messages when user-provided autonomous/variable arguments conflict with operand types
+- Support for mixed Function + VectorField/Hamiltonian combinations with proper validation
+
+### Changed
+- Modified __parse_lie_args() to track which arguments user explicitly provided
+- Added _get_TD() and _get_VD() accessor functions for runtime type parameter extraction
+- Created __check_bracket_consistency() function for centralized validation logic
+- Updated __transform_lie_poisson_expression() to call consistency checks before bracket computation
+- Enhanced @Lie macro to pass has_autonomous and has_variable flags to validation logic
+
+### Fixed
+- Fixed issue where autonomous/variable keyword arguments were silently ignored when used with already typed VectorField/Hamiltonian operands
+- Fixed test syntax errors with parentheses for macro + isa expressions
+- Improved error handling with clear IncorrectArgument messages instead of cryptic MethodErrors
+
+### Test
+- Added 47 comprehensive test scenarios covering all TD/VD combinations
+- Tests include TD mismatches, VD mismatches, user argument conflicts, mixed types, and nested brackets
+- All error cases provide clear, descriptive error messages
+
 ## [0.8.18] - 2026-04-01
 
 ### Changed

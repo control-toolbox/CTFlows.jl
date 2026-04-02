@@ -74,6 +74,64 @@ function Lift(
 end
 
 # ---------------------------------------------------------------------------
+# Runtime accessor functions for TimeDependence and VariableDependence
+# Used for consistency checking in the @Lie macro
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the `TimeDependence` type from an `AbstractVectorField`.
+
+Returns the type parameter `TD` (either `Autonomous` or `NonAutonomous`).
+"""
+_get_TD(::AbstractVectorField{TD,VD}) where {TD,VD} = TD
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the `TimeDependence` type from an `AbstractHamiltonian`.
+
+Returns the type parameter `TD` (either `Autonomous` or `NonAutonomous`).
+"""
+_get_TD(::AbstractHamiltonian{TD,VD}) where {TD,VD} = TD
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the `TimeDependence` type from a plain `Function`.
+
+Returns `nothing` since plain functions don't have type parameters.
+"""
+_get_TD(::Function) = nothing
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the `VariableDependence` type from an `AbstractVectorField`.
+
+Returns the type parameter `VD` (either `Fixed` or `NonFixed`).
+"""
+_get_VD(::AbstractVectorField{TD,VD}) where {TD,VD} = VD
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the `VariableDependence` type from an `AbstractHamiltonian`.
+
+Returns the type parameter `VD` (either `Fixed` or `NonFixed`).
+"""
+_get_VD(::AbstractHamiltonian{TD,VD}) where {TD,VD} = VD
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the `VariableDependence` type from a plain `Function`.
+
+Returns `nothing` since plain functions don't have type parameters.
+"""
+_get_VD(::Function) = nothing
+
+# ---------------------------------------------------------------------------
 # Lie derivative of a scalar function along a vector field or a function: L_X(f) = X⋅f
 
 # (postulate)
@@ -255,9 +313,7 @@ julia> Lie(X, Y)([1, 2])
 function Lie(
     X::VectorField{<:Function,Autonomous,V}, Y::VectorField{<:Function,Autonomous,V}
 )::VectorField{<:Function,Autonomous,V} where {V<:VariableDependence}
-    return VectorField(
-        (x, args...) -> (X ⅋ Y)(x, args...) - (Y ⅋ X)(x, args...), Autonomous, V
-    )
+    return _Lie_bracket(X, Y)
 end
 
 """
@@ -276,9 +332,142 @@ julia> Lie(X, Y)(1, [1, 2], 1)
 function Lie(
     X::VectorField{<:Function,NonAutonomous,V}, Y::VectorField{<:Function,NonAutonomous,V}
 )::VectorField{<:Function,NonAutonomous,V} where {V<:VariableDependence}
+    return _Lie_bracket(X, Y)
+end
+
+# ---------------------------------------------------------------------------
+# Internal Lie bracket function for macro support
+# This internal function supports automatic wrapping of plain functions into VectorField objects
+# and handles mixed types (Function + VectorField), similar to how Poisson handles Hamiltonians.
+
+"""
+$(TYPEDSIGNATURES)
+
+Internal Lie bracket for two vector fields in the autonomous case.
+
+This is the core implementation used by both `Lie` and the `@Lie` macro.
+
+# Arguments
+- `X::VectorField{<:Function,Autonomous,V}`: First vector field
+- `Y::VectorField{<:Function,Autonomous,V}`: Second vector field
+
+# Returns
+- `VectorField{<:Function,Autonomous,V}`: The Lie bracket `[X, Y]`
+
+See also: [`Lie`](@ref), [`@Lie`](@ref)
+"""
+function _Lie_bracket(
+    X::VectorField{<:Function,Autonomous,V}, Y::VectorField{<:Function,Autonomous,V}
+)::VectorField{<:Function,Autonomous,V} where {V<:VariableDependence}
+    return VectorField(
+        (x, args...) -> (X ⅋ Y)(x, args...) - (Y ⅋ X)(x, args...), Autonomous, V
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Internal Lie bracket for two vector fields in the non-autonomous case.
+
+This is the core implementation used by both `Lie` and the `@Lie` macro.
+
+# Arguments
+- `X::VectorField{<:Function,NonAutonomous,V}`: First vector field
+- `Y::VectorField{<:Function,NonAutonomous,V}`: Second vector field
+
+# Returns
+- `VectorField{<:Function,NonAutonomous,V}`: The Lie bracket `[X, Y]`
+
+See also: [`Lie`](@ref), [`@Lie`](@ref)
+"""
+function _Lie_bracket(
+    X::VectorField{<:Function,NonAutonomous,V}, Y::VectorField{<:Function,NonAutonomous,V}
+)::VectorField{<:Function,NonAutonomous,V} where {V<:VariableDependence}
     return VectorField(
         (t, x, args...) -> (X ⅋ Y)(t, x, args...) - (Y ⅋ X)(t, x, args...), NonAutonomous, V
     )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Internal Lie bracket for two plain functions.
+
+Automatically wraps both functions in `VectorField` objects with the specified time and variable dependence.
+
+# Arguments
+- `f::Function`: First function representing a vector field
+- `g::Function`: Second function representing a vector field
+- `autonomous::Bool=true`: Whether the functions are time-independent
+- `variable::Bool=false`: Whether the functions depend on an auxiliary variable `v`
+
+# Returns
+- A `VectorField` representing the Lie bracket `[f, g]`
+
+# Example
+```julia-repl
+julia> f = x -> [x[2], -x[1]]
+julia> g = x -> [x[1], x[2]]
+julia> bracket = CTFlows._Lie_bracket(f, g)
+julia> bracket([1, 2])
+2-element Vector{Float64}:
+  3.0
+ -3.0
+```
+
+See also: [`Lie`](@ref), [`@Lie`](@ref)
+"""
+function _Lie_bracket(
+    f::Function, g::Function; autonomous::Bool=__autonomous(), variable::Bool=__variable()
+)
+    return _Lie_bracket(
+        VectorField(f; autonomous=autonomous, variable=variable),
+        VectorField(g; autonomous=autonomous, variable=variable),
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Internal Lie bracket for a plain function and a vector field.
+
+Automatically wraps the function in a `VectorField` with time and variable dependence inferred from the second argument.
+
+# Arguments
+- `f::Function`: Function representing a vector field
+- `g::AbstractVectorField{TD,VD}`: Vector field
+
+# Returns
+- A `VectorField` representing the Lie bracket `[f, g]`
+
+See also: [`Lie`](@ref), [`@Lie`](@ref)
+"""
+function _Lie_bracket(
+    f::Function, g::AbstractVectorField{TD,VD}
+) where {TD<:TimeDependence,VD<:VariableDependence}
+    return _Lie_bracket(VectorField(f, TD, VD), g)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Internal Lie bracket for a vector field and a plain function.
+
+Automatically wraps the function in a `VectorField` with time and variable dependence inferred from the first argument.
+
+# Arguments
+- `f::AbstractVectorField{TD,VD}`: Vector field
+- `g::Function`: Function representing a vector field
+
+# Returns
+- A `VectorField` representing the Lie bracket `[f, g]`
+
+See also: [`Lie`](@ref), [`@Lie`](@ref)
+"""
+function _Lie_bracket(
+    f::AbstractVectorField{TD,VD}, g::Function
+) where {TD<:TimeDependence,VD<:VariableDependence}
+    return _Lie_bracket(f, VectorField(g, TD, VD))
 end
 
 # ---------------------------------------------------------------------------
@@ -522,39 +711,53 @@ $(TYPEDSIGNATURES)
 
 Helper function to parse keyword arguments for the `@Lie` macro.
 
-This function parses the keyword arguments and returns the autonomous and variable flags.
+This function parses the keyword arguments and returns the autonomous and variable flags,
+along with flags indicating whether each argument was explicitly provided by the user.
 If an invalid argument is encountered, it returns an error expression that can be thrown.
 
 # Arguments
 - `args...`: Variable arguments passed to the macro
 
 # Returns
-- `Tuple{Bool, Bool, Union{Expr, Nothing}}`: 
+- `Tuple{Bool, Bool, Bool, Bool, Union{Expr, Nothing}}`: 
   - `autonomous`: Whether the system is time-independent
   - `variable`: Whether the system depends on an extra variable `v`
+  - `has_autonomous`: Whether the user explicitly provided the `autonomous` argument
+  - `has_variable`: Whether the user explicitly provided the `variable` argument
   - `error_expr`: An expression to throw an error if invalid arguments are found, or `nothing` if parsing succeeded
 
 # Examples
 ```julia
-julia> autonomous, variable, error = CTFlows.__parse_lie_args()
-(true, false, nothing)
+julia> autonomous, variable, has_autonomous, has_variable, error = CTFlows.__parse_lie_args()
+(true, false, false, false, nothing)
 
-julia> autonomous, variable, error = CTFlows.__parse_lie_args(:(autonomous = false))
-(false, false, nothing)
+julia> autonomous, variable, has_autonomous, has_variable, error = CTFlows.__parse_lie_args(:(autonomous = false))
+(false, false, true, false, nothing)
 
-julia> autonomous, variable, error = CTFlows.__parse_lie_args(:(invalid_arg = true))
-(true, true, :(throw(CTBase.Exceptions.IncorrectArgument("Invalid argument: invalid_arg = true"))))
+julia> autonomous, variable, has_autonomous, has_variable, error = CTFlows.__parse_lie_args(:(autonomous = false), :(variable = true))
+(false, true, true, true, nothing)
+
+julia> autonomous, variable, has_autonomous, has_variable, error = CTFlows.__parse_lie_args(:(invalid_arg = true))
+(true, false, false, false, :(throw(CTBase.Exceptions.IncorrectArgument("Invalid argument: invalid_arg = true"))))
 ```
 """
 function __parse_lie_args(args...)
     autonomous = true
     variable = false
+    has_autonomous = false
+    has_variable = false
     error_expr = nothing
 
     for arg in args
         @match arg begin
-            :(autonomous = $a) => (autonomous = a)
-            :(variable = $a) => (variable = a)
+            :(autonomous = $a) => begin
+                autonomous = a
+                has_autonomous = true
+            end
+            :(variable = $a) => begin
+                variable = a
+                has_variable = true
+            end
             _ => begin
                 error_expr = :(throw(
                     CTBase.Exceptions.IncorrectArgument("Invalid argument: $($(arg))"),
@@ -564,7 +767,87 @@ function __parse_lie_args(args...)
         end
     end
 
-    return autonomous, variable, error_expr
+    return autonomous, variable, has_autonomous, has_variable, error_expr
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Check consistency between bracket operands and user-specified `autonomous`/`variable` arguments.
+
+This function validates that:
+1. Both operands have matching `TimeDependence` (if both are typed objects)
+2. Both operands have matching `VariableDependence` (if both are typed objects)
+3. User-specified `autonomous` matches operands' `TimeDependence` (if provided)
+4. User-specified `variable` matches operands' `VariableDependence` (if provided)
+
+# Arguments
+- `a`: First bracket operand (Function, AbstractVectorField, or AbstractHamiltonian)
+- `b`: Second bracket operand (Function, AbstractVectorField, or AbstractHamiltonian)
+- `has_autonomous::Bool`: Whether user explicitly provided `autonomous` argument
+- `autonomous::Bool`: User-specified autonomous value
+- `has_variable::Bool`: Whether user explicitly provided `variable` argument
+- `variable::Bool`: User-specified variable value
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: If any consistency check fails
+
+# Examples
+```julia
+julia> F1 = VectorField(x -> [x[2], -x[1]])  # Autonomous, Fixed
+julia> F2 = VectorField((t, x) -> [x[2], -x[1]]; autonomous=false)  # NonAutonomous, Fixed
+julia> CTFlows.__check_bracket_consistency(F1, F2, false, true, false, false)
+ERROR: IncorrectArgument: Mismatched time dependence: first operand is Autonomous, second is NonAutonomous.
+
+julia> CTFlows.__check_bracket_consistency(F1, F1, true, false, false, false)
+ERROR: IncorrectArgument: autonomous=false conflicts with first operand which is Autonomous.
+
+julia> CTFlows.__check_bracket_consistency(F1, F1, false, true, false, false)  # OK, no error
+```
+"""
+function __check_bracket_consistency(
+    a, b,
+    has_autonomous::Bool, autonomous::Bool,
+    has_variable::Bool, variable::Bool,
+)
+    TD_a, TD_b = _get_TD(a), _get_TD(b)
+    VD_a, VD_b = _get_VD(a), _get_VD(b)
+
+    # Check operands match each other
+    if TD_a !== nothing && TD_b !== nothing && TD_a !== TD_b
+        throw(CTBase.Exceptions.IncorrectArgument(
+            "Mismatched time dependence: first operand is $TD_a, second is $TD_b."
+        ))
+    end
+    if VD_a !== nothing && VD_b !== nothing && VD_a !== VD_b
+        throw(CTBase.Exceptions.IncorrectArgument(
+            "Mismatched variable dependence: first operand is $VD_a, second is $VD_b."
+        ))
+    end
+
+    # Check user-specified args match operands (only if explicitly provided)
+    if has_autonomous
+        expected_TD = autonomous ? Autonomous : NonAutonomous
+        for (TD, label) in ((TD_a, "first"), (TD_b, "second"))
+            if TD !== nothing && TD !== expected_TD
+                throw(CTBase.Exceptions.IncorrectArgument(
+                    "autonomous=$autonomous conflicts with $label operand which is $TD."
+                ))
+            end
+        end
+    end
+    if has_variable
+        expected_VD = variable ? NonFixed : Fixed
+        for (VD, label) in ((VD_a, "first"), (VD_b, "second"))
+            if VD !== nothing && VD !== expected_VD
+                throw(CTBase.Exceptions.IncorrectArgument(
+                    "variable=$variable conflicts with $label operand which is $VD."
+                ))
+            end
+        end
+    end
+
+    return nothing
 end
 
 """
@@ -573,10 +856,11 @@ $(TYPEDSIGNATURES)
 Helper function to transform Lie and Poisson bracket expressions into their corresponding function calls.
 
 This function walks through an expression and transforms:
-- Lie bracket notation `[a, b]` into `CTFlows.Lie(a, b)` calls
-- Poisson bracket notation `{c, d}` into `CTFlows.Poisson(c, d)` calls with appropriate Hamiltonian wrapping
+- Lie bracket notation `[a, b]` into `CTFlows._Lie_bracket(a, b)` calls with runtime type checks
+- Poisson bracket notation `{c, d}` into `CTFlows.Poisson(c, d)` calls with runtime type checks
 
-For Poisson brackets with raw functions, it generates runtime type checks to determine whether to wrap the functions in `Hamiltonian` objects.
+For both Lie and Poisson brackets with raw functions, it generates runtime type checks to determine 
+whether to pass `autonomous` and `variable` keyword arguments.
 
 # Arguments
 - `x::Expr`: An expression to transform
@@ -584,44 +868,55 @@ For Poisson brackets with raw functions, it generates runtime type checks to det
 - `variable::Bool`: Whether the system depends on an extra variable `v`
 
 # Returns
-- `Expr`: The transformed expression with Lie/Poisson function calls
+- `Expr`: The transformed expression with `_Lie_bracket` or `Poisson` function calls
 
 # Examples
 ```julia
 julia> expr = :([F0, F1])
 julia> result = CTFlows.__transform_lie_poisson_expression(expr, true, false)
-:(CTFlows.Lie(F0, F1))
+quote
+    if isa(F0, Function) && isa(F1, Function)
+        CTFlows._Lie_bracket(F0, F1; autonomous=true, variable=false)
+    else
+        CTFlows._Lie_bracket(F0, F1)
+    end
+end
 
 julia> expr = :({f, g})
 julia> result = CTFlows.__transform_lie_poisson_expression(expr, true, false)
 quote
     if isa(f, Function) && isa(g, Function)
-        CTFlows.Poisson(CTFlows.Hamiltonian(f; autonomous=true, variable=false), CTFlows.Hamiltonian(g; autonomous=true, variable=false))
+        CTFlows.Poisson(f, g; autonomous=true, variable=false)
     else
         CTFlows.Poisson(f, g)
     end
 end
 ```
 """
-function __transform_lie_poisson_expression(x, autonomous, variable)
+function __transform_lie_poisson_expression(x, autonomous, variable, has_autonomous, has_variable)
     is_lie, is_poisson = @capture(x, [a_, b_]), @capture(x, {c_, d_})
 
     if is_lie
-        # Just return Lie call with interpolation
-        return :(CTFlows.Lie($a, $b))
+        # Return a quoted block with if...else for runtime type checks
+        return quote
+            if isa($a, Function) && isa($b, Function)
+                CTFlows._Lie_bracket($a, $b; autonomous=$(autonomous), variable=$(variable))
+            else
+                CTFlows.__check_bracket_consistency(
+                    $a, $b, $(has_autonomous), $(autonomous), $(has_variable), $(variable)
+                )
+                CTFlows._Lie_bracket($a, $b)
+            end
+        end
     elseif is_poisson
         # Return a quoted block with if...else for runtime type checks
         return quote
             if isa($c, Function) && isa($d, Function)
-                CTFlows.Poisson(
-                    CTFlows.Hamiltonian(
-                        $c; autonomous=($(autonomous)), variable=($(variable))
-                    ),
-                    CTFlows.Hamiltonian(
-                        $d; autonomous=($(autonomous)), variable=($(variable))
-                    ),
-                )
+                CTFlows.Poisson($c, $d; autonomous=$(autonomous), variable=$(variable))
             else
+                CTFlows.__check_bracket_consistency(
+                    $c, $d, $(has_autonomous), $(autonomous), $(has_variable), $(variable)
+                )
                 CTFlows.Poisson($c, $d)
             end
         end
@@ -648,15 +943,16 @@ This macro provides a unified notation to define recursively nested Lie brackets
 - `@Lie expr autonomous = false`: specifies a non-autonomous system.
 - `@Lie expr variable = true`: indicates presence of an auxiliary variable `v`.
 
-Keyword-like arguments can be provided to control the evaluation context for Poisson brackets with raw functions:
+Keyword-like arguments can be provided to control the evaluation context for both Lie and Poisson brackets with raw functions:
 - `autonomous = Bool`: whether the system is time-independent (default: `true`).
 - `variable = Bool`: whether the system depends on an extra variable `v` (default: `false`).
 
 ### Bracket type detection
 
-- Square brackets `[...]` denote Lie brackets between `VectorField` objects.
-- Curly brackets `{...}` denote Poisson brackets between `Hamiltonian` objects or between raw functions.
-- The macro automatically dispatches to `Lie` or `Poisson` depending on the input pattern.
+- Square brackets `[...]` denote Lie brackets between `VectorField` objects or raw functions.
+- Curly brackets `{...}` denote Poisson brackets between `Hamiltonian` objects or raw functions.
+- The macro automatically dispatches to `_Lie_bracket` or `Poisson` depending on the input pattern.
+- Raw functions are automatically wrapped in `VectorField` or `Hamiltonian` objects as needed.
 
 ### Return
 
@@ -684,6 +980,30 @@ julia> F1 = VectorField((t, x, v) -> [0, -x[3], x[2]]; autonomous=false, variabl
 julia> F2 = VectorField((t, x, v) -> [x[3], 0, -x[1]]; autonomous=false, variable=true)
 julia> L = @Lie [F1, F2]
 julia> L(0.0, [1.0, 2.0, 3.0], 1.0)
+3-element Vector{Float64}:
+  2.0
+ -1.0
+  0.0
+```
+
+#### ■ Lie brackets from raw functions (autonomous)
+```julia-repl
+julia> f1 = x -> [0, -x[3], x[2]]
+julia> f2 = x -> [x[3], 0, -x[1]]
+julia> L = @Lie [f1, f2]
+julia> L([1.0, 2.0, 3.0])
+3-element Vector{Float64}:
+  2.0
+ -1.0
+  0.0
+```
+
+#### ■ Lie bracket with non-autonomous raw functions
+```julia-repl
+julia> f1 = (t, x) -> [t, -x[3], x[2]]
+julia> f2 = (t, x) -> [x[3], 0, -x[1]]
+julia> L = @Lie [f1, f2] autonomous = false
+julia> L(1.0, [1.0, 2.0, 3.0])
 3-element Vector{Float64}:
   2.0
  -1.0
@@ -772,7 +1092,7 @@ julia> @Lie {H1, H2}(x, p) + 2 * {H2, H3}(x, p)
 """
 macro Lie(expr::Expr, args...)
     # Parse keyword arguments
-    autonomous, variable, error_expr = __parse_lie_args(args...)
+    autonomous, variable, has_autonomous, has_variable, error_expr = __parse_lie_args(args...)
 
     # Return early if there was an error in argument parsing
     if error_expr !== nothing
@@ -790,6 +1110,6 @@ macro Lie(expr::Expr, args...)
 
     # Transform Lie and Poisson bracket expressions
     return esc(
-        postwalk(e -> __transform_lie_poisson_expression(e, autonomous, variable), expr)
+        postwalk(e -> __transform_lie_poisson_expression(e, autonomous, variable, has_autonomous, has_variable), expr)
     )
 end
