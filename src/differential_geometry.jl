@@ -806,23 +806,25 @@ julia> CTFlows.__check_bracket_consistency(F1, F1, false, true, false, false)  #
 ```
 """
 function __check_bracket_consistency(
-    a, b,
-    has_autonomous::Bool, autonomous::Bool,
-    has_variable::Bool, variable::Bool,
+    a, b, has_autonomous::Bool, autonomous::Bool, has_variable::Bool, variable::Bool
 )
     TD_a, TD_b = _get_TD(a), _get_TD(b)
     VD_a, VD_b = _get_VD(a), _get_VD(b)
 
     # Check operands match each other
     if TD_a !== nothing && TD_b !== nothing && TD_a !== TD_b
-        throw(CTBase.Exceptions.IncorrectArgument(
-            "Mismatched time dependence: first operand is $TD_a, second is $TD_b."
-        ))
+        throw(
+            CTBase.Exceptions.IncorrectArgument(
+                "Mismatched time dependence: first operand is $TD_a, second is $TD_b."
+            ),
+        )
     end
     if VD_a !== nothing && VD_b !== nothing && VD_a !== VD_b
-        throw(CTBase.Exceptions.IncorrectArgument(
-            "Mismatched variable dependence: first operand is $VD_a, second is $VD_b."
-        ))
+        throw(
+            CTBase.Exceptions.IncorrectArgument(
+                "Mismatched variable dependence: first operand is $VD_a, second is $VD_b."
+            ),
+        )
     end
 
     # Check user-specified args match operands (only if explicitly provided)
@@ -830,9 +832,11 @@ function __check_bracket_consistency(
         expected_TD = autonomous ? Autonomous : NonAutonomous
         for (TD, label) in ((TD_a, "first"), (TD_b, "second"))
             if TD !== nothing && TD !== expected_TD
-                throw(CTBase.Exceptions.IncorrectArgument(
-                    "autonomous=$autonomous conflicts with $label operand which is $TD."
-                ))
+                throw(
+                    CTBase.Exceptions.IncorrectArgument(
+                        "autonomous=$autonomous conflicts with $label operand which is $TD."
+                    ),
+                )
             end
         end
     end
@@ -840,9 +844,11 @@ function __check_bracket_consistency(
         expected_VD = variable ? NonFixed : Fixed
         for (VD, label) in ((VD_a, "first"), (VD_b, "second"))
             if VD !== nothing && VD !== expected_VD
-                throw(CTBase.Exceptions.IncorrectArgument(
-                    "variable=$variable conflicts with $label operand which is $VD."
-                ))
+                throw(
+                    CTBase.Exceptions.IncorrectArgument(
+                        "variable=$variable conflicts with $label operand which is $VD."
+                    ),
+                )
             end
         end
     end
@@ -893,14 +899,18 @@ quote
 end
 ```
 """
-function __transform_lie_poisson_expression(x, autonomous, variable, has_autonomous, has_variable)
+function __transform_lie_poisson_expression(
+    x, autonomous, variable, has_autonomous, has_variable
+)
     is_lie, is_poisson = @capture(x, [a_, b_]), @capture(x, {c_, d_})
 
     if is_lie
         # Return a quoted block with if...else for runtime type checks
         return quote
             if isa($a, Function) && isa($b, Function)
-                CTFlows._Lie_bracket($a, $b; autonomous=$(autonomous), variable=$(variable))
+                CTFlows._Lie_bracket(
+                    $a, $b; autonomous=($(autonomous)), variable=($(variable))
+                )
             else
                 CTFlows.__check_bracket_consistency(
                     $a, $b, $(has_autonomous), $(autonomous), $(has_variable), $(variable)
@@ -912,7 +922,7 @@ function __transform_lie_poisson_expression(x, autonomous, variable, has_autonom
         # Return a quoted block with if...else for runtime type checks
         return quote
             if isa($c, Function) && isa($d, Function)
-                CTFlows.Poisson($c, $d; autonomous=$(autonomous), variable=$(variable))
+                CTFlows.Poisson($c, $d; autonomous=($(autonomous)), variable=($(variable)))
             else
                 CTFlows.__check_bracket_consistency(
                     $c, $d, $(has_autonomous), $(autonomous), $(has_variable), $(variable)
@@ -1092,7 +1102,9 @@ julia> @Lie {H1, H2}(x, p) + 2 * {H2, H3}(x, p)
 """
 macro Lie(expr::Expr, args...)
     # Parse keyword arguments
-    autonomous, variable, has_autonomous, has_variable, error_expr = __parse_lie_args(args...)
+    autonomous, variable, has_autonomous, has_variable, error_expr = __parse_lie_args(
+        args...
+    )
 
     # Return early if there was an error in argument parsing
     if error_expr !== nothing
@@ -1110,6 +1122,11 @@ macro Lie(expr::Expr, args...)
 
     # Transform Lie and Poisson bracket expressions
     return esc(
-        postwalk(e -> __transform_lie_poisson_expression(e, autonomous, variable, has_autonomous, has_variable), expr)
+        postwalk(
+            e -> __transform_lie_poisson_expression(
+                e, autonomous, variable, has_autonomous, has_variable
+            ),
+            expr,
+        ),
     )
 end
