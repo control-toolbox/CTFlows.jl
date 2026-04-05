@@ -51,6 +51,39 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Construct and return the Hamiltonian for a control-free optimal control problem.
+
+The Hamiltonian is built using model dynamics (and possibly a running cost) without a control law.
+The control is passed as an empty array `Float64[]` to the dynamics.
+
+Returns a tuple `(H, u_dummy)` where `H` is the Hamiltonian function and `u_dummy` is a 
+dummy control law that returns `Float64[]`.
+
+# Arguments
+- `ocp::CTModels.Model`: The optimal control problem (must have `EmptyControlModel`).
+
+# Returns
+- `(H, u_dummy)`: Tuple containing the Hamiltonian and a dummy control law.
+
+# Notes
+This method is used for parameter estimation and optimal design problems without control variables.
+
+See also: [`makeH`](@ref)
+"""
+function __create_hamiltonian(ocp::CTModels.Model)
+    f, f⁰, p⁰, s = __get_data_for_ocp_flow(ocp)
+    @assert f ≠ nothing "no dynamics in ocp"
+    h = Hamiltonian(
+        f⁰ ≠ nothing ? makeH(f, f⁰, p⁰, s) : makeH(f), NonAutonomous, NonFixed
+    )
+    # Create dummy control law that returns Float64[]
+    u_dummy = ControlLaw((t, x, p, v) -> Float64[], NonAutonomous, NonFixed)
+    return h, u_dummy
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Construct and return the Hamiltonian for the given model and control law.
 
 The Hamiltonian is built using model dynamics (and possibly a running cost) and returned as a callable function.
@@ -218,6 +251,86 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Construct the Hamiltonian for a control-free problem with state constraint and multiplier.
+
+The Hamiltonian is built using model dynamics, state constraint, and associated multiplier.
+The control is passed as an empty array `Float64[]` to the dynamics.
+
+# Arguments
+- `ocp::CTModels.Model`: The optimal control problem (must have `EmptyControlModel`).
+- `g::StateConstraint`: State constraint function.
+- `μ::Multiplier`: Multiplier function associated with the constraint.
+
+# Returns
+- `(H, u_dummy)`: Tuple containing the Hamiltonian and a dummy control law.
+
+# Notes
+This method is used for control-free problems with state constraints.
+
+See also: [`makeH`](@ref)
+"""
+function __create_hamiltonian(
+    ocp::CTModels.Model,
+    g::StateConstraint{<:Function,T,V},
+    μ::Multiplier{<:Function,T,V},
+) where {T,V}
+    f, f⁰, p⁰, s = __get_data_for_ocp_flow(ocp)
+    @assert f ≠ nothing "no dynamics in ocp"
+    h = Hamiltonian(
+        f⁰ ≠ nothing ? makeH(f, f⁰, p⁰, s, g, μ) : makeH(f, g, μ),
+        NonAutonomous,
+        NonFixed,
+    )
+    # Create dummy control law that returns Float64[]
+    u_dummy = ControlLaw((t, x, p, v) -> Float64[], NonAutonomous, NonFixed)
+    return h, u_dummy
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Overload for control-free problem with raw constraint and multiplier functions.
+
+Wraps the raw functions into `StateConstraint` and `Multiplier` objects.
+
+# Arguments
+- `ocp::CTModels.Model`: The optimal control problem (must have `EmptyControlModel`).
+- `g::Function`: State constraint function.
+- `μ::Function`: Multiplier function.
+- `autonomous::Bool`: Whether the system is autonomous.
+- `variable::Bool`: Whether the system parameters are variable.
+
+# Returns
+- `(H, u_dummy)`: Tuple containing the Hamiltonian and a dummy control law.
+"""
+function __create_hamiltonian(
+    ocp::CTModels.Model, g::Function, μ::Function; autonomous::Bool, variable::Bool
+)
+    T, V = @match (autonomous, variable) begin
+        (true, false) => (Autonomous, Fixed)
+        (true, true) => (Autonomous, NonFixed)
+        (false, false) => (NonAutonomous, Fixed)
+        _ => (NonAutonomous, NonFixed)
+    end
+    return __create_hamiltonian(ocp, StateConstraint(g, T, V), Multiplier(μ, T, V))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Overload for control-free problem with raw constraint function and typed multiplier.
+
+Wraps the constraint function into a `StateConstraint` object.
+"""
+function __create_hamiltonian(
+    ocp::CTModels.Model, g::Function, μ::Multiplier{<:Function,T,V}; autonomous::Bool, variable::Bool
+) where {T,V}
+    return __create_hamiltonian(ocp, StateConstraint(g, T, V), μ)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Overload that wraps multiplier functions into Multiplier objects.
 """
 function __create_hamiltonian(
@@ -253,6 +366,30 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Construct the Hamiltonian for a control-free problem:
+
+H(t, x, p) = p ⋅ f(t, x, Float64[], v)
+
+The function returns a callable `H(t, x, p, v)` where `v` is an optional additional parameter.
+The control is passed as an empty array `Float64[]`.
+
+# Arguments
+- `f::Dynamics`: System dynamics function.
+
+# Returns
+- A callable Hamiltonian function `H(t, x, p, v)`.
+
+# Notes
+This variant is used for optimal control problems without control variables
+(parameter estimation, optimal design problems).
+"""
+function makeH(f::Dynamics)
+    return (t, x, p, v) -> p' * f(t, x, Float64[], v)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Construct the Hamiltonian:
 
 H(t, x, p) = p ⋅ f(t, x, u(t, x, p))
@@ -261,6 +398,32 @@ The function returns a callable `H(t, x, p, v)` where `v` is an optional additio
 """
 function makeH(f::Dynamics, u::ControlLaw)
     return (t, x, p, v) -> p' * f(t, x, u(t, x, p, v), v)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Construct the Hamiltonian for a control-free problem with Lagrange cost:
+
+H(t, x, p) = p ⋅ f(t, x, Float64[], v) + s p⁰ f⁰(t, x, Float64[], v)
+
+Includes a Lagrange integrand scaled by `p⁰` and sign `s`.
+The control is passed as an empty array `Float64[]`.
+
+# Arguments
+- `f::Dynamics`: System dynamics function.
+- `f⁰::Lagrange`: Lagrange cost integrand.
+- `p⁰::ctNumber`: Constant multiplier for the cost (typically `-1`).
+- `s::ctNumber`: Sign for minimization (`+1`) or maximization (`-1`).
+
+# Returns
+- A callable Hamiltonian function `H(t, x, p, v)`.
+"""
+function makeH(f::Dynamics, f⁰::Lagrange, p⁰::ctNumber, s::ctNumber)
+    function H(t, x, p, v)
+        return p' * f(t, x, Float64[], v) + s * p⁰ * f⁰(t, x, Float64[], v)
+    end
+    return H
 end
 
 """
@@ -283,6 +446,31 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Construct the Hamiltonian for a control-free problem with state constraint:
+
+H(t, x, p) = p ⋅ f(t, x, Float64[], v) + μ(t, x, p) ⋅ g(t, x, v)
+
+Includes state constraints and associated multipliers.
+The control is passed as an empty array `Float64[]`.
+
+# Arguments
+- `f::Dynamics`: System dynamics function.
+- `g::StateConstraint`: State constraint function.
+- `μ::Multiplier`: Multiplier function associated with the constraint.
+
+# Returns
+- A callable Hamiltonian function `H(t, x, p, v)`.
+"""
+function makeH(f::Dynamics, g::StateConstraint, μ::Multiplier)
+    function H(t, x, p, v)
+        return p' * f(t, x, Float64[], v) + μ(t, x, p, v)' * g(t, x, v)
+    end
+    return H
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Construct the Hamiltonian:
 
 H(t, x, p) = p ⋅ f(t, x, u(t, x, p)) + μ(t, x, p) ⋅ g(t, x, u(t, x, p))
@@ -293,6 +481,45 @@ function makeH(f::Dynamics, u::ControlLaw, g::MixedConstraint, μ::Multiplier)
     function H(t, x, p, v)
         u_ = u(t, x, p, v)
         return p' * f(t, x, u_, v) + μ(t, x, p, v)' * g(t, x, u_, v)
+    end
+    return H
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Construct the Hamiltonian for a control-free problem with Lagrange cost and state constraint:
+
+H(t, x, p) = p ⋅ f(t, x, Float64[], v) 
+           + s p⁰ f⁰(t, x, Float64[], v) 
+           + μ(t, x, p) ⋅ g(t, x, v)
+
+Combines integrand cost and state constraints.
+The control is passed as an empty array `Float64[]`.
+
+# Arguments
+- `f::Dynamics`: System dynamics function.
+- `f⁰::Lagrange`: Lagrange cost integrand.
+- `p⁰::ctNumber`: Constant multiplier for the cost (typically `-1`).
+- `s::ctNumber`: Sign for minimization (`+1`) or maximization (`-1`).
+- `g::StateConstraint`: State constraint function.
+- `μ::Multiplier`: Multiplier function associated with the constraint.
+
+# Returns
+- A callable Hamiltonian function `H(t, x, p, v)`.
+"""
+function makeH(
+    f::Dynamics,
+    f⁰::Lagrange,
+    p⁰::ctNumber,
+    s::ctNumber,
+    g::StateConstraint,
+    μ::Multiplier,
+)
+    function H(t, x, p, v)
+        return p' * f(t, x, Float64[], v) +
+               s * p⁰ * f⁰(t, x, Float64[], v) +
+               μ(t, x, p, v)' * g(t, x, v)
     end
     return H
 end
