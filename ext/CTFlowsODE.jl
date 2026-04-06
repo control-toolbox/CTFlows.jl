@@ -78,6 +78,47 @@ Used to distinguish time-dependent systems or flows with control/state parameter
 """
 const __variable = CTFlows.__variable
 
+# --------------------------------------------------------------------------------------------------
+# Type aliases for control-free flow dispatch
+
+"""
+$(TYPEDEF)
+
+Type alias for optimal control problems without control variables.
+
+Used for dispatch in control-free flow construction methods.
+"""
+const ControlFreeModel = CTModels.Model{
+    <:CTModels.OCP.TimeDependence,
+    <:CTModels.OCP.AbstractTimesModel,
+    <:CTModels.OCP.AbstractStateModel,
+    CTModels.EmptyControlModel,
+    <:CTModels.OCP.AbstractVariableModel,
+    <:Function,
+    <:CTModels.OCP.AbstractObjectiveModel,
+    <:CTModels.OCP.AbstractConstraintsModel,
+    <:Union{Function,Nothing},
+}
+
+"""
+$(TYPEDEF)
+
+Type alias for optimal control problems with control variables.
+
+Used to restrict existing flow methods that require a control law.
+"""
+const WithControlModel = CTModels.Model{
+    <:CTModels.OCP.TimeDependence,
+    <:CTModels.OCP.AbstractTimesModel,
+    <:CTModels.OCP.AbstractStateModel,
+    CTModels.ControlModel,
+    <:CTModels.OCP.AbstractVariableModel,
+    <:Function,
+    <:CTModels.OCP.AbstractObjectiveModel,
+    <:CTModels.OCP.AbstractConstraintsModel,
+    <:Union{Function,Nothing},
+}
+
 # --------------------------------------------------------------------------------------------#
 include("ext_default.jl")
 include("ext_types.jl")

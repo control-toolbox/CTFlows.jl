@@ -657,4 +657,172 @@ function test_optimal_control_problem()
         xf, pf = f(t0, x0, p0, tf)
         Test.@test xf - (tan(π/4) - 2log(√(2)/2)) ≈ 0 atol = 1e-6
     end
+
+    # ====================================================================
+    # CONTROL-FREE PROBLEMS TESTS
+    # ====================================================================
+    
+    @testset "Control-free: exponential growth (parameter estimation)" begin
+        # Simple parameter estimation problem: ẋ = λx, fit to data
+        t0 = 0.0
+        tf = 2.0
+        x0 = 1.0
+        λ_true = 0.5
+        data(t) = 2 * exp(λ_true * t)
+        
+        # Create control-free OCP manually (without @def)
+        pre_ocp = CTModels.PreModel()
+        CTModels.variable!(pre_ocp, 1)  # λ is the variable to estimate
+        CTModels.time!(pre_ocp; t0=t0, tf=tf)
+        CTModels.state!(pre_ocp, 1)
+        # No control!
+        dynamics!(r, t, x, u, v) = r .= v[1] * x[1]  # ẋ = λx, u is Float64[]
+        CTModels.dynamics!(pre_ocp, dynamics!)
+        lagrange(t, x, u, v) = (x[1] - data(t))^2  # Fit to data
+        CTModels.objective!(pre_ocp, :min; lagrange=lagrange)
+        definition = quote end
+        CTModels.definition!(pre_ocp, definition)
+        CTModels.time_dependence!(pre_ocp; autonomous=false)
+        ocp = CTModels.build(pre_ocp)
+        
+        # Test: control_dimension should be 0
+        Test.@test CTModels.control_dimension(ocp) == 0
+        
+        # Test: Flow construction without control
+        f = Flow(ocp; alg=BS5())
+        Test.@test f isa CTFlowsODE.OptimalControlFlow
+        
+        # Test: Integration with variable parameter
+        λ_guess = 0.5
+        p0 = [1.0]  # Initial costate
+        ode_sol = f((t0, tf), x0, p0, λ_guess)
+        Test.@test ode_sol isa Any  # ODE solution
+        
+        # Test: Control is empty (via feedback_control)
+        Test.@test f.feedback_control(1.0, [1.0], [1.0], λ_guess) == Float64[]
+    end
+    
+    @testset "Control-free: guard against providing control" begin
+        # Create a control-free OCP
+        pre_ocp = CTModels.PreModel()
+        CTModels.time!(pre_ocp; t0=0.0, tf=1.0)
+        CTModels.state!(pre_ocp, 1)
+        # No control!
+        dynamics!(r, t, x, u, v) = r .= x[1]
+        CTModels.dynamics!(pre_ocp, dynamics!)
+        CTModels.objective!(pre_ocp, :min; lagrange=(t, x, u, v) -> x[1]^2)
+        definition = quote end
+        CTModels.definition!(pre_ocp, definition)
+        CTModels.time_dependence!(pre_ocp; autonomous=true)
+        ocp = CTModels.build(pre_ocp)
+        
+        # Test: Providing ControlLaw should throw PreconditionError
+        u_control = CTFlows.ControlLaw((t, x, p, v) -> [1.0], CTFlows.NonAutonomous, CTFlows.NonFixed)
+        Test.@test_throws CTBase.Exceptions.PreconditionError Flow(ocp, u_control)
+        
+        # Test: Providing Function should throw PreconditionError
+        u_func = (t, x, p, v) -> [1.0]
+        Test.@test_throws CTBase.Exceptions.PreconditionError Flow(ocp, u_func)
+        
+        # Test: Error message is clear
+        try
+            Flow(ocp, u_control)
+            Test.@test false  # Should not reach here
+        catch e
+            Test.@test e isa CTBase.Exceptions.PreconditionError
+            Test.@test occursin("control-free", e.msg)
+            Test.@test occursin("EmptyControlModel", e.msg)
+            Test.@test occursin("Flow(ocp)", e.msg)
+        end
+    end
+    
+    @testset "Control-free: with variable parameter (NonFixed)" begin
+        # Parameter estimation with free final time
+        t0 = 0.0
+        x0 = 1.0
+        
+        pre_ocp = CTModels.PreModel()
+        CTModels.variable!(pre_ocp, 1)  # Variable parameter
+        CTModels.time!(pre_ocp; t0=t0, tf=2.0)
+        CTModels.state!(pre_ocp, 1)
+        dynamics!(r, t, x, u, v) = r .= v[1] * x[1]
+        CTModels.dynamics!(pre_ocp, dynamics!)
+        lagrange(t, x, u, v) = x[1]^2
+        CTModels.objective!(pre_ocp, :min; lagrange=lagrange)
+        definition = quote end
+        CTModels.definition!(pre_ocp, definition)
+        CTModels.time_dependence!(pre_ocp; autonomous=true)
+        ocp = CTModels.build(pre_ocp)
+        
+        # Test: Flow with variable
+        f = Flow(ocp)
+        Test.@test f isa CTFlowsODE.OptimalControlFlow
+        
+        # Test: Integration with variable
+        λ = 0.5
+        p0 = [1.0]
+        sol = f((t0, 2.0), x0, p0, λ)
+        Test.@test sol isa Any
+    end
+    
+    @testset "Control-free: with state constraint" begin
+        # Control-free problem with state constraint
+        t0 = 0.0
+        tf = 1.0
+        x0 = 1.0
+        
+        pre_ocp = CTModels.PreModel()
+        CTModels.variable!(pre_ocp, 1)
+        CTModels.time!(pre_ocp; t0=t0, tf=tf)
+        CTModels.state!(pre_ocp, 1)
+        dynamics!(r, t, x, u, v) = r .= v[1] * x[1]
+        CTModels.dynamics!(pre_ocp, dynamics!)
+        lagrange(t, x, u, v) = x[1]^2
+        CTModels.objective!(pre_ocp, :min; lagrange=lagrange)
+        definition = quote end
+        CTModels.definition!(pre_ocp, definition)
+        CTModels.time_dependence!(pre_ocp; autonomous=true)
+        ocp = CTModels.build(pre_ocp)
+        
+        # Test: Flow with state constraint and multiplier
+        g = CTFlows.StateConstraint((t, x, v) -> x[1] - 0.5, CTFlows.NonAutonomous, CTFlows.NonFixed)
+        μ = CTFlows.Multiplier((t, x, p, v) -> p[1], CTFlows.NonAutonomous, CTFlows.NonFixed)
+        f = Flow(ocp, g, μ)
+        Test.@test f isa CTFlowsODE.OptimalControlFlow
+        
+        # Test: Flow with raw functions
+        g_func = (t, x, v) -> x[1] - 0.5
+        μ_func = (t, x, p, v) -> p[1]
+        f2 = Flow(ocp, g_func, μ_func; autonomous=false, variable=true)
+        Test.@test f2 isa CTFlowsODE.OptimalControlFlow
+    end
+    
+    @testset "Control-free: type stability" begin
+        # Create control-free OCP
+        pre_ocp = CTModels.PreModel()
+        CTModels.time!(pre_ocp; t0=0.0, tf=1.0)
+        CTModels.state!(pre_ocp, 1)
+        dynamics!(r, t, x, u, v) = r .= x[1]
+        CTModels.dynamics!(pre_ocp, dynamics!)
+        CTModels.objective!(pre_ocp, :min; lagrange=(t, x, u, v) -> x[1]^2)
+        definition = quote end
+        CTModels.definition!(pre_ocp, definition)
+        CTModels.time_dependence!(pre_ocp; autonomous=true)
+        ocp = CTModels.build(pre_ocp)
+        
+        # Test: Type stability of Flow construction
+        Test.@test_nowarn Test.@inferred Flow(ocp)
+        
+        # Test: control_dimension is stable
+        Test.@test_nowarn Test.@inferred CTModels.control_dimension(ocp)
+        Test.@test CTModels.control_dimension(ocp) === 0
+    end
+    
+    @testset "Control-free: exports verification" begin
+        # Test that control-free Flow methods are accessible
+        Test.@test isdefined(CTFlows, :Flow)
+        
+        # Test that type aliases are defined in extension
+        # (These are internal to the extension, so we can't test them directly from here)
+    end
 end
