@@ -44,8 +44,6 @@ julia> sol = f((0.0, 10.0), x0, p0, λ)
 
 This method is for control-free problems only. For problems with control variables,
 use `Flow(ocp, u)` instead.
-
-See also: [`Flow(::ControlFreeModel, ::StateConstraint, ::Multiplier)`](@ref)
 """
 function CTFlows.Flow(
     ocp::ControlFreeModel;
@@ -100,8 +98,6 @@ julia> f = Flow(ocp, ControlLaw(u))
 # Notes
 
 For control-free problems (parameter estimation, optimal design), use `Flow(ocp)` instead.
-
-See also: [`Flow(::ControlFreeModel)`](@ref)
 """
 function CTFlows.Flow(
     ocp::WithControlModel,
@@ -233,8 +229,6 @@ julia> g = StateConstraint((x, v) -> x[1] - 1.0)
 julia> μ = Multiplier((x, p, v) -> p[1])
 julia> f = Flow(ocp, g, μ)
 ```
-
-See also: [`Flow(::ControlFreeModel)`](@ref)
 """
 function CTFlows.Flow(
     ocp::ControlFreeModel,
