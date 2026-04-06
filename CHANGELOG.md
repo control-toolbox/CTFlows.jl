@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.23-beta] - 2026-04-06
+
+### Added
+
+- `augment=true` keyword for `OptimalControlFlow` point evaluation
+- Computes costate `pv(tf)` associated with variable `v` with initial condition `pv(t0) = 0`
+- Implementation uses `Flow(Hamiltonian(H_aug))` to avoid `::ctVector` type constraints
+- Returns triple `(xf, pf, pvf)` when `augment=true`, standard `(xf, pf)` when `augment=false`
+- Support for scalar and vector states and variables with automatic type handling
+- Comprehensive test suite with 55 tests covering all combinations and edge cases
+
+### Changed
+
+- Modified `OptimalControlFlow` to store Hamiltonian for augmented system construction
+- Updated `__ocp_Flow` to pass Hamiltonian to constructor
+- Updated `concatenate` functions to preserve Hamiltonian parameter
+- Fixed scalar/vector assignment issues in `rhs_augmented` using explicit loops
+
+### Fixed
+
+- Resolved `ForwardDiff.Dual` type conversion errors with `::ctVector` constraint in `Dynamics`
+- Fixed `copyto!` broadcast errors when variable dimension is 1 (scalar)
+- Proper error handling for `augment=true` on Fixed models and trajectory calls
+
+### Test
+
+- Added 55 comprehensive tests in `test_augmented_flow.jl`
+- Tests include unit tests for `rhs_augmented`, reference implementations, error cases, and mathematical correctness
+- All tests pass with both scalar and vector variables
+- Zero regression in existing functionality
+
 ## [0.8.21-beta] - 2026-04-06
 
 ### Added

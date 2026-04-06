@@ -433,5 +433,5 @@ function __ocp_Flow(
         saveat=saveat,
         internalnorm=internalnorm,
     )
-    return OptimalControlFlow(f, rhs!, u, ocp, kwargs_Flow)
+    return OptimalControlFlow(f, rhs!, u, ocp, h, kwargs_Flow)
 end
