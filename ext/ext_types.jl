@@ -285,6 +285,7 @@ struct OptimalControlFlow{VD} <: AbstractFlow{DCoTangent,CoTangent}
     jumps::Vector{Tuple{Time,Costate}} # specific jumps the integrator must perform
     feedback_control::CTFlows.ControlLaw # the control law in feedback form, that is u(t, x, p, v)
     ocp::CTModels.Model # the optimal control problem
+    hamiltonian::CTFlows.Hamiltonian # the Hamiltonian function (for augmented flow computation)
     kwargs_Flow::Any     #
 
     # constructor
@@ -293,6 +294,7 @@ struct OptimalControlFlow{VD} <: AbstractFlow{DCoTangent,CoTangent}
         rhs!::Function,
         u::CTFlows.ControlLaw,
         ocp::CTModels.Model,
+        h::CTFlows.Hamiltonian,
         kwargs_Flow,
         tstops::Times=Vector{Time}(),
         jumps::Vector{Tuple{Time,Costate}}=Vector{Tuple{Time,Costate}}(),
@@ -302,14 +304,20 @@ struct OptimalControlFlow{VD} <: AbstractFlow{DCoTangent,CoTangent}
         else
             CTFlows.NonFixed
         end
-        return new{VD}(f, rhs!, tstops, jumps, u, ocp, kwargs_Flow)
+        return new{VD}(f, rhs!, tstops, jumps, u, ocp, h, kwargs_Flow)
     end
 end
 
 # call F.f
 function (F::OptimalControlFlow{CTFlows.Fixed})(
-    t0::Time, x0::State, p0::Costate, tf::Time; kwargs...
+    t0::Time, x0::State, p0::Costate, tf::Time; augment::Bool=false, kwargs...
 )
+    if augment
+        throw(CTBase.Exceptions.PreconditionError(
+            "augment=true requires a problem with variables (variable_dimension > 0). " *
+            "This problem has no variables (Fixed model)."
+        ))
+    end
     return F.f(
         t0,
         x0,
@@ -328,25 +336,63 @@ function (F::OptimalControlFlow{CTFlows.NonFixed})(
     p0::Costate,
     tf::Time,
     v::Variable=__thevariable(t0, x0, p0, tf, F.ocp);
+    augment::Bool=false,
     kwargs...,
 )
-    return F.f(
-        t0,
-        x0,
-        p0,
-        tf,
-        v;
-        jumps=F.jumps,
-        _t_stops_interne=F.tstops,
-        DiffEqRHS=F.rhs!,
-        kwargs...,
-    )
+    if !augment
+        # Standard flow (no augmentation)
+        return F.f(
+            t0,
+            x0,
+            p0,
+            tf,
+            v;
+            jumps=F.jumps,
+            _t_stops_interne=F.tstops,
+            DiffEqRHS=F.rhs!,
+            kwargs...,
+        )
+    else
+        # Augmented flow: compute pv(tf) with pv(t0) = 0
+        # Build augmented Hamiltonian: H_aug(t, [x;v], [p;pv]) = H(t, x, p, v)
+        n = length(x0)
+        m = length(v)
+        h = F.hamiltonian
+        H_aug = CTFlows.Hamiltonian(
+            (t, z_aug, p_aug) -> h(t, z_aug[rg(1, n)], p_aug[rg(1, n)], z_aug[rg(n + 1, n + m)]);
+            autonomous=false, variable=false)
+        f_aug = CTFlows.Flow(H_aug; F.kwargs_Flow...)
+
+        # Construct augmented initial conditions
+        z_aug0 = [x0; v]
+        p_aug0 = [p0; zeros(eltype(p0), m)]
+
+        # Integrate and extract results using rg (handles scalar/vector)
+        # Pass jumps and tstops to preserve F's context
+        z_augf, p_augf = f_aug(
+            t0, z_aug0, p_aug0, tf;
+            jumps=F.jumps,
+            _t_stops_interne=F.tstops,
+            DiffEqRHS=f_aug.rhs!,
+            kwargs...)
+        xf = z_augf[rg(1, n)]
+        pf = p_augf[rg(1, n)]
+        pvf = p_augf[rg(n + 1, n + m)]
+
+        return xf, pf, pvf
+    end
 end
 
 # call F.f and then, construct an optimal control solution
 function (F::OptimalControlFlow{CTFlows.Fixed})(
-    tspan::Tuple{Time,Time}, x0::State, p0::Costate; kwargs...
+    tspan::Tuple{Time,Time}, x0::State, p0::Costate; augment::Bool=false, kwargs...
 )
+    if augment
+        throw(CTBase.Exceptions.PreconditionError(
+            "augment=true is only supported for point evaluation f(t0, x0, p0, tf, v), " *
+            "not for trajectory computation f((t0, tf), x0, p0, v)."
+        ))
+    end
     ode_sol = F.f(
         tspan, x0, p0; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs!, kwargs...
     )
@@ -361,8 +407,15 @@ function (F::OptimalControlFlow{CTFlows.NonFixed})(
     x0::State,
     p0::Costate,
     v::Variable=__thevariable(tspan[1], x0, p0, tspan[2], F.ocp);
+    augment::Bool=false,
     kwargs...,
 )
+    if augment
+        throw(CTBase.Exceptions.PreconditionError(
+            "augment=true is only supported for point evaluation f(t0, x0, p0, tf, v), " *
+            "not for trajectory computation f((t0, tf), x0, p0, v)."
+        ))
+    end
     ode_sol = F.f(
         tspan,
         x0,

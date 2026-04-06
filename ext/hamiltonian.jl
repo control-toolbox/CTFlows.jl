@@ -116,6 +116,63 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Constructs the right-hand side of the augmented Hamiltonian system.
+
+Given a Hamiltonian `h(t, x, p, v)`, returns an in-place function `rhs_aug!(dz_aug, z_aug, _, t)`
+for the augmented system where `z_aug = [x; v; p; pv]` with:
+- `dx/dt = ∂H/∂p`
+- `dv/dt = 0` (v is constant)
+- `dp/dt = -∂H/∂x`
+- `dpv/dt = -∂H/∂v`
+
+This is used when `augment=true` to compute the costate `pv` associated with the variable `v`.
+
+# Arguments
+- `h`: a `CTFlows.Hamiltonian` defining the scalar Hamiltonian.
+- `n::Int`: state dimension.
+- `m::Int`: variable dimension.
+
+# Returns
+- `rhs_aug!`: a function for use in an ODE solver for the augmented system.
+
+# Notes
+The initial condition for `pv` is assumed to be zero: `pv(t0) = 0`.
+The returned `pvf = pv(tf)` satisfies: `pvf = -∫_{t0}^{tf} ∂H/∂v dt`.
+"""
+function rhs_augmented(h::CTFlows.AbstractHamiltonian, n::Int, m::Int)
+    function rhs_aug!(dz_aug::DCoTangent, z_aug::CoTangent, _, t::Time)
+        # Extract components: z_aug = [x; v; p; pv]
+        # rg returns scalar if dimension is 1, vector otherwise
+        x = z_aug[rg(1, n)]
+        v = z_aug[rg(n + 1, n + m)]
+        p = z_aug[rg(n + m + 1, n + m + n)]
+        pv = z_aug[rg(n + m + n + 1, n + m + n + m)]
+        
+        # Compute ∂H/∂x and ∂H/∂p using gradient on [x; p]
+        foo_xp(z) = h(t, z[rg(1, n)], z[rg(n + 1, 2n)], v)
+        dh_xp = ctgradient(foo_xp, [x; p])
+        
+        # Compute ∂H/∂v using ctgradient (handles scalar and vector)
+        foo_v(v_) = h(t, x, p, v_)
+        dh_v = ctgradient(foo_v, v)
+        
+        # Set derivatives
+        dz_aug[rg(1, n)] = dh_xp[rg(n + 1, 2n)]           # dx/dt = ∂H/∂p
+        for i in (n + 1):(n + m)                             # dv/dt = 0
+            dz_aug[i] = 0
+        end
+        dz_aug[rg(n + m + 1, n + m + n)] = -dh_xp[rg(1, n)] # dp/dt = -∂H/∂x
+        dz_aug[rg(n + m + n + 1, n + m + n + m)] = -dh_v   # dpv/dt = -∂H/∂v
+        
+        return nothing
+    end
+    return rhs_aug!
+end
+
+# --------------------------------------------------------------------------------------------
+"""
+$(TYPEDSIGNATURES)
+
 Constructs a Hamiltonian flow from a scalar Hamiltonian.
 
 This method builds a numerical integrator that simulates the evolution of a Hamiltonian system
