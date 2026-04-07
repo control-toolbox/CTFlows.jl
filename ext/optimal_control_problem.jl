@@ -55,7 +55,9 @@ function CTFlows.Flow(
     kwargs_Flow...,
 )
     h, u_dummy = __create_hamiltonian(ocp)
-    return __ocp_Flow(ocp, h, u_dummy, alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...)
+    return __ocp_Flow(
+        ocp, h, u_dummy, alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...
+    )
 end
 
 """
@@ -122,16 +124,14 @@ Guard method that prevents providing a control law to a control-free problem.
 
 - `CTBase.Exceptions.PreconditionError`: Always throws with a clear error message.
 """
-function CTFlows.Flow(
-    ocp::ControlFreeModel,
-    u::CTFlows.ControlLaw;
-    kwargs...,
-)
-    throw(CTBase.Exceptions.PreconditionError(
-        "Cannot provide a control law to a control-free optimal control problem. " *
-        "The problem has EmptyControlModel (no control variable). " *
-        "Use Flow(ocp) instead to create a flow for this control-free problem."
-    ))
+function CTFlows.Flow(ocp::ControlFreeModel, u::CTFlows.ControlLaw; kwargs...)
+    throw(
+        CTBase.Exceptions.PreconditionError(
+            "Cannot provide a control law to a control-free optimal control problem. " *
+            "The problem has EmptyControlModel (no control variable). " *
+            "Use Flow(ocp) instead to create a flow for this control-free problem.",
+        ),
+    )
 end
 
 """
@@ -189,16 +189,14 @@ Guard method that prevents providing a control function to a control-free proble
 
 - `CTBase.Exceptions.PreconditionError`: Always throws with a clear error message.
 """
-function CTFlows.Flow(
-    ocp::ControlFreeModel,
-    u::Function;
-    kwargs...,
-)
-    throw(CTBase.Exceptions.PreconditionError(
-        "Cannot provide a control function to a control-free optimal control problem. " *
-        "The problem has EmptyControlModel (no control variable). " *
-        "Use Flow(ocp) instead to create a flow for this control-free problem."
-    ))
+function CTFlows.Flow(ocp::ControlFreeModel, u::Function; kwargs...)
+    throw(
+        CTBase.Exceptions.PreconditionError(
+            "Cannot provide a control function to a control-free optimal control problem. " *
+            "The problem has EmptyControlModel (no control variable). " *
+            "Use Flow(ocp) instead to create a flow for this control-free problem.",
+        ),
+    )
 end
 
 """
@@ -242,7 +240,9 @@ function CTFlows.Flow(
     kwargs_Flow...,
 ) where {T,V}
     h, u_dummy = __create_hamiltonian(ocp, g, μ)
-    return __ocp_Flow(ocp, h, u_dummy, alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...)
+    return __ocp_Flow(
+        ocp, h, u_dummy, alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...
+    )
 end
 
 """
@@ -289,7 +289,9 @@ function CTFlows.Flow(
     kwargs_Flow...,
 )
     h, u_dummy = __create_hamiltonian(ocp, g, μ; autonomous=autonomous, variable=variable)
-    return __ocp_Flow(ocp, h, u_dummy, alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...)
+    return __ocp_Flow(
+        ocp, h, u_dummy, alg, abstol, reltol, saveat, internalnorm; kwargs_Flow...
+    )
 end
 
 """

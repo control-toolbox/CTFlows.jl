@@ -313,10 +313,12 @@ function (F::OptimalControlFlow{CTFlows.Fixed})(
     t0::Time, x0::State, p0::Costate, tf::Time; augment::Bool=false, kwargs...
 )
     if augment
-        throw(CTBase.Exceptions.PreconditionError(
-            "augment=true requires a problem with variables (variable_dimension > 0). " *
-            "This problem has no variables (Fixed model)."
-        ))
+        throw(
+            CTBase.Exceptions.PreconditionError(
+                "augment=true requires a problem with variables (variable_dimension > 0). " *
+                "This problem has no variables (Fixed model).",
+            ),
+        )
     end
     return F.f(
         t0,
@@ -359,8 +361,11 @@ function (F::OptimalControlFlow{CTFlows.NonFixed})(
         m = length(v)
         h = F.hamiltonian
         H_aug = CTFlows.Hamiltonian(
-            (t, z_aug, p_aug) -> h(t, z_aug[rg(1, n)], p_aug[rg(1, n)], z_aug[rg(n + 1, n + m)]);
-            autonomous=false, variable=false)
+            (t, z_aug, p_aug) ->
+                h(t, z_aug[rg(1, n)], p_aug[rg(1, n)], z_aug[rg(n + 1, n + m)]);
+            autonomous=false,
+            variable=false,
+        )
         f_aug = CTFlows.Flow(H_aug; F.kwargs_Flow...)
 
         # Construct augmented initial conditions
@@ -370,11 +375,15 @@ function (F::OptimalControlFlow{CTFlows.NonFixed})(
         # Integrate and extract results using rg (handles scalar/vector)
         # Pass jumps and tstops to preserve F's context
         z_augf, p_augf = f_aug(
-            t0, z_aug0, p_aug0, tf;
+            t0,
+            z_aug0,
+            p_aug0,
+            tf;
             jumps=F.jumps,
             _t_stops_interne=F.tstops,
             DiffEqRHS=f_aug.rhs!,
-            kwargs...)
+            kwargs...,
+        )
         xf = z_augf[rg(1, n)]
         pf = p_augf[rg(1, n)]
         pvf = p_augf[rg(n + 1, n + m)]
@@ -388,10 +397,12 @@ function (F::OptimalControlFlow{CTFlows.Fixed})(
     tspan::Tuple{Time,Time}, x0::State, p0::Costate; augment::Bool=false, kwargs...
 )
     if augment
-        throw(CTBase.Exceptions.PreconditionError(
-            "augment=true is only supported for point evaluation f(t0, x0, p0, tf, v), " *
-            "not for trajectory computation f((t0, tf), x0, p0, v)."
-        ))
+        throw(
+            CTBase.Exceptions.PreconditionError(
+                "augment=true is only supported for point evaluation f(t0, x0, p0, tf, v), " *
+                "not for trajectory computation f((t0, tf), x0, p0, v).",
+            ),
+        )
     end
     ode_sol = F.f(
         tspan, x0, p0; jumps=F.jumps, _t_stops_interne=F.tstops, DiffEqRHS=F.rhs!, kwargs...
@@ -411,10 +422,12 @@ function (F::OptimalControlFlow{CTFlows.NonFixed})(
     kwargs...,
 )
     if augment
-        throw(CTBase.Exceptions.PreconditionError(
-            "augment=true is only supported for point evaluation f(t0, x0, p0, tf, v), " *
-            "not for trajectory computation f((t0, tf), x0, p0, v)."
-        ))
+        throw(
+            CTBase.Exceptions.PreconditionError(
+                "augment=true is only supported for point evaluation f(t0, x0, p0, tf, v), " *
+                "not for trajectory computation f((t0, tf), x0, p0, v).",
+            ),
+        )
     end
     ode_sol = F.f(
         tspan,

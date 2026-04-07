@@ -147,15 +147,15 @@ function rhs_augmented(h::CTFlows.AbstractHamiltonian, n::Int, m::Int)
         v = z_aug[rg(n + 1, n + m)]
         p = z_aug[rg(n + m + 1, n + m + n)]
         pv = z_aug[rg(n + m + n + 1, n + m + n + m)]
-        
+
         # Compute ∂H/∂x and ∂H/∂p using gradient on [x; p]
         foo_xp(z) = h(t, z[rg(1, n)], z[rg(n + 1, 2n)], v)
         dh_xp = ctgradient(foo_xp, [x; p])
-        
+
         # Compute ∂H/∂v using ctgradient (handles scalar and vector)
         foo_v(v_) = h(t, x, p, v_)
         dh_v = ctgradient(foo_v, v)
-        
+
         # Set derivatives
         dz_aug[rg(1, n)] = dh_xp[rg(n + 1, 2n)]           # dx/dt = ∂H/∂p
         for i in (n + 1):(n + m)                             # dv/dt = 0
@@ -163,7 +163,7 @@ function rhs_augmented(h::CTFlows.AbstractHamiltonian, n::Int, m::Int)
         end
         dz_aug[rg(n + m + 1, n + m + n)] = -dh_xp[rg(1, n)] # dp/dt = -∂H/∂x
         dz_aug[rg(n + m + n + 1, n + m + n + m)] = -dh_v   # dpv/dt = -∂H/∂v
-        
+
         return nothing
     end
     return rhs_aug!
