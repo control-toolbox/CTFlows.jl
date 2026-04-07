@@ -73,9 +73,7 @@ See also: [`makeH`](@ref)
 function __create_hamiltonian(ocp::CTModels.Model)
     f, f⁰, p⁰, s = __get_data_for_ocp_flow(ocp)
     @assert f ≠ nothing "no dynamics in ocp"
-    h = Hamiltonian(
-        f⁰ ≠ nothing ? makeH(f, f⁰, p⁰, s) : makeH(f), NonAutonomous, NonFixed
-    )
+    h = Hamiltonian(f⁰ ≠ nothing ? makeH(f, f⁰, p⁰, s) : makeH(f), NonAutonomous, NonFixed)
     # Create dummy control law that returns Float64[]
     u_dummy = ControlLaw((t, x, p, v) -> Float64[], NonAutonomous, NonFixed)
     return h, u_dummy
@@ -270,16 +268,12 @@ This method is used for control-free problems with state constraints.
 See also: [`makeH`](@ref)
 """
 function __create_hamiltonian(
-    ocp::CTModels.Model,
-    g::StateConstraint{<:Function,T,V},
-    μ::Multiplier{<:Function,T,V},
+    ocp::CTModels.Model, g::StateConstraint{<:Function,T,V}, μ::Multiplier{<:Function,T,V}
 ) where {T,V}
     f, f⁰, p⁰, s = __get_data_for_ocp_flow(ocp)
     @assert f ≠ nothing "no dynamics in ocp"
     h = Hamiltonian(
-        f⁰ ≠ nothing ? makeH(f, f⁰, p⁰, s, g, μ) : makeH(f, g, μ),
-        NonAutonomous,
-        NonFixed,
+        f⁰ ≠ nothing ? makeH(f, f⁰, p⁰, s, g, μ) : makeH(f, g, μ), NonAutonomous, NonFixed
     )
     # Create dummy control law that returns Float64[]
     u_dummy = ControlLaw((t, x, p, v) -> Float64[], NonAutonomous, NonFixed)
@@ -323,7 +317,11 @@ Overload for control-free problem with raw constraint function and typed multipl
 Wraps the constraint function into a `StateConstraint` object.
 """
 function __create_hamiltonian(
-    ocp::CTModels.Model, g::Function, μ::Multiplier{<:Function,T,V}; autonomous::Bool, variable::Bool
+    ocp::CTModels.Model,
+    g::Function,
+    μ::Multiplier{<:Function,T,V};
+    autonomous::Bool,
+    variable::Bool,
 ) where {T,V}
     return __create_hamiltonian(ocp, StateConstraint(g, T, V), μ)
 end
@@ -509,12 +507,7 @@ The control is passed as an empty array `Float64[]`.
 - A callable Hamiltonian function `H(t, x, p, v)`.
 """
 function makeH(
-    f::Dynamics,
-    f⁰::Lagrange,
-    p⁰::ctNumber,
-    s::ctNumber,
-    g::StateConstraint,
-    μ::Multiplier,
+    f::Dynamics, f⁰::Lagrange, p⁰::ctNumber, s::ctNumber, g::StateConstraint, μ::Multiplier
 )
     function H(t, x, p, v)
         return p' * f(t, x, Float64[], v) +

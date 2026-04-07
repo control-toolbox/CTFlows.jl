@@ -29,8 +29,8 @@ function test_augmented_flow()
     @testset "rhs_augmented: direct Hamiltonian, n=2 m=1" begin
         # H(t, x, p, v) = p₁*v*x₁ + p₂*x₂
         h = CTFlows.Hamiltonian(
-            (t, x, p, v) -> p[1] * v * x[1] + p[2] * x[2];
-            autonomous=false, variable=true)
+            (t, x, p, v) -> p[1] * v * x[1] + p[2] * x[2]; autonomous=false, variable=true
+        )
         rhs_aug! = CTFlowsODE.rhs_augmented(h, 2, 1)
 
         # z_aug = [x₁; x₂; v; p₁; p₂; pv] = [2.0; 3.0; 4.0; 5.0; 6.0; 0.0]
@@ -56,8 +56,8 @@ function test_augmented_flow()
     @testset "rhs_augmented: direct Hamiltonian, n=1 m=2" begin
         # H(t, x, p, v) = p * (v₁ + v₂) * x
         h = CTFlows.Hamiltonian(
-            (t, x, p, v) -> p * (v[1] + v[2]) * x;
-            autonomous=false, variable=true)
+            (t, x, p, v) -> p * (v[1] + v[2]) * x; autonomous=false, variable=true
+        )
         rhs_aug! = CTFlowsODE.rhs_augmented(h, 1, 2)
 
         # z_aug = [x; v₁; v₂; p; pv₁; pv₂] = [2.0; 3.0; 4.0; 5.0; 0.0; 0.0]
@@ -85,7 +85,7 @@ function test_augmented_flow()
         CTModels.variable!(pre_ocp, 1)
         CTModels.time!(pre_ocp; t0=0.0, tf=1.0)
         CTModels.state!(pre_ocp, 1)
-        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1] = v[1] * x[1]; r))
+        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1]=v[1] * x[1]; r))
         CTModels.objective!(pre_ocp, :min; lagrange=(t, x, u, v) -> 0.0)
         CTModels.definition!(pre_ocp, quote end)
         CTModels.time_dependence!(pre_ocp; autonomous=true)
@@ -181,14 +181,16 @@ function test_augmented_flow()
         pre_ocp = CTModels.PreModel()
         CTModels.time!(pre_ocp; t0=0.0, tf=1.0)
         CTModels.state!(pre_ocp, 1)
-        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1] = x[1]; r))
+        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1]=x[1]; r))
         CTModels.objective!(pre_ocp, :min; lagrange=(t, x, u, v) -> x[1]^2)
         CTModels.definition!(pre_ocp, quote end)
         CTModels.time_dependence!(pre_ocp; autonomous=true)
         ocp = CTModels.build(pre_ocp)
 
         f = Flow(ocp)
-        Test.@test_throws CTBase.Exceptions.PreconditionError f(0.0, 1.0, 1.0, 1.0; augment=true)
+        Test.@test_throws CTBase.Exceptions.PreconditionError f(
+            0.0, 1.0, 1.0, 1.0; augment=true
+        )
     end
 
     @testset "Errors: augment=true on trajectory call (NonFixed)" begin
@@ -196,28 +198,32 @@ function test_augmented_flow()
         CTModels.variable!(pre_ocp, 1)
         CTModels.time!(pre_ocp; t0=0.0, tf=1.0)
         CTModels.state!(pre_ocp, 1)
-        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1] = v[1] * x[1]; r))
+        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1]=v[1] * x[1]; r))
         CTModels.objective!(pre_ocp, :min; lagrange=(t, x, u, v) -> x[1]^2)
         CTModels.definition!(pre_ocp, quote end)
         CTModels.time_dependence!(pre_ocp; autonomous=true)
         ocp = CTModels.build(pre_ocp)
 
         f = Flow(ocp)
-        Test.@test_throws CTBase.Exceptions.PreconditionError f((0.0, 1.0), 1.0, 1.0, 0.5; augment=true)
+        Test.@test_throws CTBase.Exceptions.PreconditionError f(
+            (0.0, 1.0), 1.0, 1.0, 0.5; augment=true
+        )
     end
 
     @testset "Errors: augment=true on trajectory call (Fixed)" begin
         pre_ocp = CTModels.PreModel()
         CTModels.time!(pre_ocp; t0=0.0, tf=1.0)
         CTModels.state!(pre_ocp, 1)
-        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1] = x[1]; r))
+        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1]=x[1]; r))
         CTModels.objective!(pre_ocp, :min; lagrange=(t, x, u, v) -> x[1]^2)
         CTModels.definition!(pre_ocp, quote end)
         CTModels.time_dependence!(pre_ocp; autonomous=true)
         ocp = CTModels.build(pre_ocp)
 
         f = Flow(ocp)
-        Test.@test_throws CTBase.Exceptions.PreconditionError f((0.0, 1.0), 1.0, 1.0; augment=true)
+        Test.@test_throws CTBase.Exceptions.PreconditionError f(
+            (0.0, 1.0), 1.0, 1.0; augment=true
+        )
     end
 
     # ====================================================================
@@ -230,7 +236,7 @@ function test_augmented_flow()
         CTModels.variable!(pre_ocp, 1)
         CTModels.time!(pre_ocp; t0=0.0, tf=1.0)
         CTModels.state!(pre_ocp, 1)
-        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1] = v[1] * x[1]; r))
+        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1]=v[1] * x[1]; r))
         CTModels.objective!(pre_ocp, :min; lagrange=(t, x, u, v) -> 0.0)
         CTModels.definition!(pre_ocp, quote end)
         CTModels.time_dependence!(pre_ocp; autonomous=true)
@@ -268,7 +274,7 @@ function test_augmented_flow()
         CTModels.variable!(pre_ocp, 1)
         CTModels.time!(pre_ocp; t0=0.0, tf=0.5)
         CTModels.state!(pre_ocp, 2)
-        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1] = x[2]; r[2] = v[1]; r))
+        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1]=x[2]; r[2]=v[1]; r))
         CTModels.objective!(pre_ocp, :min; lagrange=(t, x, u, v) -> 0.0)
         CTModels.definition!(pre_ocp, quote end)
         CTModels.time_dependence!(pre_ocp; autonomous=true)
@@ -299,7 +305,7 @@ function test_augmented_flow()
         CTModels.variable!(pre_ocp, 2)
         CTModels.time!(pre_ocp; t0=0.0, tf=0.5)
         CTModels.state!(pre_ocp, 1)
-        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1] = v[1] + v[2]; r))
+        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1]=v[1] + v[2]; r))
         CTModels.objective!(pre_ocp, :min; lagrange=(t, x, u, v) -> 0.0)
         CTModels.definition!(pre_ocp, quote end)
         CTModels.time_dependence!(pre_ocp; autonomous=true)
@@ -329,7 +335,7 @@ function test_augmented_flow()
         CTModels.variable!(pre_ocp, 1)
         CTModels.time!(pre_ocp; t0=0.0, tf=0.5)
         CTModels.state!(pre_ocp, 1)
-        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1] = v[1] * x[1]; r))
+        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1]=v[1] * x[1]; r))
         CTModels.objective!(pre_ocp, :min; lagrange=(t, x, u, v) -> x[1]^2)
         CTModels.definition!(pre_ocp, quote end)
         CTModels.time_dependence!(pre_ocp; autonomous=true)
@@ -359,7 +365,7 @@ function test_augmented_flow()
         CTModels.variable!(pre_ocp, 1)
         CTModels.time!(pre_ocp; t0=0.0, tf=0.1)
         CTModels.state!(pre_ocp, 1)
-        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1] = v[1] * x[1]; r))
+        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1]=v[1] * x[1]; r))
         CTModels.objective!(pre_ocp, :min; lagrange=(t, x, u, v) -> 0.0)
         CTModels.definition!(pre_ocp, quote end)
         CTModels.time_dependence!(pre_ocp; autonomous=true)
@@ -375,7 +381,7 @@ function test_augmented_flow()
         CTModels.variable!(pre_ocp, 1)
         CTModels.time!(pre_ocp; t0=0.0, tf=0.1)
         CTModels.state!(pre_ocp, 2)
-        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1] = x[2]; r[2] = v[1]; r))
+        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1]=x[2]; r[2]=v[1]; r))
         CTModels.objective!(pre_ocp, :min; lagrange=(t, x, u, v) -> 0.0)
         CTModels.definition!(pre_ocp, quote end)
         CTModels.time_dependence!(pre_ocp; autonomous=true)
@@ -391,7 +397,7 @@ function test_augmented_flow()
         CTModels.variable!(pre_ocp, 2)
         CTModels.time!(pre_ocp; t0=0.0, tf=0.1)
         CTModels.state!(pre_ocp, 1)
-        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1] = v[1] + v[2]; r))
+        CTModels.dynamics!(pre_ocp, (r, t, x, u, v) -> (r[1]=v[1] + v[2]; r))
         CTModels.objective!(pre_ocp, :min; lagrange=(t, x, u, v) -> 0.0)
         CTModels.definition!(pre_ocp, quote end)
         CTModels.time_dependence!(pre_ocp; autonomous=true)

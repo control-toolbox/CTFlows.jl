@@ -661,7 +661,7 @@ function test_optimal_control_problem()
     # # ====================================================================
     # # CONTROL-FREE PROBLEMS TESTS
     # # ====================================================================
-    
+
     # @testset "Control-free: exponential growth (parameter estimation)" begin
     #     # Simple parameter estimation problem: ẋ = λx, fit to data
     #     t0 = 0.0
@@ -669,7 +669,7 @@ function test_optimal_control_problem()
     #     x0 = 1.0
     #     λ_true = 0.5
     #     data(t) = 2 * exp(λ_true * t)
-        
+
     #     # Create control-free OCP manually (without @def)
     #     pre_ocp = CTModels.PreModel()
     #     CTModels.variable!(pre_ocp, 1)  # λ is the variable to estimate
@@ -684,24 +684,24 @@ function test_optimal_control_problem()
     #     CTModels.definition!(pre_ocp, definition)
     #     CTModels.time_dependence!(pre_ocp; autonomous=false)
     #     ocp = CTModels.build(pre_ocp)
-        
+
     #     # Test: control_dimension should be 0
     #     Test.@test CTModels.control_dimension(ocp) == 0
-        
+
     #     # Test: Flow construction without control
     #     f = Flow(ocp; alg=BS5())
     #     Test.@test f isa CTFlowsODE.OptimalControlFlow
-        
+
     #     # Test: Integration with variable parameter
     #     λ_guess = 0.5
     #     p0 = [1.0]  # Initial costate
     #     ode_sol = f((t0, tf), x0, p0, λ_guess)
     #     Test.@test ode_sol isa Any  # ODE solution
-        
+
     #     # Test: Control is empty (via feedback_control)
     #     Test.@test f.feedback_control(1.0, [1.0], [1.0], λ_guess) == Float64[]
     # end
-    
+
     # @testset "Control-free: guard against providing control" begin
     #     # Create a control-free OCP
     #     pre_ocp = CTModels.PreModel()
@@ -715,15 +715,15 @@ function test_optimal_control_problem()
     #     CTModels.definition!(pre_ocp, definition)
     #     CTModels.time_dependence!(pre_ocp; autonomous=true)
     #     ocp = CTModels.build(pre_ocp)
-        
+
     #     # Test: Providing ControlLaw should throw PreconditionError
     #     u_control = CTFlows.ControlLaw((t, x, p, v) -> [1.0], CTFlows.NonAutonomous, CTFlows.NonFixed)
     #     Test.@test_throws CTBase.Exceptions.PreconditionError Flow(ocp, u_control)
-        
+
     #     # Test: Providing Function should throw PreconditionError
     #     u_func = (t, x, p, v) -> [1.0]
     #     Test.@test_throws CTBase.Exceptions.PreconditionError Flow(ocp, u_func)
-        
+
     #     # Test: Error message is clear
     #     try
     #         Flow(ocp, u_control)
@@ -735,12 +735,12 @@ function test_optimal_control_problem()
     #         Test.@test occursin("Flow(ocp)", e.msg)
     #     end
     # end
-    
+
     # @testset "Control-free: with variable parameter (NonFixed)" begin
     #     # Parameter estimation with free final time
     #     t0 = 0.0
     #     x0 = 1.0
-        
+
     #     pre_ocp = CTModels.PreModel()
     #     CTModels.variable!(pre_ocp, 1)  # Variable parameter
     #     CTModels.time!(pre_ocp; t0=t0, tf=2.0)
@@ -753,24 +753,24 @@ function test_optimal_control_problem()
     #     CTModels.definition!(pre_ocp, definition)
     #     CTModels.time_dependence!(pre_ocp; autonomous=true)
     #     ocp = CTModels.build(pre_ocp)
-        
+
     #     # Test: Flow with variable
     #     f = Flow(ocp)
     #     Test.@test f isa CTFlowsODE.OptimalControlFlow
-        
+
     #     # Test: Integration with variable
     #     λ = 0.5
     #     p0 = [1.0]
     #     sol = f((t0, 2.0), x0, p0, λ)
     #     Test.@test sol isa Any
     # end
-    
+
     # @testset "Control-free: with state constraint" begin
     #     # Control-free problem with state constraint
     #     t0 = 0.0
     #     tf = 1.0
     #     x0 = 1.0
-        
+
     #     pre_ocp = CTModels.PreModel()
     #     CTModels.variable!(pre_ocp, 1)
     #     CTModels.time!(pre_ocp; t0=t0, tf=tf)
@@ -783,20 +783,20 @@ function test_optimal_control_problem()
     #     CTModels.definition!(pre_ocp, definition)
     #     CTModels.time_dependence!(pre_ocp; autonomous=true)
     #     ocp = CTModels.build(pre_ocp)
-        
+
     #     # Test: Flow with state constraint and multiplier
     #     g = CTFlows.StateConstraint((t, x, v) -> x[1] - 0.5, CTFlows.NonAutonomous, CTFlows.NonFixed)
     #     μ = CTFlows.Multiplier((t, x, p, v) -> p[1], CTFlows.NonAutonomous, CTFlows.NonFixed)
     #     f = Flow(ocp, g, μ)
     #     Test.@test f isa CTFlowsODE.OptimalControlFlow
-        
+
     #     # Test: Flow with raw functions
     #     g_func = (t, x, v) -> x[1] - 0.5
     #     μ_func = (t, x, p, v) -> p[1]
     #     f2 = Flow(ocp, g_func, μ_func; autonomous=false, variable=true)
     #     Test.@test f2 isa CTFlowsODE.OptimalControlFlow
     # end
-    
+
     # @testset "Control-free: type stability" begin
     #     # Create control-free OCP
     #     pre_ocp = CTModels.PreModel()
@@ -809,33 +809,33 @@ function test_optimal_control_problem()
     #     CTModels.definition!(pre_ocp, definition)
     #     CTModels.time_dependence!(pre_ocp; autonomous=true)
     #     ocp = CTModels.build(pre_ocp)
-        
+
     #     # Test: Type stability of Flow construction
     #     Test.@test_nowarn Test.@inferred Flow(ocp)
-        
+
     #     # Test: control_dimension is stable
     #     Test.@test_nowarn Test.@inferred CTModels.control_dimension(ocp)
     #     Test.@test CTModels.control_dimension(ocp) === 0
     # end
-    
+
     # @testset "Control-free: exports verification" begin
     #     # Test that control-free Flow methods are accessible
     #     Test.@test isdefined(CTFlows, :Flow)
-        
+
     #     # Test that type aliases are defined in extension
     #     # (These are internal to the extension, so we can't test them directly from here)
     # end
-    
+
     # ====================================================================
     # AUGMENTED FLOW TESTS (augment=true)
     # ====================================================================
-    
+
     @testset "Augmented flow: basic functionality" begin
         # Simple control-free problem: ẋ = λx
         t0 = 0.0
         tf = 1.0
         x0 = 1.0
-        
+
         pre_ocp = CTModels.PreModel()
         CTModels.variable!(pre_ocp, 1)  # λ is the variable
         CTModels.time!(pre_ocp; t0=t0, tf=tf)
@@ -848,33 +848,33 @@ function test_optimal_control_problem()
         CTModels.definition!(pre_ocp, definition)
         CTModels.time_dependence!(pre_ocp; autonomous=true)
         ocp = CTModels.build(pre_ocp)
-        
+
         f = Flow(ocp)
         λ = 0.5
         p0 = 1.0
-        
+
         # Test: augment=false returns 2 values
         result_standard = f(t0, x0, p0, tf, λ; augment=false)
         Test.@test result_standard isa Tuple
         Test.@test length(result_standard) == 2
-        
+
         # Test: augment=true returns 3 values
         result_augmented = f(t0, x0, p0, tf, λ; augment=true)
         Test.@test result_augmented isa Tuple
         Test.@test length(result_augmented) == 3
-        
+
         xf, pf, pλf = result_augmented
         Test.@test xf isa Number
         Test.@test pf isa Number
         Test.@test pλf isa Number
     end
-    
+
     @testset "Augmented flow: with control" begin
         # Problem with control and variable
         t0 = 0.0
         tf = 1.0
         x0 = [1.0, 0.0]
-        
+
         pre_ocp = CTModels.PreModel()
         CTModels.variable!(pre_ocp, 1)  # Variable parameter
         CTModels.time!(pre_ocp; t0=t0, tf=tf)
@@ -888,14 +888,14 @@ function test_optimal_control_problem()
         CTModels.definition!(pre_ocp, definition)
         CTModels.time_dependence!(pre_ocp; autonomous=true)
         ocp = CTModels.build(pre_ocp)
-        
+
         # Control law
         u = (x, p, v) -> p[2]
         f = Flow(ocp, u)
-        
+
         λ = 0.1
         p0 = [1.0, 1.0]
-        
+
         # Test: augment=true works with control
         xf, pf, pλf = f(t0, x0, p0, tf, λ; augment=true)
         Test.@test xf isa Vector
@@ -904,7 +904,7 @@ function test_optimal_control_problem()
         Test.@test length(pf) == 2
         Test.@test pλf isa Number
     end
-    
+
     @testset "Augmented flow: scalar vs vector variable" begin
         # Test with scalar variable
         pre_ocp1 = CTModels.PreModel()
@@ -919,11 +919,11 @@ function test_optimal_control_problem()
         CTModels.definition!(pre_ocp1, definition)
         CTModels.time_dependence!(pre_ocp1; autonomous=true)
         ocp1 = CTModels.build(pre_ocp1)
-        
+
         f1 = Flow(ocp1)
         xf1, pf1, pλf1 = f1(0.0, 1.0, 1.0, 1.0, 0.5; augment=true)
         Test.@test pλf1 isa Number
-        
+
         # Test with vector variable
         pre_ocp2 = CTModels.PreModel()
         CTModels.variable!(pre_ocp2, 2)  # Vector
@@ -936,13 +936,13 @@ function test_optimal_control_problem()
         CTModels.definition!(pre_ocp2, definition)
         CTModels.time_dependence!(pre_ocp2; autonomous=true)
         ocp2 = CTModels.build(pre_ocp2)
-        
+
         f2 = Flow(ocp2)
         xf2, pf2, pλf2 = f2(0.0, 1.0, 1.0, 1.0, [0.3, 0.2]; augment=true)
         Test.@test pλf2 isa Vector
         Test.@test length(pλf2) == 2
     end
-    
+
     @testset "Augmented flow: error on Fixed model" begin
         # Create Fixed model (no variables)
         pre_ocp = CTModels.PreModel()
@@ -956,12 +956,14 @@ function test_optimal_control_problem()
         CTModels.definition!(pre_ocp, definition)
         CTModels.time_dependence!(pre_ocp; autonomous=true)
         ocp = CTModels.build(pre_ocp)
-        
+
         f = Flow(ocp)
-        
+
         # Test: augment=true should throw PreconditionError
-        Test.@test_throws CTBase.Exceptions.PreconditionError f(0.0, 1.0, 1.0, 1.0; augment=true)
-        
+        Test.@test_throws CTBase.Exceptions.PreconditionError f(
+            0.0, 1.0, 1.0, 1.0; augment=true
+        )
+
         # Test: error message is clear
         try
             f(0.0, 1.0, 1.0, 1.0; augment=true)
@@ -972,7 +974,7 @@ function test_optimal_control_problem()
             Test.@test occursin("variables", e.msg)
         end
     end
-    
+
     @testset "Augmented flow: error on trajectory call" begin
         # Create NonFixed model
         pre_ocp = CTModels.PreModel()
@@ -987,12 +989,14 @@ function test_optimal_control_problem()
         CTModels.definition!(pre_ocp, definition)
         CTModels.time_dependence!(pre_ocp; autonomous=true)
         ocp = CTModels.build(pre_ocp)
-        
+
         f = Flow(ocp)
-        
+
         # Test: augment=true on trajectory call should throw
-        Test.@test_throws CTBase.Exceptions.PreconditionError f((0.0, 1.0), 1.0, 1.0, 0.5; augment=true)
-        
+        Test.@test_throws CTBase.Exceptions.PreconditionError f(
+            (0.0, 1.0), 1.0, 1.0, 0.5; augment=true
+        )
+
         # Test: error message mentions trajectory
         try
             f((0.0, 1.0), 1.0, 1.0, 0.5; augment=true)
@@ -1003,7 +1007,7 @@ function test_optimal_control_problem()
             Test.@test occursin("trajectory computation", e.msg)
         end
     end
-    
+
     @testset "Augmented flow: mathematical correctness" begin
         # Analytical test: ẋ = λx, H = pλx, ∂H/∂λ = px
         # pλ(tf) = -∫_{t0}^{tf} px dt
@@ -1012,7 +1016,7 @@ function test_optimal_control_problem()
         x0 = 1.0
         λ = 0.5
         p0 = 1.0
-        
+
         pre_ocp = CTModels.PreModel()
         CTModels.variable!(pre_ocp, 1)
         CTModels.time!(pre_ocp; t0=t0, tf=tf)
@@ -1025,18 +1029,18 @@ function test_optimal_control_problem()
         CTModels.definition!(pre_ocp, definition)
         CTModels.time_dependence!(pre_ocp; autonomous=true)
         ocp = CTModels.build(pre_ocp)
-        
+
         f = Flow(ocp)
         xf, pf, pλf = f(t0, x0, p0, tf, λ; augment=true)
-        
+
         # For this system: x(t) = x0*exp(λt), p(t) = p0*exp(-λt)
         # ∂H/∂λ = px = p0*x0*exp(0) = p0*x0
         # pλ(tf) = -∫_{t0}^{tf} p0*x0 dt = -p0*x0*(tf-t0)
         expected_pλf = -p0 * x0 * (tf - t0)
-        
+
         Test.@test pλf ≈ expected_pλf atol=1e-6
     end
-    
+
     @testset "Augmented flow: dimension consistency" begin
         # Test that pvf has correct dimension
         pre_ocp = CTModels.PreModel()
@@ -1045,16 +1049,16 @@ function test_optimal_control_problem()
         CTModels.state!(pre_ocp, 2)
         dynamics!(r, t, x, u, v) = r .= [v[1]*x[1], v[2]*x[2] + v[3]]
         CTModels.dynamics!(pre_ocp, dynamics!)
-        lagrange(t, x, u, v) = sum(x.^2)
+        lagrange(t, x, u, v) = sum(x .^ 2)
         CTModels.objective!(pre_ocp, :min; lagrange=lagrange)
         definition = quote end
         CTModels.definition!(pre_ocp, definition)
         CTModels.time_dependence!(pre_ocp; autonomous=true)
         ocp = CTModels.build(pre_ocp)
-        
+
         f = Flow(ocp)
         xf, pf, pvf = f(0.0, [1.0, 1.0], [1.0, 1.0], 1.0, [0.1, 0.2, 0.3]; augment=true)
-        
+
         Test.@test length(pvf) == 3
         Test.@test length(pvf) == CTModels.variable_dimension(ocp)
     end
