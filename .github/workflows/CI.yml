@@ -6,12 +6,28 @@ on:
       - main
     tags: '*'
   pull_request:
+    types: [labeled, synchronize, opened, reopened]
     
 jobs:
-  call:
+  # Job pour les runners GitHub hosted (ubuntu, windows, macos)
+  test-cpu-github:
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run ci cpu')
     uses: control-toolbox/CTActions/.github/workflows/ci.yml@main
     with:
-      runs_on: '["ubuntu-latest","macos-latest"]'
+      runs_on: '["ubuntu-latest", "macos-latest"]'
+      runner_type: 'github'
+      use_ct_registry: true
+    secrets:
+      SSH_KEY: ${{ secrets.SSH_KEY }}
+
+  # Job pour le runner self-hosted kkt (GPU/CUDA)
+  test-gpu-kkt:
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run ci gpu')
+    uses: control-toolbox/CTActions/.github/workflows/ci.yml@main
+    with:
+      versions: '["1"]'
+      runs_on: '[["kkt"]]'
+      runner_type: 'self-hosted'
       use_ct_registry: true
     secrets:
       SSH_KEY: ${{ secrets.SSH_KEY }}
