@@ -97,6 +97,7 @@ const ControlFreeModel = CTModels.Model{
     <:Function,
     <:CTModels.OCP.AbstractObjectiveModel,
     <:CTModels.OCP.AbstractConstraintsModel,
+    <:CTModels.OCP.AbstractDefinition,
     <:Union{Function,Nothing},
 }
 
@@ -116,6 +117,7 @@ const WithControlModel = CTModels.Model{
     <:Function,
     <:CTModels.OCP.AbstractObjectiveModel,
     <:CTModels.OCP.AbstractConstraintsModel,
+    <:CTModels.OCP.AbstractDefinition,
     <:Union{Function,Nothing},
 }
 

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.24-beta] - 2026-04-20
+
+### Changed
+
+- Version bump to 0.8.24-beta
+- Added `<:CTModels.OCP.AbstractDefinition` parameter to `ControlFreeModel` and `WithControlModel` type aliases
+
 ## [0.8.23] - 2026-04-06
 
 ### Added
