@@ -1,7 +1,7 @@
 name = "CTFlows"
 uuid = "1c39547c-7794-42f7-af83-d98194f657c2"
 authors = ["Olivier Cots <olivier.cots@toulouse-inp.fr>"]
-version = "0.8.24-beta"
+version = "0.8.25"
 
 [deps]
 CTBase = "54762871-cc72-4466-b8e8-f6c8b58076cd"
@@ -34,7 +34,7 @@ test = ["Aqua", "CTParser", "OrdinaryDiffEq", "Plots", "Test", "OrdinaryDiffEqRo
 [compat]
 Aqua = "0.8"
 CTBase = "0.18"
-CTModels = "0.9, 0.10"
+CTModels = "0.10"
 CTParser = "0.8"
 DocStringExtensions = "0.9"
 ForwardDiff = "0.10, 1.0"
