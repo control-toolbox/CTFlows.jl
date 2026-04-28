@@ -1,0 +1,13 @@
+[deps]
+CTBase = "54762871-cc72-4466-b8e8-f6c8b58076cd"
+CTFlows = "1c39547c-7794-42f7-af83-d98194f657c2"
+CTSolvers = "d3e8d392-8e4b-4d9b-8e92-d7d4e3650ef6"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+MarkdownAST = "d0879d2d-cac2-40c8-9cee-1863dc0c7391"
+
+[compat]
+CTBase = "0.18"
+CTSolvers = "0.2"
+Documenter = "1"
+MarkdownAST = "0.1"
+julia = "1.10"

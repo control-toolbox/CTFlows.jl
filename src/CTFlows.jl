@@ -34,17 +34,17 @@ using .Core
 include(joinpath(@__DIR__, "Systems", "Systems.jl"))
 using .Systems
 
-include(joinpath(@__DIR__, "Flows", "Flows.jl"))
-using .Flows
-
-include(joinpath(@__DIR__, "Modelers", "Modelers.jl"))
-using .Modelers
-
 include(joinpath(@__DIR__, "Integrators", "Integrators.jl"))
 using .Integrators
 
 include(joinpath(@__DIR__, "ADBackends", "ADBackends.jl"))
 using .ADBackends
+
+include(joinpath(@__DIR__, "Modelers", "Modelers.jl"))
+using .Modelers
+
+include(joinpath(@__DIR__, "Flows", "Flows.jl"))
+using .Flows
 
 include(joinpath(@__DIR__, "Pipelines", "Pipelines.jl"))
 using .Pipelines

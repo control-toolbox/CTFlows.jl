@@ -3,9 +3,10 @@ module TestFlow
 import Test
 import CTFlows.Systems
 import CTFlows.Flows
+import CTFlows.Integrators
 
-const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
 
 # ==============================================================================
 # Fake types for testing
@@ -33,7 +34,7 @@ end
 """
 Fake integrator for testing Flow.
 """
-struct FakeIntegrator
+struct FakeIntegrator <: Integrators.AbstractODEIntegrator
     result::Any
 end
 

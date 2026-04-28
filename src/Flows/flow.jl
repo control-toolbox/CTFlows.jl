@@ -26,7 +26,7 @@ Flow(system=FakeSystem(n_x=2, n_p=2), integrator=FakeIntegrator)
 
 See also: [`AbstractFlow`](@ref), [`AbstractSystem`](@ref), [`AbstractODEIntegrator`](@ref).
 """
-struct Flow{S<:Systems.AbstractSystem, I} <: AbstractFlow
+struct Flow{S<:Systems.AbstractSystem, I<:Integrators.AbstractODEIntegrator} <: AbstractFlow
     system::S
     integrator::I
 end
