@@ -15,7 +15,7 @@ A major refactoring is planned. The simplest approach is to start from scratch, 
 
 ## Flow Construction
 
-- **Multi-phase flows for concatenation**: to concatenate flows, introduce a multi-phase flow concept. The concatenation is restricted to flows built from the same OCP.
+- **Multi-phase flows for concatenation**: to concatenate flows, introduce a multi-phase flow concept. The concatenation is restricted to flows built from the same OCP. **Note**: Multi-phase design is deferred to a later phase. The current implementation focuses on single-phase flows with abstract types and contract testing. Multi-phase flows will require additional types (e.g., `MultiPhaseSystem`, `MultiPhaseFlow`) and concatenation logic. See the [design document](./design.md) for the planned multi-phase architecture.
 - **Closed- and open-loop encapsulation**: support flows built by encapsulating `DynClosedLoop`, `ClosedLoop`, and `OpenLoop`. See [issue #134](https://github.com/control-toolbox/CTFlows.jl/issues/134), [discussion #144](https://github.com/control-toolbox/CTFlows.jl/discussions/144), and the [review document](https://github.com/control-toolbox/CTFlows.jl/blob/134-dev-add-flow-for-open-closed-loop-control/review.md).
 - **Flows on generic objects**: consider whether to support creating a flow directly from a `Hamiltonian`, an `ODEProblem`, or an `ODEFunction`.
 - **Flow on a control-free OCP**: keep the ability to build a flow on an OCP that has no control (a `ControlFreeModel`). See `ext/optimal_control_problem.jl`.
