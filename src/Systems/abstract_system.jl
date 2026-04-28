@@ -30,13 +30,13 @@ fill `du` in place with the derivative at state `u`, parameters `p`, and time `t
 
 See also: [`AbstractSystem`](@ref).
 """
-function rhs!(sys::AbstractSystem)
+function rhs!(system::AbstractSystem)
     throw(
         Exceptions.NotImplemented(
-            "rhs! not implemented for $(typeof(sys))";
-            required_method = "rhs!(sys::AbstractSystem)",
-            suggestion = "Implement rhs! for $(typeof(sys)) to return the right-hand side function",
-            context = "AbstractSystem - required method implementation",
+            "AbstractSystem rhs! method not implemented";
+            required_method = "rhs!(system::$(typeof(system)))",
+            suggestion = "Return a function (du, u, p, t) -> nothing that fills du in place.",
+            context = "AbstractSystem.rhs! - required method implementation",
         ),
     )
 end
