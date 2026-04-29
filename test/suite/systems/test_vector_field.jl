@@ -129,6 +129,34 @@ function test_vector_field()
                 Test.@test Systems.variable_dependence(sys) === Systems.NonFixed
             end
         end
+
+        # ====================================================================
+        # UNIT TESTS - CTModels-style predicates
+        # ====================================================================
+
+        Test.@testset "CTModels-style predicates" begin
+            Test.@testset "is_autonomous" begin
+                vf_aut = Systems.VectorField(x -> x, Systems.Autonomous, Systems.Fixed)
+                Test.@test Systems.is_autonomous(vf_aut) === true
+                Test.@test Systems.is_nonautonomous(vf_aut) === false
+
+                vf_nonaut = Systems.VectorField((t, x) -> t .* x, Systems.NonAutonomous, Systems.Fixed)
+                Test.@test Systems.is_autonomous(vf_nonaut) === false
+                Test.@test Systems.is_nonautonomous(vf_nonaut) === true
+            end
+
+            Test.@testset "is_variable / has_variable" begin
+                vf_fixed = Systems.VectorField(x -> x, Systems.Autonomous, Systems.Fixed)
+                Test.@test Systems.is_variable(vf_fixed) === false
+                Test.@test Systems.has_variable(vf_fixed) === false
+                Test.@test Systems.is_nonvariable(vf_fixed) === true
+
+                vf_nonfixed = Systems.VectorField((x, v) -> x .+ v, Systems.Autonomous, Systems.NonFixed)
+                Test.@test Systems.is_variable(vf_nonfixed) === true
+                Test.@test Systems.has_variable(vf_nonfixed) === true
+                Test.@test Systems.is_nonvariable(vf_nonfixed) === false
+            end
+        end
     end
 end
 

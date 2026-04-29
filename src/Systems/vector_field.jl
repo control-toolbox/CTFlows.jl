@@ -137,6 +137,84 @@ function variable_dependence(vf::VectorField{<:Any, <:Any, VD}) where {VD <: Var
 end
 
 # =============================================================================
+# CTModels-style predicate methods
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Return true if the VectorField is autonomous (time-independent).
+
+# Returns
+- `Bool`: true if time_dependence is Autonomous.
+"""
+function is_autonomous(vf::VectorField{<:Any, Autonomous, <:Any})
+    return true
+end
+
+function is_autonomous(vf::VectorField{<:Any, NonAutonomous, <:Any})
+    return false
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return true if the VectorField is non-autonomous (time-dependent).
+
+# Returns
+- `Bool`: true if time_dependence is NonAutonomous.
+"""
+function is_nonautonomous(vf::VectorField{<:Any, Autonomous, <:Any})
+    return false
+end
+
+function is_nonautonomous(vf::VectorField{<:Any, NonAutonomous, <:Any})
+    return true
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return true if the VectorField depends on variable parameters.
+
+# Returns
+- `Bool`: true if variable_dependence is NonFixed.
+"""
+function is_variable(vf::VectorField{<:Any, <:Any, NonFixed})
+    return true
+end
+
+function is_variable(vf::VectorField{<:Any, <:Any, Fixed})
+    return false
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Alias for `is_variable` for CTModels compatibility.
+
+# Returns
+- `Bool`: true if variable_dependence is NonFixed.
+"""
+has_variable(vf::VectorField) = is_variable(vf)
+
+"""
+$(TYPEDSIGNATURES)
+
+Return true if the VectorField does not depend on variable parameters.
+
+# Returns
+- `Bool`: true if variable_dependence is Fixed.
+"""
+function is_nonvariable(vf::VectorField{<:Any, <:Any, Fixed})
+    return true
+end
+
+function is_nonvariable(vf::VectorField{<:Any, <:Any, NonFixed})
+    return false
+end
+
+# =============================================================================
 # Base.show
 # =============================================================================
 

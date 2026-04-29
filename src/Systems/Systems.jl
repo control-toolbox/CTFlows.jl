@@ -37,5 +37,6 @@ export AbstractSystem, VectorField, VectorFieldSystem
 export TimeDependence, Autonomous, NonAutonomous
 export VariableDependence, Fixed, NonFixed
 export rhs!, dimensions, build_solution, ode_problem, variable_dependence
+export is_autonomous, is_nonautonomous, is_variable, has_variable, is_nonvariable
 
 end # module Systems
