@@ -72,6 +72,33 @@ function test_build_flow()
                 Test.@test Flows.integrator(flow) === integ
             end
         end
+
+        # ====================================================================
+        # UNIT TESTS - Flow Constructor from VectorField
+        # ====================================================================
+
+        Test.@testset "Flow Constructor from VectorField" begin
+            Test.@testset "builds system then flow" begin
+                vf = Systems.VectorField(x -> -x, Systems.Autonomous, Systems.Fixed)
+                flow = Pipelines.Flow(vf, :sciml)
+                Test.@test flow isa Flows.Flow
+                Test.@test Flows.system(flow) isa Systems.VectorFieldSystem
+            end
+
+            Test.@testset "with options" begin
+                vf = Systems.VectorField(x -> -x, Systems.Autonomous, Systems.Fixed)
+                flow = Pipelines.Flow(vf, :sciml; reltol=1e-8)
+                Test.@test flow isa Flows.Flow
+            end
+
+            Test.@testset "NonFixed VectorField" begin
+                vf = Systems.VectorField((x, v) -> x .+ v, Systems.Autonomous, Systems.NonFixed)
+                flow = Pipelines.Flow(vf, :sciml)
+                Test.@test flow isa Flows.Flow
+                sys = Flows.system(flow)
+                Test.@test Systems.variable_dependence(sys) === Systems.NonFixed
+            end
+        end
     end
 end
 
