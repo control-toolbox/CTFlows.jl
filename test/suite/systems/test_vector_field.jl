@@ -101,15 +101,31 @@ function test_vector_field()
                 Test.@test sys isa Systems.AbstractSystem
             end
 
-            Test.@testset "variable_dependence returns Fixed" begin
+            Test.@testset "trait propagation - Autonomous Fixed" begin
                 vf = Systems.VectorField(x -> x, Systems.Autonomous, Systems.Fixed)
                 sys = Systems.VectorFieldSystem(vf)
+                Test.@test Systems.time_dependence(sys) === Systems.Autonomous
                 Test.@test Systems.variable_dependence(sys) === Systems.Fixed
             end
 
-            Test.@testset "variable_dependence returns NonFixed" begin
+            Test.@testset "trait propagation - NonAutonomous Fixed" begin
+                vf = Systems.VectorField((t, x) -> t .* x, Systems.NonAutonomous, Systems.Fixed)
+                sys = Systems.VectorFieldSystem(vf)
+                Test.@test Systems.time_dependence(sys) === Systems.NonAutonomous
+                Test.@test Systems.variable_dependence(sys) === Systems.Fixed
+            end
+
+            Test.@testset "trait propagation - Autonomous NonFixed" begin
                 vf = Systems.VectorField((x, v) -> x .+ v, Systems.Autonomous, Systems.NonFixed)
                 sys = Systems.VectorFieldSystem(vf)
+                Test.@test Systems.time_dependence(sys) === Systems.Autonomous
+                Test.@test Systems.variable_dependence(sys) === Systems.NonFixed
+            end
+
+            Test.@testset "trait propagation - NonAutonomous NonFixed" begin
+                vf = Systems.VectorField((t, x, v) -> t .* x .+ v, Systems.NonAutonomous, Systems.NonFixed)
+                sys = Systems.VectorFieldSystem(vf)
+                Test.@test Systems.time_dependence(sys) === Systems.NonAutonomous
                 Test.@test Systems.variable_dependence(sys) === Systems.NonFixed
             end
         end
