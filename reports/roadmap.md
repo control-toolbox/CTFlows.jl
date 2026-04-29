@@ -51,3 +51,68 @@ A major refactoring is planned. The simplest approach is to start from scratch, 
 - **Revamp tests and documentation** following the CTBase guides:
   - [Test runner guide](https://control-toolbox.org/CTBase.jl/stable/guide/test-runner.html)
   - [API documentation guide](https://control-toolbox.org/CTBase.jl/stable/guide/api-documentation.html)
+
+---
+
+April 29th, 2026
+
+Actually, we need only one strategy family which will be `AbstractIntegrator`. We will use it to model and solve flows. When calling a flow, we have two possibilities:
+
+- `xf[, pf] = f(t0, x0[, p0], tf)`
+- `sol = f((t0, tf), x0[, p0])`
+
+where `sol` is a solution object that contains the trajectory and possibly the costate as functions of time. We will call `config` either `(t0, x0[, p0], tf)` or `((t0, tf), x0[, p0])`. We could imagine having a struct representing these two different config to dispatch the calls.
+
+So, we will have:
+
+```julia
+function solve(system, config, integrator)
+  f = build_flow(system, integrator)
+  return f(config)
+end
+```
+
+where `integrator` is a strategy, `(system, config)` is the object and `solve` is the action, according to the pattern:
+
+```julia
+action(object, strategies...) → result
+```
+
+- The **object** is the thing being acted upon — a problem, a system, a model.
+- The **strategies** are the configured descriptors that control *how* the action is carried out.
+- The **result** is a new object: a solution, a flow, a trajectory, …
+
+We will have:
+
+```julia
+function (flow::AbstractFlow)(config)
+    r = integrate(system(flow), config, integrator(flow))
+    s = build_solution(r, flow, config)
+    return s
+end
+```
+
+To build a system from a VectorField, a Hamiltonian, an OCP with a control law, etc, we will have a function `build_system` that takes the object and returns a system.
+
+```julia
+system = build_system(object)
+```
+
+When needed, we will have to pass the AD backend to `build_system`:
+
+```julia
+system = build_system(object, ad_backend)
+```
+
+but it is not always needed. For instance, for a VectorField, the AD backend is not needed. Here, there is no strategy involved.
+
+So we need:
+
+- `build_system(object)` for objects that do not need an AD backend
+- `build_system(object, ad_backend)` for objects that need an AD backend
+- we need an abstract type for the system
+- we need an abstract type for the flow
+- we need an abstract type for the solution. We have also CTModels.Solution for a solution of an optimal control problem.
+- we need to define the family `AbstractIntegrator` for the integrator strategy and concrete implementations like `SciMLIntegrator`.
+- `integrate(system, config, integrator)` is the action that integrates the system with the given configuration and integrator.
+- `build_solution(result, flow, config)` is the action that builds a solution from the result of the integration.
