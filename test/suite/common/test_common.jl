@@ -28,6 +28,28 @@ function test_common()
         end
 
         # ====================================================================
+        # UNIT TESTS - Abstract Type
+        # ====================================================================
+
+        Test.@testset "Abstract Type" begin
+            Test.@testset "AbstractConfig is exported" begin
+                Test.@test isdefined(Common, :AbstractConfig)
+            end
+
+            Test.@testset "PointConfig subtypes AbstractConfig" begin
+                config = Common.PointConfig(0.0, [1.0], 1.0)
+                Test.@test config isa Common.AbstractConfig
+                Test.@test Common.PointConfig <: Common.AbstractConfig
+            end
+
+            Test.@testset "TrajectoryConfig subtypes AbstractConfig" begin
+                config = Common.TrajectoryConfig((0.0, 1.0), [1.0])
+                Test.@test config isa Common.AbstractConfig
+                Test.@test Common.TrajectoryConfig <: Common.AbstractConfig
+            end
+        end
+
+        # ====================================================================
         # UNIT TESTS - Config Structures
         # ====================================================================
 
@@ -45,6 +67,33 @@ function test_common()
                 Test.@test config isa Common.TrajectoryConfig
                 Test.@test config.tspan == (0.0, 1.0)
                 Test.@test config.x0 == [1.0, 0.0]
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Display Methods
+        # ====================================================================
+
+        Test.@testset "Display Methods" begin
+            Test.@testset "PointConfig show methods" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                io = IOBuffer()
+                show(io, config)
+                output = String(take!(io))
+                Test.@test occursin("PointConfig", output)
+                Test.@test occursin("t0:", output)
+                Test.@test occursin("x0:", output)
+                Test.@test occursin("tf:", output)
+            end
+
+            Test.@testset "TrajectoryConfig show methods" begin
+                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+                io = IOBuffer()
+                show(io, config)
+                output = String(take!(io))
+                Test.@test occursin("TrajectoryConfig", output)
+                Test.@test occursin("tspan:", output)
+                Test.@test occursin("x0:", output)
             end
         end
     end
