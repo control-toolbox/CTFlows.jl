@@ -23,6 +23,27 @@ function test_vector_field()
                 vf = Systems.VectorField(x -> x, Systems.Autonomous, Systems.Fixed)
                 Test.@test vf isa Systems.VectorField
             end
+
+            Test.@testset "keyword constructor with defaults" begin
+                vf = Systems.VectorField(x -> x)
+                Test.@test vf isa Systems.VectorField
+                Test.@test Systems.time_dependence(vf) === Systems.Autonomous
+                Test.@test Systems.variable_dependence(vf) === Systems.Fixed
+            end
+
+            Test.@testset "keyword constructor with explicit flags" begin
+                vf_autonomous = Systems.VectorField(x -> x; autonomous=true, variable=false)
+                Test.@test Systems.time_dependence(vf_autonomous) === Systems.Autonomous
+                Test.@test Systems.variable_dependence(vf_autonomous) === Systems.Fixed
+
+                vf_nonautonomous = Systems.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
+                Test.@test Systems.time_dependence(vf_nonautonomous) === Systems.NonAutonomous
+                Test.@test Systems.variable_dependence(vf_nonautonomous) === Systems.Fixed
+
+                vf_nonfixed = Systems.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
+                Test.@test Systems.time_dependence(vf_nonfixed) === Systems.Autonomous
+                Test.@test Systems.variable_dependence(vf_nonfixed) === Systems.NonFixed
+            end
         end
 
         # ====================================================================
@@ -30,10 +51,23 @@ function test_vector_field()
         # ====================================================================
 
         Test.@testset "Uniform Dispatch" begin
-            Test.@testset "Autonomous Fixed" begin
-                vf = Systems.VectorField(x -> x, Systems.Autonomous, Systems.Fixed)
+            Test.@testset "Scalar case" begin
+                vf = Systems.VectorField(x -> -2x, Systems.Autonomous, Systems.Fixed)
+                result = vf(3.0)
+                Test.@test result == -6.0
+            end
+
+            Test.@testset "Vector case" begin
+                vf = Systems.VectorField(x -> -x, Systems.Autonomous, Systems.Fixed)
                 result = vf([1.0, 2.0])
-                Test.@test result == [1.0, 2.0]
+                Test.@test result == [-1.0, -2.0]
+            end
+
+            Test.@testset "Matrix case" begin
+                vf = Systems.VectorField(x -> -x, Systems.Autonomous, Systems.Fixed)
+                x0 = [1.0 2.0; 3.0 4.0]
+                result = vf(x0)
+                Test.@test result == -x0
             end
 
             Test.@testset "NonAutonomous Fixed" begin

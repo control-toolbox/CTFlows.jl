@@ -1,19 +1,27 @@
 name = "CTFlows"
 uuid = "1c39547c-7794-42f7-af83-d98194f657c2"
-authors = ["Olivier Cots <olivier.cots@toulouse-inp.fr>"]
 version = "0.9.0-DEV"
+authors = ["Olivier Cots <olivier.cots@toulouse-inp.fr>"]
 
 [deps]
 CTBase = "54762871-cc72-4466-b8e8-f6c8b58076cd"
 CTSolvers = "d3e8d392-8e4b-4d9b-8e92-d7d4e3650ef6"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 
-# [weakdeps]
-# OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
-# SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
+[weakdeps]
+OrdinaryDiffEqTsit5 = "b1df2697-797e-41e3-8120-5422d3b24e4a"
 
-# [extensions]
-# CTFlowsSciMLExt = "CTFlowsSciMLExt"
+[extensions]
+CTFlowsSciMLExt = "OrdinaryDiffEqTsit5"
+
+[compat]
+Aqua = "0.8"
+CTBase = "0.18"
+CTSolvers = "0.2"
+DocStringExtensions = "0.9"
+OrdinaryDiffEqTsit5 = "2"
+Test = "1"
+julia = "1.10"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
@@ -21,11 +29,3 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Aqua", "Test"]
-
-[compat]
-Aqua = "0.8"
-CTBase = "0.18"
-CTSolvers = "0.2"
-DocStringExtensions = "0.9"
-Test = "1"
-julia = "1.10"

@@ -44,8 +44,33 @@ end
 $(TYPEDSIGNATURES)
 
 Construct a `VectorField` with trait flags.
+
+# Arguments
+- `f::Function`: The vector-field function.
+- `autonomous::Bool`: If true, system is autonomous (default: `Common.__autonomous()`).
+- `variable::Bool`: If true, system depends on variable parameters (default: `Common.__variable()`).
+
+# Returns
+- `VectorField`: A VectorField with appropriate traits.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Systems, CTFlows.Common
+
+julia> vf = VectorField(x -> -x)  # Uses defaults: autonomous=true, variable=false
+VectorField
+  time_dependence: Autonomous
+  variable_dependence: Fixed
+  function: var"#1"
+
+julia> vf = VectorField((t, x) -> t .* x; autonomous=false)
+VectorField
+  time_dependence: NonAutonomous
+  variable_dependence: Fixed
+  function: var"#2"
+\`\`\`
 """
-function VectorField(f; autonomous::Bool = true, variable::Bool = false)
+function VectorField(f; autonomous::Bool = Common.__autonomous(), variable::Bool = Common.__variable())
     TD = autonomous ? Autonomous : NonAutonomous
     VD = variable ? NonFixed : Fixed
     return VectorField{typeof(f), TD, VD}(f)
@@ -82,3 +107,46 @@ end
 (F::VectorField{<:Any, Autonomous, Fixed})(t, x, v) = F.f(x)
 (F::VectorField{<:Any, NonAutonomous, Fixed})(t, x, v) = F.f(t, x)
 (F::VectorField{<:Any, Autonomous, NonFixed})(t, x, v) = F.f(x, v)
+
+# =============================================================================
+# Trait accessors for VectorField
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the time dependence trait from a VectorField.
+
+# Returns
+- `Type{<:TimeDependence}`: The time dependence trait type (Autonomous or NonAutonomous).
+"""
+function time_dependence(vf::VectorField{<:Any, TD, <:Any}) where {TD <: TimeDependence}
+    return TD
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the variable dependence trait from a VectorField.
+
+# Returns
+- `Type{<:VariableDependence}`: The variable dependence trait type (Fixed or NonFixed).
+"""
+function variable_dependence(vf::VectorField{<:Any, <:Any, VD}) where {VD <: VariableDependence}
+    return VD
+end
+
+# =============================================================================
+# Base.show
+# =============================================================================
+
+function Base.show(io::IO, vf::VectorField{F, TD, VD}) where {F, TD, VD}
+    println(io, "VectorField")
+    println(io, "  time_dependence: ", TD)
+    println(io, "  variable_dependence: ", VD)
+    print(io, "  function: ", typeof(vf.f))
+end
+
+function Base.show(io::IO, ::MIME"text/plain", vf::VectorField{F, TD, VD}) where {F, TD, VD}
+    show(io, vf)
+end

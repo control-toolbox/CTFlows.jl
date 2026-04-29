@@ -67,7 +67,7 @@ function (f::Flow{S})(
 ) where {S <: Systems.VectorFieldSystem{<:Any, <:Any, Systems.Fixed}}
     prob = Systems.ode_problem(f.system, config)
     raw = f.integrator(prob)
-    return Systems.build_solution(raw, f, config)
+    return Systems.build_solution(f.system, raw, f, config)
 end
 
 """
@@ -108,7 +108,7 @@ function (f::Flow{S})(
 ) where {S <: Systems.VectorFieldSystem{<:Any, <:Any, Systems.NonFixed}}
     prob = Systems.ode_problem(f.system, config; variable = variable)
     raw = f.integrator(prob)
-    return Systems.build_solution(raw, f, config)
+    return Systems.build_solution(f.system, raw, f, config)
 end
 
 """

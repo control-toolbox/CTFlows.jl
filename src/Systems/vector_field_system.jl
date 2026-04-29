@@ -36,5 +36,49 @@ determined at integration time by the config's `x0`, not stored on the system.
 """
 dimensions(::VectorFieldSystem) = (n_x = nothing,)
 
-# Variable-dependence trait override
-variable_dependence(::Type{<:VectorFieldSystem{<:Any, <:Any, VD}}) where {VD} = VD
+"""
+$(TYPEDSIGNATURES)
+
+Extract the variable dependence trait from a VectorFieldSystem.
+
+# Returns
+- `Type{<:VariableDependence}`: The variable dependence trait type (Fixed or NonFixed).
+"""
+function variable_dependence(::Type{<:VectorFieldSystem{<:Any, <:Any, VD}}) where {VD <: VariableDependence}
+    return VD
+end
+
+function variable_dependence(sys::VectorFieldSystem{<:Any, <:Any, VD}) where {VD <: VariableDependence}
+    return VD
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the time dependence trait from a VectorFieldSystem.
+
+# Returns
+- `Type{<:TimeDependence}`: The time dependence trait type (Autonomous or NonAutonomous).
+"""
+function time_dependence(::Type{<:VectorFieldSystem{<:Any, TD, <:Any}}) where {TD <: TimeDependence}
+    return TD
+end
+
+function time_dependence(sys::VectorFieldSystem{<:Any, TD, <:Any}) where {TD <: TimeDependence}
+    return TD
+end
+
+# =============================================================================
+# Base.show
+# =============================================================================
+
+function Base.show(io::IO, sys::VectorFieldSystem{F, TD, VD}) where {F, TD, VD}
+    println(io, "VectorFieldSystem")
+    println(io, "  time_dependence: ", TD)
+    println(io, "  variable_dependence: ", VD)
+    print(io, "  vector_field: ", typeof(sys.vf))
+end
+
+function Base.show(io::IO, ::MIME"text/plain", sys::VectorFieldSystem{F, TD, VD}) where {F, TD, VD}
+    show(io, sys)
+end

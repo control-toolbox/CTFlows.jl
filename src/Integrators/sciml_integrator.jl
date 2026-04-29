@@ -4,7 +4,7 @@ $(TYPEDEF)
 Tag type for SciML integrator dispatch. Used to target the implementation
 provided by the `CTFlowsSciMLExt` package extension.
 """
-abstract type SciMLTag <: Common.AbstractTag end
+struct SciMLTag <: Common.AbstractTag end
 
 """
 $(TYPEDEF)
@@ -29,6 +29,11 @@ struct SciMLIntegrator <: AbstractODEIntegrator
     options::CTSolvers.Strategies.StrategyOptions
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the unique identifier for SciMLIntegrator.
+"""
 CTSolvers.Strategies.id(::Type{<:SciMLIntegrator}) = :sciml
 
 """
@@ -48,7 +53,7 @@ Stub builder for `SciMLIntegrator`. The real implementation is provided by
 `CTFlowsSciMLExt`; this stub throws `ExtensionError` until the extension
 is loaded.
 """
-function build_sciml_integrator(::Type{SciMLTag}; mode::Symbol = :strict, kwargs...)
+function build_sciml_integrator(::Type{<:Common.AbstractTag}; mode::Symbol = :strict, kwargs...)
     throw(
         Exceptions.ExtensionError(
             :OrdinaryDiffEqTsit5;
@@ -59,19 +64,7 @@ function build_sciml_integrator(::Type{SciMLTag}; mode::Symbol = :strict, kwargs
     )
 end
 
-"""
-$(TYPEDSIGNATURES)
-
-Stub callable for `SciMLIntegrator`. The real implementation is provided by
-`CTFlowsSciMLExt`.
-"""
-function (integ::SciMLIntegrator)(prob)
-    throw(
-        Exceptions.ExtensionError(
-            :OrdinaryDiffEqTsit5;
-            message = "to call a SciMLIntegrator",
-            feature = "ODE integration via SciML",
-            context = "Load OrdinaryDiffEqTsit5, OrdinaryDiffEq, or DifferentialEquations to activate the CTFlowsSciMLExt extension.",
-        ),
-    )
-end
+# Note: the callable `(integ::SciMLIntegrator)(prob)` is provided by the
+# CTFlowsSciMLExt extension. Without the extension, `SciMLIntegrator` cannot
+# be constructed (the builder above throws `ExtensionError`), so no explicit
+# stub callable is needed at the package level.
