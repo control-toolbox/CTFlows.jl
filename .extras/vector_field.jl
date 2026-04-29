@@ -79,9 +79,32 @@ display(vf_kw_nonfixed)
 println("\n2. VectorFieldSystem")
 println("-" ^ 80)
 
-sys = Systems.VectorFieldSystem(vf_vector)
-println("VectorFieldSystem created from VectorField")
-println("  variable_dependence(sys) = ", Systems.variable_dependence(sys))
+println("\n--- Autonomous Fixed ---")
+sys_af = Systems.VectorFieldSystem(vf_vector)
+println("System from Autonomous Fixed VectorField:")
+println("  time_dependence(sys) = ", Systems.time_dependence(sys_af))
+println("  variable_dependence(sys) = ", Systems.variable_dependence(sys_af))
+
+println("\n--- NonAutonomous Fixed ---")
+vf_naf = Systems.VectorField((t, x) -> t .* x, Systems.NonAutonomous, Systems.Fixed)
+sys_naf = Systems.VectorFieldSystem(vf_naf)
+println("System from NonAutonomous Fixed VectorField:")
+println("  time_dependence(sys) = ", Systems.time_dependence(sys_naf))
+println("  variable_dependence(sys) = ", Systems.variable_dependence(sys_naf))
+
+println("\n--- Autonomous NonFixed ---")
+vf_anf = Systems.VectorField((x, v) -> v .* x, Systems.Autonomous, Systems.NonFixed)
+sys_anf = Systems.VectorFieldSystem(vf_anf)
+println("System from Autonomous NonFixed VectorField:")
+println("  time_dependence(sys) = ", Systems.time_dependence(sys_anf))
+println("  variable_dependence(sys) = ", Systems.variable_dependence(sys_anf))
+
+println("\n--- NonAutonomous NonFixed ---")
+vf_nanf = Systems.VectorField((t, x, v) -> t .* x .+ v, Systems.NonAutonomous, Systems.NonFixed)
+sys_nanf = Systems.VectorFieldSystem(vf_nanf)
+println("System from NonAutonomous NonFixed VectorField:")
+println("  time_dependence(sys) = ", Systems.time_dependence(sys_nanf))
+println("  variable_dependence(sys) = ", Systems.variable_dependence(sys_nanf))
 
 # =============================================================================
 # 3. Pipeline: build_system
