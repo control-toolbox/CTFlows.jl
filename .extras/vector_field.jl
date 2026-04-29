@@ -213,6 +213,7 @@ display(result_traj)
 using Plots
 println("\n  --- Plotting with Plots extension ---")
 plot(result_traj)  # Uses CTFlowsPlotsExt
+result_traj(0.5)  # Evaluate at t=0.5 using extension
 
 println("\n  4c. Direct flow callable (builds config internally)")
 result_direct = flow(0.0, [1.0, 2.0], 1.0)
