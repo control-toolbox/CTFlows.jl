@@ -133,11 +133,14 @@ traj_config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 display(traj_config)
 
 # =============================================================================
-# 5. Complete Pipeline Examples (VectorField → System → Flow)
+# 5. Complete Pipeline Examples with Tsit5 Integration
 # =============================================================================
 
-println("\n5. Complete Pipeline Structure")
+println("\n5. Complete Pipeline with Tsit5 Integration")
 println("-" ^ 80)
+
+# Load SciML extension
+using OrdinaryDiffEqTsit5
 
 println("\n--- Vector case pipeline (Fixed) ---")
 println("Step 1: Create VectorField")
@@ -151,57 +154,56 @@ println("System: ", typeof(sys_vector))
 println("  time_dependence(sys) = ", Systems.time_dependence(sys_vector))
 println("  variable_dependence(sys) = ", Systems.variable_dependence(sys_vector))
 
-println("\nStep 3: Build Flow (requires SciML extension)")
-println("  flow = Pipelines.build_flow(sys_vector, integrator)")
-println("  # Requires: using OrdinaryDiffEq")
-println("  # integrator = Integrators.SciMLIntegrator()")
+println("\nStep 3: Create Integrator")
+integrator = Integrators.SciMLIntegrator()
+println("Integrator: ", typeof(integrator))
 
-println("\nStep 4: Call Flow - multiple ways")
-println("\n  4a. With PointConfig:")
-println("    config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)")
-println("    result = flow(config)")
+println("\nStep 4: Integration via solve() methods")
+println("\n  4a. solve(vf, config, integrator) - from VectorField")
+config_point = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
+result_vf = Pipelines.solve(vf_vector, config_point, integrator)
+println("    result = ", result_vf)
 
-println("\n  4b. With TrajectoryConfig:")
-println("    config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 2.0])")
-println("    result = flow(config)")
+println("\n  4b. solve(system, config, integrator) - from System")
+result_sys = Pipelines.solve(sys_vector, config_point, integrator)
+println("    result = ", result_sys)
 
-println("\n  4c. With args (builds PointConfig internally):")
-println("    result = flow(0.0, [1.0, 2.0], 1.0)")
+println("\n  4c. solve(flow, config) - from Flow")
+flow = Pipelines.build_flow(sys_vector, integrator)
+result_flow = Pipelines.solve(flow, config_point)
+println("    result = ", result_flow)
 
-println("\n  4d. With tspan (builds TrajectoryConfig internally):")
-println("    result = flow((0.0, 1.0), [1.0, 2.0])")
-
-println("\n  4e. Via integrate function:")
-println("    result = Pipelines.integrate(flow, config)")
-
-println("\n  4f. Via solve function:")
-println("    result = Pipelines.solve(flow, config)")
+println("\n  4d. TrajectoryConfig integration")
+config_traj = Common.TrajectoryConfig((0.0, 1.0), [1.0, 2.0])
+result_traj = Pipelines.solve(vf_vector, config_traj, integrator)
+println("    result type: ", typeof(result_traj))
+println("    result is VectorFieldSolution: ", result_traj isa Systems.VectorFieldSolution)
 
 println("\n--- NonFixed case (with variable) ---")
 vf_nonfixed = Systems.VectorField((x, v) -> x .+ v, Systems.Autonomous, Systems.NonFixed)
 println("VectorField (NonFixed):")
 display(vf_nonfixed)
 
-sys_nonfixed = Pipelines.build_system(vf_nonfixed)
-println("System (NonFixed): ", typeof(sys_nonfixed))
-
-println("\nFlow calls with variable kwarg:")
-println("  flow(config; variable=0.5)")
-println("  flow(0.0, [1.0, 2.0], 1.0; variable=0.5)")
-println("  flow((0.0, 1.0), [1.0, 2.0]; variable=0.5)")
+config_nonfixed = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
+result_nonfixed = Pipelines.solve(vf_nonfixed, config_nonfixed, integrator; variable=0.5)
+println("Result with variable=0.5: ", result_nonfixed)
 
 println("\n--- Scalar case ---")
 vf_scalar = Systems.VectorField(x -> -2x, Systems.Autonomous, Systems.Fixed)
 println("Scalar VectorField:")
 display(vf_scalar)
-println("  flow(0.0, 3.0, 1.0)  # PointConfig with scalar x0")
+config_scalar = Common.PointConfig(0.0, 3.0, 1.0)
+result_scalar = Pipelines.solve(vf_scalar, config_scalar, integrator)
+println("  Result: ", result_scalar, " (scalar)")
 
 println("\n--- Matrix case ---")
 vf_matrix = Systems.VectorField(x -> -x, Systems.Autonomous, Systems.Fixed)
 x0_matrix = [1.0 2.0; 3.0 4.0]
 println("Matrix VectorField:")
 display(vf_matrix)
-println("  flow(0.0, x0_matrix, 1.0)  # PointConfig with matrix x0")
+config_matrix = Common.PointConfig(0.0, x0_matrix, 1.0)
+result_matrix = Pipelines.solve(vf_matrix, config_matrix, integrator)
+println("  Result: ", result_matrix, " (matrix)")
 
 # =============================================================================
 # 6. Trait Information

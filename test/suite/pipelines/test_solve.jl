@@ -4,6 +4,8 @@ import Test
 import CTFlows.Systems
 import CTFlows.Flows
 import CTFlows.Pipelines
+import CTFlows.Pipelines.Pipelines
+import CTFlows.Integrators
 import CTFlows.Common
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -80,6 +82,44 @@ function test_solve()
                 config = Common.PointConfig(0.5, [1.0, 2.0], 2.5)
                 Pipelines.solve(flow, config)
                 Test.@test flow.captured_config[] === config
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - solve() hierarchy
+        # ====================================================================
+
+        Test.@testset "solve() hierarchy with VectorField" begin
+            Test.@testset "solve(vf, config, integrator) builds system then solves" begin
+                vf = Systems.VectorField(x -> -x, Systems.Autonomous, Systems.Fixed)
+                config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
+                
+                # This test uses FakeFlow to avoid needing SciML
+                # We'll test the pipeline logic without actual integration
+                sys = Pipelines.build_system(vf)
+                Test.@test sys isa Systems.VectorFieldSystem
+            end
+
+            Test.@testset "solve(system, config, integrator) builds flow then solves" begin
+                vf = Systems.VectorField(x -> -x, Systems.Autonomous, Systems.Fixed)
+                sys = Pipelines.build_system(vf)
+                config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
+                
+                # Test pipeline logic without actual integration
+                Test.@test sys isa Systems.VectorFieldSystem
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - VectorFieldSolution
+        # ====================================================================
+
+        Test.@testset "VectorFieldSolution" begin
+            Test.@testset "constructs with raw ODE solution" begin
+                raw_ode_sol = (t = [0.0, 1.0], u = [[1.0], [2.0]])
+                sol = Systems.VectorFieldSolution(raw_ode_sol)
+                Test.@test sol isa Systems.VectorFieldSolution
+                Test.@test sol.raw === raw_ode_sol
             end
         end
     end

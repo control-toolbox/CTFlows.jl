@@ -41,6 +41,8 @@ include(joinpath(@__DIR__, "build_system.jl"))
 include(joinpath(@__DIR__, "build_flow.jl"))
 include(joinpath(@__DIR__, "integrate.jl"))
 include(joinpath(@__DIR__, "solve.jl"))
+include(joinpath(@__DIR__, "solve_system.jl"))
+include(joinpath(@__DIR__, "solve_vector_field.jl"))
 include(joinpath(@__DIR__, "flow_constructor.jl"))
 
 # ==============================================================================

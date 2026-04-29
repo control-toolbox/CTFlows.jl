@@ -9,6 +9,7 @@ internally, so `solve` is provided for convenience and semantic clarity.
 # Arguments
 - `flow::Flows.AbstractFlow`: The flow to solve.
 - `config`: The integration configuration (`PointConfig` or `TrajectoryConfig`).
+- `kwargs`: Additional keyword arguments (e.g., `variable` for NonFixed systems).
 
 # Returns
 - The packaged solution (type varies by flow implementation).
@@ -26,6 +27,6 @@ julia> sol = solve(flow, config)
 
 See also: [`integrate`](@ref), [`Flows.AbstractFlow`](@ref).
 """
-function solve(flow::Flows.AbstractFlow, config)
-    return integrate(flow, config)
+function solve(flow::Flows.AbstractFlow, config; kwargs...)
+    return integrate(flow, config; kwargs...)
 end

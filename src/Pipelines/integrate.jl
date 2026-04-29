@@ -9,6 +9,7 @@ when one wants to spell out the action by name rather than calling the flow dire
 # Arguments
 - `flow::Flows.AbstractFlow`: The flow to integrate.
 - `config`: The integration configuration (`PointConfig` or `TrajectoryConfig`).
+- `kwargs`: Additional keyword arguments (e.g., `variable` for NonFixed systems).
 
 # Returns
 - The integrated solution (type varies by flow implementation).
@@ -26,6 +27,6 @@ julia> sol = integrate(flow, config)
 
 See also: [`Flows.AbstractFlow`](@ref), [`solve`](@ref), [`Core.PointConfig`](@ref), [`Core.TrajectoryConfig`](@ref).
 """
-function integrate(flow::Flows.AbstractFlow, config)
-    return flow(config)
+function integrate(flow::Flows.AbstractFlow, config; kwargs...)
+    return flow(config; kwargs...)
 end

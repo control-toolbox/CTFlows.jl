@@ -14,9 +14,9 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Default implementation for `TrajectoryConfig` — return the raw ODE solution
-as-is (it carries `.t` and `.u` and supports interpolation).
+Default implementation for `TrajectoryConfig` — wrap the raw ODE solution
+in a `VectorFieldSolution` for future extensibility.
 """
 function build_solution(sys::VectorFieldSystem, raw, flow, config::Common.TrajectoryConfig)
-    return raw
+    return VectorFieldSolution(raw)
 end
