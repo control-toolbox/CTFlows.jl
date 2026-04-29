@@ -32,7 +32,5 @@ julia> # CTFlowsSciMLExt implementation when the extension is loaded
 - Tag types have no runtime cost (empty structs)
 - They enable conditional compilation via Julia's extension system
 - The pattern avoids hard dependencies on optional packages
-
-See also: [`CTFlows.Integrators.SciMLTag`](@ref)
 """
 abstract type AbstractTag end

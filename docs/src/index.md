@@ -44,11 +44,10 @@ CTFlows organises its code along three concerns, mirroring the CTSolvers three-l
 
 | Layer | Submodule | Purpose |
 |---|---|---|
+| **Utilities** | [`Common`](@ref CTFlows.Common) | shared types and configuration |
 | **Objects** | [`Systems`](@ref CTFlows.Systems), [`Flows`](@ref CTFlows.Flows) | what is acted upon (a fully-assembled system, or a callable flow) |
-| **Strategy families** | [`Modelers`](@ref CTFlows.Modelers), [`Integrators`](@ref CTFlows.Integrators), [`ADBackends`](@ref CTFlows.ADBackends) | each `<: CTSolvers.Strategies.AbstractStrategy` |
+| **Strategy families** | [`Integrators`](@ref CTFlows.Integrators) | `<: CTSolvers.Strategies.AbstractStrategy` |
 | **Actions / pipelines** | [`Pipelines`](@ref CTFlows.Pipelines) | `build_system`, `build_flow`, `integrate`, `build_solution`, `solve` |
-
-The shared [`Core`](@ref CTFlows.Core) submodule is reserved for cross-submodule utilities.
 
 ## Contracts at a glance
 
@@ -73,12 +72,8 @@ A callable combining a system and an integrator. Required methods:
 All inherit from `CTSolvers.Strategies.AbstractStrategy` and gain its full contract
 (`id`, `metadata`, `options`, `Base.show`, `describe`, …).
 
-- [`AbstractFlowModeler`](@ref CTFlows.Modelers.AbstractFlowModeler):
-  callable `(modeler)(input, ad_backend) → AbstractSystem`
 - [`AbstractODEIntegrator`](@ref CTFlows.Integrators.AbstractODEIntegrator):
   callable `(integrator)(ode_problem, tspan) → ode_sol`
-- [`AbstractADBackend`](@ref CTFlows.ADBackends.AbstractADBackend):
-  `ctgradient(backend, f, x)`, `ctjacobian(backend, f, x)`
 
 ## Pipelines at a glance
 
