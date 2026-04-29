@@ -59,6 +59,10 @@ function (f::FakeFlow)(t0, x0, p0, tf)
     return :fake_trajectory_with_costate
 end
 
+function (f::FakeFlow)(config::Common.AbstractConfig)
+    return :fake_config_trajectory
+end
+
 # Add predicate methods to FakeSystem for testing
 function Systems.is_autonomous(sys::FakeSystem)
     return true
@@ -129,6 +133,18 @@ function test_abstract_flow()
                 result = flow(0.0, [1.0, 0.0], [0.0, 0.0], 1.0)
                 Test.@test result === :fake_trajectory_with_costate
             end
+
+            Test.@testset "callable with config" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                result = flow(config)
+                Test.@test result === :fake_config_trajectory
+            end
+
+            Test.@testset "callable with TrajectoryConfig" begin
+                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+                result = flow(config)
+                Test.@test result === :fake_config_trajectory
+            end
         end
 
         # ====================================================================
@@ -140,16 +156,45 @@ function test_abstract_flow()
             flow = MinimalFlow(sys)
 
             Test.@testset "system throws NotImplemented" begin
-                Test.@test_throws Exceptions.NotImplemented Flows.system(flow)
+                try
+                    Flows.system(flow)
+                    Test.@test false  # Should not reach here
+                catch err
+                    Test.@test err isa Exceptions.NotImplemented
+                    Test.@test occursin("system", sprint(showerror, err))
+                end
             end
 
             Test.@testset "integrator throws NotImplemented" begin
-                Test.@test_throws Exceptions.NotImplemented Flows.integrator(flow)
+                try
+                    Flows.integrator(flow)
+                    Test.@test false  # Should not reach here
+                catch err
+                    Test.@test err isa Exceptions.NotImplemented
+                    Test.@test occursin("integrator", sprint(showerror, err))
+                end
             end
 
             Test.@testset "callable with config throws NotImplemented" begin
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
-                Test.@test_throws Exceptions.NotImplemented flow(config)
+                try
+                    flow(config)
+                    Test.@test false  # Should not reach here
+                catch err
+                    Test.@test err isa Exceptions.NotImplemented
+                    Test.@test occursin("config", sprint(showerror, err))
+                end
+            end
+
+            Test.@testset "callable with TrajectoryConfig throws NotImplemented" begin
+                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+                try
+                    flow(config)
+                    Test.@test false  # Should not reach here
+                catch err
+                    Test.@test err isa Exceptions.NotImplemented
+                    Test.@test occursin("config", sprint(showerror, err))
+                end
             end
         end
 
