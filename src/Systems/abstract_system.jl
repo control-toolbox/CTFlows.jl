@@ -73,7 +73,7 @@ Package the raw ODE solution into the appropriate result type.
 
 This ensures that systems must implement their own solution building logic.
 """
-function build_solution(sys::AbstractSystem, ode_sol, flow, config)
+function build_solution(sys::AbstractSystem, ode_sol, flow, config::Common.AbstractConfig)
     throw(Exceptions.NotImplemented("build_solution"))
 end
 
@@ -85,10 +85,10 @@ Build an `ODEProblem` for the given system and integration config.
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
 """
-function ode_problem(system::AbstractSystem, config; kwargs...)
+function ode_problem(system::AbstractSystem, config::Common.AbstractConfig; kwargs...)
     throw(Exceptions.NotImplemented(
         "AbstractSystem ode_problem method not implemented";
-        required_method = "ode_problem(system::$(typeof(system)), config::$(typeof(config)); kwargs...)",
+        required_method = "ode_problem(system::$(typeof(system)), config::Common.AbstractConfig; kwargs...)",
         suggestion = "Implementation for VectorFieldSystem is provided by the CTFlowsSciMLExt package extension. Load OrdinaryDiffEqTsit5 (or a superset) to activate it.",
         context = "AbstractSystem.ode_problem - required method implementation",
     ))

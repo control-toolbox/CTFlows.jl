@@ -7,7 +7,7 @@ This performs the integration and builds the solution.
 
 # Arguments
 - `flow::Flows.AbstractFlow`: The flow to solve.
-- `config`: The integration configuration (`PointConfig` or `TrajectoryConfig`).
+- `config::Common.AbstractConfig`: The integration configuration (e.g., `PointConfig`, `TrajectoryConfig`).
 - `kwargs`: Additional keyword arguments (e.g., `variable` for NonFixed systems).
 
 # Returns
@@ -15,9 +15,9 @@ This performs the integration and builds the solution.
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Pipelines, CTFlows.Core
+julia> using CTFlows.Pipelines, CTFlows.Common
 
-julia> config = Core.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+julia> config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 TrajectoryConfig(...)
 
 julia> sol = solve(flow, config)
@@ -26,7 +26,7 @@ julia> sol = solve(flow, config)
 
 See also: [`Flows.AbstractFlow`](@ref), [`Systems.build_solution`](@ref).
 """
-function solve(flow::Flows.AbstractFlow, config; kwargs...)
+function solve(flow::Flows.AbstractFlow, config::Common.AbstractConfig; kwargs...)
     prob = Systems.ode_problem(Flows.system(flow), config; kwargs...)
     raw = Flows.integrator(flow)(prob)
     return Systems.build_solution(Flows.system(flow), raw, flow, config)

@@ -1,6 +1,33 @@
 """
 $(TYPEDEF)
 
+Abstract configuration type for integration problems.
+
+Marker type for dispatch on configuration objects. Concrete subtypes define
+specific integration scenarios (e.g., point-to-point, trajectory, costate).
+
+# Interface Requirements
+
+No required methods - this is a marker type for type-based dispatch only.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> PointConfig <: Common.AbstractConfig
+true
+
+julia> TrajectoryConfig <: Common.AbstractConfig
+true
+\`\`\`
+
+See also: [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Common.TrajectoryConfig`](@ref)
+"""
+abstract type AbstractConfig end
+
+"""
+$(TYPEDEF)
+
 Configuration for a point-to-point integration problem.
 
 Defines the initial and final time points along with the initial state for
@@ -22,9 +49,9 @@ PointConfig
   tf: 1.0
 \`\`\`
 
-See also: [`TrajectoryConfig`](@ref)
+See also: [`CTFlows.Common.TrajectoryConfig`](@ref)
 """
-struct PointConfig{T0, X0, TF}
+struct PointConfig{T0, X0, TF} <: AbstractConfig
     t0::T0
     x0::X0
     tf::TF
@@ -52,9 +79,9 @@ TrajectoryConfig
   x0: [1.0, 0.0]
 \`\`\`
 
-See also: [`PointConfig`](@ref)
+See also: [`CTFlows.Common.PointConfig`](@ref)
 """
-struct TrajectoryConfig{TS, X0}
+struct TrajectoryConfig{TS, X0} <: AbstractConfig
     tspan::TS
     x0::X0
 end

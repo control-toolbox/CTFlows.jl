@@ -31,11 +31,11 @@ Integrate the flow according to the given `config`.
 
 See also: [`AbstractFlow`](@ref).
 """
-function (flow::AbstractFlow)(config)
+function (flow::AbstractFlow)(config::Common.AbstractConfig)
     throw(Exceptions.NotImplemented(
         "AbstractFlow callable not implemented";
-        required_method = "(flow::$(typeof(flow)))(config)",
-        suggestion = "Implement (f::YourFlow)(config) returning the integrated trajectory.",
+        required_method = "(flow::$(typeof(flow)))(config::Common.AbstractConfig)",
+        suggestion = "Implement (f::YourFlow)(config::Common.AbstractConfig) returning the integrated trajectory.",
         context = "AbstractFlow call - required method implementation",
     ))
 end

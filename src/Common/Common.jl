@@ -22,6 +22,6 @@ include(joinpath(@__DIR__, "configs.jl"))
 # Module exports
 # ==============================================================================
 
-export AbstractTag, PointConfig, TrajectoryConfig
+export AbstractTag, AbstractConfig, PointConfig, TrajectoryConfig
 
 end # module Common
