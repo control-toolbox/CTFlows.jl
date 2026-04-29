@@ -23,9 +23,32 @@ end
 """
 Fake flow for testing Flow contract without requiring SciML extension.
 """
-struct FakeFlow <: Flows.AbstractFlow
-    sys::Any
+struct FakeFlow{S} <: Flows.AbstractFlow
+    sys::S
     integ::Any
+end
+
+"""
+Fake system for Fixed systems.
+"""
+struct FixedSystem end
+
+"""
+Fake system for NonFixed systems.
+"""
+struct NonFixedSystem end
+
+# Trait types for dispatch (matching real Flow pattern)
+struct Fixed end
+struct NonFixed end
+
+# Attach traits to fake systems
+function Systems.variable_dependence(::FixedSystem)
+    return Fixed()
+end
+
+function Systems.variable_dependence(::NonFixedSystem)
+    return NonFixed()
 end
 
 function Flows.system(flow::FakeFlow)
@@ -36,7 +59,31 @@ function Flows.integrator(flow::FakeFlow)
     return flow.integ
 end
 
-function (flow::FakeFlow)(config::Common.PointConfig; variable=nothing)
+# Config-based callable - Fixed systems (no variable kwarg)
+function (flow::FakeFlow{FixedSystem})(config::Common.PointConfig)
+    return flow.integ.result
+end
+
+# Config-based callable - NonFixed systems (require variable kwarg)
+function (flow::FakeFlow{NonFixedSystem})(config::Common.PointConfig; variable)
+    return flow.integ.result
+end
+
+# Fixed systems - no variable kwarg
+function (flow::FakeFlow{FixedSystem})(t0, x0, tf)
+    return flow.integ.result
+end
+
+function (flow::FakeFlow{FixedSystem})(tspan::Tuple, x0)
+    return flow.integ.result
+end
+
+# NonFixed systems - require variable kwarg
+function (flow::FakeFlow{NonFixedSystem})(t0, x0, tf; variable)
+    return flow.integ.result
+end
+
+function (flow::FakeFlow{NonFixedSystem})(tspan::Tuple, x0; variable)
     return flow.integ.result
 end
 
@@ -74,14 +121,29 @@ function test_flow()
         # ====================================================================
 
         Test.@testset "Flow Callable - Fixed Systems" begin
-            sys = :fake_system
+            sys = FixedSystem()
             integ = FakeIntegrator(:solution)
-            flow = FakeFlow(sys, integ)
+            flow = FakeFlow{FixedSystem}(sys, integ)
 
             Test.@testset "call with PointConfig" begin
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
                 result = flow(config)
                 Test.@test result === :solution
+            end
+
+            Test.@testset "call with (t0, x0, tf)" begin
+                result = flow(0.0, [1.0, 0.0], 1.0)
+                Test.@test result === :solution
+            end
+
+            Test.@testset "call with (tspan, x0)" begin
+                result = flow((0.0, 1.0), [1.0, 0.0])
+                Test.@test result === :solution
+            end
+
+            Test.@testset "ERROR: call with variable kwarg (not allowed for Fixed)" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                Test.@test_throws MethodError flow(config; variable = 0.5)
             end
         end
 
@@ -90,14 +152,29 @@ function test_flow()
         # ====================================================================
 
         Test.@testset "Flow Callable - NonFixed Systems" begin
-            sys = :fake_system
+            sys = NonFixedSystem()
             integ = FakeIntegrator(:solution)
-            flow = FakeFlow(sys, integ)
+            flow = FakeFlow{NonFixedSystem}(sys, integ)
 
             Test.@testset "call with PointConfig and variable" begin
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
                 result = flow(config; variable = 0.5)
                 Test.@test result === :solution
+            end
+
+            Test.@testset "call with (t0, x0, tf; variable)" begin
+                result = flow(0.0, [1.0, 0.0], 1.0; variable = 0.5)
+                Test.@test result === :solution
+            end
+
+            Test.@testset "call with (tspan, x0; variable)" begin
+                result = flow((0.0, 1.0), [1.0, 0.0]; variable = 0.5)
+                Test.@test result === :solution
+            end
+
+            Test.@testset "ERROR: call without variable kwarg (required for NonFixed)" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                Test.@test_throws UndefKeywordError flow(config)
             end
         end
 
