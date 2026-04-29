@@ -10,14 +10,14 @@ to expose the integration protocol.
 # Contract
 
 All subtypes must implement:
-- `(flow)(config)`: Integrate according to the given config (e.g. `PointConfig`, `TrajectoryConfig`).
+- `(flow)(config)`: Integrate according to the given config (e.g. `CTFlows.Common.PointConfig`, `CTFlows.Common.TrajectoryConfig`).
 - `system(flow)`: Return the associated `AbstractSystem`.
 - `integrator(flow)`: Return the associated `AbstractODEIntegrator`.
 
 Convenience call signatures like `(flow)(t0, x0, tf)` or `(flow)((t0, tf), x0)`
 are provided by concrete subtypes (see `Flow`).
 
-See also: [`Flow`](@ref), [`AbstractSystem`](@ref), [`AbstractODEIntegrator`](@ref).
+See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractODEIntegrator`](@ref).
 """
 abstract type AbstractFlow end
 
@@ -29,7 +29,7 @@ Integrate the flow according to the given `config`.
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
 
-See also: [`AbstractFlow`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref).
 """
 function (flow::AbstractFlow)(config::Common.AbstractConfig)
     throw(Exceptions.NotImplemented(
@@ -105,7 +105,7 @@ Return the associated `AbstractSystem` for the flow.
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
 
-See also: [`AbstractFlow`](@ref), [`AbstractSystem`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
 """
 function system(flow::AbstractFlow)
     throw(Exceptions.NotImplemented(
@@ -124,7 +124,7 @@ Return the associated `AbstractODEIntegrator` for the flow.
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
 
-See also: [`AbstractFlow`](@ref), [`AbstractODEIntegrator`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Integrators.AbstractODEIntegrator`](@ref).
 """
 function integrator(flow::AbstractFlow)
     throw(Exceptions.NotImplemented(
