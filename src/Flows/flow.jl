@@ -21,7 +21,7 @@ julia> integrator = FakeIntegrator()
 FakeIntegrator()
 
 julia> flow = Flow(system, integrator)
-Flow(system=FakeSystem(n_x=2, n_p=2), integrator=FakeIntegrator)
+Flow{FakeSystem}(system=FakeSystem(n_x=2, n_p=2), integrator=FakeIntegrator)
 ```
 
 See also: [`AbstractFlow`](@ref), [`AbstractSystem`](@ref), [`AbstractODEIntegrator`](@ref).
@@ -136,4 +136,32 @@ function (f::Flow{S})(
     variable,
 ) where {S <: Systems.VectorFieldSystem{<:Any, <:Any, Systems.NonFixed}}
     return f(Common.TrajectoryConfig(tspan, x0); variable = variable)
+end
+
+# =============================================================================
+# Specialized show for Flow with VectorFieldSystem
+# =============================================================================
+
+function Base.show(io::IO, ::MIME"text/plain", flow::Flow{S}) where {S <: Systems.VectorFieldSystem}
+    print(io, "Flow{", nameof(S), "}")
+    sys = Flows.system(flow)
+    integ = Flows.integrator(flow)
+    
+    print(io, "\n  system: VectorFieldSystem")
+    print(io, "\n    time_dependence: ", Systems.time_dependence(sys))
+    print(io, "\n    variable_dependence: ", Systems.variable_dependence(sys))
+    print(io, "\n    vector_field: ", typeof(sys.vf))
+    print(io, "\n  integrator: ", nameof(typeof(integ)))
+end
+
+function Base.show(io::IO, flow::Flow{S}) where {S <: Systems.VectorFieldSystem}
+    sys = Flows.system(flow)
+    integ = Flows.integrator(flow)
+    print(io, "Flow(")
+    print(io, "VectorFieldSystem(")
+    print(io, Systems.time_dependence(sys), ", ")
+    print(io, Systems.variable_dependence(sys))
+    print(io, "), ")
+    print(io, typeof(integ))
+    print(io, ")")
 end
