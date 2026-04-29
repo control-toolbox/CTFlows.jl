@@ -152,22 +152,10 @@ Flow
 """
 function Base.show(io::IO, ::MIME"text/plain", flow::AbstractFlow)
     print(io, typeof(flow).name)
-    sys = try
-        system(flow)
-    catch
-        nothing
-    end
-    integ = try
-        integrator(flow)
-    catch
-        nothing
-    end
-    if !isnothing(sys)
-        print(io, "\n  system: ", sys)
-    end
-    if !isnothing(integ)
-        print(io, "\n  integrator: ", typeof(integ).name)
-    end
+    sys = system(flow)
+    integ = integrator(flow)
+    print(io, "\n  system: ", sys)
+    print(io, "\n  integrator: ", typeof(integ).name)
 end
 
 """
@@ -184,24 +172,12 @@ Flow(system=FakeSystem(n_x=2, n_p=2), integrator=FakeIntegrator)
 ```
 """
 function Base.show(io::IO, flow::AbstractFlow)
-    sys = try
-        system(flow)
-    catch
-        nothing
-    end
-    integ = try
-        integrator(flow)
-    catch
-        nothing
-    end
+    sys = system(flow)
+    integ = integrator(flow)
     print(io, typeof(flow).name, "(")
     parts = String[]
-    if !isnothing(sys)
-        push!(parts, "system=$(sys)")
-    end
-    if !isnothing(integ)
-        push!(parts, "integrator=$(typeof(integ).name)")
-    end
+    push!(parts, "system=$(sys)")
+    push!(parts, "integrator=$(typeof(integ).name)")
     print(io, join(parts, ", "))
     print(io, ")")
 end
