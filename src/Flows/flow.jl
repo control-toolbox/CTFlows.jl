@@ -199,11 +199,16 @@ end
 # Specialized show for Flow with VectorFieldSystem
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Display the `Flow` with `VectorFieldSystem` in tree-style format.
+"""
 function Base.show(io::IO, ::MIME"text/plain", flow::Flow{S}) where {S <: Systems.VectorFieldSystem}
     print(io, "Flow{", nameof(S), "}")
     sys = Flows.system(flow)
     integ = Flows.integrator(flow)
-    
+
     print(io, "\n  system: VectorFieldSystem")
     print(io, "\n    time_dependence: ", Systems.time_dependence(sys))
     print(io, "\n    variable_dependence: ", Systems.variable_dependence(sys))
@@ -211,6 +216,11 @@ function Base.show(io::IO, ::MIME"text/plain", flow::Flow{S}) where {S <: System
     print(io, "\n  integrator: ", nameof(typeof(integ)))
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display the `Flow` with `VectorFieldSystem` in compact format.
+"""
 function Base.show(io::IO, flow::Flow{S}) where {S <: Systems.VectorFieldSystem}
     sys = Flows.system(flow)
     integ = Flows.integrator(flow)

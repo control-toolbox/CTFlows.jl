@@ -90,6 +90,11 @@ end
 # Base.show
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Display the `PointConfig` in tree-style format.
+"""
 function Base.show(io::IO, c::PointConfig)
     println(io, "PointConfig")
     println(io, "  t0: ", c.t0)
@@ -97,16 +102,31 @@ function Base.show(io::IO, c::PointConfig)
     print(io, "  tf: ", c.tf)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display the `PointConfig` in REPL format.
+"""
 function Base.show(io::IO, ::MIME"text/plain", c::PointConfig)
     show(io, c)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display the `TrajectoryConfig` in tree-style format.
+"""
 function Base.show(io::IO, c::TrajectoryConfig)
     println(io, "TrajectoryConfig")
     println(io, "  tspan: ", c.tspan)
     print(io, "  x0: ", c.x0)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display the `TrajectoryConfig` in REPL format.
+"""
 function Base.show(io::IO, ::MIME"text/plain", c::TrajectoryConfig)
     show(io, c)
 end
