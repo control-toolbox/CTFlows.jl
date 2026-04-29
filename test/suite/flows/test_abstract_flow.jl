@@ -59,6 +59,27 @@ function (f::FakeFlow)(t0, x0, p0, tf)
     return :fake_trajectory_with_costate
 end
 
+# Add predicate methods to FakeSystem for testing
+function Systems.is_autonomous(sys::FakeSystem)
+    return true
+end
+
+function Systems.is_nonautonomous(sys::FakeSystem)
+    return false
+end
+
+function Systems.is_variable(sys::FakeSystem)
+    return false
+end
+
+function Systems.is_nonvariable(sys::FakeSystem)
+    return true
+end
+
+function Systems.has_variable(sys::FakeSystem)
+    return false
+end
+
 """
 Minimal flow that does not implement the contract (for error testing).
 """
@@ -154,6 +175,95 @@ function test_abstract_flow()
                 output = String(take!(io))
                 Test.@test occursin("FakeFlow", output)
                 Test.@test occursin("system", output)
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Predicate Methods
+        # ====================================================================
+
+        Test.@testset "Predicate Methods" begin
+            Test.@testset "FakeFlow with FakeSystem" begin
+                sys = FakeSystem(2)
+                flow = FakeFlow(sys, :fake_integ)
+
+                Test.@testset "is_autonomous" begin
+                    Test.@test Flows.is_autonomous(flow) === true
+                end
+
+                Test.@testset "is_nonautonomous" begin
+                    Test.@test Flows.is_nonautonomous(flow) === false
+                end
+
+                Test.@testset "is_variable" begin
+                    Test.@test Flows.is_variable(flow) === false
+                end
+
+                Test.@testset "is_nonvariable" begin
+                    Test.@test Flows.is_nonvariable(flow) === true
+                end
+
+                Test.@testset "has_variable" begin
+                    Test.@test Flows.has_variable(flow) === false
+                end
+            end
+
+            Test.@testset "MinimalFlow without system() throws NotImplemented" begin
+                sys = FakeSystem(2)
+                flow = MinimalFlow(sys)
+
+                Test.@testset "is_autonomous throws NotImplemented" begin
+                    Test.@test_throws Exceptions.NotImplemented Flows.is_autonomous(flow)
+                end
+
+                Test.@testset "is_variable throws NotImplemented" begin
+                    Test.@test_throws Exceptions.NotImplemented Flows.is_variable(flow)
+                end
+            end
+        end
+
+        # ====================================================================
+        # INTEGRATION TESTS - VectorField Flow
+        # ====================================================================
+
+        Test.@testset "VectorField Flow Integration Tests" begin
+            Test.@testset "Autonomous Fixed Flow" begin
+                vf = Systems.VectorField(x -> -x, Systems.Autonomous, Systems.Fixed)
+                sys = Systems.VectorFieldSystem(vf)
+                integ = :fake_integ
+                flow = FakeFlow(sys, integ)
+
+                Test.@test Flows.is_autonomous(flow) === true
+                Test.@test Flows.is_nonautonomous(flow) === false
+                Test.@test Flows.is_variable(flow) === false
+                Test.@test Flows.is_nonvariable(flow) === true
+                Test.@test Flows.has_variable(flow) === false
+            end
+
+            Test.@testset "NonAutonomous Fixed Flow" begin
+                vf = Systems.VectorField((t, x) -> t .* x, Systems.NonAutonomous, Systems.Fixed)
+                sys = Systems.VectorFieldSystem(vf)
+                integ = :fake_integ
+                flow = FakeFlow(sys, integ)
+
+                Test.@test Flows.is_autonomous(flow) === false
+                Test.@test Flows.is_nonautonomous(flow) === true
+                Test.@test Flows.is_variable(flow) === false
+                Test.@test Flows.is_nonvariable(flow) === true
+                Test.@test Flows.has_variable(flow) === false
+            end
+
+            Test.@testset "Autonomous NonFixed Flow" begin
+                vf = Systems.VectorField((x, v) -> x .+ v, Systems.Autonomous, Systems.NonFixed)
+                sys = Systems.VectorFieldSystem(vf)
+                integ = :fake_integ
+                flow = FakeFlow(sys, integ)
+
+                Test.@test Flows.is_autonomous(flow) === true
+                Test.@test Flows.is_nonautonomous(flow) === false
+                Test.@test Flows.is_variable(flow) === true
+                Test.@test Flows.is_nonvariable(flow) === false
+                Test.@test Flows.has_variable(flow) === true
             end
         end
     end

@@ -50,6 +50,56 @@ variable_dependence(flow::AbstractFlow) = Systems.variable_dependence(system(flo
 """
 $(TYPEDSIGNATURES)
 
+Return true if the flow is autonomous (time-independent).
+
+# Returns
+- `Bool`: true if system(flow) is autonomous.
+"""
+is_autonomous(flow::AbstractFlow) = Systems.is_autonomous(system(flow))
+
+"""
+$(TYPEDSIGNATURES)
+
+Return true if the flow is non-autonomous (time-dependent).
+
+# Returns
+- `Bool`: true if system(flow) is non-autonomous.
+"""
+is_nonautonomous(flow::AbstractFlow) = Systems.is_nonautonomous(system(flow))
+
+"""
+$(TYPEDSIGNATURES)
+
+Return true if the flow depends on variable parameters.
+
+# Returns
+- `Bool`: true if system(flow) depends on variable parameters.
+"""
+is_variable(flow::AbstractFlow) = Systems.is_variable(system(flow))
+
+"""
+$(TYPEDSIGNATURES)
+
+Alias for `is_variable` for CTModels compatibility.
+
+# Returns
+- `Bool`: true if system(flow) depends on variable parameters.
+"""
+has_variable(flow::AbstractFlow) = Systems.has_variable(system(flow))
+
+"""
+$(TYPEDSIGNATURES)
+
+Return true if the flow does not depend on variable parameters.
+
+# Returns
+- `Bool`: true if system(flow) does not depend on variable parameters.
+"""
+is_nonvariable(flow::AbstractFlow) = Systems.is_nonvariable(system(flow))
+
+"""
+$(TYPEDSIGNATURES)
+
 Return the associated `AbstractSystem` for the flow.
 
 # Throws
