@@ -209,6 +209,11 @@ println("    result type: ", typeof(result_traj))
 println("    result is VectorFieldSolution: ", result_traj isa Systems.VectorFieldSolution)
 display(result_traj)
 
+# Load Plots extension for plotting
+using Plots
+println("\n  --- Plotting with Plots extension ---")
+plot(result_traj)  # Uses CTFlowsPlotsExt
+
 println("\n  4c. Direct flow callable (builds config internally)")
 result_direct = flow(0.0, [1.0, 2.0], 1.0)
 println("    flow(0.0, [1.0, 2.0], 1.0) = ", result_direct)

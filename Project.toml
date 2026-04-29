@@ -7,12 +7,15 @@ authors = ["Olivier Cots <olivier.cots@toulouse-inp.fr>"]
 CTBase = "54762871-cc72-4466-b8e8-f6c8b58076cd"
 CTSolvers = "d3e8d392-8e4b-4d9b-8e92-d7d4e3650ef6"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
+RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 
 [weakdeps]
 OrdinaryDiffEqTsit5 = "b1df2697-797e-41e3-8120-5422d3b24e4a"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 
 [extensions]
 CTFlowsSciMLExt = "OrdinaryDiffEqTsit5"
+CTFlowsPlotsExt = "Plots"
 
 [compat]
 Aqua = "0.8"
@@ -20,6 +23,8 @@ CTBase = "0.18"
 CTSolvers = "0.2"
 DocStringExtensions = "0.9"
 OrdinaryDiffEqTsit5 = "2"
+Plots = "1"
+RecipesBase = "1"
 Test = "1"
 julia = "1.10"
 

@@ -13,9 +13,34 @@ it simply stores the solution without providing any accessor methods.
 - No accessor methods are provided at this time.
 - The raw solution typically contains `.t` (time points) and `.u` (state values).
 - Future versions may add convenience methods for accessing solution data.
+- Plotting and evaluation capabilities are provided by the CTFlowsPlotsExt extension.
 """
 struct VectorFieldSolution
     raw::Any
+end
+
+# =============================================================================
+# Stub methods — to be extended by CTFlowsPlotsExt
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Plot stub — throws error if Plots extension not loaded.
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: If Plots extension is not loaded.
+"""
+function RecipesBase.plot(sol::VectorFieldSolution, args...; kwargs...)
+    throw(
+        Exceptions.IncorrectArgument(
+            "Plots extension not loaded";
+            got = "plot call without Plots extension",
+            expected = "Plots.jl to be loaded",
+            suggestion = "Load Plots.jl with: using Plots",
+            context = "RecipesBase.plot - extension availability check",
+        ),
+    )
 end
 
 # =============================================================================

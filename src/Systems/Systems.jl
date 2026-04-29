@@ -12,6 +12,7 @@ module Systems
 # 1. External-package imports (qualified, pollution-free)
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
+import RecipesBase
 
 # ==============================================================================
 # Internal sibling-submodule imports
