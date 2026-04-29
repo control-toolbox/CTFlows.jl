@@ -43,6 +43,15 @@ function RecipesBase.plot(sol::VectorFieldSolution, args...; kwargs...)
     )
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluate the solution at a given time by delegating to raw solution.
+"""
+function (sol::VectorFieldSolution)(args...; kwargs...)
+    return sol.raw(args...; kwargs...)
+end
+
 # =============================================================================
 # Base.show
 # =============================================================================
