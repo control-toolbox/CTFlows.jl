@@ -24,7 +24,7 @@ julia> flow = Flow(system, integrator)
 Flow{FakeSystem}(system=FakeSystem(n_x=2, n_p=2), integrator=FakeIntegrator)
 ```
 
-See also: [`AbstractFlow`](@ref), [`AbstractSystem`](@ref), [`AbstractODEIntegrator`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractODEIntegrator`](@ref).
 """
 struct Flow{S<:Systems.AbstractSystem, I<:Integrators.AbstractODEIntegrator} <: AbstractFlow
     system::S
@@ -35,6 +35,9 @@ end
 $(TYPEDSIGNATURES)
 
 Return the system associated with the flow.
+
+# Returns
+- `S`: The `AbstractSystem` stored in the flow.
 """
 system(f::Flow) = f.system
 
@@ -42,6 +45,9 @@ system(f::Flow) = f.system
 $(TYPEDSIGNATURES)
 
 Return the integrator associated with the flow.
+
+# Returns
+- `I`: The `AbstractODEIntegrator` stored in the flow.
 """
 integrator(f::Flow) = f.integrator
 
@@ -61,6 +67,13 @@ integrator(f::Flow) = f.integrator
 $(TYPEDSIGNATURES)
 
 Integrate a `Fixed` (variable-free) `Flow` using the given `config`.
+
+# Arguments
+- `f::Flow{S}`: The flow to integrate.
+- `config`: The integration configuration (`CTFlows.Common.PointConfig` or `CTFlows.Common.TrajectoryConfig`).
+
+# Returns
+- The integrated solution (type varies by config type).
 """
 function (f::Flow{S})(
     config,
@@ -74,6 +87,15 @@ end
 $(TYPEDSIGNATURES)
 
 Convenience call `flow(t0, x0, tf)` — builds a `PointConfig` internally.
+
+# Arguments
+- `f::Flow{S}`: The flow to integrate.
+- `t0`: Initial time.
+- `x0`: Initial state vector.
+- `tf`: Final time.
+
+# Returns
+- The integrated solution.
 """
 function (f::Flow{S})(
     t0,
@@ -87,6 +109,14 @@ end
 $(TYPEDSIGNATURES)
 
 Convenience call `flow((t0, tf), x0)` — builds a `TrajectoryConfig` internally.
+
+# Arguments
+- `f::Flow{S}`: The flow to integrate.
+- `tspan::Tuple`: Time span as a tuple (t0, tf).
+- `x0`: Initial state vector.
+
+# Returns
+- The integrated solution.
 """
 function (f::Flow{S})(
     tspan::Tuple,
@@ -101,6 +131,14 @@ end
 $(TYPEDSIGNATURES)
 
 Integrate a `NonFixed` `Flow` with the required `variable` kwarg.
+
+# Arguments
+- `f::Flow{S}`: The flow to integrate.
+- `config`: The integration configuration (`CTFlows.Common.PointConfig` or `CTFlows.Common.TrajectoryConfig`).
+- `variable`: The variable parameter value.
+
+# Returns
+- The integrated solution (type varies by config type).
 """
 function (f::Flow{S})(
     config;
@@ -115,6 +153,16 @@ end
 $(TYPEDSIGNATURES)
 
 Convenience call `flow(t0, x0, tf; variable=v)`.
+
+# Arguments
+- `f::Flow{S}`: The flow to integrate.
+- `t0`: Initial time.
+- `x0`: Initial state vector.
+- `tf`: Final time.
+- `variable`: The variable parameter value.
+
+# Returns
+- The integrated solution.
 """
 function (f::Flow{S})(
     t0,
@@ -129,6 +177,15 @@ end
 $(TYPEDSIGNATURES)
 
 Convenience call `flow((t0, tf), x0; variable=v)`.
+
+# Arguments
+- `f::Flow{S}`: The flow to integrate.
+- `tspan::Tuple`: Time span as a tuple (t0, tf).
+- `x0`: Initial state vector.
+- `variable`: The variable parameter value.
+
+# Returns
+- The integrated solution.
 """
 function (f::Flow{S})(
     tspan::Tuple,
