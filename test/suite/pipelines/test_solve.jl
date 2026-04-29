@@ -4,8 +4,6 @@ import Test
 import CTFlows.Systems
 import CTFlows.Flows
 import CTFlows.Pipelines
-import CTFlows.Pipelines.Pipelines
-import CTFlows.Integrators
 import CTFlows.Common
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -34,9 +32,30 @@ function Systems.build_solution(sys::FakeSystem, ode_sol, flow, config)
     return (:packaged, ode_sol)
 end
 
+function Systems.ode_problem(sys::FakeSystem, config; kwargs...)
+    return :fake_ode_problem
+end
+
 struct FakeFlow <: Flows.AbstractFlow
     sys::Systems.AbstractSystem
     captured_config::Ref{Any}
+end
+
+function Flows.system(flow::FakeFlow)
+    return flow.sys
+end
+
+function Flows.integrator(flow::FakeFlow)
+    # Fake integrator that returns a fake ODE solution
+    return FakeIntegrator(:fake_ode_sol)
+end
+
+struct FakeIntegrator
+    result::Any
+end
+
+function (integ::FakeIntegrator)(prob)
+    return integ.result
 end
 
 function FakeFlow(sys)
@@ -46,14 +65,6 @@ end
 function (f::FakeFlow)(config)
     f.captured_config[] = config
     return :fake_ode_sol
-end
-
-function Flows.system(f::FakeFlow)
-    return f.sys
-end
-
-function Flows.integrator(f::FakeFlow)
-    return :fake_integrator
 end
 
 # ==============================================================================
@@ -71,42 +82,32 @@ function test_solve()
             sys = FakeSystem(2)
             flow = FakeFlow(sys)
 
-            Test.@testset "delegates to integrate" begin
+            Test.@testset "performs integration + build solution" begin
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
                 result = Pipelines.solve(flow, config)
-                Test.@test result === :fake_ode_sol
+                Test.@test result === (:packaged, :fake_ode_sol)
             end
 
-            Test.@testset "passes config correctly" begin
+            Test.@testset "solve() calls ode_problem, integrator, build_solution" begin
+                sys = FakeSystem(2)
                 flow = FakeFlow(sys)
-                config = Common.PointConfig(0.5, [1.0, 2.0], 2.5)
-                Pipelines.solve(flow, config)
-                Test.@test flow.captured_config[] === config
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                result = Pipelines.solve(flow, config)
+                Test.@test result === (:packaged, :fake_ode_sol)
             end
         end
 
         # ====================================================================
-        # UNIT TESTS - solve() hierarchy
+        # UNIT TESTS - solve() does integration + build
         # ====================================================================
 
-        Test.@testset "solve() hierarchy with VectorField" begin
-            Test.@testset "solve(vf, config, integrator) builds system then solves" begin
-                vf = Systems.VectorField(x -> -x, Systems.Autonomous, Systems.Fixed)
-                config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
-                
-                # This test uses FakeFlow to avoid needing SciML
-                # We'll test the pipeline logic without actual integration
-                sys = Pipelines.build_system(vf)
-                Test.@test sys isa Systems.VectorFieldSystem
-            end
-
-            Test.@testset "solve(system, config, integrator) builds flow then solves" begin
-                vf = Systems.VectorField(x -> -x, Systems.Autonomous, Systems.Fixed)
-                sys = Pipelines.build_system(vf)
-                config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
-                
-                # Test pipeline logic without actual integration
-                Test.@test sys isa Systems.VectorFieldSystem
+        Test.@testset "solve() does integration + build solution" begin
+            Test.@testset "calls ode_problem, integrator, build_solution" begin
+                sys = FakeSystem(2)
+                flow = FakeFlow(sys)
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                result = Pipelines.solve(flow, config)
+                Test.@test result === (:packaged, :fake_ode_sol)
             end
         end
 

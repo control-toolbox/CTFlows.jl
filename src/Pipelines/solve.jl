@@ -3,8 +3,7 @@ $(TYPEDSIGNATURES)
 
 Solve an ODE problem using a flow.
 
-This is an alias for `integrate` — the Flow callable already builds solutions
-internally, so `solve` is provided for convenience and semantic clarity.
+This performs the integration and builds the solution.
 
 # Arguments
 - `flow::Flows.AbstractFlow`: The flow to solve.
@@ -12,7 +11,7 @@ internally, so `solve` is provided for convenience and semantic clarity.
 - `kwargs`: Additional keyword arguments (e.g., `variable` for NonFixed systems).
 
 # Returns
-- The packaged solution (type varies by flow implementation).
+- The packaged solution (type varies by config type).
 
 # Example
 \`\`\`julia-repl
@@ -25,8 +24,10 @@ julia> sol = solve(flow, config)
 ...
 \`\`\`
 
-See also: [`integrate`](@ref), [`Flows.AbstractFlow`](@ref).
+See also: [`Flows.AbstractFlow`](@ref), [`Systems.build_solution`](@ref).
 """
 function solve(flow::Flows.AbstractFlow, config; kwargs...)
-    return integrate(flow, config; kwargs...)
+    prob = Systems.ode_problem(Flows.system(flow), config; kwargs...)
+    raw = Flows.integrator(flow)(prob)
+    return Systems.build_solution(Flows.system(flow), raw, flow, config)
 end
