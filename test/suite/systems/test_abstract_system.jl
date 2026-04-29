@@ -3,6 +3,7 @@ module TestAbstractSystem
 import Test
 import CTBase.Exceptions
 import CTFlows.Systems
+import CTFlows.Common
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -33,8 +34,12 @@ function Systems.dimensions(sys::FakeSystem)
     return (n_x=sys.state_dim, n_p=sys.costate_dim, n_u=sys.control_dim, n_v=sys.variable_dim)
 end
 
-function Systems.build_solution(sys::FakeSystem, ode_sol)
+function Systems.build_solution(sys::FakeSystem, ode_sol, flow, config)
     return ode_sol  # Return as-is for testing
+end
+
+function Systems.ode_problem(sys::FakeSystem, config)
+    return :fake_ode_problem
 end
 
 """
@@ -83,8 +88,20 @@ function test_abstract_system()
 
             Test.@testset "build_solution returns input" begin
                 ode_sol = :fake_solution
-                result = Systems.build_solution(sys, ode_sol)
+                flow = :fake_flow
+                config = Common.PointConfig(0.0, [1.0], 1.0)
+                result = Systems.build_solution(sys, ode_sol, flow, config)
                 Test.@test result === ode_sol
+            end
+
+            Test.@testset "ode_problem returns fake problem" begin
+                config = Common.PointConfig(0.0, [1.0], 1.0)
+                result = Systems.ode_problem(sys, config)
+                Test.@test result === :fake_ode_problem
+            end
+
+            Test.@testset "variable_dependence defaults to Fixed" begin
+                Test.@test Systems.variable_dependence(sys) === Systems.Fixed
             end
         end
 
@@ -104,7 +121,11 @@ function test_abstract_system()
             end
 
             Test.@testset "build_solution throws NotImplemented" begin
-                Test.@test_throws Exceptions.NotImplemented Systems.build_solution(sys, :fake_sol)
+                Test.@test_throws Exceptions.NotImplemented Systems.build_solution(sys, :fake_sol, :fake_flow, Common.PointConfig(0.0, [1.0], 1.0))
+            end
+
+            Test.@testset "ode_problem throws NotImplemented" begin
+                Test.@test_throws Exceptions.NotImplemented Systems.ode_problem(sys, Common.PointConfig(0.0, [1.0], 1.0))
             end
         end
 

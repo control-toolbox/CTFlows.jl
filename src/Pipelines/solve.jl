@@ -3,46 +3,29 @@ $(TYPEDSIGNATURES)
 
 Solve an ODE problem using a flow.
 
-This is a two-step pipeline: integrate the flow over the time span, then package
-the result using the system's solution builder.
+This is an alias for `integrate` — the Flow callable already builds solutions
+internally, so `solve` is provided for convenience and semantic clarity.
 
 # Arguments
 - `flow::Flows.AbstractFlow`: The flow to solve.
-- `tspan`: The time span `(t0, tf)` over which to solve.
-- `x0`: Initial state.
+- `config`: The integration configuration (`PointConfig` or `TrajectoryConfig`).
 
 # Returns
-- The packaged solution (type varies by system implementation).
+- The packaged solution (type varies by flow implementation).
 
-See also: [`integrate`](@ref), [`build_solution`](@ref).
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Pipelines, CTFlows.Core
+
+julia> config = Core.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+TrajectoryConfig(...)
+
+julia> sol = solve(flow, config)
+...
+\`\`\`
+
+See also: [`integrate`](@ref), [`Flows.AbstractFlow`](@ref).
 """
-function solve(flow::Flows.AbstractFlow, tspan, x0)
-    t0, tf = tspan
-    ode_sol = integrate(flow, t0, x0, tf)
-    return build_solution(Flows.system(flow), ode_sol)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Solve an ODE problem with initial state and costate using a flow.
-
-This is a two-step pipeline: integrate the flow over the time span, then package
-the result using the system's solution builder.
-
-# Arguments
-- `flow::Flows.AbstractFlow`: The flow to solve.
-- `tspan`: The time span `(t0, tf)` over which to solve.
-- `x0`: Initial state.
-- `p0`: Initial costate.
-
-# Returns
-- The packaged solution (type varies by system implementation).
-
-See also: [`integrate`](@ref), [`build_solution`](@ref).
-"""
-function solve(flow::Flows.AbstractFlow, tspan, x0, p0)
-    t0, tf = tspan
-    ode_sol = integrate(flow, t0, x0, p0, tf)
-    return build_solution(Flows.system(flow), ode_sol)
+function solve(flow::Flows.AbstractFlow, config)
+    return integrate(flow, config)
 end

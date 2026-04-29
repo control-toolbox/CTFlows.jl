@@ -4,6 +4,7 @@ import Test
 import CTFlows.Systems
 import CTFlows.Flows
 import CTFlows.Pipelines
+import CTFlows.Common
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -33,21 +34,16 @@ end
 
 struct FakeFlow <: Flows.AbstractFlow
     sys::Systems.AbstractSystem
-    captured_args::Ref{Vector{Any}}
+    captured_config::Ref{Any}
 end
 
 function FakeFlow(sys)
-    return FakeFlow(sys, Ref{Any}[])
+    return FakeFlow(sys, Ref{Any}(nothing))
 end
 
-function (f::FakeFlow)(t0, x0, tf)
-    push!(f.captured_args[], (t0, x0, tf))
+function (f::FakeFlow)(config)
+    f.captured_config[] = config
     return :fake_trajectory
-end
-
-function (f::FakeFlow)(t0, x0, p0, tf)
-    push!(f.captured_args[], (t0, x0, p0, tf))
-    return :fake_trajectory_with_costate
 end
 
 function Flows.system(f::FakeFlow)
@@ -66,44 +62,30 @@ function test_integrate()
     Test.@testset "integrate Pipeline Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
-        # UNIT TESTS - State Integration
+        # UNIT TESTS - Config-based Integration
         # ====================================================================
 
-        Test.@testset "State Integration" begin
+        Test.@testset "Config-based Integration" begin
             sys = FakeSystem(2)
             flow = FakeFlow(sys)
 
-            Test.@testset "delegates to flow callable" begin
-                result = Pipelines.integrate(flow, 0.0, [1.0, 0.0], 1.0)
+            Test.@testset "delegates to flow callable with PointConfig" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                result = Pipelines.integrate(flow, config)
                 Test.@test result === :fake_trajectory
             end
 
-            Test.@testset "passes arguments correctly" begin
+            Test.@testset "passes config correctly" begin
                 flow = FakeFlow(sys)
-                Pipelines.integrate(flow, 0.5, [1.0, 2.0], 2.5)
-                Test.@test length(flow.captured_args[]) == 1
-                Test.@test flow.captured_args[][1] == (0.5, [1.0, 2.0], 2.5)
-            end
-        end
-
-        # ====================================================================
-        # UNIT TESTS - State + Costate Integration
-        # ====================================================================
-
-        Test.@testset "State + Costate Integration" begin
-            sys = FakeSystem(2)
-            flow = FakeFlow(sys)
-
-            Test.@testset "delegates to flow callable" begin
-                result = Pipelines.integrate(flow, 0.0, [1.0, 0.0], [0.0, 0.0], 1.0)
-                Test.@test result === :fake_trajectory_with_costate
+                config = Common.PointConfig(0.5, [1.0, 2.0], 2.5)
+                Pipelines.integrate(flow, config)
+                Test.@test flow.captured_config[] === config
             end
 
-            Test.@testset "passes arguments correctly" begin
-                flow = FakeFlow(sys)
-                Pipelines.integrate(flow, 0.5, [1.0, 2.0], [0.1, 0.2], 2.5)
-                Test.@test length(flow.captured_args[]) == 1
-                Test.@test flow.captured_args[][1] == (0.5, [1.0, 2.0], [0.1, 0.2], 2.5)
+            Test.@testset "delegates to flow callable with TrajectoryConfig" begin
+                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+                result = Pipelines.integrate(flow, config)
+                Test.@test result === :fake_trajectory
             end
         end
     end

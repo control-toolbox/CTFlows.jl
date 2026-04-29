@@ -8,6 +8,13 @@ CTBase = "54762871-cc72-4466-b8e8-f6c8b58076cd"
 CTSolvers = "d3e8d392-8e4b-4d9b-8e92-d7d4e3650ef6"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 
+# [weakdeps]
+# OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
+# SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
+
+# [extensions]
+# CTFlowsSciMLExt = "CTFlowsSciMLExt"
+
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

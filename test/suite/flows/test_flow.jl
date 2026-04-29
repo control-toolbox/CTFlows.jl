@@ -4,6 +4,7 @@ import Test
 import CTFlows.Systems
 import CTFlows.Flows
 import CTFlows.Integrators
+import CTFlows.Common
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -13,33 +14,30 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # ==============================================================================
 
 """
-Fake system for testing.
-"""
-struct FakeSystem <: Systems.AbstractSystem
-    state_dim::Int
-end
-
-function Systems.rhs!(sys::FakeSystem)
-    return (du, u, p, t) -> nothing
-end
-
-function Systems.dimensions(sys::FakeSystem)
-    return (n_x=sys.state_dim, n_p=sys.state_dim, n_u=0, n_v=0)
-end
-
-function Systems.build_solution(sys::FakeSystem, ode_sol)
-    return ode_sol
-end
-
-"""
 Fake integrator for testing Flow.
 """
-struct FakeIntegrator <: Integrators.AbstractODEIntegrator
+struct FakeIntegrator
     result::Any
 end
 
-function (integ::FakeIntegrator)(ode_problem, tspan)
-    return integ.result
+"""
+Fake flow for testing Flow contract without requiring SciML extension.
+"""
+struct FakeFlow <: Flows.AbstractFlow
+    sys::Any
+    integ::Any
+end
+
+function Flows.system(flow::FakeFlow)
+    return flow.sys
+end
+
+function Flows.integrator(flow::FakeFlow)
+    return flow.integ
+end
+
+function (flow::FakeFlow)(config::Common.PointConfig; variable=nothing)
+    return flow.integ.result
 end
 
 # ==============================================================================
@@ -54,9 +52,9 @@ function test_flow()
         # ====================================================================
 
         Test.@testset "Flow Construction" begin
-            sys = FakeSystem(2)
+            sys = :fake_system
             integ = FakeIntegrator(:fake_ode_sol)
-            flow = Flows.Flow(sys, integ)
+            flow = FakeFlow(sys, integ)
 
             Test.@testset "Flow is AbstractFlow" begin
                 Test.@test flow isa Flows.AbstractFlow
@@ -72,13 +70,45 @@ function test_flow()
         end
 
         # ====================================================================
+        # UNIT TESTS - Flow Callable (Fixed systems)
+        # ====================================================================
+
+        Test.@testset "Flow Callable - Fixed Systems" begin
+            sys = :fake_system
+            integ = FakeIntegrator(:solution)
+            flow = FakeFlow(sys, integ)
+
+            Test.@testset "call with PointConfig" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                result = flow(config)
+                Test.@test result === :solution
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Flow Callable (NonFixed systems)
+        # ====================================================================
+
+        Test.@testset "Flow Callable - NonFixed Systems" begin
+            sys = :fake_system
+            integ = FakeIntegrator(:solution)
+            flow = FakeFlow(sys, integ)
+
+            Test.@testset "call with PointConfig and variable" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                result = flow(config; variable = 0.5)
+                Test.@test result === :solution
+            end
+        end
+
+        # ====================================================================
         # UNIT TESTS - Base.show
         # ====================================================================
 
         Test.@testset "Base.show" begin
-            sys = FakeSystem(2)
+            sys = :fake_system
             integ = FakeIntegrator(:fake_ode_sol)
-            flow = Flows.Flow(sys, integ)
+            flow = FakeFlow(sys, integ)
 
             Test.@testset "MIME text/plain" begin
                 io = IOBuffer()

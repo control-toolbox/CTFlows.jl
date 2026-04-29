@@ -45,37 +45,95 @@ Return the integrator associated with the flow.
 """
 integrator(f::Flow) = f.integrator
 
+# =============================================================================
+# Flow callable — compile-time dispatch on variable trait.
+#
+# Fixed systems: 3 methods, NO `variable` kwarg.
+# NonFixed systems: 3 methods, REQUIRED `variable` kwarg (no default).
+#
+# Calling a Fixed flow with `variable=v` → MethodError (unknown kwarg).
+# Calling a NonFixed flow without `variable` → MethodError (required kwarg).
+# =============================================================================
+
+# --- Fixed ------------------------------------------------------------------
+
 """
 $(TYPEDSIGNATURES)
 
-Integrate the flow from initial state `x0` at time `t0` to final time `tf`.
-
-This method builds an ODE problem from the system's RHS, calls the integrator,
-and packages the result using the system's `build_solution` method.
-
-See also: [`AbstractFlow`](@ref), [`rhs!`](@ref), [`build_solution`](@ref).
+Integrate a `Fixed` (variable-free) `Flow` using the given `config`.
 """
-function (f::Flow)(t0, x0, tf)
-    rhs = Systems.rhs!(f.system)
-    # In a real implementation, this would build an ODEProblem and call the integrator
-    # For now, we delegate to the integrator's callable
-    ode_problem = (rhs, t0, x0)  # Placeholder: should be an actual ODEProblem
-    ode_sol = f.integrator(ode_problem, (t0, tf))
-    return Systems.build_solution(f.system, ode_sol)
+function (f::Flow{S})(
+    config,
+) where {S <: Systems.VectorFieldSystem{<:Any, <:Any, Systems.Fixed}}
+    prob = Systems.ode_problem(f.system, config)
+    raw = f.integrator(prob)
+    return Systems.build_solution(raw, f, config)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Integrate the flow from initial state `x0` and costate `p0` at time `t0` to final time `tf`.
-
-See also: [`AbstractFlow`](@ref).
+Convenience call `flow(t0, x0, tf)` — builds a `PointConfig` internally.
 """
-function (f::Flow)(t0, x0, p0, tf)
-    rhs = Systems.rhs!(f.system)
-    # In a real implementation, this would build an ODEProblem with augmented state
-    # For now, we delegate to the integrator's callable
-    ode_problem = (rhs, t0, [x0; p0])  # Placeholder: should be an actual ODEProblem
-    ode_sol = f.integrator(ode_problem, (t0, tf))
-    return Systems.build_solution(f.system, ode_sol)
+function (f::Flow{S})(
+    t0,
+    x0,
+    tf,
+) where {S <: Systems.VectorFieldSystem{<:Any, <:Any, Systems.Fixed}}
+    return f(Common.PointConfig(t0, x0, tf))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Convenience call `flow((t0, tf), x0)` — builds a `TrajectoryConfig` internally.
+"""
+function (f::Flow{S})(
+    tspan::Tuple,
+    x0,
+) where {S <: Systems.VectorFieldSystem{<:Any, <:Any, Systems.Fixed}}
+    return f(Common.TrajectoryConfig(tspan, x0))
+end
+
+# --- NonFixed ---------------------------------------------------------------
+
+"""
+$(TYPEDSIGNATURES)
+
+Integrate a `NonFixed` `Flow` with the required `variable` kwarg.
+"""
+function (f::Flow{S})(
+    config;
+    variable,
+) where {S <: Systems.VectorFieldSystem{<:Any, <:Any, Systems.NonFixed}}
+    prob = Systems.ode_problem(f.system, config; variable = variable)
+    raw = f.integrator(prob)
+    return Systems.build_solution(raw, f, config)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Convenience call `flow(t0, x0, tf; variable=v)`.
+"""
+function (f::Flow{S})(
+    t0,
+    x0,
+    tf;
+    variable,
+) where {S <: Systems.VectorFieldSystem{<:Any, <:Any, Systems.NonFixed}}
+    return f(Common.PointConfig(t0, x0, tf); variable = variable)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Convenience call `flow((t0, tf), x0; variable=v)`.
+"""
+function (f::Flow{S})(
+    tspan::Tuple,
+    x0;
+    variable,
+) where {S <: Systems.VectorFieldSystem{<:Any, <:Any, Systems.NonFixed}}
+    return f(Common.TrajectoryConfig(tspan, x0); variable = variable)
 end

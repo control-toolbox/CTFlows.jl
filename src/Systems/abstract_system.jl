@@ -71,23 +71,39 @@ $(TYPEDSIGNATURES)
 
 Package the raw ODE solution into the appropriate result type.
 
-For raw systems (vector field), this returns the trajectory as-is.
-For OCP systems, this integrates the Lagrange cost, reconstructs the control,
-and returns a `CTModels.Solution`.
+This ensures that systems must implement their own solution building logic.
+"""
+function build_solution(sys::AbstractSystem, ode_sol, flow, config)
+    throw(Exceptions.NotImplemented("build_solution"))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Build an `ODEProblem` for the given system and integration config.
 
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
-
-See also: [`AbstractSystem`](@ref).
 """
-function build_solution(system::AbstractSystem, ode_sol)
+function ode_problem(system::AbstractSystem, config; kwargs...)
     throw(Exceptions.NotImplemented(
-        "AbstractSystem build_solution method not implemented";
-        required_method = "build_solution(system::$(typeof(system)), ode_sol)",
-        suggestion = "Package the raw ODE trajectory into the appropriate result (raw trajectory or CTModels.Solution).",
-        context = "AbstractSystem.build_solution - required method implementation",
+        "AbstractSystem ode_problem method not implemented";
+        required_method = "ode_problem(system::$(typeof(system)), config::$(typeof(config)); kwargs...)",
+        suggestion = "Implementation for VectorFieldSystem is provided by the CTFlowsSciMLExt package extension. Load OrdinaryDiffEqTsit5 (or a superset) to activate it.",
+        context = "AbstractSystem.ode_problem - required method implementation",
     ))
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the variable-dependence trait (`Fixed` or `NonFixed`) of the system.
+
+By default systems are `Fixed`. Subtypes that depend on a variable (e.g.
+`VectorFieldSystem` parameterised on `NonFixed`) must override this method.
+"""
+variable_dependence(::Type{<:AbstractSystem}) = Fixed
+variable_dependence(system::AbstractSystem) = variable_dependence(typeof(system))
 
 """
 $(TYPEDSIGNATURES)

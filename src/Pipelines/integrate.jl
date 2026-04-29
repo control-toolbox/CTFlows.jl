@@ -1,46 +1,31 @@
 """
 $(TYPEDSIGNATURES)
 
-Integrate a flow from initial state `x0` at time `t0` to final time `tf`.
+Integrate a flow using a configuration object.
 
 This is a thin wrapper over the callable protocol of `AbstractFlow`. It is useful
 when one wants to spell out the action by name rather than calling the flow directly.
 
 # Arguments
 - `flow::Flows.AbstractFlow`: The flow to integrate.
-- `t0`: Initial time.
-- `x0`: Initial state.
-- `tf`: Final time.
+- `config`: The integration configuration (`PointConfig` or `TrajectoryConfig`).
 
 # Returns
-- The integrated trajectory (type varies by flow implementation).
+- The integrated solution (type varies by flow implementation).
 
-See also: [`Flows.AbstractFlow`](@ref), [`solve`](@ref).
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Pipelines, CTFlows.Core, CTFlows.Systems
+
+julia> config = Core.PointConfig(0.0, [1.0, 0.0], 1.0)
+PointConfig(...)
+
+julia> sol = integrate(flow, config)
+...
+\`\`\`
+
+See also: [`Flows.AbstractFlow`](@ref), [`solve`](@ref), [`Core.PointConfig`](@ref), [`Core.TrajectoryConfig`](@ref).
 """
-function integrate(flow::Flows.AbstractFlow, t0, x0, tf)
-    return flow(t0, x0, tf)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Integrate a flow from initial state `x0` and costate `p0` at time `t0` to final time `tf`.
-
-This is a thin wrapper over the callable protocol of `AbstractFlow`. It is useful
-when one wants to spell out the action by name rather than calling the flow directly.
-
-# Arguments
-- `flow::Flows.AbstractFlow`: The flow to integrate.
-- `t0`: Initial time.
-- `x0`: Initial state.
-- `p0`: Initial costate.
-- `tf`: Final time.
-
-# Returns
-- The integrated trajectory (type varies by flow implementation).
-
-See also: [`Flows.AbstractFlow`](@ref), [`solve`](@ref).
-"""
-function integrate(flow::Flows.AbstractFlow, t0, x0, p0, tf)
-    return flow(t0, x0, p0, tf)
+function integrate(flow::Flows.AbstractFlow, config)
+    return flow(config)
 end

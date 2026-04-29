@@ -10,10 +10,12 @@ to expose the integration protocol.
 # Contract
 
 All subtypes must implement:
-- `(flow)(t0, x0, tf)`: Integrate from initial state `x0` at time `t0` to final time `tf`.
-- `(flow)(t0, x0, p0, tf)`: Integrate with initial state `x0` and costate `p0`.
+- `(flow)(config)`: Integrate according to the given config (e.g. `PointConfig`, `TrajectoryConfig`).
 - `system(flow)`: Return the associated `AbstractSystem`.
 - `integrator(flow)`: Return the associated `AbstractODEIntegrator`.
+
+Convenience call signatures like `(flow)(t0, x0, tf)` or `(flow)((t0, tf), x0)`
+are provided by concrete subtypes (see `Flow`).
 
 See also: [`Flow`](@ref), [`AbstractSystem`](@ref), [`AbstractODEIntegrator`](@ref).
 """
@@ -22,18 +24,18 @@ abstract type AbstractFlow end
 """
 $(TYPEDSIGNATURES)
 
-Integrate the flow from initial state `x0` at time `t0` to final time `tf`.
+Integrate the flow according to the given `config`.
 
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
 
 See also: [`AbstractFlow`](@ref).
 """
-function (flow::AbstractFlow)(t0, x0, tf)
+function (flow::AbstractFlow)(config)
     throw(Exceptions.NotImplemented(
         "AbstractFlow callable not implemented";
-        required_method = "(flow::$(typeof(flow)))(t0, x0, tf)",
-        suggestion = "Implement (f::YourFlow)(t0, x0, tf) returning the integrated trajectory.",
+        required_method = "(flow::$(typeof(flow)))(config)",
+        suggestion = "Implement (f::YourFlow)(config) returning the integrated trajectory.",
         context = "AbstractFlow call - required method implementation",
     ))
 end
@@ -41,21 +43,9 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Integrate the flow from initial state `x0` and costate `p0` at time `t0` to final time `tf`.
-
-# Throws
-- `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
-
-See also: [`AbstractFlow`](@ref).
+Return the variable-dependence trait of the flow (delegates to its system).
 """
-function (flow::AbstractFlow)(t0, x0, p0, tf)
-    throw(Exceptions.NotImplemented(
-        "AbstractFlow callable not implemented";
-        required_method = "(flow::$(typeof(flow)))(t0, x0, p0, tf)",
-        suggestion = "Implement (f::YourFlow)(t0, x0, p0, tf) returning the integrated trajectory.",
-        context = "AbstractFlow call - required method implementation",
-    ))
-end
+variable_dependence(flow::AbstractFlow) = Systems.variable_dependence(system(flow))
 
 """
 $(TYPEDSIGNATURES)

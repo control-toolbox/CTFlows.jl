@@ -4,6 +4,7 @@ import Test
 import CTBase.Exceptions
 import CTFlows.Systems
 import CTFlows.Flows
+import CTFlows.Common
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -125,12 +126,9 @@ function test_abstract_flow()
                 Test.@test_throws Exceptions.NotImplemented Flows.integrator(flow)
             end
 
-            Test.@testset "callable (t0, x0, tf) throws NotImplemented" begin
-                Test.@test_throws Exceptions.NotImplemented flow(0.0, [1.0, 0.0], 1.0)
-            end
-
-            Test.@testset "callable (t0, x0, p0, tf) throws NotImplemented" begin
-                Test.@test_throws Exceptions.NotImplemented flow(0.0, [1.0, 0.0], [0.0, 0.0], 1.0)
+            Test.@testset "callable with config throws NotImplemented" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                Test.@test_throws Exceptions.NotImplemented flow(config)
             end
         end
 
