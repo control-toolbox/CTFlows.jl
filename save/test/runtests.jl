@@ -2,19 +2,11 @@
 # CTFlows Test Runner
 # ==============================================================================
 #
-# ## Running tests
+# See test/README.md for usage instructions (running specific tests, coverage, etc.)
 #
-# ### All tests
-#   julia --project -e 'using Pkg; Pkg.test("CTFlows")'
-#
-# ### Specific test(s) — glob patterns matched against test file paths/names
-#   julia --project -e 'using Pkg; Pkg.test("CTFlows"; test_args=["test_abstract_system"])'
-#   julia --project -e 'using Pkg; Pkg.test("CTFlows"; test_args=["*pipelines*"])'
-#   julia --project -e 'using Pkg; Pkg.test("CTFlows"; test_args=["-n"])'  # dry run
-#
-# Test layout: `suite/<group>/test_<name>.jl` each defining `test_<name>()`.
 # ==============================================================================
 
+# Test dependencies
 using Test
 using CTBase
 using CTFlows
@@ -23,11 +15,11 @@ using CTFlows
 const TestRunner = Base.get_extension(CTBase, :TestRunner)
 
 # Controls nested testset output formatting (used by individual test files)
-module TestOptions
+module TestData
 const VERBOSE = true
 const SHOWTIMING = true
 end
-using .TestOptions: VERBOSE, SHOWTIMING
+using .TestData: VERBOSE, SHOWTIMING
 
 # Run tests using the TestRunner extension
 CTBase.run_tests(;
@@ -40,3 +32,21 @@ CTBase.run_tests(;
     showtiming=SHOWTIMING,
     test_dir=@__DIR__,
 )
+
+# If running with coverage enabled, remind the user to run the post-processing script
+# because .cov files are flushed at process exit and cannot be cleaned up by this script.
+if Base.JLOptions().code_coverage != 0
+    println(
+        """
+
+================================================================================
+[CTFlows] Coverage files generated.
+
+To process them, move them to the coverage/ directory, and generate a report,
+please run:
+
+    julia --project=@. -e 'using Pkg; Pkg.test("CTFlows"; coverage=true); include("test/coverage.jl")'
+================================================================================
+""",
+    )
+end

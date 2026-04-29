@@ -1,47 +1,63 @@
-using Documenter
-using DocumenterMermaid
-using CTFlows
-using CTModels
-using OrdinaryDiffEq
+# to run the documentation generation:
+# julia --project=. docs/make.jl
+pushfirst!(LOAD_PATH, joinpath(@__DIR__))
+pushfirst!(LOAD_PATH, joinpath(@__DIR__, ".."))
 
-# to add docstrings from external packages
-const CTFlowsODE = Base.get_extension(CTFlows, :CTFlowsODE)
-Modules = [CTFlowsODE]
-for Module in Modules
-    isnothing(DocMeta.getdocmeta(Module, :DocTestSetup)) &&
-        DocMeta.setdocmeta!(Module, :DocTestSetup, :(using $Module); recursive=true)
+using Documenter
+using CTFlows
+using CTBase
+using Markdown
+using MarkdownAST: MarkdownAST
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Configuration
+# ══════════════════════════════════════════════════════════════════════════════
+
+draft = false  # Draft mode: if true, @example blocks are not executed
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Load extensions
+# ══════════════════════════════════════════════════════════════════════════════
+
+const DocumenterReference = Base.get_extension(CTBase, :DocumenterReference)
+
+if !isnothing(DocumenterReference)
+    DocumenterReference.reset_config!()
 end
 
+# ══════════════════════════════════════════════════════════════════════════════
+# Paths
+# ══════════════════════════════════════════════════════════════════════════════
+
 repo_url = "github.com/control-toolbox/CTFlows.jl"
+src_dir = abspath(joinpath(@__DIR__, "..", "src"))
+ext_dir = abspath(joinpath(@__DIR__, "..", "ext"))
 
-API_PAGES = [
-    "concatenation.md",
-    "ctflowsode.md",
-    "default.md",
-    "differential_geometry.md",
-    "ext_default.md",
-    "ext_types.md",
-    "ext_utils.md",
-    "function.md",
-    "hamiltonian.md",
-    "optimal_control_problem_utils.md",
-    "optimal_control_problem.md",
-    "types.md",
-    "utils.md",
-    "vector_field.md",
-]
+# Include the API reference manager
+include("api_reference.jl")
 
-makedocs(;
-    sitename="CTFlows.jl",
-    format=Documenter.HTML(;
-        repolink="https://" * repo_url,
-        prettyurls=false,
-        assets=[
-            asset("https://control-toolbox.org/assets/css/documentation.css"),
-            asset("https://control-toolbox.org/assets/js/documentation.js"),
-        ],
-    ),
-    pages=["Introduction" => "index.md", "API" => API_PAGES],
-)
+# ══════════════════════════════════════════════════════════════════════════════
+# Build documentation
+# ══════════════════════════════════════════════════════════════════════════════
+
+with_api_reference(src_dir, ext_dir) do api_pages
+    makedocs(;
+        draft=draft,
+        remotes=nothing,
+        warnonly=[:cross_references],
+        sitename="CTFlows.jl",
+        format=Documenter.HTML(;
+            repolink="https://" * repo_url,
+            prettyurls=false,
+            assets=[
+                asset("https://control-toolbox.org/assets/css/documentation.css"),
+                asset("https://control-toolbox.org/assets/js/documentation.js"),
+            ],
+        ),
+        pages=["Introduction" => "index.md", "API Reference" => api_pages],
+    )
+end
+
+# ══════════════════════════════════════════════════════════════════════════════
 
 deploydocs(; repo=repo_url * ".git", devbranch="main")
