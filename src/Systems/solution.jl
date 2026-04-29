@@ -17,3 +17,39 @@ it simply stores the solution without providing any accessor methods.
 struct VectorFieldSolution
     raw::Any
 end
+
+# =============================================================================
+# Base.show
+# =============================================================================
+
+function Base.show(io::IO, ::MIME"text/plain", sol::VectorFieldSolution)
+    print(io, "VectorFieldSolution")
+    print(io, "\n  raw: ", nameof(typeof(sol.raw)))
+    
+    # Try to extract useful info from raw solution
+    try
+        if hasfield(typeof(sol.raw), :t) && !isempty(sol.raw.t)
+            print(io, "\n  time span: (", first(sol.raw.t), ", ", last(sol.raw.t), ")")
+            print(io, "\n  time points: ", length(sol.raw.t))
+        end
+    catch
+        # If we can't extract info, just show the type
+    end
+end
+
+function Base.show(io::IO, sol::VectorFieldSolution)
+    print(io, "VectorFieldSolution(")
+    parts = String[]
+    push!(parts, "raw=$(nameof(typeof(sol.raw)))")
+    
+    try
+        if hasfield(typeof(sol.raw), :t) && !isempty(sol.raw.t)
+            push!(parts, "tspan=($(first(sol.raw.t)), $(last(sol.raw.t)))")
+            push!(parts, "n=$(length(sol.raw.t))")
+        end
+    catch
+    end
+    
+    print(io, join(parts, ", "))
+    print(io, ")")
+end
