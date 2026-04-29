@@ -39,16 +39,13 @@ using ..Flows
 
 include(joinpath(@__DIR__, "build_system.jl"))
 include(joinpath(@__DIR__, "build_flow.jl"))
-include(joinpath(@__DIR__, "integrate.jl"))
 include(joinpath(@__DIR__, "solve.jl"))
-include(joinpath(@__DIR__, "solve_system.jl"))
-include(joinpath(@__DIR__, "solve_vector_field.jl"))
 include(joinpath(@__DIR__, "flow_constructor.jl"))
 
 # ==============================================================================
 # Module exports
 # ==============================================================================
 
-export build_system, build_flow, integrate, solve
+export build_system, build_flow, solve
 
 end # module Pipelines
