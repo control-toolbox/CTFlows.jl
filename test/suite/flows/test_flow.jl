@@ -22,33 +22,39 @@ end
 
 """
 Fake flow for testing Flow contract without requiring SciML extension.
+
+Matches the new parametric Flow{VD, S, I} structure.
 """
-struct FakeFlow{S} <: Flows.AbstractFlow
+struct FakeFlow{VD<:Common.VariableDependence, S<:Systems.AbstractSystem{VD}, I} <: Flows.AbstractFlow{VD}
     sys::S
-    integ::Any
+    integ::I
 end
 
 """
 Fake system for Fixed systems.
 """
-struct FixedSystem end
+struct FixedSystem <: Systems.AbstractSystem{Common.Fixed} end
 
 """
 Fake system for NonFixed systems.
 """
-struct NonFixedSystem end
+struct NonFixedSystem <: Systems.AbstractSystem{Common.NonFixed} end
 
-# Trait types for dispatch (matching real Flow pattern)
-struct Fixed end
-struct NonFixed end
-
-# Attach traits to fake systems
-function Systems.variable_dependence(::FixedSystem)
-    return Fixed()
+# Attach traits to fake systems (return types, not instances)
+function Common.variable_dependence(::FixedSystem)
+    return Common.Fixed
 end
 
-function Systems.variable_dependence(::NonFixedSystem)
-    return NonFixed()
+function Common.variable_dependence(::NonFixedSystem)
+    return Common.NonFixed
+end
+
+function Common.time_dependence(::FixedSystem)
+    return Common.Autonomous
+end
+
+function Common.time_dependence(::NonFixedSystem)
+    return Common.Autonomous
 end
 
 function Flows.system(flow::FakeFlow)
@@ -59,31 +65,21 @@ function Flows.integrator(flow::FakeFlow)
     return flow.integ
 end
 
-# Config-based callable - Fixed systems (no variable kwarg)
-function (flow::FakeFlow{FixedSystem})(config::Common.PointConfig)
+# Config-based callable - both Fixed and NonFixed accept variable=nothing
+function (flow::FakeFlow)(config::Common.PointConfig; variable=nothing)
     return flow.integ.result
 end
 
-# Config-based callable - NonFixed systems (require variable kwarg)
-function (flow::FakeFlow{NonFixedSystem})(config::Common.PointConfig; variable)
+function (flow::FakeFlow)(config::Common.TrajectoryConfig; variable=nothing)
     return flow.integ.result
 end
 
-# Fixed systems - no variable kwarg
-function (flow::FakeFlow{FixedSystem})(t0, x0, tf)
+# Positional callable - both Fixed and NonFixed accept variable=nothing
+function (flow::FakeFlow)(t0, x0, tf; variable=nothing)
     return flow.integ.result
 end
 
-function (flow::FakeFlow{FixedSystem})(tspan::Tuple, x0)
-    return flow.integ.result
-end
-
-# NonFixed systems - require variable kwarg
-function (flow::FakeFlow{NonFixedSystem})(t0, x0, tf; variable)
-    return flow.integ.result
-end
-
-function (flow::FakeFlow{NonFixedSystem})(tspan::Tuple, x0; variable)
+function (flow::FakeFlow)(tspan::Tuple, x0; variable=nothing)
     return flow.integ.result
 end
 
@@ -99,20 +95,40 @@ function test_flow()
         # ====================================================================
 
         Test.@testset "Flow Construction" begin
-            sys = :fake_system
-            integ = FakeIntegrator(:fake_ode_sol)
-            flow = FakeFlow(sys, integ)
+            Test.@testset "Fixed Flow" begin
+                sys = FixedSystem()
+                integ = FakeIntegrator(:fake_ode_sol)
+                flow = FakeFlow{Common.Fixed, FixedSystem, typeof(integ)}(sys, integ)
 
-            Test.@testset "Flow is AbstractFlow" begin
-                Test.@test flow isa Flows.AbstractFlow
+                Test.@testset "Flow is AbstractFlow{Fixed}" begin
+                    Test.@test flow isa Flows.AbstractFlow{Common.Fixed}
+                end
+
+                Test.@testset "Flow stores system" begin
+                    Test.@test Flows.system(flow) === sys
+                end
+
+                Test.@testset "Flow stores integrator" begin
+                    Test.@test Flows.integrator(flow) === integ
+                end
             end
 
-            Test.@testset "Flow stores system" begin
-                Test.@test Flows.system(flow) === sys
-            end
+            Test.@testset "NonFixed Flow" begin
+                sys = NonFixedSystem()
+                integ = FakeIntegrator(:fake_ode_sol)
+                flow = FakeFlow{Common.NonFixed, NonFixedSystem, typeof(integ)}(sys, integ)
 
-            Test.@testset "Flow stores integrator" begin
-                Test.@test Flows.integrator(flow) === integ
+                Test.@testset "Flow is AbstractFlow{NonFixed}" begin
+                    Test.@test flow isa Flows.AbstractFlow{Common.NonFixed}
+                end
+
+                Test.@testset "Flow stores system" begin
+                    Test.@test Flows.system(flow) === sys
+                end
+
+                Test.@testset "Flow stores integrator" begin
+                    Test.@test Flows.integrator(flow) === integ
+                end
             end
         end
 
@@ -123,11 +139,17 @@ function test_flow()
         Test.@testset "Flow Callable - Fixed Systems" begin
             sys = FixedSystem()
             integ = FakeIntegrator(:solution)
-            flow = FakeFlow{FixedSystem}(sys, integ)
+            flow = FakeFlow{Common.Fixed, FixedSystem, typeof(integ)}(sys, integ)
 
             Test.@testset "call with PointConfig" begin
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
                 result = flow(config)
+                Test.@test result === :solution
+            end
+
+            Test.@testset "call with PointConfig and variable (ignored for Fixed)" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                result = flow(config; variable = 0.5)
                 Test.@test result === :solution
             end
 
@@ -136,14 +158,19 @@ function test_flow()
                 Test.@test result === :solution
             end
 
+            Test.@testset "call with (t0, x0, tf; variable) (ignored for Fixed)" begin
+                result = flow(0.0, [1.0, 0.0], 1.0; variable = 0.5)
+                Test.@test result === :solution
+            end
+
             Test.@testset "call with (tspan, x0)" begin
                 result = flow((0.0, 1.0), [1.0, 0.0])
                 Test.@test result === :solution
             end
 
-            Test.@testset "ERROR: call with variable kwarg (not allowed for Fixed)" begin
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
-                Test.@test_throws MethodError flow(config; variable = 0.5)
+            Test.@testset "call with (tspan, x0; variable) (ignored for Fixed)" begin
+                result = flow((0.0, 1.0), [1.0, 0.0]; variable = 0.5)
+                Test.@test result === :solution
             end
         end
 
@@ -154,11 +181,22 @@ function test_flow()
         Test.@testset "Flow Callable - NonFixed Systems" begin
             sys = NonFixedSystem()
             integ = FakeIntegrator(:solution)
-            flow = FakeFlow{NonFixedSystem}(sys, integ)
+            flow = FakeFlow{Common.NonFixed, NonFixedSystem, typeof(integ)}(sys, integ)
+
+            Test.@testset "call with PointConfig" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                result = flow(config)
+                Test.@test result === :solution
+            end
 
             Test.@testset "call with PointConfig and variable" begin
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
                 result = flow(config; variable = 0.5)
+                Test.@test result === :solution
+            end
+
+            Test.@testset "call with (t0, x0, tf)" begin
+                result = flow(0.0, [1.0, 0.0], 1.0)
                 Test.@test result === :solution
             end
 
@@ -167,14 +205,48 @@ function test_flow()
                 Test.@test result === :solution
             end
 
+            Test.@testset "call with (tspan, x0)" begin
+                result = flow((0.0, 1.0), [1.0, 0.0])
+                Test.@test result === :solution
+            end
+
             Test.@testset "call with (tspan, x0; variable)" begin
                 result = flow((0.0, 1.0), [1.0, 0.0]; variable = 0.5)
                 Test.@test result === :solution
             end
+        end
 
-            Test.@testset "ERROR: call without variable kwarg (required for NonFixed)" begin
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
-                Test.@test_throws UndefKeywordError flow(config)
+        # ====================================================================
+        # UNIT TESTS - Trait Delegation
+        # ====================================================================
+
+        Test.@testset "Trait Delegation" begin
+            Test.@testset "Fixed Flow traits" begin
+                sys = FixedSystem()
+                integ = FakeIntegrator(:solution)
+                flow = FakeFlow{Common.Fixed, FixedSystem, typeof(integ)}(sys, integ)
+
+                Test.@testset "variable_dependence delegates to system" begin
+                    Test.@test Common.variable_dependence(flow) === Common.Fixed
+                end
+
+                Test.@testset "time_dependence delegates to system" begin
+                    Test.@test Common.time_dependence(flow) === Common.Autonomous
+                end
+            end
+
+            Test.@testset "NonFixed Flow traits" begin
+                sys = NonFixedSystem()
+                integ = FakeIntegrator(:solution)
+                flow = FakeFlow{Common.NonFixed, NonFixedSystem, typeof(integ)}(sys, integ)
+
+                Test.@testset "variable_dependence delegates to system" begin
+                    Test.@test Common.variable_dependence(flow) === Common.NonFixed
+                end
+
+                Test.@testset "time_dependence delegates to system" begin
+                    Test.@test Common.time_dependence(flow) === Common.Autonomous
+                end
             end
         end
 
@@ -183,9 +255,9 @@ function test_flow()
         # ====================================================================
 
         Test.@testset "Base.show" begin
-            sys = :fake_system
+            sys = FixedSystem()
             integ = FakeIntegrator(:fake_ode_sol)
-            flow = FakeFlow(sys, integ)
+            flow = FakeFlow{Common.Fixed, FixedSystem, typeof(integ)}(sys, integ)
 
             Test.@testset "MIME text/plain" begin
                 io = IOBuffer()

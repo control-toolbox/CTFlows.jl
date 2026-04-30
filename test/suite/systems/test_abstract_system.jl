@@ -18,7 +18,7 @@ Fake system for testing the AbstractSystem contract.
 This minimal implementation provides the required contract methods to test
 routing and default behavior without full system complexity.
 """
-struct FakeSystem <: Systems.AbstractSystem
+struct FakeSystem <: Systems.AbstractSystem{Common.Fixed}
     data::Vector{Float64}
 end
 
@@ -30,7 +30,7 @@ end
 """
 Minimal system that does not implement the contract (for error testing).
 """
-struct MinimalSystem <: Systems.AbstractSystem
+struct MinimalSystem <: Systems.AbstractSystem{Common.Fixed}
     state_dim::Int
 end
 

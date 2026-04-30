@@ -32,7 +32,7 @@ Fake system for testing the Flow contract.
 This minimal implementation provides the required contract methods to test
 routing and default behavior without full system complexity.
 """
-struct FakeSystem <: Systems.AbstractSystem
+struct FakeSystem <: Systems.AbstractSystem{Common.Fixed}
     state_dim::Int
     param_dim::Int
 end
@@ -44,12 +44,12 @@ end
 
 # Implement contract: time_dependence
 function Common.time_dependence(sys::FakeSystem)
-    return Common.Autonomous()
+    return Common.Autonomous
 end
 
 # Implement contract: variable_dependence
 function Common.variable_dependence(sys::FakeSystem)
-    return Common.Fixed()
+    return Common.Fixed
 end
 
 """
@@ -175,14 +175,14 @@ function test_flow_module()
                 sys = FakeSystem(2, 2)
                 integ = FakeIntegrator()
                 flow = Flows.Flow(sys, integ)
-                Test.@test Common.time_dependence(flow) === Common.Autonomous()
+                Test.@test Common.time_dependence(flow) === Common.Autonomous
             end
 
             Test.@testset "variable_dependence delegates to system" begin
                 sys = FakeSystem(2, 2)
                 integ = FakeIntegrator()
                 flow = Flows.Flow(sys, integ)
-                Test.@test Common.variable_dependence(flow) === Common.Fixed()
+                Test.@test Common.variable_dependence(flow) === Common.Fixed
             end
         end
 

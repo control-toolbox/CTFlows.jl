@@ -20,7 +20,7 @@ Fake system for testing the AbstractFlow contract.
 This minimal implementation provides the required contract methods for AbstractSystem
 to test flow behavior without full system complexity.
 """
-struct FakeSystem <: Systems.AbstractSystem
+struct FakeSystem <: Systems.AbstractSystem{Common.Fixed}
     state_dim::Int
 end
 
@@ -42,13 +42,13 @@ Fake flow for testing the AbstractFlow contract.
 This minimal implementation provides the required contract methods to test
 routing and default behavior without full flow complexity.
 """
-struct FakeFlow{VD<:Systems.VariableDependence} <: Flows.AbstractFlow
-    sys::Systems.AbstractSystem
+struct FakeFlow{VD<:Common.VariableDependence} <: Flows.AbstractFlow{VD}
+    sys::Systems.AbstractSystem{VD}
     integ::Any
 end
 
 function FakeFlow(sys::Systems.AbstractSystem, integ::Any)
-    return FakeFlow{Systems.variable_dependence(sys)}(sys, integ)
+    return FakeFlow{Common.variable_dependence(sys)}(sys, integ)
 end
 
 function Flows.system(f::FakeFlow)
@@ -74,8 +74,8 @@ end
 """
 Minimal flow that does not implement the contract (for error testing).
 """
-struct MinimalFlow <: Flows.AbstractFlow
-    sys::Systems.AbstractSystem
+struct MinimalFlow <: Flows.AbstractFlow{Common.Fixed}
+    sys::Systems.AbstractSystem{Common.Fixed}
 end
 
 # ==============================================================================

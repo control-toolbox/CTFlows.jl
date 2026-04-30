@@ -42,7 +42,7 @@ Return the system associated with the flow.
 # Returns
 - `S`: The `AbstractSystem` stored in the flow.
 """
-function system(f::Flow{S, I})::S where {S, I}
+function system(f::Flow{VD, S, I})::S where {VD, S, I}
     return f.system
 end
 
@@ -54,8 +54,8 @@ Return the integrator associated with the flow.
 # Returns
 - `I`: The `AbstractODEIntegrator` stored in the flow.
 """
-function integrator(f::Flow{S, I})::I where {S, I}
-    return f.integrator
+function integrator(f::Flow{VD, S, I})::I where {VD, S, I}
+    return f.integ
 end
 
 # =============================================================================
