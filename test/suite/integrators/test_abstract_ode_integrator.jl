@@ -3,6 +3,7 @@ module TestAbstractODEIntegrator
 import Test
 import CTBase.Exceptions
 import CTFlows.Integrators
+import CTFlows.Common
 import CTSolvers: CTSolvers
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -78,8 +79,9 @@ function test_abstract_ode_integrator()
         Test.@testset "NotImplemented Errors" begin
             integ = MinimalIntegrator()
 
-            Test.@testset "callable throws NotImplemented" begin
-                Test.@test_throws Exceptions.NotImplemented integ(:fake_ode_problem, (0.0, 1.0))
+            Test.@testset "callable with config throws NotImplemented" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                Test.@test_throws Exceptions.NotImplemented integ(config)
             end
         end
     end

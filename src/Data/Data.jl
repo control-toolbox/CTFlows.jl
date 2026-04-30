@@ -1,37 +1,32 @@
 """
-    Modelers
+    Data
 
-Flow modeler strategy types for CTFlows.
+Data structures for CTFlows including vector fields with traits.
 
-This module defines the `AbstractFlowModeler` type which inherits from
-`CTSolvers.Strategies.AbstractStrategy`.
+This module defines the `VectorField` type which encapsulates a vector-field
+function together with its time-dependence and variable-dependence traits.
 """
-module Modelers
+module Data
 
-# ==============================================================================
-# External package imports
-# ==============================================================================
-
+# 1. External-package imports (qualified, pollution-free)
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
-import CTBase.Exceptions
-import CTSolvers: CTSolvers
 
 # ==============================================================================
-# Internal submodule imports
+# Internal sibling-submodule imports
 # ==============================================================================
 
-using ..Core
+using ..Common
 
 # ==============================================================================
 # Include files
 # ==============================================================================
 
-include(joinpath(@__DIR__, "abstract_flow_modeler.jl"))
+include(joinpath(@__DIR__, "vector_field.jl"))
 
 # ==============================================================================
 # Module exports
 # ==============================================================================
 
-export AbstractFlowModeler
+export VectorField
 
-end # module Modelers
+end # module Data

@@ -4,6 +4,7 @@ import Test
 import CTFlows.Systems
 import CTFlows.Flows
 import CTFlows.Pipelines
+import CTFlows.Common
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -23,44 +24,47 @@ function Systems.rhs!(sys::FakeSystem)
     return (du, u, p, t) -> nothing
 end
 
-function Systems.dimensions(sys::FakeSystem)
-    return (n_x=sys.state_dim, n_p=sys.state_dim, n_u=0, n_v=0)
+function Systems.build_solution(sys::FakeSystem, ode_sol, flow, config)
+    return (:packaged, ode_sol)
 end
 
-function Systems.build_solution(sys::FakeSystem, ode_sol)
-    return (:packaged, ode_sol)
+function Systems.ode_problem(sys::FakeSystem, config; kwargs...)
+    return :fake_ode_problem
+end
+
+function Systems.variable_dependence(sys::FakeSystem)
+    return Common.Fixed
 end
 
 struct FakeFlow <: Flows.AbstractFlow
     sys::Systems.AbstractSystem
-    captured_tspan::Ref{Any}
-    captured_x0::Ref{Any}
-    captured_p0::Ref{Any}
+    captured_config::Ref{Any}
+end
+
+function Flows.system(flow::FakeFlow)
+    return flow.sys
+end
+
+function Flows.integrator(flow::FakeFlow)
+    # Fake integrator that returns a fake ODE solution
+    return FakeIntegrator(:fake_ode_sol)
+end
+
+struct FakeIntegrator
+    result::Any
+end
+
+function (integ::FakeIntegrator)(prob)
+    return integ.result
 end
 
 function FakeFlow(sys)
-    return FakeFlow(sys, Ref{Any}(nothing), Ref{Any}(nothing), Ref{Any}(nothing))
+    return FakeFlow(sys, Ref{Any}(nothing))
 end
 
-function (f::FakeFlow)(t0, x0, tf)
-    f.captured_tspan[] = (t0, tf)
-    f.captured_x0[] = x0
+function (f::FakeFlow)(config)
+    f.captured_config[] = config
     return :fake_ode_sol
-end
-
-function (f::FakeFlow)(t0, x0, p0, tf)
-    f.captured_tspan[] = (t0, tf)
-    f.captured_x0[] = x0
-    f.captured_p0[] = p0
-    return :fake_ode_sol
-end
-
-function Flows.system(f::FakeFlow)
-    return f.sys
-end
-
-function Flows.integrator(f::FakeFlow)
-    return :fake_integrator
 end
 
 # ==============================================================================
@@ -71,55 +75,52 @@ function test_solve()
     Test.@testset "solve Pipeline Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
-        # UNIT TESTS - State Solve
+        # UNIT TESTS - Config-based Solve
         # ====================================================================
 
-        Test.@testset "State Solve" begin
+        Test.@testset "Config-based Solve" begin
             sys = FakeSystem(2)
             flow = FakeFlow(sys)
 
-            Test.@testset "returns packaged solution" begin
-                result = Pipelines.solve(flow, (0.0, 1.0), [1.0, 0.0])
-                Test.@test result == (:packaged, :fake_ode_sol)
+            Test.@testset "performs integration + build solution" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                result = Pipelines.solve(flow, config)
+                Test.@test result === (:packaged, :fake_ode_sol)
             end
 
-            Test.@testset "calls integrate with correct args" begin
+            Test.@testset "solve() calls ode_problem, integrator, build_solution" begin
+                sys = FakeSystem(2)
                 flow = FakeFlow(sys)
-                Pipelines.solve(flow, (0.5, 2.5), [1.0, 2.0])
-                Test.@test flow.captured_tspan[] == (0.5, 2.5)
-                Test.@test flow.captured_x0[] == [1.0, 2.0]
-            end
-
-            Test.@testset "calls build_solution" begin
-                result = Pipelines.solve(flow, (0.0, 1.0), [1.0, 0.0])
-                Test.@test result isa Tuple && result[1] == :packaged
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                result = Pipelines.solve(flow, config)
+                Test.@test result === (:packaged, :fake_ode_sol)
             end
         end
 
         # ====================================================================
-        # UNIT TESTS - State + Costate Solve
+        # UNIT TESTS - solve() does integration + build
         # ====================================================================
 
-        Test.@testset "State + Costate Solve" begin
-            sys = FakeSystem(2)
-            flow = FakeFlow(sys)
-
-            Test.@testset "returns packaged solution" begin
-                result = Pipelines.solve(flow, (0.0, 1.0), [1.0, 0.0], [0.0, 0.0])
-                Test.@test result == (:packaged, :fake_ode_sol)
-            end
-
-            Test.@testset "calls integrate with correct args" begin
+        Test.@testset "solve() does integration + build solution" begin
+            Test.@testset "calls ode_problem, integrator, build_solution" begin
+                sys = FakeSystem(2)
                 flow = FakeFlow(sys)
-                Pipelines.solve(flow, (0.5, 2.5), [1.0, 2.0], [0.1, 0.2])
-                Test.@test flow.captured_tspan[] == (0.5, 2.5)
-                Test.@test flow.captured_x0[] == [1.0, 2.0]
-                Test.@test flow.captured_p0[] == [0.1, 0.2]
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                result = Pipelines.solve(flow, config)
+                Test.@test result === (:packaged, :fake_ode_sol)
             end
+        end
 
-            Test.@testset "calls build_solution" begin
-                result = Pipelines.solve(flow, (0.0, 1.0), [1.0, 0.0], [0.0, 0.0])
-                Test.@test result isa Tuple && result[1] == :packaged
+        # ====================================================================
+        # UNIT TESTS - VectorFieldSolution
+        # ====================================================================
+
+        Test.@testset "VectorFieldSolution" begin
+            Test.@testset "constructs with raw ODE solution" begin
+                raw_ode_sol = (t = [0.0, 1.0], u = [[1.0], [2.0]])
+                sol = Systems.VectorFieldSolution(raw_ode_sol)
+                Test.@test sol isa Systems.VectorFieldSolution
+                Test.@test sol.raw === raw_ode_sol
             end
         end
     end

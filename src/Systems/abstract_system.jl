@@ -9,13 +9,97 @@ It embeds its own `rhs!`, dimensional metadata, and solution-building logic.
 # Contract
 
 All subtypes must implement:
-- `rhs!(system::AbstractSystem)`: Returns a function `(du, u, p, t) -> nothing` that fills `du` in place.
-- `dimensions(system::AbstractSystem)`: Returns a `NamedTuple` with dimension fields (e.g., `(n_x=n, n_p=n, n_u=m, n_v=k)`).
-- `build_solution(system::AbstractSystem, ode_sol)`: Packages the raw ODE trajectory into the appropriate result.
 
-See also: [`rhs!`](@ref), [`dimensions`](@ref), [`build_solution`](@ref).
+- `rhs!(system::AbstractSystem)`: Returns a function `(du, u, p, t) -> nothing` that fills `du` in place.
+- `variable_dependence(system::AbstractSystem)`: Returns the variable-dependence trait (`Fixed` or `NonFixed`).
+- `time_dependence(system::AbstractSystem)`: Returns the time-dependence trait (`Autonomous` or `NonAutonomous`).
+
+# Example
+
+\`\`\`julia
+using CTFlows.Systems
+using CTFlows.Common
+
+# Define a concrete system
+struct MySystem <: Systems.AbstractSystem
+    data::Vector{Float64}
+end
+
+# Implement required contract methods
+function Systems.rhs!(sys::MySystem)
+    return (du, u, p, t) -> du .= sys.data .* u
+end
+
+function Common.variable_dependence(sys::MySystem)
+    return Common.NonFixed
+end
+
+function Common.time_dependence(sys::MySystem)
+    return Common.Autonomous
+end
+\`\`\`
+
+See also: [`CTFlows.Systems.rhs!`](@ref), [`CTFlows.Common.time_dependence`](@ref), [`CTFlows.Common.variable_dependence`](@ref).
 """
 abstract type AbstractSystem end
+
+"""
+$(TYPEDSIGNATURES)
+
+Indicate that `AbstractSystem` has the time-dependence trait.
+
+This implementation declares that all systems support time-dependence queries.
+Concrete subtypes must implement `time_dependence` to return the specific trait value.
+
+# Example
+
+\`\`\`julia
+using CTFlows.Systems
+using CTFlows.Common
+
+struct MySystem <: Systems.AbstractSystem end
+
+# All systems have the time-dependence trait
+Common.has_time_dependence_trait(MySystem)  # Returns true
+
+# Concrete subtypes must implement time_dependence
+function Common.time_dependence(sys::MySystem)
+    return Common.Autonomous
+end
+\`\`\`
+
+See also: [`CTFlows.Common.time_dependence`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
+"""
+Common.has_time_dependence_trait(::AbstractSystem) = true
+
+"""
+$(TYPEDSIGNATURES)
+
+Indicate that `AbstractSystem` has the variable-dependence trait.
+
+This implementation declares that all systems support variable-dependence queries.
+Concrete subtypes must implement `variable_dependence` to return the specific trait value.
+
+# Example
+
+\`\`\`julia
+using CTFlows.Systems
+using CTFlows.Common
+
+struct MySystem <: Systems.AbstractSystem end
+
+# All systems have the variable-dependence trait
+Common.has_variable_dependence_trait(MySystem)  # Returns true
+
+# Concrete subtypes must implement variable_dependence
+function Common.variable_dependence(sys::MySystem)
+    return Common.NonFixed
+end
+\`\`\`
+
+See also: [`CTFlows.Common.variable_dependence`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
+"""
+Common.has_variable_dependence_trait(::AbstractSystem) = true
 
 """
 $(TYPEDSIGNATURES)
@@ -25,10 +109,31 @@ Return the right-hand side function for the system.
 The returned function must have the signature `(du, u, p, t) -> nothing` and
 fill `du` in place with the derivative at state `u`, parameters `p`, and time `t`.
 
-# Throws
-- `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
+# Example
 
-See also: [`AbstractSystem`](@ref).
+\`\`\`julia
+using CTFlows.Systems
+
+struct MySystem <: Systems.AbstractSystem
+    data::Vector{Float64}
+end
+
+# Implement rhs! to return the ODE right-hand side function
+function Systems.rhs!(sys::MySystem)
+    return (du, u, p, t) -> du .= sys.data .* u
+end
+
+# Usage
+sys = MySystem([1.0, 2.0])
+rhs_func = Systems.rhs!(sys)
+du = zeros(2)
+rhs_func(du, [3.0, 4.0], [], 0.0)  # du becomes [3.0, 8.0]
+\`\`\`
+
+# Throws
+- [`CTBase.Exceptions.NotImplemented`](@extref): If not implemented by the concrete type.
+
+See also: [`CTFlows.Systems.AbstractSystem`](@ref).
 """
 function rhs!(system::AbstractSystem)
     throw(
@@ -41,106 +146,3 @@ function rhs!(system::AbstractSystem)
     )
 end
 
-"""
-$(TYPEDSIGNATURES)
-
-Return the dimensional information for the system.
-
-Returns a `NamedTuple` containing dimension fields such as:
-- `n_x`: state dimension
-- `n_p`: costate dimension
-- `n_u`: control dimension
-- `n_v`: variable dimension
-
-# Throws
-- `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
-
-See also: [`AbstractSystem`](@ref).
-"""
-function dimensions(system::AbstractSystem)
-    throw(Exceptions.NotImplemented(
-        "AbstractSystem dimensions method not implemented";
-        required_method = "dimensions(system::$(typeof(system)))",
-        suggestion = "Return a NamedTuple, e.g. (n_x=n, n_p=n, n_u=m, n_v=k).",
-        context = "AbstractSystem.dimensions - required method implementation",
-    ))
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Package the raw ODE solution into the appropriate result type.
-
-For raw systems (vector field), this returns the trajectory as-is.
-For OCP systems, this integrates the Lagrange cost, reconstructs the control,
-and returns a `CTModels.Solution`.
-
-# Throws
-- `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
-
-See also: [`AbstractSystem`](@ref).
-"""
-function build_solution(system::AbstractSystem, ode_sol)
-    throw(Exceptions.NotImplemented(
-        "AbstractSystem build_solution method not implemented";
-        required_method = "build_solution(system::$(typeof(system)), ode_sol)",
-        suggestion = "Package the raw ODE trajectory into the appropriate result (raw trajectory or CTModels.Solution).",
-        context = "AbstractSystem.build_solution - required method implementation",
-    ))
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Display the system in tree-style format.
-
-# Example
-```julia-repl
-julia> using CTFlows.Systems
-
-julia> system = FakeSystem(2)
-FakeSystem
-  n_x: 2
-  n_p: 2
-```
-"""
-function Base.show(io::IO, ::MIME"text/plain", system::AbstractSystem)
-    print(io, typeof(system).name)
-    dims = try
-        dimensions(system)
-    catch
-        nothing
-    end
-    if !isnothing(dims)
-        for (k, v) in pairs(dims)
-            print(io, "\n  ", k, ": ", v)
-        end
-    end
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Compact display of the system.
-
-# Example
-```julia-repl
-julia> using CTFlows.Systems
-
-julia> system = FakeSystem(2)
-FakeSystem(n_x=2, n_p=2)
-```
-"""
-function Base.show(io::IO, system::AbstractSystem)
-    dims = try
-        dimensions(system)
-    catch
-        nothing
-    end
-    if isnothing(dims)
-        print(io, typeof(system).name, "(…)")
-    else
-        dim_str = join(["$k=$v" for (k, v) in pairs(dims)], ", ")
-        print(io, typeof(system).name, "(", dim_str, ")")
-    end
-end

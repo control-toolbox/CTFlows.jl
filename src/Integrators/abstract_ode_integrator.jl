@@ -15,7 +15,7 @@ This type inherits the full CTSolvers strategy contract:
 # Contract
 
 All subtypes must implement:
-- `(integrator)(ode_problem, tspan)`: Solve the ODE problem over the given time span.
+- `(integrator)(prob)`: Solve the given ODE problem (tspan is embedded in `prob`).
 
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If the callable is not implemented by the concrete type.
@@ -27,12 +27,11 @@ abstract type AbstractODEIntegrator <: CTSolvers.Strategies.AbstractStrategy end
 """
 $(TYPEDSIGNATURES)
 
-Solve the ODE problem over the given time span.
+Solve the given ODE problem.
 
 # Arguments
 - `integrator::AbstractODEIntegrator`: The integrator strategy.
-- `ode_problem`: The ODE problem to solve (type varies by concrete integrator).
-- `tspan`: The time span `(t0, tf)` over which to solve.
+- `prob`: The ODE problem to solve (type varies by concrete integrator; tspan is embedded).
 
 # Returns
 - The ODE solution (type varies by concrete integrator).
@@ -42,11 +41,11 @@ Solve the ODE problem over the given time span.
 
 See also: [`AbstractODEIntegrator`](@ref).
 """
-function (integrator::AbstractODEIntegrator)(ode_problem, tspan)
+function (integrator::AbstractODEIntegrator)(prob)
     throw(Exceptions.NotImplemented(
         "AbstractODEIntegrator callable not implemented";
-        required_method = "(integrator::$(typeof(integrator)))(ode_problem, tspan)",
-        suggestion = "Implement (i::YourIntegrator)(prob, tspan) returning an ODE solution.",
+        required_method = "(integrator::$(typeof(integrator)))(prob)",
+        suggestion = "Implement (i::YourIntegrator)(prob) returning an ODE solution.",
         context = "AbstractODEIntegrator call - required method implementation",
     ))
 end

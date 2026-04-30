@@ -14,22 +14,25 @@ import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
 
 # ==============================================================================
-# Internal submodule imports
+# Internal sibling-submodule imports
 # ==============================================================================
 
-using ..Core
+using ..Common
+using ..Data
 
 # ==============================================================================
 # Include files
 # ==============================================================================
 
 include(joinpath(@__DIR__, "abstract_system.jl"))
+include(joinpath(@__DIR__, "vector_field_system.jl"))
 
 # ==============================================================================
 # Module exports
 # ==============================================================================
 
 export AbstractSystem
-export rhs!, dimensions, build_solution
+export rhs!
+export VectorFieldSystem
 
 end # module Systems

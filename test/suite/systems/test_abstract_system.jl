@@ -3,6 +3,7 @@ module TestAbstractSystem
 import Test
 import CTBase.Exceptions
 import CTFlows.Systems
+import CTFlows.Common
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -18,23 +19,12 @@ This minimal implementation provides the required contract methods to test
 routing and default behavior without full system complexity.
 """
 struct FakeSystem <: Systems.AbstractSystem
-    state_dim::Int
-    costate_dim::Int
-    control_dim::Int
-    variable_dim::Int
+    data::Vector{Float64}
 end
 
-# Implement contract
+# Implement contract: rhs!
 function Systems.rhs!(sys::FakeSystem)
-    return (du, u, p, t) -> nothing
-end
-
-function Systems.dimensions(sys::FakeSystem)
-    return (n_x=sys.state_dim, n_p=sys.costate_dim, n_u=sys.control_dim, n_v=sys.variable_dim)
-end
-
-function Systems.build_solution(sys::FakeSystem, ode_sol)
-    return ode_sol  # Return as-is for testing
+    return (du, u, p, t) -> du .= sys.data .* u
 end
 
 """
@@ -56,7 +46,7 @@ function test_abstract_system()
         # ====================================================================
 
         Test.@testset "Abstract Types" begin
-            Test.@test FakeSystem(2, 2, 1, 0) isa Systems.AbstractSystem
+            Test.@test FakeSystem([1.0, 2.0]) isa Systems.AbstractSystem
             Test.@test MinimalSystem(2) isa Systems.AbstractSystem
         end
 
@@ -65,26 +55,69 @@ function test_abstract_system()
         # ====================================================================
 
         Test.@testset "Contract Implementation" begin
-            sys = FakeSystem(2, 2, 1, 0)
+            sys = FakeSystem([1.0, 2.0])
 
             Test.@testset "rhs! returns callable" begin
                 rhs = Systems.rhs!(sys)
                 Test.@test rhs isa Function
             end
 
-            Test.@testset "dimensions returns NamedTuple" begin
-                dims = Systems.dimensions(sys)
-                Test.@test dims isa NamedTuple
-                Test.@test dims.n_x == 2
-                Test.@test dims.n_p == 2
-                Test.@test dims.n_u == 1
-                Test.@test dims.n_v == 0
+            Test.@testset "rhs! function has correct signature (du, u, p, t)" begin
+                rhs = Systems.rhs!(sys)
+                du = zeros(2)
+                u = [3.0, 4.0]
+                p = []
+                t = 0.0
+                # Should not throw - signature is correct
+                rhs(du, u, p, t)
+                Test.@test du ≈ [3.0, 8.0] atol=1e-10
             end
 
-            Test.@testset "build_solution returns input" begin
-                ode_sol = :fake_solution
-                result = Systems.build_solution(sys, ode_sol)
-                Test.@test result === ode_sol
+            Test.@testset "rhs! function fills du in place" begin
+                rhs = Systems.rhs!(sys)
+                du = zeros(2)
+                rhs(du, [3.0, 4.0], [], 0.0)
+                Test.@test du ≈ [3.0, 8.0] atol=1e-10
+            end
+
+            Test.@testset "rhs! function uses system data" begin
+                sys1 = FakeSystem([2.0, 3.0])
+                sys2 = FakeSystem([0.5, 1.0])
+                rhs1 = Systems.rhs!(sys1)
+                rhs2 = Systems.rhs!(sys2)
+                du1 = zeros(2)
+                du2 = zeros(2)
+                rhs1(du1, [1.0, 1.0], [], 0.0)
+                rhs2(du2, [1.0, 1.0], [], 0.0)
+                Test.@test du1 ≈ [2.0, 3.0] atol=1e-10
+                Test.@test du2 ≈ [0.5, 1.0] atol=1e-10
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Trait Methods
+        # ====================================================================
+
+        Test.@testset "Trait Methods" begin
+            sys = FakeSystem([1.0, 2.0])
+            sys2 = MinimalSystem(3)
+
+            Test.@testset "has_time_dependence_trait returns true" begin
+                Test.@test Common.has_time_dependence_trait(sys) === true
+                Test.@test Common.has_time_dependence_trait(sys2) === true
+            end
+
+            Test.@testset "has_variable_dependence_trait returns true" begin
+                Test.@test Common.has_variable_dependence_trait(sys) === true
+                Test.@test Common.has_variable_dependence_trait(sys2) === true
+            end
+
+            Test.@testset "trait methods work for all AbstractSystem subtypes" begin
+                # Verify that the trait methods work for any AbstractSystem subtype
+                for sys_instance in [sys, sys2]
+                    Test.@test Common.has_time_dependence_trait(sys_instance) === true
+                    Test.@test Common.has_variable_dependence_trait(sys_instance) === true
+                end
             end
         end
 
@@ -96,39 +129,34 @@ function test_abstract_system()
             sys = MinimalSystem(2)
 
             Test.@testset "rhs! throws NotImplemented" begin
-                Test.@test_throws Exceptions.NotImplemented Systems.rhs!(sys)
+                try
+                    Systems.rhs!(sys)
+                    Test.@test false  # Should not reach here
+                catch err
+                    Test.@test err isa Exceptions.NotImplemented
+                    Test.@test occursin("rhs!", err.msg)
+                end
             end
 
-            Test.@testset "dimensions throws NotImplemented" begin
-                Test.@test_throws Exceptions.NotImplemented Systems.dimensions(sys)
-            end
-
-            Test.@testset "build_solution throws NotImplemented" begin
-                Test.@test_throws Exceptions.NotImplemented Systems.build_solution(sys, :fake_sol)
+            Test.@testset "NotImplemented error contains required fields" begin
+                try
+                    Systems.rhs!(sys)
+                    Test.@test false  # Should not reach here
+                catch err
+                    Test.@test err isa Exceptions.NotImplemented
+                    Test.@test hasfield(typeof(err), :msg)
+                    Test.@test hasfield(typeof(err), :context)
+                end
             end
         end
 
         # ====================================================================
-        # UNIT TESTS - Base.show
+        # UNIT TESTS - Exports Verification
         # ====================================================================
 
-        Test.@testset "Base.show" begin
-            sys = FakeSystem(2, 2, 1, 0)
-
-            Test.@testset "MIME text/plain" begin
-                io = IOBuffer()
-                show(io, MIME("text/plain"), sys)
-                output = String(take!(io))
-                Test.@test occursin("FakeSystem", output)
-                Test.@test occursin("n_x: 2", output)
-            end
-
-            Test.@testset "compact" begin
-                io = IOBuffer()
-                show(io, sys)
-                output = String(take!(io))
-                Test.@test occursin("FakeSystem", output)
-                Test.@test occursin("n_x=2", output)
+        Test.@testset "Exports Verification" begin
+            Test.@testset "Exported types" begin
+                Test.@test isdefined(Systems, :AbstractSystem)
             end
         end
     end
