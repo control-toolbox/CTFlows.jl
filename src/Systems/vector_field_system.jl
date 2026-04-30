@@ -8,7 +8,7 @@ time via the `variable` kwarg and threaded through `ODEProblem`'s `p` slot.
 # Fields
 - `vf::VectorField{F, TD, VD}`: the underlying vector field.
 """
-struct VectorFieldSystem{F, TD<:Common.TimeDependence, VD<:Common.VariableDependence} <: AbstractSystem
+struct VectorFieldSystem{F<:Function, TD<:Common.TimeDependence, VD<:Common.VariableDependence} <: AbstractSystem
     vf::VectorField{F, TD, VD}
 end
 

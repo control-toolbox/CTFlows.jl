@@ -14,7 +14,7 @@ time-dependence and variable-dependence traits.
 
 # Construction
 
-Prefer the keyword constructor for clarity:
+Use the keyword constructor:
 
 ```julia
 VectorField(f; autonomous = true, variable = false)        # default: f(x)
@@ -23,20 +23,16 @@ VectorField((x, v) -> ...; variable = true)                # f(x, v)
 VectorField((t, x, v) -> ...; autonomous = false, variable = true)
 ```
 
-Explicit-type constructor:
-
-```julia
-VectorField(f, Autonomous, Fixed)
-```
-
 # Call Signatures
 
 Every `VectorField` is callable via its **natural** signature (matching the
 traits), and via a **uniform** signature `(t, x, v)` that ignores the
 unused arguments — this uniform form is used internally to build the right-hand
 side of the ODE in a trait-agnostic way.
+
+See also: [`CTFlows.Systems.VectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
 """
-struct VectorField{F <: Function, TD <: TimeDependence, VD <: VariableDependence}
+struct VectorField{F<:Function, TD<:TimeDependence, VD<:VariableDependence}
     f::F
 end
 
@@ -69,6 +65,8 @@ VectorField
   variable_dependence: Fixed
   function: var"#2"
 \`\`\`
+
+See also: [`CTFlows.Systems.VectorField`](@ref), [`CTFlows.Common.Autonomous`](@ref), [`CTFlows.Common.NonAutonomous`](@ref), [`CTFlows.Common.Fixed`](@ref), [`CTFlows.Common.NonFixed`](@ref).
 """
 function VectorField(f; autonomous::Bool = Common.__autonomous(), variable::Bool = Common.__variable())
     TD = autonomous ? Autonomous : NonAutonomous
@@ -80,10 +78,10 @@ end
 # Natural call signatures - one per trait combination
 # =============================================================================
 
-(F::VectorField{<:Any, Autonomous, Fixed})(x) = F.f(x)
-(F::VectorField{<:Any, NonAutonomous, Fixed})(t, x) = F.f(t, x)
-(F::VectorField{<:Any, Autonomous, NonFixed})(x, v) = F.f(x, v)
-(F::VectorField{<:Any, NonAutonomous, NonFixed})(t, x, v) = F.f(t, x, v)
+(F::VectorField{<:Function, Autonomous, Fixed})(x) = F.f(x)
+(F::VectorField{<:Function, NonAutonomous, Fixed})(t, x) = F.f(t, x)
+(F::VectorField{<:Function, Autonomous, NonFixed})(x, v) = F.f(x, v)
+(F::VectorField{<:Function, NonAutonomous, NonFixed})(t, x, v) = F.f(t, x, v)
 
 # =============================================================================
 # Uniform (t, x, v) call - used by VectorFieldSystem.rhs!
@@ -91,9 +89,9 @@ end
 # (NonAutonomous, NonFixed) is already covered by the natural signature above.
 # =============================================================================
 
-(F::VectorField{<:Any, Autonomous, Fixed})(t, x, v) = F.f(x)
-(F::VectorField{<:Any, NonAutonomous, Fixed})(t, x, v) = F.f(t, x)
-(F::VectorField{<:Any, Autonomous, NonFixed})(t, x, v) = F.f(x, v)
+(F::VectorField{<:Function, Autonomous, Fixed})(t, x, v) = F.f(x)
+(F::VectorField{<:Function, NonAutonomous, Fixed})(t, x, v) = F.f(t, x)
+(F::VectorField{<:Function, Autonomous, NonFixed})(t, x, v) = F.f(x, v)
 
 # =============================================================================
 # Trait accessors for VectorField
@@ -102,12 +100,50 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Indicate that `VectorField` has the time-dependence trait.
+
+This implementation declares that all vector fields support time-dependence queries.
+Concrete `VectorField` instances have their time dependence encoded in the type parameter `TD`.
+
+See also: [`CTFlows.Common.time_dependence`](@ref), [`CTFlows.Systems.VectorField`](@ref).
+"""
+Common.has_time_dependence_trait(::VectorField) = true
+
+"""
+$(TYPEDSIGNATURES)
+
+Indicate that `VectorField` has the variable-dependence trait.
+
+This implementation declares that all vector fields support variable-dependence queries.
+Concrete `VectorField` instances have their variable dependence encoded in the type parameter `VD`.
+
+See also: [`CTFlows.Common.variable_dependence`](@ref), [`CTFlows.Systems.VectorField`](@ref).
+"""
+Common.has_variable_dependence_trait(::VectorField) = true
+
+"""
+$(TYPEDSIGNATURES)
+
 Extract the time dependence trait from a VectorField.
 
 # Returns
 - `Type{<:TimeDependence}`: The time dependence trait type (Autonomous or NonAutonomous).
+
+# Example
+\`\`\`julia
+using CTFlows.Systems
+using CTFlows.Common
+
+vf_autonomous = VectorField(x -> -x; autonomous=true)
+Common.time_dependence(vf_autonomous)  # Returns Autonomous
+
+vf_nonautonomous = VectorField((t, x) -> t .* x; autonomous=false)
+Common.time_dependence(vf_nonautonomous)  # Returns NonAutonomous
+\`\`\`
+
+See also: [`CTFlows.Common.has_time_dependence_trait`](@ref), [`CTFlows.Common.is_autonomous`](@ref).
 """
-function time_dependence(vf::VectorField{<:Any, TD, <:Any}) where {TD <: TimeDependence}
+function Common.time_dependence(vf::VectorField{<:Function, TD, <:VariableDependence}) where {TD <: TimeDependence}
     return TD
 end
 
@@ -118,93 +154,42 @@ Extract the variable dependence trait from a VectorField.
 
 # Returns
 - `Type{<:VariableDependence}`: The variable dependence trait type (Fixed or NonFixed).
+
+# Example
+\`\`\`julia
+using CTFlows.Systems
+using CTFlows.Common
+
+vf_fixed = VectorField(x -> -x; variable=false)
+Common.variable_dependence(vf_fixed)  # Returns Fixed
+
+vf_nonfixed = VectorField((x, v) -> -x .* v; variable=true)
+Common.variable_dependence(vf_nonfixed)  # Returns NonFixed
+\`\`\`
+
+See also: [`CTFlows.Common.has_variable_dependence_trait`](@ref), [`CTFlows.Common.is_variable`](@ref).
 """
-function variable_dependence(vf::VectorField{<:Any, <:Any, VD}) where {VD <: VariableDependence}
+function Common.variable_dependence(vf::VectorField{<:Function, <:TimeDependence, VD}) where {VD <: VariableDependence}
     return VD
-end
-
-# =============================================================================
-# CTModels-style predicate methods
-# =============================================================================
-
-"""
-$(TYPEDSIGNATURES)
-
-Return true if the vector field is autonomous (time-independent).
-
-# Returns
-- `Bool`: true if time_dependence is Autonomous.
-"""
-function is_autonomous(vf::VectorField{<:Any, Autonomous, <:Any})
-    return true
-end
-
-function is_autonomous(vf::VectorField{<:Any, NonAutonomous, <:Any})
-    return false
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Return true if the VectorField is non-autonomous (time-dependent).
-
-# Returns
-- `Bool`: true if time_dependence is NonAutonomous.
-"""
-function is_nonautonomous(vf::VectorField{<:Any, Autonomous, <:Any})
-    return false
-end
-
-function is_nonautonomous(vf::VectorField{<:Any, NonAutonomous, <:Any})
-    return true
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Return true if the VectorField depends on variable parameters.
-
-# Returns
-- `Bool`: true if variable_dependence is NonFixed.
-"""
-function is_variable(vf::VectorField{<:Any, <:Any, NonFixed})
-    return true
-end
-
-function is_variable(vf::VectorField{<:Any, <:Any, Fixed})
-    return false
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Alias for `is_variable` for CTModels compatibility.
-
-# Returns
-- `Bool`: true if variable_dependence is NonFixed.
-"""
-has_variable(vf::VectorField) = is_variable(vf)
-
-"""
-$(TYPEDSIGNATURES)
-
-Return true if the VectorField does not depend on variable parameters.
-
-# Returns
-- `Bool`: true if variable_dependence is Fixed.
-"""
-function is_nonvariable(vf::VectorField{<:Any, <:Any, Fixed})
-    return true
-end
-
-function is_nonvariable(vf::VectorField{<:Any, <:Any, NonFixed})
-    return false
 end
 
 # =============================================================================
 # Base.show
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of a VectorField.
+
+Shows the type name, time dependence, variable dependence, and function type.
+
+# Arguments
+- `io::IO`: The IO stream to write to.
+- `vf::VectorField`: The VectorField to display.
+
+See also: [`CTFlows.Systems.VectorField`](@ref).
+"""
 function Base.show(io::IO, vf::VectorField{F, TD, VD}) where {F, TD, VD}
     println(io, "VectorField")
     println(io, "  time_dependence: ", TD)
@@ -212,6 +197,20 @@ function Base.show(io::IO, vf::VectorField{F, TD, VD}) where {F, TD, VD}
     print(io, "  function: ", typeof(vf.f))
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display a VectorField in the REPL with text/plain MIME type.
+
+Delegates to the compact show method.
+
+# Arguments
+- `io::IO`: The IO stream to write to.
+- `::MIME"text/plain"`: The MIME type for REPL display.
+- `vf::VectorField`: The VectorField to display.
+
+See also: [`CTFlows.Systems.VectorField`](@ref).
+"""
 function Base.show(io::IO, ::MIME"text/plain", vf::VectorField{F, TD, VD}) where {F, TD, VD}
     show(io, vf)
 end
