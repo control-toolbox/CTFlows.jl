@@ -3,7 +3,7 @@
 
 ODE integrator strategy types for CTFlows.
 
-This module defines the `AbstractODEIntegrator` type which inherits from
+This module defines the `AbstractIntegrator` type which inherits from
 `CTSolvers.Strategies.AbstractStrategy`.
 """
 module Integrators
@@ -29,13 +29,13 @@ using CTSolvers: CTSolvers
 
 include(joinpath(@__DIR__, "abstract_ode_integrator.jl"))
 include(joinpath(@__DIR__, "sciml_integrator.jl"))
-include(joinpath(@__DIR__, "build_integrator.jl"))
+include(joinpath(@__DIR__, "building.jl"))
 
 # ==============================================================================
 # Module exports
 # ==============================================================================
 
-export AbstractODEIntegrator, SciMLIntegrator, SciMLTag
+export AbstractIntegrator, SciMLIntegrator, SciMLTag
 export build_sciml_integrator, build_integrator
 
 end # module Integrators

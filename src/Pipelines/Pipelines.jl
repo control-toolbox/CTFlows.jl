@@ -39,10 +39,7 @@ using ..Flows
 # Include files
 # ==============================================================================
 
-include(joinpath(@__DIR__, "build_system.jl"))
-include(joinpath(@__DIR__, "build_flow.jl"))
 include(joinpath(@__DIR__, "solve.jl"))
-include(joinpath(@__DIR__, "flow_constructor.jl"))
 
 # ==============================================================================
 # Module exports

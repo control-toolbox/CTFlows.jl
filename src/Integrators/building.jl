@@ -1,7 +1,7 @@
 """
 $(TYPEDSIGNATURES)
 
-Build an `AbstractODEIntegrator` from its symbolic id.
+Build an `AbstractIntegrator` from its symbolic id.
 
 # Arguments
 - `id::Symbol`: integrator identifier. Phase 1 supports `:sciml`.

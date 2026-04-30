@@ -33,7 +33,7 @@ function Systems.variable_dependence(sys::FakeSystem)
     return Common.Fixed
 end
 
-struct FakeIntegrator <: Integrators.AbstractODEIntegrator
+struct FakeIntegrator <: Integrators.AbstractIntegrator
     options::CTSolvers.Strategies.StrategyOptions
 end
 

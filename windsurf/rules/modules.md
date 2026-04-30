@@ -316,7 +316,7 @@ src/
 ├── Systems/Systems.jl          # AbstractSystem + concrete systems + MultiPhaseSystem
 ├── Flows/Flows.jl              # AbstractFlow, Flow, MultiPhaseFlow
 ├── Modelers/Modelers.jl        # AbstractFlowModeler + concrete modelers
-├── Integrators/Integrators.jl  # AbstractODEIntegrator + concrete integrators
+├── Integrators/Integrators.jl  # AbstractIntegrator + concrete integrators
 ├── ADBackends/ADBackends.jl    # AbstractADBackend + concrete backends
 └── Pipelines/Pipelines.jl      # build_system, build_flow, integrate, build_solution, solve
 ```

@@ -25,7 +25,7 @@ To activate the extension, load any of:
 # Fields
 - `options::CTSolvers.Strategies.StrategyOptions`: validated option bundle.
 """
-struct SciMLIntegrator <: AbstractODEIntegrator
+struct SciMLIntegrator <: AbstractIntegrator
     options::CTSolvers.Strategies.StrategyOptions
 end
 

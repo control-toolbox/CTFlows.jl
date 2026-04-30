@@ -31,7 +31,7 @@ Tests are organized under `test/suite/` by **functionality**, not by source file
 - `suite/systems/`: System types tests (AbstractSystem, concrete systems, MultiPhaseSystem)
 - `suite/flows/`: Flow types tests (AbstractFlow, Flow, MultiPhaseFlow)
 - `suite/modelers/`: Flow modeler strategy tests (AbstractFlowModeler, concrete modelers)
-- `suite/integrators/`: ODE integrator strategy tests (AbstractODEIntegrator, concrete integrators)
+- `suite/integrators/`: ODE integrator strategy tests (AbstractIntegrator, concrete integrators)
 - `suite/ad_backends/`: AD backend strategy tests (AbstractADBackend, concrete backends)
 - `suite/pipelines/`: Pipeline function tests (build_system, build_flow, integrate, build_solution, solve)
 - `suite/exceptions/`: Exception system tests

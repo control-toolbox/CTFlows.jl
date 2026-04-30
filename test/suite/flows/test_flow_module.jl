@@ -55,7 +55,7 @@ end
 """
 Fake integrator for testing the Flow contract.
 """
-struct FakeIntegrator <: Integrators.AbstractODEIntegrator
+struct FakeIntegrator <: Integrators.AbstractIntegrator
     options::CTSolvers.Strategies.StrategyOptions
 end
 

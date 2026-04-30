@@ -9,7 +9,7 @@ It provides the **flow integration layer** for systems and optimal control probl
 
 - **abstract types** describing systems, flows, and the strategy families that build and integrate them;
 - **pipeline functions** (`build_system`, `build_flow`, `integrate`, `build_solution`, `solve`) operating uniformly on the abstractions;
-- a concrete [`Flow`](@ref) wrapper combining an [`AbstractSystem`](@ref) with an [`AbstractODEIntegrator`](@ref).
+- a concrete [`Flow`](@ref) wrapper combining an [`AbstractSystem`](@ref) with an [`AbstractIntegrator`](@ref).
 
 !!! info "CTFlows in the ecosystem"
 
@@ -72,7 +72,7 @@ A callable combining a system and an integrator. Required methods:
 All inherit from `CTSolvers.Strategies.AbstractStrategy` and gain its full contract
 (`id`, `metadata`, `options`, `Base.show`, `describe`, …).
 
-- [`AbstractODEIntegrator`](@ref CTFlows.Integrators.AbstractODEIntegrator):
+- [`AbstractIntegrator`](@ref CTFlows.Integrators.AbstractIntegrator):
   callable `(integrator)(ode_problem, tspan) → ode_sol`
 
 ## Pipelines at a glance

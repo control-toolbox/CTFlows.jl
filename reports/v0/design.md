@@ -12,7 +12,7 @@ CTFlows organises its code along three concerns:
 
 - **Objects** — `AbstractSystem` and `AbstractFlow` (with their multi-phase variants). They
   are *what* is acted upon. Not strategies.
-- **Strategy families** — `AbstractFlowModeler`, `AbstractODEIntegrator`, `AbstractADBackend`.
+- **Strategy families** — `AbstractFlowModeler`, `AbstractIntegrator`, `AbstractADBackend`.
   Each family is `<: CTSolvers.Strategies.AbstractStrategy` and inherits the full CTSolvers
   contract (`id`, `metadata`, `options`, `Base.show`, `describe`, …).
 - **Actions / pipelines** — `build_system`, `build_flow`, `integrate`, `build_solution`,
@@ -91,7 +91,7 @@ end
 
 ### 2.2 `AbstractFlow`
 
-A callable object that combines an `AbstractSystem` with an `AbstractODEIntegrator`. It
+A callable object that combines an `AbstractSystem` with an `AbstractIntegrator`. It
 carries no business logic of its own — its job is to expose the integration protocol.
 
 ```julia
@@ -121,7 +121,7 @@ end
 **Concrete `Flow <: AbstractFlow`** (provided by CTFlows):
 
 ```julia
-struct Flow{S<:AbstractSystem, I<:AbstractODEIntegrator} <: AbstractFlow
+struct Flow{S<:AbstractSystem, I<:AbstractIntegrator} <: AbstractFlow
     system::S
     integrator::I
 end
@@ -231,23 +231,23 @@ unified signature `(m)(input)` is the only one.
 **Candidate option specs** (for `metadata`): `augmented::Bool`, `internalnorm`, `tstops`,
 `jumps`. Concrete modelers add their own.
 
-### 3.2 `AbstractODEIntegrator <: AbstractStrategy`
+### 3.2 `AbstractIntegrator <: AbstractStrategy`
 
 **Role**: solve a Cauchy problem.
 
 ```julia
-abstract type AbstractODEIntegrator <: AbstractStrategy end
+abstract type AbstractIntegrator <: AbstractStrategy end
 ```
 
 **Business callable** (NotImplemented default):
 
 ```julia
-function (integrator::AbstractODEIntegrator)(ode_problem, tspan)
+function (integrator::AbstractIntegrator)(ode_problem, tspan)
     throw(NotImplemented(
-        "AbstractODEIntegrator callable not implemented";
+        "AbstractIntegrator callable not implemented";
         required_method = "(integrator::$(typeof(integrator)))(ode_problem, tspan)",
         suggestion = "Implement (i::YourIntegrator)(prob, tspan) returning an ODE solution.",
-        context = "AbstractODEIntegrator call - required method implementation",
+        context = "AbstractIntegrator call - required method implementation",
     ))
 end
 ```
@@ -311,7 +311,7 @@ own concern (the contract only forces it to return an `AbstractSystem`).
 Atomic form (no modeler involved):
 
 ```julia
-function build_flow(system::AbstractSystem, integrator::AbstractODEIntegrator)
+function build_flow(system::AbstractSystem, integrator::AbstractIntegrator)
     return Flow(system, integrator)
 end
 ```
@@ -321,7 +321,7 @@ Pipeline alias (combines `build_system` and `build_flow`):
 ```julia
 function build_flow(input,
                     modeler::AbstractFlowModeler,
-                    integrator::AbstractODEIntegrator,
+                    integrator::AbstractIntegrator,
                     ad_backend::AbstractADBackend)
     system = build_system(input, modeler, ad_backend)
     return build_flow(system, integrator)
@@ -379,7 +379,7 @@ Two-step pipeline: integrate, then package. No additional strategy — both the 
 | `MultiPhaseSystem`       | object       | inherits + `phases`, `switching`                       | define      |
 | `MultiPhaseFlow`         | object       | inherits + `phases`, `switching`                       | define      |
 | `AbstractFlowModeler`    | strategy     | CTSolvers contract + `(modeler)(input)`                | inherited   |
-| `AbstractODEIntegrator`  | strategy     | CTSolvers contract + `(integrator)(prob, tspan)`       | inherited   |
+| `AbstractIntegrator`  | strategy     | CTSolvers contract + `(integrator)(prob, tspan)`       | inherited   |
 | `AbstractADBackend`      | strategy     | CTSolvers contract + `ctgradient`, `ctjacobian`        | inherited   |
 
 Pipeline functions on abstract types:

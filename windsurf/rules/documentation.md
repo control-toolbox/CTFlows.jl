@@ -336,7 +336,7 @@ It provides the **flow layer** for optimal control problems:
 - **Systems** — assembled callable objects (`AbstractSystem`)
 - **Flows** — system + integrator pairs (`AbstractFlow`)
 - **Modelers** — flow modeler strategies (`AbstractFlowModeler`)
-- **Integrators** — ODE integrator strategies (`AbstractODEIntegrator`)
+- **Integrators** — ODE integrator strategies (`AbstractIntegrator`)
 - **AD Backends** — automatic-differentiation strategies (`AbstractADBackend`)
 - **Pipelines** — `build_system`, `build_flow`, `integrate`, `build_solution`, `solve`
 
@@ -369,7 +369,7 @@ It provides the **flow layer** for optimal control problems:
 | `Systems` | `AbstractSystem`, concrete systems, `MultiPhaseSystem` |
 | `Flows` | `AbstractFlow`, `Flow`, `MultiPhaseFlow` |
 | `Modelers` | `AbstractFlowModeler` and concrete modelers |
-| `Integrators` | `AbstractODEIntegrator` and concrete integrators |
+| `Integrators` | `AbstractIntegrator` and concrete integrators |
 | `ADBackends` | `AbstractADBackend` and concrete backends |
 | `Pipelines` | `build_system`, `build_flow`, `integrate`, `build_solution`, `solve` |
 
@@ -380,7 +380,7 @@ It provides the **flow layer** for optimal control problems:
 - [Architecture](@ref) — module overview, type hierarchy, data flow
 - [Implementing a System](@ref) — `AbstractSystem` contract
 - [Implementing a Flow Modeler](@ref) — `AbstractFlowModeler` strategy
-- [Implementing an ODE Integrator](@ref) — `AbstractODEIntegrator` strategy
+- [Implementing an ODE Integrator](@ref) — `AbstractIntegrator` strategy
 - [Implementing an AD Backend](@ref) — `AbstractADBackend` strategy
 - [Pipelines](@ref) — `build_system`, `build_flow`, `integrate`, `build_solution`, `solve`
 - [Multi-phase Composition](@ref) — `MultiPhaseSystem` and `MultiPhaseFlow`

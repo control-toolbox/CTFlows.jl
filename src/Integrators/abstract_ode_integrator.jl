@@ -3,7 +3,7 @@ $(TYPEDEF)
 
 Abstract strategy for solving ODE Cauchy problems.
 
-An `AbstractODEIntegrator` is a strategy that solves an ODE problem over a time span.
+An `AbstractIntegrator` is a strategy that solves an ODE problem over a time span.
 
 This type inherits the full CTSolvers strategy contract:
 - `id(::Type{<:S}) → Symbol`
@@ -22,7 +22,7 @@ All subtypes must implement:
 
 See also: [`AbstractFlow`](@ref).
 """
-abstract type AbstractODEIntegrator <: CTSolvers.Strategies.AbstractStrategy end
+abstract type AbstractIntegrator <: CTSolvers.Strategies.AbstractStrategy end
 
 """
 $(TYPEDSIGNATURES)
@@ -30,7 +30,7 @@ $(TYPEDSIGNATURES)
 Solve the given ODE problem.
 
 # Arguments
-- `integrator::AbstractODEIntegrator`: The integrator strategy.
+- `integrator::AbstractIntegrator`: The integrator strategy.
 - `prob`: The ODE problem to solve (type varies by concrete integrator; tspan is embedded).
 
 # Returns
@@ -39,13 +39,13 @@ Solve the given ODE problem.
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
 
-See also: [`AbstractODEIntegrator`](@ref).
+See also: [`AbstractIntegrator`](@ref).
 """
-function (integrator::AbstractODEIntegrator)(prob)
+function (integrator::AbstractIntegrator)(prob)
     throw(Exceptions.NotImplemented(
-        "AbstractODEIntegrator callable not implemented";
+        "AbstractIntegrator callable not implemented";
         required_method = "(integrator::$(typeof(integrator)))(prob)",
         suggestion = "Implement (i::YourIntegrator)(prob) returning an ODE solution.",
-        context = "AbstractODEIntegrator call - required method implementation",
+        context = "AbstractIntegrator call - required method implementation",
     ))
 end

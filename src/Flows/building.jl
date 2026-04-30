@@ -31,10 +31,10 @@ julia> sol = flow(0.0, [1.0, 0.0], 1.0)
 ...
 \`\`\`
 
-See also: [`Flows.Flow`](@ref), [`build_system`](@ref), [`build_flow`](@ref), [`build_integrator`](@ref).
+See also: [`Flows.Flow`](@ref), [`Systems.build_system`](@ref), [`Flows.build_flow`](@ref), [`Integrators.build_integrator`](@ref).
 """
-function Flows.Flow(data::Data.VectorField, id::Symbol=:sciml; opts...)
-    system = build_system(data)
-    integrator = build_integrator(id; opts...)
-    return build_flow(system, integrator)
+function Flow(data::Data.VectorField, id::Symbol=:sciml; opts...)
+    system = Systems.build_system(data)
+    integrator = Integrators.build_integrator(id; opts...)
+    return Flow(system, integrator)
 end

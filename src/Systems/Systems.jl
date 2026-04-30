@@ -25,7 +25,8 @@ using ..Data
 # ==============================================================================
 
 include(joinpath(@__DIR__, "abstract_system.jl"))
-include(joinpath(@__DIR__, "vector_field_system.jl"))
+include(joinpath(@__DIR__, "vector_field_system.jl"))   
+include(joinpath(@__DIR__, "building.jl"))
 
 # ==============================================================================
 # Module exports
@@ -34,5 +35,6 @@ include(joinpath(@__DIR__, "vector_field_system.jl"))
 export AbstractSystem
 export rhs!
 export VectorFieldSystem
+export build_system
 
 end # module Systems

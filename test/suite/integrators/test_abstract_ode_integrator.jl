@@ -1,4 +1,4 @@
-module TestAbstractODEIntegrator
+module TestAbstractIntegrator
 
 import Test
 import CTBase.Exceptions
@@ -14,9 +14,9 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # ==============================================================================
 
 """
-Fake integrator for testing the AbstractODEIntegrator contract.
+Fake integrator for testing the AbstractIntegrator contract.
 """
-struct FakeIntegrator <: Integrators.AbstractODEIntegrator
+struct FakeIntegrator <: Integrators.AbstractIntegrator
     options::CTSolvers.Strategies.StrategyOptions
 end
 
@@ -31,7 +31,7 @@ end
 """
 Minimal integrator that does not implement the contract (for error testing).
 """
-struct MinimalIntegrator <: Integrators.AbstractODEIntegrator
+struct MinimalIntegrator <: Integrators.AbstractIntegrator
     options::CTSolvers.Strategies.StrategyOptions
 end
 
@@ -52,11 +52,11 @@ function test_abstract_ode_integrator()
 
         Test.@testset "Abstract Types" begin
             integ = FakeIntegrator()
-            Test.@test integ isa Integrators.AbstractODEIntegrator
+            Test.@test integ isa Integrators.AbstractIntegrator
             Test.@test integ isa CTSolvers.Strategies.AbstractStrategy
 
             minimal = MinimalIntegrator()
-            Test.@test minimal isa Integrators.AbstractODEIntegrator
+            Test.@test minimal isa Integrators.AbstractIntegrator
         end
 
         # ====================================================================
@@ -89,4 +89,4 @@ end
 
 end # module
 
-test_abstract_ode_integrator() = TestAbstractODEIntegrator.test_abstract_ode_integrator()
+test_abstract_ode_integrator() = TestAbstractIntegrator.test_abstract_ode_integrator()

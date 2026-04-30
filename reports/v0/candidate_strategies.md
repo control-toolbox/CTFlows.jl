@@ -24,7 +24,7 @@ AbstractNLPModeler                     AbstractFlowModeler
    (ADNLP, Exa)                           (OpenLoop, ClosedLoop,
                                            HamiltonianModeler, …)
 
-AbstractNLPSolver                      AbstractODEIntegrator
+AbstractNLPSolver                      AbstractIntegrator
    NLP → execution stats                  ODEProblem → trajectory
    (Ipopt, MadNLP, …)                     (Tsit5, DP8, Rodas4, …)
 ─────────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ AbstractNLPSolver                      AbstractODEIntegrator
 - **Layer 2 — the construction strategy** (`AbstractFlowModeler`): takes any integrable input
   (a `VectorField`, a `Hamiltonian`, an OCP with control law, …) and produces a fully assembled
   `AbstractSystem` with an embedded `rhs!`. Direct analog of `AbstractNLPModeler`.
-- **Layer 3 — the execution strategy** (`AbstractODEIntegrator`): solves the Cauchy problem and
+- **Layer 3 — the execution strategy** (`AbstractIntegrator`): solves the Cauchy problem and
   returns a trajectory. Direct analog of `AbstractNLPSolver`.
 
 A multi-phase composition level (several systems + switching times) sits above as a
@@ -99,7 +99,7 @@ The resulting system embeds:
 With the system fully assembled, `build_flow` is just a wrapper:
 
 ```julia
-function build_flow(system::AbstractSystem, integrator::AbstractODEIntegrator)
+function build_flow(system::AbstractSystem, integrator::AbstractIntegrator)
     return Flow(system, integrator)
 end
 ```
@@ -229,7 +229,7 @@ and solution-building logic.
 **Classification**: 🟢 **Strong candidate.** This is the most important gap in the current
 architecture. Without it, all construction choices are hardcoded and non-extensible.
 
-## 5. Candidate family: ODE Integrator Backend (`AbstractODEIntegrator`)
+## 5. Candidate family: ODE Integrator Backend (`AbstractIntegrator`)
 
 **Role**: solves a Cauchy problem (an `ODEProblem` or equivalent `rhs!` + initial condition +
 time span) and returns a trajectory. Direct analog of `AbstractNLPSolver`.

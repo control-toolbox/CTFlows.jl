@@ -1,7 +1,7 @@
 """
 $(TYPEDEF)
 
-Concrete flow that combines an `AbstractSystem` with an `AbstractODEIntegrator`.
+Concrete flow that combines an `AbstractSystem` with an `AbstractIntegrator`.
 
 A `Flow` is the standard implementation of `AbstractFlow` that delegates
 integration to the provided integrator and solution building to the system.
@@ -11,7 +11,7 @@ to enable compile-time dispatch on whether the `variable` kwarg is required.
 
 # Fields
 - `system::S`: The `AbstractSystem` to integrate.
-- `integrator::I`: The `AbstractODEIntegrator` to use for integration.
+- `integrator::I`: The `AbstractIntegrator` to use for integration.
 
 # Example
 ```julia-repl
@@ -27,9 +27,9 @@ julia> flow = Flow(system, integrator)
 Flow{FakeSystem, FakeIntegrator, Fixed}(system=FakeSystem(), integrator=FakeIntegrator)
 ```
 
-See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractODEIntegrator`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref).
 """
-struct Flow{VD<:Common.VariableDependence, S<:Systems.AbstractSystem{VD}, I<:Integrators.AbstractODEIntegrator} <: AbstractFlow{VD}
+struct Flow{VD<:Common.VariableDependence, S<:Systems.AbstractSystem{VD}, I<:Integrators.AbstractIntegrator} <: AbstractFlow{VD}
     system::S
     integrator::I
 end
@@ -52,10 +52,10 @@ $(TYPEDSIGNATURES)
 Return the integrator associated with the flow.
 
 # Returns
-- `I`: The `AbstractODEIntegrator` stored in the flow.
+- `I`: The `AbstractIntegrator` stored in the flow.
 """
 function integrator(f::Flow{VD, S, I})::I where {VD, S, I}
-    return f.integ
+    return f.integrator
 end
 
 # =============================================================================
@@ -82,7 +82,7 @@ Convenience call `flow(t0, x0, tf)` — builds a `PointConfig` internally.
 # Returns
 - The integrated solution.
 
-See also: [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Flows.solve`](@ref).
+See also: [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
 """
 function (f::Flow)(
     t0::Real,
@@ -90,7 +90,7 @@ function (f::Flow)(
     tf::Real;
     variable=nothing,
 )
-    return solve(f, Common.PointConfig(t0, x0, tf); variable=variable)
+    return call(f, Common.PointConfig(t0, x0, tf); variable=variable)
 end
 
 """
@@ -106,12 +106,12 @@ Convenience call `flow((t0, tf), x0)` — builds a `TrajectoryConfig` internally
 # Returns
 - The integrated solution.
 
-See also: [`CTFlows.Common.TrajectoryConfig`](@ref), [`CTFlows.Flows.solve`](@ref).
+See also: [`CTFlows.Common.TrajectoryConfig`](@ref), [`CTFlows.Flows.call`](@ref).
 """
 function (f::Flow)(
     tspan::Tuple{Real, Real},
     x0; 
     variable=nothing,
 )
-    return solve(f, Common.TrajectoryConfig(tspan, x0); variable=variable)
+    return call(f, Common.TrajectoryConfig(tspan, x0); variable=variable)
 end

@@ -4,14 +4,14 @@ $(TYPEDEF)
 Abstract type for all flows in CTFlows.
 
 An `AbstractFlow` is a callable object that combines an `AbstractSystem` with an
-`AbstractODEIntegrator`. It carries no business logic of its own — its job is
+`AbstractIntegrator`. It carries no business logic of its own — its job is
 to expose the integration protocol and delegate trait queries to its system.
 
 # Interface Requirements
 
 All subtypes must implement:
 - `system(flow::AbstractFlow)`: Return the associated `AbstractSystem`.
-- `integrator(flow::AbstractFlow)`: Return the associated `AbstractODEIntegrator`.
+- `integrator(flow::AbstractFlow)`: Return the associated `AbstractIntegrator`.
 
 # Traits
 
@@ -30,7 +30,7 @@ julia> MyFlow <: Flows.AbstractFlow
 true
 \`\`\`
 
-See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractODEIntegrator`](@ref).
+See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref).
 """
 abstract type AbstractFlow{VD<:Common.VariableDependence} end
 
@@ -110,18 +110,18 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the associated `AbstractODEIntegrator` for the flow.
+Return the associated `AbstractIntegrator` for the flow.
 
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
 
-See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Integrators.AbstractODEIntegrator`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref).
 """
 function integrator(flow::AbstractFlow)
     throw(Exceptions.NotImplemented(
         "AbstractFlow integrator method not implemented";
         required_method = "integrator(flow::$(typeof(flow)))",
-        suggestion = "Return the AbstractODEIntegrator associated with this flow.",
+        suggestion = "Return the AbstractIntegrator associated with this flow.",
         context = "AbstractFlow.integrator - required method implementation",
     ))
 end
