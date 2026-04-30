@@ -5,15 +5,30 @@ Abstract type for all flows in CTFlows.
 
 An `AbstractFlow` is a callable object that combines an `AbstractSystem` with an
 `AbstractODEIntegrator`. It carries no business logic of its own — its job is
-to expose the integration protocol.
+to expose the integration protocol and delegate trait queries to its system.
 
-# Contract
+# Interface Requirements
 
 All subtypes must implement:
-- `system(flow)`: Return the associated `AbstractSystem`.
-- `integrator(flow)`: Return the associated `AbstractODEIntegrator`.
+- `system(flow::AbstractFlow)`: Return the associated `AbstractSystem`.
+- `integrator(flow::AbstractFlow)`: Return the associated `AbstractODEIntegrator`.
 
-Convenience call signatures like `(flow)(t0, x0, tf)` or `(flow)((t0, tf), x0)` are provided by concrete subtypes (see `Flow`).
+# Traits
+
+All `AbstractFlow` subtypes automatically support time-dependence and variable-dependence
+trait queries by delegating to their associated system:
+- `time_dependence(flow)`: Returns the time-dependence trait of the system.
+- `variable_dependence(flow)`: Returns the variable-dependence trait of the system.
+- `is_autonomous(flow)`, `is_nonautonomous(flow)`: Time-dependence predicates.
+- `is_variable(flow)`, `is_nonvariable(flow)`, `has_variable(flow)`: Variable-dependence predicates.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Flows
+
+julia> MyFlow <: Flows.AbstractFlow
+true
+\`\`\`
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractODEIntegrator`](@ref).
 """
@@ -22,59 +37,56 @@ abstract type AbstractFlow end
 """
 $(TYPEDSIGNATURES)
 
+Indicate that `AbstractFlow` has the time-dependence trait.
+
+# Returns
+- `Bool`: Always `true` for `AbstractFlow`.
+
+See also: [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.time_dependence`](@ref).
+"""
+Common.has_time_dependence_trait(::AbstractFlow) = true
+
+"""
+$(TYPEDSIGNATURES)
+
+Indicate that `AbstractFlow` has the variable-dependence trait.
+
+# Returns
+- `Bool`: Always `true` for `AbstractFlow`.
+
+See also: [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.variable_dependence`](@ref).
+"""
+Common.has_variable_dependence_trait(::AbstractFlow) = true
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the time-dependence trait of the flow (delegates to its system).
+
+# Arguments
+- `flow::AbstractFlow`: The flow to query.
+
+# Returns
+- `CTFlows.Common.Autonomous` or `CTFlows.Common.NonAutonomous`: The time-dependence trait of the associated system.
+
+See also: [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.variable_dependence`](@ref), [`CTFlows.Flows.system`](@ref).
+"""
+Common.time_dependence(flow::AbstractFlow) = Common.time_dependence(system(flow))
+
+"""
+$(TYPEDSIGNATURES)
+
 Return the variable-dependence trait of the flow (delegates to its system).
-"""
-variable_dependence(flow::AbstractFlow) = Systems.variable_dependence(system(flow))
 
-"""
-$(TYPEDSIGNATURES)
-
-Return true if the flow is autonomous (time-independent).
+# Arguments
+- `flow::AbstractFlow`: The flow to query.
 
 # Returns
-- `Bool`: true if system(flow) is autonomous.
+- `CTFlows.Common.Fixed` or `CTFlows.Common.NonFixed`: The variable-dependence trait of the associated system.
+
+See also: [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.time_dependence`](@ref), [`CTFlows.Flows.system`](@ref).
 """
-is_autonomous(flow::AbstractFlow) = Systems.is_autonomous(system(flow))
-
-"""
-$(TYPEDSIGNATURES)
-
-Return true if the flow is non-autonomous (time-dependent).
-
-# Returns
-- `Bool`: true if system(flow) is non-autonomous.
-"""
-is_nonautonomous(flow::AbstractFlow) = Systems.is_nonautonomous(system(flow))
-
-"""
-$(TYPEDSIGNATURES)
-
-Return true if the flow depends on variable parameters.
-
-# Returns
-- `Bool`: true if system(flow) depends on variable parameters.
-"""
-is_variable(flow::AbstractFlow) = Systems.is_variable(system(flow))
-
-"""
-$(TYPEDSIGNATURES)
-
-Alias for `is_variable` for CTModels compatibility.
-
-# Returns
-- `Bool`: true if system(flow) depends on variable parameters.
-"""
-has_variable(flow::AbstractFlow) = Systems.has_variable(system(flow))
-
-"""
-$(TYPEDSIGNATURES)
-
-Return true if the flow does not depend on variable parameters.
-
-# Returns
-- `Bool`: true if system(flow) does not depend on variable parameters.
-"""
-is_nonvariable(flow::AbstractFlow) = Systems.is_nonvariable(system(flow))
+Common.variable_dependence(flow::AbstractFlow) = Common.variable_dependence(system(flow))
 
 """
 $(TYPEDSIGNATURES)

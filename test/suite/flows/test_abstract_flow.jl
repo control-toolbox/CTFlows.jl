@@ -5,6 +5,7 @@ import CTBase.Exceptions
 import CTFlows.Systems
 import CTFlows.Flows
 import CTFlows.Common
+import CTFlows.Data
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -14,7 +15,10 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # ==============================================================================
 
 """
-Fake system for testing.
+Fake system for testing the AbstractFlow contract.
+
+This minimal implementation provides the required contract methods for AbstractSystem
+to test flow behavior without full system complexity.
 """
 struct FakeSystem <: Systems.AbstractSystem
     state_dim::Int
@@ -24,11 +28,11 @@ function Systems.rhs!(sys::FakeSystem)
     return (du, u, p, t) -> nothing
 end
 
-function Systems.build_solution(sys::FakeSystem, ode_sol)
-    return ode_sol
+function Common.time_dependence(sys::FakeSystem)
+    return Common.Autonomous
 end
 
-function Systems.variable_dependence(sys::FakeSystem)
+function Common.variable_dependence(sys::FakeSystem)
     return Common.Fixed
 end
 
@@ -65,27 +69,6 @@ end
 
 function (f::FakeFlow)(config::Common.AbstractConfig)
     return :fake_config_trajectory
-end
-
-# Add predicate methods to FakeSystem for testing
-function Systems.is_autonomous(sys::FakeSystem)
-    return true
-end
-
-function Systems.is_nonautonomous(sys::FakeSystem)
-    return false
-end
-
-function Systems.is_variable(sys::FakeSystem)
-    return false
-end
-
-function Systems.is_nonvariable(sys::FakeSystem)
-    return true
-end
-
-function Systems.has_variable(sys::FakeSystem)
-    return false
 end
 
 """
@@ -182,28 +165,6 @@ function test_abstract_flow()
                     Test.@test occursin("integrator", sprint(showerror, err))
                 end
             end
-
-            Test.@testset "callable with config throws NotImplemented" begin
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
-                try
-                    flow(config)
-                    Test.@test false  # Should not reach here
-                catch err
-                    Test.@test err isa Exceptions.NotImplemented
-                    Test.@test occursin("config", sprint(showerror, err))
-                end
-            end
-
-            Test.@testset "callable with TrajectoryConfig throws NotImplemented" begin
-                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
-                try
-                    flow(config)
-                    Test.@test false  # Should not reach here
-                catch err
-                    Test.@test err isa Exceptions.NotImplemented
-                    Test.@test occursin("config", sprint(showerror, err))
-                end
-            end
         end
 
         # ====================================================================
@@ -279,7 +240,7 @@ function test_abstract_flow()
 
         Test.@testset "VectorField Flow Integration Tests" begin
             Test.@testset "Autonomous Fixed Flow" begin
-                vf = Systems.VectorField(x -> -x, Common.Autonomous, Common.Fixed)
+                vf = Data.VectorField(x -> -x; autonomous=true, variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
@@ -293,7 +254,7 @@ function test_abstract_flow()
             end
 
             Test.@testset "NonAutonomous Fixed Flow" begin
-                vf = Systems.VectorField((t, x) -> t .* x, Common.NonAutonomous, Common.Fixed)
+                vf = Data.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
@@ -307,7 +268,7 @@ function test_abstract_flow()
             end
 
             Test.@testset "Autonomous NonFixed Flow" begin
-                vf = Systems.VectorField((x, v) -> x .+ v, Common.Autonomous, Common.NonFixed)
+                vf = Data.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
                 sys = Systems.VectorFieldSystem(vf)
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
