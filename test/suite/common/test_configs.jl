@@ -1,31 +1,41 @@
-module TestCommon
+module TestConfigs
 
 import Test
+import CTBase.Exceptions
 import CTFlows.Common
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
 
 # ==============================================================================
+# Fake types for contract testing
+# ==============================================================================
+
+"""
+Fake config type for testing the AbstractConfig contract.
+Does not implement tspan to trigger NotImplemented error.
+"""
+struct FakeConfig <: Common.AbstractConfig end
+
+"""
+Fake config type that implements the tspan contract.
+Used to test contract implementation without relying on concrete types.
+"""
+struct FakeConfigWithTspan <: Common.AbstractConfig
+    t0::Float64
+    tf::Float64
+end
+
+function Common.tspan(c::FakeConfigWithTspan)
+    return (c.t0, c.tf)
+end
+
+# ==============================================================================
 # Test function
 # ==============================================================================
 
-function test_common()
-    Test.@testset "Common Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
-
-        # ====================================================================
-        # UNIT TESTS - Default Value Functions
-        # ====================================================================
-
-        Test.@testset "Default Value Functions" begin
-            Test.@testset "__autonomous returns true" begin
-                Test.@test Common.__autonomous() === true
-            end
-
-            Test.@testset "__variable returns false" begin
-                Test.@test Common.__variable() === false
-            end
-        end
+function test_configs()
+    Test.@testset "Config Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Abstract Type
@@ -71,6 +81,37 @@ function test_common()
         end
 
         # ====================================================================
+        # UNIT TESTS - tspan Contract
+        # ====================================================================
+
+        Test.@testset "tspan Contract" begin
+            Test.@testset "AbstractConfig tspan throws NotImplemented" begin
+                config = FakeConfig()
+                Test.@test_throws Exceptions.NotImplemented Common.tspan(config)
+            end
+
+            Test.@testset "PointConfig tspan returns tuple" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                ts = Common.tspan(config)
+                Test.@test ts isa Tuple{Real, Real}
+                Test.@test ts == (0.0, 1.0)
+            end
+
+            Test.@testset "TrajectoryConfig tspan returns tuple" begin
+                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+                ts = Common.tspan(config)
+                Test.@test ts isa Tuple{Real, Real}
+                Test.@test ts == (0.0, 1.0)
+            end
+
+            Test.@testset "Fake config with tspan contract" begin
+                config = FakeConfigWithTspan(0.5, 2.5)
+                ts = Common.tspan(config)
+                Test.@test ts == (0.5, 2.5)
+            end
+        end
+
+        # ====================================================================
         # UNIT TESTS - Display Methods
         # ====================================================================
 
@@ -101,4 +142,4 @@ end
 
 end # module
 
-test_common() = TestCommon.test_common()
+test_configs() = TestConfigs.test_configs()
