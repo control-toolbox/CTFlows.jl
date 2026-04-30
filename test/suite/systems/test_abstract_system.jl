@@ -30,10 +30,6 @@ function Systems.rhs!(sys::FakeSystem)
     return (du, u, p, t) -> nothing
 end
 
-function Systems.dimensions(sys::FakeSystem)
-    return (n_x=sys.state_dim, n_p=sys.costate_dim, n_u=sys.control_dim, n_v=sys.variable_dim)
-end
-
 function Systems.build_solution(sys::FakeSystem, ode_sol, flow, config)
     return ode_sol  # Return as-is for testing
 end
@@ -77,15 +73,6 @@ function test_abstract_system()
                 Test.@test rhs isa Function
             end
 
-            Test.@testset "dimensions returns NamedTuple" begin
-                dims = Systems.dimensions(sys)
-                Test.@test dims isa NamedTuple
-                Test.@test dims.n_x == 2
-                Test.@test dims.n_p == 2
-                Test.@test dims.n_u == 1
-                Test.@test dims.n_v == 0
-            end
-
             Test.@testset "build_solution returns input" begin
                 ode_sol = :fake_solution
                 flow = :fake_flow
@@ -101,7 +88,7 @@ function test_abstract_system()
             end
 
             Test.@testset "variable_dependence defaults to Fixed" begin
-                Test.@test Systems.variable_dependence(sys) === Systems.Fixed
+                Test.@test Systems.variable_dependence(sys) === Common.Fixed
             end
         end
 
@@ -114,10 +101,6 @@ function test_abstract_system()
 
             Test.@testset "rhs! throws NotImplemented" begin
                 Test.@test_throws Exceptions.NotImplemented Systems.rhs!(sys)
-            end
-
-            Test.@testset "dimensions throws NotImplemented" begin
-                Test.@test_throws Exceptions.NotImplemented Systems.dimensions(sys)
             end
 
             Test.@testset "build_solution throws NotImplemented" begin

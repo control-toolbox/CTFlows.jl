@@ -36,7 +36,7 @@ traits), and via a **uniform** signature `(t, x, v)` that ignores the
 unused arguments — this uniform form is used internally to build the right-hand
 side of the ODE in a trait-agnostic way.
 """
-struct VectorField{F, TD <: TimeDependence, VD <: VariableDependence}
+struct VectorField{F <: Function, TD <: TimeDependence, VD <: VariableDependence}
     f::F
 end
 
@@ -73,19 +73,6 @@ VectorField
 function VectorField(f; autonomous::Bool = Common.__autonomous(), variable::Bool = Common.__variable())
     TD = autonomous ? Autonomous : NonAutonomous
     VD = variable ? NonFixed : Fixed
-    return VectorField{typeof(f), TD, VD}(f)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Construct a `VectorField` with explicit trait types.
-"""
-function VectorField(
-    f,
-    ::Type{TD},
-    ::Type{VD},
-) where {TD <: TimeDependence, VD <: VariableDependence}
     return VectorField{typeof(f), TD, VD}(f)
 end
 
@@ -143,7 +130,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return true if the VectorField is autonomous (time-independent).
+Return true if the vector field is autonomous (time-independent).
 
 # Returns
 - `Bool`: true if time_dependence is Autonomous.

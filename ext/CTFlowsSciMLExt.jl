@@ -154,59 +154,16 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build an `ODEProblem` from a `VectorFieldSystem` and a `PointConfig` (Fixed).
+Build an `ODEProblem` from a `VectorFieldSystem` and a `AbstractConfig`.
 """
 function CTFlows.Systems.ode_problem(
-    sys::Systems.VectorFieldSystem{<:Any, <:Any, Systems.Fixed},
-    config::Common.PointConfig,
-)
-    f! = Systems.rhs!(sys)
-    u0 = config.x0 isa Number ? [config.x0] : config.x0
-    return ODEProblem(f!, u0, (config.t0, config.tf), nothing)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Build an `ODEProblem` from a `VectorFieldSystem` and a `TrajectoryConfig` (Fixed).
-"""
-function CTFlows.Systems.ode_problem(
-    sys::Systems.VectorFieldSystem{<:Any, <:Any, Systems.Fixed},
-    config::Common.TrajectoryConfig,
-)
-    f! = Systems.rhs!(sys)
-    u0 = config.x0 isa Number ? [config.x0] : config.x0
-    return ODEProblem(f!, u0, config.tspan, nothing)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Build an `ODEProblem` from a `VectorFieldSystem` and a `PointConfig` (NonFixed).
-"""
-function CTFlows.Systems.ode_problem(
-    sys::Systems.VectorFieldSystem{<:Any, <:Any, Systems.NonFixed},
-    config::Common.PointConfig;
+    sys::Systems.VectorFieldSystem,
+    config::Common.AbstractConfig;
     variable,
 )
     f! = Systems.rhs!(sys)
     u0 = config.x0 isa Number ? [config.x0] : config.x0
-    return ODEProblem(f!, u0, (config.t0, config.tf), variable)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Build an `ODEProblem` from a `VectorFieldSystem` and a `TrajectoryConfig` (NonFixed).
-"""
-function CTFlows.Systems.ode_problem(
-    sys::Systems.VectorFieldSystem{<:Any, <:Any, Systems.NonFixed},
-    config::Common.TrajectoryConfig;
-    variable,
-)
-    f! = Systems.rhs!(sys)
-    u0 = config.x0 isa Number ? [config.x0] : config.x0
-    return ODEProblem(f!, u0, config.tspan, variable)
+    return ODEProblem(f!, u0, Common.tspan(config), variable)
 end
 
 end # module CTFlowsSciMLExt

@@ -10,35 +10,14 @@ to expose the integration protocol.
 # Contract
 
 All subtypes must implement:
-- `(flow)(config)`: Integrate according to the given config (e.g. `CTFlows.Common.PointConfig`, `CTFlows.Common.TrajectoryConfig`).
 - `system(flow)`: Return the associated `AbstractSystem`.
 - `integrator(flow)`: Return the associated `AbstractODEIntegrator`.
 
-Convenience call signatures like `(flow)(t0, x0, tf)` or `(flow)((t0, tf), x0)`
-are provided by concrete subtypes (see `Flow`).
+Convenience call signatures like `(flow)(t0, x0, tf)` or `(flow)((t0, tf), x0)` are provided by concrete subtypes (see `Flow`).
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractODEIntegrator`](@ref).
 """
 abstract type AbstractFlow end
-
-"""
-$(TYPEDSIGNATURES)
-
-Integrate the flow according to the given `config`.
-
-# Throws
-- `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
-
-See also: [`CTFlows.Flows.AbstractFlow`](@ref).
-"""
-function (flow::AbstractFlow)(config::Common.AbstractConfig)
-    throw(Exceptions.NotImplemented(
-        "AbstractFlow callable not implemented";
-        required_method = "(flow::$(typeof(flow)))(config::Common.AbstractConfig)",
-        suggestion = "Implement (f::YourFlow)(config::Common.AbstractConfig) returning the integrated trajectory.",
-        context = "AbstractFlow call - required method implementation",
-    ))
-end
 
 """
 $(TYPEDSIGNATURES)

@@ -24,12 +24,12 @@ function Systems.rhs!(sys::FakeSystem)
     return (du, u, p, t) -> nothing
 end
 
-function Systems.dimensions(sys::FakeSystem)
-    return (n_x=sys.state_dim, n_p=sys.state_dim, n_u=0, n_v=0)
-end
-
 function Systems.build_solution(sys::FakeSystem, ode_sol)
     return ode_sol
+end
+
+function Systems.variable_dependence(sys::FakeSystem)
+    return Common.Fixed
 end
 
 """
@@ -38,9 +38,13 @@ Fake flow for testing the AbstractFlow contract.
 This minimal implementation provides the required contract methods to test
 routing and default behavior without full flow complexity.
 """
-struct FakeFlow <: Flows.AbstractFlow
+struct FakeFlow{VD<:Systems.VariableDependence} <: Flows.AbstractFlow
     sys::Systems.AbstractSystem
     integ::Any
+end
+
+function FakeFlow(sys::Systems.AbstractSystem, integ::Any)
+    return FakeFlow{Systems.variable_dependence(sys)}(sys, integ)
 end
 
 function Flows.system(f::FakeFlow)
@@ -122,6 +126,10 @@ function test_abstract_flow()
 
             Test.@testset "integrator returns integrator" begin
                 Test.@test Flows.integrator(flow) === :fake_integ
+            end
+
+            Test.@testset "FakeFlow has correct VD parameter" begin
+                Test.@test flow isa FakeFlow{Common.Fixed}
             end
 
             Test.@testset "callable (t0, x0, tf)" begin
@@ -211,7 +219,6 @@ function test_abstract_flow()
                 show(io, MIME("text/plain"), flow)
                 output = String(take!(io))
                 Test.@test occursin("FakeFlow", output)
-                Test.@test occursin("system", output)
             end
 
             Test.@testset "compact" begin
@@ -219,7 +226,6 @@ function test_abstract_flow()
                 show(io, flow)
                 output = String(take!(io))
                 Test.@test occursin("FakeFlow", output)
-                Test.@test occursin("system", output)
             end
         end
 
@@ -273,11 +279,12 @@ function test_abstract_flow()
 
         Test.@testset "VectorField Flow Integration Tests" begin
             Test.@testset "Autonomous Fixed Flow" begin
-                vf = Systems.VectorField(x -> -x, Systems.Autonomous, Systems.Fixed)
+                vf = Systems.VectorField(x -> -x, Common.Autonomous, Common.Fixed)
                 sys = Systems.VectorFieldSystem(vf)
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
 
+                Test.@test flow isa FakeFlow{Common.Fixed}
                 Test.@test Flows.is_autonomous(flow) === true
                 Test.@test Flows.is_nonautonomous(flow) === false
                 Test.@test Flows.is_variable(flow) === false
@@ -286,11 +293,12 @@ function test_abstract_flow()
             end
 
             Test.@testset "NonAutonomous Fixed Flow" begin
-                vf = Systems.VectorField((t, x) -> t .* x, Systems.NonAutonomous, Systems.Fixed)
+                vf = Systems.VectorField((t, x) -> t .* x, Common.NonAutonomous, Common.Fixed)
                 sys = Systems.VectorFieldSystem(vf)
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
 
+                Test.@test flow isa FakeFlow{Common.Fixed}
                 Test.@test Flows.is_autonomous(flow) === false
                 Test.@test Flows.is_nonautonomous(flow) === true
                 Test.@test Flows.is_variable(flow) === false
@@ -299,11 +307,12 @@ function test_abstract_flow()
             end
 
             Test.@testset "Autonomous NonFixed Flow" begin
-                vf = Systems.VectorField((x, v) -> x .+ v, Systems.Autonomous, Systems.NonFixed)
+                vf = Systems.VectorField((x, v) -> x .+ v, Common.Autonomous, Common.NonFixed)
                 sys = Systems.VectorFieldSystem(vf)
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
 
+                Test.@test flow isa FakeFlow{Common.NonFixed}
                 Test.@test Flows.is_autonomous(flow) === true
                 Test.@test Flows.is_nonautonomous(flow) === false
                 Test.@test Flows.is_variable(flow) === true

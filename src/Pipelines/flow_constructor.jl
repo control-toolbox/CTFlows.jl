@@ -21,7 +21,7 @@ This constructor builds a complete flow by:
 \`\`\`julia-repl
 julia> using CTFlows.Pipelines, CTFlows.Systems
 
-julia> vf = Systems.VectorField((t, x, v) -> x, Systems.Autonomous(), Systems.Fixed())
+julia> vf = Systems.VectorField((t, x, v) -> x, Common.Autonomous(), Common.Fixed())
 VectorField(...)
 
 julia> flow = Pipelines.Flow(vf, :sciml; reltol=1e-8)

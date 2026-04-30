@@ -21,7 +21,7 @@ function test_build_system()
 
         Test.@testset "VectorField System Building" begin
             Test.@testset "builds VectorFieldSystem from VectorField" begin
-                vf = Systems.VectorField(x -> x, Systems.Autonomous, Systems.Fixed)
+                vf = Systems.VectorField(x -> x, Common.Autonomous, Common.Fixed)
                 system = Pipelines.build_system(vf)
                 Test.@test system isa Systems.VectorFieldSystem
                 Test.@test system isa Systems.AbstractSystem

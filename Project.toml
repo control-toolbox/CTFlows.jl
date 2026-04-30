@@ -6,6 +6,7 @@ authors = ["Olivier Cots <olivier.cots@toulouse-inp.fr>"]
 [deps]
 CTBase = "54762871-cc72-4466-b8e8-f6c8b58076cd"
 CTSolvers = "d3e8d392-8e4b-4d9b-8e92-d7d4e3650ef6"
+CommonSolve = "38540f10-b2f7-11e9-35d8-d573e4eb0ff2"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 
@@ -21,6 +22,7 @@ CTFlowsPlotsExt = "Plots"
 Aqua = "0.8"
 CTBase = "0.18"
 CTSolvers = "0.2"
+CommonSolve = "0.2"
 DocStringExtensions = "0.9"
 OrdinaryDiffEqTsit5 = "2"
 Plots = "1"

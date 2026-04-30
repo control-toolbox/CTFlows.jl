@@ -8,7 +8,8 @@ specific integration scenarios (e.g., point-to-point, trajectory, costate).
 
 # Interface Requirements
 
-No required methods - this is a marker type for type-based dispatch only.
+All subtypes must implement:
+- `tspan(config)`: Return the time span as a tuple `(t0, tf)`.
 
 # Example
 \`\`\`julia-repl
@@ -24,6 +25,25 @@ true
 See also: [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Common.TrajectoryConfig`](@ref)
 """
 abstract type AbstractConfig end
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the time span from an `AbstractConfig`.
+
+# Throws
+- `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
+
+See also: [`CTFlows.Common.AbstractConfig`](@ref), [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Common.TrajectoryConfig`](@ref).
+"""
+function tspan(c::AbstractConfig)
+    throw(Exceptions.NotImplemented(
+        "AbstractConfig tspan method not implemented";
+        required_method = "tspan(c::$(typeof(c)))",
+        suggestion = "Return the time span as a tuple (t0, tf) for this configuration.",
+        context = "AbstractConfig.tspan - required method implementation",
+    ))
+end
 
 """
 $(TYPEDEF)
@@ -82,7 +102,7 @@ julia> tspan(config)
 
 See also: [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Common.TrajectoryConfig`](@ref)
 """
-function tspan(c::PointConfig)
+function tspan(c::PointConfig)::Tuple{Real, Real}
     return (c.t0, c.tf)
 end
 
@@ -140,7 +160,7 @@ julia> tspan(config)
 
 See also: [`CTFlows.Common.TrajectoryConfig`](@ref), [`CTFlows.Common.PointConfig`](@ref)
 """
-function tspan(c::TrajectoryConfig)
+function tspan(c::TrajectoryConfig)::Tuple{Real, Real}
     return c.tspan
 end
 
@@ -188,27 +208,3 @@ Display the `TrajectoryConfig` in REPL format.
 function Base.show(io::IO, ::MIME"text/plain", c::TrajectoryConfig)
     show(io, c)
 end
-
-# =============================================================================
-# Default values for time-dependent object constructors
-# =============================================================================
-
-"""
-$(TYPEDSIGNATURES)
-
-Default value for autonomous flag in time-dependent object constructors.
-
-Returns `true` by default, meaning objects do not explicitly depend on time
-unless specified otherwise.
-"""
-__autonomous()::Bool = true
-
-"""
-$(TYPEDSIGNATURES)
-
-Default value for variable flag in time-dependent object constructors.
-
-Returns `false` by default, meaning objects have fixed parameters unless
-specified otherwise.
-"""
-__variable()::Bool = false

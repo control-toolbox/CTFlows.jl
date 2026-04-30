@@ -25,12 +25,12 @@ function Systems.rhs!(sys::FakeSystem)
     return (du, u, p, t) -> nothing
 end
 
-function Systems.dimensions(sys::FakeSystem)
-    return (n_x=sys.state_dim, n_p=sys.state_dim, n_u=0, n_v=0)
-end
-
 function Systems.build_solution(sys::FakeSystem, ode_sol)
     return ode_sol
+end
+
+function Systems.variable_dependence(sys::FakeSystem)
+    return Common.Fixed
 end
 
 struct FakeIntegrator <: Integrators.AbstractODEIntegrator

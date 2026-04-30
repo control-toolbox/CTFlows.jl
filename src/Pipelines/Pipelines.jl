@@ -23,6 +23,7 @@ module Pipelines
 
 import DocStringExtensions: TYPEDSIGNATURES
 import CTBase.Exceptions
+using CommonSolve: CommonSolve
 
 # ==============================================================================
 # Internal submodule imports

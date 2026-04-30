@@ -152,32 +152,32 @@ function test_common_module()
         Test.@testset "Trait Accessor Functions" begin
             Test.@testset "is_autonomous is exported" begin
                 Test.@test isdefined(Common, :is_autonomous)
-                Test.@test Common.is_autonomous(Common.Autonomous()) === true
-                Test.@test Common.is_autonomous(Common.NonAutonomous()) === false
+                Test.@test Common.is_autonomous(Common.Autonomous) === true
+                Test.@test Common.is_autonomous(Common.NonAutonomous) === false
             end
 
             Test.@testset "is_nonautonomous is exported" begin
                 Test.@test isdefined(Common, :is_nonautonomous)
-                Test.@test Common.is_nonautonomous(Common.Autonomous()) === false
-                Test.@test Common.is_nonautonomous(Common.NonAutonomous()) === true
+                Test.@test Common.is_nonautonomous(Common.Autonomous) === false
+                Test.@test Common.is_nonautonomous(Common.NonAutonomous) === true
             end
 
             Test.@testset "is_variable is exported" begin
                 Test.@test isdefined(Common, :is_variable)
-                Test.@test Common.is_variable(Common.Fixed()) === false
-                Test.@test Common.is_variable(Common.NonFixed()) === true
+                Test.@test Common.is_variable(Common.Fixed) === false
+                Test.@test Common.is_variable(Common.NonFixed) === true
             end
 
             Test.@testset "is_nonvariable is exported" begin
                 Test.@test isdefined(Common, :is_nonvariable)
-                Test.@test Common.is_nonvariable(Common.Fixed()) === true
-                Test.@test Common.is_nonvariable(Common.NonFixed()) === false
+                Test.@test Common.is_nonvariable(Common.Fixed) === true
+                Test.@test Common.is_nonvariable(Common.NonFixed) === false
             end
 
             Test.@testset "has_variable is exported" begin
                 Test.@test isdefined(Common, :has_variable)
-                Test.@test Common.has_variable(Common.Fixed()) === false
-                Test.@test Common.has_variable(Common.NonFixed()) === true
+                Test.@test Common.has_variable(Common.Fixed) === false
+                Test.@test Common.has_variable(Common.NonFixed) === true
             end
         end
 
