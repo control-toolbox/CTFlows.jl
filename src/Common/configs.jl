@@ -51,10 +51,39 @@ PointConfig
 
 See also: [`CTFlows.Common.TrajectoryConfig`](@ref)
 """
-struct PointConfig{T0, X0, TF} <: AbstractConfig
+struct PointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfig
     t0::T0
     x0::X0
     tf::TF
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the time span from a `PointConfig`.
+
+Returns a tuple `(t0, tf)` for consistency with `TrajectoryConfig`.
+
+# Arguments
+- `c::PointConfig`: The point configuration.
+
+# Returns
+- `Tuple{Real, Real}`: Time span as `(t0, tf)`.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> config = PointConfig(0.0, [1.0, 0.0], 1.0)
+
+julia> tspan(config)
+(0.0, 1.0)
+\`\`\`
+
+See also: [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Common.TrajectoryConfig`](@ref)
+"""
+function tspan(c::PointConfig)
+    return (c.t0, c.tf)
 end
 
 """
@@ -81,9 +110,38 @@ TrajectoryConfig
 
 See also: [`CTFlows.Common.PointConfig`](@ref)
 """
-struct TrajectoryConfig{TS, X0} <: AbstractConfig
+struct TrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractConfig
     tspan::TS
     x0::X0
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the time span from a `TrajectoryConfig`.
+
+Returns the stored time span tuple.
+
+# Arguments
+- `c::TrajectoryConfig`: The trajectory configuration.
+
+# Returns
+- `Tuple{Real, Real}`: Time span as `(t0, tf)`.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> config = TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+
+julia> tspan(config)
+(0.0, 1.0)
+\`\`\`
+
+See also: [`CTFlows.Common.TrajectoryConfig`](@ref), [`CTFlows.Common.PointConfig`](@ref)
+"""
+function tspan(c::TrajectoryConfig)
+    return c.tspan
 end
 
 # =============================================================================
@@ -132,23 +190,25 @@ function Base.show(io::IO, ::MIME"text/plain", c::TrajectoryConfig)
 end
 
 # =============================================================================
-# Default values for VectorField constructor
+# Default values for time-dependent object constructors
 # =============================================================================
 
 """
 $(TYPEDSIGNATURES)
 
-Default value for autonomous flag in VectorField constructor.
+Default value for autonomous flag in time-dependent object constructors.
 
-Returns `true` by default, meaning systems are autonomous unless explicitly specified.
+Returns `true` by default, meaning objects do not explicitly depend on time
+unless specified otherwise.
 """
 __autonomous()::Bool = true
 
 """
 $(TYPEDSIGNATURES)
 
-Default value for variable flag in VectorField constructor.
+Default value for variable flag in time-dependent object constructors.
 
-Returns `false` by default, meaning systems have fixed parameters unless explicitly specified.
+Returns `false` by default, meaning objects have fixed parameters unless
+specified otherwise.
 """
 __variable()::Bool = false
