@@ -41,7 +41,7 @@ end
 
 See also: [`CTFlows.Systems.rhs!`](@ref), [`CTFlows.Common.time_dependence`](@ref), [`CTFlows.Common.variable_dependence`](@ref).
 """
-abstract type AbstractSystem end
+abstract type AbstractSystem{VD<:Common.VariableDependence} end
 
 """
 $(TYPEDSIGNATURES)

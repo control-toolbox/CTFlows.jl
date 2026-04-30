@@ -35,6 +35,6 @@ include(joinpath(@__DIR__, "flow.jl"))
 # ==============================================================================
 
 export AbstractFlow, Flow
-export system, integrator, variable_dependence
+export system, integrator
 
 end # module Flows
