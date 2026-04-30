@@ -12,7 +12,8 @@ all public symbols are accessed via qualified paths (e.g., `CTFlows.Systems.Abst
 CTFlows is organised into specialised submodules:
 
 - **Core**: Shared utilities and types
-- **Systems**: System types (`AbstractSystem`, `VectorField`, `VectorFieldSystem`) with traits
+- **Data**: Data structures (`VectorField`) with traits
+- **Systems**: System types (`AbstractSystem`, `VectorFieldSystem`) with traits
 - **Flows**: Flow types (`AbstractFlow`, `Flow`) combining systems with integrators
 - **Integrators**: ODE integrator strategies (`AbstractODEIntegrator`, `SciMLIntegrator`)
 - **Pipelines**: High-level pipeline functions (`build_system`, `build_flow`, `integrate`, `solve`, `Flow`)
@@ -28,6 +29,9 @@ module CTFlows
 
 include(joinpath(@__DIR__, "Common", "Common.jl"))
 using .Common
+
+include(joinpath(@__DIR__, "Data", "Data.jl"))
+using .Data
 
 include(joinpath(@__DIR__, "Systems", "Systems.jl"))
 using .Systems

@@ -15,9 +15,9 @@ This is the atomic form that directly combines an `AbstractSystem` with an
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Pipelines, CTFlows.Systems, CTFlows.Integrators
+julia> using CTFlows.Pipelines, CTFlows.Data, CTFlows.Systems, CTFlows.Integrators
 
-julia> vf = Systems.VectorField((t, x, v) -> x, Common.Autonomous(), Common.Fixed())
+julia> vf = Data.VectorField((t, x, v) -> x, Common.Autonomous(), Common.Fixed())
 VectorField(...)
 
 julia> system = build_system(vf)

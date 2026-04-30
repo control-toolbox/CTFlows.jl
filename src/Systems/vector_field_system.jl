@@ -25,10 +25,10 @@ VectorFieldSystem
   vector_field: VectorField{var"#1", Autonomous, Fixed}
 \`\`\`
 
-See also: [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Systems.VectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
+See also: [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
 """
 struct VectorFieldSystem{F<:Function, TD<:Common.TimeDependence, VD<:Common.VariableDependence} <: AbstractSystem
-    vf::VectorField{F, TD, VD}
+    vf::Data.VectorField{F, TD, VD}
 end
 
 """

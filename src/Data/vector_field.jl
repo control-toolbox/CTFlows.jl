@@ -30,7 +30,7 @@ traits), and via a **uniform** signature `(t, x, v)` that ignores the
 unused arguments — this uniform form is used internally to build the right-hand
 side of the ODE in a trait-agnostic way.
 
-See also: [`CTFlows.Systems.VectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
+See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
 """
 struct VectorField{F<:Function, TD<:TimeDependence, VD<:VariableDependence}
     f::F
@@ -66,7 +66,7 @@ VectorField
   function: var"#2"
 \`\`\`
 
-See also: [`CTFlows.Systems.VectorField`](@ref), [`CTFlows.Common.Autonomous`](@ref), [`CTFlows.Common.NonAutonomous`](@ref), [`CTFlows.Common.Fixed`](@ref), [`CTFlows.Common.NonFixed`](@ref).
+See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Common.Autonomous`](@ref), [`CTFlows.Common.NonAutonomous`](@ref), [`CTFlows.Common.Fixed`](@ref), [`CTFlows.Common.NonFixed`](@ref).
 """
 function VectorField(f; autonomous::Bool = Common.__autonomous(), variable::Bool = Common.__variable())
     TD = autonomous ? Autonomous : NonAutonomous
@@ -105,7 +105,7 @@ Indicate that `VectorField` has the time-dependence trait.
 This implementation declares that all vector fields support time-dependence queries.
 Concrete `VectorField` instances have their time dependence encoded in the type parameter `TD`.
 
-See also: [`CTFlows.Common.time_dependence`](@ref), [`CTFlows.Systems.VectorField`](@ref).
+See also: [`CTFlows.Common.time_dependence`](@ref), [`CTFlows.Data.VectorField`](@ref).
 """
 Common.has_time_dependence_trait(::VectorField) = true
 
@@ -117,7 +117,7 @@ Indicate that `VectorField` has the variable-dependence trait.
 This implementation declares that all vector fields support variable-dependence queries.
 Concrete `VectorField` instances have their variable dependence encoded in the type parameter `VD`.
 
-See also: [`CTFlows.Common.variable_dependence`](@ref), [`CTFlows.Systems.VectorField`](@ref).
+See also: [`CTFlows.Common.variable_dependence`](@ref), [`CTFlows.Data.VectorField`](@ref).
 """
 Common.has_variable_dependence_trait(::VectorField) = true
 
@@ -188,7 +188,7 @@ Shows the type name, time dependence, variable dependence, and function type.
 - `io::IO`: The IO stream to write to.
 - `vf::VectorField`: The VectorField to display.
 
-See also: [`CTFlows.Systems.VectorField`](@ref).
+See also: [`CTFlows.Data.VectorField`](@ref).
 """
 function Base.show(io::IO, vf::VectorField{F, TD, VD}) where {F, TD, VD}
     println(io, "VectorField")
@@ -209,7 +209,7 @@ Delegates to the compact show method.
 - `::MIME"text/plain"`: The MIME type for REPL display.
 - `vf::VectorField`: The VectorField to display.
 
-See also: [`CTFlows.Systems.VectorField`](@ref).
+See also: [`CTFlows.Data.VectorField`](@ref).
 """
 function Base.show(io::IO, ::MIME"text/plain", vf::VectorField{F, TD, VD}) where {F, TD, VD}
     show(io, vf)
