@@ -3,6 +3,7 @@ module TestSciMLExtension
 import Test
 import CTFlows: CTFlows
 import CTFlows.Common: Common
+import CTFlows.Data: Data
 import CTFlows.Systems: Systems
 import CTFlows.Integrators: Integrators
 import CTFlows.Solutions: Solutions
@@ -116,7 +117,7 @@ function test_sciml_extension()
         Test.@testset "Problem Building" begin
             # Create a simple system
             sys = Systems.VectorFieldSystem(
-                Common.Data.VectorField(x -> -x; autonomous=true, variable=false)
+                Data.VectorField(x -> -x; autonomous=true, variable=false)
             )
 
             config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
@@ -135,7 +136,7 @@ function test_sciml_extension()
         Test.@testset "Solving" begin
             # Create a simple system
             sys = Systems.VectorFieldSystem(
-                Common.Data.VectorField(x -> -x; autonomous=true, variable=false)
+                Data.VectorField(x -> -x; autonomous=true, variable=false)
             )
 
             config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
@@ -157,7 +158,7 @@ function test_sciml_extension()
         Test.@testset "Solution Building" begin
             # Create a simple system
             sys = Systems.VectorFieldSystem(
-                Common.Data.VectorField(x -> -x; autonomous=true, variable=false)
+                Data.VectorField(x -> -x; autonomous=true, variable=false)
             )
 
             config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 2.0])
@@ -182,10 +183,10 @@ function test_sciml_extension()
         Test.@testset "Full Workflow" begin
             Test.@testset "PointConfig workflow" begin
                 sys = Systems.VectorFieldSystem(
-                    Common.Data.VectorField(x -> -x; autonomous=true, variable=false)
+                    Data.VectorField(x -> -x; autonomous=true, variable=false)
                 )
 
-                config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
+                config = Common.PointConfig(0.0, 1.0, 1.0)
                 integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
                 # Build problem
@@ -202,7 +203,7 @@ function test_sciml_extension()
 
             Test.@testset "TrajectoryConfig workflow" begin
                 sys = Systems.VectorFieldSystem(
-                    Common.Data.VectorField(x -> -x; autonomous=true, variable=false)
+                    Data.VectorField(x -> -x; autonomous=true, variable=false)
                 )
 
                 config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 2.0])
