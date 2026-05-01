@@ -3,6 +3,7 @@ module TestSciML
 import Test
 import CTBase.Exceptions
 import CTFlows.Integrators
+import CTFlows.Common
 import CTSolvers: CTSolvers
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -20,7 +21,7 @@ function test_sciml()
         # ====================================================================
 
         Test.@testset "Type Hierarchy" begin
-            Test.@test Integrators.SciMLTag isa Common.AbstractTag
+            Test.@test Integrators.SciMLTag <: Common.AbstractTag
         end
 
         # ====================================================================
@@ -71,13 +72,25 @@ function test_sciml()
         Test.@testset "Error Messages" begin
 
             Test.@testset "constructor error mentions OrdinaryDiffEqTsit5" begin
-                err = Test.@test_throws Exceptions.ExtensionError Integrators.SciML()
-                Test.@test occursin("OrdinaryDiffEqTsit5", err.msg)
+                try
+                    Integrators.SciML()
+                    Test.@test false  # Should not reach here
+                catch err
+                    Test.@test err isa Exceptions.ExtensionError
+                    msg = sprint(showerror, err)
+                    Test.@test occursin("OrdinaryDiffEqTsit5", msg)
+                end
             end
 
             Test.@testset "metadata error mentions OrdinaryDiffEqTsit5" begin
-                err = Test.@test_throws Exceptions.ExtensionError CTSolvers.Strategies.metadata(Integrators.SciML)
-                Test.@test occursin("OrdinaryDiffEqTsit5", err.msg)
+                try
+                    CTSolvers.Strategies.metadata(Integrators.SciML)
+                    Test.@test false  # Should not reach here
+                catch err
+                    Test.@test err isa Exceptions.ExtensionError
+                    msg = sprint(showerror, err)
+                    Test.@test occursin("OrdinaryDiffEqTsit5", msg)
+                end
             end
         end
     end

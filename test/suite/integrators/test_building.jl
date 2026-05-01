@@ -4,6 +4,7 @@ import Test
 import CTBase.Exceptions
 import CTFlows.Integrators
 import CTFlows.Integrators: SciML
+using OrdinaryDiffEqTsit5
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -33,9 +34,15 @@ function test_building()
             end
 
             Test.@testset "error message for unknown id" begin
-                err = Test.@test_throws Exceptions.IncorrectArgument Integrators.build_integrator(:fake)
-                Test.@test occursin("Unknown integrator id", err.msg)
-                Test.@test occursin(":sciml", err.msg)
+                try
+                    Integrators.build_integrator(:fake)
+                    Test.@test false  # Should not reach here
+                catch err
+                    Test.@test err isa Exceptions.IncorrectArgument
+                    msg = sprint(showerror, err)
+                    Test.@test occursin("Unknown integrator id", msg)
+                    Test.@test occursin(":sciml", msg)
+                end
             end
         end
     end
