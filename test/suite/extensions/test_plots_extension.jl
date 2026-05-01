@@ -3,9 +3,10 @@ module TestPlotsExtension
 import Test
 import CTFlows: CTFlows
 import CTFlows.Solutions: Solutions
+import SciMLBase: SciMLBase
 
 # Get extension to access plotting functions
-using Plots: Plots
+using Plots
 const CTFlowsPlotsExt = Base.get_extension(CTFlows, :CTFlowsPlotsExt)
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -18,9 +19,22 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake ODE solution for testing plotting.
 """
-struct FakeODESolution
+struct FakeODESolution <: SciMLBase.AbstractODESolution{Any, Any, Any}
     t::Vector{Float64}
     u::Vector{Vector{Float64}}
+end
+
+# Add plot method for FakeODESolution to make it compatible with Plots
+function Plots.plot(sol::FakeODESolution; kwargs...)
+    return Plots.plot(sol.t, first.(sol.u); kwargs...)
+end
+
+function Plots.plot!(sol::FakeODESolution; kwargs...)
+    return Plots.plot!(sol.t, first.(sol.u); kwargs...)
+end
+
+function Plots.plot!(p::Plots.Plot, sol::FakeODESolution; kwargs...)
+    return Plots.plot!(p, sol.t, first.(sol.u); kwargs...)
 end
 
 # ==============================================================================

@@ -68,7 +68,7 @@ Plot stub — throws error if Plots extension not loaded.
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: If Plots extension is not loaded.
 """
-function RecipesBase.plot(sol::AbstractVectorFieldSolution, args...; kwargs...)
+function RecipesBase.plot(sol::AbstractVectorFieldSolution; kwargs...)
     throw(
         Exceptions.IncorrectArgument(
             "Plots extension not loaded";
@@ -85,8 +85,8 @@ $(TYPEDSIGNATURES)
 
 Evaluate the solution at a given time by delegating to raw solution.
 """
-function (sol::VectorFieldSolution)(args...; kwargs...)
-    return raw(sol)(args...; kwargs...)
+function (sol::VectorFieldSolution)(t::Real)
+    return raw(sol)(t)
 end
 
 # =============================================================================

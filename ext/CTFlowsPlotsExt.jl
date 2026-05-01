@@ -21,8 +21,8 @@ $(TYPEDSIGNATURES)
 
 Plot a `VectorFieldSolution` by delegating to its raw SciML solution.
 """
-function Plots.plot(sol::Solutions.VectorFieldSolution, args...; kwargs...)
-    return Plots.plot(Solutions.raw(sol), args...; kwargs...)
+function Plots.plot(sol::Solutions.VectorFieldSolution; kwargs...)
+    return Plots.plot(Solutions.raw(sol); kwargs...)
 end
 
 """
@@ -30,8 +30,8 @@ $(TYPEDSIGNATURES)
 
 Plot into an existing plot by delegating to raw solution.
 """
-function Plots.plot!(sol::Solutions.VectorFieldSolution, args...; kwargs...)
-    return Plots.plot!(Solutions.raw(sol), args...; kwargs...)
+function Plots.plot!(sol::Solutions.VectorFieldSolution; kwargs...)
+    return Plots.plot!(Solutions.raw(sol); kwargs...)
 end
 
 """
@@ -39,8 +39,8 @@ $(TYPEDSIGNATURES)
 
 Plot into an existing plot by delegating to raw solution.
 """
-function Plots.plot!(p, sol::Solutions.VectorFieldSolution, args...; kwargs...)
-    return Plots.plot!(p, Solutions.raw(sol), args...; kwargs...)
+function Plots.plot!(p::Plots.Plot, sol::Solutions.VectorFieldSolution; kwargs...)
+    return Plots.plot!(p, Solutions.raw(sol); kwargs...)
 end
 
 end # module CTFlowsPlotsExt
