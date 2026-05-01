@@ -90,4 +90,4 @@ end
 
 end # module
 
-test_building_solutions() = TestBuilding.test_building_solutions()
+test_building_solutions() = TestBuildingSolutions.test_building_solutions()

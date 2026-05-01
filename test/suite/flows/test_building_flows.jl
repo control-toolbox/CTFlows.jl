@@ -145,4 +145,4 @@ end
 
 end # module
 
-test_building_flows() = TestBuilding.test_building_flows()
+test_building_flows() = TestBuildingFlows.test_building_flows()

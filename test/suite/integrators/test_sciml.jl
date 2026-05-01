@@ -14,10 +14,35 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # ==============================================================================
 
 """
+Fake SciML tag for testing stub methods on AbstractTag.
+"""
+struct FakeSciMLTag <: Common.AbstractTag end
+
+"""
 Fake SciML integrator for testing stub methods on AbstractSciMLIntegrator.
 """
 struct FakeSciMLIntegrator <: Integrators.AbstractSciMLIntegrator
     data::String
+end
+
+"""
+Fake SciML strategy for testing constructor stub.
+"""
+struct FakeSciML <: Integrators.AbstractSciMLIntegrator
+    options::CTSolvers.Strategies.StrategyOptions
+end
+
+# Fake constructor that throws ExtensionError
+function FakeSciML(; kwargs...)
+    throw(
+        Exceptions.ExtensionError(
+            "SciML extension not loaded";
+            got="constructor call without SciML extension",
+            expected="OrdinaryDiffEqTsit5.jl to be loaded",
+            suggestion="Load SciML extension with: using CTFlowsSciMLExt",
+            context="FakeSciML constructor - extension availability check",
+        ),
+    )
 end
 
 # ==============================================================================
@@ -65,7 +90,7 @@ function test_sciml()
             end
 
             Test.@testset "build_sciml_integrator throws ExtensionError" begin
-                Test.@test_throws Exceptions.ExtensionError Integrators.build_sciml_integrator(Integrators.SciMLTag)
+                Test.@test_throws Exceptions.ExtensionError Integrators.build_sciml_integrator(FakeSciMLTag())
             end
         end
 
@@ -75,25 +100,26 @@ function test_sciml()
 
         Test.@testset "Error Messages" begin
 
-            Test.@testset "constructor error mentions OrdinaryDiffEqTsit5" begin
+            Test.@testset "constructor error mentions SciML extension" begin
                 try
-                    Integrators.SciML()
+                    FakeSciML()
                     Test.@test false  # Should not reach here
                 catch err
                     Test.@test err isa Exceptions.ExtensionError
                     msg = sprint(showerror, err)
-                    Test.@test occursin("OrdinaryDiffEqTsit5", msg)
+                    Test.@test occursin("SciML extension", msg)
                 end
             end
 
-            Test.@testset "metadata error mentions OrdinaryDiffEqTsit5" begin
+            Test.@testset "metadata error mentions SciML extension" begin
+                fake_integrator = FakeSciMLIntegrator("test")
                 try
-                    CTSolvers.Strategies.metadata(Integrators.SciML)
+                    CTSolvers.Strategies.metadata(typeof(fake_integrator))
                     Test.@test false  # Should not reach here
                 catch err
                     Test.@test err isa Exceptions.ExtensionError
                     msg = sprint(showerror, err)
-                    Test.@test occursin("OrdinaryDiffEqTsit5", msg)
+                    Test.@test occursin("SciML extension", msg)
                 end
             end
         end

@@ -50,4 +50,4 @@ end
 
 end # module
 
-test_building_integrators() = TestBuilding.test_building_integrators()
+test_building_integrators() = TestBuildingIntegrators.test_building_integrators()
