@@ -36,10 +36,9 @@ end
 function FakeSciML(; kwargs...)
     throw(
         Exceptions.ExtensionError(
-            "SciML extension not loaded";
-            got="constructor call without SciML extension",
-            expected="OrdinaryDiffEqTsit5.jl to be loaded",
-            suggestion="Load SciML extension with: using CTFlowsSciMLExt",
+            :SciML;
+            message="SciML extension not loaded",
+            feature="SciML integrator",
             context="FakeSciML constructor - extension availability check",
         ),
     )
@@ -90,7 +89,7 @@ function test_sciml()
             end
 
             Test.@testset "build_sciml_integrator throws ExtensionError" begin
-                Test.@test_throws Exceptions.ExtensionError Integrators.build_sciml_integrator(FakeSciMLTag())
+                Test.@test_throws Exceptions.ExtensionError Integrators.build_sciml_integrator(FakeSciMLTag)
             end
         end
 
@@ -100,18 +99,18 @@ function test_sciml()
 
         Test.@testset "Error Messages" begin
 
-            Test.@testset "constructor error mentions SciML extension" begin
+            Test.@testset "constructor error mentions SciML" begin
                 try
                     FakeSciML()
                     Test.@test false  # Should not reach here
                 catch err
                     Test.@test err isa Exceptions.ExtensionError
                     msg = sprint(showerror, err)
-                    Test.@test occursin("SciML extension", msg)
+                    Test.@test occursin("SciML", msg)
                 end
             end
 
-            Test.@testset "metadata error mentions SciML extension" begin
+            Test.@testset "metadata error mentions OrdinaryDiffEqTsit5" begin
                 fake_integrator = FakeSciMLIntegrator("test")
                 try
                     CTSolvers.Strategies.metadata(typeof(fake_integrator))
@@ -119,7 +118,7 @@ function test_sciml()
                 catch err
                     Test.@test err isa Exceptions.ExtensionError
                     msg = sprint(showerror, err)
-                    Test.@test occursin("SciML extension", msg)
+                    Test.@test occursin("OrdinaryDiffEqTsit5", msg)
                 end
             end
         end
