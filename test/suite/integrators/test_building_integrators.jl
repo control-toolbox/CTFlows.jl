@@ -1,4 +1,4 @@
-module TestBuilding
+module TestBuildingIntegrators
 
 import Test
 import CTBase.Exceptions
@@ -13,7 +13,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # Test function
 # ==============================================================================
 
-function test_building()
+function test_building_integrators()
     Test.@testset "Integrator Building Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
@@ -50,4 +50,4 @@ end
 
 end # module
 
-test_building() = TestBuilding.test_building()
+test_building_integrators() = TestBuilding.test_building_integrators()

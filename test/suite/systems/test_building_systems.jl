@@ -1,4 +1,4 @@
-module TestBuilding
+module TestBuildingSystems
 
 import Test
 import CTFlows.Systems
@@ -12,7 +12,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # Test function
 # ==============================================================================
 
-function test_building()
+function test_building_systems()
     Test.@testset "Building Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
@@ -92,4 +92,4 @@ end
 
 end # module
 
-test_building() = TestBuilding.test_building()
+test_building_systems() = TestBuildingSystems.test_building_systems()

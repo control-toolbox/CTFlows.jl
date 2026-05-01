@@ -24,7 +24,7 @@ module Solutions
 import DocStringExtensions: TYPEDSIGNATURES, TYPEDEF
 import CTBase.Exceptions
 import SciMLBase
-import RecipesBase
+import RecipesBase: RecipesBase, plot
 
 # ==============================================================================
 # Internal submodule imports
@@ -47,5 +47,6 @@ include(joinpath(@__DIR__, "building.jl"))
 export VectorFieldSolution
 export build_solution
 export raw
+export plot
 
 end # module Solutions

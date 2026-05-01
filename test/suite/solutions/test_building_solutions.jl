@@ -1,9 +1,11 @@
-module TestBuilding
+module TestBuildingSolutions
 
 import Test
 import CTFlows.Solutions
 import CTFlows.Systems
 import CTFlows.Common
+import CTFlows.Data
+import SciMLBase: SciMLBase
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -15,7 +17,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake ODE solution for testing build_solution.
 """
-struct FakeODESolution
+struct FakeODESolution <: SciMLBase.AbstractODESolution{Any, Any, Any}
     u::Vector{Vector{Float64}}
 end
 
@@ -23,7 +25,7 @@ end
 # Test function
 # ==============================================================================
 
-function test_building()
+function test_building_solutions()
     Test.@testset "Building Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
@@ -32,7 +34,7 @@ function test_building()
 
         Test.@testset "build_solution - PointConfig" begin
             Test.@testset "vector initial condition returns final state" begin
-                sys = Systems.VectorFieldSystem(Common.Data.VectorField(x -> -x; autonomous=true, variable=false))
+                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; autonomous=true, variable=false))
                 ode_sol = FakeODESolution([[1.0, 2.0], [0.5, 1.0]])
                 config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
                 
@@ -41,7 +43,7 @@ function test_building()
             end
 
             Test.@testset "scalar initial condition unwraps length-1 vector" begin
-                sys = Systems.VectorFieldSystem(Common.Data.VectorField(x -> -x; autonomous=true, variable=false))
+                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; autonomous=true, variable=false))
                 ode_sol = FakeODESolution([[3.0], [1.5]])
                 config = Common.PointConfig(0.0, 3.0, 1.0)
                 
@@ -56,7 +58,7 @@ function test_building()
 
         Test.@testset "build_solution - TrajectoryConfig" begin
             Test.@testset "returns VectorFieldSolution wrapping raw ODE solution" begin
-                sys = Systems.VectorFieldSystem(Common.Data.VectorField(x -> -x; autonomous=true, variable=false))
+                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; autonomous=true, variable=false))
                 ode_sol = FakeODESolution([[1.0, 2.0], [0.5, 1.0]])
                 config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 2.0])
                 
@@ -65,7 +67,7 @@ function test_building()
             end
 
             Test.@testset "VectorFieldSolution contains correct ODE solution" begin
-                sys = Systems.VectorFieldSystem(Common.Data.VectorField(x -> -x; autonomous=true, variable=false))
+                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; autonomous=true, variable=false))
                 ode_sol = FakeODESolution([[1.0, 2.0], [0.5, 1.0]])
                 config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 2.0])
                 
@@ -88,4 +90,4 @@ end
 
 end # module
 
-test_building() = TestBuilding.test_building()
+test_building_solutions() = TestBuilding.test_building_solutions()

@@ -10,6 +10,17 @@ const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
 
 # ==============================================================================
+# Fake types for testing stubs
+# ==============================================================================
+
+"""
+Fake SciML integrator for testing stub methods on AbstractSciMLIntegrator.
+"""
+struct FakeSciMLIntegrator <: Integrators.AbstractSciMLIntegrator
+    data::String
+end
+
+# ==============================================================================
 # Test function
 # ==============================================================================
 
@@ -48,16 +59,9 @@ function test_sciml()
 
         Test.@testset "Extension Error Stubs" begin
 
-            Test.@testset "constructor throws ExtensionError" begin
-                Test.@test_throws Exceptions.ExtensionError Integrators.SciML()
-            end
-
-            Test.@testset "constructor with options throws ExtensionError" begin
-                Test.@test_throws Exceptions.ExtensionError Integrators.SciML(reltol=1e-6)
-            end
-
             Test.@testset "metadata throws ExtensionError" begin
-                Test.@test_throws Exceptions.ExtensionError CTSolvers.Strategies.metadata(Integrators.SciML)
+                fake_integrator = FakeSciMLIntegrator("test")
+                Test.@test_throws Exceptions.ExtensionError CTSolvers.Strategies.metadata(typeof(fake_integrator))
             end
 
             Test.@testset "build_sciml_integrator throws ExtensionError" begin

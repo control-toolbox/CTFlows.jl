@@ -1,4 +1,4 @@
-module TestBuilding
+module TestBuildingFlows
 
 import Test
 using OrdinaryDiffEqTsit5
@@ -15,7 +15,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # Test function
 # ==============================================================================
 
-function test_building()
+function test_building_flows()
     Test.@testset "Building Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
@@ -145,4 +145,4 @@ end
 
 end # module
 
-test_building() = TestBuilding.test_building()
+test_building_flows() = TestBuilding.test_building_flows()

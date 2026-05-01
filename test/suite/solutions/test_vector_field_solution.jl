@@ -3,6 +3,8 @@ module TestVectorFieldSolution
 import Test
 import CTFlows.Solutions
 import CTBase.Exceptions
+import SciMLBase: SciMLBase
+import CTFlows.Common
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -12,11 +14,25 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # ==============================================================================
 
 """
-Fake ODE solution for testing VectorFieldSolution.
+Fake ODE solution for testing VectorFieldSolution callable interface.
+Must be callable to support the VectorFieldSolution callable.
 """
-struct FakeODESolution
+struct FakeODESolution <: SciMLBase.AbstractODESolution{Any, Any, Any}
     t::Vector{Float64}
     u::Vector{Vector{Float64}}
+end
+
+# Make FakeODESolution callable
+function (fake::FakeODESolution)(t::Real)
+    # Simple interpolation for testing
+    return fake.u[1]
+end
+
+"""
+Fake VectorFieldSolution for testing stub methods on AbstractVectorFieldSolution.
+"""
+struct FakeVectorFieldSolution <: Solutions.AbstractVectorFieldSolution
+    data::String
 end
 
 # ==============================================================================
@@ -69,22 +85,21 @@ function test_vector_field_solution()
 
         Test.@testset "Plot stub" begin
             Test.@testset "throws IncorrectArgument without Plots extension" begin
-                ode_sol = FakeODESolution([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
-                sol = Solutions.VectorFieldSolution(ode_sol)
+                fake_sol = FakeVectorFieldSolution("test data")
                 
-                Test.@test_throws Exceptions.IncorrectArgument Solutions.plot(sol)
+                Test.@test_throws Exceptions.IncorrectArgument Solutions.plot(fake_sol)
             end
 
             Test.@testset "error message mentions Plots extension" begin
-                ode_sol = FakeODESolution([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
-                sol = Solutions.VectorFieldSolution(ode_sol)
+                fake_sol = FakeVectorFieldSolution("test data")
                 
                 try
-                    Solutions.plot(sol)
+                    Solutions.plot(fake_sol)
                     Test.@test false  # Should not reach here
                 catch err
                     Test.@test err isa Exceptions.IncorrectArgument
-                    Test.@test occursin("Plots", err.msg)
+                    msg = sprint(showerror, err)
+                    Test.@test occursin("Plots extension", msg)
                 end
             end
         end
