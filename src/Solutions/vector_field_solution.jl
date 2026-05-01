@@ -1,6 +1,31 @@
 """
 $(TYPEDEF)
 
+Abstract supertype for vector field solution containers.
+
+This type defines the interface for all solution types that wrap SciML ODE solutions.
+Concrete subtypes should store the raw ODE solution and provide access via the `raw` function.
+
+# Interface Requirements
+
+Subtypes must implement:
+- `raw(sol::SubType)`: Return the underlying SciML ODE solution
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Solutions
+
+julia> VectorFieldSolution <: AbstractVectorFieldSolution
+true
+\`\`\`
+
+See also: [`Solutions.VectorFieldSolution`](@ref), [`Solutions.raw`](@ref).
+"""
+abstract type AbstractVectorFieldSolution end
+
+"""
+$(TYPEDEF)
+
 Container for the raw SciML ODE solution from a TrajectoryConfig integration.
 
 This type wraps the raw ODE solution returned by SciML solvers. For now,
@@ -15,7 +40,7 @@ it simply stores the solution without providing any accessor methods.
 - Future versions may add convenience methods for accessing solution data.
 - Plotting and evaluation capabilities are provided by the CTFlowsPlotsExt extension.
 """
-struct VectorFieldSolution{TO<:SciMLBase.AbstractODESolution}
+struct VectorFieldSolution{TO<:SciMLBase.AbstractODESolution} <: AbstractVectorFieldSolution
     ode_sol::TO
 end
 
@@ -43,7 +68,7 @@ Plot stub — throws error if Plots extension not loaded.
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: If Plots extension is not loaded.
 """
-function RecipesBase.plot(sol::VectorFieldSolution, args...; kwargs...)
+function RecipesBase.plot(sol::AbstractVectorFieldSolution, args...; kwargs...)
     throw(
         Exceptions.IncorrectArgument(
             "Plots extension not loaded";

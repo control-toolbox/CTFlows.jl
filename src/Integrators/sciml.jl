@@ -9,6 +9,33 @@ struct SciMLTag <: Common.AbstractTag end
 """
 $(TYPEDEF)
 
+Abstract supertype for SciML-based ODE integrator strategies.
+
+This type defines the interface for all integrator strategies that use SciML solvers.
+Concrete subtypes should store strategy options and implement the required contract methods.
+
+# Interface Requirements
+
+Subtypes must implement:
+- `CTSolvers.Strategies.id(::Type{<:SubType})`: Return unique identifier
+- `CTSolvers.Strategies.description(::Type{<:SubType})`: Return description
+- `CTSolvers.Strategies.metadata(::Type{<:SubType})`: Return option metadata
+
+# Example
+```julia-repl
+julia> using CTFlows.Integrators
+
+julia> SciML <: AbstractSciMLIntegrator
+true
+```
+
+See also: [`Integrators.SciML`](@ref), [`Integrators.SciMLTag`](@ref).
+"""
+abstract type AbstractSciMLIntegrator <: AbstractIntegrator end
+
+"""
+$(TYPEDEF)
+
 Generic SciML ODE integrator strategy.
 
 Wraps any SciML algorithm (e.g. `Tsit5`, `Rodas4`) through a unified
@@ -25,7 +52,7 @@ To activate the extension, load any of:
 # Fields
 - `options::CTSolvers.Strategies.StrategyOptions`: validated option bundle.
 """
-struct SciML <: AbstractIntegrator
+struct SciML <: AbstractSciMLIntegrator
     options::CTSolvers.Strategies.StrategyOptions
 end
 
@@ -99,9 +126,9 @@ Real metadata implementation provided by the extension.
 # Throws
 - `CTBase.Exceptions.ExtensionError`: Always thrown by this stub implementation
 
-See also: `SciML`, `Strategies.StrategyMetadata`.
+See also: `SciML`, `CTSolvers.Strategies.StrategyMetadata`.
 """
-function Strategies.metadata(::Type{<:SciML})
+function CTSolvers.Strategies.metadata(::Type{<:AbstractSciMLIntegrator})
     # Extension is missing
     throw(
         Exceptions.ExtensionError(

@@ -21,8 +21,10 @@ module Solutions
 # External package imports
 # ==============================================================================
 
-import DocStringExtensions: TYPEDSIGNATURES
+import DocStringExtensions: TYPEDSIGNATURES, TYPEDEF
 import CTBase.Exceptions
+import SciMLBase
+import RecipesBase
 
 # ==============================================================================
 # Internal submodule imports

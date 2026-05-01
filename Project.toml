@@ -22,7 +22,7 @@ CTFlowsSciMLExt = "OrdinaryDiffEqTsit5"
 [compat]
 Aqua = "0.8"
 CTBase = "0.18"
-CTSolvers = "0.2"
+CTSolvers = "0.4"
 CommonSolve = "0.2"
 DocStringExtensions = "0.9"
 OrdinaryDiffEqTsit5 = "2"

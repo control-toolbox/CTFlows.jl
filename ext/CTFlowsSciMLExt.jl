@@ -31,7 +31,7 @@ $(TYPEDSIGNATURES)
 
 Return metadata defining `SciML` options and their specifications.
 """
-function Strategies.metadata(::Type{<:SciML})
+function Strategies.metadata(::Type{SciML})
     return Strategies.StrategyMetadata(
         Strategies.OptionDefinition(;
             name = :alg,
