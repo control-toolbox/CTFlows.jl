@@ -31,7 +31,7 @@ Tests are organized under `test/suite/` by **functionality**, not by source file
 - `suite/systems/`: System types tests (AbstractSystem, concrete systems, MultiPhaseSystem)
 - `suite/flows/`: Flow types tests (AbstractFlow, Flow, MultiPhaseFlow)
 - `suite/modelers/`: Flow modeler strategy tests (AbstractFlowModeler, concrete modelers)
-- `suite/integrators/`: ODE integrator strategy tests (AbstractIntegrator, concrete integrators)
+- `suite/integrators/`: ODE integrator strategy tests (AbstractODEIntegrator, concrete integrators)
 - `suite/ad_backends/`: AD backend strategy tests (AbstractADBackend, concrete backends)
 - `suite/pipelines/`: Pipeline function tests (build_system, build_flow, integrate, build_solution, solve)
 - `suite/exceptions/`: Exception system tests
@@ -384,6 +384,56 @@ Test.@testset "Test B" begin
     # Test B logic
 end
 ```
+
+### 6. Extension Stub Testing - CRITICAL
+
+**When testing extension stubs that throw exceptions (e.g., when an extension is not loaded), ALWAYS use fake types that subtype the abstract types, NEVER the real types.**
+
+**Why:** When running all tests together, extensions can be loaded by other test files. Tests that check for extension errors will fail if the extension is loaded elsewhere in the test suite.
+
+**✅ Correct - Use fake types:**
+
+```julia
+# TOP-LEVEL: Define fake types for extension stub testing
+struct FakeSciMLTag <: Common.AbstractTag end
+struct FakeSciMLIntegrator <: Integrators.AbstractSciMLIntegrator
+    data::String
+end
+
+# Test stubs on fake types
+Test.@testset "Extension Error Stubs" begin
+    Test.@testset "metadata throws ExtensionError" begin
+        fake_integrator = FakeSciMLIntegrator("test")
+        Test.@test_throws Exceptions.ExtensionError CTSolvers.Strategies.metadata(typeof(fake_integrator))
+    end
+
+    Test.@testset "build_sciml_integrator throws ExtensionError" begin
+        Test.@test_throws Exceptions.ExtensionError Integrators.build_sciml_integrator(FakeSciMLTag)
+    end
+end
+```
+
+**❌ Wrong - Use real types (will fail when extension is loaded elsewhere):**
+
+```julia
+# BAD: Testing on real types
+Test.@testset "Extension Error Stubs" begin
+    Test.@testset "constructor throws ExtensionError" begin
+        Test.@test_throws Exceptions.ExtensionError Integrators.SciML()  # FAILS if extension loaded
+    end
+
+    Test.@testset "metadata throws ExtensionError" begin
+        Test.@test_throws Exceptions.ExtensionError CTSolvers.Strategies.metadata(Integrators.SciML)  # FAILS
+    end
+end
+```
+
+**Exception:** You may test real types for:
+
+- Type hierarchy checks (e.g., `Test.@test Integrators.SciMLTag <: Common.AbstractTag`)
+- AbstractStrategy contract methods (e.g., `id`, `description`) that don't depend on extension state
+
+These tests are safe because they test the type system and contract, not extension availability.
 
 ## Test Quality Standards
 
