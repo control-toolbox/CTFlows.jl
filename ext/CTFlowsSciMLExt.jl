@@ -17,6 +17,7 @@ using CTFlows: CTFlows
 using CTFlows.Common: Common
 using CTFlows.Systems: Systems
 using CTFlows.Integrators: Integrators, SciML, SciMLTag
+using CTFlows.Solutions: Solutions
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, ODEProblem, Tsit5
 using SciMLBase: SciMLBase
 
@@ -269,7 +270,7 @@ function (integ::SciML)(prob::SciMLBase.AbstractODEProblem)
 end
 
 # =============================================================================
-# SciML solution building — actual implementation
+# SciML solution building — actual implementation (generic)
 # =============================================================================
 
 """
@@ -277,10 +278,8 @@ $(TYPEDSIGNATURES)
 
 Build the flow solution from an ODE solution.
 """
-function (integ::SciML)(ode_sol, sys::Systems.AbstractSystem, config::Common.AbstractConfig)
-    # For now, return the raw ODE solution
-    # TODO: Package into a proper flow solution type
-    return ode_sol
+function (integ::SciML)(ode_sol::SciMLBase.AbstractODESolution, sys::Systems.AbstractSystem, config::Common.AbstractConfig)
+    return Solutions.build_solution(ode_sol, sys, config)
 end
 
 end # module CTFlowsSciMLExt

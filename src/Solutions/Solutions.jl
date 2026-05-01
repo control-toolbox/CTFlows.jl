@@ -15,7 +15,7 @@ to plug in without changing the pipeline logic.
 
 See also: [`build_system`](@ref), [`build_flow`](@ref), [`integrate`](@ref), [`solve`](@ref), [`Flow`](@ref).
 """
-module Pipelines
+module Solutions
 
 # ==============================================================================
 # External package imports
@@ -23,28 +23,27 @@ module Pipelines
 
 import DocStringExtensions: TYPEDSIGNATURES
 import CTBase.Exceptions
-using CommonSolve: CommonSolve
 
 # ==============================================================================
 # Internal submodule imports
 # ==============================================================================
 
 using ..Common
-using ..Data
 using ..Systems
-using ..Integrators
-using ..Flows
 
 # ==============================================================================
 # Include files
 # ==============================================================================
 
-include(joinpath(@__DIR__, "solve.jl"))
+include(joinpath(@__DIR__, "vector_field_solution.jl"))
+include(joinpath(@__DIR__, "building.jl"))
 
 # ==============================================================================
 # Module exports
 # ==============================================================================
 
-export build_system, build_flow, solve
+export VectorFieldSolution
+export build_solution
+export raw
 
-end # module Pipelines
+end # module Solutions

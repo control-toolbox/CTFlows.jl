@@ -16,7 +16,7 @@ CTFlows is organised into specialised submodules:
 - **Systems**: System types (`AbstractSystem`, `VectorFieldSystem`) with traits
 - **Flows**: Flow types (`AbstractFlow`, `Flow`) combining systems with integrators
 - **Integrators**: ODE integrator strategies (`AbstractIntegrator`, `SciML`)
-- **Pipelines**: High-level pipeline functions (`build_system`, `build_flow`, `integrate`, `solve`, `Flow`)
+- **Solutions**: Solution types (`VectorFieldSolution`) and solution building functions
 
 All submodules export their public API. The package-level module exports nothing;
 access symbols via qualified paths like `CTFlows.Systems.AbstractSystem`.
@@ -42,8 +42,8 @@ using .Integrators
 include(joinpath(@__DIR__, "Flows", "Flows.jl"))
 using .Flows
 
-# include(joinpath(@__DIR__, "Pipelines", "Pipelines.jl"))
-# using .Pipelines
+include(joinpath(@__DIR__, "Solutions", "Solutions.jl"))
+using .Solutions
 
 # ==============================================================================
 # No exports at package level

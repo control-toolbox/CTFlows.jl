@@ -7,16 +7,28 @@ This type wraps the raw ODE solution returned by SciML solvers. For now,
 it simply stores the solution without providing any accessor methods.
 
 # Fields
-- `raw`: The raw ODE solution object (typically from SciML's solve function).
+- `ode_sol`: The raw ODE solution object (typically from SciML's solve function).
 
 # Notes
-- No accessor methods are provided at this time.
+- Access the raw ODE solution via the `raw(sol)` getter.
 - The raw solution typically contains `.t` (time points) and `.u` (state values).
 - Future versions may add convenience methods for accessing solution data.
 - Plotting and evaluation capabilities are provided by the CTFlowsPlotsExt extension.
 """
-struct VectorFieldSolution
-    raw::Any
+struct VectorFieldSolution{TO<:SciMLBase.AbstractODESolution}
+    ode_sol::TO
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the raw SciML ODE solution from a `VectorFieldSolution`.
+
+# Returns
+- `SciMLBase.AbstractODESolution`: The underlying ODE solution object.
+"""
+function raw(sol::VectorFieldSolution)
+    return sol.ode_sol
 end
 
 # =============================================================================
@@ -49,7 +61,7 @@ $(TYPEDSIGNATURES)
 Evaluate the solution at a given time by delegating to raw solution.
 """
 function (sol::VectorFieldSolution)(args...; kwargs...)
-    return sol.raw(args...; kwargs...)
+    return raw(sol)(args...; kwargs...)
 end
 
 # =============================================================================
@@ -58,13 +70,14 @@ end
 
 function Base.show(io::IO, ::MIME"text/plain", sol::VectorFieldSolution)
     print(io, "VectorFieldSolution")
-    print(io, "\n  raw: ", nameof(typeof(sol.raw)))
+    print(io, "\n  ode solution: ", nameof(typeof(raw(sol))))
     
     # Try to extract useful info from raw solution
     try
-        if hasfield(typeof(sol.raw), :t) && !isempty(sol.raw.t)
-            print(io, "\n  time span: (", first(sol.raw.t), ", ", last(sol.raw.t), ")")
-            print(io, "\n  time points: ", length(sol.raw.t))
+        raw_ode_sol = raw(sol)
+        if hasfield(typeof(raw_ode_sol), :t) && !isempty(raw_ode_sol.t)
+            print(io, "\n  time span: (", first(raw_ode_sol.t), ", ", last(raw_ode_sol.t), ")")
+            print(io, "\n  time points: ", length(raw_ode_sol.t))
         end
     catch
         # If we can't extract info, just show the type
@@ -74,12 +87,13 @@ end
 function Base.show(io::IO, sol::VectorFieldSolution)
     print(io, "VectorFieldSolution(")
     parts = String[]
-    push!(parts, "raw=$(nameof(typeof(sol.raw)))")
+    push!(parts, "ode_sol=$(nameof(typeof(raw(sol))))")
     
     try
-        if hasfield(typeof(sol.raw), :t) && !isempty(sol.raw.t)
-            push!(parts, "tspan=($(first(sol.raw.t)), $(last(sol.raw.t)))")
-            push!(parts, "n=$(length(sol.raw.t))")
+        raw_ode_sol = raw(sol)
+        if hasfield(typeof(raw_ode_sol), :t) && !isempty(raw_ode_sol.t)
+            push!(parts, "tspan=($(first(raw_ode_sol.t)), $(last(raw_ode_sol.t)))")
+            push!(parts, "n=$(length(raw_ode_sol.t))")
         end
     catch
     end
