@@ -122,7 +122,7 @@ function test_flow()
         Test.@testset "Flow Callable - Fixed Systems" begin
             sys = FixedSystem()
             integ = FakeIntegrator(:solution)
-            flow = FakeFlow{Common.Fixed, FixedSystem, typeof(integ)}(sys, integ)
+            flow = FakeFlow{Common.Autonomous, Common.Fixed, FixedSystem, typeof(integ)}(sys, integ)
 
             Test.@testset "call with PointConfig" begin
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
@@ -164,7 +164,7 @@ function test_flow()
         Test.@testset "Flow Callable - NonFixed Systems" begin
             sys = NonFixedSystem()
             integ = FakeIntegrator(:solution)
-            flow = FakeFlow{Common.NonFixed, NonFixedSystem, typeof(integ)}(sys, integ)
+            flow = FakeFlow{Common.Autonomous, Common.NonFixed, NonFixedSystem, typeof(integ)}(sys, integ)
 
             Test.@testset "call with PointConfig" begin
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
@@ -240,7 +240,7 @@ function test_flow()
         Test.@testset "Base.show" begin
             sys = FixedSystem()
             integ = FakeIntegrator(:fake_ode_sol)
-            flow = FakeFlow{Common.Fixed, FixedSystem, typeof(integ)}(sys, integ)
+            flow = FakeFlow{Common.Autonomous, Common.Fixed, FixedSystem, typeof(integ)}(sys, integ)
 
             Test.@testset "MIME text/plain" begin
                 io = IOBuffer()

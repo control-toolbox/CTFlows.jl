@@ -37,10 +37,9 @@ routing and default behavior without full flow complexity.
 struct FakeFlow{TD<:Common.TimeDependence, VD<:Common.VariableDependence} <: Flows.AbstractFlow{TD, VD}
     sys::Systems.AbstractSystem{TD, VD}
     integ::Any
-end
-
-function FakeFlow(sys::Systems.AbstractSystem, integ::Any)
-    return FakeFlow{Common.time_dependence(sys), Common.variable_dependence(sys)}(sys, integ)
+    function FakeFlow(sys::Systems.AbstractSystem, integ::Any)
+        return new{Common.time_dependence(sys), Common.variable_dependence(sys)}(sys, integ)
+    end
 end
 
 function Flows.system(f::FakeFlow)
@@ -251,7 +250,7 @@ function test_abstract_flow()
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
 
-                Test.@test flow isa FakeFlow{Common.Autonomous, Common.Fixed}
+                Test.@test flow isa FakeFlow{Common.NonAutonomous, Common.Fixed}
                 Test.@test Flows.is_autonomous(flow) === false
                 Test.@test Flows.is_nonautonomous(flow) === true
                 Test.@test Flows.is_variable(flow) === false

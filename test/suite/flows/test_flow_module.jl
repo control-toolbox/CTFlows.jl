@@ -32,7 +32,7 @@ Fake system for testing the Flow contract.
 This minimal implementation provides the required contract methods to test
 routing and default behavior without full system complexity.
 """
-struct FakeSystem <: Systems.AbstractSystem{Common.Fixed}
+struct FakeSystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
     state_dim::Int
     param_dim::Int
 end
