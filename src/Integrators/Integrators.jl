@@ -27,7 +27,7 @@ using CTSolvers: CTSolvers
 # Include files
 # ==============================================================================
 
-include(joinpath(@__DIR__, "abstract_ode_integrator.jl"))
+include(joinpath(@__DIR__, "abstract_integrator.jl"))
 include(joinpath(@__DIR__, "sciml_integrator.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 

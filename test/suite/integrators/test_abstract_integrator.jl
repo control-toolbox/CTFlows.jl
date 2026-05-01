@@ -3,6 +3,7 @@ module TestAbstractIntegrator
 import Test
 import CTBase.Exceptions
 import CTFlows.Integrators
+import CTFlows.Systems
 import CTFlows.Common
 import CTSolvers: CTSolvers
 
@@ -14,7 +15,17 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # ==============================================================================
 
 """
+Fake system for testing the AbstractIntegrator contract.
+"""
+struct FakeSystem <: Systems.AbstractSystem{Common.Fixed}
+    state_dim::Int
+end
+
+"""
 Fake integrator for testing the AbstractIntegrator contract.
+
+This minimal implementation provides all three required callable signatures
+to test routing and default behavior without full integrator complexity.
 """
 struct FakeIntegrator <: Integrators.AbstractIntegrator
     options::CTSolvers.Strategies.StrategyOptions
@@ -24,8 +35,17 @@ function FakeIntegrator()
     return FakeIntegrator(CTSolvers.Strategies.StrategyOptions())
 end
 
-function (integ::FakeIntegrator)(ode_problem, tspan)
-    return :fake_solution
+# Implement the three required callable signatures
+function (integ::FakeIntegrator)(system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)
+    return :fake_ode_problem
+end
+
+function (integ::FakeIntegrator)(prob)
+    return :fake_ode_solution
+end
+
+function (integ::FakeIntegrator)(ode_sol, sys::Systems.AbstractSystem, config::Common.AbstractConfig)
+    return :fake_flow_solution
 end
 
 """
@@ -43,7 +63,7 @@ end
 # Test function
 # ==============================================================================
 
-function test_abstract_ode_integrator()
+function test_abstract_integrator()
     Test.@testset "Abstract ODE Integrator Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
@@ -65,10 +85,22 @@ function test_abstract_ode_integrator()
 
         Test.@testset "Contract Implementation" begin
             integ = FakeIntegrator()
+            sys = FakeSystem(2)
+            config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
 
-            Test.@testset "callable returns solution" begin
-                result = integ(:fake_ode_problem, (0.0, 1.0))
-                Test.@test result === :fake_solution
+            Test.@testset "Problem building signature" begin
+                result = integ(sys, config; variable=nothing)
+                Test.@test result === :fake_ode_problem
+            end
+
+            Test.@testset "Integration signature" begin
+                result = integ(:fake_prob)
+                Test.@test result === :fake_ode_solution
+            end
+
+            Test.@testset "Solution building signature" begin
+                result = integ(:fake_ode_sol, sys, config)
+                Test.@test result === :fake_flow_solution
             end
         end
 
@@ -78,10 +110,19 @@ function test_abstract_ode_integrator()
 
         Test.@testset "NotImplemented Errors" begin
             integ = MinimalIntegrator()
+            sys = FakeSystem(2)
+            config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
 
-            Test.@testset "callable with config throws NotImplemented" begin
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
-                Test.@test_throws Exceptions.NotImplemented integ(config)
+            Test.@testset "Problem building throws NotImplemented" begin
+                Test.@test_throws Exceptions.NotImplemented integ(sys, config; variable=nothing)
+            end
+
+            Test.@testset "Integration throws NotImplemented" begin
+                Test.@test_throws Exceptions.NotImplemented integ(:fake_prob)
+            end
+
+            Test.@testset "Solution building throws NotImplemented" begin
+                Test.@test_throws Exceptions.NotImplemented integ(:fake_ode_sol, sys, config)
             end
         end
     end
@@ -89,4 +130,4 @@ end
 
 end # module
 
-test_abstract_ode_integrator() = TestAbstractIntegrator.test_abstract_ode_integrator()
+test_abstract_integrator() = TestAbstractIntegrator.test_abstract_integrator()
