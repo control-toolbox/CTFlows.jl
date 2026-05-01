@@ -42,6 +42,38 @@ function test_configs()
         # ====================================================================
 
         Test.@testset "Abstract Type" begin
+            Test.@testset "initial_condition is exported" begin
+                Test.@test isdefined(Common, :initial_condition)
+            end
+
+            Test.@testset "initial_condition handles scalar" begin
+                config = Common.PointConfig(0.0, 1.0, 1.0)
+                ic = Common.initial_condition(config)
+                Test.@test ic isa AbstractVector
+                Test.@test ic == [1.0]
+            end
+
+            Test.@testset "initial_condition handles vector" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                ic = Common.initial_condition(config)
+                Test.@test ic isa AbstractVector
+                Test.@test ic == [1.0, 0.0]
+            end
+
+            Test.@testset "initial_condition with TrajectoryConfig scalar" begin
+                config = Common.TrajectoryConfig((0.0, 1.0), 1.0)
+                ic = Common.initial_condition(config)
+                Test.@test ic isa AbstractVector
+                Test.@test ic == [1.0]
+            end
+
+            Test.@testset "initial_condition with TrajectoryConfig vector" begin
+                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+                ic = Common.initial_condition(config)
+                Test.@test ic isa AbstractVector
+                Test.@test ic == [1.0, 0.0]
+            end
+
             Test.@testset "AbstractConfig is exported" begin
                 Test.@test isdefined(Common, :AbstractConfig)
             end

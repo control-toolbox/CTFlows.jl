@@ -28,14 +28,14 @@ using CTSolvers: CTSolvers
 # ==============================================================================
 
 include(joinpath(@__DIR__, "abstract_integrator.jl"))
-include(joinpath(@__DIR__, "sciml_integrator.jl"))
+include(joinpath(@__DIR__, "sciml.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 
 # ==============================================================================
 # Module exports
 # ==============================================================================
 
-export AbstractIntegrator, SciMLIntegrator, SciMLTag
+export AbstractIntegrator, SciML, SciMLTag
 export build_sciml_integrator, build_integrator
 
 end # module Integrators

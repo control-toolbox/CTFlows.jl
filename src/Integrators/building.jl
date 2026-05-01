@@ -4,7 +4,7 @@ $(TYPEDSIGNATURES)
 Build an `AbstractIntegrator` from its symbolic id.
 
 # Arguments
-- `id::Symbol`: integrator identifier. Phase 1 supports `:sciml`.
+- `id::Symbol`: integrator identifier. Only `:sciml` is supported.
 - `kwargs...`: options forwarded to the integrator's constructor.
 
 # Throws
@@ -12,14 +12,14 @@ Build an `AbstractIntegrator` from its symbolic id.
 """
 function build_integrator(id::Symbol; kwargs...)
     if id === :sciml
-        return SciMLIntegrator(; kwargs...)
+        return SciML(; kwargs...)
     else
         throw(
             Exceptions.IncorrectArgument(
                 "Unknown integrator id";
                 got = "id = :$id",
-                expected = "one of: :sciml",
-                suggestion = "Use :sciml (the only Phase-1 integrator).",
+                expected = ":sciml",
+                suggestion = "Use :sciml (the only integrator).",
                 context = "build_integrator dispatch",
             ),
         )

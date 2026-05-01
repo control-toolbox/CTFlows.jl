@@ -6,8 +6,8 @@ Concrete flow that combines an `AbstractSystem` with an `AbstractIntegrator`.
 A `Flow` is the standard implementation of `AbstractFlow` that delegates
 integration to the provided integrator and solution building to the system.
 
-The `VD` parameter encodes the `VariableDependence` trait (Fixed or NonFixed)
-to enable compile-time dispatch on whether the `variable` kwarg is required.
+The `TD` and `VD` parameters encode the `TimeDependence` and `VariableDependence`
+traits (Autonomous/NonAutonomous and Fixed/NonFixed) to enable compile-time dispatch.
 
 # Fields
 - `system::S`: The `AbstractSystem` to integrate.
@@ -29,7 +29,7 @@ Flow{FakeSystem, FakeIntegrator, Fixed}(system=FakeSystem(), integrator=FakeInte
 
 See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref).
 """
-struct Flow{VD<:Common.VariableDependence, S<:Systems.AbstractSystem{VD}, I<:Integrators.AbstractIntegrator} <: AbstractFlow{VD}
+struct Flow{TD<:Common.TimeDependence, VD<:Common.VariableDependence, S<:Systems.AbstractSystem{TD, VD}, I<:Integrators.AbstractIntegrator} <: AbstractFlow{TD, VD}
     system::S
     integrator::I
 end
@@ -42,7 +42,7 @@ Return the system associated with the flow.
 # Returns
 - `S`: The `AbstractSystem` stored in the flow.
 """
-function system(f::Flow{VD, S, I})::S where {VD, S, I}
+function system(f::Flow{TD, VD, S, I})::S where {TD, VD, S, I}
     return f.system
 end
 
@@ -54,7 +54,7 @@ Return the integrator associated with the flow.
 # Returns
 - `I`: The `AbstractIntegrator` stored in the flow.
 """
-function integrator(f::Flow{VD, S, I})::I where {VD, S, I}
+function integrator(f::Flow{TD, VD, S, I})::I where {TD, VD, S, I}
     return f.integrator
 end
 

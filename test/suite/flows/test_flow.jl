@@ -23,9 +23,9 @@ end
 """
 Fake flow for testing Flow contract without requiring SciML extension.
 
-Matches the new parametric Flow{VD, S, I} structure.
+Matches the new parametric Flow{TD, VD, S, I} structure.
 """
-struct FakeFlow{VD<:Common.VariableDependence, S<:Systems.AbstractSystem{VD}, I} <: Flows.AbstractFlow{VD}
+struct FakeFlow{TD<:Common.TimeDependence, VD<:Common.VariableDependence, S<:Systems.AbstractSystem{TD, VD}, I} <: Flows.AbstractFlow{TD, VD}
     sys::S
     integ::I
 end
@@ -33,29 +33,12 @@ end
 """
 Fake system for Fixed systems.
 """
-struct FixedSystem <: Systems.AbstractSystem{Common.Fixed} end
+struct FixedSystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed} end
 
 """
 Fake system for NonFixed systems.
 """
-struct NonFixedSystem <: Systems.AbstractSystem{Common.NonFixed} end
-
-# Attach traits to fake systems (return types, not instances)
-function Common.variable_dependence(::FixedSystem)
-    return Common.Fixed
-end
-
-function Common.variable_dependence(::NonFixedSystem)
-    return Common.NonFixed
-end
-
-function Common.time_dependence(::FixedSystem)
-    return Common.Autonomous
-end
-
-function Common.time_dependence(::NonFixedSystem)
-    return Common.Autonomous
-end
+struct NonFixedSystem <: Systems.AbstractSystem{Common.Autonomous, Common.NonFixed} end
 
 function Flows.system(flow::FakeFlow)
     return flow.sys
@@ -98,10 +81,10 @@ function test_flow()
             Test.@testset "Fixed Flow" begin
                 sys = FixedSystem()
                 integ = FakeIntegrator(:fake_ode_sol)
-                flow = FakeFlow{Common.Fixed, FixedSystem, typeof(integ)}(sys, integ)
+                flow = FakeFlow{Common.Autonomous, Common.Fixed, FixedSystem, typeof(integ)}(sys, integ)
 
-                Test.@testset "Flow is AbstractFlow{Fixed}" begin
-                    Test.@test flow isa Flows.AbstractFlow{Common.Fixed}
+                Test.@testset "Flow is AbstractFlow{Autonomous, Fixed}" begin
+                    Test.@test flow isa Flows.AbstractFlow{Common.Autonomous, Common.Fixed}
                 end
 
                 Test.@testset "Flow stores system" begin
@@ -116,10 +99,10 @@ function test_flow()
             Test.@testset "NonFixed Flow" begin
                 sys = NonFixedSystem()
                 integ = FakeIntegrator(:fake_ode_sol)
-                flow = FakeFlow{Common.NonFixed, NonFixedSystem, typeof(integ)}(sys, integ)
+                flow = FakeFlow{Common.Autonomous, Common.NonFixed, NonFixedSystem, typeof(integ)}(sys, integ)
 
-                Test.@testset "Flow is AbstractFlow{NonFixed}" begin
-                    Test.@test flow isa Flows.AbstractFlow{Common.NonFixed}
+                Test.@testset "Flow is AbstractFlow{Autonomous, NonFixed}" begin
+                    Test.@test flow isa Flows.AbstractFlow{Common.Autonomous, Common.NonFixed}
                 end
 
                 Test.@testset "Flow stores system" begin
@@ -224,7 +207,7 @@ function test_flow()
             Test.@testset "Fixed Flow traits" begin
                 sys = FixedSystem()
                 integ = FakeIntegrator(:solution)
-                flow = FakeFlow{Common.Fixed, FixedSystem, typeof(integ)}(sys, integ)
+                flow = FakeFlow{Common.Autonomous, Common.Fixed, FixedSystem, typeof(integ)}(sys, integ)
 
                 Test.@testset "variable_dependence delegates to system" begin
                     Test.@test Common.variable_dependence(flow) === Common.Fixed
@@ -238,7 +221,7 @@ function test_flow()
             Test.@testset "NonFixed Flow traits" begin
                 sys = NonFixedSystem()
                 integ = FakeIntegrator(:solution)
-                flow = FakeFlow{Common.NonFixed, NonFixedSystem, typeof(integ)}(sys, integ)
+                flow = FakeFlow{Common.Autonomous, Common.NonFixed, NonFixedSystem, typeof(integ)}(sys, integ)
 
                 Test.@testset "variable_dependence delegates to system" begin
                     Test.@test Common.variable_dependence(flow) === Common.NonFixed

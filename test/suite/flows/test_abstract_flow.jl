@@ -20,20 +20,12 @@ Fake system for testing the AbstractFlow contract.
 This minimal implementation provides the required contract methods for AbstractSystem
 to test flow behavior without full system complexity.
 """
-struct FakeSystem <: Systems.AbstractSystem{Common.Fixed}
+struct FakeSystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
     state_dim::Int
 end
 
 function Systems.rhs!(sys::FakeSystem)
     return (du, u, p, t) -> nothing
-end
-
-function Common.time_dependence(sys::FakeSystem)
-    return Common.Autonomous
-end
-
-function Common.variable_dependence(sys::FakeSystem)
-    return Common.Fixed
 end
 
 """
@@ -42,13 +34,13 @@ Fake flow for testing the AbstractFlow contract.
 This minimal implementation provides the required contract methods to test
 routing and default behavior without full flow complexity.
 """
-struct FakeFlow{VD<:Common.VariableDependence} <: Flows.AbstractFlow{VD}
-    sys::Systems.AbstractSystem{VD}
+struct FakeFlow{TD<:Common.TimeDependence, VD<:Common.VariableDependence} <: Flows.AbstractFlow{TD, VD}
+    sys::Systems.AbstractSystem{TD, VD}
     integ::Any
 end
 
 function FakeFlow(sys::Systems.AbstractSystem, integ::Any)
-    return FakeFlow{Common.variable_dependence(sys)}(sys, integ)
+    return FakeFlow{Common.time_dependence(sys), Common.variable_dependence(sys)}(sys, integ)
 end
 
 function Flows.system(f::FakeFlow)
@@ -74,8 +66,8 @@ end
 """
 Minimal flow that does not implement the contract (for error testing).
 """
-struct MinimalFlow <: Flows.AbstractFlow{Common.Fixed}
-    sys::Systems.AbstractSystem{Common.Fixed}
+struct MinimalFlow <: Flows.AbstractFlow{Common.Autonomous, Common.Fixed}
+    sys::Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
 end
 
 # ==============================================================================
@@ -112,7 +104,7 @@ function test_abstract_flow()
             end
 
             Test.@testset "FakeFlow has correct VD parameter" begin
-                Test.@test flow isa FakeFlow{Common.Fixed}
+                Test.@test flow isa FakeFlow{Common.Autonomous, Common.Fixed}
             end
 
             Test.@testset "callable (t0, x0, tf)" begin
@@ -245,7 +237,7 @@ function test_abstract_flow()
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
 
-                Test.@test flow isa FakeFlow{Common.Fixed}
+                Test.@test flow isa FakeFlow{Common.Autonomous, Common.Fixed}
                 Test.@test Flows.is_autonomous(flow) === true
                 Test.@test Flows.is_nonautonomous(flow) === false
                 Test.@test Flows.is_variable(flow) === false
@@ -259,7 +251,7 @@ function test_abstract_flow()
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
 
-                Test.@test flow isa FakeFlow{Common.Fixed}
+                Test.@test flow isa FakeFlow{Common.Autonomous, Common.Fixed}
                 Test.@test Flows.is_autonomous(flow) === false
                 Test.@test Flows.is_nonautonomous(flow) === true
                 Test.@test Flows.is_variable(flow) === false
@@ -273,7 +265,7 @@ function test_abstract_flow()
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
 
-                Test.@test flow isa FakeFlow{Common.NonFixed}
+                Test.@test flow isa FakeFlow{Common.Autonomous, Common.NonFixed}
                 Test.@test Flows.is_autonomous(flow) === true
                 Test.@test Flows.is_nonautonomous(flow) === false
                 Test.@test Flows.is_variable(flow) === true

@@ -164,6 +164,41 @@ function tspan(c::TrajectoryConfig)::Tuple{Real, Real}
     return c.tspan
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Extract the initial condition from an `AbstractConfig`.
+
+Returns the initial state as a vector. If the stored initial condition is a scalar,
+it is wrapped in a vector for consistency.
+
+# Arguments
+- `c::AbstractConfig`: The configuration.
+
+# Returns
+- `AbstractVector`: The initial condition as a vector.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> config = PointConfig(0.0, 1.0, 1.0)  # scalar x0
+
+julia> initial_condition(config)
+[1.0]
+
+julia> config = PointConfig(0.0, [1.0, 0.0], 1.0)  # vector x0
+
+julia> initial_condition(config)
+[1.0, 0.0]
+\`\`\`
+
+See also: [`CTFlows.Common.AbstractConfig`](@ref), [`CTFlows.Common.PointConfig`](@ref).
+"""
+function initial_condition(c::AbstractConfig)
+    return c.x0 isa Number ? [c.x0] : c.x0
+end
+
 # =============================================================================
 # Base.show
 # =============================================================================

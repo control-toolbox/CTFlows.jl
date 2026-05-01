@@ -23,7 +23,7 @@ sol = call(flow, config)
 
 See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.build_ode_problem`](@ref).
 """
-function call(flow::Flows.AbstractFlow{VD}, config::Common.AbstractConfig; variable=nothing) where {VD<:Common.VariableDependence}
+function call(flow::Flows.AbstractFlow{TD, VD}, config::Common.AbstractConfig; variable=nothing) where {TD<:Common.TimeDependence, VD<:Common.VariableDependence}
 
     # get system and integrator
     sys = system(flow)
@@ -36,7 +36,7 @@ function call(flow::Flows.AbstractFlow{VD}, config::Common.AbstractConfig; varia
     ode_sol = integrate(prob, int)
 
     # build flow solution
-    flow_sol = build_ode_solution(ode_sol, sys, config, int)
+    flow_sol = build_flow_solution(ode_sol, sys, config, int)
 
     return flow_sol
 end
@@ -104,6 +104,6 @@ integrator strategy, allowing each integrator to define its own solution format.
 
 See also: [`CTFlows.Flows.call`](@ref), [`CTFlows.Flows.integrate`](@ref).
 """
-function build_ode_solution(ode_sol, sys::Systems.AbstractSystem, config::Common.AbstractConfig, integrator::Integrators.AbstractIntegrator)
+function build_flow_solution(ode_sol, sys::Systems.AbstractSystem, config::Common.AbstractConfig, integrator::Integrators.AbstractIntegrator)
     return integrator(ode_sol, sys, config)
 end

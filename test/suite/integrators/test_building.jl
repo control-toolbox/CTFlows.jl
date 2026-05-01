@@ -1,0 +1,46 @@
+module TestBuilding
+
+import Test
+import CTBase.Exceptions
+import CTFlows.Integrators
+import CTFlows.Integrators: SciML
+
+const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+
+# ==============================================================================
+# Test function
+# ==============================================================================
+
+function test_building()
+    Test.@testset "Integrator Building Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+
+        # ====================================================================
+        # UNIT TESTS - build_integrator
+        # ====================================================================
+
+        Test.@testset "build_integrator" begin
+
+            Test.@testset "valid id :sciml" begin
+                # This will throw ExtensionError if CTFlowsSciMLExt is not loaded,
+                # but at least it dispatches correctly
+                result = Integrators.build_integrator(:sciml)
+                Test.@test result isa SciML
+            end
+
+            Test.@testset "unknown id throws IncorrectArgument" begin
+                Test.@test_throws Exceptions.IncorrectArgument Integrators.build_integrator(:unknown)
+            end
+
+            Test.@testset "error message for unknown id" begin
+                err = Test.@test_throws Exceptions.IncorrectArgument Integrators.build_integrator(:fake)
+                Test.@test occursin("Unknown integrator id", err.msg)
+                Test.@test occursin(":sciml", err.msg)
+            end
+        end
+    end
+end
+
+end # module
+
+test_building() = TestBuilding.test_building()

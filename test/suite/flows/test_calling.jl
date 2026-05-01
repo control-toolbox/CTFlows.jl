@@ -16,7 +16,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake system for testing the calling workflow.
 """
-struct FakeSystemForCalling <: Systems.AbstractSystem{Common.Fixed}
+struct FakeSystemForCalling <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
     state_dim::Int
 end
 
@@ -61,7 +61,7 @@ end
 """
 Fake flow for testing the calling workflow.
 """
-struct FakeFlowForCalling{VD<:Common.VariableDependence, S<:Systems.AbstractSystem{VD}, I} <: Flows.AbstractFlow{VD}
+struct FakeFlowForCalling{TD<:Common.TimeDependence, VD<:Common.VariableDependence, S<:Systems.AbstractSystem{TD, VD}, I} <: Flows.AbstractFlow{TD, VD}
     sys::S
     integ::I
 end
@@ -90,7 +90,7 @@ function test_calling()
                 # Setup
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
-                flow = FakeFlowForCalling{Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
                 
                 # Execute
@@ -108,7 +108,7 @@ function test_calling()
             Test.@testset "call with variable parameter (Fixed system)" begin
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
-                flow = FakeFlowForCalling{Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
                 
                 # Call with variable (should be accepted even for Fixed)
@@ -123,7 +123,7 @@ function test_calling()
             Test.@testset "call with TrajectoryConfig" begin
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
-                flow = FakeFlowForCalling{Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
                 
                 result = Flows.call(flow, config)
@@ -161,13 +161,13 @@ function test_calling()
                 Test.@test ode_sol === :fake_ode_solution
             end
 
-            Test.@testset "build_ode_solution calls integrator" begin
+            Test.@testset "build_flow_solution calls integrator" begin
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
                 fake_ode_sol = :fake_ode_sol
                 
-                flow_sol = Flows.build_ode_solution(fake_ode_sol, sys, config, integ)
+                flow_sol = Flows.build_flow_solution(fake_ode_sol, sys, config, integ)
                 
                 Test.@test integ.build_solution_called === true
                 Test.@test flow_sol === :fake_flow_solution

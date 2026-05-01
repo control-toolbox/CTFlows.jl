@@ -18,7 +18,7 @@ Fake system for testing the AbstractSystem contract.
 This minimal implementation provides the required contract methods to test
 routing and default behavior without full system complexity.
 """
-struct FakeSystem <: Systems.AbstractSystem{Common.Fixed}
+struct FakeSystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
     data::Vector{Float64}
 end
 
@@ -30,7 +30,7 @@ end
 """
 Minimal system that does not implement the contract (for error testing).
 """
-struct MinimalSystem <: Systems.AbstractSystem{Common.Fixed}
+struct MinimalSystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
     state_dim::Int
 end
 
@@ -110,6 +110,16 @@ function test_abstract_system()
             Test.@testset "has_variable_dependence_trait returns true" begin
                 Test.@test Common.has_variable_dependence_trait(sys) === true
                 Test.@test Common.has_variable_dependence_trait(sys2) === true
+            end
+
+            Test.@testset "time_dependence extracts trait from type parameter" begin
+                Test.@test Common.time_dependence(sys) === Common.Autonomous
+                Test.@test Common.time_dependence(sys2) === Common.Autonomous
+            end
+
+            Test.@testset "variable_dependence extracts trait from type parameter" begin
+                Test.@test Common.variable_dependence(sys) === Common.Fixed
+                Test.@test Common.variable_dependence(sys2) === Common.Fixed
             end
 
             Test.@testset "trait methods work for all AbstractSystem subtypes" begin

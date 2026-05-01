@@ -1,7 +1,7 @@
 """
     CTFlowsSciMLExt
 
-Package extension providing the SciML implementation for `SciMLIntegrator`
+Package extension providing the SciML implementation for `SciML`
 and `ode_problem` for `VectorFieldSystem`. Activated automatically when
 `OrdinaryDiffEqTsit5` (or any superset such as `OrdinaryDiffEq` /
 `DifferentialEquations`) is loaded together with `CTFlows`.
@@ -16,31 +16,34 @@ import CTSolvers.Options
 using CTFlows: CTFlows
 using CTFlows.Common: Common
 using CTFlows.Systems: Systems
-using CTFlows.Integrators: Integrators, SciMLIntegrator, SciMLTag
+using CTFlows.Integrators: Integrators, SciML, SciMLTag
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, ODEProblem, Tsit5
+using SciMLBase: SciMLBase
+
 
 # =============================================================================
-# Strategies.metadata — option definitions for SciMLIntegrator
+# Strategies.metadata — option definitions for SciML
 # =============================================================================
 
 """
 $(TYPEDSIGNATURES)
 
-Return metadata defining `SciMLIntegrator` options and their specifications.
+Return metadata defining `SciML` options and their specifications.
 """
-function Strategies.metadata(::Type{<:SciMLIntegrator})
+function Strategies.metadata(::Type{<:SciML})
     return Strategies.StrategyMetadata(
         Strategies.OptionDefinition(;
             name = :alg,
-            type = Any,
+            type = SciMLBase.AbstractDEAlgorithm,
             default = Tsit5(),
             description = "ODE algorithm (e.g. Tsit5(), Rodas4()).",
         ),
         Strategies.OptionDefinition(;
             name = :reltol,
             type = Real,
-            default = 1e-10,
+            default = 1e-8,
             description = "Relative tolerance for the ODE solver.",
+            aliases = (:rtol, :rel_tol),
             validator = x ->
                 x > 0 || throw(
                     Exceptions.IncorrectArgument(
@@ -48,31 +51,33 @@ function Strategies.metadata(::Type{<:SciMLIntegrator})
                         got = "reltol=$x",
                         expected = "positive real number (> 0)",
                         suggestion = "Provide a positive tolerance (e.g., 1e-8, 1e-10).",
-                        context = "SciMLIntegrator reltol validation",
+                        context = "SciML reltol validation",
                     ),
                 ),
         ),
         Strategies.OptionDefinition(;
             name = :abstol,
             type = Real,
-            default = 1e-10,
+            default = 1e-8,
             description = "Absolute tolerance for the ODE solver.",
+            aliases = (:atol, :abs_tol),
             validator = x ->
                 x > 0 || throw(
                     Exceptions.IncorrectArgument(
                         "Invalid abstol value";
                         got = "abstol=$x",
                         expected = "positive real number (> 0)",
-                        suggestion = "Provide a positive tolerance (e.g., 1e-10, 1e-12).",
-                        context = "SciMLIntegrator abstol validation",
+                        suggestion = "Provide a positive tolerance (e.g., 1e-8, 1e-10).",
+                        context = "SciML abstol validation",
                     ),
                 ),
         ),
         Strategies.OptionDefinition(;
             name = :maxiters,
             type = Integer,
-            default = 10^5,
+            default = Options.NotProvided,
             description = "Maximum number of solver iterations.",
+            aliases=(:max_iters, :max_iter, :maxiter, :max_iterations, :maxit),
             validator = x ->
                 x > 0 || throw(
                     Exceptions.IncorrectArgument(
@@ -80,7 +85,7 @@ function Strategies.metadata(::Type{<:SciMLIntegrator})
                         got = "maxiters=$x",
                         expected = "positive integer (> 0)",
                         suggestion = "Provide a positive iteration count (e.g., 10^5).",
-                        context = "SciMLIntegrator maxiters validation",
+                        context = "SciML maxiters validation",
                     ),
                 ),
         ),
@@ -89,24 +94,129 @@ function Strategies.metadata(::Type{<:SciMLIntegrator})
             type = Real,
             default = Options.NotProvided,
             description = "Fixed step size (used when adaptive=false).",
+            aliases = (:dt0, :timestep),
+            validator = x ->
+                x > 0 || throw(
+                    Exceptions.IncorrectArgument(
+                        "Invalid dt value";
+                        got = "dt=$x",
+                        expected = "positive real number (> 0)",
+                        suggestion = "Provide a positive step size (e.g., 0.01).",
+                        context = "SciML dt validation",
+                    ),
+                ),
         ),
         Strategies.OptionDefinition(;
             name = :adaptive,
             type = Bool,
-            default = true,
+            default = Options.NotProvided,
             description = "Whether to use adaptive step-size control.",
+            aliases = (:adaptive_step, :adaptive_stepping),
         ),
         Strategies.OptionDefinition(;
             name = :save_everystep,
             type = Bool,
-            default = true,
+            default = Options.NotProvided,
             description = "Save the solution at every solver step.",
         ),
         Strategies.OptionDefinition(;
             name = :saveat,
-            type = Any,
+            type = Union{Real, AbstractVector},
             default = Options.NotProvided,
             description = "Times at which to save the solution (Vector or range).",
+            aliases = (:save_at, :save_times),
+        ),
+        Strategies.OptionDefinition(;
+            name = :dense,
+            type = Bool,
+            default = true,
+            description = "Whether to save extra pieces for dense (continuous) output.",
+        ),
+        Strategies.OptionDefinition(;
+            name = :save_idxs,
+            type = Union{AbstractVector{<:Integer}, Options.NotProvided},
+            default = Options.NotProvided,
+            description = "Indices of components to save (Vector of integers).",
+            aliases = (:saveindices, :save_indices),
+        ),
+        Strategies.OptionDefinition(;
+            name = :tstops,
+            type = Union{AbstractVector{<:Real}, Options.NotProvided},
+            default = Options.NotProvided,
+            description = "Extra times the solver must step to (for discontinuities).",
+            aliases = (:t_stops, :stop_times),
+        ),
+        Strategies.OptionDefinition(;
+            name = :d_discontinuities,
+            type = Union{AbstractVector{<:Real}, Options.NotProvided},
+            default = Options.NotProvided,
+            description = "Locations of discontinuities in low-order derivatives.",
+        ),
+        Strategies.OptionDefinition(;
+            name = :dtmax,
+            type = Real,
+            default = Options.NotProvided,
+            description = "Maximum step size for adaptive timestepping.",
+            aliases = (:max_dt, :dt_max),
+            validator = x ->
+                x > 0 || throw(
+                    Exceptions.IncorrectArgument(
+                        "Invalid dtmax value";
+                        got = "dtmax=$x",
+                        expected = "positive real number (> 0)",
+                        suggestion = "Provide a positive maximum step size (e.g., 0.1).",
+                        context = "SciML dtmax validation",
+                    ),
+                ),
+        ),
+        Strategies.OptionDefinition(;
+            name = :dtmin,
+            type = Real,
+            default = Options.NotProvided,
+            description = "Minimum step size for adaptive timestepping.",
+            aliases = (:min_dt, :dt_min),
+            validator = x ->
+                x > 0 || throw(
+                    Exceptions.IncorrectArgument(
+                        "Invalid dtmin value";
+                        got = "dtmin=$x",
+                        expected = "positive real number (> 0)",
+                        suggestion = "Provide a positive minimum step size (e.g., 1e-6).",
+                        context = "SciML dtmin validation",
+                    ),
+                ),
+        ),
+        Strategies.OptionDefinition(;
+            name = :force_dtmin,
+            type = Bool,
+            default = Options.NotProvided,
+            description = "Whether to continue forcing minimum dt usage.",
+        ),
+        Strategies.OptionDefinition(;
+            name = :callback,
+            type = Any,
+            default = Options.NotProvided,
+            description = "Callback function for event handling.",
+            aliases = (:callbacks, :cb),
+        ),
+        Strategies.OptionDefinition(;
+            name = :progress,
+            type = Bool,
+            default = Options.NotProvided,
+            description = "Whether to show progress bar.",
+            aliases = (:verbose,),
+        ),
+        Strategies.OptionDefinition(;
+            name = :save_start,
+            type = Bool,
+            default = Options.NotProvided,
+            description = "Whether to save the initial condition.",
+        ),
+        Strategies.OptionDefinition(;
+            name = :save_end,
+            type = Bool,
+            default = Options.NotProvided,
+            description = "Whether to force saving the final timepoint.",
         ),
     )
 end
@@ -118,52 +228,59 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build a `SciMLIntegrator` with validated options.
+Build a `SciML` with validated options.
 """
 function CTFlows.Integrators.build_sciml_integrator(
-    ::Type{SciMLTag}; mode::Symbol = :strict, kwargs...,
+    ::Type{CTFlows.Integrators.SciMLTag}; mode::Symbol = :strict, kwargs...,
 )
-    opts = Strategies.build_strategy_options(SciMLIntegrator; mode = mode, kwargs...)
-    return SciMLIntegrator(opts)
+    opts = Strategies.build_strategy_options(SciML; mode = mode, kwargs...)
+    return CTFlows.Integrators.SciML(opts)
 end
 
 # =============================================================================
-# SciMLIntegrator callable — actual implementation
+# SciML problem building — actual implementation (generic)
 # =============================================================================
 
 """
 $(TYPEDSIGNATURES)
 
-Solve an `ODEProblem` using the `SciMLIntegrator`'s configured options.
+Build an `ODEProblem` from a system and configuration.
+"""
+function (integ::SciML)(system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)
+    f! = Systems.rhs!(system)
+    u0 = Common.initial_condition(config)
+    prob = ODEProblem(f!, u0, Common.tspan(config), variable)
+    return prob
+end
+
+# =============================================================================
+# SciML solve — actual implementation (generic)
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Solve an `ODEProblem` using the `SciML`'s configured options.
 Returns the raw `ODESolution`.
 """
-function (integ::SciMLIntegrator)(prob)
+function (integ::SciML)(prob::SciMLBase.AbstractODEProblem)
     options = Strategies.options_dict(integ)
-    alg = pop!(options, :alg)
-    return _solve_ode(prob, alg; options...)
-end
-
-function _solve_ode(prob, alg; kwargs...)
-    return OrdinaryDiffEqTsit5.solve(prob, alg; kwargs...)
+    return SciMLBase.solve(prob; options...)
 end
 
 # =============================================================================
-# Systems.ode_problem — VectorFieldSystem implementation
+# SciML solution building — actual implementation
 # =============================================================================
 
 """
 $(TYPEDSIGNATURES)
 
-Build an `ODEProblem` from a `VectorFieldSystem` and a `AbstractConfig`.
+Build the flow solution from an ODE solution.
 """
-function CTFlows.Systems.ode_problem(
-    sys::Systems.VectorFieldSystem,
-    config::Common.AbstractConfig;
-    variable,
-)
-    f! = Systems.rhs!(sys)
-    u0 = config.x0 isa Number ? [config.x0] : config.x0
-    return ODEProblem(f!, u0, Common.tspan(config), variable)
+function (integ::SciML)(ode_sol, sys::Systems.AbstractSystem, config::Common.AbstractConfig)
+    # For now, return the raw ODE solution
+    # TODO: Package into a proper flow solution type
+    return ode_sol
 end
 
 end # module CTFlowsSciMLExt

@@ -11,8 +11,6 @@ It embeds its own `rhs!`, dimensional metadata, and solution-building logic.
 All subtypes must implement:
 
 - `rhs!(system::AbstractSystem)`: Returns a function `(du, u, p, t) -> nothing` that fills `du` in place.
-- `variable_dependence(system::AbstractSystem)`: Returns the variable-dependence trait (`Fixed` or `NonFixed`).
-- `time_dependence(system::AbstractSystem)`: Returns the time-dependence trait (`Autonomous` or `NonAutonomous`).
 
 # Example
 
@@ -21,27 +19,19 @@ using CTFlows.Systems
 using CTFlows.Common
 
 # Define a concrete system
-struct MySystem <: Systems.AbstractSystem
+struct MySystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
     data::Vector{Float64}
 end
 
-# Implement required contract methods
+# Implement required contract method
 function Systems.rhs!(sys::MySystem)
     return (du, u, p, t) -> du .= sys.data .* u
-end
-
-function Common.variable_dependence(sys::MySystem)
-    return Common.NonFixed
-end
-
-function Common.time_dependence(sys::MySystem)
-    return Common.Autonomous
 end
 \`\`\`
 
 See also: [`CTFlows.Systems.rhs!`](@ref), [`CTFlows.Common.time_dependence`](@ref), [`CTFlows.Common.variable_dependence`](@ref).
 """
-abstract type AbstractSystem{VD<:Common.VariableDependence} end
+abstract type AbstractSystem{TD<:Common.TimeDependence, VD<:Common.VariableDependence} end
 
 """
 $(TYPEDSIGNATURES)
@@ -104,6 +94,58 @@ Common.has_variable_dependence_trait(::AbstractSystem) = true
 """
 $(TYPEDSIGNATURES)
 
+Extract the time dependence trait from an `AbstractSystem`.
+
+# Returns
+- `Type{<:TimeDependence}`: The time dependence trait type (Autonomous or NonAutonomous).
+
+# Example
+\`\`\`julia
+using CTFlows.Systems
+using CTFlows.Common
+
+struct MySystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
+    data::Vector{Float64}
+end
+
+Common.time_dependence(MySystem)  # Returns Autonomous
+\`\`\`
+
+See also: [`CTFlows.Common.has_time_dependence_trait`](@ref), [`CTFlows.Common.is_autonomous`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
+"""
+function Common.time_dependence(sys::AbstractSystem{TD, <:VariableDependence}) where {TD <: TimeDependence}
+    return TD
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the variable dependence trait from an `AbstractSystem`.
+
+# Returns
+- `Type{<:VariableDependence}`: The variable dependence trait type (Fixed or NonFixed).
+
+# Example
+\`\`\`julia
+using CTFlows.Systems
+using CTFlows.Common
+
+struct MySystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
+    data::Vector{Float64}
+end
+
+Common.variable_dependence(MySystem)  # Returns Fixed
+\`\`\`
+
+See also: [`CTFlows.Common.has_variable_dependence_trait`](@ref), [`CTFlows.Common.is_variable`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
+"""
+function Common.variable_dependence(sys::AbstractSystem{<:TimeDependence, VD}) where {VD <: VariableDependence}
+    return VD
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Return the right-hand side function for the system.
 
 The returned function must have the signature `(du, u, p, t) -> nothing` and
@@ -114,7 +156,7 @@ fill `du` in place with the derivative at state `u`, parameters `p`, and time `t
 \`\`\`julia
 using CTFlows.Systems
 
-struct MySystem <: Systems.AbstractSystem
+struct MySystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
     data::Vector{Float64}
 end
 

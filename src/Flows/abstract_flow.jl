@@ -32,7 +32,7 @@ true
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref).
 """
-abstract type AbstractFlow{VD<:Common.VariableDependence} end
+abstract type AbstractFlow{TD<:Common.TimeDependence, VD<:Common.VariableDependence} end
 
 """
 $(TYPEDSIGNATURES)
