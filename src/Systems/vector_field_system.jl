@@ -7,6 +7,7 @@ time via the `variable` kwarg and threaded through `ODEProblem`'s `p` slot.
 
 # Fields
 - `vf::VectorField{F, TD, VD}`: the underlying vector field.
+- `rhs::RHS`: the pre-computed right-hand side closure with signature `(du, u, p, t) -> nothing`.
 
 # Example
 \`\`\`julia-repl
@@ -27,23 +28,32 @@ VectorFieldSystem
 
 See also: [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
 """
-struct VectorFieldSystem{F<:Function, TD<:Common.TimeDependence, VD<:Common.VariableDependence} <: AbstractSystem{TD, VD}
+struct VectorFieldSystem{F<:Function, TD<:Common.TimeDependence, VD<:Common.VariableDependence, RHS<:Function} <: AbstractSystem{TD, VD}
     vf::Data.VectorField{F, TD, VD}
+    rhs::RHS
+
+    function VectorFieldSystem(vf::Data.VectorField{F, TD, VD}) where {F, TD, VD}
+        rhs = function (du, u, p, t)
+            du .= vf(t, u, p)
+            return nothing
+        end
+        return new{F, TD, VD, typeof(rhs)}(vf, rhs)
+    end
 end
 
 """
 $(TYPEDSIGNATURES)
 
-In-place right-hand side for a `VectorFieldSystem`. The returned closure has
-signature `(du, u, p, t) -> nothing` and uses the uniform `(t, x, v)` call on
-the underlying `VectorField`, where `p` carries the variable (or `nothing`
-for `Fixed` systems).
+In-place right-hand side for a `VectorFieldSystem`. Returns the pre-computed
+closure stored in the system, which has signature `(du, u, p, t) -> nothing` and
+uses the uniform `(t, x, v)` call on the underlying `VectorField`, where `p`
+carries the variable (or `nothing` for `Fixed` systems).
 
 # Arguments
-- `sys::VectorFieldSystem`: The system for which to generate the RHS function.
+- `sys::VectorFieldSystem`: The system for which to return the RHS function.
 
 # Returns
-- `Function`: A closure with signature `(du, u, p, t) -> nothing`.
+- `Function`: The pre-computed closure with signature `(du, u, p, t) -> nothing`.
 
 # Example
 \`\`\`julia
@@ -59,14 +69,14 @@ rhs(du, u, nothing, 0.0)
 # du is now [-1.0, -2.0]
 \`\`\`
 
+# Notes
+- The closure is computed once at construction time for performance.
+- Multiple calls to `rhs!` return the same function object.
+
 See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
 """
 function rhs!(sys::VectorFieldSystem)
-    vf = sys.vf
-    return function (du, u, p, t)
-        du .= vf(t, u, p)
-        return nothing
-    end
+    return sys.rhs
 end
 
 # =============================================================================
@@ -86,7 +96,7 @@ Shows the type name, time dependence, variable dependence, and the underlying ve
 
 See also: [`CTFlows.Systems.VectorFieldSystem`](@ref).
 """
-function Base.show(io::IO, sys::VectorFieldSystem{F, TD, VD}) where {F, TD, VD}
+function Base.show(io::IO, sys::VectorFieldSystem{F, TD, VD, RHS}) where {F, TD, VD, RHS}
     println(io, "VectorFieldSystem")
     println(io, "  time_dependence: ", TD)
     println(io, "  variable_dependence: ", VD)
@@ -107,6 +117,6 @@ Delegates to the compact show method.
 
 See also: [`CTFlows.Systems.VectorFieldSystem`](@ref).
 """
-function Base.show(io::IO, ::MIME"text/plain", sys::VectorFieldSystem{F, TD, VD}) where {F, TD, VD}
+function Base.show(io::IO, ::MIME"text/plain", sys::VectorFieldSystem{F, TD, VD, RHS}) where {F, TD, VD, RHS}
     show(io, sys)
 end

@@ -229,7 +229,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build a `SciML` with validated options.
+Build a `SciML` integrator with validated options.
 """
 function CTFlows.Integrators.build_sciml_integrator(
     ::Type{CTFlows.Integrators.SciMLTag}; mode::Symbol = :strict, kwargs...,
