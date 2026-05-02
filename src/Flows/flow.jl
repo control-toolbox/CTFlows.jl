@@ -1,32 +1,35 @@
 """
 $(TYPEDEF)
 
-Concrete flow that combines an `AbstractSystem` with an `AbstractODEIntegrator`.
+Concrete flow that combines an `AbstractSystem` with an `AbstractIntegrator`.
 
 A `Flow` is the standard implementation of `AbstractFlow` that delegates
 integration to the provided integrator and solution building to the system.
 
+The `TD` and `VD` parameters encode the `TimeDependence` and `VariableDependence`
+traits (Autonomous/NonAutonomous and Fixed/NonFixed) to enable compile-time dispatch.
+
 # Fields
 - `system::S`: The `AbstractSystem` to integrate.
-- `integrator::I`: The `AbstractODEIntegrator` to use for integration.
+- `integrator::I`: The `AbstractIntegrator` to use for integration.
 
 # Example
 ```julia-repl
 julia> using CTFlows.Flows, CTFlows.Systems
 
-julia> system = FakeSystem(2)
-FakeSystem(n_x=2, n_p=2)
+julia> system = FakeSystem()
+FakeSystem()
 
 julia> integrator = FakeIntegrator()
 FakeIntegrator()
 
 julia> flow = Flow(system, integrator)
-Flow(system=FakeSystem(n_x=2, n_p=2), integrator=FakeIntegrator)
+Flow{FakeSystem, FakeIntegrator, Fixed}(system=FakeSystem(), integrator=FakeIntegrator)
 ```
 
-See also: [`AbstractFlow`](@ref), [`AbstractSystem`](@ref), [`AbstractODEIntegrator`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref).
 """
-struct Flow{S<:Systems.AbstractSystem, I<:Integrators.AbstractODEIntegrator} <: AbstractFlow
+struct Flow{TD<:Common.TimeDependence, VD<:Common.VariableDependence, S<:Systems.AbstractSystem{TD, VD}, I<:Integrators.AbstractIntegrator} <: AbstractFlow{TD, VD}
     system::S
     integrator::I
 end
@@ -35,47 +38,80 @@ end
 $(TYPEDSIGNATURES)
 
 Return the system associated with the flow.
+
+# Returns
+- `S`: The `AbstractSystem` stored in the flow.
 """
-system(f::Flow) = f.system
-
-"""
-$(TYPEDSIGNATURES)
-
-Return the integrator associated with the flow.
-"""
-integrator(f::Flow) = f.integrator
-
-"""
-$(TYPEDSIGNATURES)
-
-Integrate the flow from initial state `x0` at time `t0` to final time `tf`.
-
-This method builds an ODE problem from the system's RHS, calls the integrator,
-and packages the result using the system's `build_solution` method.
-
-See also: [`AbstractFlow`](@ref), [`rhs!`](@ref), [`build_solution`](@ref).
-"""
-function (f::Flow)(t0, x0, tf)
-    rhs = Systems.rhs!(f.system)
-    # In a real implementation, this would build an ODEProblem and call the integrator
-    # For now, we delegate to the integrator's callable
-    ode_problem = (rhs, t0, x0)  # Placeholder: should be an actual ODEProblem
-    ode_sol = f.integrator(ode_problem, (t0, tf))
-    return Systems.build_solution(f.system, ode_sol)
+function system(f::Flow{TD, VD, S, I})::S where {TD, VD, S, I}
+    return f.system
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Integrate the flow from initial state `x0` and costate `p0` at time `t0` to final time `tf`.
+Return the integrator associated with the flow.
 
-See also: [`AbstractFlow`](@ref).
+# Returns
+- `I`: The `AbstractIntegrator` stored in the flow.
 """
-function (f::Flow)(t0, x0, p0, tf)
-    rhs = Systems.rhs!(f.system)
-    # In a real implementation, this would build an ODEProblem with augmented state
-    # For now, we delegate to the integrator's callable
-    ode_problem = (rhs, t0, [x0; p0])  # Placeholder: should be an actual ODEProblem
-    ode_sol = f.integrator(ode_problem, (t0, tf))
-    return Systems.build_solution(f.system, ode_sol)
+function integrator(f::Flow{TD, VD, S, I})::I where {TD, VD, S, I}
+    return f.integrator
+end
+
+# =============================================================================
+# Flow callable — compile-time dispatch on variable trait.
+#
+# Calling a Fixed flow with `variable=v` → Error.
+# Calling a NonFixed flow without `variable` → Error.
+#
+# The error is thrown by the inner `solve` method.
+#
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Convenience call `flow(t0, x0, tf)` — builds a `PointConfig` internally.
+
+# Arguments
+- `f::Flow`: The flow to integrate.
+- `t0`: Initial time.
+- `x0`: Initial state vector.
+- `tf`: Final time.
+
+# Returns
+- The integrated solution.
+
+See also: [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+"""
+function (f::Flow)(
+    t0::Real,
+    x0,
+    tf::Real;
+    variable=nothing,
+)
+    return call(f, Common.PointConfig(t0, x0, tf); variable=variable)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Convenience call `flow((t0, tf), x0)` — builds a `TrajectoryConfig` internally.
+
+# Arguments
+- `f::Flow{S, I, VD}`: The flow to integrate.
+- `tspan::Tuple`: Time span as a tuple (t0, tf).
+- `x0`: Initial state vector.
+
+# Returns
+- The integrated solution.
+
+See also: [`CTFlows.Common.TrajectoryConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+"""
+function (f::Flow)(
+    tspan::Tuple{Real, Real},
+    x0; 
+    variable=nothing,
+)
+    return call(f, Common.TrajectoryConfig(tspan, x0); variable=variable)
 end

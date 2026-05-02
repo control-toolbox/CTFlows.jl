@@ -4,58 +4,89 @@ $(TYPEDEF)
 Abstract type for all flows in CTFlows.
 
 An `AbstractFlow` is a callable object that combines an `AbstractSystem` with an
-`AbstractODEIntegrator`. It carries no business logic of its own — its job is
-to expose the integration protocol.
+`AbstractIntegrator`. It carries no business logic of its own — its job is
+to expose the integration protocol and delegate trait queries to its system.
 
-# Contract
+# Interface Requirements
 
 All subtypes must implement:
-- `(flow)(t0, x0, tf)`: Integrate from initial state `x0` at time `t0` to final time `tf`.
-- `(flow)(t0, x0, p0, tf)`: Integrate with initial state `x0` and costate `p0`.
-- `system(flow)`: Return the associated `AbstractSystem`.
-- `integrator(flow)`: Return the associated `AbstractODEIntegrator`.
+- `system(flow::AbstractFlow)`: Return the associated `AbstractSystem`.
+- `integrator(flow::AbstractFlow)`: Return the associated `AbstractIntegrator`.
 
-See also: [`Flow`](@ref), [`AbstractSystem`](@ref), [`AbstractODEIntegrator`](@ref).
+# Traits
+
+All `AbstractFlow` subtypes automatically support time-dependence and variable-dependence
+trait queries by delegating to their associated system:
+- `time_dependence(flow)`: Returns the time-dependence trait of the system.
+- `variable_dependence(flow)`: Returns the variable-dependence trait of the system.
+- `is_autonomous(flow)`, `is_nonautonomous(flow)`: Time-dependence predicates.
+- `is_variable(flow)`, `is_nonvariable(flow)`, `has_variable(flow)`: Variable-dependence predicates.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Flows
+
+julia> MyFlow <: Flows.AbstractFlow
+true
+\`\`\`
+
+See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref).
 """
-abstract type AbstractFlow end
-
-"""
-$(TYPEDSIGNATURES)
-
-Integrate the flow from initial state `x0` at time `t0` to final time `tf`.
-
-# Throws
-- `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
-
-See also: [`AbstractFlow`](@ref).
-"""
-function (flow::AbstractFlow)(t0, x0, tf)
-    throw(Exceptions.NotImplemented(
-        "AbstractFlow callable not implemented";
-        required_method = "(flow::$(typeof(flow)))(t0, x0, tf)",
-        suggestion = "Implement (f::YourFlow)(t0, x0, tf) returning the integrated trajectory.",
-        context = "AbstractFlow call - required method implementation",
-    ))
-end
+abstract type AbstractFlow{TD<:Common.TimeDependence, VD<:Common.VariableDependence} end
 
 """
 $(TYPEDSIGNATURES)
 
-Integrate the flow from initial state `x0` and costate `p0` at time `t0` to final time `tf`.
+Indicate that `AbstractFlow` has the time-dependence trait.
 
-# Throws
-- `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
+# Returns
+- `Bool`: Always `true` for `AbstractFlow`.
 
-See also: [`AbstractFlow`](@ref).
+See also: [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.time_dependence`](@ref).
 """
-function (flow::AbstractFlow)(t0, x0, p0, tf)
-    throw(Exceptions.NotImplemented(
-        "AbstractFlow callable not implemented";
-        required_method = "(flow::$(typeof(flow)))(t0, x0, p0, tf)",
-        suggestion = "Implement (f::YourFlow)(t0, x0, p0, tf) returning the integrated trajectory.",
-        context = "AbstractFlow call - required method implementation",
-    ))
-end
+Common.has_time_dependence_trait(::AbstractFlow) = true
+
+"""
+$(TYPEDSIGNATURES)
+
+Indicate that `AbstractFlow` has the variable-dependence trait.
+
+# Returns
+- `Bool`: Always `true` for `AbstractFlow`.
+
+See also: [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.variable_dependence`](@ref).
+"""
+Common.has_variable_dependence_trait(::AbstractFlow) = true
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the time-dependence trait of the flow (delegates to its system).
+
+# Arguments
+- `flow::AbstractFlow`: The flow to query.
+
+# Returns
+- `CTFlows.Common.Autonomous` or `CTFlows.Common.NonAutonomous`: The time-dependence trait of the associated system.
+
+See also: [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.variable_dependence`](@ref), [`CTFlows.Flows.system`](@ref).
+"""
+Common.time_dependence(flow::AbstractFlow) = Common.time_dependence(system(flow))
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the variable-dependence trait of the flow (delegates to its system).
+
+# Arguments
+- `flow::AbstractFlow`: The flow to query.
+
+# Returns
+- `CTFlows.Common.Fixed` or `CTFlows.Common.NonFixed`: The variable-dependence trait of the associated system.
+
+See also: [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.time_dependence`](@ref), [`CTFlows.Flows.system`](@ref).
+"""
+Common.variable_dependence(flow::AbstractFlow) = Common.variable_dependence(system(flow))
 
 """
 $(TYPEDSIGNATURES)
@@ -65,7 +96,7 @@ Return the associated `AbstractSystem` for the flow.
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
 
-See also: [`AbstractFlow`](@ref), [`AbstractSystem`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
 """
 function system(flow::AbstractFlow)
     throw(Exceptions.NotImplemented(
@@ -79,18 +110,18 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the associated `AbstractODEIntegrator` for the flow.
+Return the associated `AbstractIntegrator` for the flow.
 
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
 
-See also: [`AbstractFlow`](@ref), [`AbstractODEIntegrator`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref).
 """
 function integrator(flow::AbstractFlow)
     throw(Exceptions.NotImplemented(
         "AbstractFlow integrator method not implemented";
         required_method = "integrator(flow::$(typeof(flow)))",
-        suggestion = "Return the AbstractODEIntegrator associated with this flow.",
+        suggestion = "Return the AbstractIntegrator associated with this flow.",
         context = "AbstractFlow.integrator - required method implementation",
     ))
 end
@@ -112,22 +143,10 @@ Flow
 """
 function Base.show(io::IO, ::MIME"text/plain", flow::AbstractFlow)
     print(io, typeof(flow).name)
-    sys = try
-        system(flow)
-    catch
-        nothing
-    end
-    integ = try
-        integrator(flow)
-    catch
-        nothing
-    end
-    if !isnothing(sys)
-        print(io, "\n  system: ", sys)
-    end
-    if !isnothing(integ)
-        print(io, "\n  integrator: ", typeof(integ).name)
-    end
+    sys = system(flow)
+    integ = integrator(flow)
+    print(io, "\n  system: ", sys)
+    print(io, "\n  integrator: ", typeof(integ).name)
 end
 
 """
@@ -144,24 +163,12 @@ Flow(system=FakeSystem(n_x=2, n_p=2), integrator=FakeIntegrator)
 ```
 """
 function Base.show(io::IO, flow::AbstractFlow)
-    sys = try
-        system(flow)
-    catch
-        nothing
-    end
-    integ = try
-        integrator(flow)
-    catch
-        nothing
-    end
+    sys = system(flow)
+    integ = integrator(flow)
     print(io, typeof(flow).name, "(")
     parts = String[]
-    if !isnothing(sys)
-        push!(parts, "system=$(sys)")
-    end
-    if !isnothing(integ)
-        push!(parts, "integrator=$(typeof(integ).name)")
-    end
+    push!(parts, "system=$(sys)")
+    push!(parts, "integrator=$(typeof(integ).name)")
     print(io, join(parts, ", "))
     print(io, ")")
 end

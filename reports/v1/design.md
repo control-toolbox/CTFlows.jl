@@ -10,7 +10,7 @@ CTFlows organises its code along three concerns:
 
 - **Objects** — `AbstractSystem`, `AbstractFlow`, `AbstractSolution`, and the config types
   `PointConfig` / `TrajectoryConfig`. They are *what* is acted upon or returned.
-- **Single strategy family** — `AbstractODEIntegrator <: CTSolvers.Strategies.AbstractStrategy`.
+- **Single strategy family** — `AbstractIntegrator <: CTSolvers.Strategies.AbstractStrategy`.
   This is the only family. It controls *how* the Cauchy problem is solved.
 - **Pipelines** — `build_system`, `build_flow`, `integrate`, `build_solution`, `solve`.
   Written on the abstract types; concrete implementations plug in without changing the pipeline.
@@ -21,7 +21,7 @@ CTFlows organises its code along three concerns:
 | --- | --- | --- |
 | System construction | `AbstractFlowModeler` (strategy) | Direct dispatch via `build_system` (no strategy) |
 | AD backend | `AbstractADBackend` (strategy) | `DifferentiationInterface.jl` backend object (not a strategy) |
-| ODE integration | `AbstractODEIntegrator` (strategy) | `AbstractODEIntegrator` (strategy) — unchanged |
+| ODE integration | `AbstractIntegrator` (strategy) | `AbstractIntegrator` (strategy) — unchanged |
 | **Total families** | **3** | **1** |
 
 Removing `AbstractFlowModeler` and `AbstractADBackend` from the strategy level reflects
@@ -112,7 +112,7 @@ build_solution(raw, flow::AbstractFlow, config::AbstractConfig)
 
 ### 3.2 `AbstractFlow`
 
-A callable object that pairs an `AbstractSystem` with an `AbstractODEIntegrator`. It
+A callable object that pairs an `AbstractSystem` with an `AbstractIntegrator`. It
 carries no business logic of its own; its job is to expose the integration protocol.
 
 ```julia
@@ -124,13 +124,13 @@ abstract type AbstractFlow end
 ```julia
 (flow::AbstractFlow)(config)      # dispatch on PointConfig or TrajectoryConfig
 system(flow::AbstractFlow)        # returns the embedded AbstractSystem
-integrator(flow::AbstractFlow)    # returns the embedded AbstractODEIntegrator
+integrator(flow::AbstractFlow)    # returns the embedded AbstractIntegrator
 ```
 
 **Concrete `Flow{S,I} <: AbstractFlow`** (provided by CTFlows):
 
 ```julia
-struct Flow{S <: AbstractSystem, I <: AbstractODEIntegrator} <: AbstractFlow
+struct Flow{S <: AbstractSystem, I <: AbstractIntegrator} <: AbstractFlow
     system::S
     integrator::I
 end
@@ -147,7 +147,7 @@ end
 `build_flow` is the canonical constructor:
 
 ```julia
-build_flow(system::AbstractSystem, integrator::AbstractODEIntegrator) = Flow(system, integrator)
+build_flow(system::AbstractSystem, integrator::AbstractIntegrator) = Flow(system, integrator)
 ```
 
 ### 3.3 `AbstractSolution`
@@ -171,25 +171,25 @@ time_grid(sol::AbstractSolution)   # time points
 
 ---
 
-## 4. Single strategy family: `AbstractODEIntegrator`
+## 4. Single strategy family: `AbstractIntegrator`
 
-`AbstractODEIntegrator` is the **only** strategy family in CTFlows. It is
+`AbstractIntegrator` is the **only** strategy family in CTFlows. It is
 `<: CTSolvers.Strategies.AbstractStrategy` and therefore inherits the full CTSolvers
 contract for free: `id`, `metadata`, `options`, `Base.show`, `describe`.
 
 ```julia
-abstract type AbstractODEIntegrator <: CTSolvers.Strategies.AbstractStrategy end
+abstract type AbstractIntegrator <: CTSolvers.Strategies.AbstractStrategy end
 ```
 
 **Business callable** (`NotImplemented` default):
 
 ```julia
-function (integrator::AbstractODEIntegrator)(ode_problem)
+function (integrator::AbstractIntegrator)(ode_problem)
     throw(NotImplemented(
-        "AbstractODEIntegrator callable not implemented";
+        "AbstractIntegrator callable not implemented";
         required_method = "(integrator::$(typeof(integrator)))(ode_problem)",
         suggestion = "Implement (i::YourIntegrator)(prob) returning an ODE solution.",
-        context = "AbstractODEIntegrator call - required method implementation",
+        context = "AbstractIntegrator call - required method implementation",
     ))
 end
 ```
@@ -285,7 +285,7 @@ types plug in without modifying the pipeline.
 ### 7.1 `build_flow`
 
 ```julia
-function build_flow(system::AbstractSystem, integrator::AbstractODEIntegrator)
+function build_flow(system::AbstractSystem, integrator::AbstractIntegrator)
     return Flow(system, integrator)
 end
 ```
@@ -293,7 +293,7 @@ end
 ### 7.2 `integrate`
 
 ```julia
-function integrate(system::AbstractSystem, config, integrator::AbstractODEIntegrator)
+function integrate(system::AbstractSystem, config, integrator::AbstractIntegrator)
     prob = ode_problem(system, config)   # build ODEProblem from system + config
     return integrator(prob)              # integrator's business callable
 end
@@ -328,7 +328,7 @@ end
 ### 7.4 `solve`
 
 ```julia
-function solve(system::AbstractSystem, config, integrator::AbstractODEIntegrator)
+function solve(system::AbstractSystem, config, integrator::AbstractIntegrator)
     f = build_flow(system, integrator)
     return f(config)   # integrate + build_solution
 end
@@ -352,7 +352,7 @@ end
 | `AbstractFlow` | object | `(flow)(config)`, `system`, `integrator` |
 | `AbstractSolution` | object | `state`, `time_grid` |
 | `Flow{S,I}` | concrete object | provided by CTFlows |
-| `AbstractODEIntegrator` | **strategy** | CTSolvers contract + `(integrator)(prob)` |
+| `AbstractIntegrator` | **strategy** | CTSolvers contract + `(integrator)(prob)` |
 
 ### Pipeline functions
 

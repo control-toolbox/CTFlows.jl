@@ -48,11 +48,30 @@ Every docstring should contain:
 
 ### Internal References
 
-For symbols within the current package or its dependencies, use `[@ref]` syntax:
+For symbols within the current package or its dependencies, use `[@ref]` syntax with **full module path** including the root package and submodules:
 
 ```julia
-See also: [`related_function`](@ref), [`RelatedType`](@ref)
+See also: [`PackageName.Submodule.related_function`](@ref), [`PackageName.Submodule.RelatedType`](@ref)
 ```
+
+**Rules for @ref:**
+
+1. Use full module path including root package (e.g., `CTFlows.Integrators.SciMLTag`, not just `SciMLTag`)
+2. Include all nested submodules in the path
+3. Only use for symbols documented in the current package's documentation
+
+**Examples:**
+
+✅ **Correct internal references:**
+
+- [`CTFlows.Integrators.SciMLTag`](@ref)
+- [`CTFlows.Options.OptionValue`](@ref)
+- [`CTFlows.Systems.AbstractSystem`](@ref)
+
+❌ **Incorrect internal references:**
+
+- [`SciMLTag`](@ref)  # Missing module qualification
+- [`Integrators.SciMLTag`](@ref)  # Missing root package name
 
 ### External Package References
 
@@ -125,7 +144,7 @@ expected_output
 - Thread safety (if relevant)
 - Stability guarantees
 
-See also: [`related_function`](@ref), [`RelatedType`](@ref)
+See also: [`PackageName.ModuleName.related_function`](@ref), [`PackageName.ModuleName.RelatedType`](@ref)
 """
 function function_name(arg1::Type1, arg2::Type2)::ReturnType
     # implementation
@@ -168,7 +187,7 @@ value1
 - Mutability status (if not obvious from declaration)
 - Performance considerations
 
-See also: [`related_type`](@ref), [`constructor_function`](@ref)
+See also: [`ModuleName.related_type`](@ref), [`ModuleName.constructor_function`](@ref)
 """
 struct StructName{T}
     field1::Type1
@@ -202,7 +221,7 @@ julia> MyType <: AbstractTypeName
 true
 \`\`\`
 
-See also: [`ConcreteSubtype1`](@ref), [`ConcreteSubtype2`](@ref)
+See also: [`ModuleName.ConcreteSubtype1`](@ref), [`ModuleName.ConcreteSubtype2`](@ref)
 """
 abstract type AbstractTypeName end
 ```

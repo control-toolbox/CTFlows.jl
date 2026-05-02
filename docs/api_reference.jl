@@ -19,19 +19,23 @@ function generate_api_reference(src_dir::String, ext_dir::String)
 
     pages = [
         # ───────────────────────────────────────────────────────────────────
-        # Core
+        # Common
         # ───────────────────────────────────────────────────────────────────
         CTBase.automatic_reference_documentation(;
             subdirectory=".",
             primary_modules=[
-                CTFlows.Core => src(joinpath("Core", "Core.jl")),
+                CTFlows.Common => src(
+                    joinpath("Common", "Common.jl"),
+                    joinpath("Common", "abstract_tag.jl"),
+                    joinpath("Common", "configs.jl"),
+                ),
             ],
             exclude=EXCLUDE_SYMBOLS,
             public=true,
             private=true,
-            title="Core",
-            title_in_menu="Core",
-            filename="api_core",
+            title="Common",
+            title_in_menu="Common",
+            filename="api_common",
         ),
         # ───────────────────────────────────────────────────────────────────
         # Systems
@@ -70,42 +74,6 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             filename="api_integrators",
         ),
         # ───────────────────────────────────────────────────────────────────
-        # AD Backends
-        # ───────────────────────────────────────────────────────────────────
-        CTBase.automatic_reference_documentation(;
-            subdirectory=".",
-            primary_modules=[
-                CTFlows.ADBackends => src(
-                    joinpath("ADBackends", "ADBackends.jl"),
-                    joinpath("ADBackends", "abstract_ad_backend.jl"),
-                ),
-            ],
-            exclude=EXCLUDE_SYMBOLS,
-            public=true,
-            private=true,
-            title="AD Backends",
-            title_in_menu="AD Backends",
-            filename="api_ad_backends",
-        ),
-        # ───────────────────────────────────────────────────────────────────
-        # Modelers
-        # ───────────────────────────────────────────────────────────────────
-        CTBase.automatic_reference_documentation(;
-            subdirectory=".",
-            primary_modules=[
-                CTFlows.Modelers => src(
-                    joinpath("Modelers", "Modelers.jl"),
-                    joinpath("Modelers", "abstract_flow_modeler.jl"),
-                ),
-            ],
-            exclude=EXCLUDE_SYMBOLS,
-            public=true,
-            private=true,
-            title="Modelers",
-            title_in_menu="Modelers",
-            filename="api_modelers",
-        ),
-        # ───────────────────────────────────────────────────────────────────
         # Flows
         # ───────────────────────────────────────────────────────────────────
         CTBase.automatic_reference_documentation(;
@@ -134,7 +102,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                     joinpath("Pipelines", "Pipelines.jl"),
                     joinpath("Pipelines", "build_system.jl"),
                     joinpath("Pipelines", "build_flow.jl"),
-                    joinpath("Pipelines", "integrate.jl"),
+                    joinpath("Pipelines", "flow_constructor.jl"),
                     joinpath("Pipelines", "solve.jl"),
                 ),
             ],

@@ -16,10 +16,11 @@ import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
 
 # ==============================================================================
-# Internal submodule imports
+# Internal sibling-submodule imports
 # ==============================================================================
 
-using ..Core
+using ..Common
+using ..Data
 using ..Systems
 using ..Integrators
 
@@ -29,6 +30,8 @@ using ..Integrators
 
 include(joinpath(@__DIR__, "abstract_flow.jl"))
 include(joinpath(@__DIR__, "flow.jl"))
+include(joinpath(@__DIR__, "building.jl"))
+include(joinpath(@__DIR__, "calling.jl"))
 
 # ==============================================================================
 # Module exports
@@ -36,5 +39,6 @@ include(joinpath(@__DIR__, "flow.jl"))
 
 export AbstractFlow, Flow
 export system, integrator
+export call
 
 end # module Flows
