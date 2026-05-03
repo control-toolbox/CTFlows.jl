@@ -1,5 +1,5 @@
 """
-    Pipelines
+    Solutions
 
 Pipeline functions for CTFlows.
 

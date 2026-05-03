@@ -28,12 +28,12 @@ This document defines the testing standards for the CTFlows.jl project. All Juli
 
 Tests are organized under `test/suite/` by **functionality**, not by source file structure:
 
-- `suite/systems/`: System types tests (AbstractSystem, concrete systems, MultiPhaseSystem)
-- `suite/flows/`: Flow types tests (AbstractFlow, Flow, MultiPhaseFlow)
-- `suite/modelers/`: Flow modeler strategy tests (AbstractFlowModeler, concrete modelers)
-- `suite/integrators/`: ODE integrator strategy tests (AbstractODEIntegrator, concrete integrators)
-- `suite/ad_backends/`: AD backend strategy tests (AbstractADBackend, concrete backends)
-- `suite/pipelines/`: Pipeline function tests (build_system, build_flow, integrate, build_solution, solve)
+- `suite/common/`: Common types and configuration tests
+- `suite/data/`: VectorField data structure tests
+- `suite/systems/`: System types tests (AbstractSystem, concrete systems)
+- `suite/integrators/`: ODE integrator strategy tests (AbstractIntegrator, concrete integrators)
+- `suite/flows/`: Flow types tests (AbstractFlow, Flow, integration pipeline)
+- `suite/solutions/`: Solution types tests (VectorFieldSolution, build_solution)
 - `suite/exceptions/`: Exception system tests
 - `suite/meta/`: Meta tests (Aqua.jl quality checks, exports verification)
 
@@ -156,20 +156,21 @@ end
 ```julia
 Test.@testset "INTEGRATION TESTS" begin
     Test.@testset "Complete flow workflow" begin
-        # Create fake system
+        # Create fake vector field and system
+        vf = Data.FakeVectorField()
         sys = Systems.FakeSystem(2)
         
-        # Create fake modeler and integrator
-        modeler = Modelers.FakeModeler()
+        # Create fake integrator
         integrator = Integrators.FakeIntegrator()
         
         # Build flow
-        flow = Pipelines.build_flow(sys, integrator)
+        flow = Flows.Flow(sys, integrator)
         Test.@test flow isa Flows.Flow
         
-        # Integrate
-        xf = Pipelines.integrate(flow, 0.0, [1.0, 0.0], 1.0)
-        Test.@test length(xf) == 2
+        # Integrate using configuration
+        config = Common.FakeConfig()
+        sol = Flows.call(flow, config)
+        Test.@test sol !== nothing
     end
 end
 ```
@@ -226,7 +227,7 @@ Test.@testset "Error Cases" begin
     end
     
     Test.@testset "Invalid Arguments" begin
-        Test.@test_throws Exceptions.IncorrectArgument Pipelines.build_system(sys, modeler)
+        Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(nothing, integrator)
     end
 end
 ```
@@ -275,9 +276,9 @@ import Test
 import CTBase.Exceptions
 import CTFlows.Systems
 import CTFlows.Flows
-import CTFlows.Modelers
+import CTFlows.Data
+import CTFlows.Common
 import CTFlows.Integrators
-import CTFlows.Pipelines
 ```
 
 **Always qualify method calls**, omitting the root module for submodules:
@@ -287,8 +288,8 @@ import CTFlows.Pipelines
 ```julia
 # Submodule qualification (omit CTBase/CTFlows root)
 Test.@test_throws Exceptions.IncorrectArgument invalid_call()
-Test.@test Systems.dimensions(sys) == (n_x=2, n_p=2)
-Test.@test Pipelines.build_system(sys, modeler) isa Systems.AbstractSystem
+Test.@test Systems.rhs!(sys) !== nothing
+Test.@test Flows.Flow(sys, integrator) isa Flows.AbstractFlow
 ```
 
 **❌ Wrong:**
@@ -312,8 +313,8 @@ Add dedicated tests to verify exports and internal symbols:
 Test.@testset "Exports Verification" begin
     # Public API should be exported from submodules
     Test.@testset "Exported Functions" begin
-        for f in (:AbstractSystem, :AbstractFlow, :build_system, :build_flow)
-            Test.@test isdefined(Systems, f)  # Exported from submodule
+        for f in (:AbstractSystem, :AbstractFlow, :Flow, :VectorField)
+            Test.@test isdefined(Systems, f) || isdefined(Flows, f) || isdefined(Data, f)
         end
     end
     
@@ -347,11 +348,12 @@ end
 **2. Indirect testing** - Test through public API (when internal logic is simple):
 
 ```julia
-Test.@testset "build_system - validation" begin
-    # This indirectly tests _validate_system and _assemble_internal
+Test.@testset "Flow construction - validation" begin
+    # This indirectly tests validation logic
     sys = Systems.FakeSystem(2)
-    built = Pipelines.build_system(sys, modeler)
-    Test.@test Systems.dimensions(built).n_x == 2
+    integrator = Integrators.FakeIntegrator()
+    flow = Flows.Flow(sys, integrator)
+    Test.@test Systems.rhs!(system(flow)) !== nothing
 end
 ```
 
@@ -534,13 +536,12 @@ Test.@testset "Type Stability" begin
     ocp = create_test_ocp()
     
     # Test type stability of critical functions
-    Test.@test_nowarn Test.@inferred Systems.dimensions(sys)
+    Test.@test_nowarn Test.@inferred Systems.rhs!(sys)
     Test.@test_nowarn Test.@inferred Flows.system(flow)
-    Test.@test_nowarn Test.@inferred Pipelines.build_system(sys, modeler)
+    Test.@test_nowarn Test.@inferred Flows.Flow(sys, integrator)
     
     # Test with different input types
-    Test.@test_nowarn Test.@inferred Pipelines.integrate(flow, t0, x0, tf)
-    Test.@test_nowarn Test.@inferred Pipelines.build_solution(sys, ode_sol)
+    Test.@test_nowarn Test.@inferred Flows.call(flow, config)
 end
 ```
 
@@ -570,7 +571,7 @@ Test.@testset "Allocations" begin
     Test.@test allocs == 0
     
     # Test bounded allocations
-    allocs = Test.@allocated Pipelines.build_system(sys, modeler)
+    allocs = Test.@allocated Systems.rhs!(sys)
     Test.@test allocs < 1000  # bytes
 end
 ```

@@ -10,28 +10,22 @@ This constructor builds a complete flow by:
 4. Combining them into a callable `Flow`
 
 # Arguments
-- `data::Data.VectorField`: The vector field defining the system dynamics.
+- `data::CTFlows.Data.VectorField`: The vector field defining the system dynamics.
 - `id::Symbol`: The integrator identifier (default `:sciml`).
 - `opts...`: Keyword options passed to the integrator's strategy.
 
 # Returns
-- `Flows.Flow`: The complete flow ready for integration.
+- `CTFlows.Flows.Flow`: The complete flow ready for integration.
 
 # Example
-\`\`\`julia-repl
-julia> using CTFlows.Pipelines, CTFlows.Data
+\`\`\`julia
+using CTFlows.Data, CTFlows.Flows, CTFlows.Common
 
-julia> vf = Data.VectorField((t, x, v) -> x, Common.Autonomous(), Common.Fixed())
-VectorField(...)
-
-julia> flow = Pipelines.Flow(vf, :sciml; reltol=1e-8)
-Flow(system=..., integrator=...)
-
-julia> sol = flow(0.0, [1.0, 0.0], 1.0)
-...
+vf = Data.VectorField((t, x, v) -> x, Common.Autonomous(), Common.Fixed())
+flow = Flows.Flow(vf, :sciml; reltol=1e-8)
 \`\`\`
 
-See also: [`Flows.Flow`](@ref), [`Systems.build_system`](@ref), [`Flows.build_flow`](@ref), [`Integrators.build_integrator`](@ref).
+See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.build_system`](@ref), [`CTFlows.Integrators.build_integrator`](@ref).
 """
 function Flow(data::Data.VectorField, id::Symbol=:sciml; opts...)
     system = Systems.build_system(data)

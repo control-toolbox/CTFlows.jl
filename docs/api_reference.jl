@@ -28,6 +28,8 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                     joinpath("Common", "Common.jl"),
                     joinpath("Common", "abstract_tag.jl"),
                     joinpath("Common", "configs.jl"),
+                    joinpath("Common", "default.jl"),
+                    joinpath("Common", "traits.jl"),
                 ),
             ],
             exclude=EXCLUDE_SYMBOLS,
@@ -38,6 +40,24 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             filename="api_common",
         ),
         # ───────────────────────────────────────────────────────────────────
+        # Data
+        # ───────────────────────────────────────────────────────────────────
+        CTBase.automatic_reference_documentation(;
+            subdirectory=".",
+            primary_modules=[
+                CTFlows.Data => src(
+                    joinpath("Data", "Data.jl"),
+                    joinpath("Data", "vector_field.jl"),
+                ),
+            ],
+            exclude=EXCLUDE_SYMBOLS,
+            public=true,
+            private=true,
+            title="Data",
+            title_in_menu="Data",
+            filename="api_data",
+        ),
+        # ───────────────────────────────────────────────────────────────────
         # Systems
         # ───────────────────────────────────────────────────────────────────
         CTBase.automatic_reference_documentation(;
@@ -46,6 +66,8 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                 CTFlows.Systems => src(
                     joinpath("Systems", "Systems.jl"),
                     joinpath("Systems", "abstract_system.jl"),
+                    joinpath("Systems", "building.jl"),
+                    joinpath("Systems", "vector_field_system.jl"),
                 ),
             ],
             exclude=EXCLUDE_SYMBOLS,
@@ -63,7 +85,9 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             primary_modules=[
                 CTFlows.Integrators => src(
                     joinpath("Integrators", "Integrators.jl"),
-                    joinpath("Integrators", "abstract_ode_integrator.jl"),
+                    joinpath("Integrators", "abstract_integrator.jl"),
+                    joinpath("Integrators", "building.jl"),
+                    joinpath("Integrators", "sciml.jl"),
                 ),
             ],
             exclude=EXCLUDE_SYMBOLS,
@@ -82,6 +106,8 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                 CTFlows.Flows => src(
                     joinpath("Flows", "Flows.jl"),
                     joinpath("Flows", "abstract_flow.jl"),
+                    joinpath("Flows", "building.jl"),
+                    joinpath("Flows", "calling.jl"),
                     joinpath("Flows", "flow.jl"),
                 ),
             ],
@@ -93,25 +119,23 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             filename="api_flows",
         ),
         # ───────────────────────────────────────────────────────────────────
-        # Pipelines
+        # Solutions
         # ───────────────────────────────────────────────────────────────────
         CTBase.automatic_reference_documentation(;
             subdirectory=".",
             primary_modules=[
-                CTFlows.Pipelines => src(
-                    joinpath("Pipelines", "Pipelines.jl"),
-                    joinpath("Pipelines", "build_system.jl"),
-                    joinpath("Pipelines", "build_flow.jl"),
-                    joinpath("Pipelines", "flow_constructor.jl"),
-                    joinpath("Pipelines", "solve.jl"),
+                CTFlows.Solutions => src(
+                    joinpath("Solutions", "Solutions.jl"),
+                    joinpath("Solutions", "building.jl"),
+                    joinpath("Solutions", "vector_field_solution.jl"),
                 ),
             ],
             exclude=EXCLUDE_SYMBOLS,
             public=true,
             private=true,
-            title="Pipelines",
-            title_in_menu="Pipelines",
-            filename="api_pipelines",
+            title="Solutions",
+            title_in_menu="Solutions",
+            filename="api_solutions",
         ),
     ]
 

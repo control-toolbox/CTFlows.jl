@@ -172,11 +172,7 @@ with_api_reference(src_dir, ext_dir) do api_pages
             "Architecture"     => "architecture.md",
             "Developer Guides" => [
                 "Implementing a System"      => "guides/implementing_a_system.md",
-                "Implementing a Flow Modeler" => "guides/implementing_a_flow_modeler.md",
                 "Implementing an ODE Integrator" => "guides/implementing_an_ode_integrator.md",
-                "Implementing an AD Backend" => "guides/implementing_an_ad_backend.md",
-                "Pipelines"                  => "guides/pipelines.md",
-                "Multi-phase Composition"    => "guides/multi_phase_composition.md",
                 "Error Messages Reference"   => "guides/error_messages.md",
             ],
             "API Reference" => api_pages,
@@ -333,12 +329,12 @@ CurrentModule = CTFlows
 The `CTFlows.jl` package is part of the [control-toolbox ecosystem](https://github.com/control-toolbox).
 It provides the **flow layer** for optimal control problems:
 
+- **Common** — shared types, traits, and configuration
+- **Data** — vector field data structures with traits
 - **Systems** — assembled callable objects (`AbstractSystem`)
 - **Flows** — system + integrator pairs (`AbstractFlow`)
-- **Modelers** — flow modeler strategies (`AbstractFlowModeler`)
-- **Integrators** — ODE integrator strategies (`AbstractODEIntegrator`)
-- **AD Backends** — automatic-differentiation strategies (`AbstractADBackend`)
-- **Pipelines** — `build_system`, `build_flow`, `integrate`, `build_solution`, `solve`
+- **Integrators** — ODE integrator strategies (`AbstractIntegrator`)
+- **Solutions** — solution types and solution building
 
 !!! info "CTFlows vs CTModels and CTSolvers"
     **CTFlows** focuses on **flowing** dynamical systems associated with optimal control problems
@@ -357,21 +353,21 @@ It provides the **flow layer** for optimal control problems:
 
     ```julia
     using CTFlows
-    CTFlows.Systems.dimensions(sys)               # ✓ Qualified
-    CTFlows.Pipelines.build_system(input, m, ad)  # ✓ Qualified
+    CTFlows.Systems.rhs!(sys)           # ✓ Qualified
+    CTFlows.Flows.Flow(vf, :sciml)      # ✓ Qualified
+    CTFlows.Flows.call(flow, config)    # ✓ Qualified
     ```
 
 ## Modules
 
 | Module | Purpose |
 |--------|---------|
-| `Core` | Shared types and utilities |
-| `Systems` | `AbstractSystem`, concrete systems, `MultiPhaseSystem` |
-| `Flows` | `AbstractFlow`, `Flow`, `MultiPhaseFlow` |
-| `Modelers` | `AbstractFlowModeler` and concrete modelers |
-| `Integrators` | `AbstractODEIntegrator` and concrete integrators |
-| `ADBackends` | `AbstractADBackend` and concrete backends |
-| `Pipelines` | `build_system`, `build_flow`, `integrate`, `build_solution`, `solve` |
+| `Common` | Shared types, traits, and configuration |
+| `Data` | `VectorField` data structures with traits |
+| `Systems` | `AbstractSystem`, concrete systems |
+| `Flows` | `AbstractFlow`, `Flow`, integration pipeline |
+| `Integrators` | `AbstractIntegrator` and concrete integrators |
+| `Solutions` | `VectorFieldSolution` and solution building |
 
 ## Documentation
 
@@ -379,11 +375,7 @@ It provides the **flow layer** for optimal control problems:
 
 - [Architecture](@ref) — module overview, type hierarchy, data flow
 - [Implementing a System](@ref) — `AbstractSystem` contract
-- [Implementing a Flow Modeler](@ref) — `AbstractFlowModeler` strategy
-- [Implementing an ODE Integrator](@ref) — `AbstractODEIntegrator` strategy
-- [Implementing an AD Backend](@ref) — `AbstractADBackend` strategy
-- [Pipelines](@ref) — `build_system`, `build_flow`, `integrate`, `build_solution`, `solve`
-- [Multi-phase Composition](@ref) — `MultiPhaseSystem` and `MultiPhaseFlow`
+- [Implementing an ODE Integrator](@ref) — `AbstractIntegrator` strategy
 - [Error Messages Reference](@ref) — exception types with examples and fixes
 
 ### API Reference
@@ -393,17 +385,17 @@ Auto-generated documentation for all public and private symbols, organised by su
 ## Quick Start
 
 ```julia
-using CTFlows
-using OrdinaryDiffEq  # loads the ODE integration extension
+using CTFlows.Data, CTFlows.Flows, CTFlows.Common
 
-# Build a system from an OCP
-sys = CTFlows.Pipelines.build_system((ocp, u), modeler, ad_backend)
+# Create a vector field
+vf = Data.VectorField((t, x, v) -> x, Common.Autonomous(), Common.Fixed())
 
-# Build a flow (system + integrator)
-flow = CTFlows.Pipelines.build_flow(sys, integrator)
+# Build a flow with SciML integrator
+flow = Flows.Flow(vf, :sciml; reltol=1e-8)
 
-# Integrate
-sol = CTFlows.Pipelines.solve(flow, (t0, tf), x0, p0)
+# Integrate using a configuration
+config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+sol = Flows.call(flow, config)
 ```
 ````
 

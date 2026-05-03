@@ -28,26 +28,27 @@ It provides the **flow integration layer** for systems and optimal control probl
     using CTFlows
     sys      = CTFlows.Systems.AbstractSystem      # abstract type
     flow     = CTFlows.Flows.Flow(system, integ)    # concrete flow
-    sol      = CTFlows.Pipelines.solve(flow, (0.0, 1.0), x0)
+    sol      = CTFlows.Flows.call(flow, config)     # integrate
     ```
 
     Or bring a single submodule into scope with `using CTFlows.Submodule`:
 
     ```julia
-    using CTFlows.Pipelines
-    sol = solve(flow, (0.0, 1.0), x0)
+    using CTFlows.Flows
+    sol = call(flow, config)
     ```
 
 ## Architecture overview
 
-CTFlows organises its code along three concerns, mirroring the CTSolvers three-layer pattern:
+CTFlows organises its code into specialised submodules:
 
 | Layer | Submodule | Purpose |
 |---|---|---|
-| **Utilities** | [`Common`](@ref CTFlows.Common) | shared types and configuration |
+| **Utilities** | [`Common`](@ref CTFlows.Common) | shared types, traits, and configuration |
+| **Data** | [`Data`](@ref CTFlows.Data) | vector field data structures with traits |
 | **Objects** | [`Systems`](@ref CTFlows.Systems), [`Flows`](@ref CTFlows.Flows) | what is acted upon (a fully-assembled system, or a callable flow) |
 | **Strategy families** | [`Integrators`](@ref CTFlows.Integrators) | `<: CTSolvers.Strategies.AbstractStrategy` |
-| **Actions / pipelines** | [`Pipelines`](@ref CTFlows.Pipelines) | `build_system`, `build_flow`, `integrate`, `build_solution`, `solve` |
+| **Solutions** | [`Solutions`](@ref CTFlows.Solutions) | solution types and solution building |
 
 ## Contracts at a glance
 
@@ -55,17 +56,23 @@ CTFlows organises its code along three concerns, mirroring the CTSolvers three-l
 
 A fully-assembled object that can be integrated. Required methods:
 
-- `rhs!(system) → (du, u, p, t) -> nothing`
-- `dimensions(system) → NamedTuple` (e.g. `(n_x=…, n_p=…, n_u=…, n_v=…)`)
-- `build_solution(system, ode_sol)` — packages the raw ODE trajectory
+- `rhs!(system) → (du, u, p, t) -> nothing` — returns the ODE right-hand side function
+
+Traits (automatically supported):
+
+- `time_dependence(system)` — returns `Autonomous` or `NonAutonomous`
+- `variable_dependence(system)` — returns `Fixed` or `NonFixed`
 
 ### `AbstractFlow`
 
 A callable combining a system and an integrator. Required methods:
 
-- `(flow)(t0, x0, tf)` — state integration
-- `(flow)(t0, x0, p0, tf)` — state + costate integration
-- `system(flow)`, `integrator(flow)` — accessors
+- `system(flow)` — returns the associated `AbstractSystem`
+- `integrator(flow)` — returns the associated `AbstractIntegrator`
+
+Traits (delegated to system):
+
+- `time_dependence(flow)`, `variable_dependence(flow)` — forwarded to the system
 
 ### Strategy families
 
@@ -73,30 +80,34 @@ All inherit from `CTSolvers.Strategies.AbstractStrategy` and gain its full contr
 (`id`, `metadata`, `options`, `Base.show`, `describe`, …).
 
 - [`AbstractIntegrator`](@ref CTFlows.Integrators.AbstractIntegrator):
-  callable `(integrator)(ode_problem, tspan) → ode_sol`
+  callable `(integrator)(system, config; variable=nothing) → ode_problem`
 
-## Pipelines at a glance
+## API at a glance
 
 ```julia
-# atomic
-system = build_system(input, modeler, ad_backend)
-flow   = build_flow(system, integrator)
+# Build a flow from vector field data
+using CTFlows.Data, CTFlows.Flows, CTFlows.Common
 
-# pipeline alias
-flow   = build_flow(input, modeler, integrator, ad_backend)
+vf = Data.VectorField((t, x, v) -> x, Autonomous(), Fixed())
+flow = Flows.Flow(vf, :sciml; reltol=1e-8)
 
-# integration
-traj   = integrate(flow, t0, x0, tf)             # state-only
-traj   = integrate(flow, t0, x0, p0, tf)         # state + costate
+# Integrate using a configuration
+config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+sol = Flows.call(flow, config)
 
-# solve = integrate + build_solution
-sol    = solve(flow, (t0, tf), x0)
-sol    = solve(flow, (t0, tf), x0, p0)
+# Or point-to-point integration
+config = Common.PointConfig((0.0, 1.0), [1.0, 0.0])
+final_state = Flows.call(flow, config)
 ```
 
 ## Status
 
-The current scaffold provides abstract types, contracts with `NotImplemented`
-defaults, the concrete `Flow` wrapper, and the pipeline functions. Concrete
-modelers, integrators, and AD backends are introduced incrementally in
-later phases (see the [roadmap](https://github.com/control-toolbox/CTFlows.jl/blob/main/reports/roadmap.md)).
+The current implementation provides:
+
+- Abstract types with traits (`AbstractSystem`, `AbstractFlow`, `AbstractIntegrator`)
+- Concrete implementations (`VectorField`, `VectorFieldSystem`, `Flow`, `VectorFieldSolution`)
+- Integration pipeline via `Flows.call` with configuration objects
+- SciML integrator strategy
+
+Future phases will add additional integrator strategies and solution types
+(see the [roadmap](https://github.com/control-toolbox/CTFlows.jl/blob/main/reports/roadmap.md)).

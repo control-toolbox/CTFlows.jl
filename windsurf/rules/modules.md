@@ -307,30 +307,28 @@ The `export` inside each submodule makes the unqualified form available to users
 
 ## Proposed CTFlows Layout
 
-Informed by [`reports/design.md`](../../reports/design.md), the CTFlows submodule breakdown mirrors CTSolvers' separation of concerns:
+Informed by the current implementation, the CTFlows submodule breakdown is:
 
 ```text
 src/
 ├── CTFlows.jl                  # top-level manifest, exports nothing
-├── Core/Core.jl                # shared types and utilities
-├── Systems/Systems.jl          # AbstractSystem + concrete systems + MultiPhaseSystem
-├── Flows/Flows.jl              # AbstractFlow, Flow, MultiPhaseFlow
-├── Modelers/Modelers.jl        # AbstractFlowModeler + concrete modelers
-├── Integrators/Integrators.jl  # AbstractODEIntegrator + concrete integrators
-├── ADBackends/ADBackends.jl    # AbstractADBackend + concrete backends
-└── Pipelines/Pipelines.jl      # build_system, build_flow, integrate, build_solution, solve
+├── Common/Common.jl            # shared types, traits, and configuration
+├── Data/Data.jl                # VectorField data structures with traits
+├── Systems/Systems.jl          # AbstractSystem + concrete systems
+├── Integrators/Integrators.jl  # AbstractIntegrator + concrete integrators
+├── Flows/Flows.jl              # AbstractFlow, Flow, integration pipeline
+└── Solutions/Solutions.jl      # VectorFieldSolution and solution building
 ```
 
 Dependency order (topologically sorted):
 
 ```text
-Core
+Common
+ ├── Data
  ├── Systems
  ├── Integrators
- ├── ADBackends
- ├── Modelers         (depends on Systems, ADBackends)
- ├── Flows            (depends on Systems, Integrators)
- └── Pipelines        (depends on all of the above)
+ ├── Flows            (depends on Data, Systems, Integrators)
+ └── Solutions        (depends on Systems)
 ```
 
 The `Options` and `Strategies` infrastructure is consumed from CTSolvers via standard package imports (`using CTSolvers: CTSolvers` then qualified calls like `CTSolvers.Strategies.AbstractStrategy`).
