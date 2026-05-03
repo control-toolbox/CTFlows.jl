@@ -117,33 +117,45 @@ function test_sciml_extension()
 
         Test.@testset "Validation Error Throws" begin
             Test.@testset "reltol must be positive" begin
-                Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(reltol=-1.0)
-                Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(reltol=0.0)
+                redirect_stderr(devnull) do
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(reltol=-1.0)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(reltol=0.0)
+                end
             end
             
             Test.@testset "abstol must be positive" begin
-                Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(abstol=-1.0)
-                Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(abstol=0.0)
+                redirect_stderr(devnull) do
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(abstol=-1.0)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(abstol=0.0)
+                end
             end
             
             Test.@testset "maxiters must be positive" begin
-                Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(maxiters=-1)
-                Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(maxiters=0)
+                redirect_stderr(devnull) do
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(maxiters=-1)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(maxiters=0)
+                end
             end
             
             Test.@testset "dt must be positive" begin
-                Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dt=-0.1)
-                Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dt=0.0)
+                redirect_stderr(devnull) do
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dt=-0.1)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dt=0.0)
+                end
             end
             
             Test.@testset "dtmax must be positive" begin
-                Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dtmax=-0.1)
-                Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dtmax=0.0)
+                redirect_stderr(devnull) do
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dtmax=-0.1)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dtmax=0.0)
+                end
             end
             
             Test.@testset "dtmin must be positive" begin
-                Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dtmin=-1e-5)
-                Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dtmin=0.0)
+                redirect_stderr(devnull) do
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dtmin=-1e-5)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dtmin=0.0)
+                end
             end
         end
 
