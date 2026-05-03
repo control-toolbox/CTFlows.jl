@@ -74,7 +74,8 @@ Return the description for the SciML integrator.
 """
 function CTSolvers.Strategies.description(::Type{<:SciML})
     "SciML ODE integrator.\n" *
-    "See: https://docs.sciml.ai/DiffEqDocs"
+    "See: https://docs.sciml.ai/DiffEqDocs\n" *
+    "Solver options: https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/"
 end
 
 # ============================================================================
