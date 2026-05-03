@@ -177,7 +177,8 @@ function test_sciml_extension()
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing)
 
                 Test.@test prob isa SciMLBase.AbstractODEProblem
-                Test.@test prob.p === nothing
+                Test.@test prob.p isa Common.ODEParameters
+                Test.@test prob.p.variable === nothing
             end
             
             Test.@testset "builds ODEProblem with variable parameter" begin
@@ -193,7 +194,8 @@ function test_sciml_extension()
                 prob = Integrators.build_problem(integ, sys, config; variable=0.5)
 
                 Test.@test prob isa SciMLBase.AbstractODEProblem
-                Test.@test prob.p == 0.5
+                Test.@test prob.p isa Common.ODEParameters
+                Test.@test prob.p.variable == 0.5
             end
         end
 

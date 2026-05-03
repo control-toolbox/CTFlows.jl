@@ -3,7 +3,8 @@ $(TYPEDEF)
 
 Concrete `AbstractSystem` wrapping a `VectorField`. The variable for
 `NonFixed` vector fields is **not** stored here; it is passed at flow-call
-time via the `variable` kwarg and threaded through `ODEProblem`'s `p` slot.
+time via the `variable` kwarg and threaded through `ODEProblem`'s `p` slot
+wrapped in a `Common.ODEParameters` struct.
 
 # Fields
 - `vf::VectorField{F, TD, VD}`: the underlying vector field.
@@ -26,7 +27,7 @@ VectorFieldSystem
   vector_field: VectorField{var"#1", Autonomous, Fixed}
 \`\`\`
 
-See also: [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
+See also: [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
 """
 struct VectorFieldSystem{F<:Function, TD<:Common.TimeDependence, VD<:Common.VariableDependence, RHS<:Function} <: AbstractSystem{TD, VD}
     vf::Data.VectorField{F, TD, VD}
@@ -34,7 +35,7 @@ struct VectorFieldSystem{F<:Function, TD<:Common.TimeDependence, VD<:Common.Vari
 
     function VectorFieldSystem(vf::Data.VectorField{F, TD, VD}) where {F, TD, VD}
         rhs = function (du, u, p, t)
-            du .= vf(t, u, p)
+            du .= vf(t, u, p.variable)
             return nothing
         end
         return new{F, TD, VD, typeof(rhs)}(vf, rhs)
@@ -47,7 +48,8 @@ $(TYPEDSIGNATURES)
 In-place right-hand side for a `VectorFieldSystem`. Returns the pre-computed
 closure stored in the system, which has signature `(du, u, p, t) -> nothing` and
 uses the uniform `(t, x, v)` call on the underlying `VectorField`, where `p`
-carries the variable (or `nothing` for `Fixed` systems).
+is a `Common.ODEParameters` wrapper containing the variable (or `nothing`
+for `Fixed` systems).
 
 # Arguments
 - `sys::VectorFieldSystem`: The system for which to return the RHS function.
@@ -65,15 +67,17 @@ rhs = Systems.rhs!(sys)
 
 du = zeros(2)
 u = [1.0, 2.0]
-rhs(du, u, nothing, 0.0)
+p = Common.ODEParameters(nothing)
+rhs(du, u, p, 0.0)
 # du is now [-1.0, -2.0]
 \`\`\`
 
 # Notes
 - The closure is computed once at construction time for performance.
 - Multiple calls to `rhs!` return the same function object.
+- The closure reads `p.variable` to access the actual variable value.
 
-See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
+See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
 """
 function rhs!(sys::VectorFieldSystem)
     return sys.rhs

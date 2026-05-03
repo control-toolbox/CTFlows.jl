@@ -133,6 +133,28 @@ function test_common_module()
         end
 
         # ====================================================================
+        # ODEParameters Type
+        # ====================================================================
+
+        Test.@testset "ODEParameters Type" begin
+            Test.@testset "ODEParameters is exported" begin
+                Test.@test isdefined(Common, :ODEParameters)
+            end
+
+            Test.@testset "constructs with nothing" begin
+                params = Common.ODEParameters(nothing)
+                Test.@test params isa Common.ODEParameters
+                Test.@test params.variable === nothing
+            end
+
+            Test.@testset "constructs with value" begin
+                params = Common.ODEParameters(0.5)
+                Test.@test params isa Common.ODEParameters
+                Test.@test params.variable == 0.5
+            end
+        end
+
+        # ====================================================================
         # Trait Check Functions
         # ====================================================================
 

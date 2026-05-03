@@ -69,7 +69,8 @@ function test_systems_module()
 
                 du = zeros(2)
                 u = [1.0, 2.0]
-                rhs(du, u, nothing, 0.0)
+                p = Common.ODEParameters(nothing)
+                rhs(du, u, p, 0.0)
                 Test.@test du ≈ [-1.0, -2.0]
             end
         end

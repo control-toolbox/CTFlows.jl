@@ -73,7 +73,8 @@ function test_building_systems()
                 sys = Systems.build_system(vf)
                 rhs = Systems.rhs!(sys)
                 du = zeros(2)
-                rhs(du, [1.0, 2.0], nothing, 0.0)
+                p = Common.ODEParameters(nothing)
+                rhs(du, [1.0, 2.0], p, 0.0)
                 Test.@test du ≈ [2.0, 4.0] atol=1e-10
             end
         end
