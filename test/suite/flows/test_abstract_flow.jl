@@ -24,7 +24,7 @@ struct FakeSystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
     state_dim::Int
 end
 
-function Systems.rhs!(sys::FakeSystem)
+function Systems.rhs(sys::FakeSystem)
     return (du, u, p, t) -> nothing
 end
 

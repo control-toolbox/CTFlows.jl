@@ -57,21 +57,21 @@ function test_building_systems()
         end
 
         # ====================================================================
-        # UNIT TESTS - Integration with rhs!
+        # UNIT TESTS - Integration with rhs
         # ====================================================================
 
-        Test.@testset "Integration with rhs!" begin
-            Test.@testset "built system has working rhs!" begin
+        Test.@testset "Integration with rhs" begin
+            Test.@testset "built system has working rhs" begin
                 vf = Data.VectorField(x -> -x; autonomous=true, variable=false)
                 sys = Systems.build_system(vf)
-                rhs = Systems.rhs!(sys)
+                rhs = Systems.rhs(sys)
                 Test.@test rhs isa Function
             end
 
-            Test.@testset "built system rhs! computes correctly" begin
+            Test.@testset "built system rhs computes correctly" begin
                 vf = Data.VectorField(x -> 2 .* x; autonomous=true, variable=false)
                 sys = Systems.build_system(vf)
-                rhs = Systems.rhs!(sys)
+                rhs = Systems.rhs(sys)
                 du = zeros(2)
                 p = Common.ODEParameters(nothing)
                 rhs(du, [1.0, 2.0], p, 0.0)

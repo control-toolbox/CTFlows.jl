@@ -22,8 +22,8 @@ struct FakeSystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
     data::Vector{Float64}
 end
 
-# Implement contract: rhs!
-function Systems.rhs!(sys::FakeSystem)
+# Implement contract: rhs
+function Systems.rhs(sys::FakeSystem)
     return (du, u, p, t) -> du .= sys.data .* u
 end
 
@@ -57,13 +57,13 @@ function test_abstract_system()
         Test.@testset "Contract Implementation" begin
             sys = FakeSystem([1.0, 2.0])
 
-            Test.@testset "rhs! returns callable" begin
-                rhs = Systems.rhs!(sys)
+            Test.@testset "rhs returns callable" begin
+                rhs = Systems.rhs(sys)
                 Test.@test rhs isa Function
             end
 
-            Test.@testset "rhs! function has correct signature (du, u, p, t)" begin
-                rhs = Systems.rhs!(sys)
+            Test.@testset "rhs function has correct signature (du, u, p, t)" begin
+                rhs = Systems.rhs(sys)
                 du = zeros(2)
                 u = [3.0, 4.0]
                 p = []
@@ -73,18 +73,18 @@ function test_abstract_system()
                 Test.@test du ≈ [3.0, 8.0] atol=1e-10
             end
 
-            Test.@testset "rhs! function fills du in place" begin
-                rhs = Systems.rhs!(sys)
+            Test.@testset "rhs function fills du in place" begin
+                rhs = Systems.rhs(sys)
                 du = zeros(2)
                 rhs(du, [3.0, 4.0], [], 0.0)
                 Test.@test du ≈ [3.0, 8.0] atol=1e-10
             end
 
-            Test.@testset "rhs! function uses system data" begin
+            Test.@testset "rhs function uses system data" begin
                 sys1 = FakeSystem([2.0, 3.0])
                 sys2 = FakeSystem([0.5, 1.0])
-                rhs1 = Systems.rhs!(sys1)
-                rhs2 = Systems.rhs!(sys2)
+                rhs1 = Systems.rhs(sys1)
+                rhs2 = Systems.rhs(sys2)
                 du1 = zeros(2)
                 du2 = zeros(2)
                 rhs1(du1, [1.0, 1.0], [], 0.0)
@@ -138,19 +138,19 @@ function test_abstract_system()
         Test.@testset "NotImplemented Errors" begin
             sys = MinimalSystem(2)
 
-            Test.@testset "rhs! throws NotImplemented" begin
+            Test.@testset "rhs throws NotImplemented" begin
                 try
-                    Systems.rhs!(sys)
+                    Systems.rhs(sys)
                     Test.@test false  # Should not reach here
                 catch err
                     Test.@test err isa Exceptions.NotImplemented
-                    Test.@test occursin("rhs!", err.msg)
+                    Test.@test occursin("rhs", err.msg)
                 end
             end
 
             Test.@testset "NotImplemented error contains required fields" begin
                 try
-                    Systems.rhs!(sys)
+                    Systems.rhs(sys)
                     Test.@test false  # Should not reach here
                 catch err
                     Test.@test err isa Exceptions.NotImplemented

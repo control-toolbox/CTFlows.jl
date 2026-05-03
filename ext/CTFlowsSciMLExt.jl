@@ -287,7 +287,7 @@ $(TYPEDSIGNATURES)
 Build an `ODEProblem` from a system and configuration.
 """
 function Integrators.build_problem(integ::SciML, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)
-    f! = Systems.rhs!(system)
+    f! = Systems.rhs(system)
     u0 = Common.initial_condition(config)
     p = Common.ODEParameters(variable)
     prob = ODEProblem(f!, u0, Common.tspan(config), p)

@@ -71,17 +71,17 @@ function test_vector_field_system()
         # ====================================================================
 
         Test.@testset "Contract Implementation" begin
-            Test.@testset "rhs! returns callable" begin
+            Test.@testset "rhs returns callable" begin
                 vf = Systems.VectorField(x -> -x; autonomous=true, variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                rhs = Systems.rhs!(sys)
+                rhs = Systems.rhs(sys)
                 Test.@test rhs isa Function
             end
 
-            Test.@testset "rhs! function has correct signature (du, u, p, t)" begin
+            Test.@testset "rhs function has correct signature (du, u, p, t)" begin
                 vf = Systems.VectorField(x -> -x; autonomous=true, variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                rhs = Systems.rhs!(sys)
+                rhs = Systems.rhs(sys)
                 du = zeros(2)
                 u = [1.0, 2.0]
                 p = Common.ODEParameters(nothing)
@@ -91,23 +91,23 @@ function test_vector_field_system()
                 Test.@test du ≈ [-1.0, -2.0] atol=1e-10
             end
 
-            Test.@testset "rhs! function fills du in place" begin
+            Test.@testset "rhs function fills du in place" begin
                 vf = Systems.VectorField(x -> -x; autonomous=true, variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                rhs = Systems.rhs!(sys)
+                rhs = Systems.rhs(sys)
                 du = zeros(2)
                 p = Common.ODEParameters(nothing)
                 rhs(du, [1.0, 2.0], p, 0.0)
                 Test.@test du ≈ [-1.0, -2.0] atol=1e-10
             end
 
-            Test.@testset "rhs! function uses underlying VectorField" begin
+            Test.@testset "rhs function uses underlying VectorField" begin
                 vf1 = Systems.VectorField(x -> 2 .* x; autonomous=true, variable=false)
                 vf2 = Systems.VectorField(x -> 3 .* x; autonomous=true, variable=false)
                 sys1 = Systems.VectorFieldSystem(vf1)
                 sys2 = Systems.VectorFieldSystem(vf2)
-                rhs1 = Systems.rhs!(sys1)
-                rhs2 = Systems.rhs!(sys2)
+                rhs1 = Systems.rhs(sys1)
+                rhs2 = Systems.rhs(sys2)
                 du1 = zeros(2)
                 du2 = zeros(2)
                 p = Common.ODEParameters(nothing)
