@@ -261,7 +261,7 @@ x.(0.0:0.1:1.0)   # broadcasting sur une grille
 
 **Ce que ça donne côté `CTFlowsPlotsExt` :**
 
-L'extension Plots peut désormais utiliser `times` et `state` au lieu de `raw`, ce qui la rend indépendante de SciML :
+L'extension Plots peut désormais utiliser `times` et `sol` directement via une fonction interne partagée par les trois surcharges de `plot` :
 
 ```julia
 function _sol_to_arrays(sol::Solutions.VectorFieldSolution)
@@ -270,7 +270,14 @@ function _sol_to_arrays(sol::Solutions.VectorFieldSolution)
     states = reduce(hcat, x.(ts))'
     return ts, states
 end
+
+function Plots.plot(sol::Solutions.VectorFieldSolution; kwargs...)
+    ts, states = _sol_to_arrays(sol)
+    return Plots.plot(ts, states; kwargs...)
+end
 ```
+
+`reduce(hcat, sol.(ts))'` est préféré à `stack(...)` car il gère uniformément les deux cas : état scalaire (1D) et état vectoriel. `stack` attend des tableaux et échoue si `sol(t)` retourne un scalaire.
 
 ---
 
@@ -286,17 +293,48 @@ Ce test détecte indirectement qu'une promotion scalaire a eu lieu lors de la co
 
 ### Proposition
 
-Rendre le contrat explicite via deux sous-types de config :
+Paramétrer `AbstractConfig` avec `X0` pour rendre la distinction scalaire/vecteur visible au niveau du type :
 
 ```julia
-struct ScalarPointConfig <: AbstractConfig ... end
-struct VectorPointConfig <: AbstractConfig ... end
+abstract type AbstractConfig{X0} end
 
-build_solution(result, sys, ::ScalarPointConfig) = final_state(result)[1]
-build_solution(result, sys, ::VectorPointConfig) = final_state(result)
+struct PointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfig{X0}
+    t0::T0
+    x0::X0
+    tf::TF
+end
+
+struct TrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractConfig{X0}
+    tspan::TS
+    x0::X0
+end
 ```
 
-La sémantique est encodée dans le type, visible à la compilation, sans test `isa` dynamique. Le constructeur de `Flow` ou de la config choisit le bon sous-type selon le type de `x0` à la création, une seule fois, au bon endroit.
+`initial_condition` et `build_solution` peuvent alors toutes deux dispatcher à la **compilation** sur le paramètre de type, sans aucun test `isa` à l'exécution :
+
+```julia
+initial_condition(c::AbstractConfig{<:Number}) = [c.x0]
+initial_condition(c::AbstractConfig)           = c.x0
+```
+
+
+
+```julia
+# Cas scalaire — X0 <: Number
+function build_solution(result::AbstractIntegrationResult, sys,
+                        config::PointConfig{<:Real, <:Number, <:Real})
+    return final_state(result)[1]
+end
+
+# Cas général — vecteur
+function build_solution(result::AbstractIntegrationResult, sys, config::PointConfig)
+    return final_state(result)
+end
+```
+
+La distinction scalaire/vecteur ne concerne que `PointConfig` — pour `TrajectoryConfig` on retourne toujours un `VectorFieldSolution` quelle que soit la dimension, donc pas de cas particulier à gérer.
+
+Le paramètre `X0` sur `AbstractConfig` ne crée pas de propagation gênante : écrire `AbstractConfig` sans paramètre dans une signature signifie "tout `AbstractConfig` quel que soit `X0`", ce qui est le comportement habituel de Julia.
 
 ---
 
@@ -306,71 +344,73 @@ La sémantique est encodée dans le type, visible à la compilation, sans test `
 
 Après `solve(prob, ...)`, la solution est emballée sans aucun contrôle. Si SciML produit un `retcode` de type `Unstable`, `MaxIters` ou `DtLessThanMin`, l'utilisateur reçoit silencieusement des `NaN` ou des valeurs absurdes. C'est un défaut critique pour un usage en contrôle optimal où une intégration ratée peut propager des erreurs sans avertissement dans un algorithme de tir.
 
-### Proposition
+### Quelle exception utiliser ?
 
-Vérifier le `retcode` dans la construction de `SciMLIntegrationResult`, au plus près de la source :
+Aucune exception existante dans CTBase ne convient :
 
-```julia
-function Flows.solve_problem(int::SciML, prob)
-    ode_sol = SciMLBase.solve(prob; Strategies.options_dict(int)...)
-    if !SciMLBase.successful_retcode(ode_sol.retcode)
-        throw(Exceptions.NumericalError(
-            "ODE integration failed";
-            retcode   = string(ode_sol.retcode),
-            suggestion = "Try tightening tolerances (reltol, abstol) or changing the solver algorithm.",
-            context   = "SciML solve_problem",
-        ))
-    end
-    return SciMLIntegrationResult(ode_sol)
-end
-```
+- `IncorrectArgument` est réservée aux **données d'entrée invalides** — les arguments peuvent être parfaitement valides et l'ODE diverger quand même.
+- `PreconditionError` désigne un **mauvais ordre d'appel** ou un état interdit — hors sujet ici.
+- Les autres (`ParsingError`, `AmbiguousDescription`, `ExtensionError`) sont encore plus éloignées.
 
-Pour les utilisateurs avancés qui veulent inspecter les solutions échouées :
+**Recommandation : ajouter `SolverFailure` dans CTBase.** Ce n'est pas une exception propre à CTFlows — c'est une catégorie d'erreur transverse à toute la toolbox : intégration ODE ratée ici, solveur d'optimisation qui ne converge pas dans CTDirect, système linéaire mal conditionné ailleurs. Le champ `retcode` est générique : `:Unstable` / `:DtLessThanMin` pour SciML, `:Infeasible` / `:MaxIterations` pour un solveur NLP.
 
 ```julia
-function Flows.solve_problem(int::SciML, prob; unsafe=false)
-    ode_sol = SciMLBase.solve(prob; Strategies.options_dict(int)...)
-    if !unsafe && !SciMLBase.successful_retcode(ode_sol.retcode)
-        throw(...)
-    end
-    return SciMLIntegrationResult(ode_sol)
-end
-```
-
-### Ajouter SolverFailure dans CTBase.
-
-Ce n'est pas une exception propre à CTFlows — c'est une catégorie d'erreur qui va se retrouver partout dans la toolbox : intégration ODE ratée ici, solveur d'optimisation qui ne converge pas dans CTDirect, système linéaire mal conditionné ailleurs. Autant la définir une fois au bon niveau. Ce serait :
-
-```julia
-juliastruct SolverFailure <: CTException
+# À ajouter dans CTBase/src/Exceptions/types.jl
+struct SolverFailure <: CTException
     msg::String
-    retcode::Union{String, Nothing}   # statut retourné par le solveur
+    retcode::Union{String, Nothing}
     suggestion::Union{String, Nothing}
     context::Union{String, Nothing}
 
     function SolverFailure(
         msg::String;
-        retcode::Union{String, Nothing}=nothing,
-        suggestion::Union{String, Nothing}=nothing,
-        context::Union{String, Nothing}=nothing,
+        retcode::Union{String, Nothing}    = nothing,
+        suggestion::Union{String, Nothing} = nothing,
+        context::Union{String, Nothing}    = nothing,
     )
         new(msg, retcode, suggestion, context)
     end
 end
 ```
 
-Et dans CTFlows :
+### Proposition
+
+Threader `unsafe` comme kwarg à travers la chaîne d'appel, exactement comme `variable` est déjà threadé :
 
 ```julia
-throw(Exceptions.SolverFailure(
-    "ODE integration failed";
-    retcode    = string(ode_sol.retcode),
-    suggestion = "Try tightening tolerances (reltol, abstol) or changing the solver algorithm.",
-    context    = "SciML solve_problem",
-))
+# Flow callable
+function (f::Flow)(t0, x0, tf; variable=nothing, unsafe=false)
+    return call(f, PointConfig(t0, x0, tf); variable=variable, unsafe=unsafe)
+end
+
+# call
+function call(flow, config; variable=nothing, unsafe=false)
+    prob   = Integrators.build_problem(int, sys, config; variable=variable)
+    result = Integrators.solve_problem(int, prob; unsafe=unsafe)
+    return Solutions.build_solution(result, sys, config)
+end
+
+# abstract_integrator.jl — stub mis à jour
+function solve_problem(int::AbstractIntegrator, prob; unsafe=false)
+    throw(NotImplemented(...))
+end
+
+# CTFlowsSciMLExt.jl
+function Integrators.solve_problem(integ::SciML, prob; unsafe=false)
+    ode_sol = SciMLBase.solve(prob; Strategies.options_dict(integ)...)
+    if !unsafe && !SciMLBase.successful_retcode(ode_sol.retcode)
+        throw(Exceptions.SolverFailure(
+            "ODE integration failed";
+            retcode    = string(ode_sol.retcode),
+            suggestion = "Try tightening tolerances (reltol, abstol) or changing the solver algorithm.",
+            context    = "SciML solve_problem",
+        ))
+    end
+    return SciMLIntegrationResult(ode_sol)
+end
 ```
 
-Le champ `retcode` est générique et peut contenir n'importe quelle valeur selon le type de solveur utilisé.
+`unsafe` est une décision qui appartient à l'appel, pas à la configuration de l'intégrateur. Un utilisateur qui débogue une trajectoire divergente peut faire `flow(t0, x0, tf; unsafe=true)` ponctuellement, sans avoir à recréer son flow. L'infrastructure est déjà là — `variable` montre exactement le chemin à suivre.
 
 ---
 
