@@ -1,27 +1,23 @@
 """
 $(TYPEDSIGNATURES)
 
-Build an `AbstractIntegrator` from its symbolic id.
+Build a `SciML` integrator with the given options.
 
 # Arguments
-- `id::Symbol`: integrator identifier. Only `:sciml` is supported.
-- `kwargs...`: options forwarded to the integrator's constructor.
+- `kwargs...`: Options forwarded to the `SciML` constructor.
 
-# Throws
-- `CTBase.Exceptions.IncorrectArgument`: if `id` is not recognised.
+# Returns
+- `CTFlows.Integrators.SciML`: The configured integrator.
+
+# Example
+\`\`\`julia
+using CTFlows.Integrators
+
+integrator = Integrators.build_integrator(reltol=1e-8, alg=Tsit5())
+\`\`\`
+
+See also: [`CTFlows.Integrators.SciML`](@ref), [`CTFlows.Integrators.build_sciml_integrator`](@ref).
 """
-function build_integrator(id::Symbol; kwargs...)
-    if id === :sciml
-        return SciML(; kwargs...)
-    else
-        throw(
-            Exceptions.IncorrectArgument(
-                "Unknown integrator id";
-                got = "id = :$id",
-                expected = ":sciml",
-                suggestion = "Use :sciml (the only integrator).",
-                context = "build_integrator dispatch",
-            ),
-        )
-    end
+function build_integrator(; kwargs...)
+    return SciML(; kwargs...)
 end

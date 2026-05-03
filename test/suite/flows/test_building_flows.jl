@@ -23,29 +23,20 @@ function test_building_flows()
         # ====================================================================
 
         Test.@testset "Flow constructor from VectorField" begin
-            Test.@testset "default integrator id (:sciml)" begin
+            Test.@testset "default constructor" begin
                 vf = Data.VectorField(x -> -x; autonomous=true, variable=false)
                 flow = Flows.Flow(vf)
-                
+
                 Test.@test flow isa Flows.Flow
                 Test.@test flow isa Flows.AbstractFlow
                 Test.@test flow.system isa Systems.VectorFieldSystem
                 Test.@test flow.integrator isa Integrators.AbstractIntegrator
             end
 
-            Test.@testset "explicit integrator id (:sciml)" begin
-                vf = Data.VectorField(x -> -x; autonomous=true, variable=false)
-                flow = Flows.Flow(vf, :sciml)
-                
-                Test.@test flow isa Flows.Flow
-                Test.@test flow.system isa Systems.VectorFieldSystem
-                Test.@test flow.integrator isa Integrators.AbstractIntegrator
-            end
-
             Test.@testset "with keyword options" begin
                 vf = Data.VectorField(x -> -x; autonomous=true, variable=false)
-                flow = Flows.Flow(vf, :sciml)
-                
+                flow = Flows.Flow(vf; reltol=1e-10)
+
                 Test.@test flow isa Flows.Flow
                 Test.@test flow.integrator isa Integrators.AbstractIntegrator
             end
