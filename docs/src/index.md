@@ -89,7 +89,7 @@ All inherit from `CTSolvers.Strategies.AbstractStrategy` and gain its full contr
 using CTFlows.Data, CTFlows.Flows, CTFlows.Common
 
 vf = Data.VectorField((t, x, v) -> x, Autonomous(), Fixed())
-flow = Flows.Flow(vf, :sciml; reltol=1e-8)
+flow = Flows.Flow(vf; reltol=1e-8)
 
 # Integrate using a configuration
 config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])

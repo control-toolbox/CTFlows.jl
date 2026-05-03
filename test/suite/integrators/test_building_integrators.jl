@@ -22,27 +22,16 @@ function test_building_integrators()
 
         Test.@testset "build_integrator" begin
 
-            Test.@testset "valid id :sciml" begin
+            Test.@testset "builds SciML integrator" begin
                 # This will throw ExtensionError if CTFlowsSciMLExt is not loaded,
-                # but at least it dispatches correctly
-                result = Integrators.build_integrator(:sciml)
-                Test.@test result isa SciML
+                # but at least it calls the right function
+                result = Integrators.build_integrator()
+                Test.@test result isa Integrators.SciML
             end
 
-            Test.@testset "unknown id throws IncorrectArgument" begin
-                Test.@test_throws Exceptions.IncorrectArgument Integrators.build_integrator(:unknown)
-            end
-
-            Test.@testset "error message for unknown id" begin
-                try
-                    Integrators.build_integrator(:fake)
-                    Test.@test false  # Should not reach here
-                catch err
-                    Test.@test err isa Exceptions.IncorrectArgument
-                    msg = sprint(showerror, err)
-                    Test.@test occursin("Unknown integrator id", msg)
-                    Test.@test occursin(":sciml", msg)
-                end
+            Test.@testset "forwards keyword options" begin
+                result = Integrators.build_integrator(reltol=1e-10)
+                Test.@test result isa Integrators.SciML
             end
         end
     end

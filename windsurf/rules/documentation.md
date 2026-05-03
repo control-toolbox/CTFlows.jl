@@ -354,7 +354,7 @@ It provides the **flow layer** for optimal control problems:
     ```julia
     using CTFlows
     CTFlows.Systems.rhs!(sys)           # ✓ Qualified
-    CTFlows.Flows.Flow(vf, :sciml)      # ✓ Qualified
+    CTFlows.Flows.Flow(vf)              # ✓ Qualified
     CTFlows.Flows.call(flow, config)    # ✓ Qualified
     ```
 
@@ -391,7 +391,7 @@ using CTFlows.Data, CTFlows.Flows, CTFlows.Common
 vf = Data.VectorField((t, x, v) -> x, Common.Autonomous(), Common.Fixed())
 
 # Build a flow with SciML integrator
-flow = Flows.Flow(vf, :sciml; reltol=1e-8)
+flow = Flows.Flow(vf; reltol=1e-8)
 
 # Integrate using a configuration
 config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
