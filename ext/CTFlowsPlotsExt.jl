@@ -29,11 +29,13 @@ Internal helper to convert a solution to time and state arrays.
 
 # Notes
 - Uses `reduce(hcat, ...)'` for robust handling of 1D states.
+- Uses `state(sol)` to explicitly obtain the state function.
 - Internal function, not part of public API.
 """
 function _sol_to_arrays(sol::Solutions.VectorFieldSolution)
     ts = Solutions.times(sol)
-    states = reduce(hcat, sol.(ts))'
+    x = Solutions.state(sol)
+    states = reduce(hcat, x.(ts))'
     return ts, states
 end
 
@@ -49,7 +51,7 @@ Plot a `VectorFieldSolution` by extracting time points and states.
 # Returns
 - The plot object returned by `Plots.plot`.
 
-See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.times`](@ref).
+See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.times`](@ref), [`CTFlows.Solutions.state`](@ref).
 """
 function Plots.plot(sol::Solutions.VectorFieldSolution; kwargs...)
     ts, states = _sol_to_arrays(sol)
@@ -68,7 +70,7 @@ Plot into an existing plot by extracting time points and states.
 # Returns
 - The modified plot object returned by `Plots.plot!`.
 
-See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.times`](@ref).
+See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.times`](@ref), [`CTFlows.Solutions.state`](@ref).
 """
 function Plots.plot!(sol::Solutions.VectorFieldSolution; kwargs...)
     ts, states = _sol_to_arrays(sol)
@@ -88,7 +90,7 @@ Plot into an existing plot by extracting time points and states.
 # Returns
 - The modified plot object returned by `Plots.plot!`.
 
-See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.times`](@ref).
+See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.times`](@ref), [`CTFlows.Solutions.state`](@ref).
 """
 function Plots.plot!(p::Plots.Plot, sol::Solutions.VectorFieldSolution; kwargs...)
     ts, states = _sol_to_arrays(sol)
