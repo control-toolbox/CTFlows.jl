@@ -25,7 +25,7 @@ include(joinpath(@__DIR__, "default.jl"))
 # Module exports
 # ==============================================================================
 
-export AbstractTag, AbstractConfig, PointConfig, TrajectoryConfig, tspan, initial_condition, unwrap_state
+export AbstractTag, AbstractConfig, PointConfig, TrajectoryConfig, tspan, initial_condition
 export TimeDependence, Autonomous, NonAutonomous
 export VariableDependence, Fixed, NonFixed
 export ODEParameters

@@ -6,6 +6,12 @@ Abstract configuration type for integration problems.
 Marker type for dispatch on configuration objects. Concrete subtypes define
 specific integration scenarios (e.g., point-to-point, trajectory, costate).
 
+The type parameter `X0` encodes the type of the initial condition:
+- `X0 <: Number` for scalar initial conditions
+- `X0 <: AbstractVector` for vector initial conditions
+
+This enables compile-time dispatch on scalar vs vector cases without runtime type tests.
+
 # Interface Requirements
 
 All subtypes must implement:
@@ -24,7 +30,7 @@ true
 
 See also: [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Common.TrajectoryConfig`](@ref)
 """
-abstract type AbstractConfig end
+abstract type AbstractConfig{X0} end
 
 """
 $(TYPEDSIGNATURES)
@@ -36,7 +42,7 @@ Extract the time span from an `AbstractConfig`.
 
 See also: [`CTFlows.Common.AbstractConfig`](@ref), [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Common.TrajectoryConfig`](@ref).
 """
-function tspan(c::AbstractConfig)
+function tspan(c::AbstractConfig{X0}) where {X0}
     throw(Exceptions.NotImplemented(
         "AbstractConfig tspan method not implemented";
         required_method = "tspan(c::$(typeof(c)))",
@@ -71,7 +77,7 @@ PointConfig
 
 See also: [`CTFlows.Common.TrajectoryConfig`](@ref)
 """
-struct PointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfig
+struct PointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfig{X0}
     t0::T0
     x0::X0
     tf::TF
@@ -130,7 +136,7 @@ TrajectoryConfig
 
 See also: [`CTFlows.Common.PointConfig`](@ref)
 """
-struct TrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractConfig
+struct TrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractConfig{X0}
     tspan::TS
     x0::X0
 end
@@ -169,14 +175,18 @@ $(TYPEDSIGNATURES)
 
 Extract the initial condition from an `AbstractConfig`.
 
-Returns the initial state as a vector. If the stored initial condition is a scalar,
-it is wrapped in a vector for consistency.
+Returns the initial condition. For scalar configurations (`X0 <: Number`),
+wraps in a vector for consistency with ODE solver expectations. For vector
+configurations, returns the vector unchanged.
+
+This uses compile-time dispatch on the type parameter `X0` to avoid runtime
+type tests.
 
 # Arguments
-- `c::AbstractConfig`: The configuration.
+- `c::AbstractConfig{<:Number}`: Scalar configuration.
 
 # Returns
-- `AbstractVector`: The initial condition as a vector.
+- `AbstractVector`: The initial condition wrapped in a vector.
 
 # Example
 \`\`\`julia-repl
@@ -186,6 +196,33 @@ julia> config = PointConfig(0.0, 1.0, 1.0)  # scalar x0
 
 julia> initial_condition(config)
 [1.0]
+\`\`\`
+
+See also: [`CTFlows.Common.AbstractConfig`](@ref), [`CTFlows.Common.PointConfig`](@ref).
+"""
+function initial_condition(c::AbstractConfig{<:Number})
+    return [c.x0]
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the initial condition from an `AbstractConfig`.
+
+Returns the initial condition as a vector for vector configurations.
+
+This uses compile-time dispatch on the type parameter `X0` to avoid runtime
+type tests.
+
+# Arguments
+- `c::AbstractConfig`: Vector configuration.
+
+# Returns
+- `AbstractVector`: The initial condition vector.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
 
 julia> config = PointConfig(0.0, [1.0, 0.0], 1.0)  # vector x0
 
@@ -196,29 +233,7 @@ julia> initial_condition(config)
 See also: [`CTFlows.Common.AbstractConfig`](@ref), [`CTFlows.Common.PointConfig`](@ref).
 """
 function initial_condition(c::AbstractConfig)
-    return c.x0 isa Number ? [c.x0] : c.x0
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Unwrap a state vector to match the original configuration type.
-
-If the config's `x0` is a `Number`, this unwraps the length-1 vector that was
-introduced by scalar-promotion at ODE problem construction time. Otherwise,
-returns the state vector unchanged.
-
-# Arguments
-- `c::AbstractConfig`: The configuration to check for scalar promotion.
-- `state`: The state vector to unwrap.
-
-# Returns
-- `Union{Number, AbstractVector}`: The unwrapped state (scalar if config was scalar, vector otherwise).
-
-See also: [`CTFlows.Common.initial_condition`](@ref), [`CTFlows.Common.AbstractConfig`](@ref).
-"""
-function unwrap_state(c::AbstractConfig, state)
-    return c.x0 isa Number ? state[1] : state
+    return c.x0
 end
 
 # =============================================================================

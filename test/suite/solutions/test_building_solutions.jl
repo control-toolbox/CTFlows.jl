@@ -41,6 +41,7 @@ function test_building_solutions()
                 
                 output = Solutions.build_solution(result, sys, config)
                 Test.@test output == [0.5, 1.0]
+                Test.@test typeof(config) <: Common.PointConfig{Float64, <:AbstractVector, Float64}
             end
 
             Test.@testset "scalar initial condition unwraps length-1 vector" begin
@@ -50,6 +51,7 @@ function test_building_solutions()
                 
                 output = Solutions.build_solution(result, sys, config)
                 Test.@test output == 1.5
+                Test.@test typeof(config) == Common.PointConfig{Float64, Float64, Float64}
             end
         end
 

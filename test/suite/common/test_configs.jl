@@ -15,15 +15,18 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 Fake config type for testing the AbstractConfig contract.
 Does not implement tspan to trigger NotImplemented error.
 """
-struct FakeConfig <: Common.AbstractConfig end
+struct FakeConfig{X0} <: Common.AbstractConfig{X0}
+    x0::X0
+end
 
 """
 Fake config type that implements the tspan contract.
 Used to test contract implementation without relying on concrete types.
 """
-struct FakeConfigWithTspan <: Common.AbstractConfig
+struct FakeConfigWithTspan{X0} <: Common.AbstractConfig{X0}
     t0::Float64
     tf::Float64
+    x0::X0
 end
 
 function Common.tspan(c::FakeConfigWithTspan)
@@ -51,6 +54,7 @@ function test_configs()
                 ic = Common.initial_condition(config)
                 Test.@test ic isa AbstractVector
                 Test.@test ic == [1.0]
+                Test.@test typeof(config) == Common.PointConfig{Float64, Float64, Float64}  # X0 <: Number
             end
 
             Test.@testset "initial_condition handles vector" begin
@@ -58,6 +62,7 @@ function test_configs()
                 ic = Common.initial_condition(config)
                 Test.@test ic isa AbstractVector
                 Test.@test ic == [1.0, 0.0]
+                Test.@test typeof(config) <: Common.PointConfig{Float64, <:AbstractVector, Float64}  # X0 is vector
             end
 
             Test.@testset "initial_condition with TrajectoryConfig scalar" begin
@@ -72,26 +77,6 @@ function test_configs()
                 ic = Common.initial_condition(config)
                 Test.@test ic isa AbstractVector
                 Test.@test ic == [1.0, 0.0]
-            end
-
-            Test.@testset "unwrap_state is exported" begin
-                Test.@test isdefined(Common, :unwrap_state)
-            end
-
-            Test.@testset "unwrap_state handles scalar" begin
-                config = Common.PointConfig(0.0, 1.0, 1.0)
-                state = [2.0]
-                unwrapped = Common.unwrap_state(config, state)
-                Test.@test unwrapped isa Number
-                Test.@test unwrapped == 2.0
-            end
-
-            Test.@testset "unwrap_state handles vector" begin
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
-                state = [2.0, 0.0]
-                unwrapped = Common.unwrap_state(config, state)
-                Test.@test unwrapped isa AbstractVector
-                Test.@test unwrapped == [2.0, 0.0]
             end
 
             Test.@testset "AbstractConfig is exported" begin
@@ -138,7 +123,7 @@ function test_configs()
 
         Test.@testset "tspan Contract" begin
             Test.@testset "AbstractConfig tspan throws NotImplemented" begin
-                config = FakeConfig()
+                config = FakeConfig(1.0)
                 Test.@test_throws Exceptions.NotImplemented Common.tspan(config)
             end
 
@@ -157,7 +142,7 @@ function test_configs()
             end
 
             Test.@testset "Fake config with tspan contract" begin
-                config = FakeConfigWithTspan(0.5, 2.5)
+                config = FakeConfigWithTspan(0.5, 2.5, 1.0)
                 ts = Common.tspan(config)
                 Test.@test ts == (0.5, 2.5)
             end
