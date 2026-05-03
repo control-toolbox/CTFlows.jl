@@ -8,7 +8,7 @@ and `ode_problem` for `VectorFieldSystem`. Activated automatically when
 """
 module CTFlowsSciMLExt
 
-import DocStringExtensions: TYPEDSIGNATURES
+import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
 import CTSolvers.Strategies
 import CTSolvers.Options
@@ -20,7 +20,6 @@ using CTFlows.Integrators: Integrators, SciML, SciMLTag
 using CTFlows.Solutions: Solutions
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, ODEProblem, Tsit5
 using SciMLBase: SciMLBase
-
 
 # =============================================================================
 # Strategies.metadata — option definitions for SciML
@@ -239,6 +238,46 @@ function CTFlows.Integrators.build_sciml_integrator(
 end
 
 # =============================================================================
+# SciMLIntegrationResult
+# =============================================================================
+
+"""
+$(TYPEDEF)
+
+Integration result from a SciML solver.
+
+Wraps a `SciMLBase.AbstractODESolution` and implements the `AbstractIntegrationResult`
+interface required by the Solutions layer.
+
+# Fields
+- `ode_sol::S`: The raw SciML ODE solution.
+"""
+struct SciMLIntegrationResult{S<:SciMLBase.AbstractODESolution} <: Solutions.AbstractIntegrationResult
+    ode_sol::S
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the final state vector from the SciML ODE solution.
+"""
+Solutions.final_state(r::SciMLIntegrationResult) = r.ode_sol.u[end]
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the vector of time points from the SciML ODE solution.
+"""
+Solutions.times(r::SciMLIntegrationResult) = r.ode_sol.t
+
+"""
+$(TYPEDSIGNATURES)
+
+Evaluate the SciML ODE solution at a specific time `t` using its interpolation.
+"""
+Solutions.evaluate_at(r::SciMLIntegrationResult, t::Real) = r.ode_sol(t)
+
+# =============================================================================
 # SciML problem building — actual implementation (generic)
 # =============================================================================
 
@@ -247,7 +286,7 @@ $(TYPEDSIGNATURES)
 
 Build an `ODEProblem` from a system and configuration.
 """
-function (integ::SciML)(system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)
+function Integrators.build_problem(integ::SciML, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)
     f! = Systems.rhs!(system)
     u0 = Common.initial_condition(config)
     prob = ODEProblem(f!, u0, Common.tspan(config), variable)
@@ -262,24 +301,12 @@ end
 $(TYPEDSIGNATURES)
 
 Solve an `ODEProblem` using the `SciML`'s configured options.
-Returns the raw `ODESolution`.
+Returns a `SciMLIntegrationResult` wrapping the raw `ODESolution`.
 """
-function (integ::SciML)(prob::SciMLBase.AbstractODEProblem)
+function Integrators.solve_problem(integ::SciML, prob::SciMLBase.AbstractODEProblem)
     options = Strategies.options_dict(integ)
-    return SciMLBase.solve(prob; options...)
-end
-
-# =============================================================================
-# SciML solution building — actual implementation (generic)
-# =============================================================================
-
-"""
-$(TYPEDSIGNATURES)
-
-Build the flow solution from an ODE solution.
-"""
-function (integ::SciML)(ode_sol::SciMLBase.AbstractODESolution, sys::Systems.AbstractSystem, config::Common.AbstractConfig)
-    return Solutions.build_solution(ode_sol, sys, config)
+    ode_sol = SciMLBase.solve(prob; options...)
+    return SciMLIntegrationResult(ode_sol)
 end
 
 end # module CTFlowsSciMLExt

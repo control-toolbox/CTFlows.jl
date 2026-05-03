@@ -4,12 +4,13 @@
 Solution types and solution building for CTFlows.
 
 This module provides:
-- `VectorFieldSolution`: Solution type wrapping raw ODE solutions
+- `AbstractIntegrationResult`: Abstraction for raw ODE integration results
+- `VectorFieldSolution`: Solution type wrapping integration results
 - `build_solution`: Solution building functions for different configuration types
-- `raw`: Accessor for the underlying ODE solution
+- `final_state`, `times`, `evaluate_at`: Semantic accessors for integration results
 - `plot`: Plotting functionality for solutions
 
-See also: [`VectorFieldSolution`](@ref), [`build_solution`](@ref), [`raw`](@ref), [`plot`](@ref).
+See also: [`CTFlows.Solutions.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.build_solution`](@ref), [`CTFlows.Solutions.plot`](@ref).
 """
 module Solutions
 
@@ -19,7 +20,6 @@ module Solutions
 
 import DocStringExtensions: TYPEDSIGNATURES, TYPEDEF
 import CTBase.Exceptions
-import SciMLBase
 import RecipesBase: RecipesBase, plot
 
 # ==============================================================================
@@ -33,6 +33,7 @@ using ..Systems
 # Include files
 # ==============================================================================
 
+include(joinpath(@__DIR__, "integration_result.jl"))
 include(joinpath(@__DIR__, "vector_field_solution.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 
@@ -40,9 +41,9 @@ include(joinpath(@__DIR__, "building.jl"))
 # Module exports
 # ==============================================================================
 
+export AbstractIntegrationResult, final_state, times, evaluate_at
 export VectorFieldSolution
 export build_solution
-export raw
 export plot
 
 end # module Solutions

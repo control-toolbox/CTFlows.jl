@@ -20,16 +20,15 @@ Methods defined on **instances** that provide the actual configuration:
 
 # Concrete Implementation
 
-All subtypes must implement three callable signatures:
+All subtypes must implement two named functions:
 
-- `(integrator)(system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)`: Build the ODE problem representation from a system and configuration.
-- `(integrator)(prob)`: Solve the given ODE problem (tspan is embedded in `prob`).
-- `(integrator)(ode_sol, sys::Systems.AbstractSystem, config::Common.AbstractConfig)`: Build the flow solution from an ODE solution.
+- `build_problem(integrator::AbstractIntegrator, system::CTFlows.Systems.AbstractSystem, config::CTFlows.Common.AbstractConfig; variable)`: Build the ODE problem representation from a system and configuration.
+- `solve_problem(integrator::AbstractIntegrator, prob)`: Solve the given ODE problem (tspan is embedded in `prob`).
 
 # Throws
-- `CTBase.Exceptions.NotImplemented`: If the callable is not implemented by the concrete type.
+- `CTBase.Exceptions.NotImplemented`: If the methods are not implemented by the concrete type.
 
-See also: [`AbstractFlow`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref).
 """
 abstract type AbstractIntegrator <: CTSolvers.Strategies.AbstractStrategy end
 
@@ -40,8 +39,8 @@ Build the ODE problem representation from a system and configuration.
 
 # Arguments
 - `integrator::AbstractIntegrator`: The integrator strategy.
-- `system::Systems.AbstractSystem`: The system to build a problem for.
-- `config::Common.AbstractConfig`: The integration configuration.
+- `system::CTFlows.Systems.AbstractSystem`: The system to build a problem for.
+- `config::CTFlows.Common.AbstractConfig`: The integration configuration.
 - `variable`: The variable parameter value (required for NonFixed systems).
 
 # Returns
@@ -50,13 +49,13 @@ Build the ODE problem representation from a system and configuration.
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
 
-See also: [`AbstractIntegrator`](@ref), [`(integrator)(prob)`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrator`](@ref), [`CTFlows.Integrators.solve_problem`](@ref).
 """
-function (integrator::AbstractIntegrator)(system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)
+function build_problem(integrator::AbstractIntegrator, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)
     throw(Exceptions.NotImplemented(
         "AbstractIntegrator problem building not implemented";
-        required_method = "(integrator::$(typeof(integrator)))(system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)",
-        suggestion = "Implement (i::YourIntegrator)(system, config; variable) returning an ODE problem representation.",
+        required_method = "build_problem(integrator::$(typeof(integrator)), system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)",
+        suggestion = "Implement build_problem(i::YourIntegrator, system, config; variable) returning an ODE problem representation.",
         context = "AbstractIntegrator problem building - required method implementation",
     ))
 end
@@ -71,46 +70,18 @@ Solve the given ODE problem.
 - `prob`: The ODE problem to solve (type varies by concrete integrator; tspan is embedded).
 
 # Returns
-- The ODE solution (type varies by concrete integrator).
+- The ODE integration result, as a subtype of `CTFlows.Solutions.AbstractIntegrationResult`.
 
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
 
-See also: [`AbstractIntegrator`](@ref), [`(integrator)(system, config; variable)`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrator`](@ref), [`CTFlows.Integrators.build_problem`](@ref).
 """
-function (integrator::AbstractIntegrator)(prob)
+function solve_problem(integrator::AbstractIntegrator, prob)
     throw(Exceptions.NotImplemented(
-        "AbstractIntegrator callable not implemented";
-        required_method = "(integrator::$(typeof(integrator)))(prob)",
-        suggestion = "Implement (i::YourIntegrator)(prob) returning an ODE solution.",
-        context = "AbstractIntegrator call - required method implementation",
-    ))
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Build the flow solution from an ODE solution.
-
-# Arguments
-- `integrator::AbstractIntegrator`: The integrator strategy.
-- `ode_sol`: The ODE solution to package.
-- `sys::Systems.AbstractSystem`: The system that was integrated.
-- `config::Common.AbstractConfig`: The integration configuration used.
-
-# Returns
-- The packaged flow solution (type varies by concrete integrator).
-
-# Throws
-- `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
-
-See also: [`AbstractIntegrator`](@ref), [`(integrator)(prob)`](@ref).
-"""
-function (integrator::AbstractIntegrator)(ode_sol, sys::Systems.AbstractSystem, config::Common.AbstractConfig)
-    throw(Exceptions.NotImplemented(
-        "AbstractIntegrator solution building not implemented";
-        required_method = "(integrator::$(typeof(integrator)))(ode_sol, sys::Systems.AbstractSystem, config::Common.AbstractConfig)",
-        suggestion = "Implement (i::YourIntegrator)(ode_sol, sys, config) returning a flow solution.",
-        context = "AbstractIntegrator solution building - required method implementation",
+        "AbstractIntegrator solve_problem not implemented";
+        required_method = "solve_problem(integrator::$(typeof(integrator)), prob)",
+        suggestion = "Implement solve_problem(i::YourIntegrator, prob) returning an AbstractIntegrationResult.",
+        context = "AbstractIntegrator solve_problem - required method implementation",
     ))
 end

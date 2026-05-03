@@ -25,10 +25,6 @@ function test_solutions_module()
             Test.@testset "build_solution is exported" begin
                 Test.@test isdefined(Solutions, :build_solution)
             end
-
-            Test.@testset "raw is exported" begin
-                Test.@test isdefined(Solutions, :raw)
-            end
         end
 
         # ====================================================================

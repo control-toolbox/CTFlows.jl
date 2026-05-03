@@ -3,57 +3,67 @@ $(TYPEDEF)
 
 Abstract supertype for vector field solution containers.
 
-This type defines the interface for all solution types that wrap SciML ODE solutions.
-Concrete subtypes should store the raw ODE solution and provide access via the `raw` function.
+This type defines the interface for all solution types that wrap ODE integration results.
 
-# Interface Requirements
-
-Subtypes must implement:
-- `raw(sol::SubType)`: Return the underlying SciML ODE solution
-
-# Example
-\`\`\`julia-repl
-julia> using CTFlows.Solutions
-
-julia> VectorFieldSolution <: AbstractVectorFieldSolution
-true
-\`\`\`
-
-See also: [`Solutions.VectorFieldSolution`](@ref), [`Solutions.raw`](@ref).
+See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.AbstractIntegrationResult`](@ref).
 """
 abstract type AbstractVectorFieldSolution end
 
 """
 $(TYPEDEF)
 
-Container for the raw SciML ODE solution from a TrajectoryConfig integration.
+Container for the integration result from a TrajectoryConfig integration.
 
-This type wraps the raw ODE solution returned by SciML solvers. For now,
-it simply stores the solution without providing any accessor methods.
+This type wraps the integration result returned by integrators.
 
 # Fields
-- `ode_sol`: The raw ODE solution object (typically from SciML's solve function).
+- `result`: The integration result object (subtype of `AbstractIntegrationResult`).
 
-# Notes
-- Access the raw ODE solution via the `raw(sol)` getter.
-- The raw solution typically contains `.t` (time points) and `.u` (state values).
-- Future versions may add convenience methods for accessing solution data.
-- Plotting and evaluation capabilities are provided by the CTFlowsPlotsExt extension.
+See also: [`CTFlows.Solutions.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.AbstractVectorFieldSolution`](@ref).
 """
-struct VectorFieldSolution{TO<:SciMLBase.AbstractODESolution} <: AbstractVectorFieldSolution
-    ode_sol::TO
+struct VectorFieldSolution{R<:AbstractIntegrationResult} <: AbstractVectorFieldSolution
+    result::R
+end
+
+# =============================================================================
+# Semantic Accessors and Delegation
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the vector of time points from the solution.
+
+Delegates to `times(sol.result)`.
+
+# Arguments
+- `sol::VectorFieldSolution`: The vector field solution.
+
+# Returns
+- `AbstractVector`: The vector of time points.
+
+See also: [`CTFlows.Solutions.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.evaluate_at`](@ref).
+"""
+function times(sol::VectorFieldSolution)
+    return times(sol.result)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Return the raw SciML ODE solution from a `VectorFieldSolution`.
+Evaluate the solution at a given time by delegating to the integration result.
+
+# Arguments
+- `sol::VectorFieldSolution`: The vector field solution.
+- `t::Real`: The time at which to evaluate the solution.
 
 # Returns
-- `SciMLBase.AbstractODESolution`: The underlying ODE solution object.
+- The solution state at time `t`.
+
+See also: [`CTFlows.Solutions.evaluate_at`](@ref), [`CTFlows.Solutions.times`](@ref).
 """
-function raw(sol::VectorFieldSolution)
-    return sol.ode_sol
+function (sol::VectorFieldSolution)(t::Real)
+    return evaluate_at(sol.result, t)
 end
 
 # =============================================================================
@@ -65,8 +75,14 @@ $(TYPEDSIGNATURES)
 
 Plot stub — throws error if Plots extension not loaded.
 
+# Arguments
+- `sol::AbstractVectorFieldSolution`: The vector field solution.
+- `kwargs...`: Additional plotting keyword arguments (ignored).
+
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: If Plots extension is not loaded.
+
+See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.AbstractVectorFieldSolution`](@ref).
 """
 function RecipesBase.plot(sol::AbstractVectorFieldSolution; kwargs...)
     throw(
@@ -80,45 +96,53 @@ function RecipesBase.plot(sol::AbstractVectorFieldSolution; kwargs...)
     )
 end
 
-"""
-$(TYPEDSIGNATURES)
-
-Evaluate the solution at a given time by delegating to raw solution.
-"""
-function (sol::VectorFieldSolution)(t::Real)
-    return raw(sol)(t)
-end
-
 # =============================================================================
 # Base.show
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Display the `VectorFieldSolution` in a readable text/plain format.
+
+# Arguments
+- `io::IO`: The IO stream to write to.
+- `::MIME"text/plain"`: The MIME type.
+- `sol::VectorFieldSolution`: The solution to display.
+"""
 function Base.show(io::IO, ::MIME"text/plain", sol::VectorFieldSolution)
     print(io, "VectorFieldSolution")
-    print(io, "\n  ode solution: ", nameof(typeof(raw(sol))))
+    print(io, "\n  result: ", nameof(typeof(sol.result)))
     
-    # Try to extract useful info from raw solution
     try
-        raw_ode_sol = raw(sol)
-        if hasfield(typeof(raw_ode_sol), :t) && !isempty(raw_ode_sol.t)
-            print(io, "\n  time span: (", first(raw_ode_sol.t), ", ", last(raw_ode_sol.t), ")")
-            print(io, "\n  time points: ", length(raw_ode_sol.t))
+        ts = times(sol)
+        if !isempty(ts)
+            print(io, "\n  time span: (", first(ts), ", ", last(ts), ")")
+            print(io, "\n  time points: ", length(ts))
         end
     catch
-        # If we can't extract info, just show the type
     end
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display the `VectorFieldSolution` in a compact one-line format.
+
+# Arguments
+- `io::IO`: The IO stream to write to.
+- `sol::VectorFieldSolution`: The solution to display.
+"""
 function Base.show(io::IO, sol::VectorFieldSolution)
     print(io, "VectorFieldSolution(")
     parts = String[]
-    push!(parts, "ode_sol=$(nameof(typeof(raw(sol))))")
+    push!(parts, "result=$(nameof(typeof(sol.result)))")
     
     try
-        raw_ode_sol = raw(sol)
-        if hasfield(typeof(raw_ode_sol), :t) && !isempty(raw_ode_sol.t)
-            push!(parts, "tspan=($(first(raw_ode_sol.t)), $(last(raw_ode_sol.t)))")
-            push!(parts, "n=$(length(raw_ode_sol.t))")
+        ts = times(sol)
+        if !isempty(ts)
+            push!(parts, "tspan=($(first(ts)), $(last(ts)))")
+            push!(parts, "n=$(length(ts))")
         end
     catch
     end

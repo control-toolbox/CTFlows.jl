@@ -192,8 +192,8 @@ See also: [`CTFlows.Data.VectorField`](@ref).
 """
 function Base.show(io::IO, vf::VectorField{F, TD, VD}) where {F, TD, VD}
     println(io, "VectorField")
-    println(io, "  time_dependence: ", TD)
-    println(io, "  variable_dependence: ", VD)
+    println(io, "  time_dependence: ", nameof(TD))
+    println(io, "  variable_dependence: ", nameof(VD))
     print(io, "  function: ", typeof(vf.f))
 end
 

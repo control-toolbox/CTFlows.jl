@@ -65,6 +65,21 @@ function test_common_module()
                 ts = Common.tspan(config)
                 Test.@test ts == (0.0, 1.0)
             end
+
+            Test.@testset "initial_condition is exported" begin
+                Test.@test isdefined(Common, :initial_condition)
+                config = Common.PointConfig(0.0, [1.0], 1.0)
+                ic = Common.initial_condition(config)
+                Test.@test ic == [1.0]
+            end
+
+            Test.@testset "unwrap_state is exported" begin
+                Test.@test isdefined(Common, :unwrap_state)
+                config = Common.PointConfig(0.0, [1.0], 1.0)
+                state = [2.0]
+                unwrapped = Common.unwrap_state(config, state)
+                Test.@test unwrapped == [2.0]
+            end
         end
 
         # ====================================================================

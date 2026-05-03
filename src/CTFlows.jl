@@ -39,11 +39,11 @@ using .Systems
 include(joinpath(@__DIR__, "Integrators", "Integrators.jl"))
 using .Integrators
 
-include(joinpath(@__DIR__, "Flows", "Flows.jl"))
-using .Flows
-
 include(joinpath(@__DIR__, "Solutions", "Solutions.jl"))
 using .Solutions
+
+include(joinpath(@__DIR__, "Flows", "Flows.jl"))
+using .Flows
 
 # ==============================================================================
 # No exports at package level

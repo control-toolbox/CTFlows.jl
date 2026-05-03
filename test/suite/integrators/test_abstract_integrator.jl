@@ -35,17 +35,13 @@ function FakeIntegrator()
     return FakeIntegrator(CTSolvers.Strategies.StrategyOptions())
 end
 
-# Implement the three required callable signatures
-function (integ::FakeIntegrator)(system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)
+# Implement the two required callable signatures
+function Integrators.build_problem(integ::FakeIntegrator, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)
     return :fake_ode_problem
 end
 
-function (integ::FakeIntegrator)(prob)
+function Integrators.solve_problem(integ::FakeIntegrator, prob)
     return :fake_ode_solution
-end
-
-function (integ::FakeIntegrator)(ode_sol, sys::Systems.AbstractSystem, config::Common.AbstractConfig)
-    return :fake_flow_solution
 end
 
 """
@@ -89,18 +85,13 @@ function test_abstract_integrator()
             config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
 
             Test.@testset "Problem building signature" begin
-                result = integ(sys, config; variable=nothing)
+                result = Integrators.build_problem(integ, sys, config; variable=nothing)
                 Test.@test result === :fake_ode_problem
             end
 
             Test.@testset "Integration signature" begin
-                result = integ(:fake_prob)
+                result = Integrators.solve_problem(integ, :fake_prob)
                 Test.@test result === :fake_ode_solution
-            end
-
-            Test.@testset "Solution building signature" begin
-                result = integ(:fake_ode_sol, sys, config)
-                Test.@test result === :fake_flow_solution
             end
         end
 
@@ -114,15 +105,11 @@ function test_abstract_integrator()
             config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
 
             Test.@testset "Problem building throws NotImplemented" begin
-                Test.@test_throws Exceptions.NotImplemented integ(sys, config; variable=nothing)
+                Test.@test_throws Exceptions.NotImplemented Integrators.build_problem(integ, sys, config; variable=nothing)
             end
 
             Test.@testset "Integration throws NotImplemented" begin
-                Test.@test_throws Exceptions.NotImplemented integ(:fake_prob)
-            end
-
-            Test.@testset "Solution building throws NotImplemented" begin
-                Test.@test_throws Exceptions.NotImplemented integ(:fake_ode_sol, sys, config)
+                Test.@test_throws Exceptions.NotImplemented Integrators.solve_problem(integ, :fake_prob)
             end
         end
     end
