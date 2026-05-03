@@ -13,34 +13,86 @@ using CTFlows.Solutions: Solutions
 using Plots: Plots
 
 # =============================================================================
-# Plots.plot — delegate to raw solution
+# Plots.plot — delegate to semantic accessors
 # =============================================================================
 
 """
 $(TYPEDSIGNATURES)
 
-Plot a `VectorFieldSolution` by delegating to its raw SciML solution.
+Internal helper to convert a solution to time and state arrays.
+
+# Arguments
+- `sol::Solutions.VectorFieldSolution`: The solution to convert.
+
+# Returns
+- `Tuple{AbstractVector, AbstractMatrix}`: A tuple of (time vector, state matrix).
+
+# Notes
+- Uses `reduce(hcat, ...)'` for robust handling of 1D states.
+- Internal function, not part of public API.
+"""
+function _sol_to_arrays(sol::Solutions.VectorFieldSolution)
+    ts = Solutions.times(sol)
+    states = reduce(hcat, sol.(ts))'
+    return ts, states
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Plot a `VectorFieldSolution` by extracting time points and states.
+
+# Arguments
+- `sol::Solutions.VectorFieldSolution`: The solution to plot.
+- `kwargs...`: Additional keyword arguments passed to `Plots.plot`.
+
+# Returns
+- The plot object returned by `Plots.plot`.
+
+See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.times`](@ref).
 """
 function Plots.plot(sol::Solutions.VectorFieldSolution; kwargs...)
-    return Plots.plot(Solutions.raw(sol); kwargs...)
+    ts, states = _sol_to_arrays(sol)
+    return Plots.plot(ts, states; kwargs...)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Plot into an existing plot by delegating to raw solution.
+Plot into an existing plot by extracting time points and states.
+
+# Arguments
+- `sol::Solutions.VectorFieldSolution`: The solution to plot.
+- `kwargs...`: Additional keyword arguments passed to `Plots.plot!`.
+
+# Returns
+- The modified plot object returned by `Plots.plot!`.
+
+See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.times`](@ref).
 """
 function Plots.plot!(sol::Solutions.VectorFieldSolution; kwargs...)
-    return Plots.plot!(Solutions.raw(sol); kwargs...)
+    ts, states = _sol_to_arrays(sol)
+    return Plots.plot!(ts, states; kwargs...)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Plot into an existing plot by delegating to raw solution.
+Plot into an existing plot by extracting time points and states.
+
+# Arguments
+- `p::Plots.Plot`: The existing plot to modify.
+- `sol::Solutions.VectorFieldSolution`: The solution to plot.
+- `kwargs...`: Additional keyword arguments passed to `Plots.plot!`.
+
+# Returns
+- The modified plot object returned by `Plots.plot!`.
+
+See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.times`](@ref).
 """
 function Plots.plot!(p::Plots.Plot, sol::Solutions.VectorFieldSolution; kwargs...)
-    return Plots.plot!(p, Solutions.raw(sol); kwargs...)
+    ts, states = _sol_to_arrays(sol)
+    return Plots.plot!(p, ts, states; kwargs...)
 end
 
 end # module CTFlowsPlotsExt

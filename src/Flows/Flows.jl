@@ -23,6 +23,7 @@ using ..Common
 using ..Data
 using ..Systems
 using ..Integrators
+using ..Solutions
 
 # ==============================================================================
 # Include files

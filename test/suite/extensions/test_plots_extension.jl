@@ -3,7 +3,6 @@ module TestPlotsExtension
 import Test
 import CTFlows: CTFlows
 import CTFlows.Solutions: Solutions
-import SciMLBase: SciMLBase
 
 # Get extension to access plotting functions
 using Plots
@@ -17,24 +16,23 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # ==============================================================================
 
 """
-Fake ODE solution for testing plotting.
+Fake integration result for testing plotting.
 """
-struct FakeODESolution <: SciMLBase.AbstractODESolution{Any, Any, Any}
+struct FakePlotIntegrationResult{T} <: Solutions.AbstractIntegrationResult
     t::Vector{Float64}
-    u::Vector{Vector{Float64}}
+    u::Vector{T}
 end
 
-# Add plot method for FakeODESolution to make it compatible with Plots
-function Plots.plot(sol::FakeODESolution; kwargs...)
-    return Plots.plot(sol.t, first.(sol.u); kwargs...)
+Solutions.times(r::FakePlotIntegrationResult) = r.t
+
+function Solutions.evaluate_at(r::FakePlotIntegrationResult, t::Real)
+    idx = findfirst(==(t), r.t)
+    return isnothing(idx) ? r.u[1] : r.u[idx]
 end
 
-function Plots.plot!(sol::FakeODESolution; kwargs...)
-    return Plots.plot!(sol.t, first.(sol.u); kwargs...)
-end
-
-function Plots.plot!(p::Plots.Plot, sol::FakeODESolution; kwargs...)
-    return Plots.plot!(p, sol.t, first.(sol.u); kwargs...)
+# Make our FakePlotIntegrationResult callable so sol.(ts) works
+function (r::FakePlotIntegrationResult)(t::Real)
+    return Solutions.evaluate_at(r, t)
 end
 
 # ==============================================================================
@@ -73,13 +71,37 @@ function test_plots_extension()
         end
 
         # ====================================================================
+        # UNIT TESTS - Internal Helper _sol_to_arrays
+        # ====================================================================
+
+        Test.@testset "Internal Helper _sol_to_arrays" begin
+            Test.@testset "vector state" begin
+                fake_result = FakePlotIntegrationResult([0.0, 1.0], [[1.0, 2.0], [3.0, 4.0]])
+                sol = Solutions.VectorFieldSolution(fake_result)
+                
+                ts, states = CTFlowsPlotsExt._sol_to_arrays(sol)
+                Test.@test ts == [0.0, 1.0]
+                Test.@test states == [1.0 2.0; 3.0 4.0]
+            end
+
+            Test.@testset "scalar state" begin
+                fake_result = FakePlotIntegrationResult([0.0, 1.0], [1.0, 3.0])
+                sol = Solutions.VectorFieldSolution(fake_result)
+                
+                ts, states = CTFlowsPlotsExt._sol_to_arrays(sol)
+                Test.@test ts == [0.0, 1.0]
+                Test.@test states == reshape([1.0, 3.0], 2, 1)
+            end
+        end
+
+        # ====================================================================
         # INTEGRATION TESTS - Plotting VectorFieldSolution
         # ====================================================================
 
         Test.@testset "VectorFieldSolution Plotting" begin
             Test.@testset "plot accepts VectorFieldSolution" begin
-                ode_sol = FakeODESolution([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
-                sol = Solutions.VectorFieldSolution(ode_sol)
+                fake_result = FakePlotIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
+                sol = Solutions.VectorFieldSolution(fake_result)
 
                 # Test that plot accepts the solution (may not actually plot without display)
                 # We just verify it doesn't throw an error
@@ -87,8 +109,8 @@ function test_plots_extension()
             end
 
             Test.@testset "plot! accepts VectorFieldSolution" begin
-                ode_sol = FakeODESolution([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
-                sol = Solutions.VectorFieldSolution(ode_sol)
+                fake_result = FakePlotIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
+                sol = Solutions.VectorFieldSolution(fake_result)
 
                 # Create a plot and plot! onto it
                 p = Plots.plot([1, 2, 3])
@@ -96,8 +118,8 @@ function test_plots_extension()
             end
 
             Test.@testset "plot!(p, sol) accepts VectorFieldSolution" begin
-                ode_sol = FakeODESolution([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
-                sol = Solutions.VectorFieldSolution(ode_sol)
+                fake_result = FakePlotIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
+                sol = Solutions.VectorFieldSolution(fake_result)
 
                 # Create a plot and plot! onto it with explicit plot object
                 p = Plots.plot([1, 2, 3])

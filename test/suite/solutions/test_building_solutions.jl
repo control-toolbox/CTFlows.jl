@@ -5,7 +5,6 @@ import CTFlows.Solutions
 import CTFlows.Systems
 import CTFlows.Common
 import CTFlows.Data
-import SciMLBase: SciMLBase
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -15,11 +14,13 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # ==============================================================================
 
 """
-Fake ODE solution for testing build_solution.
+Fake integration result for testing build_solution.
 """
-struct FakeODESolution <: SciMLBase.AbstractODESolution{Any, Any, Any}
+struct FakeIntegrationResult <: Solutions.AbstractIntegrationResult
     u::Vector{Vector{Float64}}
 end
+
+Solutions.final_state(r::FakeIntegrationResult) = r.u[end]
 
 # ==============================================================================
 # Test function
@@ -35,20 +36,20 @@ function test_building_solutions()
         Test.@testset "build_solution - PointConfig" begin
             Test.@testset "vector initial condition returns final state" begin
                 sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; autonomous=true, variable=false))
-                ode_sol = FakeODESolution([[1.0, 2.0], [0.5, 1.0]])
+                result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
                 config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
                 
-                result = Solutions.build_solution(ode_sol, sys, config)
-                Test.@test result == [0.5, 1.0]
+                output = Solutions.build_solution(result, sys, config)
+                Test.@test output == [0.5, 1.0]
             end
 
             Test.@testset "scalar initial condition unwraps length-1 vector" begin
                 sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; autonomous=true, variable=false))
-                ode_sol = FakeODESolution([[3.0], [1.5]])
+                result = FakeIntegrationResult([[3.0], [1.5]])
                 config = Common.PointConfig(0.0, 3.0, 1.0)
                 
-                result = Solutions.build_solution(ode_sol, sys, config)
-                Test.@test result == 1.5
+                output = Solutions.build_solution(result, sys, config)
+                Test.@test output == 1.5
             end
         end
 
@@ -57,22 +58,22 @@ function test_building_solutions()
         # ====================================================================
 
         Test.@testset "build_solution - TrajectoryConfig" begin
-            Test.@testset "returns VectorFieldSolution wrapping raw ODE solution" begin
+            Test.@testset "returns VectorFieldSolution wrapping result" begin
                 sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; autonomous=true, variable=false))
-                ode_sol = FakeODESolution([[1.0, 2.0], [0.5, 1.0]])
+                result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
                 config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 2.0])
                 
-                result = Solutions.build_solution(ode_sol, sys, config)
-                Test.@test result isa Solutions.VectorFieldSolution
+                output = Solutions.build_solution(result, sys, config)
+                Test.@test output isa Solutions.VectorFieldSolution
             end
 
-            Test.@testset "VectorFieldSolution contains correct ODE solution" begin
+            Test.@testset "VectorFieldSolution contains correct result" begin
                 sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; autonomous=true, variable=false))
-                ode_sol = FakeODESolution([[1.0, 2.0], [0.5, 1.0]])
+                result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
                 config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 2.0])
                 
-                result = Solutions.build_solution(ode_sol, sys, config)
-                Test.@test Solutions.raw(result) === ode_sol
+                output = Solutions.build_solution(result, sys, config)
+                Test.@test output.result === result
             end
         end
 

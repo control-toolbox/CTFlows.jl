@@ -1,6 +1,7 @@
 module TestSciMLExtension
 
 import Test
+import CTBase.Exceptions: Exceptions
 import CTFlows: CTFlows
 import CTFlows.Common: Common
 import CTFlows.Data: Data
@@ -111,26 +112,93 @@ function test_sciml_extension()
         end
 
         # ====================================================================
-        # UNIT TESTS - Callable: Problem Building
+        # UNIT TESTS - Validation Error Throws
         # ====================================================================
 
-        Test.@testset "Problem Building" begin
-            # Create a simple system
-            sys = Systems.VectorFieldSystem(
-                Data.VectorField(x -> -x; autonomous=true, variable=false)
-            )
-
-            config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
-            integ = Integrators.SciML()
-
-            # Build ODE problem
-            prob = integ(sys, config; variable=nothing)
-
-            Test.@test prob isa SciMLBase.AbstractODEProblem
+        Test.@testset "Validation Error Throws" begin
+            Test.@testset "reltol must be positive" begin
+                redirect_stderr(devnull) do
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(reltol=-1.0)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(reltol=0.0)
+                end
+            end
+            
+            Test.@testset "abstol must be positive" begin
+                redirect_stderr(devnull) do
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(abstol=-1.0)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(abstol=0.0)
+                end
+            end
+            
+            Test.@testset "maxiters must be positive" begin
+                redirect_stderr(devnull) do
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(maxiters=-1)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(maxiters=0)
+                end
+            end
+            
+            Test.@testset "dt must be positive" begin
+                redirect_stderr(devnull) do
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dt=-0.1)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dt=0.0)
+                end
+            end
+            
+            Test.@testset "dtmax must be positive" begin
+                redirect_stderr(devnull) do
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dtmax=-0.1)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dtmax=0.0)
+                end
+            end
+            
+            Test.@testset "dtmin must be positive" begin
+                redirect_stderr(devnull) do
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dtmin=-1e-5)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dtmin=0.0)
+                end
+            end
         end
 
         # ====================================================================
-        # UNIT TESTS - Callable: Solving
+        # UNIT TESTS - Problem Building
+        # ====================================================================
+
+        Test.@testset "Problem Building" begin
+            Test.@testset "builds ODEProblem without variable" begin
+                # Create a simple system
+                sys = Systems.VectorFieldSystem(
+                    Data.VectorField(x -> -x; autonomous=true, variable=false)
+                )
+
+                config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
+                integ = Integrators.SciML()
+
+                # Build ODE problem
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
+
+                Test.@test prob isa SciMLBase.AbstractODEProblem
+                Test.@test prob.p === nothing
+            end
+            
+            Test.@testset "builds ODEProblem with variable parameter" begin
+                # Create a simple system that takes a variable
+                sys = Systems.VectorFieldSystem(
+                    Data.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
+                )
+
+                config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
+                integ = Integrators.SciML()
+
+                # Build ODE problem with variable
+                prob = Integrators.build_problem(integ, sys, config; variable=0.5)
+
+                Test.@test prob isa SciMLBase.AbstractODEProblem
+                Test.@test prob.p == 0.5
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Solving
         # ====================================================================
 
         Test.@testset "Solving" begin
@@ -143,20 +211,20 @@ function test_sciml_extension()
             integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
             # Build ODE problem
-            prob = integ(sys, config; variable=nothing)
+            prob = Integrators.build_problem(integ, sys, config; variable=nothing)
 
             # Solve
-            ode_sol = integ(prob)
+            result = Integrators.solve_problem(integ, prob)
 
-            Test.@test ode_sol isa SciMLBase.AbstractODESolution
+            Test.@test result isa CTFlowsSciMLExt.SciMLIntegrationResult
+            Test.@test result isa Solutions.AbstractIntegrationResult
         end
 
         # ====================================================================
-        # UNIT TESTS - Callable: Solution Building
+        # UNIT TESTS - Semantic Accessors
         # ====================================================================
 
-        Test.@testset "Solution Building" begin
-            # Create a simple system
+        Test.@testset "Semantic Accessors" begin
             sys = Systems.VectorFieldSystem(
                 Data.VectorField(x -> -x; autonomous=true, variable=false)
             )
@@ -164,16 +232,18 @@ function test_sciml_extension()
             config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 2.0])
             integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
-            # Build ODE problem
-            prob = integ(sys, config; variable=nothing)
+            prob = Integrators.build_problem(integ, sys, config; variable=nothing)
+            result = Integrators.solve_problem(integ, prob)
 
-            # Solve
-            ode_sol = integ(prob)
+            Test.@test Solutions.final_state(result) isa Vector{Float64}
+            Test.@test length(Solutions.final_state(result)) == 2
+            
+            ts = Solutions.times(result)
+            Test.@test ts isa Vector{Float64}
+            Test.@test ts[1] == 0.0
+            Test.@test ts[end] == 1.0
 
-            # Build flow solution
-            flow_sol = integ(ode_sol, sys, config)
-
-            Test.@test flow_sol isa Solutions.VectorFieldSolution
+            Test.@test Solutions.evaluate_at(result, 0.5) isa Vector{Float64}
         end
 
         # ====================================================================
@@ -190,13 +260,13 @@ function test_sciml_extension()
                 integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
                 # Build problem
-                prob = integ(sys, config; variable=nothing)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
 
                 # Solve
-                ode_sol = integ(prob)
+                result = Integrators.solve_problem(integ, prob)
 
                 # Build solution
-                flow_sol = integ(ode_sol, sys, config)
+                flow_sol = Solutions.build_solution(result, sys, config)
 
                 Test.@test flow_sol isa Number
             end
@@ -210,13 +280,13 @@ function test_sciml_extension()
                 integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
                 # Build problem
-                prob = integ(sys, config; variable=nothing)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
 
                 # Solve
-                ode_sol = integ(prob)
+                result = Integrators.solve_problem(integ, prob)
 
                 # Build solution
-                flow_sol = integ(ode_sol, sys, config)
+                flow_sol = Solutions.build_solution(result, sys, config)
 
                 Test.@test flow_sol isa Solutions.VectorFieldSolution
             end

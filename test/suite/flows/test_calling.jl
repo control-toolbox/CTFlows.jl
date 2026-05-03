@@ -4,6 +4,7 @@ import Test
 import CTFlows.Systems
 import CTFlows.Flows
 import CTFlows.Integrators
+import CTFlows.Solutions
 import CTFlows.Common
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -21,41 +22,54 @@ struct FakeSystemForCalling <: Systems.AbstractSystem{Common.Autonomous, Common.
 end
 
 """
+Fake integration result.
+"""
+struct FakeIntegrationResultForCalling <: Solutions.AbstractIntegrationResult end
+
+Solutions.final_state(::FakeIntegrationResultForCalling) = :fake_flow_solution
+
+"""
 Fake integrator for testing the calling workflow.
 Tracks which methods were called.
 """
 mutable struct FakeIntegratorForCalling <: Integrators.AbstractIntegrator
     build_problem_called::Bool
     solve_problem_called::Bool
-    build_solution_called::Bool
     problem_result::Any
     ode_solution::Any
-    final_solution::Any
 end
 
 function FakeIntegratorForCalling()
-    return FakeIntegratorForCalling(false, false, false, nothing, nothing, nothing)
+    return FakeIntegratorForCalling(false, false, nothing, nothing)
 end
 
-# Implement integrator callable for building ODE problem
-function (integ::FakeIntegratorForCalling)(system::Systems.AbstractSystem, config::Common.AbstractConfig; variable=nothing)
+# Implement named functions instead of callables
+function Integrators.build_problem(integ::FakeIntegratorForCalling, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable=nothing)
     integ.build_problem_called = true
     integ.problem_result = :fake_ode_problem
     return integ.problem_result
 end
 
-# Implement integrator callable for integration
-function (integ::FakeIntegratorForCalling)(prob)
+function Integrators.solve_problem(integ::FakeIntegratorForCalling, prob)
     integ.solve_problem_called = true
-    integ.ode_solution = :fake_ode_solution
+    integ.ode_solution = FakeIntegrationResultForCalling()
     return integ.ode_solution
 end
 
-# Implement integrator callable for building solution
-function (integ::FakeIntegratorForCalling)(ode_sol, sys::Systems.AbstractSystem, config::Common.AbstractConfig)
-    integ.build_solution_called = true
-    integ.final_solution = :fake_flow_solution
-    return integ.final_solution
+function Solutions.build_solution(
+    result::FakeIntegrationResultForCalling,
+    system::FakeSystemForCalling,
+    config::Common.PointConfig
+)
+    return Solutions.final_state(result)
+end
+
+function Solutions.build_solution(
+    result::FakeIntegrationResultForCalling,
+    system::FakeSystemForCalling,
+    config::Common.TrajectoryConfig
+)
+    return :fake_vector_field_solution
 end
 
 """
@@ -99,10 +113,9 @@ function test_calling()
                 # Verify all steps were called
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.solve_problem_called === true
-                Test.@test integ.build_solution_called === true
                 
-                # Verify result
-                Test.@test result === :fake_flow_solution
+                # Verify result - for PointConfig it unwraps the vector
+                Test.@test result == :fake_flow_solution
             end
 
             Test.@testset "call with variable parameter (Fixed system)" begin
@@ -116,8 +129,7 @@ function test_calling()
                 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.solve_problem_called === true
-                Test.@test integ.build_solution_called === true
-                Test.@test result === :fake_flow_solution
+                Test.@test result == :fake_flow_solution
             end
 
             Test.@testset "call with TrajectoryConfig" begin
@@ -130,47 +142,7 @@ function test_calling()
                 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.solve_problem_called === true
-                Test.@test integ.build_solution_called === true
-                Test.@test result === :fake_flow_solution
-            end
-        end
-
-        # ====================================================================
-        # UNIT TESTS - Helper functions
-        # ====================================================================
-
-        Test.@testset "Helper functions" begin
-            Test.@testset "build_problem calls integrator" begin
-                sys = FakeSystemForCalling(2)
-                integ = FakeIntegratorForCalling()
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
-                
-                prob = Flows.build_problem(sys, config, integ; variable=nothing)
-                
-                Test.@test integ.build_problem_called === true
-                Test.@test prob === :fake_ode_problem
-            end
-
-            Test.@testset "integrate calls integrator" begin
-                integ = FakeIntegratorForCalling()
-                fake_prob = :fake_problem
-                
-                ode_sol = Flows.solve_problem(fake_prob, integ)
-                
-                Test.@test integ.solve_problem_called === true
-                Test.@test ode_sol === :fake_ode_solution
-            end
-
-            Test.@testset "build_solution calls integrator" begin
-                sys = FakeSystemForCalling(2)
-                integ = FakeIntegratorForCalling()
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
-                fake_ode_sol = :fake_ode_sol
-                
-                flow_sol = Flows.build_solution(fake_ode_sol, sys, config, integ)
-                
-                Test.@test integ.build_solution_called === true
-                Test.@test flow_sol === :fake_flow_solution
+                Test.@test result === :fake_vector_field_solution
             end
         end
 

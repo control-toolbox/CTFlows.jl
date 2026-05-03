@@ -199,6 +199,28 @@ function initial_condition(c::AbstractConfig)
     return c.x0 isa Number ? [c.x0] : c.x0
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Unwrap a state vector to match the original configuration type.
+
+If the config's `x0` is a `Number`, this unwraps the length-1 vector that was
+introduced by scalar-promotion at ODE problem construction time. Otherwise,
+returns the state vector unchanged.
+
+# Arguments
+- `c::AbstractConfig`: The configuration to check for scalar promotion.
+- `state`: The state vector to unwrap.
+
+# Returns
+- `Union{Number, AbstractVector}`: The unwrapped state (scalar if config was scalar, vector otherwise).
+
+See also: [`CTFlows.Common.initial_condition`](@ref), [`CTFlows.Common.AbstractConfig`](@ref).
+"""
+function unwrap_state(c::AbstractConfig, state)
+    return c.x0 isa Number ? state[1] : state
+end
+
 # =============================================================================
 # Base.show
 # =============================================================================

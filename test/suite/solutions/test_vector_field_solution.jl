@@ -3,7 +3,6 @@ module TestVectorFieldSolution
 import Test
 import CTFlows.Solutions
 import CTBase.Exceptions
-import SciMLBase: SciMLBase
 import CTFlows.Common
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -14,18 +13,18 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # ==============================================================================
 
 """
-Fake ODE solution for testing VectorFieldSolution callable interface.
-Must be callable to support the VectorFieldSolution callable.
+Fake integration result for testing VectorFieldSolution callable interface.
 """
-struct FakeODESolution <: SciMLBase.AbstractODESolution{Any, Any, Any}
+struct FakeIntegrationResult <: Solutions.AbstractIntegrationResult
     t::Vector{Float64}
     u::Vector{Vector{Float64}}
 end
 
-# Make FakeODESolution callable
-function (fake::FakeODESolution)(t::Real)
+Solutions.times(r::FakeIntegrationResult) = r.t
+Solutions.final_state(r::FakeIntegrationResult) = r.u[end]
+function Solutions.evaluate_at(r::FakeIntegrationResult, t::Real)
     # Simple interpolation for testing
-    return fake.u[1]
+    return r.u[1]
 end
 
 """
@@ -47,35 +46,28 @@ function test_vector_field_solution()
         # ====================================================================
 
         Test.@testset "Construction" begin
-            Test.@testset "constructs from ODE solution" begin
-                ode_sol = FakeODESolution([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
-                sol = Solutions.VectorFieldSolution(ode_sol)
+            Test.@testset "constructs from integration result" begin
+                result = FakeIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
+                sol = Solutions.VectorFieldSolution(result)
                 Test.@test sol isa Solutions.VectorFieldSolution
             end
         end
 
         # ====================================================================
-        # UNIT TESTS - raw getter
+        # UNIT TESTS - Callable & Delegation
         # ====================================================================
 
-        Test.@testset "raw getter" begin
-            Test.@testset "returns underlying ODE solution" begin
-                ode_sol = FakeODESolution([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
-                sol = Solutions.VectorFieldSolution(ode_sol)
-                Test.@test Solutions.raw(sol) === ode_sol
+        Test.@testset "Callable & Delegation" begin
+            Test.@testset "delegates evaluate_at to result" begin
+                result = FakeIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
+                sol = Solutions.VectorFieldSolution(result)
+                Test.@test sol(0.5) === Solutions.evaluate_at(result, 0.5)
             end
-        end
 
-        # ====================================================================
-        # UNIT TESTS - Callable
-        # ====================================================================
-
-        Test.@testset "Callable" begin
-            Test.@testset "delegates to raw ODE solution" begin
-                ode_sol = FakeODESolution([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
-                sol = Solutions.VectorFieldSolution(ode_sol)
-                # The callable should delegate to raw(sol)
-                Test.@test sol(0.5) === ode_sol(0.5)
+            Test.@testset "delegates times to result" begin
+                result = FakeIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
+                sol = Solutions.VectorFieldSolution(result)
+                Test.@test Solutions.times(sol) === Solutions.times(result)
             end
         end
 
@@ -110,8 +102,8 @@ function test_vector_field_solution()
 
         Test.@testset "Base.show" begin
             Test.@testset "MIME text/plain" begin
-                ode_sol = FakeODESolution([0.0, 1.0], [[1.0, 2.0], [0.5, 1.0]])
-                sol = Solutions.VectorFieldSolution(ode_sol)
+                result = FakeIntegrationResult([0.0, 1.0], [[1.0, 2.0], [0.5, 1.0]])
+                sol = Solutions.VectorFieldSolution(result)
                 
                 io = IOBuffer()
                 show(io, MIME("text/plain"), sol)
@@ -120,8 +112,8 @@ function test_vector_field_solution()
             end
 
             Test.@testset "compact" begin
-                ode_sol = FakeODESolution([0.0, 1.0], [[1.0, 2.0], [0.5, 1.0]])
-                sol = Solutions.VectorFieldSolution(ode_sol)
+                result = FakeIntegrationResult([0.0, 1.0], [[1.0, 2.0], [0.5, 1.0]])
+                sol = Solutions.VectorFieldSolution(result)
                 
                 io = IOBuffer()
                 show(io, sol)
@@ -137,10 +129,6 @@ function test_vector_field_solution()
         Test.@testset "Exports Verification" begin
             Test.@testset "VectorFieldSolution is exported" begin
                 Test.@test isdefined(Solutions, :VectorFieldSolution)
-            end
-
-            Test.@testset "raw is exported" begin
-                Test.@test isdefined(Solutions, :raw)
             end
         end
     end

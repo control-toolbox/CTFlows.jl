@@ -1,7 +1,7 @@
 module TestVectorField
 
 import Test
-import CTFlows.Systems
+import CTFlows.Data
 import CTFlows.Common
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -19,8 +19,8 @@ function test_vector_field()
         # ====================================================================
 
         Test.@testset "Abstract Types" begin
-            vf = Systems.VectorField(x -> x; autonomous=true, variable=false)
-            Test.@test vf isa Systems.VectorField
+            vf = Data.VectorField(x -> x; autonomous=true, variable=false)
+            Test.@test vf isa Data.VectorField
         end
 
         # ====================================================================
@@ -29,26 +29,26 @@ function test_vector_field()
 
         Test.@testset "Construction" begin
             Test.@testset "keyword constructor with defaults" begin
-                vf = Systems.VectorField(x -> x)
-                Test.@test vf isa Systems.VectorField
+                vf = Data.VectorField(x -> x)
+                Test.@test vf isa Data.VectorField
                 Test.@test Common.time_dependence(vf) === Common.Autonomous
                 Test.@test Common.variable_dependence(vf) === Common.Fixed
             end
 
             Test.@testset "keyword constructor with explicit flags" begin
-                vf_autonomous = Systems.VectorField(x -> x; autonomous=true, variable=false)
+                vf_autonomous = Data.VectorField(x -> x; autonomous=true, variable=false)
                 Test.@test Common.time_dependence(vf_autonomous) === Common.Autonomous
                 Test.@test Common.variable_dependence(vf_autonomous) === Common.Fixed
 
-                vf_nonautonomous = Systems.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
+                vf_nonautonomous = Data.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
                 Test.@test Common.time_dependence(vf_nonautonomous) === Common.NonAutonomous
                 Test.@test Common.variable_dependence(vf_nonautonomous) === Common.Fixed
 
-                vf_nonfixed = Systems.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
+                vf_nonfixed = Data.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
                 Test.@test Common.time_dependence(vf_nonfixed) === Common.Autonomous
                 Test.@test Common.variable_dependence(vf_nonfixed) === Common.NonFixed
 
-                vf_full = Systems.VectorField((t, x, v) -> t .* x .+ v; autonomous=false, variable=true)
+                vf_full = Data.VectorField((t, x, v) -> t .* x .+ v; autonomous=false, variable=true)
                 Test.@test Common.time_dependence(vf_full) === Common.NonAutonomous
                 Test.@test Common.variable_dependence(vf_full) === Common.NonFixed
             end
@@ -59,10 +59,10 @@ function test_vector_field()
         # ====================================================================
 
         Test.@testset "Trait Methods" begin
-            vf_aut = Systems.VectorField(x -> x; autonomous=true, variable=false)
-            vf_nonaut = Systems.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
-            vf_fixed = Systems.VectorField(x -> x; autonomous=true, variable=false)
-            vf_nonfixed = Systems.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
+            vf_aut = Data.VectorField(x -> x; autonomous=true, variable=false)
+            vf_nonaut = Data.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
+            vf_fixed = Data.VectorField(x -> x; autonomous=true, variable=false)
+            vf_nonfixed = Data.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
 
             Test.@testset "has_time_dependence_trait returns true" begin
                 Test.@test Common.has_time_dependence_trait(vf_aut) === true
@@ -91,7 +91,7 @@ function test_vector_field()
 
         Test.@testset "Natural Call Signatures" begin
             Test.@testset "Autonomous Fixed - (x)" begin
-                vf = Systems.VectorField(x -> -x; autonomous=true, variable=false)
+                vf = Data.VectorField(x -> -x; autonomous=true, variable=false)
                 
                 Test.@testset "scalar" begin
                     Test.@test vf(3.0) == -3.0
@@ -109,7 +109,7 @@ function test_vector_field()
             end
 
             Test.@testset "NonAutonomous Fixed - (t, x)" begin
-                vf = Systems.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
+                vf = Data.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
                 
                 Test.@testset "scalar" begin
                     Test.@test vf(2.0, 3.0) == 6.0
@@ -127,7 +127,7 @@ function test_vector_field()
             end
 
             Test.@testset "Autonomous NonFixed - (x, v)" begin
-                vf = Systems.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
+                vf = Data.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
                 
                 Test.@testset "scalar" begin
                     Test.@test vf(3.0, 0.5) == 3.5
@@ -145,7 +145,7 @@ function test_vector_field()
             end
 
             Test.@testset "NonAutonomous NonFixed - (t, x, v)" begin
-                vf = Systems.VectorField((t, x, v) -> t .* x .+ v; autonomous=false, variable=true)
+                vf = Data.VectorField((t, x, v) -> t .* x .+ v; autonomous=false, variable=true)
                 
                 Test.@testset "scalar" begin
                     Test.@test vf(2.0, 3.0, 0.5) == 6.5
@@ -169,7 +169,7 @@ function test_vector_field()
 
         Test.@testset "Uniform Call Signature" begin
             Test.@testset "Autonomous Fixed ignores t and v" begin
-                vf = Systems.VectorField(x -> -x; autonomous=true, variable=false)
+                vf = Data.VectorField(x -> -x; autonomous=true, variable=false)
                 
                 Test.@testset "scalar" begin
                     Test.@test vf(0.0, 3.0, 0.0) == -3.0
@@ -187,7 +187,7 @@ function test_vector_field()
             end
 
             Test.@testset "NonAutonomous Fixed uses t, ignores v" begin
-                vf = Systems.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
+                vf = Data.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
                 
                 Test.@testset "scalar" begin
                     Test.@test vf(2.0, 3.0, 0.0) == 6.0
@@ -205,7 +205,7 @@ function test_vector_field()
             end
 
             Test.@testset "Autonomous NonFixed ignores t, uses v" begin
-                vf = Systems.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
+                vf = Data.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
                 
                 Test.@testset "scalar" begin
                     Test.@test vf(0.0, 3.0, 0.5) == 3.5
@@ -228,10 +228,10 @@ function test_vector_field()
         # ====================================================================
 
         Test.@testset "Common Trait Predicates" begin
-            vf_aut = Systems.VectorField(x -> x; autonomous=true, variable=false)
-            vf_nonaut = Systems.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
-            vf_fixed = Systems.VectorField(x -> x; autonomous=true, variable=false)
-            vf_nonfixed = Systems.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
+            vf_aut = Data.VectorField(x -> x; autonomous=true, variable=false)
+            vf_nonaut = Data.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
+            vf_fixed = Data.VectorField(x -> x; autonomous=true, variable=false)
+            vf_nonfixed = Data.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
 
             Test.@testset "is_autonomous / is_nonautonomous" begin
                 Test.@test Common.is_autonomous(vf_aut) === true
@@ -249,12 +249,39 @@ function test_vector_field()
         end
 
         # ====================================================================
+        # UNIT TESTS - Show Methods
+        # ====================================================================
+
+        Test.@testset "Show Methods" begin
+            vf = Data.VectorField(x -> x; autonomous=true, variable=false)
+            
+            Test.@testset "Base.show (compact)" begin
+                io = IOBuffer()
+                show(io, vf)
+                str = String(take!(io))
+                Test.@test occursin("VectorField", str)
+                Test.@test occursin("time_dependence: Autonomous", str)
+                Test.@test occursin("variable_dependence: Fixed", str)
+                Test.@test occursin("function:", str)
+            end
+            
+            Test.@testset "Base.show (text/plain)" begin
+                io = IOBuffer()
+                show(io, MIME("text/plain"), vf)
+                str = String(take!(io))
+                Test.@test occursin("VectorField", str)
+                Test.@test occursin("time_dependence: Autonomous", str)
+                Test.@test occursin("variable_dependence: Fixed", str)
+            end
+        end
+
+        # ====================================================================
         # UNIT TESTS - Exports Verification
         # ====================================================================
 
         Test.@testset "Exports Verification" begin
             Test.@testset "Exported types" begin
-                Test.@test isdefined(Systems, :VectorField)
+                Test.@test isdefined(Data, :VectorField)
             end
         end
     end

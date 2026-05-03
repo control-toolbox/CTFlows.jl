@@ -74,6 +74,26 @@ function test_configs()
                 Test.@test ic == [1.0, 0.0]
             end
 
+            Test.@testset "unwrap_state is exported" begin
+                Test.@test isdefined(Common, :unwrap_state)
+            end
+
+            Test.@testset "unwrap_state handles scalar" begin
+                config = Common.PointConfig(0.0, 1.0, 1.0)
+                state = [2.0]
+                unwrapped = Common.unwrap_state(config, state)
+                Test.@test unwrapped isa Number
+                Test.@test unwrapped == 2.0
+            end
+
+            Test.@testset "unwrap_state handles vector" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                state = [2.0, 0.0]
+                unwrapped = Common.unwrap_state(config, state)
+                Test.@test unwrapped isa AbstractVector
+                Test.@test unwrapped == [2.0, 0.0]
+            end
+
             Test.@testset "AbstractConfig is exported" begin
                 Test.@test isdefined(Common, :AbstractConfig)
             end
@@ -159,10 +179,31 @@ function test_configs()
                 Test.@test occursin("tf:", output)
             end
 
+            Test.@testset "PointConfig text/plain show method" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                io = IOBuffer()
+                show(io, MIME("text/plain"), config)
+                output = String(take!(io))
+                Test.@test occursin("PointConfig", output)
+                Test.@test occursin("t0:", output)
+                Test.@test occursin("x0:", output)
+                Test.@test occursin("tf:", output)
+            end
+
             Test.@testset "TrajectoryConfig show methods" begin
                 config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
                 io = IOBuffer()
                 show(io, config)
+                output = String(take!(io))
+                Test.@test occursin("TrajectoryConfig", output)
+                Test.@test occursin("tspan:", output)
+                Test.@test occursin("x0:", output)
+            end
+
+            Test.@testset "TrajectoryConfig text/plain show method" begin
+                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+                io = IOBuffer()
+                show(io, MIME("text/plain"), config)
                 output = String(take!(io))
                 Test.@test occursin("TrajectoryConfig", output)
                 Test.@test occursin("tspan:", output)
