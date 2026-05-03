@@ -21,7 +21,7 @@ config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 sol = call(flow, config)
 \`\`\`
 
-See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.build_ode_problem`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.build_problem`](@ref).
 """
 function call(flow::Flows.AbstractFlow{TD, VD}, config::Common.AbstractConfig; variable=nothing) where {TD<:Common.TimeDependence, VD<:Common.VariableDependence}
 
@@ -30,13 +30,13 @@ function call(flow::Flows.AbstractFlow{TD, VD}, config::Common.AbstractConfig; v
     int = integrator(flow)
 
     # build ode problem
-    prob = build_ode_problem(sys, config, int; variable=variable)
+    prob = build_problem(sys, config, int; variable=variable)
 
     # integrate ode problem
-    ode_sol = integrate(prob, int)
+    ode_sol = solve_problem(prob, int)
 
     # build flow solution
-    flow_sol = build_flow_solution(ode_sol, sys, config, int)
+    flow_sol = build_solution(ode_sol, sys, config, int)
 
     return flow_sol
 end
@@ -60,7 +60,7 @@ integrator strategy, allowing each integrator to define its own problem represen
 
 See also: [`CTFlows.Flows.call`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref).
 """
-function build_ode_problem(system::Systems.AbstractSystem, config::Common.AbstractConfig, integrator::Integrators.AbstractIntegrator; variable)
+function build_problem(system::Systems.AbstractSystem, config::Common.AbstractConfig, integrator::Integrators.AbstractIntegrator; variable)
     return integrator(system, config; variable=variable)
 end
 
@@ -79,9 +79,9 @@ strategy, allowing each integrator to use its own integration algorithm.
 # Returns
 - The ODE solution (type depends on integrator strategy).
 
-See also: [`CTFlows.Flows.call`](@ref), [`CTFlows.Flows.build_ode_problem`](@ref).
+See also: [`CTFlows.Flows.call`](@ref), [`CTFlows.Flows.build_problem`](@ref).
 """
-function integrate(prob, integrator::Integrators.AbstractIntegrator)
+function solve_problem(prob, integrator::Integrators.AbstractIntegrator)
     return integrator(prob)
 end
 
@@ -102,8 +102,8 @@ integrator strategy, allowing each integrator to define its own solution format.
 # Returns
 - The packaged flow solution (type depends on integrator strategy).
 
-See also: [`CTFlows.Flows.call`](@ref), [`CTFlows.Flows.integrate`](@ref).
+See also: [`CTFlows.Flows.call`](@ref), [`CTFlows.Flows.solve_problem`](@ref).
 """
-function build_flow_solution(ode_sol, sys::Systems.AbstractSystem, config::Common.AbstractConfig, integrator::Integrators.AbstractIntegrator)
+function build_solution(ode_sol, sys::Systems.AbstractSystem, config::Common.AbstractConfig, integrator::Integrators.AbstractIntegrator)
     return integrator(ode_sol, sys, config)
 end

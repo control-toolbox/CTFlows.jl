@@ -26,7 +26,7 @@ Tracks which methods were called.
 """
 mutable struct FakeIntegratorForCalling <: Integrators.AbstractIntegrator
     build_problem_called::Bool
-    integrate_called::Bool
+    solve_problem_called::Bool
     build_solution_called::Bool
     problem_result::Any
     ode_solution::Any
@@ -46,7 +46,7 @@ end
 
 # Implement integrator callable for integration
 function (integ::FakeIntegratorForCalling)(prob)
-    integ.integrate_called = true
+    integ.solve_problem_called = true
     integ.ode_solution = :fake_ode_solution
     return integ.ode_solution
 end
@@ -98,7 +98,7 @@ function test_calling()
                 
                 # Verify all steps were called
                 Test.@test integ.build_problem_called === true
-                Test.@test integ.integrate_called === true
+                Test.@test integ.solve_problem_called === true
                 Test.@test integ.build_solution_called === true
                 
                 # Verify result
@@ -115,7 +115,7 @@ function test_calling()
                 result = Flows.call(flow, config; variable=0.5)
                 
                 Test.@test integ.build_problem_called === true
-                Test.@test integ.integrate_called === true
+                Test.@test integ.solve_problem_called === true
                 Test.@test integ.build_solution_called === true
                 Test.@test result === :fake_flow_solution
             end
@@ -129,7 +129,7 @@ function test_calling()
                 result = Flows.call(flow, config)
                 
                 Test.@test integ.build_problem_called === true
-                Test.@test integ.integrate_called === true
+                Test.@test integ.solve_problem_called === true
                 Test.@test integ.build_solution_called === true
                 Test.@test result === :fake_flow_solution
             end
@@ -140,12 +140,12 @@ function test_calling()
         # ====================================================================
 
         Test.@testset "Helper functions" begin
-            Test.@testset "build_ode_problem calls integrator" begin
+            Test.@testset "build_problem calls integrator" begin
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
                 
-                prob = Flows.build_ode_problem(sys, config, integ; variable=nothing)
+                prob = Flows.build_problem(sys, config, integ; variable=nothing)
                 
                 Test.@test integ.build_problem_called === true
                 Test.@test prob === :fake_ode_problem
@@ -155,19 +155,19 @@ function test_calling()
                 integ = FakeIntegratorForCalling()
                 fake_prob = :fake_problem
                 
-                ode_sol = Flows.integrate(fake_prob, integ)
+                ode_sol = Flows.solve_problem(fake_prob, integ)
                 
-                Test.@test integ.integrate_called === true
+                Test.@test integ.solve_problem_called === true
                 Test.@test ode_sol === :fake_ode_solution
             end
 
-            Test.@testset "build_flow_solution calls integrator" begin
+            Test.@testset "build_solution calls integrator" begin
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
                 fake_ode_sol = :fake_ode_sol
                 
-                flow_sol = Flows.build_flow_solution(fake_ode_sol, sys, config, integ)
+                flow_sol = Flows.build_solution(fake_ode_sol, sys, config, integ)
                 
                 Test.@test integ.build_solution_called === true
                 Test.@test flow_sol === :fake_flow_solution
