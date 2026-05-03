@@ -69,6 +69,28 @@ function test_vector_field_solution()
                 sol = Solutions.VectorFieldSolution(result)
                 Test.@test Solutions.times(sol) === Solutions.times(result)
             end
+
+            Test.@testset "state accessor returns sol itself" begin
+                result = FakeIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
+                sol = Solutions.VectorFieldSolution(result)
+                x = Solutions.state(sol)
+                Test.@test x === sol  # Returns same object
+            end
+
+            Test.@testset "state accessor is callable" begin
+                result = FakeIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
+                sol = Solutions.VectorFieldSolution(result)
+                x = Solutions.state(sol)
+                Test.@test x(0.5) ≈ Solutions.evaluate_at(result, 0.5)
+            end
+
+            Test.@testset "time_grid alias works" begin
+                result = FakeIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
+                sol = Solutions.VectorFieldSolution(result)
+                tg = Solutions.time_grid(sol)
+                ts = Solutions.times(sol)
+                Test.@test tg === ts  # Returns same object
+            end
         end
 
         # ====================================================================

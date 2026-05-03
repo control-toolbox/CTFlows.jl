@@ -264,10 +264,11 @@ x.(0.0:0.1:1.0)   # broadcasting sur une grille
 L'extension Plots peut désormais utiliser `times` et `state` au lieu de `raw`, ce qui la rend indépendante de SciML :
 
 ```julia
-function Plots.plot(sol::VectorFieldSolution; kwargs...)
-    x = state(sol)
-    ts = times(sol)
-    return Plots.plot(ts, stack(x.(ts))'; kwargs...)
+function _sol_to_arrays(sol::Solutions.VectorFieldSolution)
+    ts     = Solutions.times(sol)
+    x      = Solutions.state(sol)
+    states = reduce(hcat, x.(ts))'
+    return ts, states
 end
 ```
 

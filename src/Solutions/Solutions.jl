@@ -8,6 +8,7 @@ This module provides:
 - `VectorFieldSolution`: Solution type wrapping integration results
 - `build_solution`: Solution building functions for different configuration types
 - `final_state`, `times`, `evaluate_at`: Semantic accessors for integration results
+- `state`, `time_grid`: Semantic accessors for VectorFieldSolution
 - `plot`: Plotting functionality for solutions
 
 See also: [`CTFlows.Solutions.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.build_solution`](@ref), [`CTFlows.Solutions.plot`](@ref).
@@ -42,6 +43,7 @@ include(joinpath(@__DIR__, "building.jl"))
 # ==============================================================================
 
 export AbstractIntegrationResult, final_state, times, evaluate_at
+export state, time_grid
 export VectorFieldSolution
 export build_solution
 export plot
