@@ -57,14 +57,14 @@ function test_systems_module()
         # ====================================================================
 
         Test.@testset "Functions" begin
-            Test.@testset "rhs! is exported" begin
-                Test.@test isdefined(Systems, :rhs!)
+            Test.@testset "rhs is exported" begin
+                Test.@test isdefined(Systems, :rhs)
             end
 
-            Test.@testset "rhs! returns a callable function" begin
+            Test.@testset "rhs returns a callable function" begin
                 vf = Data.VectorField(x -> -x; autonomous=true, variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                rhs = Systems.rhs!(sys)
+                rhs = Systems.rhs(sys)
                 Test.@test isa(rhs, Function)
 
                 du = zeros(2)

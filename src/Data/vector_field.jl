@@ -84,7 +84,7 @@ end
 (F::VectorField{<:Function, NonAutonomous, NonFixed})(t, x, v) = F.f(t, x, v)
 
 # =============================================================================
-# Uniform (t, x, v) call - used by VectorFieldSystem.rhs!
+# Uniform (t, x, v) call - used by VectorFieldSystem.rhs
 # Every combination forwards to its natural call, ignoring unused args.
 # (NonAutonomous, NonFixed) is already covered by the natural signature above.
 # =============================================================================

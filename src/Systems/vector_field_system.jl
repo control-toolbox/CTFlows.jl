@@ -63,7 +63,7 @@ using CTFlows.Systems, CTFlows.Common
 
 vf = VectorField(x -> -x; autonomous=true, variable=false)
 sys = VectorFieldSystem(vf)
-rhs = Systems.rhs!(sys)
+rhs = Systems.rhs(sys)
 
 du = zeros(2)
 u = [1.0, 2.0]
@@ -74,12 +74,12 @@ rhs(du, u, p, 0.0)
 
 # Notes
 - The closure is computed once at construction time for performance.
-- Multiple calls to `rhs!` return the same function object.
+- Multiple calls to `rhs` return the same function object.
 - The closure reads `p.variable` to access the actual variable value.
 
 See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
 """
-function rhs!(sys::VectorFieldSystem)
+function rhs(sys::VectorFieldSystem)
     return sys.rhs
 end
 

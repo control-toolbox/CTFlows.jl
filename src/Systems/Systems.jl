@@ -4,7 +4,7 @@
 System types and contracts for CTFlows.
 
 This module defines the `AbstractSystem` type and its required methods:
-- `rhs!`: returns the right-hand side function for integration
+- `rhs`: returns the right-hand side function for integration
 - `dimensions`: returns dimensional information (state, costate, control, variable)
 """
 module Systems
@@ -33,7 +33,7 @@ include(joinpath(@__DIR__, "building.jl"))
 # ==============================================================================
 
 export AbstractSystem
-export rhs!
+export rhs
 export VectorFieldSystem
 export build_system
 

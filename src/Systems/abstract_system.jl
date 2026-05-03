@@ -4,13 +4,13 @@ $(TYPEDEF)
 Abstract type for all systems in CTFlows.
 
 An `AbstractSystem` represents a fully assembled object that can be integrated.
-It embeds its own `rhs!`, dimensional metadata, and solution-building logic.
+It embeds its own `rhs`, dimensional metadata, and solution-building logic.
 
 # Contract
 
 All subtypes must implement:
 
-- `rhs!(system::AbstractSystem)`: Returns a function `(du, u, p, t) -> nothing` that fills `du` in place.
+- `rhs(system::AbstractSystem)`: Returns a function `(du, u, p, t) -> nothing` that fills `du` in place.
 
 # Example
 
@@ -24,12 +24,12 @@ struct MySystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
 end
 
 # Implement required contract method
-function Systems.rhs!(sys::MySystem)
+function Systems.rhs(sys::MySystem)
     return (du, u, p, t) -> du .= sys.data .* u
 end
 \`\`\`
 
-See also: [`CTFlows.Systems.rhs!`](@ref), [`CTFlows.Common.time_dependence`](@ref), [`CTFlows.Common.variable_dependence`](@ref).
+See also: [`CTFlows.Systems.rhs`](@ref), [`CTFlows.Common.time_dependence`](@ref), [`CTFlows.Common.variable_dependence`](@ref).
 """
 abstract type AbstractSystem{TD<:Common.TimeDependence, VD<:Common.VariableDependence} end
 
@@ -160,14 +160,14 @@ struct MySystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
     data::Vector{Float64}
 end
 
-# Implement rhs! to return the ODE right-hand side function
-function Systems.rhs!(sys::MySystem)
+# Implement rhs to return the ODE right-hand side function
+function Systems.rhs(sys::MySystem)
     return (du, u, p, t) -> du .= sys.data .* u
 end
 
 # Usage
 sys = MySystem([1.0, 2.0])
-rhs_func = Systems.rhs!(sys)
+rhs_func = Systems.rhs(sys)
 du = zeros(2)
 rhs_func(du, [3.0, 4.0], [], 0.0)  # du becomes [3.0, 8.0]
 \`\`\`
@@ -177,13 +177,13 @@ rhs_func(du, [3.0, 4.0], [], 0.0)  # du becomes [3.0, 8.0]
 
 See also: [`CTFlows.Systems.AbstractSystem`](@ref).
 """
-function rhs!(system::AbstractSystem)
+function rhs(system::AbstractSystem)
     throw(
         Exceptions.NotImplemented(
-            "AbstractSystem rhs! method not implemented";
-            required_method = "rhs!(system::$(typeof(system)))",
+            "AbstractSystem rhs method not implemented";
+            required_method = "rhs(system::$(typeof(system)))",
             suggestion = "Return a function (du, u, p, t) -> nothing that fills du in place.",
-            context = "AbstractSystem.rhs! - required method implementation",
+            context = "AbstractSystem.rhs - required method implementation",
         ),
     )
 end

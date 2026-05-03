@@ -37,8 +37,8 @@ struct FakeSystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
     param_dim::Int
 end
 
-# Implement contract: rhs!
-function Systems.rhs!(sys::FakeSystem)
+# Implement contract: rhs
+function Systems.rhs(sys::FakeSystem)
     return (du, u, p, t) -> du .= -u
 end
 
