@@ -18,6 +18,7 @@ import CTBase.Exceptions
 include(joinpath(@__DIR__, "abstract_tag.jl"))
 include(joinpath(@__DIR__, "configs.jl"))
 include(joinpath(@__DIR__, "traits.jl"))
+include(joinpath(@__DIR__, "ode_parameters.jl"))
 include(joinpath(@__DIR__, "default.jl"))
 
 # ==============================================================================
@@ -27,6 +28,7 @@ include(joinpath(@__DIR__, "default.jl"))
 export AbstractTag, AbstractConfig, PointConfig, TrajectoryConfig, tspan, initial_condition, unwrap_state
 export TimeDependence, Autonomous, NonAutonomous
 export VariableDependence, Fixed, NonFixed
+export ODEParameters
 export has_time_dependence_trait, has_variable_dependence_trait
 export time_dependence, variable_dependence
 export is_autonomous, is_nonautonomous, is_variable, is_nonvariable, has_variable

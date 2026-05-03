@@ -84,7 +84,7 @@ function test_vector_field_system()
                 rhs = Systems.rhs!(sys)
                 du = zeros(2)
                 u = [1.0, 2.0]
-                p = nothing
+                p = Common.ODEParameters(nothing)
                 t = 0.0
                 # Should not throw - signature is correct
                 rhs(du, u, p, t)
@@ -96,7 +96,8 @@ function test_vector_field_system()
                 sys = Systems.VectorFieldSystem(vf)
                 rhs = Systems.rhs!(sys)
                 du = zeros(2)
-                rhs(du, [1.0, 2.0], nothing, 0.0)
+                p = Common.ODEParameters(nothing)
+                rhs(du, [1.0, 2.0], p, 0.0)
                 Test.@test du ≈ [-1.0, -2.0] atol=1e-10
             end
 
@@ -109,8 +110,9 @@ function test_vector_field_system()
                 rhs2 = Systems.rhs!(sys2)
                 du1 = zeros(2)
                 du2 = zeros(2)
-                rhs1(du1, [1.0, 1.0], nothing, 0.0)
-                rhs2(du2, [1.0, 1.0], nothing, 0.0)
+                p = Common.ODEParameters(nothing)
+                rhs1(du1, [1.0, 1.0], p, 0.0)
+                rhs2(du2, [1.0, 1.0], p, 0.0)
                 Test.@test du1 ≈ [2.0, 2.0] atol=1e-10
                 Test.@test du2 ≈ [3.0, 3.0] atol=1e-10
             end

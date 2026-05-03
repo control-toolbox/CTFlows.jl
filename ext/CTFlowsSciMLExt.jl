@@ -289,7 +289,8 @@ Build an `ODEProblem` from a system and configuration.
 function Integrators.build_problem(integ::SciML, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)
     f! = Systems.rhs!(system)
     u0 = Common.initial_condition(config)
-    prob = ODEProblem(f!, u0, Common.tspan(config), variable)
+    p = Common.ODEParameters(variable)
+    prob = ODEProblem(f!, u0, Common.tspan(config), p)
     return prob
 end
 

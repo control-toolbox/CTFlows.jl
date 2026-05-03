@@ -37,6 +37,7 @@ end
 
 # Implement the two required callable signatures
 function Integrators.build_problem(integ::FakeIntegrator, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)
+    p = Common.ODEParameters(variable)
     return :fake_ode_problem
 end
 
