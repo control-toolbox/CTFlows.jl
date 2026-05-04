@@ -280,12 +280,60 @@ end
 # build_sciml_integrator — actual implementation
 # =============================================================================
 
+# =============================================================================
+# Config-dependent option resolution
+# =============================================================================
+
+"""
+    _AUTO_OPTION_KEYS
+
+Tuple of option keys that support automatic resolution based on configuration type.
+
+These options use the `:auto` sentinel value in their metadata and are resolved
+dynamically during integrator construction:
+- For `PointConfig`: set to `false` (only final state needed)
+- For `TrajectoryConfig`: set to `true` (full trajectory storage needed)
+
+Users can override automatic resolution by providing explicit `true`/`false` values
+when constructing the integrator.
+"""
 const _AUTO_OPTION_KEYS = (:dense, :save_everystep, :save_start)
 
 """
 $(TYPEDSIGNATURES)
 
 Build a `SciML` integrator with validated options and pre-computed config-specific options.
+
+This function constructs a SciML integrator with automatic resolution of config-dependent
+options. Options in `_AUTO_OPTION_KEYS` support the `:auto` sentinel value, which is
+resolved based on the configuration type used during integration:
+- For `PointConfig` (e.g., `flow(t0, x0, tf)`): options set to `false` to minimize memory
+  since only the final state is needed
+- For `TrajectoryConfig` (e.g., `flow((t0, tf), x0)`): options set to `true` to enable
+  full trajectory storage and interpolation
+
+The resolved options are pre-computed and cached in the integrator for performance,
+avoiding repeated resolution during integration.
+
+# Arguments
+- `::Type{CTFlows.Integrators.SciMLTag}`: The SciML integrator tag type.
+- `mode::Symbol`: Validation mode for strategy options (`:strict` or `:permissive`).
+- `kwargs...`: User-provided option values. Explicit `true`/`false` values override
+  automatic `:auto` resolution.
+
+# Returns
+- `CTFlows.Integrators.SciML`: Parametric SciML integrator with cached `options_point`
+  and `options_trajectory` fields.
+
+# Notes
+- The `:auto` sentinel is defined in option metadata as `Union{Bool, Symbol}` with
+  default `:auto`.
+- Pre-computation happens at construction time, not during integration.
+- Config-specific options are returned by `Integrators.build_options` based on dispatch
+  on the configuration type.
+
+See also: [`CTFlows.Integrators.build_options`](@ref), [`CTFlows.Integrators.SciML`](@ref),
+[`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Common.TrajectoryConfig`](@ref).
 """
 function CTFlows.Integrators.build_sciml_integrator(
     ::Type{CTFlows.Integrators.SciMLTag}; mode::Symbol = :strict, kwargs...,
