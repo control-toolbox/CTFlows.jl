@@ -27,49 +27,49 @@ println("-" ^ 80)
 
 # Using keyword constructor with defaults
 vf_default = Data.VectorField(x -> -x)
-println("Default constructor (autonomous=true, variable=false):")
+println("Default constructor (is_autonomous=true, is_variable=false):")
 display(vf_default)
 
 # Autonomous Fixed - depends only on state x
 println("\n--- Scalar case ---")
-vf_scalar = Data.VectorField(x -> -2x; autonomous=true, variable=false)
+vf_scalar = Data.VectorField(x -> -2x; is_autonomous=true, is_variable=false)
 println("Scalar: vf(3.0) = ", vf_scalar(3.0))
 display(vf_scalar)
 
 println("\n--- Vector case ---")
-vf_vector = Data.VectorField(x -> -x; autonomous=true, variable=false)
+vf_vector = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
 println("Vector: vf([1.0, 2.0]) = ", vf_vector([1.0, 2.0]))
 display(vf_vector)
 
 println("\n--- Matrix case ---")
-vf_matrix = Data.VectorField(x -> -x; autonomous=true, variable=false)
+vf_matrix = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
 x0_matrix = [1.0 2.0; 3.0 4.0]
 println("Matrix: vf(x0_matrix) = ", vf_matrix(x0_matrix))
 display(vf_matrix)
 
 # NonAutonomous Fixed - depends on time t and state x
 println("\n--- NonAutonomous cases ---")
-vf_nonautonomous_fixed = Data.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
+vf_nonautonomous_fixed = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
 println("NonAutonomous Fixed (vector): vf(2.0, [1.0, 2.0]) = ", vf_nonautonomous_fixed(2.0, [1.0, 2.0]))
 
 # Autonomous NonFixed - depends on state x and variable v
-vf_autonomous_nonfixed = Data.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
+vf_autonomous_nonfixed = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
 println("Autonomous NonFixed (vector): vf([1.0, 2.0], 0.5) = ", vf_autonomous_nonfixed([1.0, 2.0], 0.5))
 
 # NonAutonomous NonFixed - depends on time t, state x, and variable v
-vf_nonautonomous_nonfixed = Data.VectorField((t, x, v) -> t .* x .+ v; autonomous=false, variable=true)
+vf_nonautonomous_nonfixed = Data.VectorField((t, x, v) -> t .* x .+ v; is_autonomous=false, is_variable=true)
 println("NonAutonomous NonFixed (vector): vf(2.0, [1.0, 2.0], 0.5) = ", vf_nonautonomous_nonfixed(2.0, [1.0, 2.0], 0.5))
 
 # Using keyword constructor with explicit flags
-vf_kw_autonomous = Data.VectorField(x -> -x; autonomous=true, variable=false)
+vf_kw_autonomous = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
 println("\nKeyword constructor with explicit flags:")
 display(vf_kw_autonomous)
 
-vf_kw_nonautonomous = Data.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
+vf_kw_nonautonomous = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
 println("NonAutonomous via keyword:")
 display(vf_kw_nonautonomous)
 
-vf_kw_nonfixed = Data.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
+vf_kw_nonfixed = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
 println("NonFixed via keyword:")
 display(vf_kw_nonfixed)
 
@@ -87,21 +87,21 @@ println("  time_dependence(sys) = ", Common.time_dependence(sys_af))
 println("  variable_dependence(sys) = ", Common.variable_dependence(sys_af))
 
 println("\n--- NonAutonomous Fixed ---")
-vf_naf = Data.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
+vf_naf = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
 sys_naf = Systems.VectorFieldSystem(vf_naf)
 println("System from NonAutonomous Fixed VectorField:")
 println("  time_dependence(sys) = ", Common.time_dependence(sys_naf))
 println("  variable_dependence(sys) = ", Common.variable_dependence(sys_naf))
 
 println("\n--- Autonomous NonFixed ---")
-vf_anf = Data.VectorField((x, v) -> v .* x; autonomous=true, variable=true)
+vf_anf = Data.VectorField((x, v) -> v .* x; is_autonomous=true, is_variable=true)
 sys_anf = Systems.VectorFieldSystem(vf_anf)
 println("System from Autonomous NonFixed VectorField:")
 println("  time_dependence(sys) = ", Common.time_dependence(sys_anf))
 println("  variable_dependence(sys) = ", Common.variable_dependence(sys_anf))
 
 println("\n--- NonAutonomous NonFixed ---")
-vf_nanf = Data.VectorField((t, x, v) -> t .* x .+ v; autonomous=false, variable=true)
+vf_nanf = Data.VectorField((t, x, v) -> t .* x .+ v; is_autonomous=false, is_variable=true)
 sys_nanf = Systems.VectorFieldSystem(vf_nanf)
 println("System from NonAutonomous NonFixed VectorField:")
 println("  time_dependence(sys) = ", Common.time_dependence(sys_nanf))
@@ -142,7 +142,7 @@ println("-" ^ 80)
 
 println("\n--- build_flow from system and integrator ---")
 println("Step 1: Build system from VectorField")
-vf_flow = Data.VectorField(x -> -x; autonomous=true, variable=false)
+vf_flow = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
 sys_flow = Systems.build_system(vf_flow)
 println("System: ", typeof(sys_flow))
 
@@ -157,16 +157,16 @@ println("  system(flow) = ", typeof(Flows.system(flow_from_build)))
 println("  integrator(flow) = ", typeof(Flows.integrator(flow_from_build)))
 
 println("\n--- Flow constructor from VectorField ---")
-println("Direct construction: Flow(vf, id=:sciml; opts...)")
-flow_direct = Flows.Flow(vf_flow, :sciml; reltol=1e-8)
+println("Direct construction: Flow(vf; opts...)")
+flow_direct = Flows.Flow(vf_flow; reltol=1e-8)
 println("Flow: ", typeof(flow_direct))
 println("  system(flow) = ", typeof(Flows.system(flow_direct)))
 println("  integrator(flow) = ", typeof(Flows.integrator(flow_direct)))
 Flows.integrator(flow_direct)
 
 println("\n--- NonFixed flow construction ---")
-vf_nonfixed_flow = Data.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
-flow_nonfixed = Flows.Flow(vf_nonfixed_flow, :sciml)
+vf_nonfixed_flow = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
+flow_nonfixed = Flows.Flow(vf_nonfixed_flow)
 println("NonFixed Flow: ", typeof(flow_nonfixed))
 println("  variable_dependence(system(flow)) = ", Common.variable_dependence(Flows.system(flow_nonfixed)))
 
@@ -182,7 +182,7 @@ using OrdinaryDiffEqTsit5
 
 println("\n--- Vector case pipeline (Fixed) ---")
 println("Step 1: Create VectorField")
-vf_vector = Data.VectorField(x -> -x; autonomous=true, variable=false)
+vf_vector = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
 display(vf_vector)
 println("Call: vf([1.0, 2.0]) = ", vf_vector([1.0, 2.0]))
 
@@ -200,12 +200,12 @@ println("\nStep 4: Integration via call()")
 println("\n  4a. call(flow, config) with PointConfig")
 flow = Flows.Flow(sys_vector, integrator)
 config_point = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
-result_point = Flows.call(flow, config_point)
+result_point = Flows.call(flow, config_point; variable=nothing, unsafe=false)
 println("    result = ", result_point)
 
 println("\n  4b. call(flow, config) with TrajectoryConfig")
 config_traj = Common.TrajectoryConfig((0.0, 1.0), [1.0, 2.0])
-result_traj = Flows.call(flow, config_traj)
+result_traj = Flows.call(flow, config_traj; variable=nothing, unsafe=false)
 println("    result type: ", typeof(result_traj))
 println("    result is VectorFieldSolution: ", result_traj isa Solutions.VectorFieldSolution)
 display(result_traj)
@@ -221,39 +221,39 @@ result_direct = flow(0.0, [1.0, 2.0], 1.0)
 println("    flow(0.0, [1.0, 2.0], 1.0) = ", result_direct)
 
 println("\n--- NonFixed case (with variable) ---")
-vf_nonfixed = Data.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
+vf_nonfixed = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
 println("VectorField (NonFixed):")
 display(vf_nonfixed)
 
 sys_nonfixed = Systems.build_system(vf_nonfixed)
 flow_nonfixed = Flows.Flow(sys_nonfixed, integrator)
 config_nonfixed = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
-result_nonfixed = Flows.call(flow_nonfixed, config_nonfixed; variable=0.5)
+result_nonfixed = Flows.call(flow_nonfixed, config_nonfixed; variable=0.5, unsafe=false)
 println("Result with variable=0.5: ", result_nonfixed)
 
 println("\n  Direct flow callable with variable:")
-result_direct_nonfixed = flow_nonfixed(0.0, [1.0, 2.0], 1.0; variable=0.5)
+result_direct_nonfixed = flow_nonfixed(0.0, [1.0, 2.0], 1.0; variable=0.5, unsafe=false)
 println("    flow(0.0, [1.0, 2.0], 1.0; variable=0.5) = ", result_direct_nonfixed)
 
 println("\n--- Scalar case ---")
-vf_scalar = Data.VectorField(x -> -2x; autonomous=true, variable=false)
+vf_scalar = Data.VectorField(x -> -2x; is_autonomous=true, is_variable=false)
 println("Scalar VectorField:")
 display(vf_scalar)
 sys_scalar = Systems.build_system(vf_scalar)
 flow_scalar = Flows.Flow(sys_scalar, integrator)
 config_scalar = Common.PointConfig(0.0, 3.0, 1.0)
-result_scalar = Flows.call(flow_scalar, config_scalar)
+result_scalar = Flows.call(flow_scalar, config_scalar; variable=nothing, unsafe=false)
 println("  Result: ", result_scalar, " (scalar)")
 
 println("\n--- Matrix case ---")
-vf_matrix = Data.VectorField(x -> -x; autonomous=true, variable=false)
+vf_matrix = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
 x0_matrix = [1.0 2.0; 3.0 4.0]
 println("Matrix VectorField:")
 display(vf_matrix)
 sys_matrix = Systems.build_system(vf_matrix)
 flow_matrix = Flows.Flow(sys_matrix, integrator)
 config_matrix = Common.PointConfig(0.0, x0_matrix, 1.0)
-result_matrix = Flows.call(flow_matrix, config_matrix)
+result_matrix = Flows.call(flow_matrix, config_matrix; variable=nothing, unsafe=false)
 println("  Result: ", result_matrix, " (matrix)")
 
 # =============================================================================
@@ -290,5 +290,5 @@ println("  2. The CTFlowsSciMLExt extension will be automatically activated")
 println("  3. Then you can use:")
 println("     integrator = Integrators.SciML()")
 println("     flow = Flows.Flow(system, integrator)")
-println("     result = Flows.call(flow, config)")
+println("     result = Flows.call(flow, config; variable=nothing, unsafe=false)")
 println("     result = flow(t0, x0, tf)  # direct callable, builds config internally")

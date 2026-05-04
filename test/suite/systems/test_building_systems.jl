@@ -21,35 +21,35 @@ function test_building_systems()
 
         Test.@testset "build_system" begin
             Test.@testset "build_system returns VectorFieldSystem" begin
-                vf = Data.VectorField(x -> -x; autonomous=true, variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.build_system(vf)
                 Test.@test sys isa Systems.VectorFieldSystem
                 Test.@test sys isa Systems.AbstractSystem
             end
 
             Test.@testset "build_system preserves traits - Autonomous Fixed" begin
-                vf = Data.VectorField(x -> x; autonomous=true, variable=false)
+                vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
                 sys = Systems.build_system(vf)
                 Test.@test Common.time_dependence(sys) === Common.Autonomous
                 Test.@test Common.variable_dependence(sys) === Common.Fixed
             end
 
             Test.@testset "build_system preserves traits - NonAutonomous Fixed" begin
-                vf = Data.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
+                vf = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
                 sys = Systems.build_system(vf)
                 Test.@test Common.time_dependence(sys) === Common.NonAutonomous
                 Test.@test Common.variable_dependence(sys) === Common.Fixed
             end
 
             Test.@testset "build_system preserves traits - Autonomous NonFixed" begin
-                vf = Data.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
+                vf = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
                 sys = Systems.build_system(vf)
                 Test.@test Common.time_dependence(sys) === Common.Autonomous
                 Test.@test Common.variable_dependence(sys) === Common.NonFixed
             end
 
             Test.@testset "build_system preserves traits - NonAutonomous NonFixed" begin
-                vf = Data.VectorField((t, x, v) -> t .* x .+ v; autonomous=false, variable=true)
+                vf = Data.VectorField((t, x, v) -> t .* x .+ v; is_autonomous=false, is_variable=true)
                 sys = Systems.build_system(vf)
                 Test.@test Common.time_dependence(sys) === Common.NonAutonomous
                 Test.@test Common.variable_dependence(sys) === Common.NonFixed
@@ -62,14 +62,14 @@ function test_building_systems()
 
         Test.@testset "Integration with rhs" begin
             Test.@testset "built system has working rhs" begin
-                vf = Data.VectorField(x -> -x; autonomous=true, variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.build_system(vf)
                 rhs = Systems.rhs(sys)
                 Test.@test rhs isa Function
             end
 
             Test.@testset "built system rhs computes correctly" begin
-                vf = Data.VectorField(x -> 2 .* x; autonomous=true, variable=false)
+                vf = Data.VectorField(x -> 2 .* x; is_autonomous=true, is_variable=false)
                 sys = Systems.build_system(vf)
                 rhs = Systems.rhs(sys)
                 du = zeros(2)

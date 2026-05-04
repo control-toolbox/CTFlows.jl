@@ -24,7 +24,7 @@ function test_building_flows()
 
         Test.@testset "Flow constructor from VectorField" begin
             Test.@testset "default constructor" begin
-                vf = Data.VectorField(x -> -x; autonomous=true, variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 flow = Flows.Flow(vf)
 
                 Test.@test flow isa Flows.Flow
@@ -34,7 +34,7 @@ function test_building_flows()
             end
 
             Test.@testset "with keyword options" begin
-                vf = Data.VectorField(x -> -x; autonomous=true, variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 flow = Flows.Flow(vf; reltol=1e-10)
 
                 Test.@test flow isa Flows.Flow
@@ -48,7 +48,7 @@ function test_building_flows()
 
         Test.@testset "Trait preservation" begin
             Test.@testset "Autonomous Fixed" begin
-                vf = Data.VectorField(x -> x; autonomous=true, variable=false)
+                vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
                 flow = Flows.Flow(vf)
                 
                 Test.@test Common.time_dependence(flow) === Common.Autonomous
@@ -56,7 +56,7 @@ function test_building_flows()
             end
 
             Test.@testset "NonAutonomous Fixed" begin
-                vf = Data.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
+                vf = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
                 flow = Flows.Flow(vf)
                 
                 Test.@test Common.time_dependence(flow) === Common.NonAutonomous
@@ -64,7 +64,7 @@ function test_building_flows()
             end
 
             Test.@testset "Autonomous NonFixed" begin
-                vf = Data.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
+                vf = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
                 flow = Flows.Flow(vf)
                 
                 Test.@test Common.time_dependence(flow) === Common.Autonomous
@@ -72,7 +72,7 @@ function test_building_flows()
             end
 
             Test.@testset "NonAutonomous NonFixed" begin
-                vf = Data.VectorField((t, x, v) -> t .* x .+ v; autonomous=false, variable=true)
+                vf = Data.VectorField((t, x, v) -> t .* x .+ v; is_autonomous=false, is_variable=true)
                 flow = Flows.Flow(vf)
                 
                 Test.@test Common.time_dependence(flow) === Common.NonAutonomous
@@ -85,7 +85,7 @@ function test_building_flows()
         # ====================================================================
 
         Test.@testset "System and Integrator access" begin
-            vf = Data.VectorField(x -> 2 .* x; autonomous=true, variable=false)
+            vf = Data.VectorField(x -> 2 .* x; is_autonomous=true, is_variable=false)
             flow = Flows.Flow(vf)
             
             Test.@testset "system accessor returns correct system" begin
@@ -105,7 +105,7 @@ function test_building_flows()
 
         Test.@testset "Integration with build_system" begin
             Test.@testset "build_system is called internally" begin
-                vf = Data.VectorField(x -> -x; autonomous=true, variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 
                 # Build system directly
                 sys_direct = Systems.build_system(vf)

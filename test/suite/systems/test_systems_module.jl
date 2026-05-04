@@ -45,7 +45,7 @@ function test_systems_module()
 
             Test.@testset "VectorFieldSystem constructor is exported" begin
                 Test.@test isdefined(Systems, :VectorFieldSystem)
-                vf = Data.VectorField(x -> x; autonomous=true, variable=false)
+                vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 Test.@test sys isa Systems.VectorFieldSystem
                 Test.@test sys isa Systems.AbstractSystem
@@ -62,7 +62,7 @@ function test_systems_module()
             end
 
             Test.@testset "rhs returns a callable function" begin
-                vf = Data.VectorField(x -> -x; autonomous=true, variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 rhs = Systems.rhs(sys)
                 Test.@test isa(rhs, Function)
@@ -93,21 +93,21 @@ function test_systems_module()
             end
 
             Test.@testset "time_dependence function works with VectorFieldSystem" begin
-                vf_aut = Data.VectorField(x -> x; autonomous=true)
+                vf_aut = Data.VectorField(x -> x; is_autonomous=true)
                 sys_aut = Systems.VectorFieldSystem(vf_aut)
                 Test.@test Common.time_dependence(sys_aut) === Common.Autonomous
 
-                vf_non = Data.VectorField((t, x) -> x; autonomous=false)
+                vf_non = Data.VectorField((t, x) -> x; is_autonomous=false)
                 sys_non = Systems.VectorFieldSystem(vf_non)
                 Test.@test Common.time_dependence(sys_non) === Common.NonAutonomous
             end
 
             Test.@testset "variable_dependence function works with VectorFieldSystem" begin
-                vf_fixed = Data.VectorField(x -> x; variable=false)
+                vf_fixed = Data.VectorField(x -> x; is_variable=false)
                 sys_fixed = Systems.VectorFieldSystem(vf_fixed)
                 Test.@test Common.variable_dependence(sys_fixed) === Common.Fixed
 
-                vf_nonfixed = Data.VectorField((x, v) -> x .* v; variable=true)
+                vf_nonfixed = Data.VectorField((x, v) -> x .* v; is_variable=true)
                 sys_nonfixed = Systems.VectorFieldSystem(vf_nonfixed)
                 Test.@test Common.variable_dependence(sys_nonfixed) === Common.NonFixed
             end
@@ -119,28 +119,28 @@ function test_systems_module()
 
         Test.@testset "Trait Propagation" begin
             Test.@testset "Autonomous Fixed traits propagate" begin
-                vf = Data.VectorField(x -> x; autonomous=true, variable=false)
+                vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 Test.@test Common.time_dependence(sys) === Common.Autonomous
                 Test.@test Common.variable_dependence(sys) === Common.Fixed
             end
 
             Test.@testset "NonAutonomous Fixed traits propagate" begin
-                vf = Data.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
+                vf = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 Test.@test Common.time_dependence(sys) === Common.NonAutonomous
                 Test.@test Common.variable_dependence(sys) === Common.Fixed
             end
 
             Test.@testset "Autonomous NonFixed traits propagate" begin
-                vf = Data.VectorField((x, v) -> x .* v; autonomous=true, variable=true)
+                vf = Data.VectorField((x, v) -> x .* v; is_autonomous=true, is_variable=true)
                 sys = Systems.VectorFieldSystem(vf)
                 Test.@test Common.time_dependence(sys) === Common.Autonomous
                 Test.@test Common.variable_dependence(sys) === Common.NonFixed
             end
 
             Test.@testset "NonAutonomous NonFixed traits propagate" begin
-                vf = Data.VectorField((t, x, v) -> t .* x .* v; autonomous=false, variable=true)
+                vf = Data.VectorField((t, x, v) -> t .* x .* v; is_autonomous=false, is_variable=true)
                 sys = Systems.VectorFieldSystem(vf)
                 Test.@test Common.time_dependence(sys) === Common.NonAutonomous
                 Test.@test Common.variable_dependence(sys) === Common.NonFixed

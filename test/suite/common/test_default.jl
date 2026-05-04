@@ -18,12 +18,16 @@ function test_default()
         # ====================================================================
 
         Test.@testset "Default Value Functions" begin
-            Test.@testset "__autonomous returns true" begin
-                Test.@test Common.__autonomous() === true
+            Test.@testset "__is_autonomous returns true" begin
+                Test.@test Common.__is_autonomous() === true
             end
 
-            Test.@testset "__variable returns false" begin
-                Test.@test Common.__variable() === false
+            Test.@testset "__is_variable returns false" begin
+                Test.@test Common.__is_variable() === false
+            end
+
+            Test.@testset "__variable returns nothing" begin
+                Test.@test Common.__variable() === nothing
             end
 
             Test.@testset "__unsafe returns false" begin

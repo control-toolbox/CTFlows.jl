@@ -35,7 +35,7 @@ function test_building_solutions()
 
         Test.@testset "build_solution - PointConfig" begin
             Test.@testset "vector initial condition returns final state" begin
-                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; autonomous=true, variable=false))
+                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; is_autonomous=false, is_variable=false))
                 result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
                 config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
                 
@@ -45,7 +45,7 @@ function test_building_solutions()
             end
 
             Test.@testset "scalar initial condition unwraps length-1 vector" begin
-                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; autonomous=true, variable=false))
+                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; is_autonomous=false, is_variable=false))
                 result = FakeIntegrationResult([[3.0], [1.5]])
                 config = Common.PointConfig(0.0, 3.0, 1.0)
                 
@@ -61,7 +61,7 @@ function test_building_solutions()
 
         Test.@testset "build_solution - TrajectoryConfig" begin
             Test.@testset "returns VectorFieldSolution wrapping result" begin
-                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; autonomous=true, variable=false))
+                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; is_autonomous=false, is_variable=false))
                 result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
                 config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 2.0])
                 
@@ -70,7 +70,7 @@ function test_building_solutions()
             end
 
             Test.@testset "VectorFieldSolution contains correct result" begin
-                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; autonomous=true, variable=false))
+                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; is_autonomous=false, is_variable=false))
                 result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
                 config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 2.0])
                 

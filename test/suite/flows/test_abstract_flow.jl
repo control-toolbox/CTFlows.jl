@@ -231,7 +231,7 @@ function test_abstract_flow()
 
         Test.@testset "VectorField Flow Integration Tests" begin
             Test.@testset "Autonomous Fixed Flow" begin
-                vf = Data.VectorField(x -> -x; autonomous=true, variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
@@ -245,7 +245,7 @@ function test_abstract_flow()
             end
 
             Test.@testset "NonAutonomous Fixed Flow" begin
-                vf = Data.VectorField((t, x) -> t .* x; autonomous=false, variable=false)
+                vf = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
@@ -259,7 +259,7 @@ function test_abstract_flow()
             end
 
             Test.@testset "Autonomous NonFixed Flow" begin
-                vf = Data.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
+                vf = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
                 sys = Systems.VectorFieldSystem(vf)
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
