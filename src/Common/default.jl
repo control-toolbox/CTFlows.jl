@@ -21,3 +21,13 @@ Returns `false` by default, meaning objects have fixed parameters unless
 specified otherwise.
 """
 __variable()::Bool = false
+
+"""
+$(TYPEDSIGNATURES)
+
+Default value for unsafe flag in integration functions.
+
+Returns `false` by default, meaning ODE solver retcodes are checked and
+failures throw exceptions unless explicitly bypassed.
+"""
+__unsafe()::Bool = false

@@ -9,6 +9,7 @@ This performs the integration and builds the solution.
 - `flow::CTFlows.Flows.AbstractFlow`: The flow to solve.
 - `config::CTFlows.Common.AbstractConfig`: The integration configuration (e.g., `PointConfig`, `TrajectoryConfig`).
 - `variable=nothing`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
+- `unsafe=Common.__unsafe()`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
 
 # Returns
 - The packaged solution (type varies by config type).
@@ -23,7 +24,7 @@ sol = call(flow, config)
 
 See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
 """
-function call(flow::Flows.AbstractFlow{TD, VD}, config::Common.AbstractConfig; variable=nothing) where {TD<:Common.TimeDependence, VD<:Common.VariableDependence}
+function call(flow::Flows.AbstractFlow{TD, VD}, config::Common.AbstractConfig; variable=nothing, unsafe=Common.__unsafe()) where {TD<:Common.TimeDependence, VD<:Common.VariableDependence}
 
     # get system and integrator
     sys = system(flow)
@@ -33,7 +34,7 @@ function call(flow::Flows.AbstractFlow{TD, VD}, config::Common.AbstractConfig; v
     prob = Integrators.build_problem(int, sys, config; variable=variable)
 
     # integrate ode problem
-    result = Integrators.solve_problem(int, prob)
+    result = Integrators.solve_problem(int, prob; unsafe=unsafe)
 
     # build flow solution
     flow_sol = Solutions.build_solution(result, sys, config)

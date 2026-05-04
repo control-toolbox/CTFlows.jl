@@ -7,7 +7,7 @@ MarkdownAST = "d0879d2d-cac2-40c8-9cee-1863dc0c7391"
 
 [compat]
 CTBase = "0.18"
-CTSolvers = "0.2"
+CTSolvers = "0.4"
 Documenter = "1"
 MarkdownAST = "0.1"
 julia = "1.10"

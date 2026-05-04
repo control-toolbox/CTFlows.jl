@@ -68,6 +68,7 @@ Solve the given ODE problem.
 # Arguments
 - `integrator::AbstractIntegrator`: The integrator strategy.
 - `prob`: The ODE problem to solve (type varies by concrete integrator; tspan is embedded).
+- `unsafe=Common.__unsafe()`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
 
 # Returns
 - The ODE integration result, as a subtype of `CTFlows.Solutions.AbstractIntegrationResult`.
@@ -77,11 +78,11 @@ Solve the given ODE problem.
 
 See also: [`CTFlows.Integrators.AbstractIntegrator`](@ref), [`CTFlows.Integrators.build_problem`](@ref).
 """
-function solve_problem(integrator::AbstractIntegrator, prob)
+function solve_problem(integrator::AbstractIntegrator, prob; unsafe=Common.__unsafe())
     throw(Exceptions.NotImplemented(
         "AbstractIntegrator solve_problem not implemented";
-        required_method = "solve_problem(integrator::$(typeof(integrator)), prob)",
-        suggestion = "Implement solve_problem(i::YourIntegrator, prob) returning an AbstractIntegrationResult.",
+        required_method = "solve_problem(integrator::$(typeof(integrator)), prob; unsafe=false)",
+        suggestion = "Implement solve_problem(i::YourIntegrator, prob; unsafe=false) returning an AbstractIntegrationResult.",
         context = "AbstractIntegrator solve_problem - required method implementation",
     ))
 end
