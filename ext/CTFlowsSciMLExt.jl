@@ -160,9 +160,9 @@ function Strategies.metadata(::Type{SciML})
         ),
         Strategies.OptionDefinition(;
             name = :save_everystep,
-            type = Bool,
-            default = Options.NotProvided,
-            description = "Save the solution at every solver step.",
+            type = Union{Bool, Symbol},
+            default = :auto,
+            description = "Save the solution at every solver step. Set `true`/`false` to force, or `:auto` to infer from call pattern (false for `flow(t0, x0[, p0], tf)`, true for `flow((t0, tf), x0[, p0])`).",
         ),
         Strategies.OptionDefinition(;
             name = :saveat,
@@ -173,9 +173,9 @@ function Strategies.metadata(::Type{SciML})
         ),
         Strategies.OptionDefinition(;
             name = :dense,
-            type = Bool,
-            default = true,
-            description = "Whether to save extra pieces for dense (continuous) output.",
+            type = Union{Bool, Symbol},
+            default = :auto,
+            description = "Dense output. Set `true`/`false` to force, or `:auto` to infer from call pattern (false for `flow(t0, x0[, p0], tf)`, true for `flow((t0, tf), x0[, p0])`).",
         ),
         Strategies.OptionDefinition(;
             name = :save_idxs,
@@ -253,9 +253,9 @@ function Strategies.metadata(::Type{SciML})
         ),
         Strategies.OptionDefinition(;
             name = :save_start,
-            type = Bool,
-            default = Options.NotProvided,
-            description = "Whether to save the initial condition.",
+            type = Union{Bool, Symbol},
+            default = :auto,
+            description = "Save initial condition in solution. Set `true`/`false` to force, or `:auto` to infer from call pattern (false for `flow(t0, x0[, p0], tf)`, true for `flow((t0, tf), x0[, p0])`).",
         ),
         Strategies.OptionDefinition(;
             name = :save_end,
@@ -280,16 +280,104 @@ end
 # build_sciml_integrator — actual implementation
 # =============================================================================
 
+const _AUTO_OPTION_KEYS = (:dense, :save_everystep, :save_start)
+
 """
 $(TYPEDSIGNATURES)
 
-Build a `SciML` integrator with validated options.
+Build a `SciML` integrator with validated options and pre-computed config-specific options.
 """
 function CTFlows.Integrators.build_sciml_integrator(
     ::Type{CTFlows.Integrators.SciMLTag}; mode::Symbol = :strict, kwargs...,
 )
     opts = Strategies.build_strategy_options(SciML; mode = mode, kwargs...)
-    return CTFlows.Integrators.SciML(opts)
+    
+    # Extract raw options using the CTSolvers internal pattern
+    # Following: options_dict(strategy) implementation
+    raw_opts = Options.extract_raw_options(Strategies._raw_options(opts))
+    raw = Dict{Symbol,Any}(pairs(raw_opts))
+    
+    # Pre-compute options for PointConfig
+    options_point = copy(raw)
+    for key in _AUTO_OPTION_KEYS
+        get(options_point, key, :auto) === :auto && (options_point[key] = false)
+    end
+    
+    # Pre-compute options for TrajectoryConfig
+    options_trajectory = copy(raw)
+    for key in _AUTO_OPTION_KEYS
+        get(options_trajectory, key, :auto) === :auto && (options_trajectory[key] = true)
+    end
+    
+    return CTFlows.Integrators.SciML{typeof(opts), typeof(options_point), typeof(options_trajectory)}(
+        opts, options_point, options_trajectory
+    )
+end
+
+# =============================================================================
+# build_options — config-dependent option resolution
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Return pre-computed solver options for PointConfig.
+
+For a PointConfig, options like `dense`, `save_everystep`, and `save_start`
+are set to `false` to minimize memory since only the final state is needed.
+
+# Arguments
+- `integ::SciML`: The SciML integrator with pre-computed option caches.
+- `config::Common.PointConfig`: The point configuration.
+
+# Returns
+- `Dict{Symbol,Any}`: Pre-computed options optimized for PointConfig.
+
+See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref).
+"""
+function Integrators.build_options(integ::SciML, config::Common.PointConfig)
+    return integ.options_point
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return pre-computed solver options for TrajectoryConfig.
+
+For a TrajectoryConfig, options like `dense`, `save_everystep`, and `save_start`
+are set to `true` to enable full trajectory storage and interpolation.
+
+# Arguments
+- `integ::SciML`: The SciML integrator with pre-computed option caches.
+- `config::Common.TrajectoryConfig`: The trajectory configuration.
+
+# Returns
+- `Dict{Symbol,Any}`: Pre-computed options optimized for TrajectoryConfig.
+
+See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref).
+"""
+function Integrators.build_options(integ::SciML, config::Common.TrajectoryConfig)
+    return integ.options_trajectory
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return pre-computed solver options for fallback case (Nothing).
+
+Defaults to TrajectoryConfig options when no configuration is provided.
+
+# Arguments
+- `integ::SciML`: The SciML integrator with pre-computed option caches.
+- `config::Nothing`: No configuration provided (fallback).
+
+# Returns
+- `Dict{Symbol,Any}`: Pre-computed options for TrajectoryConfig (fallback).
+
+See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref).
+"""
+function Integrators.build_options(integ::SciML, config::Nothing)
+    return integ.options_trajectory  # fallback vers Trajectory par défaut
 end
 
 # =============================================================================
@@ -356,12 +444,13 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Solve an `ODEProblem` using the `SciML`'s configured options.
+Solve an `ODEProblem` using resolved options.
 Returns a `SciMLIntegrationResult` wrapping the raw `ODESolution`.
 
 # Arguments
 - `integ::SciML`: The SciML integrator strategy.
 - `prob::SciMLBase.AbstractODEProblem`: The ODE problem to solve.
+- `options::Dict{Symbol,Any}`: Resolved solver options (typically from `build_options`).
 - `unsafe=Common.__unsafe()`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
 
 # Returns
@@ -370,8 +459,7 @@ Returns a `SciMLIntegrationResult` wrapping the raw `ODESolution`.
 # Throws
 - `CTBase.Exceptions.SolverFailure`: If the ODE solver returns an unsuccessful retcode and `unsafe=false`.
 """
-function Integrators.solve_problem(integ::SciML, prob::SciMLBase.AbstractODEProblem; unsafe=Common.__unsafe())
-    options = Strategies.options_dict(integ)
+function Integrators.solve_problem(integ::SciML, prob::SciMLBase.AbstractODEProblem, options::Dict{Symbol,Any}; unsafe=Common.__unsafe())
     ode_sol = SciMLBase.solve(prob; options...)
     if !unsafe && !SciMLBase.successful_retcode(ode_sol.retcode)
         throw(Exceptions.SolverFailure(

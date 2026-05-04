@@ -34,13 +34,14 @@ Tracks which methods were called.
 """
 mutable struct FakeIntegratorForCalling <: Integrators.AbstractIntegrator
     build_problem_called::Bool
+    build_options_called::Bool
     solve_problem_called::Bool
     problem_result::Any
     ode_solution::Any
 end
 
 function FakeIntegratorForCalling()
-    return FakeIntegratorForCalling(false, false, nothing, nothing)
+    return FakeIntegratorForCalling(false, false, false, nothing, nothing)
 end
 
 # Implement named functions instead of callables
@@ -51,7 +52,12 @@ function Integrators.build_problem(integ::FakeIntegratorForCalling, system::Syst
     return integ.problem_result
 end
 
-function Integrators.solve_problem(integ::FakeIntegratorForCalling, prob; unsafe=false)
+function Integrators.build_options(integ::FakeIntegratorForCalling, config::Union{Common.AbstractConfig, Nothing})
+    integ.build_options_called = true
+    return Dict{Symbol,Any}()
+end
+
+function Integrators.solve_problem(integ::FakeIntegratorForCalling, prob, options::Dict{Symbol,Any}; unsafe=false)
     integ.solve_problem_called = true
     integ.ode_solution = FakeIntegrationResultForCalling()
     return integ.ode_solution
@@ -113,6 +119,7 @@ function test_calling()
                 
                 # Verify all steps were called
                 Test.@test integ.build_problem_called === true
+                Test.@test integ.build_options_called === true
                 Test.@test integ.solve_problem_called === true
                 
                 # Verify result - for PointConfig it unwraps the vector
@@ -129,6 +136,7 @@ function test_calling()
                 result = Flows.call(flow, config; variable=0.5, unsafe=false)
                 
                 Test.@test integ.build_problem_called === true
+                Test.@test integ.build_options_called === true
                 Test.@test integ.solve_problem_called === true
                 Test.@test result == :fake_flow_solution
             end
@@ -142,6 +150,7 @@ function test_calling()
                 result = Flows.call(flow, config; variable=nothing, unsafe=false)
 
                 Test.@test integ.build_problem_called === true
+                Test.@test integ.build_options_called === true
                 Test.@test integ.solve_problem_called === true
                 Test.@test result === :fake_vector_field_solution
             end
@@ -156,6 +165,7 @@ function test_calling()
                 result = Flows.call(flow, config; variable=nothing, unsafe=true)
 
                 Test.@test integ.build_problem_called === true
+                Test.@test integ.build_options_called === true
                 Test.@test integ.solve_problem_called === true
                 Test.@test result == :fake_flow_solution
             end
