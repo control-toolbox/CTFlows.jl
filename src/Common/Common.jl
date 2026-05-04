@@ -32,6 +32,6 @@ export ODEParameters
 export has_time_dependence_trait, has_variable_dependence_trait
 export time_dependence, variable_dependence
 export is_autonomous, is_nonautonomous, is_variable, is_nonvariable, has_variable
-export __autonomous, __variable, __unsafe
+export __is_autonomous, __is_variable, __variable, __unsafe
 
 end # module Common

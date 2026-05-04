@@ -48,21 +48,21 @@ function Flows.integrator(flow::FakeFlow)
     return flow.integ
 end
 
-# Config-based callable - both Fixed and NonFixed accept variable=nothing, unsafe=false
-function (flow::FakeFlow)(config::Common.PointConfig; variable=nothing, unsafe=false)
+# Config-based callable - both Fixed and NonFixed require variable, unsafe
+function (flow::FakeFlow)(config::Common.PointConfig; variable, unsafe)
     return flow.integ.result
 end
 
-function (flow::FakeFlow)(config::Common.TrajectoryConfig; variable=nothing, unsafe=false)
+function (flow::FakeFlow)(config::Common.TrajectoryConfig; variable, unsafe)
     return flow.integ.result
 end
 
-# Positional callable - both Fixed and NonFixed accept variable=nothing, unsafe=false
-function (flow::FakeFlow)(t0, x0, tf; variable=nothing, unsafe=false)
+# Positional callable - both Fixed and NonFixed require variable, unsafe
+function (flow::FakeFlow)(t0, x0, tf; variable, unsafe)
     return flow.integ.result
 end
 
-function (flow::FakeFlow)(tspan::Tuple, x0; variable=nothing, unsafe=false)
+function (flow::FakeFlow)(tspan::Tuple, x0; variable, unsafe)
     return flow.integ.result
 end
 
@@ -126,38 +126,38 @@ function test_flow()
 
             Test.@testset "call with PointConfig" begin
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
-                result = flow(config)
+                result = flow(config; variable=nothing, unsafe=false)
                 Test.@test result === :solution
             end
 
             Test.@testset "call with PointConfig and variable (ignored for Fixed)" begin
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
-                result = flow(config; variable = 0.5)
+                result = flow(config; variable=0.5, unsafe=false)
                 Test.@test result === :solution
             end
 
             Test.@testset "call with (t0, x0, tf)" begin
-                result = flow(0.0, [1.0, 0.0], 1.0)
+                result = flow(0.0, [1.0, 0.0], 1.0; variable=nothing, unsafe=false)
                 Test.@test result === :solution
             end
 
             Test.@testset "call with (t0, x0, tf; variable) (ignored for Fixed)" begin
-                result = flow(0.0, [1.0, 0.0], 1.0; variable = 0.5)
+                result = flow(0.0, [1.0, 0.0], 1.0; variable=0.5, unsafe=false)
                 Test.@test result === :solution
             end
 
             Test.@testset "call with (tspan, x0)" begin
-                result = flow((0.0, 1.0), [1.0, 0.0])
+                result = flow((0.0, 1.0), [1.0, 0.0]; variable=nothing, unsafe=false)
                 Test.@test result === :solution
             end
 
             Test.@testset "call with (tspan, x0; variable) (ignored for Fixed)" begin
-                result = flow((0.0, 1.0), [1.0, 0.0]; variable = 0.5)
+                result = flow((0.0, 1.0), [1.0, 0.0]; variable=0.5, unsafe=false)
                 Test.@test result === :solution
             end
 
             Test.@testset "call with unsafe kwarg" begin
-                result = flow(0.0, [1.0, 0.0], 1.0; unsafe = true)
+                result = flow(0.0, [1.0, 0.0], 1.0; variable=nothing, unsafe=true)
                 Test.@test result === :solution
             end
         end
@@ -173,38 +173,38 @@ function test_flow()
 
             Test.@testset "call with PointConfig" begin
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
-                result = flow(config)
+                result = flow(config; variable=nothing, unsafe=false)
                 Test.@test result === :solution
             end
 
             Test.@testset "call with PointConfig and variable" begin
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
-                result = flow(config; variable = 0.5)
+                result = flow(config; variable=0.5, unsafe=false)
                 Test.@test result === :solution
             end
 
             Test.@testset "call with (t0, x0, tf)" begin
-                result = flow(0.0, [1.0, 0.0], 1.0)
+                result = flow(0.0, [1.0, 0.0], 1.0; variable=nothing, unsafe=false)
                 Test.@test result === :solution
             end
 
             Test.@testset "call with (t0, x0, tf; variable)" begin
-                result = flow(0.0, [1.0, 0.0], 1.0; variable = 0.5)
+                result = flow(0.0, [1.0, 0.0], 1.0; variable=0.5, unsafe=false)
                 Test.@test result === :solution
             end
 
             Test.@testset "call with (tspan, x0)" begin
-                result = flow((0.0, 1.0), [1.0, 0.0])
+                result = flow((0.0, 1.0), [1.0, 0.0]; variable=nothing, unsafe=false)
                 Test.@test result === :solution
             end
 
             Test.@testset "call with (tspan, x0; variable)" begin
-                result = flow((0.0, 1.0), [1.0, 0.0]; variable = 0.5)
+                result = flow((0.0, 1.0), [1.0, 0.0]; variable=0.5, unsafe=false)
                 Test.@test result === :solution
             end
 
             Test.@testset "call with unsafe kwarg" begin
-                result = flow(0.0, [1.0, 0.0], 1.0; unsafe = true)
+                result = flow(0.0, [1.0, 0.0], 1.0; variable=nothing, unsafe=true)
                 Test.@test result === :solution
             end
         end

@@ -109,7 +109,7 @@ function test_calling()
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
                 
                 # Execute
-                result = Flows.call(flow, config)
+                result = Flows.call(flow, config; variable=nothing, unsafe=false)
                 
                 # Verify all steps were called
                 Test.@test integ.build_problem_called === true
@@ -126,7 +126,7 @@ function test_calling()
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
                 
                 # Call with variable (should be accepted even for Fixed)
-                result = Flows.call(flow, config; variable=0.5)
+                result = Flows.call(flow, config; variable=0.5, unsafe=false)
                 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.solve_problem_called === true
@@ -139,7 +139,7 @@ function test_calling()
                 flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 
-                result = Flows.call(flow, config)
+                result = Flows.call(flow, config; variable=nothing, unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.solve_problem_called === true
@@ -153,7 +153,7 @@ function test_calling()
                 config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
 
                 # Call with unsafe=true
-                result = Flows.call(flow, config; unsafe=true)
+                result = Flows.call(flow, config; variable=nothing, unsafe=true)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.solve_problem_called === true

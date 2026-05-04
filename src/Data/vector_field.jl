@@ -43,8 +43,8 @@ Construct a `VectorField` with trait flags.
 
 # Arguments
 - `f::Function`: The vector-field function.
-- `autonomous::Bool`: If true, system is autonomous (default: `Common.__autonomous()`).
-- `variable::Bool`: If true, system depends on variable parameters (default: `Common.__variable()`).
+- `is_autonomous::Bool`: If true, system is autonomous (default: `Common.__is_autonomous()`).
+- `is_variable::Bool`: If true, system depends on variable parameters (default: `Common.__is_variable()`).
 
 # Returns
 - `VectorField`: A VectorField with appropriate traits.
@@ -53,13 +53,13 @@ Construct a `VectorField` with trait flags.
 \`\`\`julia-repl
 julia> using CTFlows.Systems, CTFlows.Common
 
-julia> vf = VectorField(x -> -x)  # Uses defaults: autonomous=true, variable=false
+julia> vf = VectorField(x -> -x)  # Uses defaults: is_autonomous=true, is_variable=false
 VectorField
   time_dependence: Autonomous
   variable_dependence: Fixed
   function: var"#1"
 
-julia> vf = VectorField((t, x) -> t .* x; autonomous=false)
+julia> vf = VectorField((t, x) -> t .* x; is_autonomous=false)
 VectorField
   time_dependence: NonAutonomous
   variable_dependence: Fixed
@@ -68,9 +68,9 @@ VectorField
 
 See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Common.Autonomous`](@ref), [`CTFlows.Common.NonAutonomous`](@ref), [`CTFlows.Common.Fixed`](@ref), [`CTFlows.Common.NonFixed`](@ref).
 """
-function VectorField(f; autonomous::Bool = Common.__autonomous(), variable::Bool = Common.__variable())
-    TD = autonomous ? Autonomous : NonAutonomous
-    VD = variable ? NonFixed : Fixed
+function VectorField(f; is_autonomous::Bool = Common.__is_autonomous(), is_variable::Bool = Common.__is_variable())
+    TD = is_autonomous ? Autonomous : NonAutonomous
+    VD = is_variable ? NonFixed : Fixed
     return VectorField{typeof(f), TD, VD}(f)
 end
 

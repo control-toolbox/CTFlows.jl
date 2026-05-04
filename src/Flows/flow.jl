@@ -90,7 +90,7 @@ function (f::Flow)(
     t0::Real,
     x0,
     tf::Real;
-    variable=nothing,
+    variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 )
     return call(f, Common.PointConfig(t0, x0, tf); variable=variable, unsafe=unsafe)
@@ -116,7 +116,7 @@ See also: [`CTFlows.Common.TrajectoryConfig`](@ref), [`CTFlows.Flows.call`](@ref
 function (f::Flow)(
     tspan::Tuple{Real, Real},
     x0;
-    variable=nothing,
+    variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 )
     return call(f, Common.TrajectoryConfig(tspan, x0); variable=variable, unsafe=unsafe)

@@ -167,7 +167,7 @@ function test_sciml_extension()
             Test.@testset "builds ODEProblem without variable" begin
                 # Create a simple system
                 sys = Systems.VectorFieldSystem(
-                    Data.VectorField(x -> -x; autonomous=true, variable=false)
+                    Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 )
 
                 config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
@@ -184,7 +184,7 @@ function test_sciml_extension()
             Test.@testset "builds ODEProblem with variable parameter" begin
                 # Create a simple system that takes a variable
                 sys = Systems.VectorFieldSystem(
-                    Data.VectorField((x, v) -> x .+ v; autonomous=true, variable=true)
+                    Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
                 )
 
                 config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
@@ -206,7 +206,7 @@ function test_sciml_extension()
         Test.@testset "Solving" begin
             # Create a simple system
             sys = Systems.VectorFieldSystem(
-                Data.VectorField(x -> -x; autonomous=true, variable=false)
+                Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
             )
 
             config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
@@ -222,32 +222,36 @@ function test_sciml_extension()
             Test.@test result isa Solutions.AbstractIntegrationResult
         end
 
-        Test.@testset "SolverFailure on failed retcode" begin
-            # Create a simple ODE problem that will fail with maxiters=1
-            prob = ODEProblem((du, u, p, t) -> du .= u, [1.0], (0.0, 1.0))
-            integ = Integrators.SciML(maxiters=1)
+        redirect_stderr(devnull) do
+            Test.@testset "SolverFailure on failed retcode" begin
+                # Create a simple ODE problem that will fail with maxiters=1
+                prob = ODEProblem((du, u, p, t) -> du .= u, [1.0], (0.0, 1.0))
+                integ = Integrators.SciML(maxiters=1)
 
-            # Test that solve_problem throws SolverFailure when unsafe=false
-            Test.@test_throws Exceptions.SolverFailure Integrators.solve_problem(integ, prob; unsafe=false)
+                # Test that solve_problem throws SolverFailure when unsafe=false
+                Test.@test_throws Exceptions.SolverFailure Integrators.solve_problem(integ, prob; unsafe=false)
 
-            # Test the exception contains correct fields
-            try
-                Integrators.solve_problem(integ, prob; unsafe=false)
-            catch e
-                Test.@test e isa Exceptions.SolverFailure
-                Test.@test occursin("MaxIters", e.retcode)
-                Test.@test e.context == "SciML solve_problem"
+                # Test the exception contains correct fields
+                try
+                    Integrators.solve_problem(integ, prob; unsafe=false)
+                catch e
+                    Test.@test e isa Exceptions.SolverFailure
+                    Test.@test occursin("MaxIters", e.retcode)
+                    Test.@test e.context == "SciML solve_problem"
+                end
             end
         end
 
-        Test.@testset "unsafe=true bypasses retcode check" begin
-            # Create a simple ODE problem that will fail with maxiters=1
-            prob = ODEProblem((du, u, p, t) -> du .= u, [1.0], (0.0, 1.0))
-            integ = Integrators.SciML(maxiters=1)
+        redirect_stderr(devnull) do
+            Test.@testset "unsafe=true bypasses retcode check" begin
+                # Create a simple ODE problem that will fail with maxiters=1
+                prob = ODEProblem((du, u, p, t) -> du .= u, [1.0], (0.0, 1.0))
+                integ = Integrators.SciML(maxiters=1)
 
-            # With unsafe=true, should not throw even with bad retcode
-            result = Integrators.solve_problem(integ, prob; unsafe=true)
-            Test.@test result isa CTFlowsSciMLExt.SciMLIntegrationResult
+                # With unsafe=true, should not throw even with bad retcode
+                result = Integrators.solve_problem(integ, prob; unsafe=true)
+                Test.@test result isa CTFlowsSciMLExt.SciMLIntegrationResult
+            end
         end
 
         # ====================================================================
@@ -256,7 +260,7 @@ function test_sciml_extension()
 
         Test.@testset "Semantic Accessors" begin
             sys = Systems.VectorFieldSystem(
-                Data.VectorField(x -> -x; autonomous=true, variable=false)
+                Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
             )
 
             config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 2.0])
@@ -283,7 +287,7 @@ function test_sciml_extension()
         Test.@testset "Full Workflow" begin
             Test.@testset "PointConfig workflow" begin
                 sys = Systems.VectorFieldSystem(
-                    Data.VectorField(x -> -x; autonomous=true, variable=false)
+                    Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 )
 
                 config = Common.PointConfig(0.0, 1.0, 1.0)
@@ -303,7 +307,7 @@ function test_sciml_extension()
 
             Test.@testset "TrajectoryConfig workflow" begin
                 sys = Systems.VectorFieldSystem(
-                    Data.VectorField(x -> -x; autonomous=true, variable=false)
+                    Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 )
 
                 config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 2.0])
