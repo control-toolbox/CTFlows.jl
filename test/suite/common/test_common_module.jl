@@ -230,6 +230,22 @@ function test_common_module()
                 Test.@test Common.TrajectoryConfig <: Common.AbstractConfig
             end
         end
+
+        # ====================================================================
+        # Internal Norm Functions
+        # ====================================================================
+
+        Test.@testset "Internal Norm Functions" begin
+            Test.@testset "deepvalue is exported" begin
+                Test.@test isdefined(Common, :deepvalue)
+                Test.@test Common.deepvalue(3.14) === 3.14
+            end
+
+            Test.@testset "real_norm is exported" begin
+                Test.@test isdefined(Common, :real_norm)
+                Test.@test Common.real_norm(3.0, 0.0) === 3.0
+            end
+        end
     end
 end
 
