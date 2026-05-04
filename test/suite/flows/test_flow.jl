@@ -48,21 +48,21 @@ function Flows.integrator(flow::FakeFlow)
     return flow.integ
 end
 
-# Config-based callable - both Fixed and NonFixed accept variable=nothing
-function (flow::FakeFlow)(config::Common.PointConfig; variable=nothing)
+# Config-based callable - both Fixed and NonFixed accept variable=nothing, unsafe=false
+function (flow::FakeFlow)(config::Common.PointConfig; variable=nothing, unsafe=false)
     return flow.integ.result
 end
 
-function (flow::FakeFlow)(config::Common.TrajectoryConfig; variable=nothing)
+function (flow::FakeFlow)(config::Common.TrajectoryConfig; variable=nothing, unsafe=false)
     return flow.integ.result
 end
 
-# Positional callable - both Fixed and NonFixed accept variable=nothing
-function (flow::FakeFlow)(t0, x0, tf; variable=nothing)
+# Positional callable - both Fixed and NonFixed accept variable=nothing, unsafe=false
+function (flow::FakeFlow)(t0, x0, tf; variable=nothing, unsafe=false)
     return flow.integ.result
 end
 
-function (flow::FakeFlow)(tspan::Tuple, x0; variable=nothing)
+function (flow::FakeFlow)(tspan::Tuple, x0; variable=nothing, unsafe=false)
     return flow.integ.result
 end
 
@@ -155,6 +155,11 @@ function test_flow()
                 result = flow((0.0, 1.0), [1.0, 0.0]; variable = 0.5)
                 Test.@test result === :solution
             end
+
+            Test.@testset "call with unsafe kwarg" begin
+                result = flow(0.0, [1.0, 0.0], 1.0; unsafe = true)
+                Test.@test result === :solution
+            end
         end
 
         # ====================================================================
@@ -195,6 +200,11 @@ function test_flow()
 
             Test.@testset "call with (tspan, x0; variable)" begin
                 result = flow((0.0, 1.0), [1.0, 0.0]; variable = 0.5)
+                Test.@test result === :solution
+            end
+
+            Test.@testset "call with unsafe kwarg" begin
+                result = flow(0.0, [1.0, 0.0], 1.0; unsafe = true)
                 Test.@test result === :solution
             end
         end

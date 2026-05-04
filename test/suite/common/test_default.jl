@@ -25,6 +25,10 @@ function test_default()
             Test.@testset "__variable returns false" begin
                 Test.@test Common.__variable() === false
             end
+
+            Test.@testset "__unsafe returns false" begin
+                Test.@test Common.__unsafe() === false
+            end
         end
     end
 end

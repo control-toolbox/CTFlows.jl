@@ -51,7 +51,7 @@ function Integrators.build_problem(integ::FakeIntegratorForCalling, system::Syst
     return integ.problem_result
 end
 
-function Integrators.solve_problem(integ::FakeIntegratorForCalling, prob)
+function Integrators.solve_problem(integ::FakeIntegratorForCalling, prob; unsafe=false)
     integ.solve_problem_called = true
     integ.ode_solution = FakeIntegrationResultForCalling()
     return integ.ode_solution
@@ -138,12 +138,26 @@ function test_calling()
                 integ = FakeIntegratorForCalling()
                 flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
-                
+
                 result = Flows.call(flow, config)
-                
+
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.solve_problem_called === true
                 Test.@test result === :fake_vector_field_solution
+            end
+
+            Test.@testset "call with unsafe kwarg" begin
+                sys = FakeSystemForCalling(2)
+                integ = FakeIntegratorForCalling()
+                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+
+                # Call with unsafe=true
+                result = Flows.call(flow, config; unsafe=true)
+
+                Test.@test integ.build_problem_called === true
+                Test.@test integ.solve_problem_called === true
+                Test.@test result == :fake_flow_solution
             end
         end
 

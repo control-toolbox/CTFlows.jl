@@ -222,6 +222,34 @@ function test_sciml_extension()
             Test.@test result isa Solutions.AbstractIntegrationResult
         end
 
+        Test.@testset "SolverFailure on failed retcode" begin
+            # Create a simple ODE problem that will fail with maxiters=1
+            prob = ODEProblem((du, u, p, t) -> du .= u, [1.0], (0.0, 1.0))
+            integ = Integrators.SciML(maxiters=1)
+
+            # Test that solve_problem throws SolverFailure when unsafe=false
+            Test.@test_throws Exceptions.SolverFailure Integrators.solve_problem(integ, prob; unsafe=false)
+
+            # Test the exception contains correct fields
+            try
+                Integrators.solve_problem(integ, prob; unsafe=false)
+            catch e
+                Test.@test e isa Exceptions.SolverFailure
+                Test.@test occursin("MaxIters", e.retcode)
+                Test.@test e.context == "SciML solve_problem"
+            end
+        end
+
+        Test.@testset "unsafe=true bypasses retcode check" begin
+            # Create a simple ODE problem that will fail with maxiters=1
+            prob = ODEProblem((du, u, p, t) -> du .= u, [1.0], (0.0, 1.0))
+            integ = Integrators.SciML(maxiters=1)
+
+            # With unsafe=true, should not throw even with bad retcode
+            result = Integrators.solve_problem(integ, prob; unsafe=true)
+            Test.@test result isa CTFlowsSciMLExt.SciMLIntegrationResult
+        end
+
         # ====================================================================
         # UNIT TESTS - Semantic Accessors
         # ====================================================================

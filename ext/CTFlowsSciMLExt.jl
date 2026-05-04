@@ -303,10 +303,29 @@ $(TYPEDSIGNATURES)
 
 Solve an `ODEProblem` using the `SciML`'s configured options.
 Returns a `SciMLIntegrationResult` wrapping the raw `ODESolution`.
+
+# Arguments
+- `integ::SciML`: The SciML integrator strategy.
+- `prob::SciMLBase.AbstractODEProblem`: The ODE problem to solve.
+- `unsafe=Common.__unsafe()`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+
+# Returns
+- `SciMLIntegrationResult`: The integration result wrapping the SciML ODE solution.
+
+# Throws
+- `CTBase.Exceptions.SolverFailure`: If the ODE solver returns an unsuccessful retcode and `unsafe=false`.
 """
-function Integrators.solve_problem(integ::SciML, prob::SciMLBase.AbstractODEProblem)
+function Integrators.solve_problem(integ::SciML, prob::SciMLBase.AbstractODEProblem; unsafe=Common.__unsafe())
     options = Strategies.options_dict(integ)
     ode_sol = SciMLBase.solve(prob; options...)
+    if !unsafe && !SciMLBase.successful_retcode(ode_sol.retcode)
+        throw(Exceptions.SolverFailure(
+            "ODE integration failed";
+            retcode = string(ode_sol.retcode),
+            suggestion = "Try tightening tolerances (reltol, abstol) or changing the solver algorithm.",
+            context = "SciML solve_problem",
+        ))
+    end
     return SciMLIntegrationResult(ode_sol)
 end
 

@@ -78,6 +78,8 @@ Convenience call `flow(t0, x0, tf)` — builds a `PointConfig` internally.
 - `t0`: Initial time.
 - `x0`: Initial state vector.
 - `tf`: Final time.
+- `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
+- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
 
 # Returns
 - The integrated solution.
@@ -89,8 +91,9 @@ function (f::Flow)(
     x0,
     tf::Real;
     variable=nothing,
+    unsafe=Common.__unsafe(),
 )
-    return call(f, Common.PointConfig(t0, x0, tf); variable=variable)
+    return call(f, Common.PointConfig(t0, x0, tf); variable=variable, unsafe=unsafe)
 end
 
 """
@@ -102,6 +105,8 @@ Convenience call `flow((t0, tf), x0)` — builds a `TrajectoryConfig` internally
 - `f::Flow{S, I, VD}`: The flow to integrate.
 - `tspan::Tuple`: Time span as a tuple (t0, tf).
 - `x0`: Initial state vector.
+- `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
+- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
 
 # Returns
 - The integrated solution.
@@ -110,8 +115,9 @@ See also: [`CTFlows.Common.TrajectoryConfig`](@ref), [`CTFlows.Flows.call`](@ref
 """
 function (f::Flow)(
     tspan::Tuple{Real, Real},
-    x0; 
+    x0;
     variable=nothing,
+    unsafe=Common.__unsafe(),
 )
-    return call(f, Common.TrajectoryConfig(tspan, x0); variable=variable)
+    return call(f, Common.TrajectoryConfig(tspan, x0); variable=variable, unsafe=unsafe)
 end
