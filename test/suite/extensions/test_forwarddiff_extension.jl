@@ -107,13 +107,13 @@ function test_forwarddiff_extension()
 
             # Integration with real numbers
             prob_real = ODEProblem(f!, u0_real, (0.0, 1.0), nothing)
-            sol_real = SciMLBase.solve(prob_real, Tsit5(); reltol=1e-8, abstol=1e-8, dense=false)
+            sol_real = SciMLBase.solve(prob_real, Tsit5(); reltol=1e-8, abstol=1e-8, dense=false, save_everystep=true)
 
             # Integration with Dual (Jacobian w.r.t. u0) using DiffEqBase.ODE_DEFAULT_NORM
             function integrate_dual_default(x0)
                 prob = ODEProblem(f!, x0, (0.0, 1.0), nothing)
                 return SciMLBase.solve(prob, Tsit5(); reltol=1e-8, abstol=1e-8, dense=false,
-                    internalnorm=DiffEqBase.ODE_DEFAULT_NORM)
+                    internalnorm=DiffEqBase.ODE_DEFAULT_NORM, save_everystep=true)
             end
             u0_dual = ForwardDiff.Dual{:T}.([1.0], [1.0])
             sol_dual = integrate_dual_default(u0_dual)
@@ -131,13 +131,13 @@ function test_forwarddiff_extension()
             prob_real = ODEProblem(f!, u0_real, (0.0, 1.0), nothing)
             sol_real = SciMLBase.solve(prob_real, Tsit5();
                 reltol=1e-8, abstol=1e-8, dense=false,
-                internalnorm=Common.real_norm)
+                internalnorm=Common.real_norm, save_everystep=true)
 
             function integrate_dual_with_norm(x0)
                 prob = ODEProblem(f!, x0, (0.0, 1.0), nothing)
                 return SciMLBase.solve(prob, Tsit5();
                     reltol=1e-8, abstol=1e-8, dense=false,
-                    internalnorm=Common.real_norm)
+                    internalnorm=Common.real_norm, save_everystep=true)
             end
             u0_dual = ForwardDiff.Dual{:T}.([1.0], [1.0])
             sol_dual = integrate_dual_with_norm(u0_dual)
@@ -165,7 +165,7 @@ function test_forwarddiff_extension()
         Test.@testset "Flow API grid invariance" begin
             # Simple ODE: ẋ = x
             vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
-            flow = Flows.Flow(vf)
+            flow = Flows.Flow(vf; save_everystep=true)
 
             # Integration with real numbers
             result_real = flow((0.0, 1.0), [1.0])
