@@ -20,10 +20,11 @@ Methods defined on **instances** that provide the actual configuration:
 
 # Concrete Implementation
 
-All subtypes must implement two named functions:
+All subtypes must implement three named functions:
 
 - `build_problem(integrator::AbstractIntegrator, system::CTFlows.Systems.AbstractSystem, config::CTFlows.Common.AbstractConfig; variable)`: Build the ODE problem representation from a system and configuration.
-- `solve_problem(integrator::AbstractIntegrator, prob)`: Solve the given ODE problem (tspan is embedded in `prob`).
+- `build_options(integrator::AbstractIntegrator, config::Union{CTFlows.Common.AbstractConfig, Nothing})`: Build solver options dict for the given configuration.
+- `solve_problem(integrator::AbstractIntegrator, prob, options::Dict{Symbol,Any})`: Solve the given ODE problem with resolved options (tspan is embedded in `prob`).
 
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If the methods are not implemented by the concrete type.
@@ -63,11 +64,12 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Solve the given ODE problem.
+Solve the given ODE problem with resolved options.
 
 # Arguments
 - `integrator::AbstractIntegrator`: The integrator strategy.
 - `prob`: The ODE problem to solve (type varies by concrete integrator; tspan is embedded).
+- `options::Dict{Symbol,Any}`: Resolved solver options (typically from `build_options`).
 - `unsafe=Common.__unsafe()`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
 
 # Returns
@@ -76,13 +78,39 @@ Solve the given ODE problem.
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
 
-See also: [`CTFlows.Integrators.AbstractIntegrator`](@ref), [`CTFlows.Integrators.build_problem`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrator`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.build_options`](@ref).
 """
-function solve_problem(integrator::AbstractIntegrator, prob; unsafe=Common.__unsafe())
+function solve_problem(integrator::AbstractIntegrator, prob, options::Dict{Symbol,Any}; unsafe=Common.__unsafe())
     throw(Exceptions.NotImplemented(
         "AbstractIntegrator solve_problem not implemented";
-        required_method = "solve_problem(integrator::$(typeof(integrator)), prob; unsafe=false)",
-        suggestion = "Implement solve_problem(i::YourIntegrator, prob; unsafe=false) returning an AbstractIntegrationResult.",
+        required_method = "solve_problem(integrator::$(typeof(integrator)), prob, options::Dict{Symbol,Any}; unsafe=false)",
+        suggestion = "Implement solve_problem(i::YourIntegrator, prob, options::Dict; unsafe=false) returning an AbstractIntegrationResult.",
         context = "AbstractIntegrator solve_problem - required method implementation",
+    ))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Build solver options dict for the given configuration.
+
+# Arguments
+- `integrator::AbstractIntegrator`: The integrator strategy.
+- `config::Union{CTFlows.Common.AbstractConfig, Nothing}`: The integration configuration (or `Nothing` for fallback).
+
+# Returns
+- `Dict{Symbol,Any}`: Resolved solver options for the given configuration.
+
+# Throws
+- `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
+
+See also: [`CTFlows.Integrators.AbstractIntegrator`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref).
+"""
+function build_options(integrator::AbstractIntegrator, config::Union{Common.AbstractConfig, Nothing})
+    throw(Exceptions.NotImplemented(
+        "AbstractIntegrator build_options not implemented";
+        required_method = "build_options(integrator::$(typeof(integrator)), config::Union{Common.AbstractConfig, Nothing})",
+        suggestion = "Implement build_options(i::YourIntegrator, config) returning a Dict{Symbol,Any} of resolved solver options.",
+        context = "AbstractIntegrator build_options - required method implementation",
     ))
 end

@@ -50,10 +50,14 @@ To activate the extension, load any of:
 - `using DifferentialEquations`
 
 # Fields
-- `options::CTSolvers.Strategies.StrategyOptions`: validated option bundle.
+- `options::CTSolvers.Strategies.StrategyOptions`: Validated option bundle.
+- `options_point::Dict{Symbol, Any}`: Pre-computed options for PointConfig.
+- `options_trajectory::Dict{Symbol, Any}`: Pre-computed options for TrajectoryConfig.
 """
-struct SciML <: AbstractSciMLIntegrator
-    options::CTSolvers.Strategies.StrategyOptions
+struct SciML{O<:CTSolvers.Strategies.StrategyOptions, OP<:Dict{Symbol, Any}, OT<:Dict{Symbol, Any}} <: AbstractSciMLIntegrator
+    options::O
+    options_point::OP
+    options_trajectory::OT
 end
 
 # ============================================================================

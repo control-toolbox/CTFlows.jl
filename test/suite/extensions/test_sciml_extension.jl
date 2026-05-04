@@ -215,8 +215,11 @@ function test_sciml_extension()
             # Build ODE problem
             prob = Integrators.build_problem(integ, sys, config; variable=nothing)
 
+            # Build options
+            opts = Integrators.build_options(integ, config)
+
             # Solve
-            result = Integrators.solve_problem(integ, prob)
+            result = Integrators.solve_problem(integ, prob, opts)
 
             Test.@test result isa CTFlowsSciMLExt.SciMLIntegrationResult
             Test.@test result isa Solutions.AbstractIntegrationResult
@@ -227,13 +230,15 @@ function test_sciml_extension()
                 # Create a simple ODE problem that will fail with maxiters=1
                 prob = ODEProblem((du, u, p, t) -> du .= u, [1.0], (0.0, 1.0))
                 integ = Integrators.SciML(maxiters=1)
+                config = Common.PointConfig(0.0, [1.0], 1.0)
+                opts = Integrators.build_options(integ, config)
 
                 # Test that solve_problem throws SolverFailure when unsafe=false
-                Test.@test_throws Exceptions.SolverFailure Integrators.solve_problem(integ, prob; unsafe=false)
+                Test.@test_throws Exceptions.SolverFailure Integrators.solve_problem(integ, prob, opts; unsafe=false)
 
                 # Test the exception contains correct fields
                 try
-                    Integrators.solve_problem(integ, prob; unsafe=false)
+                    Integrators.solve_problem(integ, prob, opts; unsafe=false)
                 catch e
                     Test.@test e isa Exceptions.SolverFailure
                     Test.@test occursin("MaxIters", e.retcode)
@@ -247,9 +252,11 @@ function test_sciml_extension()
                 # Create a simple ODE problem that will fail with maxiters=1
                 prob = ODEProblem((du, u, p, t) -> du .= u, [1.0], (0.0, 1.0))
                 integ = Integrators.SciML(maxiters=1)
+                config = Common.PointConfig(0.0, [1.0], 1.0)
+                opts = Integrators.build_options(integ, config)
 
                 # With unsafe=true, should not throw even with bad retcode
-                result = Integrators.solve_problem(integ, prob; unsafe=true)
+                result = Integrators.solve_problem(integ, prob, opts; unsafe=true)
                 Test.@test result isa CTFlowsSciMLExt.SciMLIntegrationResult
             end
         end
@@ -267,7 +274,8 @@ function test_sciml_extension()
             integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
             prob = Integrators.build_problem(integ, sys, config; variable=nothing)
-            result = Integrators.solve_problem(integ, prob)
+            opts = Integrators.build_options(integ, config)
+            result = Integrators.solve_problem(integ, prob, opts)
 
             Test.@test Solutions.final_state(result) isa Vector{Float64}
             Test.@test length(Solutions.final_state(result)) == 2
@@ -296,8 +304,11 @@ function test_sciml_extension()
                 # Build problem
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing)
 
+                # Build options
+                opts = Integrators.build_options(integ, config)
+
                 # Solve
-                result = Integrators.solve_problem(integ, prob)
+                result = Integrators.solve_problem(integ, prob, opts)
 
                 # Build solution
                 flow_sol = Solutions.build_solution(result, sys, config)
@@ -316,13 +327,56 @@ function test_sciml_extension()
                 # Build problem
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing)
 
+                # Build options
+                opts = Integrators.build_options(integ, config)
+
                 # Solve
-                result = Integrators.solve_problem(integ, prob)
+                result = Integrators.solve_problem(integ, prob, opts)
 
                 # Build solution
                 flow_sol = Solutions.build_solution(result, sys, config)
 
                 Test.@test flow_sol isa Solutions.VectorFieldSolution
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Config-Dependent Options
+        # ====================================================================
+
+        Test.@testset "Config-Dependent Options" begin
+            integ = Integrators.SciML()
+            config_point = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+            config_traj = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+
+            Test.@testset "auto defaults resolve correctly for PointConfig" begin
+                opts = Integrators.build_options(integ, config_point)
+                Test.@test opts[:dense] === false
+                Test.@test opts[:save_everystep] === false
+                Test.@test opts[:save_start] === false
+            end
+
+            Test.@testset "auto defaults resolve correctly for TrajectoryConfig" begin
+                opts = Integrators.build_options(integ, config_traj)
+                Test.@test opts[:dense] === true
+                Test.@test opts[:save_everystep] === true
+                Test.@test opts[:save_start] === true
+            end
+
+            Test.@testset "explicit values override auto" begin
+                integ_explicit = Integrators.SciML(dense=false, save_everystep=true, save_start=false)
+                opts = Integrators.build_options(integ_explicit, config_traj)
+                Test.@test opts[:dense] === false
+                Test.@test opts[:save_everystep] === true
+                Test.@test opts[:save_start] === false
+            end
+
+            Test.@testset "build_options dispatch returns correct cached dicts" begin
+                opts_point = Integrators.build_options(integ, config_point)
+                opts_traj = Integrators.build_options(integ, config_traj)
+                Test.@test opts_point === integ.options_point
+                Test.@test opts_traj === integ.options_trajectory
+                Test.@test opts_point !== opts_traj
             end
         end
     end

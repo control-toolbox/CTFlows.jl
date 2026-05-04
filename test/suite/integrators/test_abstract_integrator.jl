@@ -35,13 +35,17 @@ function FakeIntegrator()
     return FakeIntegrator(CTSolvers.Strategies.StrategyOptions())
 end
 
-# Implement the two required callable signatures
+# Implement the three required callable signatures
 function Integrators.build_problem(integ::FakeIntegrator, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)
     p = Common.ODEParameters(variable)
     return :fake_ode_problem
 end
 
-function Integrators.solve_problem(integ::FakeIntegrator, prob)
+function Integrators.build_options(integ::FakeIntegrator, config::Union{Common.AbstractConfig, Nothing})
+    return Dict{Symbol,Any}()
+end
+
+function Integrators.solve_problem(integ::FakeIntegrator, prob, options::Dict{Symbol,Any})
     return :fake_ode_solution
 end
 
@@ -91,8 +95,14 @@ function test_abstract_integrator()
             end
 
             Test.@testset "Integration signature" begin
-                result = Integrators.solve_problem(integ, :fake_prob)
+                result = Integrators.solve_problem(integ, :fake_prob, Dict{Symbol,Any}())
                 Test.@test result === :fake_ode_solution
+            end
+
+            Test.@testset "build_options signature" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                opts = Integrators.build_options(integ, config)
+                Test.@test opts isa Dict{Symbol,Any}
             end
         end
 
@@ -110,7 +120,12 @@ function test_abstract_integrator()
             end
 
             Test.@testset "Integration throws NotImplemented" begin
-                Test.@test_throws Exceptions.NotImplemented Integrators.solve_problem(integ, :fake_prob)
+                Test.@test_throws Exceptions.NotImplemented Integrators.solve_problem(integ, :fake_prob, Dict{Symbol,Any}())
+            end
+
+            Test.@testset "build_options throws NotImplemented" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                Test.@test_throws Exceptions.NotImplemented Integrators.build_options(integ, config)
             end
         end
     end

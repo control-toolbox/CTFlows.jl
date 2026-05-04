@@ -33,8 +33,11 @@ function call(flow::Flows.AbstractFlow{TD, VD}, config::Common.AbstractConfig; v
     # build ode problem
     prob = Integrators.build_problem(int, sys, config; variable=variable)
 
+    # build config-specific options
+    opts = Integrators.build_options(int, config)
+
     # integrate ode problem
-    result = Integrators.solve_problem(int, prob; unsafe=unsafe)
+    result = Integrators.solve_problem(int, prob, opts; unsafe=unsafe)
 
     # build flow solution
     flow_sol = Solutions.build_solution(result, sys, config)
