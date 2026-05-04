@@ -606,10 +606,11 @@ end
 
 ### Contrat AbstractFlow pour les Types Multi-phase
 
-Les types multi-phase doivent implémenter le contrat `AbstractFlow`. Les méthodes `system()` et `integrator()` n'ont pas de réponse unique — on choisit la convention "première phase" :
+Les types multi-phase doivent implémenter le contrat `AbstractFlow`. Les méthodes `system()` et `integrator()` n'ont pas de réponse unique (il y a N systèmes et N intégrateurs). Trois options sont possibles.
+
+#### Option A — Convention "première phase" (simple, discutable)
 
 ```julia
-# Convention : retourner le système/intégrateur de la première phase
 function Flows.system(flow::MultiPhaseStateFlow)
     return Flows.system(flow.phases[1])
 end
@@ -617,11 +618,79 @@ end
 function Flows.integrator(flow::MultiPhaseStateFlow)
     return Flows.integrator(flow.phases[1])
 end
-
-# Idem pour MultiPhaseHamiltonianFlow
 ```
 
-Note : ces méthodes sont utiles pour les utilitaires génériques (affichage, etc.) mais ne sont pas utilisées dans le pipeline `call()`.
+Inconvénient : retourner le système de la première phase est arbitraire et peut induire en erreur.
+
+#### Option B — Retourner un vecteur
+
+```julia
+function Flows.system(flow::MultiPhaseStateFlow)
+    return [Flows.system(phase) for phase in flow.phases]
+end
+
+function Flows.integrator(flow::MultiPhaseStateFlow)
+    return [Flows.integrator(phase) for phase in flow.phases]
+end
+```
+
+Inconvénient : rompt le contrat `system(flow)::AbstractSystem` (retourne un `Vector` au lieu d'un `AbstractSystem`). Nécessite de changer la signature du contrat.
+
+#### Option C — Wrappers MultiPhaseSystem et MultiPhaseIntegrator (recommandée)
+
+Créer deux types enveloppes qui agrègent les N composantes et exposent une interface unifiée, y compris pour l'affichage :
+
+```julia
+# Dans MultiPhase/multiphase_system.jl
+struct MultiPhaseSystem{
+    TD <: Common.TimeDependence,
+    VD <: Common.VariableDependence,
+    S  <: Systems.AbstractSystem{TD, VD}
+} <: Systems.AbstractSystem{TD, VD}
+    phases          :: Vector{S}
+    switching_times :: Vector{<:Real}
+end
+
+# Dans MultiPhase/multiphase_integrator.jl
+struct MultiPhaseIntegrator{I <: Integrators.AbstractIntegrator}
+    phases :: Vector{I}
+end
+```
+
+Le contrat `AbstractFlow` est alors satisfait proprement :
+
+```julia
+function Flows.system(flow::MultiPhaseStateFlow)
+    return MultiPhaseSystem(
+        [Flows.system(p) for p in flow.phases],
+        flow.switching_times
+    )
+end
+
+function Flows.integrator(flow::MultiPhaseStateFlow)
+    return MultiPhaseIntegrator([Flows.integrator(p) for p in flow.phases])
+end
+```
+
+Ces wrappers permettent en plus d'implémenter un `show` informatif :
+
+```julia
+function Base.show(io::IO, sys::MultiPhaseSystem)
+    println(io, "MultiPhaseSystem with $(length(sys.phases)) phases:")
+    for (k, (s, t)) in enumerate(zip(sys.phases, [sys.switching_times; Inf]))
+        println(io, "  Phase $k : $(typeof(s)), until t = $t")
+    end
+end
+
+function Base.show(io::IO, int::MultiPhaseIntegrator)
+    println(io, "MultiPhaseIntegrator with $(length(int.phases)) integrators:")
+    for (k, i) in enumerate(int.phases)
+        println(io, "  Phase $k : $(typeof(i))")
+    end
+end
+```
+
+Note : `MultiPhaseSystem` ici n'est **pas** le `MultiPhaseSystem` de la discussion #144 (qui portait la logique d'intégration). C'est un wrapper passif pour satisfaire le contrat et l'affichage.
 
 Les méthodes appelables (l'API publique) se comportent comme un flot simple :
 
@@ -680,7 +749,7 @@ Pas de fusion : on propage seulement l'état final d'une phase à l'autre. Résu
 
 La fusion se fait pendant la boucle, en accumulant deux vecteurs `t_all` et `u_all`. Le dernier point de chaque phase intermédiaire est exclu pour éviter les doublons aux points de switching :
 
-```
+```text
 Phase 1 : t = [0.0, 0.3, 0.7, 1.0]   →  on prend [0.0, 0.3, 0.7]  (sans 1.0)
 Phase 2 : t = [1.0, 1.4, 2.0]         →  on prend [1.0, 1.4, 2.0]  (tous, c'est la dernière)
 Résultat: t = [0.0, 0.3, 0.7, 1.0, 1.4, 2.0]
@@ -701,27 +770,119 @@ Les sauts ne sont pas limités aux vecteurs. Tout type pour lequel `+` est défi
 
 La contrainte est vérifiée à l'exécution par Julia : si `z + Δx` n'est pas défini, une `MethodError` est levée.
 
-### 5.4 Localisation dans l'Architecture v1
+### 5.4 Localisation dans l'Architecture v1 : Submodule MultiPhase
 
-#### Fichiers à Créer
+Plutôt que de surcharger le submodule `Flows`, la concaténation et tous ses types associés vivent dans un **submodule dédié `MultiPhase`**, chargé en dernier (après `Flows`).
 
-- `src/Flows/multiphase.jl` : définitions de `MultiPhaseStateFlow`, `MultiPhaseHamiltonianFlow`
-- `src/Flows/concatenation.jl` : opérateurs `*`, fonctions `_flatten_*`
-- `src/Flows/multiphase_call.jl` : méthodes `call()` pour les types multi-phase
+#### Justification
 
-#### Fichiers à Modifier
+- `Flows` reste focalisé sur un flot simple (`AbstractFlow`, `Flow`, `call`)
+- `MultiPhase` a ses propres responsabilités (wrappers, concaténation, intégration multi-phase)
+- La séparation facilite les tests et la maintenance
+- Cohérent avec le principe SRP (Single Responsibility)
 
-- `src/Flows/abstract_flow.jl` : ajouter `AbstractStateFlow` et `AbstractHamiltonianFlow`
-- `src/Flows/flow.jl` : faire hériter `Flow` de l'un des sous-types abstraits
-- `src/Flows/Flows.jl` : inclure les nouveaux fichiers, ajouter les exports
-- `ext/CTFlowsSciMLExt.jl` : implémenter `_build_merged_solution`
+#### Nouveau Layout
 
-#### Exports
+```text
+src/
+├── CTFlows.jl                         # top-level manifest
+├── Common/Common.jl
+├── Data/Data.jl
+├── Systems/Systems.jl
+├── Integrators/Integrators.jl
+├── Solutions/Solutions.jl
+├── Flows/
+│   ├── Flows.jl                       # manifest Flows (inchangé dans ses responsabilités)
+│   ├── abstract_flow.jl               # AbstractFlow + AbstractStateFlow + AbstractHamiltonianFlow
+│   ├── flow.jl                        # Flow <: AbstractStateFlow ou AbstractHamiltonianFlow
+│   ├── building.jl
+│   └── calling.jl
+└── MultiPhase/
+    ├── MultiPhase.jl                  # manifest du submodule
+    ├── multiphase_system.jl           # MultiPhaseSystem (wrapper passif)
+    ├── multiphase_integrator.jl       # MultiPhaseIntegrator (wrapper passif)
+    ├── multiphase_flow.jl             # MultiPhaseStateFlow, MultiPhaseHamiltonianFlow
+    ├── concatenation.jl               # opérateurs *, fonctions _flatten_*
+    └── calling.jl                     # call() pour les types multi-phase
+```
+
+#### Manifest MultiPhase/MultiPhase.jl
 
 ```julia
-# Dans src/Flows/Flows.jl
-export AbstractStateFlow, AbstractHamiltonianFlow
+"""
+Submodule handling multi-phase flows and flow concatenation.
+
+Provides:
+- `MultiPhaseSystem`, `MultiPhaseIntegrator` : passive wrappers for the `AbstractFlow` contract
+- `MultiPhaseStateFlow`, `MultiPhaseHamiltonianFlow` : concatenated flow types
+- `*` operator for building multi-phase flows
+"""
+module MultiPhase
+
+import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
+import CTBase.Exceptions
+using ..Common
+using ..Systems
+using ..Integrators
+using ..Flows
+
+include(joinpath(@__DIR__, "multiphase_system.jl"))
+include(joinpath(@__DIR__, "multiphase_integrator.jl"))
+include(joinpath(@__DIR__, "multiphase_flow.jl"))
+include(joinpath(@__DIR__, "concatenation.jl"))
+include(joinpath(@__DIR__, "calling.jl"))
+
+export MultiPhaseSystem, MultiPhaseIntegrator
 export MultiPhaseStateFlow, MultiPhaseHamiltonianFlow
+
+end # module MultiPhase
+```
+
+#### Modification de CTFlows.jl
+
+```julia
+module CTFlows
+
+include(joinpath(@__DIR__, "Common",       "Common.jl"));       using .Common
+include(joinpath(@__DIR__, "Data",         "Data.jl"));          using .Data
+include(joinpath(@__DIR__, "Systems",      "Systems.jl"));       using .Systems
+include(joinpath(@__DIR__, "Integrators",  "Integrators.jl"));   using .Integrators
+include(joinpath(@__DIR__, "Solutions",    "Solutions.jl"));     using .Solutions
+include(joinpath(@__DIR__, "Flows",        "Flows.jl"));          using .Flows
+include(joinpath(@__DIR__, "MultiPhase",   "MultiPhase.jl"));    using .MultiPhase  # après Flows
+
+end # module CTFlows
+```
+
+L'ordre topologique est respecté : `MultiPhase` dépend de `Flows`, `Systems`, `Integrators`.
+
+#### Modification de Flows/abstract_flow.jl
+
+Seuls `AbstractStateFlow` et `AbstractHamiltonianFlow` s'ajoutent ici. `Flow` hérite de l'un des deux :
+
+```julia
+# Dans src/Flows/abstract_flow.jl
+abstract type AbstractStateFlow{TD, VD, S <: Systems.AbstractSystem{TD,VD}} <: AbstractFlow{TD, VD} end
+abstract type AbstractHamiltonianFlow{TD, VD, S <: Systems.AbstractSystem{TD,VD}} <: AbstractFlow{TD, VD} end
+```
+
+```julia
+# Dans src/Flows/Flows.jl — exports à ajouter
+export AbstractStateFlow, AbstractHamiltonianFlow
+```
+
+#### Extension CTFlowsSciMLExt
+
+`_build_merged_solution` reste un stub dans `MultiPhase/calling.jl` et son implémentation réelle va dans l'extension :
+
+```julia
+# Dans ext/CTFlowsSciMLExt.jl
+function CTFlows.MultiPhase._build_merged_solution(t, u, flow)
+    first_phase = flow.phases[1]
+    prob = Integrators.last_prob(first_phase)
+    alg  = Integrators.last_alg(first_phase)
+    return SciMLBase.build_solution(prob, alg, t, u; retcode=:Success)
+end
 ```
 
 ---
