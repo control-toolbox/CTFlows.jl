@@ -29,5 +29,5 @@ See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.build_system`](@ref), 
 function Flow(data::Data.VectorField; opts...)
     system = Systems.build_system(data)
     integrator = Integrators.build_integrator(; opts...)
-    return Flow(system, integrator)
+    return build_flow(system, integrator)
 end

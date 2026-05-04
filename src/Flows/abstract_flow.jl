@@ -5,7 +5,7 @@ Abstract type for all flows in CTFlows.
 
 An `AbstractFlow` is a callable object that combines an `AbstractSystem` with an
 `AbstractIntegrator`. It carries no business logic of its own — its job is
-to expose the integration protocol and delegate trait queries to its system.
+to expose the integration protocol.
 
 # Interface Requirements
 
@@ -16,9 +16,9 @@ All subtypes must implement:
 # Traits
 
 All `AbstractFlow` subtypes automatically support time-dependence and variable-dependence
-trait queries by delegating to their associated system:
-- `time_dependence(flow)`: Returns the time-dependence trait of the system.
-- `variable_dependence(flow)`: Returns the variable-dependence trait of the system.
+trait queries encoded in their type parameters:
+- `time_dependence(flow)`: Returns the time-dependence trait type.
+- `variable_dependence(flow)`: Returns the variable-dependence trait type.
 - `is_autonomous(flow)`, `is_nonautonomous(flow)`: Time-dependence predicates.
 - `is_variable(flow)`, `is_nonvariable(flow)`, `has_variable(flow)`: Variable-dependence predicates.
 
@@ -61,32 +61,54 @@ Common.has_variable_dependence_trait(::AbstractFlow) = true
 """
 $(TYPEDSIGNATURES)
 
-Return the time-dependence trait of the flow (delegates to its system).
-
-# Arguments
-- `flow::AbstractFlow`: The flow to query.
+Extract the time dependence trait from an `AbstractFlow`.
 
 # Returns
-- `CTFlows.Common.Autonomous` or `CTFlows.Common.NonAutonomous`: The time-dependence trait of the associated system.
+- `Type{<:TimeDependence}`: The time dependence trait type (Autonomous or NonAutonomous).
 
-See also: [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.variable_dependence`](@ref), [`CTFlows.Flows.system`](@ref).
+# Example
+\`\`\`julia
+using CTFlows.Flows
+using CTFlows.Common
+
+struct MyFlow <: Flows.AbstractFlow{Common.Autonomous, Common.Fixed}
+    data::Vector{Float64}
+end
+
+Common.time_dependence(MyFlow)  # Returns Autonomous
+\`\`\`
+
+See also: [`CTFlows.Common.has_time_dependence_trait`](@ref), [`CTFlows.Common.is_autonomous`](@ref), [`CTFlows.Flows.AbstractFlow`](@ref).
 """
-Common.time_dependence(flow::AbstractFlow) = Common.time_dependence(system(flow))
+function Common.time_dependence(flow::AbstractFlow{TD, <:VariableDependence}) where {TD <: TimeDependence}
+    return TD
+end
 
 """
 $(TYPEDSIGNATURES)
 
-Return the variable-dependence trait of the flow (delegates to its system).
-
-# Arguments
-- `flow::AbstractFlow`: The flow to query.
+Extract the variable dependence trait from an `AbstractFlow`.
 
 # Returns
-- `CTFlows.Common.Fixed` or `CTFlows.Common.NonFixed`: The variable-dependence trait of the associated system.
+- `Type{<:VariableDependence}`: The variable dependence trait type (Fixed or NonFixed).
 
-See also: [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.time_dependence`](@ref), [`CTFlows.Flows.system`](@ref).
+# Example
+\`\`\`julia
+using CTFlows.Flows
+using CTFlows.Common
+
+struct MyFlow <: Flows.AbstractFlow{Common.Autonomous, Common.Fixed}
+    data::Vector{Float64}
+end
+
+Common.variable_dependence(MyFlow)  # Returns Fixed
+\`\`\`
+
+See also: [`CTFlows.Common.has_variable_dependence_trait`](@ref), [`CTFlows.Common.is_variable`](@ref), [`CTFlows.Flows.AbstractFlow`](@ref).
 """
-Common.variable_dependence(flow::AbstractFlow) = Common.variable_dependence(system(flow))
+function Common.variable_dependence(flow::AbstractFlow{<:TimeDependence, VD}) where {VD <: VariableDependence}
+    return VD
+end
 
 """
 $(TYPEDSIGNATURES)

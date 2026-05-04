@@ -5,6 +5,7 @@ import CTFlows.Systems
 import CTFlows.Flows
 import CTFlows.Integrators
 import CTFlows.Common
+import CTSolvers
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -15,10 +16,17 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 
 """
 Fake integrator for testing Flow.
+
+Implements minimal strategy contract for testing purposes.
 """
-struct FakeIntegrator
+struct FakeIntegrator <: Integrators.AbstractIntegrator
     result::Any
 end
+
+# Minimal strategy contract implementation
+CTSolvers.Strategies.id(::Type{FakeIntegrator}) = :fake_integrator
+CTSolvers.Strategies.metadata(::Type{FakeIntegrator}) = CTSolvers.Strategies.StrategyMetadata()
+CTSolvers.Strategies.options(integ::FakeIntegrator) = CTSolvers.Options.StrategyOptions()
 
 """
 Fake flow for testing Flow contract without requiring SciML extension.
@@ -102,6 +110,56 @@ function test_flow()
                 flow = FakeFlow{Common.Autonomous, Common.NonFixed, NonFixedSystem, typeof(integ)}(sys, integ)
 
                 Test.@testset "Flow is AbstractFlow{Autonomous, NonFixed}" begin
+                    Test.@test flow isa Flows.AbstractFlow{Common.Autonomous, Common.NonFixed}
+                end
+
+                Test.@testset "Flow stores system" begin
+                    Test.@test Flows.system(flow) === sys
+                end
+
+                Test.@testset "Flow stores integrator" begin
+                    Test.@test Flows.integrator(flow) === integ
+                end
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - build_flow
+        # ====================================================================
+
+        Test.@testset "build_flow" begin
+            Test.@testset "Fixed System" begin
+                sys = FixedSystem()
+                integ = FakeIntegrator(:solution)
+                flow = Flows.build_flow(sys, integ)
+
+                Test.@testset "returns Flow" begin
+                    Test.@test flow isa Flows.Flow
+                end
+
+                Test.@testset "Flow has correct traits" begin
+                    Test.@test flow isa Flows.AbstractFlow{Common.Autonomous, Common.Fixed}
+                end
+
+                Test.@testset "Flow stores system" begin
+                    Test.@test Flows.system(flow) === sys
+                end
+
+                Test.@testset "Flow stores integrator" begin
+                    Test.@test Flows.integrator(flow) === integ
+                end
+            end
+
+            Test.@testset "NonFixed System" begin
+                sys = NonFixedSystem()
+                integ = FakeIntegrator(:solution)
+                flow = Flows.build_flow(sys, integ)
+
+                Test.@testset "returns Flow" begin
+                    Test.@test flow isa Flows.Flow
+                end
+
+                Test.@testset "Flow has correct traits" begin
                     Test.@test flow isa Flows.AbstractFlow{Common.Autonomous, Common.NonFixed}
                 end
 

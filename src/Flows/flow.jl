@@ -37,6 +37,41 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Build a `Flow` from an `AbstractSystem` and an `AbstractIntegrator`.
+
+Constructs a concrete flow that combines the system and integrator for integration.
+The resulting flow is callable and can be used with both point and trajectory configurations.
+
+# Arguments
+- `system::S`: The `AbstractSystem` to integrate.
+- `integrator::I`: The `AbstractIntegrator` to use for integration.
+
+# Returns
+- `Flow`: A concrete flow combining the system and integrator.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Flows, CTFlows.Systems, CTFlows.Integrators
+
+julia> system = VectorFieldSystem(VectorField(x -> -x))
+VectorFieldSystem
+
+julia> integrator = FakeIntegrator()
+FakeIntegrator()
+
+julia> flow = build_flow(system, integrator)
+Flow{...}
+\`\`\`
+
+See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref).
+"""
+function build_flow(system::S, integrator::I) where {S<:Systems.AbstractSystem, I<:Integrators.AbstractIntegrator}
+    return Flow(system, integrator)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Return the system associated with the flow.
 
 # Returns

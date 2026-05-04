@@ -211,16 +211,18 @@ function test_abstract_flow()
                 end
             end
 
-            Test.@testset "MinimalFlow without system() throws NotImplemented" begin
+            Test.@testset "MinimalFlow without system() - predicates work from type parameters" begin
                 sys = FakeSystem(2)
                 flow = MinimalFlow(sys)
 
-                Test.@testset "is_autonomous throws NotImplemented" begin
-                    Test.@test_throws Exceptions.NotImplemented Flows.is_autonomous(flow)
+                Test.@testset "is_autonomous works from type parameter" begin
+                    # Predicates now read directly from type parameters, not from system
+                    Test.@test Flows.is_autonomous(flow) === true
                 end
 
-                Test.@testset "is_variable throws NotImplemented" begin
-                    Test.@test_throws Exceptions.NotImplemented Flows.is_variable(flow)
+                Test.@testset "is_variable works from type parameter" begin
+                    # Predicates now read directly from type parameters, not from system
+                    Test.@test Flows.is_variable(flow) === false
                 end
             end
         end

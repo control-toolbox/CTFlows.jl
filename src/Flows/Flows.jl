@@ -41,5 +41,6 @@ include(joinpath(@__DIR__, "calling.jl"))
 export AbstractFlow, Flow
 export system, integrator
 export call
+export build_flow
 
 end # module Flows
