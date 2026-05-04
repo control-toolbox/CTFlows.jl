@@ -339,11 +339,7 @@ function CTFlows.Integrators.build_sciml_integrator(
     ::Type{CTFlows.Integrators.SciMLTag}; mode::Symbol = :strict, kwargs...,
 )
     opts = Strategies.build_strategy_options(SciML; mode = mode, kwargs...)
-    
-    # Extract raw options using the CTSolvers internal pattern
-    # Following: options_dict(strategy) implementation
-    raw_opts = Options.extract_raw_options(Strategies._raw_options(opts))
-    raw = Dict{Symbol,Any}(pairs(raw_opts))
+    raw = Options.options_dict(opts)
     
     # Pre-compute options for PointConfig
     options_point = copy(raw)
