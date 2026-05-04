@@ -7,6 +7,7 @@ import CTFlows.Data: Data
 import CTFlows.Systems: Systems
 import CTFlows.Integrators: Integrators
 import CTFlows.Solutions: Solutions
+import CTFlows.Flows: Flows
 import CTSolvers.Strategies: Strategies
 
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, ODEProblem, Tsit5
@@ -155,6 +156,27 @@ function test_forwarddiff_extension()
             opts = Strategies.options_dict(integ)
             Test.@test haskey(opts, :internalnorm)
             Test.@test opts[:internalnorm] === Common.real_norm
+        end
+
+        # ====================================================================
+        # INTEGRATION TESTS - Flow API grid invariance
+        # ====================================================================
+
+        Test.@testset "Flow API grid invariance" begin
+            # Simple ODE: ẋ = x
+            vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
+            flow = Flows.Flow(vf)
+
+            # Integration with real numbers
+            result_real = flow((0.0, 1.0), [1.0])
+            t_real = Solutions.times(result_real)
+
+            # Integration with Dual (Jacobian w.r.t. initial condition)
+            result_dual = flow((0.0, 1.0), ForwardDiff.Dual{:T}.([1.0], [1.0]))
+            t_dual = ForwardDiff.value.(Solutions.times(result_dual))
+
+            # Grids must be identical with real_norm (default)
+            Test.@test t_real == t_dual
         end
     end
 end
