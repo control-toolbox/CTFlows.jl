@@ -18,8 +18,50 @@ using CTFlows.Common: Common
 using CTFlows.Systems: Systems
 using CTFlows.Integrators: Integrators, SciML, SciMLTag
 using CTFlows.Solutions: Solutions
+using DiffEqBase: DiffEqBase
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, ODEProblem, Tsit5
 using SciMLBase: SciMLBase
+
+# =============================================================================
+# real_norm overload for SciML
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Compute the internal norm for adaptive step-size control using only the primal
+parts of dual numbers.
+
+This function ensures grid invariance (IND) when integrating ODEs with ForwardDiff
+dual numbers: the adaptive time grid chosen by the solver is identical whether
+integrating with real numbers or dual numbers. Without this, the step-size
+controller would make decisions based on dual values, breaking grid invariance.
+
+This implementation uses `Common.deepvalue` to extract primal parts and
+`DiffEqBase.ODE_DEFAULT_NORM` to compute the norm. When ForwardDiff is loaded,
+`Common.deepvalue` is extended to handle dual numbers via `CTFlowsForwardDiffExt`.
+
+# Arguments
+- `u::AbstractArray`: State vector (may contain dual numbers).
+- `t`: Time parameter (unused but required by SciML interface).
+
+# Returns
+- `Real`: The norm computed on the primal parts only.
+
+# Example
+```julia
+julia> using ForwardDiff
+
+julia> u_real = [1.0, 2.0, 3.0]
+julia> u_dual = ForwardDiff.Dual{:T}.(u_real, ones(3))
+
+julia> CTFlowsSciMLExt.real_norm(u_real, 0.0) ≈ CTFlowsSciMLExt.real_norm(u_dual, 0.0)
+true
+```
+
+See also: [`Common.deepvalue`](@ref), [`Common.real_norm`](@ref)
+"""
+Common.real_norm(u::AbstractArray, t) = DiffEqBase.ODE_DEFAULT_NORM(Common.deepvalue.(u), t)
 
 # =============================================================================
 # Strategies.metadata — option definitions for SciML
@@ -29,6 +71,9 @@ using SciMLBase: SciMLBase
 $(TYPEDSIGNATURES)
 
 Return metadata defining `SciML` options and their specifications.
+
+The `internalnorm` option defaults to `real_norm`, which extracts the primal (Float64)
+part of ForwardDiff dual numbers to ensure grid invariance (IND) when ForwardDiff is loaded.
 """
 function Strategies.metadata(::Type{SciML})
     return Strategies.StrategyMetadata(
@@ -217,6 +262,16 @@ function Strategies.metadata(::Type{SciML})
             type = Bool,
             default = Options.NotProvided,
             description = "Whether to force saving the final timepoint.",
+        ),
+        Strategies.OptionDefinition(;
+            name = :internalnorm,
+            type = Function,
+            default = Common.real_norm,
+            description = "Internal norm for adaptive step-size control. " *
+                          "Defaults to `real_norm`, which extracts the primal (Float64) " *
+                          "part of ForwardDiff dual numbers to ensure grid invariance (IND) " *
+                          "when ForwardDiff is loaded. Set to `DiffEqBase.ODE_DEFAULT_NORM` to use the SciML default.",
+            aliases = (:internal_norm, :norm),
         ),
     )
 end
