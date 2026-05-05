@@ -1,7 +1,7 @@
 module TestIntegrationResult
 
 import Test
-import CTFlows.Solutions
+import CTFlows.Integrators
 import CTBase.Exceptions
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -11,7 +11,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # Fake type for stub testing
 # ==============================================================================
 
-struct FakeResult <: Solutions.AbstractIntegrationResult end
+struct FakeResult <: Integrators.AbstractIntegrationResult end
 
 # ==============================================================================
 # Test function
@@ -28,19 +28,19 @@ function test_integration_result()
             Test.@testset "final_state throws NotImplemented on abstract type" begin
                 result = FakeResult()
                 
-                Test.@test_throws Exceptions.NotImplemented Solutions.final_state(result)
+                Test.@test_throws Exceptions.NotImplemented Integrators.final_state(result)
             end
 
             Test.@testset "times throws NotImplemented on abstract type" begin
                 result = FakeResult()
                 
-                Test.@test_throws Exceptions.NotImplemented Solutions.times(result)
+                Test.@test_throws Exceptions.NotImplemented Integrators.times(result)
             end
 
             Test.@testset "evaluate_at throws NotImplemented on abstract type" begin
                 result = FakeResult()
                 
-                Test.@test_throws Exceptions.NotImplemented Solutions.evaluate_at(result, 0.0)
+                Test.@test_throws Exceptions.NotImplemented Integrators.evaluate_at(result, 0.0)
             end
         end
 
@@ -50,19 +50,19 @@ function test_integration_result()
 
         Test.@testset "Exports Verification" begin
             Test.@testset "AbstractIntegrationResult is exported" begin
-                Test.@test isdefined(Solutions, :AbstractIntegrationResult)
+                Test.@test isdefined(Integrators, :AbstractIntegrationResult)
             end
 
             Test.@testset "final_state is exported" begin
-                Test.@test isdefined(Solutions, :final_state)
+                Test.@test isdefined(Integrators, :final_state)
             end
 
             Test.@testset "times is exported" begin
-                Test.@test isdefined(Solutions, :times)
+                Test.@test isdefined(Integrators, :times)
             end
 
             Test.@testset "evaluate_at is exported" begin
-                Test.@test isdefined(Solutions, :evaluate_at)
+                Test.@test isdefined(Integrators, :evaluate_at)
             end
         end
     end

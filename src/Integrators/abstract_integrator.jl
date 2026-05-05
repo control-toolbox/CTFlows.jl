@@ -26,6 +26,10 @@ All subtypes must implement three named functions:
 - `build_options(integrator::AbstractIntegrator, config::Union{CTFlows.Common.AbstractConfig, Nothing})`: Build solver options dict for the given configuration.
 - `solve_problem(integrator::AbstractIntegrator, prob, options::Dict{Symbol,Any})`: Solve the given ODE problem with resolved options (tspan is embedded in `prob`).
 
+Additionally, for multi-phase trajectory support, subtypes should implement:
+
+- `merge(segments::AbstractVector{<:CTFlows.Integrators.AbstractIntegrationResult})`: Merge a sequence of integration results into a single result (used for concatenating multi-phase trajectories).
+
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If the methods are not implemented by the concrete type.
 
@@ -73,7 +77,7 @@ Solve the given ODE problem with resolved options.
 - `unsafe=Common.__unsafe()`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
 
 # Returns
-- The ODE integration result, as a subtype of `CTFlows.Solutions.AbstractIntegrationResult`.
+- The ODE integration result, as a subtype of `CTFlows.Integrators.AbstractIntegrationResult`.
 
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
@@ -112,5 +116,33 @@ function build_options(integrator::AbstractIntegrator, config::Union{Common.Abst
         required_method = "build_options(integrator::$(typeof(integrator)), config::Union{Common.AbstractConfig, Nothing})",
         suggestion = "Implement build_options(i::YourIntegrator, config) returning a Dict{Symbol,Any} of resolved solver options.",
         context = "AbstractIntegrator build_options - required method implementation",
+    ))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Merge a sequence of integration results into a single result.
+
+This is used for concatenating multi-phase trajectories. Concrete integrator types
+should implement this method for their specific result types.
+
+# Arguments
+- `segments::AbstractVector{T}`: Sequence of integration results to merge, where `T<:Integrators.AbstractIntegrationResult`.
+
+# Returns
+- A single `AbstractIntegrationResult` representing the merged trajectory.
+
+# Throws
+- `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
+
+See also: [`CTFlows.Integrators.AbstractIntegrator`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
+"""
+function merge(segments::AbstractVector{T}) where {T<:Integrators.AbstractIntegrationResult}
+    throw(Exceptions.NotImplemented(
+        "AbstractIntegrator merge not implemented";
+        required_method = "merge(segments::Vector{<:$(T)})",
+        suggestion = "Implement merge(segments::Vector{<:YourIntegrationResult}) returning a merged YourIntegrationResult.",
+        context = "AbstractIntegrator merge - required method implementation for multi-phase trajectories",
     ))
 end

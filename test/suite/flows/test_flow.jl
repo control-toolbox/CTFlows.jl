@@ -41,12 +41,12 @@ end
 """
 Fake system for Fixed systems.
 """
-struct FixedSystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed} end
+struct FixedSystem <: Systems.AbstractStateSystem{Common.Autonomous, Common.Fixed} end
 
 """
 Fake system for NonFixed systems.
 """
-struct NonFixedSystem <: Systems.AbstractSystem{Common.Autonomous, Common.NonFixed} end
+struct NonFixedSystem <: Systems.AbstractStateSystem{Common.Autonomous, Common.NonFixed} end
 
 function Flows.system(flow::FakeFlow)
     return flow.sys
@@ -133,8 +133,8 @@ function test_flow()
                 integ = FakeIntegrator(:solution)
                 flow = Flows.build_flow(sys, integ)
 
-                Test.@testset "returns Flow" begin
-                    Test.@test flow isa Flows.Flow
+                Test.@testset "returns StateFlow" begin
+                    Test.@test flow isa Flows.StateFlow
                 end
 
                 Test.@testset "Flow has correct traits" begin
@@ -155,8 +155,8 @@ function test_flow()
                 integ = FakeIntegrator(:solution)
                 flow = Flows.build_flow(sys, integ)
 
-                Test.@testset "returns Flow" begin
-                    Test.@test flow isa Flows.Flow
+                Test.@testset "returns StateFlow" begin
+                    Test.@test flow isa Flows.StateFlow
                 end
 
                 Test.@testset "Flow has correct traits" begin

@@ -11,7 +11,7 @@ This module provides:
 - `state`, `time_grid`: Semantic accessors for VectorFieldSolution
 - `plot`: Plotting functionality for solutions
 
-See also: [`CTFlows.Solutions.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.build_solution`](@ref), [`CTFlows.Solutions.plot`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.build_solution`](@ref), [`CTFlows.Solutions.plot`](@ref).
 """
 module Solutions
 
@@ -29,12 +29,12 @@ import RecipesBase: RecipesBase, plot
 
 using ..Common
 using ..Systems
+using ..Integrators
 
 # ==============================================================================
 # Include files
 # ==============================================================================
 
-include(joinpath(@__DIR__, "integration_result.jl"))
 include(joinpath(@__DIR__, "vector_field_solution.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 
@@ -42,7 +42,6 @@ include(joinpath(@__DIR__, "building.jl"))
 # Module exports
 # ==============================================================================
 
-export AbstractIntegrationResult, final_state, times, evaluate_at
 export state, time_grid
 export VectorFieldSolution
 export build_solution

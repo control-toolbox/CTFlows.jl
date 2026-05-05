@@ -1,4 +1,4 @@
-module TestCalling
+module TestCallingFlows
 
 import Test
 import CTFlows.Systems
@@ -17,7 +17,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake system for testing the calling workflow.
 """
-struct FakeSystemForCalling <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
+struct FakeSystemForCalling <: Systems.AbstractStateSystem{Common.Autonomous, Common.Fixed}
     state_dim::Int
 end
 
@@ -99,7 +99,7 @@ end
 # Test function
 # ==============================================================================
 
-function test_calling()
+function test_calling_flows()
     Test.@testset "Calling Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
@@ -185,4 +185,4 @@ end
 
 end # module
 
-test_calling() = TestCalling.test_calling()
+test_calling_flows() = TestCallingFlows.test_calling_flows()

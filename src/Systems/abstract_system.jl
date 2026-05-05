@@ -34,6 +34,54 @@ See also: [`CTFlows.Systems.rhs`](@ref), [`CTFlows.Common.time_dependence`](@ref
 abstract type AbstractSystem{TD<:Common.TimeDependence, VD<:Common.VariableDependence} end
 
 """
+$(TYPEDEF)
+
+Abstract type for state systems (non-Hamiltonian).
+
+Subtype of `AbstractSystem` specialized for state dynamics without costates.
+Carries the time-dependence and variable-dependence traits for compile-time dispatch.
+
+# Type Parameters
+- `TD <: TimeDependence`: Time dependence trait (Autonomous or NonAutonomous)
+- `VD <: VariableDependence`: Variable dependence trait (Fixed or NonFixed)
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Systems
+
+julia> MyStateSystem <: Systems.AbstractStateSystem
+true
+\`\`\`
+
+See also: [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
+"""
+abstract type AbstractStateSystem{TD, VD} <: AbstractSystem{TD, VD} end
+
+"""
+$(TYPEDEF)
+
+Abstract type for Hamiltonian systems.
+
+Subtype of `AbstractSystem` specialized for Hamiltonian dynamics with state and costate.
+Carries the time-dependence and variable-dependence traits for compile-time dispatch.
+
+# Type Parameters
+- `TD <: TimeDependence`: Time dependence trait (Autonomous or NonAutonomous)
+- `VD <: VariableDependence`: Variable dependence trait (Fixed or NonFixed)
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Systems
+
+julia> MyHamiltonianSystem <: Systems.AbstractHamiltonianSystem
+true
+\`\`\`
+
+See also: [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Systems.AbstractStateSystem`](@ref).
+"""
+abstract type AbstractHamiltonianSystem{TD, VD} <: AbstractSystem{TD, VD} end
+
+"""
 $(TYPEDSIGNATURES)
 
 Indicate that `AbstractSystem` has the time-dependence trait.

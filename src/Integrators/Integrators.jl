@@ -27,6 +27,7 @@ using CTSolvers: CTSolvers
 # Include files
 # ==============================================================================
 
+include(joinpath(@__DIR__, "integration_result.jl"))
 include(joinpath(@__DIR__, "abstract_integrator.jl"))
 include(joinpath(@__DIR__, "sciml.jl"))
 include(joinpath(@__DIR__, "building.jl"))
@@ -36,7 +37,8 @@ include(joinpath(@__DIR__, "building.jl"))
 # ==============================================================================
 
 export AbstractIntegrator, SciML, SciMLTag
+export AbstractIntegrationResult, final_state, times, evaluate_at
 export build_sciml_integrator, build_integrator
-export build_problem, solve_problem
+export build_problem, solve_problem, merge
 
 end # module Integrators

@@ -1,46 +1,43 @@
 """
-    Flows
+    MultiPhase
 
-Flow types and contracts for CTFlows.
+Multi-phase flow concatenation and sequential integration.
 
-This module defines the `AbstractFlow` type and its required methods:
-- `(flow)(t0, x0, tf)`: callable interface for state integration
-- `(flow)(t0, x0, p0, tf)`: callable interface for state + costate integration
-- `system`: returns the system associated with the flow
-- `integrator`: returns the integrator used by the flow
+This module provides types and operators for concatenating flows with switching times
+and optional jumps, implementing exact sequential integration.
 """
-module Flows
+module MultiPhase
 
 # 1. External-package imports (qualified, pollution-free)
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
+import CTSolvers.Strategies
+import CTSolvers.Options
 
 # ==============================================================================
 # Internal sibling-submodule imports
 # ==============================================================================
 
 using ..Common
-using ..Data
 using ..Systems
 using ..Integrators
+using ..Flows
 using ..Solutions
 
 # ==============================================================================
 # Include files
 # ==============================================================================
 
-include(joinpath(@__DIR__, "abstract_flow.jl"))
-include(joinpath(@__DIR__, "flow.jl"))
-include(joinpath(@__DIR__, "building.jl"))
+include(joinpath(@__DIR__, "multiphase_flow.jl"))
+include(joinpath(@__DIR__, "concatenation.jl"))
 include(joinpath(@__DIR__, "calling.jl"))
 
 # ==============================================================================
 # Module exports
 # ==============================================================================
 
-export AbstractFlow, AbstractStateFlow, AbstractHamiltonianFlow, Flow, StateFlow, HamiltonianFlow
-export system, integrator
-export call
-export build_flow
+export MultiPhaseStateFlow, MultiPhaseHamiltonianFlow
+export n_phases, get_flow, get_switching_time, get_jump
+export get_flows, get_switching_times, get_jumps
 
-end # module Flows
+end # module MultiPhase

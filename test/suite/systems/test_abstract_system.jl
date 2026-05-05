@@ -27,6 +27,23 @@ function Systems.rhs(sys::FakeSystem)
     return (du, u, p, t) -> du .= sys.data .* u
 end
 
+# Fake subtypes for hierarchy testing
+struct FakeStateSystem <: Systems.AbstractStateSystem{Common.Autonomous, Common.Fixed}
+    data::Vector{Float64}
+end
+
+function Systems.rhs(sys::FakeStateSystem)
+    return (du, u, p, t) -> du .= sys.data .* u
+end
+
+struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed}
+    data::Vector{Float64}
+end
+
+function Systems.rhs(sys::FakeHamiltonianSystem)
+    return (du, u, p, t) -> du .= sys.data .* u
+end
+
 """
 Minimal system that does not implement the contract (for error testing).
 """
@@ -48,6 +65,16 @@ function test_abstract_system()
         Test.@testset "Abstract Types" begin
             Test.@test FakeSystem([1.0, 2.0]) isa Systems.AbstractSystem
             Test.@test MinimalSystem(2) isa Systems.AbstractSystem
+        end
+
+        Test.@testset "Hierarchy" begin
+            Test.@test FakeStateSystem([1.0, 2.0]) isa Systems.AbstractStateSystem
+            Test.@test FakeStateSystem([1.0, 2.0]) isa Systems.AbstractSystem
+            Test.@test FakeHamiltonianSystem([1.0, 2.0]) isa Systems.AbstractHamiltonianSystem
+            Test.@test FakeHamiltonianSystem([1.0, 2.0]) isa Systems.AbstractSystem
+            # Verify the two subtypes are not related to each other
+            Test.@test !(FakeStateSystem([1.0, 2.0]) isa Systems.AbstractHamiltonianSystem)
+            Test.@test !(FakeHamiltonianSystem([1.0, 2.0]) isa Systems.AbstractStateSystem)
         end
 
         # ====================================================================
@@ -167,6 +194,8 @@ function test_abstract_system()
         Test.@testset "Exports Verification" begin
             Test.@testset "Exported types" begin
                 Test.@test isdefined(Systems, :AbstractSystem)
+                Test.@test isdefined(Systems, :AbstractStateSystem)
+                Test.@test isdefined(Systems, :AbstractHamiltonianSystem)
             end
         end
     end

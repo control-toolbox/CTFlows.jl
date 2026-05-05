@@ -32,7 +32,7 @@ include(joinpath(@__DIR__, "building.jl"))
 # Module exports
 # ==============================================================================
 
-export AbstractSystem
+export AbstractSystem, AbstractStateSystem, AbstractHamiltonianSystem
 export rhs
 export VectorFieldSystem
 export build_system
