@@ -109,7 +109,11 @@ function test_flow_module()
         Test.@testset "Concrete Types" begin
             Test.@testset "StateFlow is exported" begin
                 Test.@test isdefined(Flows, :StateFlow)
-                Test.@test Flows.StateFlow <: Flows.AbstractFlow
+                sys = FakeSystem(2, 2)
+                integ = FakeIntegrator()
+                flow = Flows.StateFlow(sys, integ)
+                Test.@test flow isa Flows.StateFlow
+                Test.@test flow isa Flows.AbstractFlow
             end
 
             Test.@testset "StateFlow constructor is exported" begin
@@ -192,7 +196,10 @@ function test_flow_module()
 
         Test.@testset "Type Hierarchy" begin
             Test.@testset "StateFlow is a subtype of AbstractFlow" begin
-                Test.@test Flows.StateFlow <: Flows.AbstractFlow
+                sys = FakeSystem(2, 2)
+                integ = FakeIntegrator()
+                flow = Flows.StateFlow(sys, integ)
+                Test.@test flow isa Flows.AbstractFlow
             end
 
             Test.@testset "Concrete StateFlow instances are AbstractFlow" begin
