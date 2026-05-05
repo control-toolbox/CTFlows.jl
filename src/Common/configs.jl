@@ -204,7 +204,35 @@ function tspan(c::TrajectoryConfig)::Tuple{Real, Real}
     return c.tspan
 end
 
-# TODO: docstring
+"""
+$(TYPEDEF)
+
+Configuration for a Hamiltonian point-to-point integration problem.
+
+Defines the initial and final time points along with the initial state and costate
+for integration from a single initial condition to a specific final time in the
+Hamiltonian framework.
+
+# Fields
+- `t0::T0`: Initial time
+- `x0::X0`: Initial state vector
+- `p0::P0`: Initial costate vector
+- `tf::TF`: Final time
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> config = HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+HamiltonianPointConfig
+  t0: 0.0
+  x0: [1.0, 0.0]
+  p0: [0.5, 0.3]
+  tf: 1.0
+\`\`\`
+
+See also: [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Common.PointConfig`](@ref).
+"""
 struct HamiltonianPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractPointConfig{X0}
     t0::T0
     x0::X0
@@ -212,17 +240,74 @@ struct HamiltonianPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractPointConfig
     tf::TF
 end
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Extract the time span from a `HamiltonianPointConfig`.
+
+Returns a tuple `(t0, tf)` for consistency with other config types.
+
+# Arguments
+- `c::HamiltonianPointConfig`: The Hamiltonian point configuration.
+
+# Returns
+- `Tuple{Real, Real}`: Time span as `(t0, tf)`.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> config = HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+
+julia> tspan(config)
+(0.0, 1.0)
+\`\`\`
+
+See also: [`CTFlows.Common.HamiltonianPointConfig`](@ref).
+"""
 function tspan(c::HamiltonianPointConfig)::Tuple{Real, Real}
     return (c.t0, c.tf)
 end
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Extract the initial condition from a `HamiltonianPointConfig`.
+
+Returns the concatenated state and costate as a single vector, which is the
+expected format for ODE solvers in the Hamiltonian framework.
+
+# Arguments
+- `c::HamiltonianPointConfig`: The Hamiltonian point configuration.
+
+# Returns
+- `AbstractVector`: Concatenated state and costate vector.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> config = HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+
+julia> initial_condition(config)
+4-element Vector{Float64}:
+ 1.0
+ 0.0
+ 0.5
+ 0.3
+\`\`\`
+
+See also: [`CTFlows.Common.HamiltonianPointConfig`](@ref), [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.initial_costate`](@ref).
+"""
 function initial_condition(c::HamiltonianPointConfig)
     return vcat(c.x0, c.p0)
 end
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Display the `HamiltonianPointConfig` in tree-style format.
+"""
 function Base.show(io::IO, c::HamiltonianPointConfig)
     println(io, "HamiltonianPointConfig")
     println(io, "  t0: ", c.t0)
@@ -231,29 +316,116 @@ function Base.show(io::IO, c::HamiltonianPointConfig)
     print(io, "  tf: ", c.tf)
 end
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Display the `HamiltonianPointConfig` in REPL format.
+"""
 function Base.show(io::IO, ::MIME"text/plain", c::HamiltonianPointConfig)
     show(io, c)
 end
 
-# TODO: docstring
+"""
+$(TYPEDEF)
+
+Configuration for a Hamiltonian trajectory integration problem.
+
+Defines a time span and initial state and costate for integration over a
+continuous time interval in the Hamiltonian framework, useful for generating
+full Hamiltonian trajectories.
+
+# Fields
+- `tspan::TS`: Time span as a tuple (t0, tf)
+- `x0::X0`: Initial state vector
+- `p0::P0`: Initial costate vector
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> config = HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
+HamiltonianTrajectoryConfig
+  tspan: (0.0, 1.0)
+  x0: [1.0, 0.0]
+  p0: [0.5, 0.3]
+\`\`\`
+
+See also: [`CTFlows.Common.HamiltonianPointConfig`](@ref), [`CTFlows.Common.TrajectoryConfig`](@ref).
+"""
 struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractTrajectoryConfig{X0}
     tspan::TS
     x0::X0
     p0::P0
 end
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Extract the time span from a `HamiltonianTrajectoryConfig`.
+
+Returns the stored time span tuple.
+
+# Arguments
+- `c::HamiltonianTrajectoryConfig`: The Hamiltonian trajectory configuration.
+
+# Returns
+- `Tuple{Real, Real}`: Time span as `(t0, tf)`.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> config = HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
+
+julia> tspan(config)
+(0.0, 1.0)
+\`\`\`
+
+See also: [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref).
+"""
 function tspan(c::HamiltonianTrajectoryConfig)::Tuple{Real, Real}
     return c.tspan
 end
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Extract the initial condition from a `HamiltonianTrajectoryConfig`.
+
+Returns the concatenated state and costate as a single vector, which is the
+expected format for ODE solvers in the Hamiltonian framework.
+
+# Arguments
+- `c::HamiltonianTrajectoryConfig`: The Hamiltonian trajectory configuration.
+
+# Returns
+- `AbstractVector`: Concatenated state and costate vector.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> config = HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
+
+julia> initial_condition(config)
+4-element Vector{Float64}:
+ 1.0
+ 0.0
+ 0.5
+ 0.3
+\`\`\`
+
+See also: [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.initial_costate`](@ref).
+"""
 function initial_condition(c::HamiltonianTrajectoryConfig)
     return vcat(c.x0, c.p0)
 end
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Display the `HamiltonianTrajectoryConfig` in tree-style format.
+"""
 function Base.show(io::IO, c::HamiltonianTrajectoryConfig)
     println(io, "HamiltonianTrajectoryConfig")
     println(io, "  tspan: ", c.tspan)
@@ -261,7 +433,11 @@ function Base.show(io::IO, c::HamiltonianTrajectoryConfig)
     print(io, "  p0: ", c.p0)
 end
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Display the `HamiltonianTrajectoryConfig` in REPL format.
+"""
 function Base.show(io::IO, ::MIME"text/plain", c::HamiltonianTrajectoryConfig)
     show(io, c)
 end

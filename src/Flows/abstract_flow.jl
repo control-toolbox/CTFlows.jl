@@ -34,10 +34,54 @@ See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref)
 """
 abstract type AbstractFlow{TD<:Common.TimeDependence, VD<:Common.VariableDependence} end
 
-# TODO: docstring
+"""
+$(TYPEDEF)
+
+Abstract type for state flows.
+
+Subtype of `AbstractFlow` specialized for state systems (not Hamiltonian systems).
+Carries the system type parameter `S` which must be an `AbstractStateSystem`.
+
+# Type Parameters
+- `TD <: TimeDependence`: Time dependence trait (Autonomous or NonAutonomous)
+- `VD <: VariableDependence`: Variable dependence trait (Fixed or NonFixed)
+- `S <: AbstractStateSystem{TD, VD}`: The state system type
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Flows
+
+julia> MyStateFlow <: Flows.AbstractStateFlow
+true
+\`\`\`
+
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@ref), [`CTFlows.Systems.AbstractStateSystem`](@ref).
+"""
 abstract type AbstractStateFlow{TD, VD, S<:Systems.AbstractStateSystem{TD,VD}} <: AbstractFlow{TD, VD} end
 
-# TODO: docstring
+"""
+$(TYPEDEF)
+
+Abstract type for Hamiltonian flows.
+
+Subtype of `AbstractFlow` specialized for Hamiltonian systems.
+Carries the system type parameter `S` which must be an `AbstractHamiltonianSystem`.
+
+# Type Parameters
+- `TD <: TimeDependence`: Time dependence trait (Autonomous or NonAutonomous)
+- `VD <: VariableDependence`: Variable dependence trait (Fixed or NonFixed)
+- `S <: AbstractHamiltonianSystem{TD, VD}`: The Hamiltonian system type
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Flows
+
+julia> MyHamiltonianFlow <: Flows.AbstractHamiltonianFlow
+true
+\`\`\`
+
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractStateFlow`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
+"""
 abstract type AbstractHamiltonianFlow{TD, VD, S<:Systems.AbstractHamiltonianSystem{TD,VD}} <: AbstractFlow{TD, VD} end
 
 """

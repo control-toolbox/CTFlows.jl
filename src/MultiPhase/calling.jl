@@ -122,7 +122,34 @@ end
 # Public Callable Interfaces
 # ==============================================================================
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Convenience call for `MultiPhaseStateFlow` with point configuration.
+
+Builds a `PointConfig` internally and evaluates the multi-phase flow.
+
+# Arguments
+- `mpf::MultiPhaseStateFlow`: The multi-phase state flow to evaluate.
+- `t0::Real`: Initial time.
+- `x0`: Initial state vector.
+- `tf::Real`: Final time.
+- `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
+- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+
+# Returns
+- The final state after sequential integration through all phases.
+
+# Example
+\`\`\`julia
+using CTFlows.MultiPhase
+
+mpf = flow1 * (1.0, flow2) * (2.0, flow3)
+sol = mpf(0.0, [1.0, 0.0], 3.0)
+\`\`\`
+
+See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Common.PointConfig`](@ref).
+"""
 function (mpf::MultiPhaseStateFlow)(
     t0::Real,
     x0,
@@ -134,7 +161,34 @@ function (mpf::MultiPhaseStateFlow)(
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Convenience call for `MultiPhaseStateFlow` with trajectory configuration.
+
+Builds a `TrajectoryConfig` internally and evaluates the multi-phase flow,
+returning a merged trajectory from all phases.
+
+# Arguments
+- `mpf::MultiPhaseStateFlow`: The multi-phase state flow to evaluate.
+- `tspan::Tuple{Real, Real}`: Time span as a tuple (t0, tf).
+- `x0`: Initial state vector.
+- `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
+- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+
+# Returns
+- The merged trajectory solution after sequential integration through all phases.
+
+# Example
+\`\`\`julia
+using CTFlows.MultiPhase
+
+mpf = flow1 * (1.0, flow2) * (2.0, flow3)
+sol = mpf((0.0, 3.0), [1.0, 0.0])
+\`\`\`
+
+See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Common.TrajectoryConfig`](@ref).
+"""
 function (mpf::MultiPhaseStateFlow)(
     tspan::Tuple{Real, Real},
     x0;
@@ -145,7 +199,35 @@ function (mpf::MultiPhaseStateFlow)(
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Convenience call for `MultiPhaseHamiltonianFlow` with point configuration.
+
+Builds a `HamiltonianPointConfig` internally and evaluates the multi-phase flow.
+
+# Arguments
+- `mpf::MultiPhaseHamiltonianFlow`: The multi-phase Hamiltonian flow to evaluate.
+- `t0::Real`: Initial time.
+- `x0`: Initial state vector.
+- `p0`: Initial costate vector.
+- `tf::Real`: Final time.
+- `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
+- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+
+# Returns
+- The final state and costate after sequential integration through all phases.
+
+# Example
+\`\`\`julia
+using CTFlows.MultiPhase
+
+mpf = flow1 * (1.0, flow2) * (2.0, flow3)
+sol = mpf(0.0, [1.0, 0.0], [0.5, 0.3], 3.0)
+\`\`\`
+
+See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Common.HamiltonianPointConfig`](@ref).
+"""
 function (mpf::MultiPhaseHamiltonianFlow)(
     t0::Real,
     x0,
@@ -158,7 +240,35 @@ function (mpf::MultiPhaseHamiltonianFlow)(
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Convenience call for `MultiPhaseHamiltonianFlow` with trajectory configuration.
+
+Builds a `HamiltonianTrajectoryConfig` internally and evaluates the multi-phase flow,
+returning a merged trajectory from all phases.
+
+# Arguments
+- `mpf::MultiPhaseHamiltonianFlow`: The multi-phase Hamiltonian flow to evaluate.
+- `tspan::Tuple{Real, Real}`: Time span as a tuple (t0, tf).
+- `x0`: Initial state vector.
+- `p0`: Initial costate vector.
+- `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
+- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+
+# Returns
+- The merged trajectory solution after sequential integration through all phases.
+
+# Example
+\`\`\`julia
+using CTFlows.MultiPhase
+
+mpf = flow1 * (1.0, flow2) * (2.0, flow3)
+sol = mpf((0.0, 3.0), [1.0, 0.0], [0.5, 0.3])
+\`\`\`
+
+See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref).
+"""
 function (mpf::MultiPhaseHamiltonianFlow)(
     tspan::Tuple{Real, Real},
     x0,
