@@ -45,6 +45,9 @@ using .Solutions
 include(joinpath(@__DIR__, "Flows", "Flows.jl"))
 using .Flows
 
+include(joinpath(@__DIR__, "MultiPhase", "MultiPhase.jl"))
+using .MultiPhase
+
 # ==============================================================================
 # No exports at package level
 # ==============================================================================
