@@ -17,7 +17,6 @@ using CTFlows: CTFlows
 using CTFlows.Common: Common
 using CTFlows.Systems: Systems
 using CTFlows.Integrators: Integrators, SciML, SciMLTag
-using CTFlows.Solutions: Solutions
 using CTFlows.MultiPhase: MultiPhase
 using DiffEqBase: DiffEqBase
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, ODEProblem, Tsit5
@@ -440,7 +439,7 @@ interface required by the Solutions layer.
 # Fields
 - `ode_sol::S`: The raw SciML ODE solution.
 """
-struct SciMLIntegrationResult{S<:SciMLBase.AbstractODESolution} <: Solutions.AbstractIntegrationResult
+struct SciMLIntegrationResult{S<:SciMLBase.AbstractODESolution} <: Integrators.AbstractIntegrationResult
     ode_sol::S
 end
 
@@ -449,21 +448,21 @@ $(TYPEDSIGNATURES)
 
 Return the final state vector from the SciML ODE solution.
 """
-Solutions.final_state(r::SciMLIntegrationResult) = r.ode_sol.u[end]
+Integrators.final_state(r::SciMLIntegrationResult) = r.ode_sol.u[end]
 
 """
 $(TYPEDSIGNATURES)
 
 Return the vector of time points from the SciML ODE solution.
 """
-Solutions.times(r::SciMLIntegrationResult) = r.ode_sol.t
+Integrators.times(r::SciMLIntegrationResult) = r.ode_sol.t
 
 """
 $(TYPEDSIGNATURES)
 
 Evaluate the SciML ODE solution at a specific time `t` using its interpolation.
 """
-Solutions.evaluate_at(r::SciMLIntegrationResult, t::Real) = r.ode_sol(t)
+Integrators.evaluate_at(r::SciMLIntegrationResult, t::Real) = r.ode_sol(t)
 
 # =============================================================================
 # SciML Segment Merging

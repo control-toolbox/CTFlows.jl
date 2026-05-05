@@ -95,7 +95,7 @@ end
 
 function _apply_jump(mpf::MultiPhaseStateFlow, i, state)
     jump = get_jump(mpf, i)
-    return state + jump
+    return state .+ jump
 end
 
 function _apply_jump(mpf::MultiPhaseHamiltonianFlow, i, state_tuple)

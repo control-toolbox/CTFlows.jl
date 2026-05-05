@@ -5,7 +5,7 @@ Abstract supertype for vector field solution containers.
 
 This type defines the interface for all solution types that wrap ODE integration results.
 
-See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.AbstractIntegrationResult`](@ref).
+See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
 """
 abstract type AbstractVectorFieldSolution end
 
@@ -35,9 +35,9 @@ x = state(sol)            # callable state function
 x(0.5)                    # evaluate at t = 0.5
 \`\`\`
 
-See also: [`CTFlows.Solutions.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.AbstractVectorFieldSolution`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.AbstractVectorFieldSolution`](@ref).
 """
-struct VectorFieldSolution{R<:AbstractIntegrationResult} <: AbstractVectorFieldSolution
+struct VectorFieldSolution{R<:Integrators.AbstractIntegrationResult} <: AbstractVectorFieldSolution
     result::R
 end
 
@@ -50,7 +50,7 @@ $(TYPEDSIGNATURES)
 
 Return the vector of time points from the solution.
 
-Delegates to `times(sol.result)`.
+Delegates to `Integrators.times(sol.result)`.
 
 # Arguments
 - `sol::VectorFieldSolution`: The vector field solution.
@@ -58,10 +58,10 @@ Delegates to `times(sol.result)`.
 # Returns
 - `AbstractVector`: The vector of time points.
 
-See also: [`CTFlows.Solutions.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.evaluate_at`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Integrators.evaluate_at`](@ref).
 """
-function times(sol::VectorFieldSolution)
-    return times(sol.result)
+function Integrators.times(sol::VectorFieldSolution)
+    return Integrators.times(sol.result)
 end
 
 """
@@ -149,6 +149,59 @@ See also: [`CTFlows.Solutions.evaluate_at`](@ref), [`CTFlows.Solutions.times`](@
 """
 function (sol::VectorFieldSolution)(t::Real)
     return evaluate_at(sol.result, t)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the final state from the solution by delegating to the integration result.
+
+# Arguments
+- `sol::VectorFieldSolution`: The vector field solution.
+
+# Returns
+- The final state from the integration result.
+
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.final_state`](@ref).
+"""
+function Integrators.final_state(sol::VectorFieldSolution)
+    return Integrators.final_state(sol.result)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Merge a sequence of VectorFieldSolution objects into a single VectorFieldSolution.
+
+This extracts the internal integration results, merges them, and wraps the result
+in a new VectorFieldSolution.
+
+# Arguments
+- `segments::AbstractVector{<:VectorFieldSolution}`: Sequence of vector field solutions to merge.
+
+# Returns
+- `VectorFieldSolution`: A merged vector field solution containing the merged integration result.
+
+See also: [`CTFlows.Integrators.merge`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
+"""
+function Integrators.merge(segments::AbstractVector{<:VectorFieldSolution})
+    if isempty(segments)
+        throw(Exceptions.IncorrectArgument(
+            "Cannot merge empty sequence of VectorFieldSolution";
+            got = "0 segments",
+            expected = "at least 1 segment",
+            context = "VectorFieldSolution merge",
+        ))
+    end
+    
+    # Extract internal results
+    internal_results = [sol.result for sol in segments]
+    
+    # Merge the internal results
+    merged_result = Integrators.merge(internal_results)
+    
+    # Wrap in VectorFieldSolution
+    return VectorFieldSolution(merged_result)
 end
 
 # =============================================================================

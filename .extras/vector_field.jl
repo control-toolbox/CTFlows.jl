@@ -292,3 +292,152 @@ println("     integrator = Integrators.SciML()")
 println("     flow = Flows.Flow(system, integrator)")
 println("     result = Flows.call(flow, config; variable=nothing, unsafe=false)")
 println("     result = flow(t0, x0, tf)  # direct callable, builds config internally")
+
+# =============================================================================
+# 9. Multi-Phase Concatenation with Jumps
+# =============================================================================
+
+println("\n9. Multi-Phase Concatenation with Jumps")
+println("-" ^ 80)
+
+using CTFlows.MultiPhase
+using Plots
+
+println("\n--- Example 1: Two-phase flow without jump ---")
+println("Linear system: dx/dt = -x, solution: x(t) = x0 * exp(-t)")
+
+vf_linear = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+sys_linear = Systems.build_system(vf_linear)
+integ_linear = Integrators.SciML()
+flow_linear = Flows.StateFlow(sys_linear, integ_linear)
+
+# Create two-phase flow
+mpf_two_phase = flow_linear * (0.5, flow_linear)
+
+println("Two-phase flow: f * (0.5, f)")
+println("  Phase 1: [0.0, 0.5]")
+println("  Phase 2: [0.5, 1.0]")
+
+# Point integration
+x0 = [1.0]
+xf_two = mpf_two_phase(0.0, x0, 1.0)
+println("  Final state: x(1.0) = ", xf_two[1])
+println("  Expected: exp(-1.0) = ", exp(-1.0))
+
+# Trajectory integration
+sol_two = mpf_two_phase((0.0, 1.0), x0)
+println("  Solution type: ", typeof(sol_two))
+println("  Time points: ", Integrators.times(sol_two))
+
+# Plot two-phase trajectory
+p_two = plot(Integrators.times(sol_two), [u[1] for u in sol_two.(Integrators.times(sol_two))],
+              label="Two-phase (no jump)", title="Two-Phase Trajectory", 
+              xlabel="t", ylabel="x(t)", linewidth=2, marker=:circle, markersize=3)
+display(p_two)
+
+println("\n--- Example 2: Two-phase flow with jump ---")
+jump_value = 5.0
+mpf_jump = flow_linear * (0.5, jump_value, flow_linear)
+
+println("Two-phase flow with jump: f * (0.5, 5.0, f)")
+println("  Phase 1: [0.0, 0.5]")
+println("  Jump: +5.0 at t=0.5")
+println("  Phase 2: [0.5, 1.0]")
+
+# Point integration
+xf_jump = mpf_jump(0.0, x0, 1.0)
+expected_jump = (exp(-0.5) + jump_value) * exp(-0.5)
+println("  Final state: x(1.0) = ", xf_jump[1])
+println("  Expected: (exp(-0.5) + 5.0) * exp(-0.5) = ", expected_jump)
+
+# Trajectory integration
+sol_jump = mpf_jump((0.0, 1.0), x0)
+
+# Plot two-phase trajectory with jump
+p_jump = plot(Integrators.times(sol_jump), [u[1] for u in sol_jump.(Integrators.times(sol_jump))],
+              label="Two-phase with jump", title="Two-Phase Trajectory with Jump",
+              xlabel="t", ylabel="x(t)", linewidth=2, marker=:circle, markersize=3)
+display(p_jump)
+
+# Compare both trajectories
+p_compare = plot(Integrators.times(sol_two), [u[1] for u in sol_two.(Integrators.times(sol_two))],
+                label="No jump", linewidth=2, marker=:circle, markersize=3)
+plot!(Integrators.times(sol_jump), [u[1] for u in sol_jump.(Integrators.times(sol_jump))],
+      label="With jump (+5.0)", linewidth=2, marker=:diamond, markersize=3)
+title!("Comparison: With vs Without Jump")
+xlabel!("t")
+ylabel!("x(t)")
+display(p_compare)
+
+println("\n--- Example 3: Three-phase flow with multiple jumps ---")
+mpf_three = flow_linear * (0.3, 2.0, flow_linear) * (0.6, 3.0, flow_linear)
+
+println("Three-phase flow: f * (0.3, 2.0, f) * (0.6, 3.0, f)")
+println("  Phase 1: [0.0, 0.3]")
+println("  Jump 1: +2.0 at t=0.3")
+println("  Phase 2: [0.3, 0.6]")
+println("  Jump 2: +3.0 at t=0.6")
+println("  Phase 3: [0.6, 1.0]")
+
+# Point integration
+xf_three = mpf_three(0.0, x0, 1.0)
+expected_three = ((1.0 * exp(-0.3) + 2.0) * exp(-0.3) + 3.0) * exp(-0.4)
+println("  Final state: x(1.0) = ", xf_three[1])
+println("  Expected: ((exp(-0.3) + 2.0) * exp(-0.3) + 3.0) * exp(-0.4) = ", expected_three)
+
+# Trajectory integration
+sol_three = mpf_three((0.0, 1.0), x0)
+
+# Plot three-phase trajectory
+p_three = plot(Integrators.times(sol_three), [u[1] for u in sol_three.(Integrators.times(sol_three))],
+               label="Three-phase with jumps", title="Three-Phase Trajectory with Multiple Jumps",
+               xlabel="t", ylabel="x(t)", linewidth=2, marker=:circle, markersize=3)
+display(p_three)
+
+# Compare all three trajectories
+p_all = plot(Integrators.times(sol_two), [u[1] for u in sol_two.(Integrators.times(sol_two))],
+             label="Two-phase (no jump)", linewidth=2, marker=:circle, markersize=3)
+plot!(Integrators.times(sol_jump), [u[1] for u in sol_jump.(Integrators.times(sol_jump))],
+      label="Two-phase (+5.0)", linewidth=2, marker=:diamond, markersize=3)
+plot!(Integrators.times(sol_three), [u[1] for u in sol_three.(Integrators.times(sol_three))],
+      label="Three-phase (+2.0, +3.0)", linewidth=2, marker=:square, markersize=3)
+title!("Comparison: All Multi-Phase Trajectories")
+xlabel!("t")
+ylabel!("x(t)")
+display(p_all)
+
+println("\n--- Example 4: Trajectory with zero jump (should be same as no jump) ---")
+mpf_zero = flow_linear * (0.5, 0.0, flow_linear)
+
+println("Two-phase flow with zero jump: f * (0.5, 0.0, f)")
+xf_zero = mpf_zero(0.0, x0, 1.0)
+println("  Final state: x(1.0) = ", xf_zero[1])
+println("  Expected: exp(-1.0) = ", exp(-1.0))
+println("  Match: ", isapprox(xf_zero[1], exp(-1.0), atol=1e-10))
+
+println("\n--- Example 5: Switch after final time (should be ignored) ---")
+mpf_after = flow_linear * (2.0, flow_linear)
+
+println("Two-phase flow with switch after final time: f * (2.0, f)")
+println("  Switch at t=2.0, but final time is 1.0")
+xf_after = mpf_after(0.0, x0, 1.0)
+println("  Final state: x(1.0) = ", xf_after[1])
+println("  Expected: exp(-1.0) = ", exp(-1.0))
+println("  Match: ", isapprox(xf_after[1], exp(-1.0), atol=1e-10))
+
+println("\n--- Example 6: Trajectory with discontinuity verification ---")
+mpf_discontinuity = flow_linear * (0.5, 5.0, flow_linear)
+sol_discontinuity = mpf_discontinuity((0.0, 1.0), x0)
+
+t_switch = 0.5
+u_before = sol_discontinuity(t_switch - 1e-6)
+u_after = sol_discontinuity(t_switch + 1e-6)
+
+println("Verify discontinuity at t=0.5:")
+println("  u(0.5 - ε) = ", u_before[1])
+println("  u(0.5 + ε) = ", u_after[1])
+println("  Jump magnitude: ", u_after[1] - u_before[1])
+println("  Expected jump: 5.0")
+
+println("\nAll multi-phase examples completed successfully!")
+

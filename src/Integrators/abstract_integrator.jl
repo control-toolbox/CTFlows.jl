@@ -28,7 +28,7 @@ All subtypes must implement three named functions:
 
 Additionally, for multi-phase trajectory support, subtypes should implement:
 
-- `merge(segments::AbstractVector{<:CTFlows.Solutions.AbstractIntegrationResult})`: Merge a sequence of integration results into a single result (used for concatenating multi-phase trajectories).
+- `merge(segments::AbstractVector{<:CTFlows.Integrators.AbstractIntegrationResult})`: Merge a sequence of integration results into a single result (used for concatenating multi-phase trajectories).
 
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If the methods are not implemented by the concrete type.
@@ -77,7 +77,7 @@ Solve the given ODE problem with resolved options.
 - `unsafe=Common.__unsafe()`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
 
 # Returns
-- The ODE integration result, as a subtype of `CTFlows.Solutions.AbstractIntegrationResult`.
+- The ODE integration result, as a subtype of `CTFlows.Integrators.AbstractIntegrationResult`.
 
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
@@ -128,7 +128,7 @@ This is used for concatenating multi-phase trajectories. Concrete integrator typ
 should implement this method for their specific result types.
 
 # Arguments
-- `segments::AbstractVector{T}`: Sequence of integration results to merge, where `T<:Solutions.AbstractIntegrationResult`.
+- `segments::AbstractVector{T}`: Sequence of integration results to merge, where `T<:Integrators.AbstractIntegrationResult`.
 
 # Returns
 - A single `AbstractIntegrationResult` representing the merged trajectory.
@@ -136,9 +136,9 @@ should implement this method for their specific result types.
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
 
-See also: [`CTFlows.Integrators.AbstractIntegrator`](@ref), [`CTFlows.Solutions.AbstractIntegrationResult`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrator`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
 """
-function merge(segments::AbstractVector{T}) where {T<:Solutions.AbstractIntegrationResult}
+function merge(segments::AbstractVector{T}) where {T<:Integrators.AbstractIntegrationResult}
     throw(Exceptions.NotImplemented(
         "AbstractIntegrator merge not implemented";
         required_method = "merge(segments::Vector{<:$(T)})",

@@ -36,11 +36,11 @@ using .Data
 include(joinpath(@__DIR__, "Systems", "Systems.jl"))
 using .Systems
 
-include(joinpath(@__DIR__, "Solutions", "Solutions.jl"))
-using .Solutions
-
 include(joinpath(@__DIR__, "Integrators", "Integrators.jl"))
 using .Integrators
+
+include(joinpath(@__DIR__, "Solutions", "Solutions.jl"))
+using .Solutions
 
 include(joinpath(@__DIR__, "Flows", "Flows.jl"))
 using .Flows
