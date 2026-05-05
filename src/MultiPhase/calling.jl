@@ -2,15 +2,12 @@
 # Generic Multiphase Evaluation Loop
 # ==============================================================================
 
-const AnyPointConfig = Union{Common.PointConfig, Common.HamiltonianPointConfig}
-const AnyTrajectoryConfig = Union{Common.TrajectoryConfig, Common.HamiltonianTrajectoryConfig}
-
 _extract_initial_state(config::Common.PointConfig) = config.x0
 _extract_initial_state(config::Common.TrajectoryConfig) = config.x0
 _extract_initial_state(config::Common.HamiltonianPointConfig) = (config.x0, config.p0)
 _extract_initial_state(config::Common.HamiltonianTrajectoryConfig) = (config.x0, config.p0)
 
-function _evaluate_multiphase(mpf, config::AnyPointConfig; variable, unsafe)
+function _evaluate_multiphase(mpf, config::Common.AbstractPointConfig; variable, unsafe)
     t0, tf = Common.tspan(config)
     current_state = _extract_initial_state(config)
     current_t = t0
@@ -31,7 +28,7 @@ function _evaluate_multiphase(mpf, config::AnyPointConfig; variable, unsafe)
     return _format_final_output(mpf, current_state)
 end
 
-function _evaluate_multiphase(mpf, config::AnyTrajectoryConfig; variable, unsafe)
+function _evaluate_multiphase(mpf, config::Common.AbstractTrajectoryConfig; variable, unsafe)
     t0, tf = Common.tspan(config)
     current_state = _extract_initial_state(config)
     current_t = t0
@@ -60,22 +57,22 @@ end
 # Phase Evaluation & Jump Delegation
 # ==============================================================================
 
-function _evaluate_phase(flow::Flows.StateFlow, t0, tf, x, ::AnyPointConfig; variable, unsafe)
+function _evaluate_phase(flow::Flows.StateFlow, t0, tf, x, ::Common.AbstractPointConfig; variable, unsafe)
     return flow(t0, x, tf; variable=variable, unsafe=unsafe)
 end
 
-function _evaluate_phase(flow::Flows.StateFlow, t0, tf, x, ::AnyTrajectoryConfig; variable, unsafe)
+function _evaluate_phase(flow::Flows.StateFlow, t0, tf, x, ::Common.AbstractTrajectoryConfig; variable, unsafe)
     return flow((t0, tf), x; variable=variable, unsafe=unsafe)
 end
 
-function _evaluate_phase(flow::Flows.HamiltonianFlow, t0, tf, state_tuple, ::AnyPointConfig; variable, unsafe)
+function _evaluate_phase(flow::Flows.HamiltonianFlow, t0, tf, state_tuple, ::Common.AbstractPointConfig; variable, unsafe)
     x, p = state_tuple
     xfpf = flow(t0, x, p, tf; variable=variable, unsafe=unsafe)
     nx = length(x)
     return (xfpf[1:nx], xfpf[nx+1:end])
 end
 
-function _evaluate_phase(flow::Flows.HamiltonianFlow, t0, tf, state_tuple, ::AnyTrajectoryConfig; variable, unsafe)
+function _evaluate_phase(flow::Flows.HamiltonianFlow, t0, tf, state_tuple, ::Common.AbstractTrajectoryConfig; variable, unsafe)
     x, p = state_tuple
     return flow((t0, tf), x, p; variable=variable, unsafe=unsafe)
 end
@@ -95,13 +92,18 @@ function _apply_jump(mpf::MultiPhaseStateFlow, i, x)
 end
 
 function _apply_jump(mpf::MultiPhaseHamiltonianFlow, i, state_tuple)
-    x, p = state_tuple
     jump = mpf.jumps[i]
-    if jump isa Tuple
-        return (x + jump[1], p + jump[2])
-    else
-        return (x, p + jump)
-    end
+    return _apply_hamiltonian_jump(state_tuple, jump)
+end
+
+function _apply_hamiltonian_jump(state_tuple::Tuple, jump::Tuple)
+    x, p = state_tuple
+    return (x + jump[1], p + jump[2])
+end
+
+function _apply_hamiltonian_jump(state_tuple::Tuple, jump)
+    x, p = state_tuple
+    return (x, p + jump)
 end
 
 function _format_final_output(::MultiPhaseStateFlow, x)

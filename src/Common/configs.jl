@@ -28,9 +28,43 @@ julia> TrajectoryConfig <: Common.AbstractConfig
 true
 \`\`\`
 
-See also: [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Common.TrajectoryConfig`](@ref)
+See also: [`CTFlows.Common.AbstractPointConfig`](@ref), [`CTFlows.Common.AbstractTrajectoryConfig`](@ref).
 """
 abstract type AbstractConfig{X0} end
+
+"""
+$(TYPEDEF)
+
+Abstract configuration for point-to-point integration problems.
+
+Concrete subtypes define integration from a single initial condition to a specific
+final time, without storing the full trajectory.
+
+# Interface Requirements
+
+All subtypes must implement:
+- `tspan(config)`: Return the time span as a tuple `(t0, tf)`.
+
+See also: [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Common.HamiltonianPointConfig`](@ref).
+"""
+abstract type AbstractPointConfig{X0} <: AbstractConfig{X0} end
+
+"""
+$(TYPEDEF)
+
+Abstract configuration for trajectory integration problems.
+
+Concrete subtypes define integration over a continuous time interval, useful for
+generating full trajectories.
+
+# Interface Requirements
+
+All subtypes must implement:
+- `tspan(config)`: Return the time span as a tuple `(t0, tf)`.
+
+See also: [`CTFlows.Common.TrajectoryConfig`](@ref), [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref).
+"""
+abstract type AbstractTrajectoryConfig{X0} <: AbstractConfig{X0} end
 
 """
 $(TYPEDSIGNATURES)
@@ -77,7 +111,7 @@ PointConfig
 
 See also: [`CTFlows.Common.TrajectoryConfig`](@ref)
 """
-struct PointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfig{X0}
+struct PointConfig{T0<:Real, X0, TF<:Real} <: AbstractPointConfig{X0}
     t0::T0
     x0::X0
     tf::TF
@@ -136,7 +170,7 @@ TrajectoryConfig
 
 See also: [`CTFlows.Common.PointConfig`](@ref)
 """
-struct TrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractConfig{X0}
+struct TrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractTrajectoryConfig{X0}
     tspan::TS
     x0::X0
 end
@@ -171,7 +205,7 @@ function tspan(c::TrajectoryConfig)::Tuple{Real, Real}
 end
 
 # TODO: docstring
-struct HamiltonianPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractConfig{X0}
+struct HamiltonianPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractPointConfig{X0}
     t0::T0
     x0::X0
     p0::P0
@@ -203,7 +237,7 @@ function Base.show(io::IO, ::MIME"text/plain", c::HamiltonianPointConfig)
 end
 
 # TODO: docstring
-struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractConfig{X0}
+struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractTrajectoryConfig{X0}
     tspan::TS
     x0::X0
     p0::P0
