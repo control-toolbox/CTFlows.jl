@@ -65,6 +65,49 @@ function test_configs()
                 Test.@test typeof(config) <: Common.PointConfig{Float64, <:AbstractVector, Float64}  # X0 is vector
             end
 
+            Test.@testset "initial_state is exported" begin
+                Test.@test isdefined(Common, :initial_state)
+            end
+
+            Test.@testset "initial_costate is exported" begin
+                Test.@test isdefined(Common, :initial_costate)
+            end
+
+            Test.@testset "initial_state for PointConfig" begin
+                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                Test.@test Common.initial_state(config) == [1.0, 0.0]
+            end
+
+            Test.@testset "initial_state for TrajectoryConfig" begin
+                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+                Test.@test Common.initial_state(config) == [1.0, 0.0]
+            end
+
+            Test.@testset "initial_state for HamiltonianPointConfig" begin
+                config = Common.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+                Test.@test Common.initial_state(config) == [1.0, 0.0]
+            end
+
+            Test.@testset "initial_state for HamiltonianTrajectoryConfig" begin
+                config = Common.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
+                Test.@test Common.initial_state(config) == [1.0, 0.0]
+            end
+
+            Test.@testset "initial_costate for HamiltonianPointConfig" begin
+                config = Common.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+                Test.@test Common.initial_costate(config) == [0.5, 0.3]
+            end
+
+            Test.@testset "initial_costate for HamiltonianTrajectoryConfig" begin
+                config = Common.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
+                Test.@test Common.initial_costate(config) == [0.5, 0.3]
+            end
+
+            Test.@testset "initial_costate throws PreconditionError for non-Hamiltonian configs" begin
+                config = Common.PointConfig(0.0, [1.0], 1.0)
+                Test.@test_throws Exceptions.PreconditionError Common.initial_costate(config)
+            end
+
             Test.@testset "initial_condition with TrajectoryConfig scalar" begin
                 config = Common.TrajectoryConfig((0.0, 1.0), 1.0)
                 ic = Common.initial_condition(config)

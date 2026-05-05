@@ -269,9 +269,9 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Extract the initial condition from an `AbstractConfig`.
+Extract the initial state from an `AbstractConfig`.
 
-Returns the initial condition. For scalar configurations (`X0 <: Number`),
+Returns the initial state. For scalar configurations (`X0 <: Number`),
 wraps in a vector for consistency with ODE solver expectations. For vector
 configurations, returns the vector unchanged.
 
@@ -330,6 +330,92 @@ See also: [`CTFlows.Common.AbstractConfig`](@ref), [`CTFlows.Common.PointConfig`
 """
 function initial_condition(c::AbstractConfig)
     return c.x0
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the initial state from an `AbstractConfig`.
+
+For point and trajectory configs, returns the state `x0`. For Hamiltonian
+configs, returns the state `x0` (separate from costate).
+
+# Arguments
+- `c::AbstractConfig`: The configuration.
+
+# Returns
+- The initial state (scalar, vector, or tuple for Hamiltonian configs).
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> config = PointConfig(0.0, [1.0, 0.0], 1.0)
+
+julia> initial_state(config)
+[1.0, 0.0]
+\`\`\`
+
+See also: [`CTFlows.Common.initial_costate`](@ref), [`CTFlows.Common.initial_condition`](@ref).
+"""
+function initial_state(c::Common.PointConfig)
+    return c.x0
+end
+
+function initial_state(c::Common.TrajectoryConfig)
+    return c.x0
+end
+
+function initial_state(c::Common.HamiltonianPointConfig)
+    return c.x0
+end
+
+function initial_state(c::Common.HamiltonianTrajectoryConfig)
+    return c.x0
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the initial costate from a Hamiltonian config.
+
+For Hamiltonian configs, returns the costate `p0`. For non-Hamiltonian configs,
+throws `NotImplemented` since costate is not defined.
+
+# Arguments
+- `c::AbstractConfig`: The configuration.
+
+# Returns
+- The initial costate (vector).
+
+# Throws
+- `CTBase.Exceptions.NotImplemented`: If config is not a Hamiltonian config.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> config = HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+
+julia> initial_costate(config)
+[0.5, 0.3]
+\`\`\`
+
+See also: [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.initial_condition`](@ref).
+"""
+function initial_costate(c::Common.HamiltonianPointConfig)
+    return c.p0
+end
+
+function initial_costate(c::Common.HamiltonianTrajectoryConfig)
+    return c.p0
+end
+
+function initial_costate(c::Common.AbstractConfig)
+    throw(Exceptions.PreconditionError(
+        "initial_costate is only defined for Hamiltonian configs";
+        context = "initial_costate - requires Hamiltonian config",
+    ))
 end
 
 # =============================================================================

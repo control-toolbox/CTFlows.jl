@@ -2,10 +2,10 @@
 # Generic Multiphase Evaluation Loop
 # ==============================================================================
 
-_extract_initial_state(config::Common.PointConfig) = config.x0
-_extract_initial_state(config::Common.TrajectoryConfig) = config.x0
-_extract_initial_state(config::Common.HamiltonianPointConfig) = (config.x0, config.p0)
-_extract_initial_state(config::Common.HamiltonianTrajectoryConfig) = (config.x0, config.p0)
+_extract_initial_state(config::Common.PointConfig) = Common.initial_state(config)
+_extract_initial_state(config::Common.TrajectoryConfig) = Common.initial_state(config)
+_extract_initial_state(config::Common.HamiltonianPointConfig) = (Common.initial_state(config), Common.initial_costate(config))
+_extract_initial_state(config::Common.HamiltonianTrajectoryConfig) = (Common.initial_state(config), Common.initial_costate(config))
 
 function _evaluate_multiphase(mpf, config::Common.AbstractPointConfig; variable, unsafe)
     t0, tf = Common.tspan(config)
