@@ -18,6 +18,7 @@ using CTFlows.Common: Common
 using CTFlows.Systems: Systems
 using CTFlows.Integrators: Integrators, SciML, SciMLTag
 using CTFlows.Solutions: Solutions
+using CTFlows.MultiPhase: MultiPhase
 using DiffEqBase: DiffEqBase
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, ODEProblem, Tsit5
 using SciMLBase: SciMLBase
@@ -463,6 +464,64 @@ $(TYPEDSIGNATURES)
 Evaluate the SciML ODE solution at a specific time `t` using its interpolation.
 """
 Solutions.evaluate_at(r::SciMLIntegrationResult, t::Real) = r.ode_sol(t)
+
+# =============================================================================
+# SciML Segment Merging
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Merge a sequence of SciML ODE solutions into a single solution.
+This allows concatenation of trajectories from multiple phases.
+"""
+function CTFlows.MultiPhase._merge_segments(mpf::MultiPhase.AnyMultiPhaseFlow, results::AbstractVector{<:SciMLIntegrationResult})
+    # Extract the raw ODESolution objects
+    ode_sols = [r.ode_sol for r in results]
+    
+    if isempty(ode_sols)
+        throw(Exceptions.IncorrectArgument(
+            "Cannot merge empty sequence of segments";
+            got = "0 segments",
+            expected = "at least 1 segment",
+            context = "SciML _merge_segments",
+        ))
+    end
+    
+    if length(ode_sols) == 1
+        return results[1]
+    end
+    
+    # Merge using DiffEqBase.EnsembleSolution (or custom concatenation if we want a single ODESolution)
+    # The simplest robust way in SciML to represent concatenated trajectories over time
+    # is often to reconstruct an ODESolution, but since times are strictly monotonic 
+    # (except at jumps where they might be equal), we can concatenate `t`, `u` and `k`.
+    # Let's concatenate them to form a continuous trajectory.
+    
+    t_merged = copy(ode_sols[1].t)
+    u_merged = copy(ode_sols[1].u)
+    
+    for i in 2:length(ode_sols)
+        sol = ode_sols[i]
+        # Append all points except the first one (which is the same time as previous last, but after jump)
+        # Actually, keep it so we can have discontinuities properly represented.
+        append!(t_merged, sol.t)
+        append!(u_merged, sol.u)
+    end
+    
+    # Create a new ODESolution (using the first one as template)
+    # This is a bit of a hack, but SciML doesn't provide a clean `vcat` for ODESolutions yet.
+    # Note: Interpolation might not work properly across the whole merged solution this way.
+    sol1 = ode_sols[1]
+    
+    merged_sol = DiffEqBase.build_solution(
+        sol1.prob, sol1.alg, t_merged, u_merged;
+        retcode = SciMLBase.ReturnCode.Success,
+        dense = false # Disable dense interpolation for merged as it requires k-arrays which are tricky to merge
+    )
+    
+    return SciMLIntegrationResult(merged_sol)
+end
 
 # =============================================================================
 # SciML problem building — actual implementation (generic)

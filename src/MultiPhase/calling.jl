@@ -89,6 +89,15 @@ function _extract_final_state(::MultiPhaseHamiltonianFlow, segment, current_stat
     return (final[1:nx], final[nx+1:end])
 end
 
+function _merge_segments(mpf, results)
+    throw(Exceptions.NotImplemented(
+        "Trajectory merging not implemented for this integrator type";
+        required_method = "_merge_segments(mpf, results::Vector{<:$(typeof(results[1]))})",
+        suggestion = "Use SciML base integrators which support segment merging via extension.",
+        context = "_merge_segments",
+    ))
+end
+
 function _apply_jump(mpf::MultiPhaseStateFlow, i, state)
     jump = get_jump(mpf, i)
     return state + jump
@@ -116,11 +125,6 @@ end
 function _format_final_output(::MultiPhaseHamiltonianFlow, state_tuple)
     x, p = state_tuple
     return vcat(x, p)
-end
-
-function _merge_segments(mpf, results)
-    # TODO: merge segments using SciMLBase extension
-    return results[1] # Placeholder
 end
 
 # ==============================================================================
