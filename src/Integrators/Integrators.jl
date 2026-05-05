@@ -21,6 +21,7 @@ import CTBase.Exceptions
 
 using ..Common
 using ..Systems
+using ..Solutions
 using CTSolvers: CTSolvers
 
 # ==============================================================================
@@ -37,6 +38,6 @@ include(joinpath(@__DIR__, "building.jl"))
 
 export AbstractIntegrator, SciML, SciMLTag
 export build_sciml_integrator, build_integrator
-export build_problem, solve_problem
+export build_problem, solve_problem, merge
 
 end # module Integrators

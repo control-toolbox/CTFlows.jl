@@ -52,7 +52,7 @@ function _evaluate_multiphase(mpf, config::Common.AbstractTrajectoryConfig; vari
         end
     end
     
-    return _merge_segments(mpf, results) # Placeholder
+    return Integrators.merge(results)
 end
 
 # ==============================================================================
@@ -87,15 +87,6 @@ function _extract_final_state(::MultiPhaseHamiltonianFlow, segment, current_stat
     final = Solutions.final_state(segment)
     nx = length(current_state[1])
     return (final[1:nx], final[nx+1:end])
-end
-
-function _merge_segments(mpf, results)
-    throw(Exceptions.NotImplemented(
-        "Trajectory merging not implemented for this integrator type";
-        required_method = "_merge_segments(mpf, results::Vector{<:$(typeof(results[1]))})",
-        suggestion = "Use SciML base integrators which support segment merging via extension.",
-        context = "_merge_segments",
-    ))
 end
 
 function _apply_jump(mpf::MultiPhaseStateFlow, i, state)

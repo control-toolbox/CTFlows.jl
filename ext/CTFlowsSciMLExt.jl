@@ -475,9 +475,9 @@ $(TYPEDSIGNATURES)
 Merge a sequence of SciML ODE solutions into a single solution.
 This allows concatenation of trajectories from multiple phases.
 """
-function CTFlows.MultiPhase._merge_segments(mpf::MultiPhase.AnyMultiPhaseFlow, results::AbstractVector{<:SciMLIntegrationResult})
+function Integrators.merge(segments::AbstractVector{<:SciMLIntegrationResult})
     # Extract the raw ODESolution objects
-    ode_sols = [r.ode_sol for r in results]
+    ode_sols = [r.ode_sol for r in segments]
     
     if isempty(ode_sols)
         throw(Exceptions.IncorrectArgument(
@@ -489,7 +489,7 @@ function CTFlows.MultiPhase._merge_segments(mpf::MultiPhase.AnyMultiPhaseFlow, r
     end
     
     if length(ode_sols) == 1
-        return results[1]
+        return segments[1]
     end
     
     # Merge using DiffEqBase.EnsembleSolution (or custom concatenation if we want a single ODESolution)
@@ -501,7 +501,7 @@ function CTFlows.MultiPhase._merge_segments(mpf::MultiPhase.AnyMultiPhaseFlow, r
     t_merged = copy(ode_sols[1].t)
     u_merged = copy(ode_sols[1].u)
     
-    for i in 2:length(ode_sols)
+    for i in eachindex(ode_sols)[2:end]
         sol = ode_sols[i]
         # Append all points except the first one (which is the same time as previous last, but after jump)
         # Actually, keep it so we can have discontinuities properly represented.
