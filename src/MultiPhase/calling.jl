@@ -20,9 +20,11 @@ function _evaluate_multiphase(mpf, config::Common.AbstractPointConfig; variable,
         
         current_t = t_end
         
-        jump = get_jump(mpf, i)
-        if i < n_ph && !isnothing(jump)
-            current_state = _apply_jump(mpf, i, current_state)
+        if i < n_ph
+            jump = get_jump(mpf, i)
+            if !isnothing(jump)
+                current_state = _apply_jump(mpf, i, current_state)
+            end
         end
     end
     
@@ -46,9 +48,11 @@ function _evaluate_multiphase(mpf, config::Common.AbstractTrajectoryConfig; vari
         current_state = _extract_final_state(mpf, segment_result, current_state)
         current_t = t_end
         
-        jump = get_jump(mpf, i)
-        if i < n_ph && !isnothing(jump)
-            current_state = _apply_jump(mpf, i, current_state)
+        if i < n_ph
+            jump = get_jump(mpf, i)
+            if !isnothing(jump)
+                current_state = _apply_jump(mpf, i, current_state)
+            end
         end
     end
     
