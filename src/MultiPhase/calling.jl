@@ -1,3 +1,127 @@
+# ==============================================================================
+# Generic Multiphase Evaluation Loop
+# ==============================================================================
+
+const AnyPointConfig = Union{Common.PointConfig, Common.HamiltonianPointConfig}
+const AnyTrajectoryConfig = Union{Common.TrajectoryConfig, Common.HamiltonianTrajectoryConfig}
+
+_extract_initial_state(config::Common.PointConfig) = config.x0
+_extract_initial_state(config::Common.TrajectoryConfig) = config.x0
+_extract_initial_state(config::Common.HamiltonianPointConfig) = (config.x0, config.p0)
+_extract_initial_state(config::Common.HamiltonianTrajectoryConfig) = (config.x0, config.p0)
+
+function _evaluate_multiphase(mpf, config::AnyPointConfig; variable, unsafe)
+    t0, tf = Common.tspan(config)
+    current_state = _extract_initial_state(config)
+    current_t = t0
+    n_phases = length(mpf.flows)
+    
+    for i in 1:n_phases
+        t_end = (i < n_phases) ? mpf.switching_times[i] : tf
+        
+        current_state = _evaluate_phase(mpf.flows[i], current_t, t_end, current_state, config; variable=variable, unsafe=unsafe)
+        
+        current_t = t_end
+        
+        if i < n_phases && !isnothing(mpf.jumps[i])
+            current_state = _apply_jump(mpf, i, current_state)
+        end
+    end
+    
+    return _format_final_output(mpf, current_state)
+end
+
+function _evaluate_multiphase(mpf, config::AnyTrajectoryConfig; variable, unsafe)
+    t0, tf = Common.tspan(config)
+    current_state = _extract_initial_state(config)
+    current_t = t0
+    n_phases = length(mpf.flows)
+    
+    results = []
+    
+    for i in 1:n_phases
+        t_end = (i < n_phases) ? mpf.switching_times[i] : tf
+        
+        segment_result = _evaluate_phase(mpf.flows[i], current_t, t_end, current_state, config; variable=variable, unsafe=unsafe)
+        push!(results, segment_result)
+        
+        current_state = _extract_final_state(mpf, segment_result, current_state)
+        current_t = t_end
+        
+        if i < n_phases && !isnothing(mpf.jumps[i])
+            current_state = _apply_jump(mpf, i, current_state)
+        end
+    end
+    
+    return _merge_segments(mpf, results) # Placeholder
+end
+
+# ==============================================================================
+# Phase Evaluation & Jump Delegation
+# ==============================================================================
+
+function _evaluate_phase(flow::Flows.StateFlow, t0, tf, x, ::AnyPointConfig; variable, unsafe)
+    return flow(t0, x, tf; variable=variable, unsafe=unsafe)
+end
+
+function _evaluate_phase(flow::Flows.StateFlow, t0, tf, x, ::AnyTrajectoryConfig; variable, unsafe)
+    return flow((t0, tf), x; variable=variable, unsafe=unsafe)
+end
+
+function _evaluate_phase(flow::Flows.HamiltonianFlow, t0, tf, state_tuple, ::AnyPointConfig; variable, unsafe)
+    x, p = state_tuple
+    xfpf = flow(t0, x, p, tf; variable=variable, unsafe=unsafe)
+    nx = length(x)
+    return (xfpf[1:nx], xfpf[nx+1:end])
+end
+
+function _evaluate_phase(flow::Flows.HamiltonianFlow, t0, tf, state_tuple, ::AnyTrajectoryConfig; variable, unsafe)
+    x, p = state_tuple
+    return flow((t0, tf), x, p; variable=variable, unsafe=unsafe)
+end
+
+function _extract_final_state(::MultiPhaseStateFlow, segment, current_state)
+    return Solutions.final_state(segment)
+end
+
+function _extract_final_state(::MultiPhaseHamiltonianFlow, segment, current_state)
+    final = Solutions.final_state(segment)
+    nx = length(current_state[1])
+    return (final[1:nx], final[nx+1:end])
+end
+
+function _apply_jump(mpf::MultiPhaseStateFlow, i, x)
+    return x + mpf.jumps[i]
+end
+
+function _apply_jump(mpf::MultiPhaseHamiltonianFlow, i, state_tuple)
+    x, p = state_tuple
+    jump = mpf.jumps[i]
+    if jump isa Tuple
+        return (x + jump[1], p + jump[2])
+    else
+        return (x, p + jump)
+    end
+end
+
+function _format_final_output(::MultiPhaseStateFlow, x)
+    return x
+end
+
+function _format_final_output(::MultiPhaseHamiltonianFlow, state_tuple)
+    x, p = state_tuple
+    return vcat(x, p)
+end
+
+function _merge_segments(mpf, results)
+    # TODO: merge segments using SciMLBase extension
+    return results[1] # Placeholder
+end
+
+# ==============================================================================
+# Public Callable Interfaces
+# ==============================================================================
+
 # TODO: docstring
 function (mpf::MultiPhaseStateFlow)(
     t0::Real,
@@ -6,27 +130,8 @@ function (mpf::MultiPhaseStateFlow)(
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 )
-    n_phases = length(mpf.flows)
-    current_x = x0
-    current_t = t0
-    
-    for i in 1:n_phases
-        if i < n_phases
-            t_end = mpf.switching_times[i]
-        else
-            t_end = tf
-        end
-        
-        flow = mpf.flows[i]
-        current_x = flow(current_t, current_x, t_end; variable=variable, unsafe=unsafe)
-        current_t = t_end
-        
-        if i < n_phases && !isnothing(mpf.jumps[i])
-            current_x = current_x + mpf.jumps[i]
-        end
-    end
-    
-    return current_x
+    config = Common.PointConfig(t0, x0, tf)
+    return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
 
 # TODO: docstring
@@ -36,35 +141,8 @@ function (mpf::MultiPhaseStateFlow)(
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 )
-    n_phases = length(mpf.flows)
-    t0, tf = tspan
-    current_x = x0
-    current_t = t0
-    
-    # For trajectory config, collect all segments
-    # TODO: implement progressive merging for memory efficiency
-    results = []
-    
-    for i in 1:n_phases
-        if i < n_phases
-            t_end = mpf.switching_times[i]
-        else
-            t_end = tf
-        end
-        
-        flow = mpf.flows[i]
-        segment = flow((current_t, t_end), current_x; variable=variable, unsafe=unsafe)
-        push!(results, segment)
-        current_x = Solutions.final_state(segment)
-        current_t = t_end
-        
-        if i < n_phases && !isnothing(mpf.jumps[i])
-            current_x = current_x + mpf.jumps[i]
-        end
-    end
-    
-    # TODO: merge segments using SciMLBase extension
-    return results[1]  # Placeholder
+    config = Common.TrajectoryConfig(tspan, x0)
+    return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
 
 # TODO: docstring
@@ -76,36 +154,8 @@ function (mpf::MultiPhaseHamiltonianFlow)(
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 )
-    n_phases = length(mpf.flows)
-    current_x = x0
-    current_p = p0
-    current_t = t0
-    
-    for i in 1:n_phases
-        if i < n_phases
-            t_end = mpf.switching_times[i]
-        else
-            t_end = tf
-        end
-        
-        flow = mpf.flows[i]
-        result = flow(current_t, current_x, current_p, t_end; variable=variable, unsafe=unsafe)
-        current_x = result[1:length(current_x)]
-        current_p = result[(length(current_x)+1):end]
-        current_t = t_end
-        
-        if i < n_phases && !isnothing(mpf.jumps[i])
-            jump = mpf.jumps[i]
-            if jump isa Tuple
-                current_x = current_x + jump[1]
-                current_p = current_p + jump[2]
-            else
-                current_p = current_p + jump
-            end
-        end
-    end
-    
-    return vcat(current_x, current_p)
+    config = Common.HamiltonianPointConfig(t0, x0, p0, tf)
+    return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
 
 # TODO: docstring
@@ -116,42 +166,6 @@ function (mpf::MultiPhaseHamiltonianFlow)(
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 )
-    n_phases = length(mpf.flows)
-    t0, tf = tspan
-    current_x = x0
-    current_p = p0
-    current_t = t0
-    
-    # For trajectory config, collect all segments
-    # TODO: implement progressive merging for memory efficiency
-    results = []
-    
-    for i in 1:n_phases
-        if i < n_phases
-            t_end = mpf.switching_times[i]
-        else
-            t_end = tf
-        end
-        
-        flow = mpf.flows[i]
-        segment = flow((current_t, t_end), current_x, current_p; variable=variable, unsafe=unsafe)
-        push!(results, segment)
-        final = Solutions.final_state(segment)
-        current_x = final[1:length(current_x)]
-        current_p = final[(length(current_x)+1):end]
-        current_t = t_end
-        
-        if i < n_phases && !isnothing(mpf.jumps[i])
-            jump = mpf.jumps[i]
-            if jump isa Tuple
-                current_x = current_x + jump[1]
-                current_p = current_p + jump[2]
-            else
-                current_p = current_p + jump
-            end
-        end
-    end
-    
-    # TODO: merge segments using SciMLBase extension
-    return results[1]  # Placeholder
+    config = Common.HamiltonianTrajectoryConfig(tspan, x0, p0)
+    return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end

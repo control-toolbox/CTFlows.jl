@@ -22,6 +22,7 @@ using ..Common
 using ..Systems
 using ..Integrators
 using ..Flows
+using ..Solutions
 
 # ==============================================================================
 # Include files

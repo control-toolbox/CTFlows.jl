@@ -48,8 +48,14 @@ function test_calling_multiphase()
             mpf = flow1 * (0.5, flow2)
 
             Test.@testset "call with (t0, x0, tf)" begin
-                # TODO: Implement actual callable logic
-                Test.@test mpf isa MultiPhase.MultiPhaseStateFlow
+                # Since FakeStateSystem currently doesn't implement ODEProblem building,
+                # we just check that the method is defined. True integration tests
+                # will be done in the SciML extension tests.
+                Test.@test hasmethod(mpf, Tuple{Real, Vector{Float64}, Real})
+            end
+
+            Test.@testset "call with (tspan, x0)" begin
+                Test.@test hasmethod(mpf, Tuple{Tuple{Real, Real}, Vector{Float64}})
             end
         end
     end
