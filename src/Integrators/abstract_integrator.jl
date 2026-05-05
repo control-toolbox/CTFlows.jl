@@ -128,7 +128,7 @@ This is used for concatenating multi-phase trajectories. Concrete integrator typ
 should implement this method for their specific result types.
 
 # Arguments
-- `segments::AbstractVector{<:Solutions.AbstractIntegrationResult}`: Sequence of integration results to merge.
+- `segments::AbstractVector{T}`: Sequence of integration results to merge, where `T<:Solutions.AbstractIntegrationResult`.
 
 # Returns
 - A single `AbstractIntegrationResult` representing the merged trajectory.
@@ -138,10 +138,10 @@ should implement this method for their specific result types.
 
 See also: [`CTFlows.Integrators.AbstractIntegrator`](@ref), [`CTFlows.Solutions.AbstractIntegrationResult`](@ref).
 """
-function merge(segments::AbstractVector{<:Solutions.AbstractIntegrationResult})
+function merge(segments::AbstractVector{T}) where {T<:Solutions.AbstractIntegrationResult}
     throw(Exceptions.NotImplemented(
         "AbstractIntegrator merge not implemented";
-        required_method = "merge(segments::Vector{<:$(typeof(segments[1]))})",
+        required_method = "merge(segments::Vector{<:$(T)})",
         suggestion = "Implement merge(segments::Vector{<:YourIntegrationResult}) returning a merged YourIntegrationResult.",
         context = "AbstractIntegrator merge - required method implementation for multi-phase trajectories",
     ))

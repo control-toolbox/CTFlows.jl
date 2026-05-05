@@ -148,10 +148,16 @@ end
 
 function Solutions.build_solution(result::MockIntegrationResult, sys, config)
     # For PointConfig, return the final state directly (as expected by _evaluate_phase)
-    if config isa Common.PointConfig || config isa Common.HamiltonianPointConfig
+    if config isa Common.PointConfig
         return result.u
-    else
-        # For TrajectoryConfig, return the full result
+    elseif config isa Common.HamiltonianPointConfig
+        # For HamiltonianFlow, return the concatenated state (will be split by _evaluate_phase)
+        return result.u
+    elseif config isa Common.TrajectoryConfig
+        # For TrajectoryConfig with StateFlow, return the full result
+        return result
+    elseif config isa Common.HamiltonianTrajectoryConfig
+        # For TrajectoryConfig with HamiltonianFlow, return the full result
         return result
     end
 end
@@ -160,7 +166,7 @@ end
 # Mock Integrators.merge Implementation
 # ==============================================================================
 
-function Integrators.merge(segments::Vector{MockIntegrationResult})
+function Integrators.merge(segments::Vector{<:MockIntegrationResult})
     if isempty(segments)
         return MockIntegrationResult(Float64[], Float64[])
     end
@@ -343,22 +349,190 @@ function test_calling_multiphase()
             end
         end
 
+        Test.@testset "_evaluate_multiphase with PointConfig" begin
+            x0 = [1.0, 2.0]
+            p0 = [0.5, 0.3]
+
+            Test.@testset "MultiPhaseStateFlow without jump" begin
+                sys = FakeStateSystem([1.0, 2.0])
+                integ = MockIntegrator(2.0)
+                flow1 = Flows.StateFlow(sys, integ)
+                flow2 = Flows.StateFlow(sys, integ)
+                mpf = flow1 * (0.5, flow2)
+
+                result = MultiPhase._evaluate_multiphase(mpf, Common.PointConfig(0.0, x0, 1.0); variable=Common.__variable(), unsafe=Common.__unsafe())
+                
+                # Each phase multiplies by 2, so final is x0 * 2 * 2 = x0 * 4
+                Test.@test result == x0 * 4
+            end
+
+            Test.@testset "MultiPhaseStateFlow with jump" begin
+                sys = FakeStateSystem([1.0, 2.0])
+                integ = MockIntegrator(2.0)
+                flow1 = Flows.StateFlow(sys, integ)
+                flow2 = Flows.StateFlow(sys, integ)
+                jump = [0.1, 0.2]
+                mpf = flow1 * (0.5, jump, flow2)
+
+                result = MultiPhase._evaluate_multiphase(mpf, Common.PointConfig(0.0, x0, 1.0); variable=Common.__variable(), unsafe=Common.__unsafe())
+                
+                # Phase 1: x0 * 2, then jump applied, then phase 2: (x0 * 2 + jump) * 2
+                expected = (x0 * 2 + jump) * 2
+                Test.@test result == expected
+            end
+
+            Test.@testset "MultiPhaseHamiltonianFlow without jump" begin
+                hsys = FakeHamiltonianSystem([1.0, 2.0])
+                integ = MockIntegrator(2.0)
+                hflow1 = Flows.HamiltonianFlow(hsys, integ)
+                hflow2 = Flows.HamiltonianFlow(hsys, integ)
+                hmpf = hflow1 * (0.5, hflow2)
+
+                result = MultiPhase._evaluate_multiphase(hmpf, Common.HamiltonianPointConfig(0.0, x0, p0, 1.0); variable=Common.__variable(), unsafe=Common.__unsafe())
+                
+                # Each phase multiplies by 2, _format_final_output returns vcat(x, p)
+                Test.@test result == vcat(x0 * 4, p0 * 4)
+            end
+
+            Test.@testset "MultiPhaseHamiltonianFlow with jump" begin
+                hsys = FakeHamiltonianSystem([1.0, 2.0])
+                integ = MockIntegrator(2.0)
+                hflow1 = Flows.HamiltonianFlow(hsys, integ)
+                hflow2 = Flows.HamiltonianFlow(hsys, integ)
+                jump_p = [0.01, 0.02]
+                hmpf = hflow1 * (0.5, jump_p, hflow2)
+
+                result = MultiPhase._evaluate_multiphase(hmpf, Common.HamiltonianPointConfig(0.0, x0, p0, 1.0); variable=Common.__variable(), unsafe=Common.__unsafe())
+                
+                # Phase 1: x0*2, p0*2, then jump_p applied to p, then phase 2: x*2, (p+jump_p)*2
+                # _format_final_output returns vcat(x, p)
+                Test.@test result == vcat(x0 * 4, (p0 * 2 + jump_p) * 2)
+            end
+        end
+
+        Test.@testset "_evaluate_multiphase with TrajectoryConfig" begin
+            x0 = [1.0, 2.0]
+            p0 = [0.5, 0.3]
+
+            Test.@testset "MultiPhaseStateFlow without jump" begin
+                sys = FakeStateSystem([1.0, 2.0])
+                integ = MockIntegrator(2.0)
+                flow1 = Flows.StateFlow(sys, integ)
+                flow2 = Flows.StateFlow(sys, integ)
+                mpf = flow1 * (0.5, flow2)
+
+                result = MultiPhase._evaluate_multiphase(mpf, Common.TrajectoryConfig((0.0, 1.0), x0); variable=Common.__variable(), unsafe=Common.__unsafe())
+                
+                # Result should be a merged MockIntegrationResult
+                Test.@test result isa MockIntegrationResult
+                # Each phase produces x0*2, so combined should be [x0*2, x0*4]
+                Test.@test result.u == vcat(x0 * 2, x0 * 4)
+            end
+
+            Test.@testset "MultiPhaseStateFlow with jump" begin
+                sys = FakeStateSystem([1.0, 2.0])
+                integ = MockIntegrator(2.0)
+                flow1 = Flows.StateFlow(sys, integ)
+                flow2 = Flows.StateFlow(sys, integ)
+                jump = [0.1, 0.2]
+                mpf = flow1 * (0.5, jump, flow2)
+
+                result = MultiPhase._evaluate_multiphase(mpf, Common.TrajectoryConfig((0.0, 1.0), x0); variable=Common.__variable(), unsafe=Common.__unsafe())
+                
+                Test.@test result isa MockIntegrationResult
+                # Phase 1: x0*2, then jump, then phase 2: (x0*2+jump)*2
+                expected = vcat(x0 * 2, (x0 * 2 + jump) * 2)
+                Test.@test result.u == expected
+            end
+
+            Test.@testset "MultiPhaseHamiltonianFlow without jump" begin
+                hsys = FakeHamiltonianSystem([1.0, 2.0])
+                integ = MockIntegrator(2.0)
+                hflow1 = Flows.HamiltonianFlow(hsys, integ)
+                hflow2 = Flows.HamiltonianFlow(hsys, integ)
+                hmpf = hflow1 * (0.5, hflow2)
+
+                result = MultiPhase._evaluate_multiphase(hmpf, Common.HamiltonianTrajectoryConfig((0.0, 1.0), x0, p0); variable=Common.__variable(), unsafe=Common.__unsafe())
+                
+                Test.@test result isa MockIntegrationResult
+                # Each phase produces vcat(x0*2, p0*2)
+                expected = vcat(x0 * 2, p0 * 2, x0 * 4, p0 * 4)
+                Test.@test result.u == expected
+            end
+
+            Test.@testset "MultiPhaseHamiltonianFlow with jump" begin
+                hsys = FakeHamiltonianSystem([1.0, 2.0])
+                integ = MockIntegrator(2.0)
+                hflow1 = Flows.HamiltonianFlow(hsys, integ)
+                hflow2 = Flows.HamiltonianFlow(hsys, integ)
+                jump_p = [0.01, 0.02]
+                hmpf = hflow1 * (0.5, jump_p, hflow2)
+
+                result = MultiPhase._evaluate_multiphase(hmpf, Common.HamiltonianTrajectoryConfig((0.0, 1.0), x0, p0); variable=Common.__variable(), unsafe=Common.__unsafe())
+                
+                Test.@test result isa MockIntegrationResult
+                # Phase 1: vcat(x0*2, p0*2), then jump, then phase 2: vcat(x*2, (p+jump_p)*2)
+                expected = vcat(x0 * 2, p0 * 2, x0 * 4, (p0 * 2 + jump_p) * 2)
+                Test.@test result.u == expected
+            end
+        end
+
         Test.@testset "MultiPhaseStateFlow callable" begin
-            sys = FakeStateSystem([1.0, 2.0])
-            integ = FakeIntegrator(:fake_result)
-            flow1 = Flows.StateFlow(sys, integ)
-            flow2 = Flows.StateFlow(sys, integ)
-            mpf = flow1 * (0.5, flow2)
+            x0 = [1.0, 2.0]
 
             Test.@testset "call with (t0, x0, tf)" begin
-                # Since FakeStateSystem currently doesn't implement ODEProblem building,
-                # we just check that the method is defined. True integration tests
-                # will be done in the SciML extension tests.
-                Test.@test hasmethod(mpf, Tuple{Real, Vector{Float64}, Real})
+                sys = FakeStateSystem([1.0, 2.0])
+                integ = MockIntegrator(2.0)
+                flow1 = Flows.StateFlow(sys, integ)
+                flow2 = Flows.StateFlow(sys, integ)
+                mpf = flow1 * (0.5, flow2)
+
+                result = mpf(0.0, x0, 1.0)
+                # Each phase multiplies by 2, so final is x0 * 4
+                Test.@test result == x0 * 4
             end
 
             Test.@testset "call with (tspan, x0)" begin
-                Test.@test hasmethod(mpf, Tuple{Tuple{Real, Real}, Vector{Float64}})
+                sys = FakeStateSystem([1.0, 2.0])
+                integ = MockIntegrator(2.0)
+                flow1 = Flows.StateFlow(sys, integ)
+                flow2 = Flows.StateFlow(sys, integ)
+                mpf = flow1 * (0.5, flow2)
+
+                result = mpf((0.0, 1.0), x0)
+                # Result should be a merged MockIntegrationResult
+                Test.@test result isa MockIntegrationResult
+                Test.@test result.u == vcat(x0 * 2, x0 * 4)
+            end
+        end
+
+        Test.@testset "MultiPhaseHamiltonianFlow callable" begin
+            x0 = [1.0, 2.0]
+            p0 = [0.5, 0.3]
+
+            Test.@testset "call with (t0, x0, p0, tf)" begin
+                hsys = FakeHamiltonianSystem([1.0, 2.0])
+                integ = MockIntegrator(2.0)
+                hflow1 = Flows.HamiltonianFlow(hsys, integ)
+                hflow2 = Flows.HamiltonianFlow(hsys, integ)
+                hmpf = hflow1 * (0.5, hflow2)
+
+                result = hmpf(0.0, x0, p0, 1.0)
+                # Each phase multiplies by 2
+                Test.@test result == vcat(x0 * 4, p0 * 4)
+            end
+
+            Test.@testset "call with (tspan, x0, p0)" begin
+                hsys = FakeHamiltonianSystem([1.0, 2.0])
+                integ = MockIntegrator(2.0)
+                hflow1 = Flows.HamiltonianFlow(hsys, integ)
+                hflow2 = Flows.HamiltonianFlow(hsys, integ)
+                hmpf = hflow1 * (0.5, hflow2)
+
+                result = hmpf((0.0, 1.0), x0, p0)
+                # Result should be a merged MockIntegrationResult
+                Test.@test result isa MockIntegrationResult
+                Test.@test result.u == vcat(x0 * 2, p0 * 2, x0 * 4, p0 * 4)
             end
         end
     end

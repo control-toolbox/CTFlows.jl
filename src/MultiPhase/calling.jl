@@ -37,13 +37,13 @@ function _evaluate_multiphase(mpf, config::Common.AbstractTrajectoryConfig; vari
     current_t = t0
     n_ph = n_phases(mpf)
     
-    results = []
+    results = nothing
     
     for i in 1:n_ph
         t_end = (i < n_ph) ? get_switching_time(mpf, i) : tf
         
         segment_result = _evaluate_phase(get_flow(mpf, i), current_t, t_end, current_state, config; variable=variable, unsafe=unsafe)
-        push!(results, segment_result)
+        results = isnothing(results) ? [segment_result] : push!(results, segment_result)
         
         current_state = _extract_final_state(mpf, segment_result, current_state)
         current_t = t_end
