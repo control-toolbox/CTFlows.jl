@@ -36,20 +36,7 @@ end
 # Getter methods for encapsulation
 # ==============================================================================
 
-"""
-$(TYPEDSIGNATURES)
-
-Get the number of phases in a multi-phase flow.
-
-# Arguments
-- `mpf::MultiPhaseStateFlow`: The multi-phase state flow.
-
-# Returns
-- `Int`: Number of phases.
-"""
-function n_phases(mpf::MultiPhaseStateFlow)
-    return length(mpf.flows)
-end
+const AnyMultiPhaseFlow = Union{MultiPhaseStateFlow, MultiPhaseHamiltonianFlow}
 
 """
 $(TYPEDSIGNATURES)
@@ -57,12 +44,12 @@ $(TYPEDSIGNATURES)
 Get the number of phases in a multi-phase flow.
 
 # Arguments
-- `mpf::MultiPhaseHamiltonianFlow`: The multi-phase Hamiltonian flow.
+- `mpf::AnyMultiPhaseFlow`: The multi-phase flow.
 
 # Returns
 - `Int`: Number of phases.
 """
-function n_phases(mpf::MultiPhaseHamiltonianFlow)
+function n_phases(mpf::AnyMultiPhaseFlow)
     return length(mpf.flows)
 end
 
@@ -72,29 +59,13 @@ $(TYPEDSIGNATURES)
 Get the flow at phase index i.
 
 # Arguments
-- `mpf::MultiPhaseStateFlow`: The multi-phase state flow.
+- `mpf::AnyMultiPhaseFlow`: The multi-phase flow.
 - `i::Int`: Phase index (1-based).
 
 # Returns
-- `StateFlow`: The flow at phase i.
+- The flow at phase i (StateFlow or HamiltonianFlow).
 """
-function get_flow(mpf::MultiPhaseStateFlow, i::Int)
-    return mpf.flows[i]
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Get the flow at phase index i.
-
-# Arguments
-- `mpf::MultiPhaseHamiltonianFlow`: The multi-phase Hamiltonian flow.
-- `i::Int`: Phase index (1-based).
-
-# Returns
-- `HamiltonianFlow`: The flow at phase i.
-"""
-function get_flow(mpf::MultiPhaseHamiltonianFlow, i::Int)
+function get_flow(mpf::AnyMultiPhaseFlow, i::Int)
     return mpf.flows[i]
 end
 
@@ -104,29 +75,13 @@ $(TYPEDSIGNATURES)
 Get the switching time at index i.
 
 # Arguments
-- `mpf::MultiPhaseStateFlow`: The multi-phase state flow.
+- `mpf::AnyMultiPhaseFlow`: The multi-phase flow.
 - `i::Int`: Switching time index (1-based).
 
 # Returns
 - `Real`: The switching time.
 """
-function get_switching_time(mpf::MultiPhaseStateFlow, i::Int)
-    return mpf.switching_times[i]
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Get the switching time at index i.
-
-# Arguments
-- `mpf::MultiPhaseHamiltonianFlow`: The multi-phase Hamiltonian flow.
-- `i::Int`: Switching time index (1-based).
-
-# Returns
-- `Real`: The switching time.
-"""
-function get_switching_time(mpf::MultiPhaseHamiltonianFlow, i::Int)
+function get_switching_time(mpf::AnyMultiPhaseFlow, i::Int)
     return mpf.switching_times[i]
 end
 
@@ -136,37 +91,19 @@ $(TYPEDSIGNATURES)
 Get the jump at index i.
 
 # Arguments
-- `mpf::MultiPhaseStateFlow`: The multi-phase state flow.
+- `mpf::AnyMultiPhaseFlow`: The multi-phase flow.
 - `i::Int`: Jump index (1-based).
 
 # Returns
 - The jump value (may be `nothing` if no jump).
 """
-function get_jump(mpf::MultiPhaseStateFlow, i::Int)
-    return mpf.jumps[i]
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Get the jump at index i.
-
-# Arguments
-- `mpf::MultiPhaseHamiltonianFlow`: The multi-phase Hamiltonian flow.
-- `i::Int`: Jump index (1-based).
-
-# Returns
-- The jump value (may be `nothing` if no jump).
-"""
-function get_jump(mpf::MultiPhaseHamiltonianFlow, i::Int)
+function get_jump(mpf::AnyMultiPhaseFlow, i::Int)
     return mpf.jumps[i]
 end
 
 # ==============================================================================
 # Base.show
 # ==============================================================================
-
-const AnyMultiPhaseFlow = Union{MultiPhaseStateFlow, MultiPhaseHamiltonianFlow}
 
 # TODO: docstring
 function Base.show(io::IO, ::MIME"text/plain", mpf::AnyMultiPhaseFlow)
