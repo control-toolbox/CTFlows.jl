@@ -88,6 +88,25 @@ function test_multiphase_flow()
                     Test.@test occursin("switching_times=[0.5])", output)
                 end
             end
+
+            Test.@testset "Getter Methods" begin
+                Test.@testset "n_phases returns number of phases" begin
+                    Test.@test MultiPhase.n_phases(mpsf) == 2
+                end
+
+                Test.@testset "get_flow returns correct flow" begin
+                    Test.@test MultiPhase.get_flow(mpsf, 1) === flow1
+                    Test.@test MultiPhase.get_flow(mpsf, 2) === flow2
+                end
+
+                Test.@testset "get_switching_time returns correct time" begin
+                    Test.@test MultiPhase.get_switching_time(mpsf, 1) == 0.5
+                end
+
+                Test.@testset "get_jump returns correct jump" begin
+                    Test.@test MultiPhase.get_jump(mpsf, 1) === nothing
+                end
+            end
         end
 
         Test.@testset "MultiPhaseHamiltonianFlow" begin

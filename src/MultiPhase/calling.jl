@@ -11,16 +11,17 @@ function _evaluate_multiphase(mpf, config::Common.AbstractPointConfig; variable,
     t0, tf = Common.tspan(config)
     current_state = _extract_initial_state(config)
     current_t = t0
-    n_phases = length(mpf.flows)
+    n_ph = n_phases(mpf)
     
-    for i in 1:n_phases
-        t_end = (i < n_phases) ? mpf.switching_times[i] : tf
+    for i in 1:n_ph
+        t_end = (i < n_ph) ? get_switching_time(mpf, i) : tf
         
-        current_state = _evaluate_phase(mpf.flows[i], current_t, t_end, current_state, config; variable=variable, unsafe=unsafe)
+        current_state = _evaluate_phase(get_flow(mpf, i), current_t, t_end, current_state, config; variable=variable, unsafe=unsafe)
         
         current_t = t_end
         
-        if i < n_phases && !isnothing(mpf.jumps[i])
+        jump = get_jump(mpf, i)
+        if i < n_ph && !isnothing(jump)
             current_state = _apply_jump(mpf, i, current_state)
         end
     end
@@ -32,20 +33,21 @@ function _evaluate_multiphase(mpf, config::Common.AbstractTrajectoryConfig; vari
     t0, tf = Common.tspan(config)
     current_state = _extract_initial_state(config)
     current_t = t0
-    n_phases = length(mpf.flows)
+    n_ph = n_phases(mpf)
     
     results = []
     
-    for i in 1:n_phases
-        t_end = (i < n_phases) ? mpf.switching_times[i] : tf
+    for i in 1:n_ph
+        t_end = (i < n_ph) ? get_switching_time(mpf, i) : tf
         
-        segment_result = _evaluate_phase(mpf.flows[i], current_t, t_end, current_state, config; variable=variable, unsafe=unsafe)
+        segment_result = _evaluate_phase(get_flow(mpf, i), current_t, t_end, current_state, config; variable=variable, unsafe=unsafe)
         push!(results, segment_result)
         
         current_state = _extract_final_state(mpf, segment_result, current_state)
         current_t = t_end
         
-        if i < n_phases && !isnothing(mpf.jumps[i])
+        jump = get_jump(mpf, i)
+        if i < n_ph && !isnothing(jump)
             current_state = _apply_jump(mpf, i, current_state)
         end
     end
@@ -87,12 +89,13 @@ function _extract_final_state(::MultiPhaseHamiltonianFlow, segment, current_stat
     return (final[1:nx], final[nx+1:end])
 end
 
-function _apply_jump(mpf::MultiPhaseStateFlow, i, x)
-    return x + mpf.jumps[i]
+function _apply_jump(mpf::MultiPhaseStateFlow, i, state)
+    jump = get_jump(mpf, i)
+    return state + jump
 end
 
 function _apply_jump(mpf::MultiPhaseHamiltonianFlow, i, state_tuple)
-    jump = mpf.jumps[i]
+    jump = get_jump(mpf, i)
     return _apply_hamiltonian_jump(state_tuple, jump)
 end
 
