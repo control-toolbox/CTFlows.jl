@@ -36,6 +36,8 @@ include(joinpath(@__DIR__, "calling.jl"))
 # Module exports
 # ==============================================================================
 
-export MultiPhaseStateFlow, MultiPhaseHamiltonianFlow, n_phases, get_flow, get_switching_time, get_jump
+export MultiPhaseStateFlow, MultiPhaseHamiltonianFlow
+export n_phases, get_flow, get_switching_time, get_jump
+export get_flows, get_switching_times, get_jumps
 
 end # module MultiPhase

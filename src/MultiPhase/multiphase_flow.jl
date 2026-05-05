@@ -28,10 +28,16 @@ mpf = MultiPhaseStateFlow([flow1, flow2], [1.0], [nothing])
 
 See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Flows.StateFlow`](@ref).
 """
-struct MultiPhaseStateFlow{TD<:Common.TimeDependence, VD<:Common.VariableDependence, S<:Systems.AbstractStateSystem{TD, VD}, I<:Integrators.AbstractIntegrator} <: Flows.AbstractStateFlow{TD, VD, S}
+struct MultiPhaseStateFlow{
+        TD<:Common.TimeDependence, 
+        VD<:Common.VariableDependence, 
+        S<:Systems.AbstractStateSystem{TD, VD}, 
+        I<:Integrators.AbstractIntegrator,
+        ST<:Vector{<:Real},
+        J<:Vector{<:Any}} <: Flows.AbstractStateFlow{TD, VD, S}
     flows::Vector{Flows.StateFlow{TD, VD, S, I}}
-    switching_times::Vector{<:Real}
-    jumps::Vector{<:Any}
+    switching_times::ST
+    jumps::J
 end
 
 """
@@ -64,11 +70,19 @@ mpf = MultiPhaseHamiltonianFlow([flow1, flow2], [1.0], [nothing])
 
 See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref).
 """
-struct MultiPhaseHamiltonianFlow{TD<:Common.TimeDependence, VD<:Common.VariableDependence, S<:Systems.AbstractHamiltonianSystem{TD, VD}, I<:Integrators.AbstractIntegrator} <: Flows.AbstractHamiltonianFlow{TD, VD, S}
+struct MultiPhaseHamiltonianFlow{
+        TD<:Common.TimeDependence, 
+        VD<:Common.VariableDependence, 
+        S<:Systems.AbstractHamiltonianSystem{TD, VD}, 
+        I<:Integrators.AbstractIntegrator,
+        ST<:Vector{<:Real},
+        J<:Vector{<:Any}} <: Flows.AbstractHamiltonianFlow{TD, VD, S}
     flows::Vector{Flows.HamiltonianFlow{TD, VD, S, I}}
-    switching_times::Vector{<:Real}
-    jumps::Vector{<:Any}
+    switching_times::ST
+    jumps::J
 end
+
+const AnyMultiPhaseFlow = Union{MultiPhaseStateFlow, MultiPhaseHamiltonianFlow}
 
 """
 $(TYPEDSIGNATURES)
@@ -76,7 +90,7 @@ $(TYPEDSIGNATURES)
 Return the systems associated with a multi-phase state flow.
 
 # Arguments
-- `mpsf::MultiPhaseStateFlow`: The multi-phase state flow.
+- `mpsf::Union{MultiPhaseStateFlow, MultiPhaseHamiltonianFlow}`: The multi-phase state flow.
 
 # Returns
 - `Vector{S}`: Vector of systems for each phase.
@@ -88,34 +102,10 @@ using CTFlows.MultiPhase
 systems = Flows.system(mpf)  # Returns vector of systems
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Flows.system`](@ref).
+See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Flows.system`](@ref).
 """
-function Flows.system(mpsf::MultiPhaseStateFlow)
+function Flows.system(mpsf::AnyMultiPhaseFlow)
     return [Flows.system(f) for f in mpsf.flows]
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Return the systems associated with a multi-phase Hamiltonian flow.
-
-# Arguments
-- `mphf::MultiPhaseHamiltonianFlow`: The multi-phase Hamiltonian flow.
-
-# Returns
-- `Vector{S}`: Vector of systems for each phase.
-
-# Example
-\`\`\`julia
-using CTFlows.MultiPhase
-
-systems = Flows.system(mpf)  # Returns vector of systems
-\`\`\`
-
-See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Flows.system`](@ref).
-"""
-function Flows.system(mphf::MultiPhaseHamiltonianFlow)
-    return [Flows.system(f) for f in mphf.flows]
 end
 
 """
@@ -124,7 +114,7 @@ $(TYPEDSIGNATURES)
 Return the integrators associated with a multi-phase state flow.
 
 # Arguments
-- `mpsf::MultiPhaseStateFlow`: The multi-phase state flow.
+- `mpsf::Union{MultiPhaseStateFlow, MultiPhaseHamiltonianFlow}`: The multi-phase state flow.
 
 # Returns
 - `Vector{I}`: Vector of integrators for each phase.
@@ -136,41 +126,15 @@ using CTFlows.MultiPhase
 integrators = Flows.integrator(mpf)  # Returns vector of integrators
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Flows.integrator`](@ref).
+See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Flows.integrator`](@ref).
 """
-function Flows.integrator(mpsf::MultiPhaseStateFlow)
+function Flows.integrator(mpsf::AnyMultiPhaseFlow)
     return [Flows.integrator(f) for f in mpsf.flows]
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Return the integrators associated with a multi-phase Hamiltonian flow.
-
-# Arguments
-- `mphf::MultiPhaseHamiltonianFlow`: The multi-phase Hamiltonian flow.
-
-# Returns
-- `Vector{I}`: Vector of integrators for each phase.
-
-# Example
-\`\`\`julia
-using CTFlows.MultiPhase
-
-integrators = Flows.integrator(mpf)  # Returns vector of integrators
-\`\`\`
-
-See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Flows.integrator`](@ref).
-"""
-function Flows.integrator(mphf::MultiPhaseHamiltonianFlow)
-    return [Flows.integrator(f) for f in mphf.flows]
 end
 
 # ==============================================================================
 # Getter methods for encapsulation
 # ==============================================================================
-
-const AnyMultiPhaseFlow = Union{MultiPhaseStateFlow, MultiPhaseHamiltonianFlow}
 
 """
 $(TYPEDSIGNATURES)
@@ -233,6 +197,171 @@ Get the jump at index i.
 """
 function get_jump(mpf::AnyMultiPhaseFlow, i::Int)
     return mpf.jumps[i]
+end
+
+# ==============================================================================
+# Helper methods for concatenation (abstract flow interface)
+# ==============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Get the flows from a single-phase flow.
+
+For single-phase flows (StateFlow, HamiltonianFlow), returns a single-element vector
+containing the flow itself. This uniform interface enables concatenation with
+multi-phase flows.
+
+# Arguments
+- `f::AbstractFlow`: The single-phase flow.
+
+# Returns
+- `Vector`: A single-element vector containing the flow.
+
+# Example
+\`\`\`julia
+using CTFlows.Flows, CTFlows.MultiPhase
+
+flow = StateFlow(system, integrator)
+flows = get_flows(flow)  # Returns [flow]
+\`\`\`
+
+See also: [`CTFlows.MultiPhase.get_flows(::AnyMultiPhaseFlow)`](@ref), [`CTFlows.MultiPhase.get_switching_times`](@ref).
+"""
+function get_flows(f::Flows.AbstractFlow)
+    return [f]
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Get the switching times from a single-phase flow.
+
+For single-phase flows, returns an empty vector since there are no switching times.
+
+# Arguments
+- `f::AbstractFlow`: The single-phase flow.
+
+# Returns
+- `Vector{Real}`: An empty vector.
+
+# Example
+\`\`\`julia
+using CTFlows.Flows, CTFlows.MultiPhase
+
+flow = StateFlow(system, integrator)
+times = get_switching_times(flow)  # Returns Real[]
+\`\`\`
+
+See also: [`CTFlows.MultiPhase.get_switching_times(::AnyMultiPhaseFlow)`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
+"""
+function get_switching_times(f::Flows.AbstractFlow)
+    return Real[]
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Get the jumps from a single-phase flow.
+
+For single-phase flows, returns an empty vector since there are no jumps.
+
+# Arguments
+- `f::AbstractFlow`: The single-phase flow.
+
+# Returns
+- `Vector{Any}`: An empty vector.
+
+# Example
+\`\`\`julia
+using CTFlows.Flows, CTFlows.MultiPhase
+
+flow = StateFlow(system, integrator)
+jumps = get_jumps(flow)  # Returns Any[]
+\`\`\`
+
+See also: [`CTFlows.MultiPhase.get_jumps(::AnyMultiPhaseFlow)`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
+"""
+function get_jumps(f::Flows.AbstractFlow)
+    return Any[]
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Get the flows from a multi-phase flow.
+
+For multi-phase flows, returns the vector of flows for all phases.
+
+# Arguments
+- `mpf::AnyMultiPhaseFlow`: The multi-phase flow.
+
+# Returns
+- `Vector`: The vector of flows for each phase.
+
+# Example
+\`\`\`julia
+using CTFlows.MultiPhase
+
+flows = get_flows(mpf)  # Returns mpf.flows
+\`\`\`
+
+See also: [`CTFlows.MultiPhase.get_flows(::AbstractFlow)`](@ref), [`CTFlows.MultiPhase.get_switching_times`](@ref).
+"""
+function get_flows(mpf::AnyMultiPhaseFlow)
+    return mpf.flows
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Get the switching times from a multi-phase flow.
+
+For multi-phase flows, returns the vector of switching times between phases.
+
+# Arguments
+- `mpf::AnyMultiPhaseFlow`: The multi-phase flow.
+
+# Returns
+- `Vector{<:Real}`: The vector of switching times.
+
+# Example
+\`\`\`julia
+using CTFlows.MultiPhase
+
+times = get_switching_times(mpf)  # Returns mpf.switching_times
+\`\`\`
+
+See also: [`CTFlows.MultiPhase.get_switching_times(::AbstractFlow)`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
+"""
+function get_switching_times(mpf::AnyMultiPhaseFlow)
+    return mpf.switching_times
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Get the jumps from a multi-phase flow.
+
+For multi-phase flows, returns the vector of jump functions applied at switching times.
+
+# Arguments
+- `mpf::AnyMultiPhaseFlow`: The multi-phase flow.
+
+# Returns
+- `Vector{<:Any}`: The vector of jump functions (may contain `nothing` for no jump).
+
+# Example
+\`\`\`julia
+using CTFlows.MultiPhase
+
+jumps = get_jumps(mpf)  # Returns mpf.jumps
+\`\`\`
+
+See also: [`CTFlows.MultiPhase.get_jumps(::AbstractFlow)`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
+"""
+function get_jumps(mpf::AnyMultiPhaseFlow)
+    return mpf.jumps
 end
 
 # ==============================================================================

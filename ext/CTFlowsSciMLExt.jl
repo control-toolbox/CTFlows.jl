@@ -484,7 +484,7 @@ function Integrators.merge(segments::AbstractVector{<:SciMLIntegrationResult})
             "Cannot merge empty sequence of segments";
             got = "0 segments",
             expected = "at least 1 segment",
-            context = "SciML _merge_segments",
+            context = "SciML merge",
         ))
     end
     

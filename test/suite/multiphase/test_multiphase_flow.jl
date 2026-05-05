@@ -115,6 +115,65 @@ function test_multiphase_flow()
                 Test.@test isdefined(MultiPhase, :MultiPhaseHamiltonianFlow)
             end
         end
+
+        Test.@testset "Helper Methods — AbstractFlow (single-phase)" begin
+            sys = FakeStateSystem([1.0, 2.0])
+            integ = FakeIntegrator(:fake_result)
+            flow = Flows.StateFlow(sys, integ)
+
+            Test.@testset "get_flows returns single-element vector" begin
+                result = MultiPhase.get_flows(flow)
+                Test.@test result isa Vector
+                Test.@test length(result) == 1
+                Test.@test result[1] === flow
+                Test.@test Test.@inferred(MultiPhase.get_flows(flow)) isa Vector
+            end
+
+            Test.@testset "get_switching_times returns empty Real vector" begin
+                result = MultiPhase.get_switching_times(flow)
+                Test.@test result isa Vector{Real}
+                Test.@test length(result) == 0
+                Test.@test Test.@inferred(MultiPhase.get_switching_times(flow)) isa Vector{Real}
+            end
+
+            Test.@testset "get_jumps returns empty Any vector" begin
+                result = MultiPhase.get_jumps(flow)
+                Test.@test result isa Vector{Any}
+                Test.@test length(result) == 0
+                Test.@test Test.@inferred(MultiPhase.get_jumps(flow)) isa Vector{Any}
+            end
+        end
+
+        Test.@testset "Helper Methods — AnyMultiPhaseFlow (multi-phase)" begin
+            sys = FakeStateSystem([1.0, 2.0])
+            integ = FakeIntegrator(:fake_result)
+            flow1 = Flows.StateFlow(sys, integ)
+            flow2 = Flows.StateFlow(sys, integ)
+            mpf = MultiPhase.MultiPhaseStateFlow([flow1, flow2], [0.5], [nothing])
+
+            Test.@testset "get_flows delegates to mpf.flows" begin
+                result = MultiPhase.get_flows(mpf)
+                Test.@test result === mpf.flows
+            end
+
+            Test.@testset "get_switching_times delegates to mpf.switching_times" begin
+                result = MultiPhase.get_switching_times(mpf)
+                Test.@test result === mpf.switching_times
+            end
+
+            Test.@testset "get_jumps delegates to mpf.jumps" begin
+                result = MultiPhase.get_jumps(mpf)
+                Test.@test result === mpf.jumps
+            end
+        end
+
+        Test.@testset "Exports" begin
+            Test.@testset "helper methods are exported" begin
+                Test.@test isdefined(MultiPhase, :get_flows)
+                Test.@test isdefined(MultiPhase, :get_switching_times)
+                Test.@test isdefined(MultiPhase, :get_jumps)
+            end
+        end
     end
 end
 
