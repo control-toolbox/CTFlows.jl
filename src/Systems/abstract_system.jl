@@ -33,6 +33,12 @@ See also: [`CTFlows.Systems.rhs`](@ref), [`CTFlows.Common.time_dependence`](@ref
 """
 abstract type AbstractSystem{TD<:Common.TimeDependence, VD<:Common.VariableDependence} end
 
+# TODO: docstring
+abstract type AbstractStateSystem{TD, VD} <: AbstractSystem{TD, VD} end
+
+# TODO: docstring
+abstract type AbstractHamiltonianSystem{TD, VD} <: AbstractSystem{TD, VD} end
+
 """
 $(TYPEDSIGNATURES)
 

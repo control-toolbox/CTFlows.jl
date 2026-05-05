@@ -32,7 +32,7 @@ include(joinpath(@__DIR__, "internal_norm.jl"))
 # Module exports
 # ==============================================================================
 
-export AbstractTag, AbstractConfig, PointConfig, TrajectoryConfig, tspan, initial_condition
+export AbstractTag, AbstractConfig, PointConfig, TrajectoryConfig, HamiltonianPointConfig, HamiltonianTrajectoryConfig, tspan, initial_condition
 export TimeDependence, Autonomous, NonAutonomous
 export VariableDependence, Fixed, NonFixed
 export ODEParameters

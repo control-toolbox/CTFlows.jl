@@ -170,6 +170,68 @@ function tspan(c::TrajectoryConfig)::Tuple{Real, Real}
     return c.tspan
 end
 
+# TODO: docstring
+struct HamiltonianPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractConfig{X0}
+    t0::T0
+    x0::X0
+    p0::P0
+    tf::TF
+end
+
+# TODO: docstring
+function tspan(c::HamiltonianPointConfig)::Tuple{Real, Real}
+    return (c.t0, c.tf)
+end
+
+# TODO: docstring
+function initial_condition(c::HamiltonianPointConfig)
+    return vcat(c.x0, c.p0)
+end
+
+# TODO: docstring
+function Base.show(io::IO, c::HamiltonianPointConfig)
+    println(io, "HamiltonianPointConfig")
+    println(io, "  t0: ", c.t0)
+    println(io, "  x0: ", c.x0)
+    println(io, "  p0: ", c.p0)
+    print(io, "  tf: ", c.tf)
+end
+
+# TODO: docstring
+function Base.show(io::IO, ::MIME"text/plain", c::HamiltonianPointConfig)
+    show(io, c)
+end
+
+# TODO: docstring
+struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractConfig{X0}
+    tspan::TS
+    x0::X0
+    p0::P0
+end
+
+# TODO: docstring
+function tspan(c::HamiltonianTrajectoryConfig)::Tuple{Real, Real}
+    return c.tspan
+end
+
+# TODO: docstring
+function initial_condition(c::HamiltonianTrajectoryConfig)
+    return vcat(c.x0, c.p0)
+end
+
+# TODO: docstring
+function Base.show(io::IO, c::HamiltonianTrajectoryConfig)
+    println(io, "HamiltonianTrajectoryConfig")
+    println(io, "  tspan: ", c.tspan)
+    println(io, "  x0: ", c.x0)
+    print(io, "  p0: ", c.p0)
+end
+
+# TODO: docstring
+function Base.show(io::IO, ::MIME"text/plain", c::HamiltonianTrajectoryConfig)
+    show(io, c)
+end
+
 """
 $(TYPEDSIGNATURES)
 
