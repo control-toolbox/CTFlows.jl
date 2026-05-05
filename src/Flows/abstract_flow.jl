@@ -214,11 +214,11 @@ Flow
 ```
 """
 function Base.show(io::IO, ::MIME"text/plain", flow::AbstractFlow)
-    print(io, typeof(flow).name)
+    print(io, nameof(typeof(flow)))
     sys = system(flow)
     integ = integrator(flow)
     print(io, "\n  system: ", sys)
-    print(io, "\n  integrator: ", typeof(integ).name)
+    print(io, "\n  integrator: ", nameof(typeof(integ)))
 end
 
 """
@@ -237,10 +237,10 @@ Flow(system=FakeSystem(n_x=2, n_p=2), integrator=FakeIntegrator)
 function Base.show(io::IO, flow::AbstractFlow)
     sys = system(flow)
     integ = integrator(flow)
-    print(io, typeof(flow).name, "(")
+    print(io, nameof(typeof(flow)), "(")
     parts = String[]
     push!(parts, "system=$(sys)")
-    push!(parts, "integrator=$(typeof(integ).name)")
+    push!(parts, "integrator=$(nameof(typeof(integ)))")
     print(io, join(parts, ", "))
     print(io, ")")
 end

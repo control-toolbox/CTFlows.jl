@@ -383,8 +383,23 @@ Shows the type name, number of phases, systems, integrators, switching times, an
 function Base.show(io::IO, ::MIME"text/plain", mpf::AnyMultiPhaseFlow)
     print(io, nameof(typeof(mpf)))
     print(io, "\n  phases: ", length(mpf.flows))
-    print(io, "\n  systems: ", typeof(Flows.system(mpf)))
-    print(io, "\n  integrators: ", typeof(Flows.integrator(mpf)))
+    
+    # Show simplified system type with element type
+    sys = Flows.system(mpf)
+    if !isempty(sys)
+        print(io, "\n  systems: ", nameof(typeof(first(sys))), "[", length(mpf.flows), "]")
+    else
+        print(io, "\n  systems: []")
+    end
+    
+    # Show simplified integrator type with element type
+    integ = Flows.integrator(mpf)
+    if !isempty(integ)
+        print(io, "\n  integrators: ", nameof(typeof(first(integ))), "[", length(mpf.flows), "]")
+    else
+        print(io, "\n  integrators: []")
+    end
+    
     print(io, "\n  switching_times: ", mpf.switching_times)
     print(io, "\n  jumps: ", mpf.jumps)
 end

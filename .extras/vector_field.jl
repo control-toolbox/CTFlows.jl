@@ -9,7 +9,7 @@ Pkg.develop(path=joinpath(@__DIR__, ".."))
 using CTFlows.Data
 using CTFlows.Common
 using CTFlows.Systems
-using CTFlows.Flows
+using CTFlows.StateFlows
 using CTFlows.Integrators
 using CTFlows.Solutions
 using OrdinaryDiffEqTsit5
@@ -151,7 +151,7 @@ integrator_flow = Integrators.SciML()
 println("Integrator: ", typeof(integrator_flow))
 
 println("\nStep 3: Build flow")
-flow_from_build = Flows.Flow(sys_flow, integrator_flow)
+flow_from_build = Flows.StateFlow(sys_flow, integrator_flow)
 println("Flow: ", typeof(flow_from_build))
 println("  system(flow) = ", typeof(Flows.system(flow_from_build)))
 println("  integrator(flow) = ", typeof(Flows.integrator(flow_from_build)))
@@ -198,7 +198,7 @@ println("Integrator: ", typeof(integrator))
 
 println("\nStep 4: Integration via call()")
 println("\n  4a. call(flow, config) with PointConfig")
-flow = Flows.Flow(sys_vector, integrator)
+flow = Flows.StateFlow(sys_vector, integrator)
 config_point = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
 result_point = Flows.call(flow, config_point; variable=nothing, unsafe=false)
 println("    result = ", result_point)
@@ -226,7 +226,7 @@ println("VectorField (NonFixed):")
 display(vf_nonfixed)
 
 sys_nonfixed = Systems.build_system(vf_nonfixed)
-flow_nonfixed = Flows.Flow(sys_nonfixed, integrator)
+flow_nonfixed = Flows.StateFlow(sys_nonfixed, integrator)
 config_nonfixed = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
 result_nonfixed = Flows.call(flow_nonfixed, config_nonfixed; variable=0.5, unsafe=false)
 println("Result with variable=0.5: ", result_nonfixed)
@@ -240,7 +240,7 @@ vf_scalar = Data.VectorField(x -> -2x; is_autonomous=true, is_variable=false)
 println("Scalar VectorField:")
 display(vf_scalar)
 sys_scalar = Systems.build_system(vf_scalar)
-flow_scalar = Flows.Flow(sys_scalar, integrator)
+flow_scalar = Flows.StateFlow(sys_scalar, integrator)
 config_scalar = Common.PointConfig(0.0, 3.0, 1.0)
 result_scalar = Flows.call(flow_scalar, config_scalar; variable=nothing, unsafe=false)
 println("  Result: ", result_scalar, " (scalar)")
@@ -251,7 +251,7 @@ x0_matrix = [1.0 2.0; 3.0 4.0]
 println("Matrix VectorField:")
 display(vf_matrix)
 sys_matrix = Systems.build_system(vf_matrix)
-flow_matrix = Flows.Flow(sys_matrix, integrator)
+flow_matrix = Flows.StateFlow(sys_matrix, integrator)
 config_matrix = Common.PointConfig(0.0, x0_matrix, 1.0)
 result_matrix = Flows.call(flow_matrix, config_matrix; variable=nothing, unsafe=false)
 println("  Result: ", result_matrix, " (matrix)")
@@ -289,7 +289,7 @@ println("  1. Install OrdinaryDiffEq: Pkg.add(\"OrdinaryDiffEqTsit5\")")
 println("  2. The CTFlowsSciMLExt extension will be automatically activated")
 println("  3. Then you can use:")
 println("     integrator = Integrators.SciML()")
-println("     flow = Flows.Flow(system, integrator)")
+println("     flow = Flows.StateFlow(system, integrator)")
 println("     result = Flows.call(flow, config; variable=nothing, unsafe=false)")
 println("     result = flow(t0, x0, tf)  # direct callable, builds config internally")
 
