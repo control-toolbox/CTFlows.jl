@@ -32,7 +32,7 @@ Fake system for testing the Flow contract.
 This minimal implementation provides the required contract methods to test
 routing and default behavior without full system complexity.
 """
-struct FakeSystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
+struct FakeSystem <: Systems.AbstractStateSystem{Common.Autonomous, Common.Fixed}
     state_dim::Int
     param_dim::Int
 end
@@ -107,17 +107,17 @@ function test_flow_module()
         # ====================================================================
 
         Test.@testset "Concrete Types" begin
-            Test.@testset "Flow is exported" begin
-                Test.@test isdefined(Flows, :Flow)
-                Test.@test Flows.Flow <: Flows.AbstractFlow
+            Test.@testset "StateFlow is exported" begin
+                Test.@test isdefined(Flows, :StateFlow)
+                Test.@test Flows.StateFlow <: Flows.AbstractFlow
             end
 
-            Test.@testset "Flow constructor is exported" begin
-                Test.@test isdefined(Flows, :Flow)
+            Test.@testset "StateFlow constructor is exported" begin
+                Test.@test isdefined(Flows, :StateFlow)
                 sys = FakeSystem(2, 2)
                 integ = FakeIntegrator()
-                flow = Flows.Flow(sys, integ)
-                Test.@test flow isa Flows.Flow
+                flow = Flows.StateFlow(sys, integ)
+                Test.@test flow isa Flows.StateFlow
                 Test.@test flow isa Flows.AbstractFlow
             end
         end
@@ -134,7 +134,7 @@ function test_flow_module()
             Test.@testset "system returns the associated system" begin
                 sys = FakeSystem(2, 2)
                 integ = FakeIntegrator()
-                flow = Flows.Flow(sys, integ)
+                flow = Flows.StateFlow(sys, integ)
                 retrieved_sys = Flows.system(flow)
                 Test.@test retrieved_sys === sys
             end
@@ -146,7 +146,7 @@ function test_flow_module()
             Test.@testset "integrator returns the associated integrator" begin
                 sys = FakeSystem(2, 2)
                 integ = FakeIntegrator()
-                flow = Flows.Flow(sys, integ)
+                flow = Flows.StateFlow(sys, integ)
                 retrieved_integ = Flows.integrator(flow)
                 Test.@test retrieved_integ === integ
             end
@@ -157,31 +157,31 @@ function test_flow_module()
         # ====================================================================
 
         Test.@testset "Trait Support" begin
-            Test.@testset "Flow has time dependence trait" begin
+            Test.@testset "StateFlow has time dependence trait" begin
                 sys = FakeSystem(2, 2)
                 integ = FakeIntegrator()
-                flow = Flows.Flow(sys, integ)
+                flow = Flows.StateFlow(sys, integ)
                 Test.@test Common.has_time_dependence_trait(flow)
             end
 
-            Test.@testset "Flow has variable dependence trait" begin
+            Test.@testset "StateFlow has variable dependence trait" begin
                 sys = FakeSystem(2, 2)
                 integ = FakeIntegrator()
-                flow = Flows.Flow(sys, integ)
+                flow = Flows.StateFlow(sys, integ)
                 Test.@test Common.has_variable_dependence_trait(flow)
             end
 
             Test.@testset "time_dependence delegates to system" begin
                 sys = FakeSystem(2, 2)
                 integ = FakeIntegrator()
-                flow = Flows.Flow(sys, integ)
+                flow = Flows.StateFlow(sys, integ)
                 Test.@test Common.time_dependence(flow) === Common.Autonomous
             end
 
             Test.@testset "variable_dependence delegates to system" begin
                 sys = FakeSystem(2, 2)
                 integ = FakeIntegrator()
-                flow = Flows.Flow(sys, integ)
+                flow = Flows.StateFlow(sys, integ)
                 Test.@test Common.variable_dependence(flow) === Common.Fixed
             end
         end
@@ -191,16 +191,16 @@ function test_flow_module()
         # ====================================================================
 
         Test.@testset "Type Hierarchy" begin
-            Test.@testset "Flow is a subtype of AbstractFlow" begin
-                Test.@test Flows.Flow <: Flows.AbstractFlow
+            Test.@testset "StateFlow is a subtype of AbstractFlow" begin
+                Test.@test Flows.StateFlow <: Flows.AbstractFlow
             end
 
-            Test.@testset "Concrete Flow instances are AbstractFlow" begin
+            Test.@testset "Concrete StateFlow instances are AbstractFlow" begin
                 sys = FakeSystem(2, 2)
                 integ = FakeIntegrator()
-                flow = Flows.Flow(sys, integ)
+                flow = Flows.StateFlow(sys, integ)
                 Test.@test flow isa Flows.AbstractFlow
-                Test.@test flow isa Flows.Flow
+                Test.@test flow isa Flows.StateFlow
             end
         end
 
@@ -212,7 +212,7 @@ function test_flow_module()
             Test.@testset "tree-style display works" begin
                 sys = FakeSystem(2, 2)
                 integ = FakeIntegrator()
-                flow = Flows.Flow(sys, integ)
+                flow = Flows.StateFlow(sys, integ)
                 # Just verify it doesn't throw
                 io = IOBuffer()
                 show(io, MIME("text/plain"), flow)
@@ -223,7 +223,7 @@ function test_flow_module()
             Test.@testset "compact display works" begin
                 sys = FakeSystem(2, 2)
                 integ = FakeIntegrator()
-                flow = Flows.Flow(sys, integ)
+                flow = Flows.StateFlow(sys, integ)
                 # Just verify it doesn't throw
                 io = IOBuffer()
                 show(io, flow)

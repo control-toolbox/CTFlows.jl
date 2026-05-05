@@ -38,7 +38,7 @@ include(joinpath(@__DIR__, "calling.jl"))
 # Module exports
 # ==============================================================================
 
-export AbstractFlow, Flow
+export AbstractFlow, AbstractStateFlow, AbstractHamiltonianFlow, Flow, StateFlow, HamiltonianFlow
 export system, integrator
 export call
 export build_flow

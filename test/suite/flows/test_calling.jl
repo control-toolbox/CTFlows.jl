@@ -17,7 +17,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake system for testing the calling workflow.
 """
-struct FakeSystemForCalling <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
+struct FakeSystemForCalling <: Systems.AbstractStateSystem{Common.Autonomous, Common.Fixed}
     state_dim::Int
 end
 

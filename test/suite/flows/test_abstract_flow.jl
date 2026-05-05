@@ -20,7 +20,7 @@ Fake system for testing the AbstractFlow contract.
 This minimal implementation provides the required contract methods for AbstractSystem
 to test flow behavior without full system complexity.
 """
-struct FakeSystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
+struct FakeSystem <: Systems.AbstractStateSystem{Common.Autonomous, Common.Fixed}
     state_dim::Int
 end
 
@@ -84,6 +84,14 @@ function test_abstract_flow()
             sys = FakeSystem(2)
             Test.@test FakeFlow(sys, :fake_integ) isa Flows.AbstractFlow
             Test.@test MinimalFlow(sys) isa Flows.AbstractFlow
+        end
+
+        Test.@testset "Hierarchy" begin
+            sys = FakeSystem(2)
+            Test.@test isdefined(Flows, :AbstractStateFlow)
+            Test.@test isdefined(Flows, :AbstractHamiltonianFlow)
+            Test.@test isdefined(Flows, :StateFlow)
+            Test.@test isdefined(Flows, :HamiltonianFlow)
         end
 
         # ====================================================================

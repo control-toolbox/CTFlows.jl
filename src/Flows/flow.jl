@@ -29,7 +29,14 @@ Flow{FakeSystem, FakeIntegrator, Fixed}(system=FakeSystem(), integrator=FakeInte
 
 See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref).
 """
-struct Flow{TD<:Common.TimeDependence, VD<:Common.VariableDependence, S<:Systems.AbstractSystem{TD, VD}, I<:Integrators.AbstractIntegrator} <: AbstractFlow{TD, VD}
+# TODO: docstring
+struct StateFlow{TD, VD, S<:Systems.AbstractStateSystem{TD, VD}, I<:Integrators.AbstractIntegrator} <: AbstractStateFlow{TD, VD, S}
+    system::S
+    integrator::I
+end
+
+# TODO: docstring
+struct HamiltonianFlow{TD, VD, S<:Systems.AbstractHamiltonianSystem{TD, VD}, I<:Integrators.AbstractIntegrator} <: AbstractHamiltonianFlow{TD, VD, S}
     system::S
     integrator::I
 end
@@ -65,8 +72,14 @@ Flow{...}
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref).
 """
-function build_flow(system::S, integrator::I) where {S<:Systems.AbstractSystem, I<:Integrators.AbstractIntegrator}
-    return Flow(system, integrator)
+# TODO: docstring
+function build_flow(system::S, integrator::I) where {S<:Systems.AbstractStateSystem, I<:Integrators.AbstractIntegrator}
+    return StateFlow(system, integrator)
+end
+
+# TODO: docstring
+function build_flow(system::S, integrator::I) where {S<:Systems.AbstractHamiltonianSystem, I<:Integrators.AbstractIntegrator}
+    return HamiltonianFlow(system, integrator)
 end
 
 """
@@ -77,7 +90,13 @@ Return the system associated with the flow.
 # Returns
 - `S`: The `AbstractSystem` stored in the flow.
 """
-function system(f::Flow{TD, VD, S, I})::S where {TD, VD, S, I}
+# TODO: docstring
+function system(f::StateFlow{TD, VD, S, I})::S where {TD, VD, S, I}
+    return f.system
+end
+
+# TODO: docstring
+function system(f::HamiltonianFlow{TD, VD, S, I})::S where {TD, VD, S, I}
     return f.system
 end
 
@@ -89,7 +108,13 @@ Return the integrator associated with the flow.
 # Returns
 - `I`: The `AbstractIntegrator` stored in the flow.
 """
-function integrator(f::Flow{TD, VD, S, I})::I where {TD, VD, S, I}
+# TODO: docstring
+function integrator(f::StateFlow{TD, VD, S, I})::I where {TD, VD, S, I}
+    return f.integrator
+end
+
+# TODO: docstring
+function integrator(f::HamiltonianFlow{TD, VD, S, I})::I where {TD, VD, S, I}
     return f.integrator
 end
 
@@ -121,7 +146,8 @@ Convenience call `flow(t0, x0, tf)` — builds a `PointConfig` internally.
 
 See also: [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
 """
-function (f::Flow)(
+# TODO: docstring
+function (f::StateFlow)(
     t0::Real,
     x0,
     tf::Real;
@@ -129,6 +155,18 @@ function (f::Flow)(
     unsafe=Common.__unsafe(),
 )
     return call(f, Common.PointConfig(t0, x0, tf); variable=variable, unsafe=unsafe)
+end
+
+# TODO: docstring
+function (f::HamiltonianFlow)(
+    t0::Real,
+    x0,
+    p0,
+    tf::Real;
+    variable=Common.__variable(),
+    unsafe=Common.__unsafe(),
+)
+    return call(f, Common.HamiltonianPointConfig(t0, x0, p0, tf); variable=variable, unsafe=unsafe)
 end
 
 """
@@ -148,11 +186,23 @@ Convenience call `flow((t0, tf), x0)` — builds a `TrajectoryConfig` internally
 
 See also: [`CTFlows.Common.TrajectoryConfig`](@ref), [`CTFlows.Flows.call`](@ref).
 """
-function (f::Flow)(
+# TODO: docstring
+function (f::StateFlow)(
     tspan::Tuple{Real, Real},
     x0;
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 )
     return call(f, Common.TrajectoryConfig(tspan, x0); variable=variable, unsafe=unsafe)
+end
+
+# TODO: docstring
+function (f::HamiltonianFlow)(
+    tspan::Tuple{Real, Real},
+    x0,
+    p0;
+    variable=Common.__variable(),
+    unsafe=Common.__unsafe(),
+)
+    return call(f, Common.HamiltonianTrajectoryConfig(tspan, x0, p0); variable=variable, unsafe=unsafe)
 end

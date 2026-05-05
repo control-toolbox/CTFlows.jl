@@ -27,7 +27,7 @@ function test_building_flows()
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 flow = Flows.Flow(vf)
 
-                Test.@test flow isa Flows.Flow
+                Test.@test flow isa Flows.StateFlow
                 Test.@test flow isa Flows.AbstractFlow
                 Test.@test flow.system isa Systems.VectorFieldSystem
                 Test.@test flow.integrator isa Integrators.AbstractIntegrator
@@ -37,7 +37,7 @@ function test_building_flows()
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 flow = Flows.Flow(vf; reltol=1e-10)
 
-                Test.@test flow isa Flows.Flow
+                Test.@test flow isa Flows.StateFlow
                 Test.@test flow.integrator isa Integrators.AbstractIntegrator
             end
         end
