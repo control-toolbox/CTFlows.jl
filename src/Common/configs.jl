@@ -76,7 +76,7 @@ Extract the time span from an `AbstractConfig`.
 
 See also: [`CTFlows.Common.AbstractConfig`](@ref), [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Common.TrajectoryConfig`](@ref).
 """
-function tspan(c::AbstractConfig{X0}) where {X0}
+function tspan(c::AbstractConfig)
     throw(Exceptions.NotImplemented(
         "AbstractConfig tspan method not implemented";
         required_method = "tspan(c::$(typeof(c)))",
@@ -534,19 +534,7 @@ julia> initial_state(config)
 
 See also: [`CTFlows.Common.initial_costate`](@ref), [`CTFlows.Common.initial_condition`](@ref).
 """
-function initial_state(c::Common.PointConfig)
-    return c.x0
-end
-
-function initial_state(c::Common.TrajectoryConfig)
-    return c.x0
-end
-
-function initial_state(c::Common.HamiltonianPointConfig)
-    return c.x0
-end
-
-function initial_state(c::Common.HamiltonianTrajectoryConfig)
+function initial_state(c::Common.AbstractConfig)
     return c.x0
 end
 
@@ -579,11 +567,7 @@ julia> initial_costate(config)
 
 See also: [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.initial_condition`](@ref).
 """
-function initial_costate(c::Common.HamiltonianPointConfig)
-    return c.p0
-end
-
-function initial_costate(c::Common.HamiltonianTrajectoryConfig)
+function initial_costate(c::Union{Common.HamiltonianPointConfig, Common.HamiltonianTrajectoryConfig})
     return c.p0
 end
 

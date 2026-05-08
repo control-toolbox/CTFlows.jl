@@ -11,10 +11,14 @@ import CTFlows.Solutions: Solutions
 import CTSolvers.Strategies: Strategies
 import CTSolvers.Options: Options
 
+# Fake tag type for testing stub behavior
+struct FakeTag <: Common.AbstractTag end
+
 # Get extension to access SciML integrator
-using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, ODEProblem, Tsit5
-using SciMLBase: SciMLBase
+using SciMLBase: SciMLBase, ODEProblem
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 const CTFlowsSciMLExt = Base.get_extension(CTFlows, :CTFlowsSciMLExt)
+const CTFlowsOrdinaryDiffEqTsit5Ext = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5Ext)
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -37,6 +41,27 @@ function test_sciml_extension()
 
             Test.@testset "extension is a Module" begin
                 Test.@test CTFlowsSciMLExt isa Module
+            end
+
+            Test.@testset "Tsit5 extension is loaded" begin
+                Test.@test !isnothing(CTFlowsOrdinaryDiffEqTsit5Ext)
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Stub Behavior
+        # ====================================================================
+
+        Test.@testset "Stub Behavior" begin
+            Test.@testset "__default_sciml_algorithm returns missing for fake tag" begin
+                result = Integrators.__default_sciml_algorithm(FakeTag)
+                Test.@test result === missing
+            end
+
+            Test.@testset "__default_sciml_algorithm returns Tsit5 for Tsit5Tag" begin
+                result = Integrators.__default_sciml_algorithm(Integrators.Tsit5Tag)
+                Test.@test result isa SciMLBase.AbstractDEAlgorithm
+                Test.@test result == Tsit5()
             end
         end
 

@@ -9,6 +9,14 @@ struct SciMLTag <: Common.AbstractTag end
 """
 $(TYPEDEF)
 
+Tag type for Tsit5-specific default algorithm dispatch. Used to target
+the implementation provided by the `CTFlowsOrdinaryDiffEqTsit5Ext` package extension.
+"""
+struct Tsit5Tag <: Common.AbstractTag end
+
+"""
+$(TYPEDEF)
+
 Abstract supertype for SciML-based ODE integrator strategies.
 
 This type defines the interface for all integrator strategies that use SciML solvers.
@@ -143,4 +151,21 @@ function CTSolvers.Strategies.metadata(::Type{<:AbstractSciMLIntegrator})
             context="Load OrdinaryDiffEqTsit5, OrdinaryDiffEq, or DifferentialEquations extension first: using OrdinaryDiffEqTsit5",
         ),
     )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the default SciML ODE algorithm for the given tag type.
+
+This stub returns `missing` for the abstract tag type. The actual implementation
+for Tsit5Tag is provided by CTFlowsOrdinaryDiffEqTsit5Ext.
+
+# Returns
+- `missing`: Default stub implementation.
+
+See also: [`Integrators.SciML`](@ref), [`Integrators.Tsit5Tag`](@ref).
+"""
+function __default_sciml_algorithm(::Type{<:Common.AbstractTag})
+    return missing
 end

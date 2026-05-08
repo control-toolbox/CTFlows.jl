@@ -3,8 +3,7 @@
 
 Package extension providing the SciML implementation for `SciML`
 and `ode_problem` for `VectorFieldSystem`. Activated automatically when
-`OrdinaryDiffEqTsit5` (or any superset such as `OrdinaryDiffEq` /
-`DifferentialEquations`) is loaded together with `CTFlows`.
+`DiffEqBase` and `SciMLBase` are loaded together with `CTFlows`.
 """
 module CTFlowsSciMLExt
 
@@ -16,11 +15,10 @@ import CTSolvers.Options
 using CTFlows: CTFlows
 using CTFlows.Common: Common
 using CTFlows.Systems: Systems
-using CTFlows.Integrators: Integrators, SciML, SciMLTag
+using CTFlows.Integrators: Integrators, SciML, SciMLTag, Tsit5Tag
 using CTFlows.MultiPhase: MultiPhase
 using DiffEqBase: DiffEqBase
-using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, ODEProblem, Tsit5
-using SciMLBase: SciMLBase
+using SciMLBase: SciMLBase, ODEProblem
 
 # =============================================================================
 # real_norm overload for SciML
@@ -80,8 +78,9 @@ function Strategies.metadata(::Type{SciML})
         Strategies.OptionDefinition(;
             name = :alg,
             type = SciMLBase.AbstractDEAlgorithm,
-            default = Tsit5(),
-            description = "ODE algorithm (e.g. Tsit5(), Rodas4()).",
+            default = Integrators.__default_sciml_algorithm(Integrators.Tsit5Tag),
+            description = "ODE algorithm (e.g. Tsit5(), Vern6()).",
+            aliases = (:algorithm, :solver),
         ),
         Strategies.OptionDefinition(;
             name = :reltol,
@@ -341,6 +340,21 @@ function CTFlows.Integrators.build_sciml_integrator(
     opts = Strategies.build_strategy_options(SciML; mode = mode, kwargs...)
     raw = Strategies.options_dict(opts)
     
+    # Check if algorithm is missing and raise PreconditionError
+    alg_val = raw[:alg]
+    if alg_val === missing
+        throw(
+            Exceptions.PreconditionError(
+                "No ODE algorithm specified and OrdinaryDiffEqTsit5 is not loaded";
+                reason = "alg is missing",
+                suggestion = "Load OrdinaryDiffEqTsit5: using OrdinaryDiffEqTsit5\n" *
+                            "Or specify an algorithm explicitly: SciML(alg=Vern6())\n" *
+                            "Note: when specifying an algorithm, also load its package (e.g., using OrdinaryDiffEqVerner for Vern6)",
+                context = "SciML integrator construction",
+            ),
+        )
+    end
+    
     # Pre-compute options for PointConfig
     options_point = copy(raw)
     for key in _AUTO_OPTION_KEYS
@@ -561,7 +575,7 @@ Returns a `SciMLIntegrationResult` wrapping the raw `ODESolution`.
 # Throws
 - `CTBase.Exceptions.SolverFailure`: If the ODE solver returns an unsuccessful retcode and `unsafe=false`.
 """
-function Integrators.solve_problem(integ::SciML, prob::SciMLBase.AbstractODEProblem, options::Dict{Symbol,Any}; unsafe=Common.__unsafe())
+function Integrators.solve_problem(integ::SciML, prob::SciMLBase.AbstractODEProblem, options::Dict{Symbol,<:Any}; unsafe=Common.__unsafe())
     ode_sol = SciMLBase.solve(prob; options...)
     if !unsafe && !SciMLBase.successful_retcode(ode_sol.retcode)
         throw(Exceptions.SolverFailure(

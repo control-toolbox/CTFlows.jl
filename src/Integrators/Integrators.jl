@@ -36,7 +36,7 @@ include(joinpath(@__DIR__, "building.jl"))
 # Module exports
 # ==============================================================================
 
-export AbstractIntegrator, SciML, SciMLTag
+export AbstractIntegrator, SciML, SciMLTag, Tsit5Tag
 export AbstractIntegrationResult, final_state, times, evaluate_at
 export build_sciml_integrator, build_integrator
 export build_problem, solve_problem, merge

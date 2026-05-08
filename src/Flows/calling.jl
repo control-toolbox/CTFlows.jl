@@ -24,7 +24,7 @@ sol = call(flow, config; variable=nothing, unsafe=false)
 
 See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
 """
-function call(flow::Flows.AbstractFlow{TD, VD}, config::Common.AbstractConfig; variable, unsafe) where {TD<:Common.TimeDependence, VD<:Common.VariableDependence}
+function call(flow::Flows.AbstractFlow, config::Common.AbstractConfig; variable, unsafe)
 
     # get system and integrator
     sys = system(flow)
