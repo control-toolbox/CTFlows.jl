@@ -84,7 +84,7 @@ Solve the given ODE problem with resolved options.
 
 See also: [`CTFlows.Integrators.AbstractIntegrator`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.build_options`](@ref).
 """
-function solve_problem(integrator::AbstractIntegrator, prob, options::Dict{Symbol,Any}; unsafe=Common.__unsafe())
+function solve_problem(integrator::AbstractIntegrator, prob, options::Dict{Symbol,<:Any}; unsafe=Common.__unsafe())
     throw(Exceptions.NotImplemented(
         "AbstractIntegrator solve_problem not implemented";
         required_method = "solve_problem(integrator::$(typeof(integrator)), prob, options::Dict{Symbol,Any}; unsafe=false)",

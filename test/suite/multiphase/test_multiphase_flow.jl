@@ -75,8 +75,8 @@ function test_multiphase_flow()
                     output = String(take!(io))
                     Test.@test occursin("MultiPhaseStateFlow", output)
                     Test.@test occursin("phases: 2", output)
-                    Test.@test occursin("systems: Vector", output)
-                    Test.@test occursin("integrators: Vector", output)
+                    Test.@test occursin("systems: FakeStateSystem", output)
+                    Test.@test occursin("integrators: FakeIntegrator", output)
                     Test.@test occursin("switching_times: [0.5]", output)
                 end
 

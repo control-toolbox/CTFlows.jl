@@ -10,8 +10,8 @@ import CTFlows.Solutions: Solutions
 import CTFlows.Flows: Flows
 import CTSolvers.Strategies: Strategies
 
-using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, ODEProblem, Tsit5
-using SciMLBase: SciMLBase
+using SciMLBase: SciMLBase, ODEProblem
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 using DiffEqBase: DiffEqBase
 using ForwardDiff: ForwardDiff
 

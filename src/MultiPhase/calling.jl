@@ -2,11 +2,84 @@
 # Generic Multiphase Evaluation Loop
 # ==============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Extract the initial state from a point configuration.
+
+# Arguments
+- `config::Common.PointConfig`: The point configuration.
+
+# Returns
+- Initial state vector.
+
+See also: [`CTFlows.Common.initial_state`](@ref).
+"""
 _extract_initial_state(config::Common.PointConfig) = Common.initial_state(config)
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the initial state from a trajectory configuration.
+
+# Arguments
+- `config::Common.TrajectoryConfig`: The trajectory configuration.
+
+# Returns
+- Initial state vector.
+
+See also: [`CTFlows.Common.initial_state`](@ref).
+"""
 _extract_initial_state(config::Common.TrajectoryConfig) = Common.initial_state(config)
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the initial state and costate from a Hamiltonian point configuration.
+
+# Arguments
+- `config::Common.HamiltonianPointConfig`: The Hamiltonian point configuration.
+
+# Returns
+- Tuple of (initial_state, initial_costate).
+
+See also: [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.initial_costate`](@ref).
+"""
 _extract_initial_state(config::Common.HamiltonianPointConfig) = (Common.initial_state(config), Common.initial_costate(config))
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the initial state and costate from a Hamiltonian trajectory configuration.
+
+# Arguments
+- `config::Common.HamiltonianTrajectoryConfig`: The Hamiltonian trajectory configuration.
+
+# Returns
+- Tuple of (initial_state, initial_costate).
+
+See also: [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.initial_costate`](@ref).
+"""
 _extract_initial_state(config::Common.HamiltonianTrajectoryConfig) = (Common.initial_state(config), Common.initial_costate(config))
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluate a multi-phase flow for a point configuration, returning only the final state.
+
+Iterates through all phases sequentially, applying jumps at switching times.
+
+# Arguments
+- `mpf`: The multi-phase flow to evaluate.
+- `config::Common.AbstractPointConfig`: The point configuration with time span and initial conditions.
+- `variable`: The variable parameter value (for NonFixed systems).
+- `unsafe`: If true, bypass ODE solver retcode checking.
+
+# Returns
+- Final state after all phases.
+
+See also: [`CTFlows.MultiPhase._evaluate_phase`](@ref), [`CTFlows.MultiPhase._apply_jump`](@ref).
+"""
 function _evaluate_multiphase(mpf, config::Common.AbstractPointConfig; variable, unsafe)
     t0, tf = Common.tspan(config)
     current_state = _extract_initial_state(config)
@@ -31,6 +104,24 @@ function _evaluate_multiphase(mpf, config::Common.AbstractPointConfig; variable,
     return _format_final_output(mpf, current_state)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluate a multi-phase flow for a trajectory configuration, returning the full trajectory.
+
+Iterates through all phases sequentially, collecting segment results and applying jumps at switching times.
+
+# Arguments
+- `mpf`: The multi-phase flow to evaluate.
+- `config::Common.AbstractTrajectoryConfig`: The trajectory configuration with time span and initial conditions.
+- `variable`: The variable parameter value (for NonFixed systems).
+- `unsafe`: If true, bypass ODE solver retcode checking.
+
+# Returns
+- Merged trajectory solution after all phases.
+
+See also: [`CTFlows.Integrators.merge`](@ref), [`CTFlows.MultiPhase._evaluate_phase`](@ref), [`CTFlows.MultiPhase._apply_jump`](@ref).
+"""
 function _evaluate_multiphase(mpf, config::Common.AbstractTrajectoryConfig; variable, unsafe)
     t0, tf = Common.tspan(config)
     current_state = _extract_initial_state(config)
@@ -63,14 +154,71 @@ end
 # Phase Evaluation & Jump Delegation
 # ==============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluate a single phase for a state flow with point configuration.
+
+# Arguments
+- `flow::Flows.StateFlow`: The state flow to evaluate.
+- `t0`: Start time.
+- `tf`: End time.
+- `x`: Initial state.
+- `::Common.AbstractPointConfig`: Point configuration type tag.
+- `variable`: The variable parameter value (for NonFixed systems).
+- `unsafe`: If true, bypass ODE solver retcode checking.
+
+# Returns
+- Final state at time tf.
+
+See also: [`CTFlows.Flows.StateFlow`](@ref).
+"""
 function _evaluate_phase(flow::Flows.StateFlow, t0, tf, x, ::Common.AbstractPointConfig; variable, unsafe)
     return flow(t0, x, tf; variable=variable, unsafe=unsafe)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluate a single phase for a state flow with trajectory configuration.
+
+# Arguments
+- `flow::Flows.StateFlow`: The state flow to evaluate.
+- `t0`: Start time.
+- `tf`: End time.
+- `x`: Initial state.
+- `::Common.AbstractTrajectoryConfig`: Trajectory configuration type tag.
+- `variable`: The variable parameter value (for NonFixed systems).
+- `unsafe`: If true, bypass ODE solver retcode checking.
+
+# Returns
+- Trajectory solution from t0 to tf.
+
+See also: [`CTFlows.Flows.StateFlow`](@ref).
+"""
 function _evaluate_phase(flow::Flows.StateFlow, t0, tf, x, ::Common.AbstractTrajectoryConfig; variable, unsafe)
     return flow((t0, tf), x; variable=variable, unsafe=unsafe)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluate a single phase for a Hamiltonian flow with point configuration.
+
+# Arguments
+- `flow::Flows.HamiltonianFlow`: The Hamiltonian flow to evaluate.
+- `t0`: Start time.
+- `tf`: End time.
+- `state_tuple`: Tuple of (initial_state, initial_costate).
+- `::Common.AbstractPointConfig`: Point configuration type tag.
+- `variable`: The variable parameter value (for NonFixed systems).
+- `unsafe`: If true, bypass ODE solver retcode checking.
+
+# Returns
+- Tuple of (final_state, final_costate) at time tf.
+
+See also: [`CTFlows.Flows.HamiltonianFlow`](@ref).
+"""
 function _evaluate_phase(flow::Flows.HamiltonianFlow, t0, tf, state_tuple, ::Common.AbstractPointConfig; variable, unsafe)
     x, p = state_tuple
     xfpf = flow(t0, x, p, tf; variable=variable, unsafe=unsafe)
@@ -78,45 +226,180 @@ function _evaluate_phase(flow::Flows.HamiltonianFlow, t0, tf, state_tuple, ::Com
     return (xfpf[1:nx], xfpf[nx+1:end])
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluate a single phase for a Hamiltonian flow with trajectory configuration.
+
+# Arguments
+- `flow::Flows.HamiltonianFlow`: The Hamiltonian flow to evaluate.
+- `t0`: Start time.
+- `tf`: End time.
+- `state_tuple`: Tuple of (initial_state, initial_costate).
+- `::Common.AbstractTrajectoryConfig`: Trajectory configuration type tag.
+- `variable`: The variable parameter value (for NonFixed systems).
+- `unsafe`: If true, bypass ODE solver retcode checking.
+
+# Returns
+- Trajectory solution from t0 to tf.
+
+See also: [`CTFlows.Flows.HamiltonianFlow`](@ref).
+"""
 function _evaluate_phase(flow::Flows.HamiltonianFlow, t0, tf, state_tuple, ::Common.AbstractTrajectoryConfig; variable, unsafe)
     x, p = state_tuple
     return flow((t0, tf), x, p; variable=variable, unsafe=unsafe)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Extract the final state from a segment result for state flows.
+
+# Arguments
+- `::MultiPhaseStateFlow`: Multi-phase state flow type tag.
+- `segment`: The segment solution.
+- `current_state`: Current state (unused for state flows).
+
+# Returns
+- Final state from the segment.
+
+See also: [`CTFlows.Solutions.final_state`](@ref).
+"""
 function _extract_final_state(::MultiPhaseStateFlow, segment, current_state)
     return Solutions.final_state(segment)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Extract the final state and costate from a segment result for Hamiltonian flows.
+
+# Arguments
+- `::MultiPhaseHamiltonianFlow`: Multi-phase Hamiltonian flow type tag.
+- `segment`: The segment solution.
+- `current_state`: Current state tuple (used to determine state dimension).
+
+# Returns
+- Tuple of (final_state, final_costate) from the segment.
+
+See also: [`CTFlows.Solutions.final_state`](@ref).
+"""
 function _extract_final_state(::MultiPhaseHamiltonianFlow, segment, current_state)
     final = Solutions.final_state(segment)
     nx = length(current_state[1])
     return (final[1:nx], final[nx+1:end])
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Apply a jump to the state for state flows.
+
+# Arguments
+- `mpf::MultiPhaseStateFlow`: The multi-phase state flow.
+- `i`: Phase index.
+- `state`: Current state.
+
+# Returns
+- State after applying the jump.
+
+See also: [`CTFlows.MultiPhase.get_jump`](@ref).
+"""
 function _apply_jump(mpf::MultiPhaseStateFlow, i, state)
     jump = get_jump(mpf, i)
     return state .+ jump
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Apply a jump to the state tuple for Hamiltonian flows.
+
+# Arguments
+- `mpf::MultiPhaseHamiltonianFlow`: The multi-phase Hamiltonian flow.
+- `i`: Phase index.
+- `state_tuple`: Tuple of (state, costate).
+
+# Returns
+- State tuple after applying the jump.
+
+See also: [`CTFlows.MultiPhase._apply_hamiltonian_jump`](@ref), [`CTFlows.MultiPhase.get_jump`](@ref).
+"""
 function _apply_jump(mpf::MultiPhaseHamiltonianFlow, i, state_tuple)
     jump = get_jump(mpf, i)
     return _apply_hamiltonian_jump(state_tuple, jump)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Apply a tuple jump to a Hamiltonian state tuple.
+
+# Arguments
+- `state_tuple::Tuple`: Tuple of (state, costate).
+- `jump::Tuple`: Tuple of (state_jump, costate_jump).
+
+# Returns
+- Tuple of (state + state_jump, costate + costate_jump).
+
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref).
+"""
 function _apply_hamiltonian_jump(state_tuple::Tuple, jump::Tuple)
     x, p = state_tuple
     return (x + jump[1], p + jump[2])
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Apply a scalar jump to the costate component of a Hamiltonian state tuple.
+
+# Arguments
+- `state_tuple::Tuple`: Tuple of (state, costate).
+- `jump`: Costate jump value (scalar).
+
+# Returns
+- Tuple of (state, costate + jump).
+
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref).
+"""
 function _apply_hamiltonian_jump(state_tuple::Tuple, jump)
     x, p = state_tuple
     return (x, p + jump)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Format the final output for state flows.
+
+# Arguments
+- `::MultiPhaseStateFlow`: Multi-phase state flow type tag.
+- `x`: Final state.
+
+# Returns
+- The final state (no formatting needed).
+
+See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@ref).
+"""
 function _format_final_output(::MultiPhaseStateFlow, x)
     return x
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Format the final output for Hamiltonian flows by concatenating state and costate.
+
+# Arguments
+- `::MultiPhaseHamiltonianFlow`: Multi-phase Hamiltonian flow type tag.
+- `state_tuple`: Tuple of (final_state, final_costate).
+
+# Returns
+- Concatenated vector [state; costate].
+
+See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@ref).
+"""
 function _format_final_output(::MultiPhaseHamiltonianFlow, state_tuple)
     x, p = state_tuple
     return vcat(x, p)
