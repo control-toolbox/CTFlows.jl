@@ -21,8 +21,6 @@ ForwardDiff-specific implementations are provided in `CTFlowsForwardDiffExt`.
 julia> CTFlows.Common.deepvalue(3.14)
 3.14
 ```
-
-See also: [`CTFlowsForwardDiffExt.deepvalue`](@extref)
 """
 deepvalue(x::Real) = x
 
@@ -46,7 +44,5 @@ ForwardDiff-specific implementations are provided in `CTFlowsForwardDiffExt`.
 julia> CTFlows.Common.real_norm(3.0, 0.0)
 3.0
 ```
-
-See also: [`CTFlowsForwardDiffExt.real_norm`](@extref)
 """
 real_norm(u::Real, t) = abs(u)

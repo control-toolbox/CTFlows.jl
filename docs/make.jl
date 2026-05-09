@@ -3,17 +3,48 @@
 pushfirst!(LOAD_PATH, joinpath(@__DIR__))
 pushfirst!(LOAD_PATH, joinpath(@__DIR__, ".."))
 
-using Documenter
+# control-toolbox packages
 using CTFlows
 using CTBase
+using CTModels
+
+# documentation
+using DocumenterInterLinks
+using Documenter
 using Markdown
 using MarkdownAST: MarkdownAST
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Configuration
-# ══════════════════════════════════════════════════════════════════════════════
+# trigger extensions
+using ForwardDiff
+using OrdinaryDiffEqTsit5
+using Plots
+using SciMLBase, DiffEqBase
 
-draft = false  # Draft mode: if true, @example blocks are not executed
+#
+links = InterLinks(
+    "CTBase" => (
+        "https://control-toolbox.org/CTBase.jl/stable/",
+        "https://control-toolbox.org/CTBase.jl/stable/objects.inv",
+        joinpath(@__DIR__, "inventories", "CTBase.toml"),
+    ),
+    "CTModels" => (
+        "https://control-toolbox.org/CTModels.jl/stable/",
+        "https://control-toolbox.org/CTModels.jl/stable/objects.inv",
+        joinpath(@__DIR__, "inventories", "CTModels.toml"),
+    ),
+)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Configuration
+# ═══════════════════════════════════════════════════════════════════════════════
+# if draft is true, then the julia code from .md is not executed
+# to disable the draft mode in a specific markdown file, use the following:
+#=
+```@meta
+Draft = false
+```
+=#
+draft = false  # Draft mode: if true, @example blocks in markdown are not executed
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Load extensions
@@ -28,7 +59,6 @@ end
 # ══════════════════════════════════════════════════════════════════════════════
 # Paths
 # ══════════════════════════════════════════════════════════════════════════════
-
 repo_url = "github.com/control-toolbox/CTFlows.jl"
 src_dir = abspath(joinpath(@__DIR__, "..", "src"))
 ext_dir = abspath(joinpath(@__DIR__, "..", "ext"))
@@ -43,8 +73,8 @@ include("api_reference.jl")
 with_api_reference(src_dir, ext_dir) do api_pages
     makedocs(;
         draft=draft,
-        remotes=nothing,
-        warnonly=[:cross_references],
+        remotes=nothing, # Disable remote links. Needed for DocumenterReference
+        warnonly=true,
         sitename="CTFlows.jl",
         format=Documenter.HTML(;
             repolink="https://" * repo_url,
@@ -55,6 +85,7 @@ with_api_reference(src_dir, ext_dir) do api_pages
             ],
         ),
         pages=["Introduction" => "index.md", "API Reference" => api_pages],
+        plugins=[links],
     )
 end
 

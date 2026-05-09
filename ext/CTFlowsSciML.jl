@@ -5,7 +5,7 @@ Package extension providing the SciML implementation for `SciML`
 and `ode_problem` for `VectorFieldSystem`. Activated automatically when
 `DiffEqBase` and `SciMLBase` are loaded together with `CTFlows`.
 """
-module CTFlowsSciMLExt
+module CTFlowsSciML
 
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions

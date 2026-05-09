@@ -13,7 +13,9 @@ Generate the API reference documentation for CTFlows.
 Returns the list of pages.
 """
 function generate_api_reference(src_dir::String, ext_dir::String)
+    # Helper to build absolute paths
     src(files...) = [abspath(joinpath(src_dir, f)) for f in files]
+    ext(files...) = [abspath(joinpath(ext_dir, f)) for f in files]
 
     EXCLUDE_SYMBOLS = Symbol[:include, :eval]
 
@@ -22,13 +24,15 @@ function generate_api_reference(src_dir::String, ext_dir::String)
         # Common
         # ───────────────────────────────────────────────────────────────────
         CTBase.automatic_reference_documentation(;
-            subdirectory=".",
+            subdirectory="api",
             primary_modules=[
                 CTFlows.Common => src(
                     joinpath("Common", "Common.jl"),
                     joinpath("Common", "abstract_tag.jl"),
                     joinpath("Common", "configs.jl"),
                     joinpath("Common", "default.jl"),
+                    joinpath("Common", "internal_norm.jl"),
+                    joinpath("Common", "ode_parameters.jl"),
                     joinpath("Common", "traits.jl"),
                 ),
             ],
@@ -43,7 +47,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
         # Data
         # ───────────────────────────────────────────────────────────────────
         CTBase.automatic_reference_documentation(;
-            subdirectory=".",
+            subdirectory="api",
             primary_modules=[
                 CTFlows.Data => src(
                     joinpath("Data", "Data.jl"),
@@ -61,7 +65,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
         # Systems
         # ───────────────────────────────────────────────────────────────────
         CTBase.automatic_reference_documentation(;
-            subdirectory=".",
+            subdirectory="api",
             primary_modules=[
                 CTFlows.Systems => src(
                     joinpath("Systems", "Systems.jl"),
@@ -81,12 +85,13 @@ function generate_api_reference(src_dir::String, ext_dir::String)
         # Integrators
         # ───────────────────────────────────────────────────────────────────
         CTBase.automatic_reference_documentation(;
-            subdirectory=".",
+            subdirectory="api",
             primary_modules=[
                 CTFlows.Integrators => src(
                     joinpath("Integrators", "Integrators.jl"),
                     joinpath("Integrators", "abstract_integrator.jl"),
                     joinpath("Integrators", "building.jl"),
+                    joinpath("Integrators", "integration_result.jl"),
                     joinpath("Integrators", "sciml.jl"),
                 ),
             ],
@@ -101,7 +106,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
         # Flows
         # ───────────────────────────────────────────────────────────────────
         CTBase.automatic_reference_documentation(;
-            subdirectory=".",
+            subdirectory="api",
             primary_modules=[
                 CTFlows.Flows => src(
                     joinpath("Flows", "Flows.jl"),
@@ -122,7 +127,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
         # Solutions
         # ───────────────────────────────────────────────────────────────────
         CTBase.automatic_reference_documentation(;
-            subdirectory=".",
+            subdirectory="api",
             primary_modules=[
                 CTFlows.Solutions => src(
                     joinpath("Solutions", "Solutions.jl"),
@@ -137,7 +142,48 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             title_in_menu="Solutions",
             filename="api_solutions",
         ),
+        # ───────────────────────────────────────────────────────────────────
+        # MultiPhase
+        # ───────────────────────────────────────────────────────────────────
+        CTBase.automatic_reference_documentation(;
+            subdirectory="api",
+            primary_modules=[
+                CTFlows.MultiPhase => src(
+                    joinpath("MultiPhase", "MultiPhase.jl"),
+                    joinpath("MultiPhase", "calling.jl"),
+                    joinpath("MultiPhase", "concatenation.jl"),
+                    joinpath("MultiPhase", "multiphase_flow.jl"),
+                ),
+            ],
+            exclude=EXCLUDE_SYMBOLS,
+            public=true,
+            private=true,
+            title="MultiPhase",
+            title_in_menu="MultiPhase",
+            filename="api_multiphase",
+        ),
     ]
+
+    # ───────────────────────────────────────────────────────────────────
+    # Extension: ForwardDiff
+    # ───────────────────────────────────────────────────────────────────
+    CTFlowsForwardDiff = Base.get_extension(CTFlows, :CTFlowsForwardDiff)
+    if !isnothing(CTFlowsForwardDiff)
+        push!(
+            pages,
+            CTBase.automatic_reference_documentation(;
+                subdirectory="api",
+                primary_modules=[CTFlowsForwardDiff => ext("CTFlowsForwardDiff.jl")],
+                external_modules_to_document=[CTFlows],
+                exclude=EXCLUDE_SYMBOLS,
+                public=true,
+                private=true,
+                title="ForwardDiff Extension",
+                title_in_menu="ForwardDiff",
+                filename="ext_forwarddiff",
+            ),
+        )
+    end
 
     return pages
 end

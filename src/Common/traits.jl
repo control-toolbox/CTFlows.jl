@@ -1,41 +1,6 @@
 """
 $(TYPEDEF)
 
-Abstract supertype for time-dependence traits.
-
-# Trait Pattern
-
-Objects that have a time-dependence trait must implement two methods:
-- `has_time_dependence_trait(obj::MyType) = true`: Indicates the type has this trait
-- `time_dependence(obj::MyType)`: Returns the specific trait value (`Autonomous` or `NonAutonomous`)
-
-Once these are implemented, the object automatically gains:
-- `is_autonomous(obj)`: Returns true if `time_dependence(obj)` is `Autonomous`
-- `is_nonautonomous(obj)`: Returns true if `time_dependence(obj)` is `NonAutonomous`
-
-If `has_time_dependence_trait` is not implemented or returns `false`,
-calling `is_autonomous`, `is_nonautonomous`, or `time_dependence` will throw an error
-indicating the object does not support time-dependence queries.
-"""
-abstract type TimeDependence end
-
-"""
-$(TYPEDEF)
-
-Trait indicating the function does not depend explicitly on time (`f(x, ...)`).
-"""
-struct Autonomous <: TimeDependence end
-
-"""
-$(TYPEDEF)
-
-Trait indicating the function depends explicitly on time (`f(t, x, ...)`).
-"""
-struct NonAutonomous <: TimeDependence end
-
-"""
-$(TYPEDEF)
-
 Abstract supertype for variable-dependence traits.
 
 # Trait Pattern
@@ -117,7 +82,7 @@ for better error messages.
 # Throws
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): Always, indicating the object does not have the trait.
 
-See also: [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.time_dependence`](@ref).
+See also: [`CTModels.OCP.TimeDependence`](@extref), [`CTFlows.Common.time_dependence`](@ref).
 """
 function has_time_dependence_trait(obj::Any)
     source_method = _caller_function_name()
@@ -143,7 +108,7 @@ to return the specific trait value (`Autonomous` or `NonAutonomous`).
 # Throws
 - [`CTBase.Exceptions.NotImplemented`](@extref): Always, indicating the method must be implemented.
 
-See also: [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.has_time_dependence_trait`](@ref).
+See also: [`CTModels.OCP.TimeDependence`](@extref), [`CTFlows.Common.has_time_dependence_trait`](@ref).
 """
 function time_dependence(obj::Any)
     throw(Exceptions.NotImplemented(
@@ -231,11 +196,11 @@ if `time_dependence(obj)` is `Autonomous`.
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): If the object does not support time-dependence queries.
 - [`CTBase.Exceptions.NotImplemented`](@extref): If `time_dependence` is not implemented for the object type.
 
-See also: [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.time_dependence`](@ref).
+See also: [`CTModels.OCP.TimeDependence`](@extref), [`CTFlows.Common.time_dependence`](@ref).
 """
-function is_autonomous(obj::Any)
+function OCP.is_autonomous(obj::Any)
     has_time_dependence_trait(obj)
-    return is_autonomous(time_dependence(obj))
+    return OCP.is_autonomous(time_dependence(obj))
 end
 
 """
@@ -256,11 +221,11 @@ if `time_dependence(obj)` is `NonAutonomous`.
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): If the object does not support time-dependence queries.
 - [`CTBase.Exceptions.NotImplemented`](@extref): If `time_dependence` is not implemented for the object type.
 
-See also: [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.time_dependence`](@ref).
+See also: [`CTModels.OCP.TimeDependence`](@extref), [`CTFlows.Common.time_dependence`](@ref).
 """
-function is_nonautonomous(obj::Any)
+function OCP.is_nonautonomous(obj::Any)
     has_time_dependence_trait(obj)
-    return is_nonautonomous(time_dependence(obj))
+    return OCP.is_nonautonomous(time_dependence(obj))
 end
 
 """
@@ -283,9 +248,9 @@ if `variable_dependence(obj)` is `NonFixed`.
 
 See also: [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.variable_dependence`](@ref).
 """
-function is_variable(obj::Any)
+function OCP.is_variable(obj::Any)
     has_variable_dependence_trait(obj)
-    return is_variable(variable_dependence(obj))
+    return OCP.is_variable(variable_dependence(obj))
 end
 
 """
@@ -308,9 +273,9 @@ if `variable_dependence(obj)` is `Fixed`.
 
 See also: [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.variable_dependence`](@ref).
 """
-function is_nonvariable(obj::Any)
+function OCP.is_nonvariable(obj::Any)
     has_variable_dependence_trait(obj)
-    return is_nonvariable(variable_dependence(obj))
+    return OCP.is_nonvariable(variable_dependence(obj))
 end
 
 """
@@ -333,9 +298,9 @@ if `variable_dependence(obj)` is `NonFixed`.
 
 See also: [`CTFlows.Common.is_variable`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
 """
-function has_variable(obj::Any)
+function OCP.has_variable(obj::Any)
     has_variable_dependence_trait(obj)
-    return is_variable(variable_dependence(obj))
+    return OCP.is_variable(variable_dependence(obj))
 end
 
 """
@@ -346,13 +311,13 @@ Return true for the `Autonomous` trait type.
 # Returns
 - `Bool`: true for `Autonomous`, false for `NonAutonomous`.
 
-See also: [`CTFlows.Common.Autonomous`](@ref), [`CTFlows.Common.NonAutonomous`](@ref).
+See also: [`CTModels.OCP.Autonomous`](@extref), [`CTModels.OCP.NonAutonomous`](@extref).
 """
-function is_autonomous(::Type{Autonomous})
+function OCP.is_autonomous(::Type{OCP.Autonomous})
     return true
 end
 
-function is_autonomous(::Type{NonAutonomous})
+function OCP.is_autonomous(::Type{OCP.NonAutonomous})
     return false
 end
 
@@ -364,13 +329,13 @@ Return true for the `NonAutonomous` trait type.
 # Returns
 - `Bool`: true for `NonAutonomous`, false for `Autonomous`.
 
-See also: [`CTFlows.Common.NonAutonomous`](@ref), [`CTFlows.Common.Autonomous`](@ref).
+See also: [`CTModels.OCP.NonAutonomous`](@extref), [`CTModels.OCP.Autonomous`](@extref).
 """
-function is_nonautonomous(::Type{Autonomous})
+function OCP.is_nonautonomous(::Type{OCP.Autonomous})
     return false
 end
 
-function is_nonautonomous(::Type{NonAutonomous})
+function OCP.is_nonautonomous(::Type{OCP.NonAutonomous})
     return true
 end
 
@@ -384,11 +349,11 @@ Return true for the `NonFixed` trait type.
 
 See also: [`CTFlows.Common.NonFixed`](@ref), [`CTFlows.Common.Fixed`](@ref).
 """
-function is_variable(::Type{NonFixed})
+function OCP.is_variable(::Type{NonFixed})
     return true
 end
 
-function is_variable(::Type{Fixed})
+function OCP.is_variable(::Type{Fixed})
     return false
 end
 
@@ -402,8 +367,13 @@ Return true for the `NonFixed` trait type (alias for `is_variable`).
 
 See also: [`CTFlows.Common.is_variable`](@ref), [`CTFlows.Common.NonFixed`](@ref).
 """
-has_variable(::Type{NonFixed}) = true
-has_variable(::Type{Fixed}) = false
+function OCP.has_variable(::Type{NonFixed})
+    return true
+end
+
+function OCP.has_variable(::Type{Fixed})
+    return false
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -415,10 +385,10 @@ Return true for the `Fixed` trait type.
 
 See also: [`CTFlows.Common.Fixed`](@ref), [`CTFlows.Common.NonFixed`](@ref).
 """
-function is_nonvariable(::Type{Fixed})
+function OCP.is_nonvariable(::Type{Fixed})
     return true
 end
 
-function is_nonvariable(::Type{NonFixed})
+function OCP.is_nonvariable(::Type{NonFixed})
     return false
 end

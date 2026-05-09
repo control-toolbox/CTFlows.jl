@@ -1,5 +1,5 @@
 """
-    CTFlowsForwardDiffExt
+    CTFlowsForwardDiff
 
 Package extension providing ForwardDiff-specific implementations for grid invariance (IND).
 Activated automatically when ForwardDiff is loaded together with CTFlows.
@@ -10,7 +10,7 @@ This extension adds:
 
 These functions extend the fallback implementations in `CTFlows.Common` to support ForwardDiff dual numbers.
 """
-module CTFlowsForwardDiffExt
+module CTFlowsForwardDiff
 
 import DocStringExtensions: TYPEDSIGNATURES
 import ForwardDiff

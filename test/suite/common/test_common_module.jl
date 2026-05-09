@@ -11,6 +11,7 @@ module TestCommonModule
 
 import Test
 import CTFlows.Common
+import CTModels.OCP
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -80,22 +81,18 @@ function test_common_module()
 
         Test.@testset "Time-Dependence Trait Types" begin
             Test.@testset "TimeDependence is exported" begin
-                Test.@test isdefined(Common, :TimeDependence)
+                Test.@test isdefined(OCP, :TimeDependence)
                 Test.@test isabstracttype(Common.TimeDependence)
             end
 
             Test.@testset "Autonomous is exported" begin
-                Test.@test isdefined(Common, :Autonomous)
+                Test.@test isdefined(OCP, :Autonomous)
                 Test.@test Common.Autonomous <: Common.TimeDependence
-                trait = Common.Autonomous()
-                Test.@test trait isa Common.Autonomous
             end
 
             Test.@testset "NonAutonomous is exported" begin
-                Test.@test isdefined(Common, :NonAutonomous)
+                Test.@test isdefined(OCP, :NonAutonomous)
                 Test.@test Common.NonAutonomous <: Common.TimeDependence
-                trait = Common.NonAutonomous()
-                Test.@test trait isa Common.NonAutonomous
             end
         end
 

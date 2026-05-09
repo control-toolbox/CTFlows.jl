@@ -14,8 +14,10 @@ module Common
 # External package imports
 # ==============================================================================
 
+using Reexport
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
+import CTModels.OCP
 
 # ==============================================================================
 # Includes
@@ -32,13 +34,14 @@ include(joinpath(@__DIR__, "internal_norm.jl"))
 # Module exports
 # ==============================================================================
 
+@reexport import CTModels.OCP: Autonomous, NonAutonomous, TimeDependence
+@reexport import CTModels.OCP: is_autonomous, is_nonautonomous, is_variable, is_nonvariable, has_variable
+
 export AbstractTag, AbstractConfig, AbstractPointConfig, AbstractTrajectoryConfig, PointConfig, TrajectoryConfig, HamiltonianPointConfig, HamiltonianTrajectoryConfig, tspan, initial_condition, initial_state, initial_costate
-export TimeDependence, Autonomous, NonAutonomous
 export VariableDependence, Fixed, NonFixed
 export ODEParameters
 export has_time_dependence_trait, has_variable_dependence_trait
 export time_dependence, variable_dependence
-export is_autonomous, is_nonautonomous, is_variable, is_nonvariable, has_variable
 export __is_autonomous, __is_variable, __variable, __unsafe
 export deepvalue, real_norm
 
