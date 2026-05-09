@@ -205,7 +205,7 @@ function Integrators.merge(segments::AbstractVector{<:VectorFieldSolution})
 end
 
 # =============================================================================
-# Stub methods — to be extended by CTFlowsPlotsExt
+# Stub methods — to be extended by CTFlowsPlots
 # =============================================================================
 
 """

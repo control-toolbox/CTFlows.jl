@@ -198,7 +198,7 @@ The callable receives a fully assembled `ODEProblem` (or equivalent SciML object
 returns a raw integration result (e.g. an `ODESolution`). It does not know about config
 types or solution wrappers — that is `build_solution`'s job.
 
-**Concrete strategies**: `SciMLIntegrator` (Phase 1, lives in `CTFlowsSciMLExt`) wraps
+**Concrete strategies**: `SciMLIntegrator` (Phase 1, lives in `CTFlowsSciML`) wraps
 any SciML algorithm. Later phases may introduce per-algorithm strategies
 (`Tsit5Integrator`, `Rodas4Integrator`, …) or GPU-parameterised variants.
 

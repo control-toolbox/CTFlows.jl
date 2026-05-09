@@ -25,7 +25,7 @@ true
 
 julia> # The tag is used as a dispatch parameter:
 julia> # build_sciml_integrator(SciMLTag; mode=:strict) routes to the
-julia> # CTFlowsSciMLExt implementation when the extension is loaded
+julia> # CTFlowsSciML implementation when the extension is loaded
 \`\`\`
 
 # Notes

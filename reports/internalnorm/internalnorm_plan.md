@@ -47,7 +47,7 @@ De plus, avec `OrdinaryDiffEqTsit5` (le sous-paquet léger utilisé dans CTFlows
 ## Où vit quoi
 
 ```
-CTFlowsSciMLExt.jl
+CTFlowsSciML.jl
     deepvalue(x)      — extraction récursive Float64 depuis Dual imbriqués
     real_norm(u, t)   — norme basée sur deepvalue, conforme à l'interface SciML
     + nouvelle OptionDefinition :internalnorm dans Strategies.metadata(::Type{SciML})
@@ -66,7 +66,7 @@ git checkout develop && git pull
 git checkout -b feature/internalnorm-ind
 ```
 
-### Step 1 — Définir `deepvalue` et `real_norm` dans `CTFlowsSciMLExt.jl`
+### Step 1 — Définir `deepvalue` et `real_norm` dans `CTFlowsSciML.jl`
 
 Ajouter **avant** la définition de `Strategies.metadata` :
 
@@ -122,13 +122,13 @@ Aucun `validator` ici — la valeur est une fonction, difficile à valider stati
 @testset "deepvalue" begin
     using ForwardDiff
     # Ordre 0 — identité
-    @test CTFlowsSciMLExt.deepvalue(1.0) === 1.0
+    @test CTFlowsSciML.deepvalue(1.0) === 1.0
     # Ordre 1
     d1 = ForwardDiff.Dual{:Tag1}(3.0, 1.0)
-    @test CTFlowsSciMLExt.deepvalue(d1) === 3.0
+    @test CTFlowsSciML.deepvalue(d1) === 3.0
     # Ordre 2 — Dual imbriqué
     d2 = ForwardDiff.Dual{:Tag2}(d1, d1)
-    @test CTFlowsSciMLExt.deepvalue(d2) === 3.0
+    @test CTFlowsSciML.deepvalue(d2) === 3.0
 end
 ```
 
@@ -140,7 +140,7 @@ end
     u_real = [1.0, 2.0, 3.0]
     u_dual = ForwardDiff.Dual{:T}.(u_real, ones(3))  # mêmes valeurs, partials ≠ 0
     # La norme doit être identique
-    @test CTFlowsSciMLExt.real_norm(u_real, 0.0) ≈ CTFlowsSciMLExt.real_norm(u_dual, 0.0)
+    @test CTFlowsSciML.real_norm(u_real, 0.0) ≈ CTFlowsSciML.real_norm(u_dual, 0.0)
 end
 ```
 
@@ -186,13 +186,13 @@ end
     prob_real = ODEProblem(f!, u0_real, (0.0, 1.0), nothing)
     sol_real  = SciMLBase.solve(prob_real, Tsit5();
         reltol=1e-8, abstol=1e-8, dense=false,
-        internalnorm=CTFlowsSciMLExt.real_norm)
+        internalnorm=CTFlowsSciML.real_norm)
 
     function integrate_dual_with_norm(x0)
         prob = ODEProblem(f!, x0, (0.0, 1.0), nothing)
         return SciMLBase.solve(prob, Tsit5();
             reltol=1e-8, abstol=1e-8, dense=false,
-            internalnorm=CTFlowsSciMLExt.real_norm)
+            internalnorm=CTFlowsSciML.real_norm)
     end
     u0_dual = ForwardDiff.Dual{:T}.([1.0], [1.0])
     sol_dual = integrate_dual_with_norm(u0_dual)
@@ -210,7 +210,7 @@ end
     integ = Integrators.build_integrator()
     opts  = Strategies.options_dict(integ)
     @test haskey(opts, :internalnorm)
-    @test opts[:internalnorm] === CTFlowsSciMLExt.real_norm
+    @test opts[:internalnorm] === CTFlowsSciML.real_norm
 end
 ```
 
@@ -259,7 +259,7 @@ grep -E "Error|Fail|Test Summary" /tmp/internalnorm.log
 ## Fichiers
 
 **Modifiés** :
-- `ext/CTFlowsSciMLExt.jl` — ajout `deepvalue`, `real_norm`, option `internalnorm`
+- `ext/CTFlowsSciML.jl` — ajout `deepvalue`, `real_norm`, option `internalnorm`
 
 **Nouveaux** :
 - `test/suite/extensions/test_internalnorm.jl`
@@ -273,10 +273,10 @@ grep -E "Error|Fail|Test Summary" /tmp/internalnorm.log
 ```julia
 # CTBase — interface générique
 deepvalue(x::Real) = x
-# CTFlowsForwardDiffExt — implémentation ForwardDiff
+# CTFlowsForwardDiff — implémentation ForwardDiff
 deepvalue(x::ForwardDiff.Dual) = deepvalue(ForwardDiff.value(x))
 # CTFlowsEnzymeExt — implémentation Enzyme (future)
 deepvalue(x::Enzyme.Active) = ...
 ```
 
-`real_norm` dans CTFlowsSciMLExt appellera alors `CTBase.deepvalue` sans modification.
+`real_norm` dans CTFlowsSciML appellera alors `CTBase.deepvalue` sans modification.

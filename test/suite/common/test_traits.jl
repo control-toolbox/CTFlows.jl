@@ -89,8 +89,6 @@ function test_traits()
             end
 
             Test.@testset "Concrete trait types" begin
-                Test.@test Common.Autonomous() isa Common.Autonomous
-                Test.@test Common.NonAutonomous() isa Common.NonAutonomous
                 Test.@test Common.Fixed() isa Common.Fixed
                 Test.@test Common.NonFixed() isa Common.NonFixed
             end

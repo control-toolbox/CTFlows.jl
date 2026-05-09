@@ -1,10 +1,10 @@
 """
-    CTFlowsPlotsExt
+    CTFlowsPlots
 
 Package extension providing plotting capabilities for `VectorFieldSolution`.
 Activated automatically when `Plots` is loaded together with `CTFlows`.
 """
-module CTFlowsPlotsExt
+module CTFlowsPlots
 
 import DocStringExtensions: TYPEDSIGNATURES
 
@@ -97,4 +97,4 @@ function Plots.plot!(p::Plots.Plot, sol::Solutions.VectorFieldSolution; kwargs..
     return Plots.plot!(p, ts, states; kwargs...)
 end
 
-end # module CTFlowsPlotsExt
+end # module CTFlowsPlots

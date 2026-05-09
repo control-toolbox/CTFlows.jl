@@ -1,10 +1,10 @@
 """
-CTFlowsOrdinaryDiffEqTsit5Ext
+CTFlowsOrdinaryDiffEqTsit5
 
 Package extension providing the default SciML ODE algorithm (Tsit5) via tag dispatch.
 Activated automatically when OrdinaryDiffEqTsit5 is loaded together with CTFlows.
 """
-module CTFlowsOrdinaryDiffEqTsit5Ext
+module CTFlowsOrdinaryDiffEqTsit5
 
 import DocStringExtensions: TYPEDSIGNATURES
 import CTFlows.Integrators
@@ -30,4 +30,4 @@ function Integrators.__default_sciml_algorithm(::Type{<:Integrators.Tsit5Tag})
     return Tsit5()
 end
 
-end # module CTFlowsOrdinaryDiffEqTsit5Ext
+end # module CTFlowsOrdinaryDiffEqTsit5

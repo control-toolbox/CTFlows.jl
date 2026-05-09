@@ -8,7 +8,7 @@ $(TYPEDSIGNATURES)
 Extract the primal (real) value from a number. Base case for real numbers.
 
 This is a fallback implementation used when AD backends are not loaded.
-ForwardDiff-specific implementations are provided in `CTFlowsForwardDiffExt`.
+ForwardDiff-specific implementations are provided in `CTFlowsForwardDiff`.
 
 # Arguments
 - `x::Real`: A real number (e.g., `Float64`).
@@ -21,8 +21,6 @@ ForwardDiff-specific implementations are provided in `CTFlowsForwardDiffExt`.
 julia> CTFlows.Common.deepvalue(3.14)
 3.14
 ```
-
-See also: [`CTFlowsForwardDiffExt.deepvalue`](@extref)
 """
 deepvalue(x::Real) = x
 
@@ -32,7 +30,7 @@ $(TYPEDSIGNATURES)
 Compute the internal norm for a scalar real number.
 
 This is a fallback implementation used when AD backends are not loaded.
-ForwardDiff-specific implementations are provided in `CTFlowsForwardDiffExt`.
+ForwardDiff-specific implementations are provided in `CTFlowsForwardDiff`.
 
 # Arguments
 - `u::Real`: A scalar real number.
@@ -46,7 +44,5 @@ ForwardDiff-specific implementations are provided in `CTFlowsForwardDiffExt`.
 julia> CTFlows.Common.real_norm(3.0, 0.0)
 3.0
 ```
-
-See also: [`CTFlowsForwardDiffExt.real_norm`](@extref)
 """
 real_norm(u::Real, t) = abs(u)

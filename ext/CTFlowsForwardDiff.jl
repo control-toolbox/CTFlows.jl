@@ -1,5 +1,5 @@
 """
-    CTFlowsForwardDiffExt
+    CTFlowsForwardDiff
 
 Package extension providing ForwardDiff-specific implementations for grid invariance (IND).
 Activated automatically when ForwardDiff is loaded together with CTFlows.
@@ -10,7 +10,7 @@ This extension adds:
 
 These functions extend the fallback implementations in `CTFlows.Common` to support ForwardDiff dual numbers.
 """
-module CTFlowsForwardDiffExt
+module CTFlowsForwardDiff
 
 import DocStringExtensions: TYPEDSIGNATURES
 import ForwardDiff
@@ -44,13 +44,13 @@ julia> using ForwardDiff
 julia> d1 = ForwardDiff.Dual{:Tag}(3.0, 1.0)
 Dual{:Tag}(3.0, 1.0)
 
-julia> CTFlowsForwardDiffExt.deepvalue(d1)
+julia> CTFlowsForwardDiff.deepvalue(d1)
 3.0
 
 julia> d2 = ForwardDiff.Dual{:Tag2}(d1, d1)  # Nested dual
 Dual{:Tag2}(Dual{:Tag}(3.0, 1.0), Dual{:Tag}(3.0, 1.0))
 
-julia> CTFlowsForwardDiffExt.deepvalue(d2)
+julia> CTFlowsForwardDiff.deepvalue(d2)
 3.0
 ```
 
@@ -77,4 +77,4 @@ See also: [`Common.real_norm`](@ref), [`deepvalue`](@ref)
 """
 Common.real_norm(u::ForwardDiff.Dual, t) = Common.real_norm(Common.deepvalue(u), t)
 
-end # module CTFlowsForwardDiffExt
+end # module CTFlowsForwardDiff

@@ -6,7 +6,7 @@ import CTFlows.Solutions: Solutions
 
 # Get extension to access plotting functions
 using Plots
-const CTFlowsPlotsExt = Base.get_extension(CTFlows, :CTFlowsPlotsExt)
+const CTFlowsPlots = Base.get_extension(CTFlows, :CTFlowsPlots)
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -48,11 +48,11 @@ function test_plots_extension()
 
         Test.@testset "Extension Loading" begin
             Test.@testset "extension is loaded" begin
-                Test.@test !isnothing(CTFlowsPlotsExt)
+                Test.@test !isnothing(CTFlowsPlots)
             end
 
             Test.@testset "extension is a Module" begin
-                Test.@test CTFlowsPlotsExt isa Module
+                Test.@test CTFlowsPlots isa Module
             end
         end
 
@@ -79,7 +79,7 @@ function test_plots_extension()
                 fake_result = FakePlotIntegrationResult([0.0, 1.0], [[1.0, 2.0], [3.0, 4.0]])
                 sol = Solutions.VectorFieldSolution(fake_result)
                 
-                ts, states = CTFlowsPlotsExt._sol_to_arrays(sol)
+                ts, states = CTFlowsPlots._sol_to_arrays(sol)
                 Test.@test ts == [0.0, 1.0]
                 Test.@test states == [1.0 2.0; 3.0 4.0]
             end
@@ -88,7 +88,7 @@ function test_plots_extension()
                 fake_result = FakePlotIntegrationResult([0.0, 1.0], [1.0, 3.0])
                 sol = Solutions.VectorFieldSolution(fake_result)
                 
-                ts, states = CTFlowsPlotsExt._sol_to_arrays(sol)
+                ts, states = CTFlowsPlots._sol_to_arrays(sol)
                 Test.@test ts == [0.0, 1.0]
                 Test.@test states == reshape([1.0, 3.0], 2, 1)
             end
@@ -99,7 +99,7 @@ function test_plots_extension()
                 fake_result = FakePlotIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
                 sol = Solutions.VectorFieldSolution(fake_result)
                 
-                ts, states = CTFlowsPlotsExt._sol_to_arrays(sol)
+                ts, states = CTFlowsPlots._sol_to_arrays(sol)
                 Test.@test length(ts) == 3
                 Test.@test size(states) == (3, 1)
             end

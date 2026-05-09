@@ -138,7 +138,7 @@ function test_building_integrators()
         Test.@testset "build_integrator" begin
 
             Test.@testset "builds SciML integrator" begin
-                # This will throw ExtensionError if CTFlowsSciMLExt is not loaded,
+                # This will throw ExtensionError if CTFlowsSciML is not loaded,
                 # but at least it calls the right function
                 result = Integrators.build_integrator()
                 Test.@test result isa Integrators.SciML
