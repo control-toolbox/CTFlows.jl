@@ -44,13 +44,13 @@ julia> using ForwardDiff
 julia> d1 = ForwardDiff.Dual{:Tag}(3.0, 1.0)
 Dual{:Tag}(3.0, 1.0)
 
-julia> CTFlowsForwardDiffExt.deepvalue(d1)
+julia> CTFlowsForwardDiff.deepvalue(d1)
 3.0
 
 julia> d2 = ForwardDiff.Dual{:Tag2}(d1, d1)  # Nested dual
 Dual{:Tag2}(Dual{:Tag}(3.0, 1.0), Dual{:Tag}(3.0, 1.0))
 
-julia> CTFlowsForwardDiffExt.deepvalue(d2)
+julia> CTFlowsForwardDiff.deepvalue(d2)
 3.0
 ```
 
@@ -77,4 +77,4 @@ See also: [`Common.real_norm`](@ref), [`deepvalue`](@ref)
 """
 Common.real_norm(u::ForwardDiff.Dual, t) = Common.real_norm(Common.deepvalue(u), t)
 
-end # module CTFlowsForwardDiffExt
+end # module CTFlowsForwardDiff

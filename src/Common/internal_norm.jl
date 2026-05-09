@@ -8,7 +8,7 @@ $(TYPEDSIGNATURES)
 Extract the primal (real) value from a number. Base case for real numbers.
 
 This is a fallback implementation used when AD backends are not loaded.
-ForwardDiff-specific implementations are provided in `CTFlowsForwardDiffExt`.
+ForwardDiff-specific implementations are provided in `CTFlowsForwardDiff`.
 
 # Arguments
 - `x::Real`: A real number (e.g., `Float64`).
@@ -30,7 +30,7 @@ $(TYPEDSIGNATURES)
 Compute the internal norm for a scalar real number.
 
 This is a fallback implementation used when AD backends are not loaded.
-ForwardDiff-specific implementations are provided in `CTFlowsForwardDiffExt`.
+ForwardDiff-specific implementations are provided in `CTFlowsForwardDiff`.
 
 # Arguments
 - `u::Real`: A scalar real number.

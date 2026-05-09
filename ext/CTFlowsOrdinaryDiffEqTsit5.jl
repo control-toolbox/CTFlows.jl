@@ -30,4 +30,4 @@ function Integrators.__default_sciml_algorithm(::Type{<:Integrators.Tsit5Tag})
     return Tsit5()
 end
 
-end # module CTFlowsOrdinaryDiffEqTsit5Ext
+end # module CTFlowsOrdinaryDiffEqTsit5

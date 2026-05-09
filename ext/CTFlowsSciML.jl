@@ -1,5 +1,5 @@
 """
-    CTFlowsSciMLExt
+    CTFlowsSciML
 
 Package extension providing the SciML implementation for `SciML`
 and `ode_problem` for `VectorFieldSystem`. Activated automatically when
@@ -37,7 +37,7 @@ controller would make decisions based on dual values, breaking grid invariance.
 
 This implementation uses `Common.deepvalue` to extract primal parts and
 `DiffEqBase.ODE_DEFAULT_NORM` to compute the norm. When ForwardDiff is loaded,
-`Common.deepvalue` is extended to handle dual numbers via `CTFlowsForwardDiffExt`.
+`Common.deepvalue` is extended to handle dual numbers via `CTFlowsForwardDiff`.
 
 # Arguments
 - `u::AbstractArray`: State vector (may contain dual numbers).
@@ -53,7 +53,7 @@ julia> using ForwardDiff
 julia> u_real = [1.0, 2.0, 3.0]
 julia> u_dual = ForwardDiff.Dual{:T}.(u_real, ones(3))
 
-julia> CTFlowsSciMLExt.real_norm(u_real, 0.0) ≈ CTFlowsSciMLExt.real_norm(u_dual, 0.0)
+julia> CTFlowsSciML.real_norm(u_real, 0.0) ≈ CTFlowsSciML.real_norm(u_dual, 0.0)
 true
 ```
 
@@ -588,4 +588,4 @@ function Integrators.solve_problem(integ::SciML, prob::SciMLBase.AbstractODEProb
     return SciMLIntegrationResult(ode_sol)
 end
 
-end # module CTFlowsSciMLExt
+end # module CTFlowsSciML

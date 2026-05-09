@@ -6,9 +6,9 @@ Introduce `AbstractIntegrationResult` with semantic accessors to eliminate redun
 
 ## What changes and why
 
-**Point 1 (fully)**: The three callables on `(int::SciML)(...)` and their wrapper counterparts in `calling.jl` are replaced by two named functions — `build_problem` and `solve_problem` — defined as `NotImplemented` stubs on `AbstractIntegrator` in `abstract_integrator.jl` and implemented in `CTFlowsSciMLExt.jl`. No callable form survives.
+**Point 1 (fully)**: The three callables on `(int::SciML)(...)` and their wrapper counterparts in `calling.jl` are replaced by two named functions — `build_problem` and `solve_problem` — defined as `NotImplemented` stubs on `AbstractIntegrator` in `abstract_integrator.jl` and implemented in `CTFlowsSciML.jl`. No callable form survives.
 
-**Point 2**: `Solutions` currently imports `SciMLBase` and `build_solution` takes `SciMLBase.AbstractODESolution`. After the refactoring, `Solutions` has no knowledge of SciML: it depends only on `AbstractIntegrationResult` and its semantic accessors (`final_state`, `times`, `evaluate_at`). `SciMLIntegrationResult` lives exclusively in `CTFlowsSciMLExt`.
+**Point 2**: `Solutions` currently imports `SciMLBase` and `build_solution` takes `SciMLBase.AbstractODESolution`. After the refactoring, `Solutions` has no knowledge of SciML: it depends only on `AbstractIntegrationResult` and its semantic accessors (`final_state`, `times`, `evaluate_at`). `SciMLIntegrationResult` lives exclusively in `CTFlowsSciML`.
 
 **Load-order fix**: `Solutions` currently loads after `Flows` in `CTFlows.jl`. Since `Flows.calling` will call `Solutions.build_solution`, `Solutions` must be moved before `Flows`.
 
@@ -20,8 +20,8 @@ Introduce `AbstractIntegrationResult` with semantic accessors to eliminate redun
 Flows/calling.jl  →  Integrators, Solutions          (no SciML)
 Integrators/      →  Common, Systems                  (no Solutions, no SciML)
 Solutions/        →  Common, Systems, AbstractIntegrationResult  (no SciML, no Integrators)
-CTFlowsSciMLExt   →  SciML + Solutions + Integrators  (sole owner of .u, .t, interpolation)
-CTFlowsPlotsExt   →  Solutions (semantic accessors only)
+CTFlowsSciML   →  SciML + Solutions + Integrators  (sole owner of .u, .t, interpolation)
+CTFlowsPlots   →  Solutions (semantic accessors only)
 ```
 
 ---
@@ -112,7 +112,7 @@ Full docstrings (TYPEDEF + TYPEDSIGNATURES, @ref cross-refs).
   ```
 - Update docstring for `call`
 
-### Step 11 — `ext/CTFlowsSciMLExt.jl`
+### Step 11 — `ext/CTFlowsSciML.jl`
 
 - Remove all three callables `(integ::SciML)(...)`
 - Add `SciMLIntegrationResult{S<:SciMLBase.AbstractODESolution} <: Solutions.AbstractIntegrationResult` struct
@@ -129,7 +129,7 @@ Full docstrings (TYPEDEF + TYPEDSIGNATURES, @ref cross-refs).
   ```
 - Full docstrings
 
-### Step 12 — `ext/CTFlowsPlotsExt.jl`
+### Step 12 — `ext/CTFlowsPlots.jl`
 
 - Replace `Plots.plot(Solutions.raw(sol))` delegation with semantic accessor approach:
   ```julia
@@ -212,8 +212,8 @@ grep -E "Error|Fail|Test Summary" /tmp/ctflows_refactor.log
 - `src/Integrators/Integrators.jl` — export `build_problem`, `solve_problem`
 - `src/Flows/Flows.jl` — add `using ..Solutions`
 - `src/Flows/calling.jl` — simplify to `call` only
-- `ext/CTFlowsSciMLExt.jl` — remove callables, add `SciMLIntegrationResult`, named impls
-- `ext/CTFlowsPlotsExt.jl` — semantic accessors
+- `ext/CTFlowsSciML.jl` — remove callables, add `SciMLIntegrationResult`, named impls
+- `ext/CTFlowsPlots.jl` — semantic accessors
 - `test/suite/flows/test_calling.jl`
 - `test/suite/solutions/test_building_solutions.jl`
 - `test/suite/solutions/test_vector_field_solution.jl`

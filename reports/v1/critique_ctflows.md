@@ -18,7 +18,7 @@ build_solution(ode_sol, sys, config, int) = int(ode_sol, sys, config)
 ```
 
 ```julia
-# CTFlowsSciMLExt.jl — trois callables sur le même struct SciML
+# CTFlowsSciML.jl — trois callables sur le même struct SciML
 (int::SciML)(sys, config; variable) = ODEProblem(...)   # construire
 (int::SciML)(prob::AbstractODEProblem) = solve(...)      # résoudre
 (int::SciML)(ode_sol, sys, config) = build_solution(...) # emballer
@@ -56,7 +56,7 @@ evaluate_at(r::AbstractIntegrationResult, t) = throw(NotImplemented(...))
 **Étape 2 — Implémenter le type concret dans l'extension SciML :**
 
 ```julia
-# CTFlowsSciMLExt.jl — le seul endroit qui connaît ode_sol.u, ode_sol.t, etc.
+# CTFlowsSciML.jl — le seul endroit qui connaît ode_sol.u, ode_sol.t, etc.
 struct SciMLIntegrationResult{S<:SciMLBase.AbstractODESolution} <: AbstractIntegrationResult
     ode_sol::S
 end
@@ -127,7 +127,7 @@ Les callables `(int::SciML)(...)` disparaissent entièrement.
 calling.jl        →  Systems, Integrators, Solutions  (pas SciML)
 Integrators/SciML →  Systems, SciML, Common           (produit AbstractIntegrationResult)
 Solutions/        →  AbstractIntegrationResult via accesseurs (pas SciML)
-CTFlowsSciMLExt   →  SciML  (seul endroit où .u, .t, l'interpolation sont accédés)
+CTFlowsSciML   →  SciML  (seul endroit où .u, .t, l'interpolation sont accédés)
 ```
 
 ---
@@ -259,7 +259,7 @@ x.(0.0:0.1:1.0)   # broadcasting sur une grille
 
 `state` est un **accesseur sémantique** : l'utilisateur travaille avec une fonction trajectoire sans savoir qu'il manipule un `VectorFieldSolution` callable. C'est la fondation naturelle d'une interface cohérente pour le contrôle optimal — on pourra écrire `x = state(sol)`, `p = costate(sol)`, `u = control(sol)` de façon uniforme si la solution est étendue aux systèmes hamiltoniens.
 
-**Ce que ça donne côté `CTFlowsPlotsExt` :**
+**Ce que ça donne côté `CTFlowsPlots` :**
 
 L'extension Plots peut désormais utiliser `times` et `sol` directement via une fonction interne partagée par les trois surcharges de `plot` :
 
@@ -395,7 +395,7 @@ function solve_problem(int::AbstractIntegrator, prob; unsafe=false)
     throw(NotImplemented(...))
 end
 
-# CTFlowsSciMLExt.jl
+# CTFlowsSciML.jl
 function Integrators.solve_problem(integ::SciML, prob; unsafe=false)
     ode_sol = SciMLBase.solve(prob; Strategies.options_dict(integ)...)
     if !unsafe && !SciMLBase.successful_retcode(ode_sol.retcode)

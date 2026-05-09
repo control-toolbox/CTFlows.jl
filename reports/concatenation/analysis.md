@@ -583,18 +583,18 @@ end
 
 #### _build_merged_solution
 
-Délégué à l'extension `CTFlowsSciMLExt`, qui construit un `ODESolution` à partir des vecteurs accumulés.
+Délégué à l'extension `CTFlowsSciML`, qui construit un `ODESolution` à partir des vecteurs accumulés.
 
 ```julia
 # Dans src/ : stub délégué à l'extension
 function _build_merged_solution(t, u, flow)
     throw(Exceptions.ExtensionError(
-        "CTFlowsSciMLExt is required to build merged solutions";
-        extension = "CTFlowsSciMLExt",
+        "CTFlowsSciML is required to build merged solutions";
+        extension = "CTFlowsSciML",
     ))
 end
 
-# Dans ext/CTFlowsSciMLExt.jl : implémentation réelle
+# Dans ext/CTFlowsSciML.jl : implémentation réelle
 function CTFlows._build_merged_solution(t, u, flow)
     # On utilise le prob/alg de la première phase comme template
     first_phase = flow.phases[1]
@@ -871,12 +871,12 @@ abstract type AbstractHamiltonianFlow{TD, VD, S <: Systems.AbstractSystem{TD,VD}
 export AbstractStateFlow, AbstractHamiltonianFlow
 ```
 
-#### Extension CTFlowsSciMLExt
+#### Extension CTFlowsSciML
 
 `_build_merged_solution` reste un stub dans `MultiPhase/calling.jl` et son implémentation réelle va dans l'extension :
 
 ```julia
-# Dans ext/CTFlowsSciMLExt.jl
+# Dans ext/CTFlowsSciML.jl
 function CTFlows.MultiPhase._build_merged_solution(t, u, flow)
     first_phase = flow.phases[1]
     prob = Integrators.last_prob(first_phase)
@@ -925,5 +925,5 @@ end
 4. Opérateurs `*` avec `_flatten_*` pour le chaînage associatif
 5. `call()` pour `PointConfig` (simple)
 6. `call()` pour `TrajectoryConfig` (fusion progressive)
-7. Stub `_build_merged_solution` dans `src/` + implémentation dans `CTFlowsSciMLExt`
+7. Stub `_build_merged_solution` dans `src/` + implémentation dans `CTFlowsSciML`
 8. Tests : contrats, sauts, chaînage, exactitude vs approche à la volée

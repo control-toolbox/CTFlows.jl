@@ -15,8 +15,8 @@ using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 using DiffEqBase: DiffEqBase
 using ForwardDiff: ForwardDiff
 
-const CTFlowsSciMLExt = Base.get_extension(CTFlows, :CTFlowsSciMLExt)
-const CTFlowsForwardDiffExt = Base.get_extension(CTFlows, :CTFlowsForwardDiffExt)
+const CTFlowsSciML = Base.get_extension(CTFlows, :CTFlowsSciML)
+const CTFlowsForwardDiff = Base.get_extension(CTFlows, :CTFlowsForwardDiff)
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -29,21 +29,21 @@ function test_forwarddiff_extension()
         # ====================================================================
 
         Test.@testset "Extension availability" begin
-            Test.@testset "CTFlowsSciMLExt is loaded" begin
-                Test.@test !isnothing(CTFlowsSciMLExt)
+            Test.@testset "CTFlowsSciML is loaded" begin
+                Test.@test !isnothing(CTFlowsSciML)
             end
 
-            Test.@testset "CTFlowsForwardDiffExt availability" begin
-                if isnothing(CTFlowsForwardDiffExt)
+            Test.@testset "CTFlowsForwardDiff availability" begin
+                if isnothing(CTFlowsForwardDiff)
                     Test.@test_skip "ForwardDiff extension not loaded (ForwardDiff not installed)"
                 else
-                    Test.@test CTFlowsForwardDiffExt isa Module
+                    Test.@test CTFlowsForwardDiff isa Module
                 end
             end
         end
 
         # Skip ForwardDiff-specific tests if extension is not loaded
-        if isnothing(CTFlowsForwardDiffExt)
+        if isnothing(CTFlowsForwardDiff)
             return
         end
 

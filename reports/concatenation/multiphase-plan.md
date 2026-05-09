@@ -192,7 +192,7 @@ grep -E "Error|Fail|Test Summary" /tmp/ctflows_phase2.log
 - `call(flow, ::TrajectoryConfig)` : fusion progressive.
 - Stub `_build_merged_solution` → `ExtensionError`.
 
-### Step 17 — `ext/CTFlowsSciMLExt.jl`
+### Step 17 — `ext/CTFlowsSciML.jl`
 
 > 🏗️ Follow `modules.md` — Qualification `CTFlows.MultiPhase._build_merged_solution`.
 
@@ -266,7 +266,7 @@ grep -E "Error|Fail|Test Summary" /tmp/ctflows_final.log
 - `src/Flows/flow.jl` — renommage + HamiltonianFlow (`architecture.md`)
 - `src/Flows/building.jl` — dispatch build_flow (`modules.md`)
 - `src/Flows/Flows.jl` — exports (`modules.md`)
-- `ext/CTFlowsSciMLExt.jl` — _build_merged_solution (`modules.md`)
+- `ext/CTFlowsSciML.jl` — _build_merged_solution (`modules.md`)
 - 7 fichiers de tests flows/extensions — renommage Flow→StateFlow
 
 **Deleted**: aucun

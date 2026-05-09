@@ -97,4 +97,4 @@ function Plots.plot!(p::Plots.Plot, sol::Solutions.VectorFieldSolution; kwargs..
     return Plots.plot!(p, ts, states; kwargs...)
 end
 
-end # module CTFlowsPlotsExt
+end # module CTFlowsPlots

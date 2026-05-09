@@ -7,7 +7,7 @@ This module provides fallback implementations for grid invariance (IND) support:
 - `deepvalue(x::Real)` — Base case for extracting primal values
 - `real_norm(u::Real, t)` — Base case for internal norm computation
 
-ForwardDiff-specific implementations are provided in `CTFlowsForwardDiffExt` when ForwardDiff is loaded.
+ForwardDiff-specific implementations are provided in `CTFlowsForwardDiff` when ForwardDiff is loaded.
 """
 module Common
 # ==============================================================================

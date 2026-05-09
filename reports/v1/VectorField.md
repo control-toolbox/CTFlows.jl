@@ -84,7 +84,7 @@ The first implementation delivers an end-to-end vector-field flow with:
 ### Integrator
 
 - **`SciMLIntegrator <: AbstractIntegrator`** — defined in the package extension
-  `CTFlowsSciMLExt`, loaded when `SciMLBase` and `OrdinaryDiffEqCore` are available. The
+  `CTFlowsSciML`, loaded when `SciMLBase` and `OrdinaryDiffEqCore` are available. The
   user loads any algorithm package (`OrdinaryDiffEqTsit5`, `OrdinaryDiffEq`,
   `DifferentialEquations`) and passes `alg = Tsit5()`.
 
