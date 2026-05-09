@@ -1,6 +1,7 @@
 module TestConcatenation
 
 import Test
+import CTBase.Exceptions
 import CTFlows.MultiPhase
 import CTFlows.Systems
 import CTFlows.Integrators
@@ -208,26 +209,36 @@ function test_concatenation()
             # 3d. n × m  (new case)
             # ------------------------------------------------------------------
             Test.@testset "n × m — no jump" begin
-                mpf1 = _mpstate(2)   # switches: [1.0], jumps: [nothing]
-                mpf2 = _mpstate(3)   # switches: [1.0, 2.0], jumps: [nothing, nothing]
-                mpf  = mpf1 * (5.0, mpf2)
+                f1 = _state_flow(:s1)
+                f2 = _state_flow(:s2)
+                f3 = _state_flow(:s3)
+                f4 = _state_flow(:s4)
+                f5 = _state_flow(:s5)
+                mpf1 = f1 * (1.0, f2) * (2.0, f3)  # switches: [1.0, 2.0]
+                mpf2 = f4 * (5.0, f5)  # switches: [5.0]
+                mpf  = mpf1 * (3.0, mpf2)  # switches: [1.0, 2.0, 3.0, 5.0]
                 Test.@test mpf isa MultiPhase.MultiPhaseStateFlow
                 Test.@test length(mpf.flows)          == 5
-                Test.@test mpf.switching_times        == [1.0, 5.0, 1.0, 2.0]
+                Test.@test mpf.switching_times        == [1.0, 2.0, 3.0, 5.0]
                 Test.@test all(==(nothing), mpf.jumps)
                 Test.@test length(mpf.jumps)          == 4
             end
 
             Test.@testset "n × m — with jump" begin
-                mpf1 = _mpstate(2)
-                mpf2 = _mpstate(3)
-                mpf  = mpf1 * (5.0, jump, mpf2)
+                f1 = _state_flow(:s1)
+                f2 = _state_flow(:s2)
+                f3 = _state_flow(:s3)
+                f4 = _state_flow(:s4)
+                f5 = _state_flow(:s5)
+                mpf1 = f1 * (1.0, f2) * (2.0, f3)  # switches: [1.0, 2.0], jumps: [nothing, nothing]
+                mpf2 = f4 * (5.0, f5)  # switches: [5.0], jumps: [nothing]
+                mpf  = mpf1 * (3.0, jump, mpf2)  # switches: [1.0, 2.0, 3.0, 5.0], jumps: [nothing, nothing, jump, nothing]
                 Test.@test length(mpf.flows)          == 5
-                Test.@test mpf.switching_times        == [1.0, 5.0, 1.0, 2.0]
-                Test.@test mpf.jumps[1]               == nothing   # from mpf1
-                Test.@test mpf.jumps[2]               === jump     # new junction
-                Test.@test mpf.jumps[3]               == nothing   # from mpf2
-                Test.@test mpf.jumps[4]               == nothing   # from mpf2
+                Test.@test mpf.switching_times        == [1.0, 2.0, 3.0, 5.0]
+                Test.@test mpf.jumps[1]               === nothing   # from mpf1
+                Test.@test mpf.jumps[2]               === nothing   # from mpf1
+                Test.@test mpf.jumps[3]               === jump     # new junction
+                Test.@test mpf.jumps[4]               === nothing   # from mpf2
             end
 
             # ------------------------------------------------------------------
@@ -348,31 +359,46 @@ function test_concatenation()
             # 4d. n × m
             # ------------------------------------------------------------------
             Test.@testset "n × m — no jump" begin
-                mpf1 = _mpham(2)
-                mpf2 = _mpham(3)
-                mpf  = mpf1 * (5.0, mpf2)
+                f1 = _ham_flow(:h1)
+                f2 = _ham_flow(:h2)
+                f3 = _ham_flow(:h3)
+                f4 = _ham_flow(:h4)
+                f5 = _ham_flow(:h5)
+                mpf1 = f1 * (1.0, f2) * (2.0, f3)  # switches: [1.0, 2.0]
+                mpf2 = f4 * (5.0, f5)  # switches: [5.0]
+                mpf  = mpf1 * (3.0, mpf2)  # switches: [1.0, 2.0, 3.0, 5.0]
                 Test.@test mpf isa MultiPhase.MultiPhaseHamiltonianFlow
                 Test.@test length(mpf.flows)          == 5
-                Test.@test mpf.switching_times        == [1.0, 5.0, 1.0, 2.0]
+                Test.@test mpf.switching_times        == [1.0, 2.0, 3.0, 5.0]
                 Test.@test all(==(nothing), mpf.jumps)
             end
 
             Test.@testset "n × m — with jump" begin
-                mpf1 = _mpham(2)
-                mpf2 = _mpham(3)
-                mpf  = mpf1 * (5.0, jump, mpf2)
+                f1 = _ham_flow(:h1)
+                f2 = _ham_flow(:h2)
+                f3 = _ham_flow(:h3)
+                f4 = _ham_flow(:h4)
+                f5 = _ham_flow(:h5)
+                mpf1 = f1 * (1.0, f2) * (2.0, f3)  # switches: [1.0, 2.0], jumps: [nothing, nothing]
+                mpf2 = f4 * (5.0, f5)  # switches: [5.0], jumps: [nothing]
+                mpf  = mpf1 * (3.0, jump, mpf2)  # switches: [1.0, 2.0, 3.0, 5.0], jumps: [nothing, nothing, jump, nothing]
                 Test.@test length(mpf.flows)          == 5
-                Test.@test mpf.jumps[1]               == nothing
-                Test.@test mpf.jumps[2]               === jump
-                Test.@test mpf.jumps[3]               == nothing
-                Test.@test mpf.jumps[4]               == nothing
+                Test.@test mpf.jumps[1]               === nothing
+                Test.@test mpf.jumps[2]               === nothing
+                Test.@test mpf.jumps[3]               === jump
+                Test.@test mpf.jumps[4]               === nothing
             end
 
             Test.@testset "n × m — with (jump_x, jump_p)" begin
-                mpf1 = _mpham(2)
-                mpf2 = _mpham(3)
-                mpf  = mpf1 * (5.0, jump_x, jump_p, mpf2)
-                Test.@test mpf.jumps[2]               == (jump_x, jump_p)
+                f1 = _ham_flow(:h1)
+                f2 = _ham_flow(:h2)
+                f3 = _ham_flow(:h3)
+                f4 = _ham_flow(:h4)
+                f5 = _ham_flow(:h5)
+                mpf1 = f1 * (1.0, f2) * (2.0, f3)  # switches: [1.0, 2.0], jumps: [nothing, nothing]
+                mpf2 = f4 * (5.0, f5)  # switches: [5.0], jumps: [nothing]
+                mpf  = mpf1 * (3.0, jump_x, jump_p, mpf2)  # switches: [1.0, 2.0, 3.0, 5.0], jumps: [nothing, nothing, (jump_x, jump_p), nothing]
+                Test.@test mpf.jumps[3]               == (jump_x, jump_p)
             end
 
             # ------------------------------------------------------------------
@@ -417,20 +443,63 @@ function test_concatenation()
 
             Test.@testset "Mixed single/multi — 5 phases" begin
                 f1   = _state_flow(:s1)
-                mpf2 = _mpstate(2)   # [s1, s2], switches [1.0]
-                mpf3 = _mpstate(2)   # [s1, s2], switches [1.0]
-                # f1 * (0.5, mpf2) * (3.0, mpf3)
-                # = (3-phase, switches [0.5, 1.0]) * (3.0, 2-phase, switches [1.0])
-                # → 5 phases, switches [0.5, 1.0, 3.0, 1.0]
-                mpf = f1 * (0.5, mpf2) * (3.0, mpf3)
+                f2   = _state_flow(:s2)
+                f3   = _state_flow(:s3)
+                f4   = _state_flow(:s4)
+                f5   = _state_flow(:s5)
+                mpf2 = f2 * (2.0, f3)  # switches: [2.0]
+                mpf3 = f4 * (5.0, f5)  # switches: [5.0]
+                mpf = f1 * (1.0, mpf2) * (3.0, mpf3)  # switches: [1.0, 2.0, 3.0, 5.0]
                 Test.@test length(mpf.flows)     == 5
-                Test.@test mpf.switching_times   == [0.5, 1.0, 3.0, 1.0]
+                Test.@test mpf.switching_times   == [1.0, 2.0, 3.0, 5.0]
                 Test.@test length(mpf.jumps)     == 4
             end
         end
 
         # ======================================================================
-        # 6. Exports
+        # 6. Switching times validation
+        # ======================================================================
+        Test.@testset "Switching times validation" begin
+            Test.@testset "Valid switching times — no error" begin
+                f1, f2 = _state_flow(:a), _state_flow(:b)
+                mpf = f1 * (1.0, f2)
+                Test.@test mpf isa MultiPhase.MultiPhaseStateFlow
+            end
+
+            Test.@testset "Invalid switching times — t_switch not greater than f1 times" begin
+                mpf1 = _mpstate(2)   # switches: [1.0]
+                f3   = _state_flow(:s3)
+                Test.@test_throws Exceptions.PreconditionError mpf1 * (0.5, f3)  # 0.5 < 1.0
+            end
+
+            Test.@testset "Invalid switching times — t_switch not less than f2 times" begin
+                f1   = _state_flow(:s0)
+                mpf2 = _mpstate(2)   # switches: [1.0]
+                Test.@test_throws Exceptions.PreconditionError f1 * (2.0, mpf2)  # 2.0 > 1.0
+            end
+
+            Test.@testset "Invalid switching times — HamiltonianFlow" begin
+                mpf1 = _mpham(2)   # switches: [1.0]
+                f3   = _ham_flow(:h3)
+                Test.@test_throws Exceptions.PreconditionError mpf1 * (0.5, f3)
+            end
+
+            Test.@testset "PreconditionError message quality" begin
+                mpf1 = _mpstate(2)   # switches: [1.0]
+                f3   = _state_flow(:s3)
+                try
+                    mpf1 * (0.5, f3)
+                    Test.@test false  # Should have thrown
+                catch e
+                    Test.@test e isa Exceptions.PreconditionError
+                    Test.@test occursin("strictly increasing", e.msg)
+                    Test.@test occursin("flow concatenation", e.context)
+                end
+            end
+        end
+
+        # ======================================================================
+        # 7. Exports
         # ======================================================================
         Test.@testset "Exports" begin
             for sym in (:MultiPhaseStateFlow, :MultiPhaseHamiltonianFlow,

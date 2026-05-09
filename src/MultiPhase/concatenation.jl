@@ -1,3 +1,38 @@
+# =============================================================================
+# Private helper: switching times validation
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Validate that switching times are strictly increasing.
+
+Throws a [`PreconditionError`](@extref) if the switching times are not in strictly
+increasing order (i.e., if any `switches[i] >= switches[i+1]`).
+
+# Arguments
+- `switches::Vector{<:Real}`: Vector of switching times to validate.
+
+# Throws
+- [`CTBase.Exceptions.PreconditionError`](@extref): If switching times are not strictly increasing.
+
+# Notes
+- This is a private helper function used internally by concatenation operators.
+- Strictly increasing means each time must be greater than the previous one.
+"""
+function _check_switching_times_order(switches::Vector{<:Real})
+    for i in 1:(length(switches) - 1)
+        if switches[i] >= switches[i + 1]
+            throw(Exceptions.PreconditionError(
+                "Switching times must be strictly increasing";
+                context = "flow concatenation",
+                reason = "found non-increasing sequence: $switches",
+                suggestion = "ensure all switching times are in strictly increasing order",
+            ))
+        end
+    end
+end
+
 """
 $(TYPEDSIGNATURES)
 
@@ -24,6 +59,7 @@ See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.MultiPhase
 function Base.:*(f1::Flows.AbstractStateFlow, (t_switch, f2)::Tuple{Real, Flows.AbstractStateFlow})
     flows = vcat(get_flows(f1), get_flows(f2))
     switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
+    _check_switching_times_order(switches)
     jumps = vcat(get_jumps(f1), [nothing], get_jumps(f2))
     return MultiPhaseStateFlow(flows, switches, jumps)
 end
@@ -55,6 +91,7 @@ See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.MultiPhase
 function Base.:*(f1::Flows.AbstractStateFlow, (t_switch, jump, f2)::Tuple{Real, Any, Flows.AbstractStateFlow})
     flows = vcat(get_flows(f1), get_flows(f2))
     switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
+    _check_switching_times_order(switches)
     jumps = vcat(get_jumps(f1), [jump], get_jumps(f2))
     return MultiPhaseStateFlow(flows, switches, jumps)
 end
@@ -85,6 +122,7 @@ See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Mult
 function Base.:*(f1::Flows.AbstractHamiltonianFlow, (t_switch, f2)::Tuple{Real, Flows.AbstractHamiltonianFlow})
     flows = vcat(get_flows(f1), get_flows(f2))
     switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
+    _check_switching_times_order(switches)
     jumps = vcat(get_jumps(f1), [nothing], get_jumps(f2))
     return MultiPhaseHamiltonianFlow(flows, switches, jumps)
 end
@@ -116,6 +154,7 @@ See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Mult
 function Base.:*(f1::Flows.AbstractHamiltonianFlow, (t_switch, jump, f2)::Tuple{Real, Any, Flows.AbstractHamiltonianFlow})
     flows = vcat(get_flows(f1), get_flows(f2))
     switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
+    _check_switching_times_order(switches)
     jumps = vcat(get_jumps(f1), [jump], get_jumps(f2))
     return MultiPhaseHamiltonianFlow(flows, switches, jumps)
 end
@@ -148,6 +187,7 @@ See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Mult
 function Base.:*(f1::Flows.AbstractHamiltonianFlow, (t_switch, jump_x, jump_p, f2)::Tuple{Real, Any, Any, Flows.AbstractHamiltonianFlow})
     flows = vcat(get_flows(f1), get_flows(f2))
     switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
+    _check_switching_times_order(switches)
     jumps = vcat(get_jumps(f1), [(jump_x, jump_p)], get_jumps(f2))
     return MultiPhaseHamiltonianFlow(flows, switches, jumps)
 end
