@@ -543,13 +543,79 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Build solver options for a HamiltonianPointConfig.
+
+Returns the point integration options from the SciML integrator strategy.
+
+# Arguments
+- `integ::SciML`: The SciML integrator strategy.
+- `config::Common.HamiltonianPointConfig`: The Hamiltonian point configuration.
+
+# Returns
+- `Dict{Symbol,Any}`: The resolved solver options for point integration.
+
+See also: [`CTFlows.Integrators.SciML`](@ref), [`CTFlows.Common.HamiltonianPointConfig`](@ref).
+"""
+function Integrators.build_options(integ::SciML, config::Common.HamiltonianPointConfig)
+    return integ.options_point
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Build solver options for a HamiltonianTrajectoryConfig.
+
+Returns the trajectory integration options from the SciML integrator strategy.
+
+# Arguments
+- `integ::SciML`: The SciML integrator strategy.
+- `config::Common.HamiltonianTrajectoryConfig`: The Hamiltonian trajectory configuration.
+
+# Returns
+- `Dict{Symbol,Any}`: The resolved solver options for trajectory integration.
+
+See also: [`CTFlows.Integrators.SciML`](@ref), [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref).
+"""
+function Integrators.build_options(integ::SciML, config::Common.HamiltonianTrajectoryConfig)
+    return integ.options_trajectory
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Build an `ODEProblem` from a system and configuration.
+
+Dispatches between in-place and out-of-place RHS based on the mutability of the initial condition:
+- If `ismutable(u0)` is true, uses the in-place `rhs(system)` with signature `(du, u, p, t) -> nothing`.
+- If `ismutable(u0)` is false (e.g., `StaticArrays.SVector`), uses the out-of-place `rhs_oop(system)` with signature `(u, p, t) -> du`.
+
+This allows zero-allocation integration with immutable array types like `StaticArrays.SVector`.
+
+# Arguments
+- `integ::SciML`: The SciML integrator strategy.
+- `system::Systems.AbstractSystem`: The system to build an ODE problem for.
+- `config::Common.AbstractConfig`: The configuration containing initial condition and time span.
+- `variable`: Optional variable parameter for non-fixed systems.
+
+# Returns
+- `SciMLBase.ODEProblem`: The ODE problem ready for integration.
+
+# Notes
+- The variable parameter is wrapped in `Common.ODEParameters` for uniform access.
+- For Hamiltonian systems, the initial condition concatenates `x0` and `p0`.
+
+See also: [`CTFlows.Systems.rhs`](@ref), [`CTFlows.Systems.rhs_oop`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
 """
 function Integrators.build_problem(integ::SciML, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)
-    f! = Systems.rhs(system)
     u0 = Common.initial_condition(config)
     p = Common.ODEParameters(variable)
-    prob = ODEProblem(f!, u0, Common.tspan(config), p)
+    if ismutable(u0)
+        f! = Systems.rhs(system)
+        prob = ODEProblem(f!, u0, Common.tspan(config), p)
+    else
+        f = Systems.rhs_oop(system)
+        prob = ODEProblem(f, u0, Common.tspan(config), p)
+    end
     return prob
 end
 

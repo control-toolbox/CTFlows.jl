@@ -1,0 +1,279 @@
+"""
+$(TYPEDEF)
+
+Concrete `AbstractHamiltonianSystem` wrapping a `HamiltonianVectorField`. The state
+dimension `N` is stored as a type parameter for compile-time validation and
+performance. If `N=nothing`, the dimension is inferred at runtime.
+
+# Type Parameters
+- `N`: State dimension (`Int` if known, `nothing` if unknown).
+- `F`: concrete type of the wrapped HamiltonianVectorField function.
+- `TD <: TimeDependence`: `Autonomous` or `NonAutonomous`.
+- `VD <: VariableDependence`: `Fixed` or `NonFixed`.
+- `RHS`: type of the pre-computed right-hand side function.
+
+# Fields
+- `hvf::HamiltonianVectorField{F, TD, VD}`: the underlying Hamiltonian vector field.
+- `rhs::RHS`: the pre-computed in-place right-hand side closure with signature `(du, u, p, t) -> nothing`.
+
+# Example
+```julia-repl
+julia> using CTFlows.Systems, CTFlows.Common
+
+julia> hvf = HamiltonianVectorField((x, p) -> (x, -p); autonomous=true, variable=false)
+HamiltonianVectorField
+  time_dependence: Autonomous
+  variable_dependence: Fixed
+  function: var"#1"
+
+julia> sys = HamiltonianVectorFieldSystem(hvf, 3)  # with known dimension
+HamiltonianVectorFieldSystem
+  time_dependence: Autonomous
+  variable_dependence: Fixed
+  n_state: 3
+  hamiltonian_vector_field: HamiltonianVectorField{var"#1", Autonomous, Fixed}
+
+julia> sys = HamiltonianVectorFieldSystem(hvf)  # without dimension
+HamiltonianVectorFieldSystem
+  time_dependence: Autonomous
+  variable_dependence: Fixed
+  n_state: unknown
+  hamiltonian_vector_field: HamiltonianVectorField{var"#1", Autonomous, Fixed}
+```
+
+See also: [`CTFlows.Data.HamiltonianVectorField`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
+"""
+struct HamiltonianVectorFieldSystem{N, F<:Function, TD<:Common.TimeDependence, VD<:Common.VariableDependence, RHS<:Function} <: AbstractHamiltonianSystem{TD, VD}
+    hvf::Data.HamiltonianVectorField{F, TD, VD}
+    rhs::RHS
+end
+
+# =============================================================================
+# Constructors
+# =============================================================================
+
+# Constructor with known dimension N
+function HamiltonianVectorFieldSystem(hvf::Data.HamiltonianVectorField{F, TD, VD}, n_state::Int) where {F, TD, VD}
+    rhs = _build_rhs(hvf, Val(n_state))
+    return HamiltonianVectorFieldSystem{n_state, F, TD, VD, typeof(rhs)}(hvf, rhs)
+end
+
+# Constructor without dimension (N=nothing)
+function HamiltonianVectorFieldSystem(hvf::Data.HamiltonianVectorField{F, TD, VD}) where {F, TD, VD}
+    rhs = _build_rhs(hvf, Val(nothing))
+    return HamiltonianVectorFieldSystem{nothing, F, TD, VD, typeof(rhs)}(hvf, rhs)
+end
+
+# =============================================================================
+# Internal helpers for building RHS (in-place)
+# =============================================================================
+
+function _build_rhs(hvf::Data.HamiltonianVectorField, ::Val{N}) where N
+    return function (du, u, p, t)
+        x = @view(u[1:N])
+        pk = @view(u[N+1:2N])
+        dx, dp = hvf(t, x, pk, p.variable)
+        du[1:N] .= dx
+        du[N+1:2N] .= dp
+        return nothing
+    end
+end
+
+function _build_rhs(hvf::Data.HamiltonianVectorField, ::Val{nothing})
+    return function (du, u, p, t)
+        n = length(u) ÷ 2
+        x = @view(u[1:n])
+        pk = @view(u[n+1:2n])
+        dx, dp = hvf(t, x, pk, p.variable)
+        du[1:n] .= dx
+        du[n+1:2n] .= dp
+        return nothing
+    end
+end
+
+# =============================================================================
+# Internal helpers for building RHS (out-of-place for SVector)
+# =============================================================================
+
+function _build_oop_rhs(hvf::Data.HamiltonianVectorField, ::Val{N}) where N
+    return function (u, p, t)
+        x = u[1:N]
+        pk = u[N+1:2N]
+        dx, dp = hvf(t, x, pk, p.variable)
+        return vcat(dx, dp)
+    end
+end
+
+function _build_oop_rhs(hvf::Data.HamiltonianVectorField, ::Val{nothing})
+    return function (u, p, t)
+        n = length(u) ÷ 2
+        x = u[1:n]
+        pk = u[n+1:2n]
+        dx, dp = hvf(t, x, pk, p.variable)
+        return vcat(dx, dp)
+    end
+end
+
+# =============================================================================
+# rhs accessor (in-place)
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+In-place right-hand side for a `HamiltonianVectorFieldSystem`. Returns the pre-computed
+closure stored in the system, which has signature `(du, u, p, t) -> nothing` and
+splits the combined state `u` into `(x, p)` halves, calls the underlying Hamiltonian
+vector field, and concatenates `(dx, dp)` into `du`.
+
+# Arguments
+- `sys::HamiltonianVectorFieldSystem`: The system for which to return the RHS function.
+
+# Returns
+- `Function`: The pre-computed closure with signature `(du, u, p, t) -> nothing`.
+
+# Notes
+- The RHS splits `u` into state `x` and costate `p` halves: `x = u[1:N]`, `p = u[N+1:2N]`.
+- If `N=nothing`, the split uses `n = length(u) ÷ 2` at runtime.
+- The closure is computed once at construction time for performance.
+
+See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Systems.rhs_oop`](@ref).
+"""
+function rhs(sys::HamiltonianVectorFieldSystem)
+    return sys.rhs
+end
+
+# =============================================================================
+# rhs_oop accessor (out-of-place for SVector)
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Out-of-place right-hand side for a `HamiltonianVectorFieldSystem`. Returns a closure
+with signature `(u, p, t) -> du` that splits the combined state `u` into `(x, p)` halves,
+calls the underlying Hamiltonian vector field, and concatenates `(dx, dp)`.
+
+# Arguments
+- `sys::HamiltonianVectorFieldSystem`: The system for which to return the RHS function.
+
+# Returns
+- `Function`: The closure with signature `(u, p, t) -> du`.
+
+# Notes
+- This method is used for immutable array types like `StaticArrays.SVector`.
+- The RHS splits `u` into state `x` and costate `p` halves: `x = u[1:N]`, `p = u[N+1:2N]`.
+- If `N=nothing`, the split uses `n = length(u) ÷ 2` at runtime.
+
+See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Systems.rhs`](@ref).
+"""
+function rhs_oop(sys::HamiltonianVectorFieldSystem{N, F, TD, VD, RHS}) where {N, F, TD, VD, RHS}
+    return _build_oop_rhs(sys.hvf, Val(N))
+end
+
+# =============================================================================
+# state_dimension accessor
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the state dimension `N` for a `HamiltonianVectorFieldSystem`.
+
+If the system was constructed with a known dimension, returns `N::Int`.
+If the dimension was not specified at construction time, returns `nothing`.
+
+# Arguments
+- `sys::HamiltonianVectorFieldSystem`: The Hamiltonian system.
+
+# Returns
+- `Union{Int, Nothing}`: The state dimension, or `nothing` if unknown.
+
+# Example
+```julia
+using CTFlows.Systems
+
+hvf = HamiltonianVectorField((x, p) -> (x, -p); autonomous=true, variable=false)
+sys_with_n = HamiltonianVectorFieldSystem(hvf, 3)
+state_dimension(sys_with_n)  # Returns 3
+
+sys_without_n = HamiltonianVectorFieldSystem(hvf)
+state_dimension(sys_without_n)  # Returns nothing
+```
+
+See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
+"""
+function state_dimension(sys::HamiltonianVectorFieldSystem{N}) where N
+    return N
+end
+
+# =============================================================================
+# Validation helper
+# =============================================================================
+
+function _check_state_dimension(sys::HamiltonianVectorFieldSystem{N}, x0) where N
+    if N !== nothing && length(x0) != N
+        throw(
+            Exceptions.IncorrectArgument(
+                "State dimension mismatch";
+                got = "length(x0)=$(length(x0))",
+                expected = "length(x0)=$N",
+                context = "HamiltonianVectorFieldSystem._check_state_dimension",
+            ),
+        )
+    end
+    return true
+end
+
+function _check_state_dimension(sys::HamiltonianVectorFieldSystem{nothing}, x0)
+    # No dimension specified, skip validation
+    return true
+end
+
+# =============================================================================
+# Base.show
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of a HamiltonianVectorFieldSystem.
+
+Shows the type name, time dependence, variable dependence, state dimension, and
+the underlying Hamiltonian vector field type.
+
+# Arguments
+- `io::IO`: The IO stream to write to.
+- `sys::HamiltonianVectorFieldSystem`: The HamiltonianVectorFieldSystem to display.
+
+See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
+"""
+function Base.show(io::IO, sys::HamiltonianVectorFieldSystem{N, F, TD, VD, RHS}) where {N, F, TD, VD, RHS}
+    println(io, "HamiltonianVectorFieldSystem")
+    println(io, "  time_dependence: ", nameof(TD))
+    println(io, "  variable_dependence: ", nameof(VD))
+    if N === nothing
+        println(io, "  n_state: unknown")
+    else
+        println(io, "  n_state: ", N)
+    end
+    print(io, "  hamiltonian_vector_field: ", typeof(sys.hvf))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a HamiltonianVectorFieldSystem in the REPL with text/plain MIME type.
+
+Delegates to the compact show method.
+
+# Arguments
+- `io::IO`: The IO stream to write to.
+- `::MIME"text/plain"`: The MIME type for REPL display.
+- `sys::HamiltonianVectorFieldSystem`: The HamiltonianVectorFieldSystem to display.
+
+See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
+"""
+function Base.show(io::IO, ::MIME"text/plain", sys::HamiltonianVectorFieldSystem{N, F, TD, VD, RHS}) where {N, F, TD, VD, RHS}
+    show(io, sys)
+end

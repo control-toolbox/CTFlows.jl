@@ -36,6 +36,7 @@ using ..Integrators
 # ==============================================================================
 
 include(joinpath(@__DIR__, "vector_field_solution.jl"))
+include(joinpath(@__DIR__, "hamiltonian_vector_field_solution.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 
 # ==============================================================================
@@ -43,7 +44,9 @@ include(joinpath(@__DIR__, "building.jl"))
 # ==============================================================================
 
 export state, time_grid
+export costate
 export VectorFieldSolution
+export HamiltonianVectorFieldSolution
 export build_solution
 export plot
 

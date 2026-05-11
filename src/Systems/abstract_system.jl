@@ -236,3 +236,56 @@ function rhs(system::AbstractSystem)
     )
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the out-of-place right-hand side function for the system.
+
+The returned function must have the signature `(u, p, t) -> du` and
+return the derivative at state `u`, parameters `p`, and time `t` without modifying `u`.
+
+This is used for immutable array types like `StaticArrays.SVector` where in-place
+operations are not possible.
+
+# Example
+
+```julia
+using CTFlows.Systems
+
+struct MySystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
+    data::Vector{Float64}
+end
+
+# Implement rhs_oop to return the ODE right-hand side function (out-of-place)
+function Systems.rhs_oop(sys::MySystem)
+    return (u, p, t) -> sys.data .* u
+end
+
+# Usage
+sys = MySystem([1.0, 2.0])
+rhs_oop_func = Systems.rhs_oop(sys)
+u = [3.0, 4.0]
+p = nothing
+t = 0.0
+du = rhs_oop_func(u, p, t)  # du = [3.0, 8.0]
+```
+
+# Throws
+- [`CTBase.Exceptions.NotImplemented`](@extref): If not implemented by the concrete type.
+
+# Notes
+- This method is called when `ismutable(u0)` returns `false` for the initial condition.
+- For mutable arrays like `Vector`, the in-place `rhs` method is used instead.
+
+See also: [`CTFlows.Systems.rhs`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
+"""
+function rhs_oop(system::AbstractSystem)
+    throw(
+        Exceptions.NotImplemented(
+            "AbstractSystem rhs_oop method not implemented";
+            required_method = "rhs_oop(sys::$(typeof(system)))",
+            suggestion = "Implement rhs_oop for your system type to support immutable array initial conditions.",
+            context = "AbstractSystem.rhs_oop - required method implementation",
+        ),
+    )
+end

@@ -83,6 +83,44 @@ function rhs(sys::VectorFieldSystem)
     return sys.rhs
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Out-of-place right-hand side for a `VectorFieldSystem`. Returns a closure
+with signature `(u, p, t) -> du` that uses the uniform `(t, x, v)` call on the
+underlying `VectorField`, where `p` is a `Common.ODEParameters` wrapper
+containing the variable (or `nothing` for `Fixed` systems).
+
+# Arguments
+- `sys::VectorFieldSystem`: The system for which to return the RHS function.
+
+# Returns
+- `Function`: The closure with signature `(u, p, t) -> du`.
+
+# Example
+```julia
+using CTFlows.Systems, CTFlows.Common
+
+vf = VectorField(x -> -x; autonomous=true, variable=false)
+sys = VectorFieldSystem(vf)
+rhs_oop = Systems.rhs_oop(sys)
+
+u = [1.0, 2.0]
+p = Common.ODEParameters(nothing)
+du = rhs_oop(u, p, 0.0)
+# du is [-1.0, -2.0]
+```
+
+# Notes
+- This method is used for immutable array types like `StaticArrays.SVector`.
+- The closure uses the uniform `(t, x, v)` signature to work with all trait combinations.
+
+See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.rhs`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
+"""
+function rhs_oop(sys::VectorFieldSystem)
+    return (u, p, t) -> sys.vf(t, u, p.variable)
+end
+
 # =============================================================================
 # Base.show
 # =============================================================================
