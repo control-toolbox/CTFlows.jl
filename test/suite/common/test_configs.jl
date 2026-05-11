@@ -106,6 +106,18 @@ function test_configs()
             Test.@testset "initial_costate throws PreconditionError for non-Hamiltonian configs" begin
                 config = Common.PointConfig(0.0, [1.0], 1.0)
                 Test.@test_throws Exceptions.PreconditionError Common.initial_costate(config)
+
+                Test.@testset "PreconditionError message quality" begin
+                    config = Common.PointConfig(0.0, [1.0], 1.0)
+                    e = try
+                        Common.initial_costate(config)
+                    catch err
+                        err
+                    end
+                    Test.@test e isa Exceptions.PreconditionError
+                    Test.@test occursin("Hamiltonian", string(e))
+                    Test.@test occursin("costate", string(e))
+                end
             end
 
             Test.@testset "initial_condition with TrajectoryConfig scalar" begin

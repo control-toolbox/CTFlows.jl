@@ -1,3 +1,7 @@
+# =============================================================================
+# Abstract Types
+# =============================================================================
+
 """
 $(TYPEDEF)
 
@@ -66,6 +70,10 @@ See also: [`CTFlows.Common.TrajectoryConfig`](@ref), [`CTFlows.Common.Hamiltonia
 """
 abstract type AbstractTrajectoryConfig{X0} <: AbstractConfig{X0} end
 
+# =============================================================================
+# Interface: tspan
+# =============================================================================
+
 """
 $(TYPEDSIGNATURES)
 
@@ -84,6 +92,10 @@ function tspan(c::AbstractConfig)
         context = "AbstractConfig.tspan - required method implementation",
     ))
 end
+
+# =============================================================================
+# PointConfig
+# =============================================================================
 
 """
 $(TYPEDEF)
@@ -146,6 +158,10 @@ function tspan(c::PointConfig)::Tuple{Real, Real}
     return (c.t0, c.tf)
 end
 
+# =============================================================================
+# TrajectoryConfig
+# =============================================================================
+
 """
 $(TYPEDEF)
 
@@ -203,6 +219,10 @@ See also: [`CTFlows.Common.TrajectoryConfig`](@ref), [`CTFlows.Common.PointConfi
 function tspan(c::TrajectoryConfig)::Tuple{Real, Real}
     return c.tspan
 end
+
+# =============================================================================
+# HamiltonianPointConfig
+# =============================================================================
 
 """
 $(TYPEDEF)
@@ -269,61 +289,10 @@ function tspan(c::HamiltonianPointConfig)::Tuple{Real, Real}
     return (c.t0, c.tf)
 end
 
-"""
-$(TYPEDSIGNATURES)
 
-Extract the initial condition from a `HamiltonianPointConfig`.
-
-Returns the concatenated state and costate as a single vector, which is the
-expected format for ODE solvers in the Hamiltonian framework.
-
-# Arguments
-- `c::HamiltonianPointConfig`: The Hamiltonian point configuration.
-
-# Returns
-- `AbstractVector`: Concatenated state and costate vector.
-
-# Example
-\`\`\`julia-repl
-julia> using CTFlows.Common
-
-julia> config = HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
-
-julia> initial_condition(config)
-4-element Vector{Float64}:
- 1.0
- 0.0
- 0.5
- 0.3
-\`\`\`
-
-See also: [`CTFlows.Common.HamiltonianPointConfig`](@ref), [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.initial_costate`](@ref).
-"""
-function initial_condition(c::HamiltonianPointConfig)
-    return vcat(c.x0, c.p0)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Display the `HamiltonianPointConfig` in tree-style format.
-"""
-function Base.show(io::IO, c::HamiltonianPointConfig)
-    println(io, "HamiltonianPointConfig")
-    println(io, "  t0: ", c.t0)
-    println(io, "  x0: ", c.x0)
-    println(io, "  p0: ", c.p0)
-    print(io, "  tf: ", c.tf)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Display the `HamiltonianPointConfig` in REPL format.
-"""
-function Base.show(io::IO, ::MIME"text/plain", c::HamiltonianPointConfig)
-    show(io, c)
-end
+# =============================================================================
+# HamiltonianTrajectoryConfig
+# =============================================================================
 
 """
 $(TYPEDEF)
@@ -387,60 +356,10 @@ function tspan(c::HamiltonianTrajectoryConfig)::Tuple{Real, Real}
     return c.tspan
 end
 
-"""
-$(TYPEDSIGNATURES)
 
-Extract the initial condition from a `HamiltonianTrajectoryConfig`.
-
-Returns the concatenated state and costate as a single vector, which is the
-expected format for ODE solvers in the Hamiltonian framework.
-
-# Arguments
-- `c::HamiltonianTrajectoryConfig`: The Hamiltonian trajectory configuration.
-
-# Returns
-- `AbstractVector`: Concatenated state and costate vector.
-
-# Example
-\`\`\`julia-repl
-julia> using CTFlows.Common
-
-julia> config = HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
-
-julia> initial_condition(config)
-4-element Vector{Float64}:
- 1.0
- 0.0
- 0.5
- 0.3
-\`\`\`
-
-See also: [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.initial_costate`](@ref).
-"""
-function initial_condition(c::HamiltonianTrajectoryConfig)
-    return vcat(c.x0, c.p0)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Display the `HamiltonianTrajectoryConfig` in tree-style format.
-"""
-function Base.show(io::IO, c::HamiltonianTrajectoryConfig)
-    println(io, "HamiltonianTrajectoryConfig")
-    println(io, "  tspan: ", c.tspan)
-    println(io, "  x0: ", c.x0)
-    print(io, "  p0: ", c.p0)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Display the `HamiltonianTrajectoryConfig` in REPL format.
-"""
-function Base.show(io::IO, ::MIME"text/plain", c::HamiltonianTrajectoryConfig)
-    show(io, c)
-end
+# =============================================================================
+# Generic Accessor Functions
+# =============================================================================
 
 """
 $(TYPEDSIGNATURES)
@@ -511,6 +430,74 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Extract the initial condition from a `HamiltonianPointConfig`.
+
+Returns the concatenated state and costate as a single vector, which is the
+expected format for ODE solvers in the Hamiltonian framework.
+
+# Arguments
+- `c::HamiltonianPointConfig`: The Hamiltonian point configuration.
+
+# Returns
+- `AbstractVector`: Concatenated state and costate vector.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> config = HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+
+julia> initial_condition(config)
+4-element Vector{Float64}:
+ 1.0
+ 0.0
+ 0.5
+ 0.3
+\`\`\`
+
+See also: [`CTFlows.Common.HamiltonianPointConfig`](@ref), [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.initial_costate`](@ref).
+"""
+function initial_condition(c::HamiltonianPointConfig)
+    return vcat(c.x0, c.p0)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the initial condition from a `HamiltonianTrajectoryConfig`.
+
+Returns the concatenated state and costate as a single vector, which is the
+expected format for ODE solvers in the Hamiltonian framework.
+
+# Arguments
+- `c::HamiltonianTrajectoryConfig`: The Hamiltonian trajectory configuration.
+
+# Returns
+- `AbstractVector`: Concatenated state and costate vector.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> config = HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
+
+julia> initial_condition(config)
+4-element Vector{Float64}:
+ 1.0
+ 0.0
+ 0.5
+ 0.3
+\`\`\`
+
+See also: [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.initial_costate`](@ref).
+"""
+function initial_condition(c::HamiltonianTrajectoryConfig)
+    return vcat(c.x0, c.p0)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Extract the initial state from an `AbstractConfig`.
 
 For point and trajectory configs, returns the state `x0`. For Hamiltonian
@@ -575,6 +562,8 @@ function initial_costate(c::Common.AbstractConfig)
     throw(Exceptions.PreconditionError(
         "initial_costate is only defined for Hamiltonian configs";
         context = "initial_costate - requires Hamiltonian config",
+        reason = "config type $(typeof(c)) does not have a costate field",
+        suggestion = "use HamiltonianPointConfig or HamiltonianTrajectoryConfig instead",
     ))
 end
 
@@ -620,5 +609,48 @@ $(TYPEDSIGNATURES)
 Display the `TrajectoryConfig` in REPL format.
 """
 function Base.show(io::IO, ::MIME"text/plain", c::TrajectoryConfig)
+    show(io, c)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display the `HamiltonianPointConfig` in tree-style format.
+"""
+function Base.show(io::IO, c::HamiltonianPointConfig)
+    println(io, "HamiltonianPointConfig")
+    println(io, "  t0: ", c.t0)
+    println(io, "  x0: ", c.x0)
+    println(io, "  p0: ", c.p0)
+    print(io, "  tf: ", c.tf)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display the `HamiltonianPointConfig` in REPL format.
+"""
+function Base.show(io::IO, ::MIME"text/plain", c::HamiltonianPointConfig)
+    show(io, c)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display the `HamiltonianTrajectoryConfig` in tree-style format.
+"""
+function Base.show(io::IO, c::HamiltonianTrajectoryConfig)
+    println(io, "HamiltonianTrajectoryConfig")
+    println(io, "  tspan: ", c.tspan)
+    println(io, "  x0: ", c.x0)
+    print(io, "  p0: ", c.p0)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display the `HamiltonianTrajectoryConfig` in REPL format.
+"""
+function Base.show(io::IO, ::MIME"text/plain", c::HamiltonianTrajectoryConfig)
     show(io, c)
 end

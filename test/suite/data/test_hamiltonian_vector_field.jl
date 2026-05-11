@@ -105,9 +105,20 @@ function test_hamiltonian_vector_field()
         end
         
         # ====================================================================
+        # UNIT TESTS - Subtyping
+        # ====================================================================
+
+        Test.@testset "Subtyping" begin
+            Test.@testset "HamiltonianVectorField is an AbstractVectorField" begin
+                hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+                Test.@test hvf isa Data.AbstractVectorField
+            end
+        end
+
+        # ====================================================================
         # UNIT TESTS - Base.show
         # ====================================================================
-        
+
         Test.@testset "Base.show" begin
             hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
             # Just check that show doesn't throw

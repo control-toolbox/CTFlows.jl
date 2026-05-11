@@ -276,6 +276,17 @@ function test_vector_field()
         end
 
         # ====================================================================
+        # UNIT TESTS - Subtyping
+        # ====================================================================
+
+        Test.@testset "Subtyping" begin
+            Test.@testset "VectorField is an AbstractVectorField" begin
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                Test.@test vf isa Data.AbstractVectorField
+            end
+        end
+
+        # ====================================================================
         # UNIT TESTS - Exports Verification
         # ====================================================================
 
