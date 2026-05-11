@@ -1,10 +1,10 @@
 """
     Data
 
-Data structures for CTFlows including vector fields with traits.
+Data structures for CTFlows including vector fields and Hamiltonian vector fields with traits.
 
-This module defines the `VectorField` type which encapsulates a vector-field
-function together with its time-dependence and variable-dependence traits.
+This module defines the `VectorField` and `HamiltonianVectorField` types which encapsulate
+vector-field functions together with their time-dependence and variable-dependence traits.
 """
 module Data
 
@@ -22,11 +22,13 @@ using ..Common
 # ==============================================================================
 
 include(joinpath(@__DIR__, "vector_field.jl"))
+include(joinpath(@__DIR__, "hamiltonian_vector_field.jl"))
 
 # ==============================================================================
 # Module exports
 # ==============================================================================
 
 export VectorField
+export HamiltonianVectorField
 
 end # module Data

@@ -3,6 +3,7 @@ module TestVectorFieldSystem
 import Test
 import CTFlows.Systems
 import CTFlows.Common
+import StaticArrays: SA
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -115,6 +116,40 @@ function test_vector_field_system()
                 rhs2(du2, [1.0, 1.0], p, 0.0)
                 Test.@test du1 ≈ [2.0, 2.0] atol=1e-10
                 Test.@test du2 ≈ [3.0, 3.0] atol=1e-10
+            end
+
+            Test.@testset "rhs_oop returns callable" begin
+                vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                rhs_oop = Systems.rhs_oop(sys)
+                Test.@test rhs_oop isa Function
+            end
+
+            Test.@testset "rhs_oop function has correct signature (u, p, t)" begin
+                vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                rhs_oop = Systems.rhs_oop(sys)
+                u = [1.0, 2.0]
+                p = Common.ODEParameters(nothing)
+                t = 0.0
+                du = rhs_oop(u, p, t)
+                Test.@test du ≈ [-1.0, -2.0] atol=1e-10
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - SVector unit
+        # ====================================================================
+
+        Test.@testset "SVector unit" begin
+            Test.@testset "rhs_oop with SVector" begin
+                vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                rhs_oop = Systems.rhs_oop(sys)
+                u = SA[1.0, 2.0]
+                p = Common.ODEParameters(nothing)
+                du = rhs_oop(u, p, 0.0)
+                Test.@test du == SA[-1.0, -2.0]
             end
         end
 

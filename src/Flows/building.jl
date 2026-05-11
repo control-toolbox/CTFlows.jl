@@ -31,3 +31,69 @@ function Flow(data::Data.VectorField; opts...)
     integrator = Integrators.build_integrator(; opts...)
     return build_flow(system, integrator)
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+High-level constructor for `HamiltonianFlow` from Hamiltonian vector field data.
+
+This constructor builds a complete Hamiltonian flow by:
+1. Building a `HamiltonianVectorFieldSystem` from the Hamiltonian vector field data
+2. Building a `SciML` integrator with the given options
+3. Routing options through the integrator's CTSolvers strategy
+4. Combining them into a callable `HamiltonianFlow`
+
+# Arguments
+- `data::CTFlows.Data.HamiltonianVectorField`: The Hamiltonian vector field defining the system dynamics.
+- `opts...`: Keyword options passed to the integrator's strategy.
+
+# Returns
+- `CTFlows.Flows.HamiltonianFlow`: The complete Hamiltonian flow ready for integration.
+
+# Example
+```julia
+using CTFlows.Data, CTFlows.Flows, CTFlows.Common
+
+hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); autonomous=true, variable=false)
+flow = Flows.Flow(hvf; reltol=1e-8)
+```
+
+See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.build_system`](@ref), [`CTFlows.Integrators.build_integrator`](@ref).
+"""
+function Flow(data::Data.HamiltonianVectorField; opts...)
+    system = Systems.build_system(data)
+    integrator = Integrators.build_integrator(; opts...)
+    return build_flow(system, integrator)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+High-level constructor for `HamiltonianFlow` from Hamiltonian vector field data with known state dimension.
+
+This constructor builds a complete Hamiltonian flow with a known state dimension for
+type stability and validation. The dimension is stored as a type parameter.
+
+# Arguments
+- `data::CTFlows.Data.HamiltonianVectorField`: The Hamiltonian vector field defining the system dynamics.
+- `n_state::Int`: The state dimension (number of state variables, not including costates).
+- `opts...`: Keyword options passed to the integrator's strategy.
+
+# Returns
+- `CTFlows.Flows.HamiltonianFlow`: The complete Hamiltonian flow ready for integration.
+
+# Example
+```julia
+using CTFlows.Data, CTFlows.Flows, CTFlows.Common
+
+hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); autonomous=true, variable=false)
+flow = Flows.Flow(hvf, 3; reltol=1e-8)  # with known state dimension
+```
+
+See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.build_system`](@ref), [`CTFlows.Integrators.build_integrator`](@ref).
+"""
+function Flow(data::Data.HamiltonianVectorField, n_state::Int; opts...)
+    system = Systems.build_system(data, n_state)
+    integrator = Integrators.build_integrator(; opts...)
+    return build_flow(system, integrator)
+end

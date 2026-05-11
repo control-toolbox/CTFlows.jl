@@ -25,7 +25,8 @@ using ..Data
 # ==============================================================================
 
 include(joinpath(@__DIR__, "abstract_system.jl"))
-include(joinpath(@__DIR__, "vector_field_system.jl"))   
+include(joinpath(@__DIR__, "vector_field_system.jl"))
+include(joinpath(@__DIR__, "hamiltonian_vector_field_system.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 
 # ==============================================================================
@@ -34,7 +35,10 @@ include(joinpath(@__DIR__, "building.jl"))
 
 export AbstractSystem, AbstractStateSystem, AbstractHamiltonianSystem
 export rhs
+export rhs_oop
+export state_dimension
 export VectorFieldSystem
+export HamiltonianVectorFieldSystem
 export build_system
 
 end # module Systems
