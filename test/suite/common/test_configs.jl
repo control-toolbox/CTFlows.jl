@@ -13,9 +13,8 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 
 """
 Fake config type for testing the AbstractConfig contract.
-Does not implement tspan to trigger NotImplemented error.
 """
-struct FakeConfig{X0} <: Common.AbstractConfig{X0}
+struct FakeConfig{X0} <: Common.AbstractConfigWithMaC{X0, Common.PointTag, Common.StateTag}
     x0::X0
 end
 
@@ -23,7 +22,7 @@ end
 Fake config type that implements the tspan contract.
 Used to test contract implementation without relying on concrete types.
 """
-struct FakeConfigWithTspan{X0} <: Common.AbstractConfig{X0}
+struct FakeConfigWithTspan{X0} <: Common.AbstractConfigWithMaC{X0, Common.PointTag, Common.StateTag}
     t0::Float64
     tf::Float64
     x0::X0
@@ -45,6 +44,25 @@ function test_configs()
         # ====================================================================
 
         Test.@testset "Abstract Type" begin
+            Test.@testset "Trait Aliases" begin
+                # Mode aliases
+                Test.@test Common.StatePointConfig <: Common.AbstractPointConfig
+                Test.@test Common.HamiltonianPointConfig <: Common.AbstractPointConfig
+                Test.@test Common.StateTrajectoryConfig <: Common.AbstractTrajectoryConfig
+                Test.@test Common.HamiltonianTrajectoryConfig <: Common.AbstractTrajectoryConfig
+
+                # Content aliases
+                Test.@test Common.StatePointConfig <: Common.AbstractStateConfig
+                Test.@test Common.StateTrajectoryConfig <: Common.AbstractStateConfig
+                Test.@test Common.HamiltonianPointConfig <: Common.AbstractHamiltonianConfig
+                Test.@test Common.HamiltonianTrajectoryConfig <: Common.AbstractHamiltonianConfig
+
+                # Negative checks
+                Test.@test !(Common.StatePointConfig <: Common.AbstractHamiltonianConfig)
+                Test.@test !(Common.HamiltonianPointConfig <: Common.AbstractStateConfig)
+                Test.@test !(Common.StatePointConfig <: Common.AbstractTrajectoryConfig)
+            end
+
             Test.@testset "initial_condition is exported" begin
                 Test.@test isdefined(Common, :initial_condition)
             end
@@ -101,6 +119,18 @@ function test_configs()
             Test.@testset "initial_costate for HamiltonianTrajectoryConfig" begin
                 config = Common.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
                 Test.@test Common.initial_costate(config) == [0.5, 0.3]
+            end
+
+            Test.@testset "tspan unified dispatch" begin
+                sp = Common.StatePointConfig(0.0, [1.0], 1.0)
+                st = Common.StateTrajectoryConfig((0.0, 1.0), [1.0])
+                hp = Common.HamiltonianPointConfig(0.0, [1.0], [0.5], 1.0)
+                ht = Common.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0], [0.5])
+
+                Test.@test Common.tspan(sp) == (0.0, 1.0)
+                Test.@test Common.tspan(st) == (0.0, 1.0)
+                Test.@test Common.tspan(hp) == (0.0, 1.0)
+                Test.@test Common.tspan(ht) == (0.0, 1.0)
             end
 
             Test.@testset "initial_costate throws PreconditionError for non-Hamiltonian configs" begin
@@ -226,11 +256,6 @@ function test_configs()
         # ====================================================================
 
         Test.@testset "tspan Contract" begin
-            Test.@testset "AbstractConfig tspan throws NotImplemented" begin
-                config = FakeConfig(1.0)
-                Test.@test_throws Exceptions.NotImplemented Common.tspan(config)
-            end
-
             Test.@testset "StatePointConfig tspan returns tuple" begin
                 config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 ts = Common.tspan(config)

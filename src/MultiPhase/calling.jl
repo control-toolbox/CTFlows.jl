@@ -5,62 +5,36 @@
 """
 $(TYPEDSIGNATURES)
 
-Extract the initial state from a point configuration.
+Extract the initial state from a state configuration.
 
 # Arguments
-- `config::Common.StatePointConfig`: The point configuration.
+- `config::Common.AbstractStateConfig`: The state configuration (StatePointConfig or StateTrajectoryConfig).
 
 # Returns
 - Initial state vector.
 
-See also: [`CTFlows.Common.initial_state`](@ref).
+See also: [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.AbstractStateConfig`](@ref).
 """
-_extract_initial_state(config::Common.StatePointConfig) = Common.initial_state(config)
-
-"""
-$(TYPEDSIGNATURES)
-
-Extract the initial state from a trajectory configuration.
-
-# Arguments
-- `config::Common.StateTrajectoryConfig`: The trajectory configuration.
-
-# Returns
-- Initial state vector.
-
-See also: [`CTFlows.Common.initial_state`](@ref).
-"""
-_extract_initial_state(config::Common.StateTrajectoryConfig) = Common.initial_state(config)
+function _extract_initial_state(config::Common.AbstractStateConfig)
+    return Common.initial_state(config)
+end
 
 """
 $(TYPEDSIGNATURES)
 
-Extract the initial state and costate from a Hamiltonian point configuration.
+Extract the initial state and costate from a Hamiltonian configuration.
 
 # Arguments
-- `config::Common.HamiltonianPointConfig`: The Hamiltonian point configuration.
+- `config::Common.AbstractHamiltonianConfig`: The Hamiltonian configuration (HamiltonianPointConfig or HamiltonianTrajectoryConfig).
 
 # Returns
 - Tuple of (initial_state, initial_costate).
 
-See also: [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.initial_costate`](@ref).
+See also: [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.initial_costate`](@ref), [`CTFlows.Common.AbstractHamiltonianConfig`](@ref).
 """
-_extract_initial_state(config::Common.HamiltonianPointConfig) = (Common.initial_state(config), Common.initial_costate(config))
-
-"""
-$(TYPEDSIGNATURES)
-
-Extract the initial state and costate from a Hamiltonian trajectory configuration.
-
-# Arguments
-- `config::Common.HamiltonianTrajectoryConfig`: The Hamiltonian trajectory configuration.
-
-# Returns
-- Tuple of (initial_state, initial_costate).
-
-See also: [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.initial_costate`](@ref).
-"""
-_extract_initial_state(config::Common.HamiltonianTrajectoryConfig) = (Common.initial_state(config), Common.initial_costate(config))
+function _extract_initial_state(config::Common.AbstractHamiltonianConfig)
+    return (Common.initial_state(config), Common.initial_costate(config))
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -221,9 +195,7 @@ See also: [`CTFlows.Flows.HamiltonianFlow`](@ref).
 """
 function _evaluate_phase(flow::Flows.HamiltonianFlow, t0, tf, state_tuple, ::Common.AbstractPointConfig; variable, unsafe)
     x, p = state_tuple
-    xfpf = flow(t0, x, p, tf; variable=variable, unsafe=unsafe)
-    nx = length(x)
-    return (xfpf[1:nx], xfpf[nx+1:end])
+    return flow(t0, x, p, tf; variable=variable, unsafe=unsafe)
 end
 
 """

@@ -379,42 +379,44 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return pre-computed solver options for StatePointConfig.
+Return pre-computed solver options for point integration configs.
 
-For a StatePointConfig, options like `dense`, `save_everystep`, and `save_start`
-are set to `false` to minimize memory since only the final state is needed.
+For point configs (e.g., StatePointConfig, HamiltonianPointConfig), options like
+`dense`, `save_everystep`, and `save_start` are set to `false` to minimize memory
+since only the final state is needed.
 
 # Arguments
 - `integ::SciML`: The SciML integrator with pre-computed option caches.
-- `config::Common.StatePointConfig`: The point configuration.
+- `config::Common.AbstractPointConfig`: The point configuration.
 
 # Returns
-- `Dict{Symbol,Any}`: Pre-computed options optimized for StatePointConfig.
+- `Dict{Symbol,Any}`: Pre-computed options optimized for point integration.
 
-See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref).
+See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref), [`CTFlows.Common.AbstractPointConfig`](@ref).
 """
-function Integrators.build_options(integ::SciML, config::Common.StatePointConfig)
+function Integrators.build_options(integ::SciML, config::Common.AbstractPointConfig)
     return integ.options_point
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Return pre-computed solver options for StateTrajectoryConfig.
+Return pre-computed solver options for trajectory integration configs.
 
-For a StateTrajectoryConfig, options like `dense`, `save_everystep`, and `save_start`
-are set to `true` to enable full trajectory storage and interpolation.
+For trajectory configs (e.g., StateTrajectoryConfig, HamiltonianTrajectoryConfig),
+options like `dense`, `save_everystep`, and `save_start` are set to `true` to enable
+full trajectory storage and interpolation.
 
 # Arguments
 - `integ::SciML`: The SciML integrator with pre-computed option caches.
-- `config::Common.StateTrajectoryConfig`: The trajectory configuration.
+- `config::Common.AbstractTrajectoryConfig`: The trajectory configuration.
 
 # Returns
-- `Dict{Symbol,Any}`: Pre-computed options optimized for StateTrajectoryConfig.
+- `Dict{Symbol,Any}`: Pre-computed options optimized for trajectory integration.
 
-See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref).
+See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref), [`CTFlows.Common.AbstractTrajectoryConfig`](@ref).
 """
-function Integrators.build_options(integ::SciML, config::Common.StateTrajectoryConfig)
+function Integrators.build_options(integ::SciML, config::Common.AbstractTrajectoryConfig)
     return integ.options_trajectory
 end
 
@@ -423,14 +425,14 @@ $(TYPEDSIGNATURES)
 
 Return pre-computed solver options for fallback case (Nothing).
 
-Defaults to StateTrajectoryConfig options when no configuration is provided.
+Defaults to trajectory options when no configuration is provided.
 
 # Arguments
 - `integ::SciML`: The SciML integrator with pre-computed option caches.
 - `config::Nothing`: No configuration provided (fallback).
 
 # Returns
-- `Dict{Symbol,Any}`: Pre-computed options for StateTrajectoryConfig (fallback).
+- `Dict{Symbol,Any}`: Pre-computed options for trajectory integration (fallback).
 
 See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref).
 """
@@ -543,46 +545,6 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build solver options for a HamiltonianPointConfig.
-
-Returns the point integration options from the SciML integrator strategy.
-
-# Arguments
-- `integ::SciML`: The SciML integrator strategy.
-- `config::Common.HamiltonianPointConfig`: The Hamiltonian point configuration.
-
-# Returns
-- `Dict{Symbol,Any}`: The resolved solver options for point integration.
-
-See also: [`CTFlows.Integrators.SciML`](@ref), [`CTFlows.Common.HamiltonianPointConfig`](@ref).
-"""
-function Integrators.build_options(integ::SciML, config::Common.HamiltonianPointConfig)
-    return integ.options_point
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Build solver options for a HamiltonianTrajectoryConfig.
-
-Returns the trajectory integration options from the SciML integrator strategy.
-
-# Arguments
-- `integ::SciML`: The SciML integrator strategy.
-- `config::Common.HamiltonianTrajectoryConfig`: The Hamiltonian trajectory configuration.
-
-# Returns
-- `Dict{Symbol,Any}`: The resolved solver options for trajectory integration.
-
-See also: [`CTFlows.Integrators.SciML`](@ref), [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref).
-"""
-function Integrators.build_options(integ::SciML, config::Common.HamiltonianTrajectoryConfig)
-    return integ.options_trajectory
-end
-
-"""
-$(TYPEDSIGNATURES)
-
 Build an `ODEProblem` from a system and configuration.
 
 Dispatches between in-place and out-of-place RHS based on the mutability of the initial condition:
@@ -606,7 +568,12 @@ This allows zero-allocation integration with immutable array types like `StaticA
 
 See also: [`CTFlows.Systems.rhs`](@ref), [`CTFlows.Systems.rhs_oop`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
 """
-function Integrators.build_problem(integ::SciML, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)
+function Integrators.build_problem(
+    integ::SciML, 
+    system::Systems.AbstractSystem, 
+    config::Common.AbstractConfig; 
+    variable,
+    )
     u0 = Common.initial_condition(config)
     p = Common.ODEParameters(variable)
     if ismutable(u0)

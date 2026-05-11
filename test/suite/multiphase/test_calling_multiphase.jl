@@ -146,20 +146,27 @@ function Solutions.evaluate_at(result::MockIntegrationResult, t::Real)
     end
 end
 
-function Solutions.build_solution(result::MockIntegrationResult, sys, config)
+function Solutions.build_solution(result::MockIntegrationResult, sys::Systems.AbstractStateSystem, config::Common.AbstractPointConfig{<:Any, Common.StateTag})
     # For StatePointConfig, return the final state directly (as expected by _evaluate_phase)
-    if config isa Common.StatePointConfig
-        return result.u
-    elseif config isa Common.HamiltonianPointConfig
-        # For HamiltonianFlow, return the concatenated state (will be split by _evaluate_phase)
-        return result.u
-    elseif config isa Common.StateTrajectoryConfig
-        # For StateTrajectoryConfig with StateFlow, return the full result
-        return result
-    elseif config isa Common.HamiltonianTrajectoryConfig
-        # For StateTrajectoryConfig with HamiltonianFlow, return the full result
-        return result
-    end
+    return result.u
+end
+
+function Solutions.build_solution(result::MockIntegrationResult, sys::Systems.AbstractStateSystem, config::Common.AbstractTrajectoryConfig{<:Any, Common.StateTag})
+    # For StateTrajectoryConfig with StateFlow, return the full result
+    return result
+end
+
+function Solutions.build_solution(result::MockIntegrationResult, sys::Systems.AbstractHamiltonianSystem, config::Common.AbstractPointConfig{<:Any, Common.HamiltonianTag})
+    # For HamiltonianFlow, return a tuple (x, p) matching _ham_split_solution behavior
+    x_len = length(result.u) ÷ 2
+    x_part = result.u[1:x_len]
+    p_part = result.u[x_len+1:end]
+    return (x_part, p_part)
+end
+
+function Solutions.build_solution(result::MockIntegrationResult, sys::Systems.AbstractHamiltonianSystem, config::Common.AbstractTrajectoryConfig{<:Any, Common.HamiltonianTag})
+    # For HamiltonianTrajectoryConfig, return the full result
+    return result
 end
 
 # ==============================================================================
