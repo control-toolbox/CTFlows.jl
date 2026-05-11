@@ -22,6 +22,13 @@ struct FakeSystemForCalling <: Systems.AbstractStateSystem{Common.Autonomous, Co
 end
 
 """
+Fake Hamiltonian system for testing the calling workflow.
+"""
+struct FakeHamiltonianSystemForCalling <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed}
+    state_dim::Int
+end
+
+"""
 Fake integration result.
 """
 struct FakeIntegrationResultForCalling <: Solutions.AbstractIntegrationResult end
@@ -77,6 +84,22 @@ function Solutions.build_solution(
     config::Common.TrajectoryConfig
 )
     return :fake_vector_field_solution
+end
+
+function Solutions.build_solution(
+    result::FakeIntegrationResultForCalling,
+    system::FakeHamiltonianSystemForCalling,
+    config::Common.HamiltonianPointConfig
+)
+    return (:fake_xf, :fake_pf)
+end
+
+function Solutions.build_solution(
+    result::FakeIntegrationResultForCalling,
+    system::FakeHamiltonianSystemForCalling,
+    config::Common.HamiltonianTrajectoryConfig
+)
+    return :fake_hamiltonian_solution
 end
 
 """
@@ -168,6 +191,34 @@ function test_calling_flows()
                 Test.@test integ.build_options_called === true
                 Test.@test integ.solve_problem_called === true
                 Test.@test result == :fake_flow_solution
+            end
+
+            Test.@testset "call with HamiltonianPointConfig" begin
+                sys = FakeHamiltonianSystemForCalling(2)
+                integ = FakeIntegratorForCalling()
+                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                config = Common.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+
+                result = Flows.call(flow, config; variable=nothing, unsafe=false)
+
+                Test.@test integ.build_problem_called === true
+                Test.@test integ.build_options_called === true
+                Test.@test integ.solve_problem_called === true
+                Test.@test result == (:fake_xf, :fake_pf)
+            end
+
+            Test.@testset "call with HamiltonianTrajectoryConfig" begin
+                sys = FakeHamiltonianSystemForCalling(2)
+                integ = FakeIntegratorForCalling()
+                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                config = Common.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
+
+                result = Flows.call(flow, config; variable=nothing, unsafe=false)
+
+                Test.@test integ.build_problem_called === true
+                Test.@test integ.build_options_called === true
+                Test.@test integ.solve_problem_called === true
+                Test.@test result === :fake_hamiltonian_solution
             end
         end
 

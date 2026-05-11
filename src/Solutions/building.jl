@@ -107,7 +107,7 @@ See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Com
 """
 function build_solution(result::Integrators.AbstractIntegrationResult, sys::Systems.HamiltonianVectorFieldSystem, config::Common.HamiltonianPointConfig)
     u = Integrators.final_state(result)
-    n = length(Common.initial_condition(config))
+    n = length(Common.initial_state(config))
     return (u[1:n], u[n+1:2n])
 end
 

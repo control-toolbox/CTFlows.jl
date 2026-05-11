@@ -80,12 +80,93 @@ function test_building_solutions()
         end
 
         # ====================================================================
+        # UNIT TESTS - build_solution for HamiltonianPointConfig
+        # ====================================================================
+
+        Test.@testset "build_solution - HamiltonianPointConfig" begin
+            Test.@testset "scalar initial condition returns tuple of scalars" begin
+                sys = Systems.HamiltonianVectorFieldSystem(
+                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=false, is_variable=false),
+                    1
+                )
+                result = FakeIntegrationResult([[1.0, 0.5], [0.5, 0.25]])
+                config = Common.HamiltonianPointConfig(0.0, 1.0, 0.5, 1.0)
+                
+                output = Solutions.build_solution(result, sys, config)
+                Test.@test output == (0.5, 0.25)
+                Test.@test typeof(config) == Common.HamiltonianPointConfig{Float64, Float64, Float64, Float64}
+            end
+
+            Test.@testset "vector initial condition returns tuple of vectors" begin
+                sys = Systems.HamiltonianVectorFieldSystem(
+                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=false, is_variable=false),
+                    2
+                )
+                result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])
+                config = Common.HamiltonianPointConfig(0.0, [1.0, 2.0], [0.5, 0.3], 1.0)
+                
+                output = Solutions.build_solution(result, sys, config)
+                Test.@test output == ([0.5, 1.0], [0.25, 0.15])
+                Test.@test typeof(config) <: Common.HamiltonianPointConfig{Float64, <:AbstractVector, <:AbstractVector, Float64}
+            end
+
+            Test.@testset "vector initial condition uses correct dimension split" begin
+                # Test the bug fix: should use length(initial_state) not length(initial_condition)
+                sys = Systems.HamiltonianVectorFieldSystem(
+                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=false, is_variable=false),
+                    3
+                )
+                # Final state has 6 elements: 3 state + 3 costate
+                result = FakeIntegrationResult([[1.0, 2.0, 3.0, 0.5, 0.6, 0.7], [0.5, 1.0, 1.5, 0.25, 0.3, 0.35]])
+                config = Common.HamiltonianPointConfig(0.0, [1.0, 2.0, 3.0], [0.5, 0.6, 0.7], 1.0)
+                
+                output = Solutions.build_solution(result, sys, config)
+                # Should split into first 3 (state) and last 3 (costate)
+                Test.@test output == ([0.5, 1.0, 1.5], [0.25, 0.3, 0.35])
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - build_solution for HamiltonianTrajectoryConfig
+        # ====================================================================
+
+        Test.@testset "build_solution - HamiltonianTrajectoryConfig" begin
+            Test.@testset "returns HamiltonianVectorFieldSolution wrapping result" begin
+                sys = Systems.HamiltonianVectorFieldSystem(
+                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=false, is_variable=false),
+                    2
+                )
+                result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])
+                config = Common.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 2.0], [0.5, 0.3])
+                
+                output = Solutions.build_solution(result, sys, config)
+                Test.@test output isa Solutions.HamiltonianVectorFieldSolution
+            end
+
+            Test.@testset "HamiltonianVectorFieldSolution contains correct result" begin
+                sys = Systems.HamiltonianVectorFieldSystem(
+                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=false, is_variable=false),
+                    2
+                )
+                result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])
+                config = Common.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 2.0], [0.5, 0.3])
+                
+                output = Solutions.build_solution(result, sys, config)
+                Test.@test output.result === result
+            end
+        end
+
+        # ====================================================================
         # UNIT TESTS - Exports Verification
         # ====================================================================
 
         Test.@testset "Exports Verification" begin
             Test.@testset "build_solution is exported" begin
                 Test.@test isdefined(Solutions, :build_solution)
+            end
+
+            Test.@testset "HamiltonianVectorFieldSolution is exported" begin
+                Test.@test isdefined(Solutions, :HamiltonianVectorFieldSolution)
             end
         end
     end
