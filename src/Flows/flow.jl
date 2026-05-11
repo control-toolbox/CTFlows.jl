@@ -255,7 +255,7 @@ $(TYPEDSIGNATURES)
 
 Convenience call for `StateFlow` with point configuration.
 
-Builds a `PointConfig` internally and calls the flow with it.
+Builds a `StatePointConfig` internally and calls the flow with it.
 
 # Arguments
 - `f::StateFlow`: The state flow to integrate.
@@ -277,7 +277,7 @@ julia> flow = StateFlow(system, integrator)
 julia> sol = flow(0.0, [1.0, 0.0], 1.0)
 \`\`\`
 
-See also: [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+See also: [`CTFlows.Common.StatePointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
 """
 function (f::StateFlow)(
     t0::Real,
@@ -286,7 +286,7 @@ function (f::StateFlow)(
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 )
-    return call(f, Common.PointConfig(t0, x0, tf); variable=variable, unsafe=unsafe)
+    return call(f, Common.StatePointConfig(t0, x0, tf); variable=variable, unsafe=unsafe)
 end
 
 """
@@ -335,7 +335,7 @@ $(TYPEDSIGNATURES)
 
 Convenience call for `StateFlow` with trajectory configuration.
 
-Builds a `TrajectoryConfig` internally and calls the flow with it.
+Builds a `StateTrajectoryConfig` internally and calls the flow with it.
 
 # Arguments
 - `f::StateFlow`: The state flow to integrate.
@@ -356,7 +356,7 @@ julia> flow = StateFlow(system, integrator)
 julia> sol = flow((0.0, 1.0), [1.0, 0.0])
 \`\`\`
 
-See also: [`CTFlows.Common.TrajectoryConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+See also: [`CTFlows.Common.StateTrajectoryConfig`](@ref), [`CTFlows.Flows.call`](@ref).
 """
 function (f::StateFlow)(
     tspan::Tuple{Real, Real},
@@ -364,7 +364,7 @@ function (f::StateFlow)(
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 )
-    return call(f, Common.TrajectoryConfig(tspan, x0); variable=variable, unsafe=unsafe)
+    return call(f, Common.StateTrajectoryConfig(tspan, x0); variable=variable, unsafe=unsafe)
 end
 
 """

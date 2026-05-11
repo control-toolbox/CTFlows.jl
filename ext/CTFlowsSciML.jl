@@ -290,8 +290,8 @@ Tuple of option keys that support automatic resolution based on configuration ty
 
 These options use the `:auto` sentinel value in their metadata and are resolved
 dynamically during integrator construction:
-- For `PointConfig`: set to `false` (only final state needed)
-- For `TrajectoryConfig`: set to `true` (full trajectory storage needed)
+- For `StatePointConfig`: set to `false` (only final state needed)
+- For `StateTrajectoryConfig`: set to `true` (full trajectory storage needed)
 
 Users can override automatic resolution by providing explicit `true`/`false` values
 when constructing the integrator.
@@ -306,9 +306,9 @@ Build a `SciML` integrator with validated options and pre-computed config-specif
 This function constructs a SciML integrator with automatic resolution of config-dependent
 options. Options in `_AUTO_OPTION_KEYS` support the `:auto` sentinel value, which is
 resolved based on the configuration type used during integration:
-- For `PointConfig` (e.g., `flow(t0, x0, tf)`): options set to `false` to minimize memory
+- For `StatePointConfig` (e.g., `flow(t0, x0, tf)`): options set to `false` to minimize memory
   since only the final state is needed
-- For `TrajectoryConfig` (e.g., `flow((t0, tf), x0)`): options set to `true` to enable
+- For `StateTrajectoryConfig` (e.g., `flow((t0, tf), x0)`): options set to `true` to enable
   full trajectory storage and interpolation
 
 The resolved options are pre-computed and cached in the integrator for performance,
@@ -332,7 +332,7 @@ avoiding repeated resolution during integration.
   on the configuration type.
 
 See also: [`CTFlows.Integrators.build_options`](@ref), [`CTFlows.Integrators.SciML`](@ref),
-[`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Common.TrajectoryConfig`](@ref).
+[`CTFlows.Common.StatePointConfig`](@ref), [`CTFlows.Common.StateTrajectoryConfig`](@ref).
 """
 function CTFlows.Integrators.build_sciml_integrator(
     ::Type{CTFlows.Integrators.SciMLTag}; mode::Symbol = :strict, kwargs...,
@@ -355,13 +355,13 @@ function CTFlows.Integrators.build_sciml_integrator(
         )
     end
     
-    # Pre-compute options for PointConfig
+    # Pre-compute options for StatePointConfig
     options_point = copy(raw)
     for key in _AUTO_OPTION_KEYS
         get(options_point, key, :auto) === :auto && (options_point[key] = false)
     end
     
-    # Pre-compute options for TrajectoryConfig
+    # Pre-compute options for StateTrajectoryConfig
     options_trajectory = copy(raw)
     for key in _AUTO_OPTION_KEYS
         get(options_trajectory, key, :auto) === :auto && (options_trajectory[key] = true)
@@ -379,42 +379,42 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return pre-computed solver options for PointConfig.
+Return pre-computed solver options for StatePointConfig.
 
-For a PointConfig, options like `dense`, `save_everystep`, and `save_start`
+For a StatePointConfig, options like `dense`, `save_everystep`, and `save_start`
 are set to `false` to minimize memory since only the final state is needed.
 
 # Arguments
 - `integ::SciML`: The SciML integrator with pre-computed option caches.
-- `config::Common.PointConfig`: The point configuration.
+- `config::Common.StatePointConfig`: The point configuration.
 
 # Returns
-- `Dict{Symbol,Any}`: Pre-computed options optimized for PointConfig.
+- `Dict{Symbol,Any}`: Pre-computed options optimized for StatePointConfig.
 
 See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref).
 """
-function Integrators.build_options(integ::SciML, config::Common.PointConfig)
+function Integrators.build_options(integ::SciML, config::Common.StatePointConfig)
     return integ.options_point
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Return pre-computed solver options for TrajectoryConfig.
+Return pre-computed solver options for StateTrajectoryConfig.
 
-For a TrajectoryConfig, options like `dense`, `save_everystep`, and `save_start`
+For a StateTrajectoryConfig, options like `dense`, `save_everystep`, and `save_start`
 are set to `true` to enable full trajectory storage and interpolation.
 
 # Arguments
 - `integ::SciML`: The SciML integrator with pre-computed option caches.
-- `config::Common.TrajectoryConfig`: The trajectory configuration.
+- `config::Common.StateTrajectoryConfig`: The trajectory configuration.
 
 # Returns
-- `Dict{Symbol,Any}`: Pre-computed options optimized for TrajectoryConfig.
+- `Dict{Symbol,Any}`: Pre-computed options optimized for StateTrajectoryConfig.
 
 See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref).
 """
-function Integrators.build_options(integ::SciML, config::Common.TrajectoryConfig)
+function Integrators.build_options(integ::SciML, config::Common.StateTrajectoryConfig)
     return integ.options_trajectory
 end
 
@@ -423,14 +423,14 @@ $(TYPEDSIGNATURES)
 
 Return pre-computed solver options for fallback case (Nothing).
 
-Defaults to TrajectoryConfig options when no configuration is provided.
+Defaults to StateTrajectoryConfig options when no configuration is provided.
 
 # Arguments
 - `integ::SciML`: The SciML integrator with pre-computed option caches.
 - `config::Nothing`: No configuration provided (fallback).
 
 # Returns
-- `Dict{Symbol,Any}`: Pre-computed options for TrajectoryConfig (fallback).
+- `Dict{Symbol,Any}`: Pre-computed options for StateTrajectoryConfig (fallback).
 
 See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref).
 """

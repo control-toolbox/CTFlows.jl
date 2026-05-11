@@ -12,7 +12,7 @@ abstract type AbstractVectorFieldSolution end
 """
 $(TYPEDEF)
 
-Container for the integration result from a TrajectoryConfig integration.
+Container for the integration result from a StateTrajectoryConfig integration.
 
 This type wraps the integration result returned by integrators and provides
 semantic accessors for time grids and state functions.

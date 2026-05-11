@@ -75,13 +75,13 @@ Strategies.options(integ::MockIntegrator) = Options.StrategyOptions()
 # Mock Integrator Interface Implementation
 # ==============================================================================
 
-function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Common.PointConfig; variable)
+function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Common.StatePointConfig; variable)
     x0 = Common.initial_state(config)
     tspan = Common.tspan(config)
     return MockODEProblem(x0, tspan)
 end
 
-function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Common.TrajectoryConfig; variable)
+function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Common.StateTrajectoryConfig; variable)
     x0 = Common.initial_state(config)
     tspan = Common.tspan(config)
     return MockODEProblem(x0, tspan)
@@ -99,11 +99,11 @@ function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractS
     return MockODEProblem(vcat(x0, p0), tspan)
 end
 
-function Integrators.build_options(integ::MockIntegrator, config::Common.PointConfig)
+function Integrators.build_options(integ::MockIntegrator, config::Common.StatePointConfig)
     return Dict{Symbol, Any}()
 end
 
-function Integrators.build_options(integ::MockIntegrator, config::Common.TrajectoryConfig)
+function Integrators.build_options(integ::MockIntegrator, config::Common.StateTrajectoryConfig)
     return Dict{Symbol, Any}()
 end
 
@@ -147,17 +147,17 @@ function Solutions.evaluate_at(result::MockIntegrationResult, t::Real)
 end
 
 function Solutions.build_solution(result::MockIntegrationResult, sys, config)
-    # For PointConfig, return the final state directly (as expected by _evaluate_phase)
-    if config isa Common.PointConfig
+    # For StatePointConfig, return the final state directly (as expected by _evaluate_phase)
+    if config isa Common.StatePointConfig
         return result.u
     elseif config isa Common.HamiltonianPointConfig
         # For HamiltonianFlow, return the concatenated state (will be split by _evaluate_phase)
         return result.u
-    elseif config isa Common.TrajectoryConfig
-        # For TrajectoryConfig with StateFlow, return the full result
+    elseif config isa Common.StateTrajectoryConfig
+        # For StateTrajectoryConfig with StateFlow, return the full result
         return result
     elseif config isa Common.HamiltonianTrajectoryConfig
-        # For TrajectoryConfig with HamiltonianFlow, return the full result
+        # For StateTrajectoryConfig with HamiltonianFlow, return the full result
         return result
     end
 end
@@ -189,14 +189,14 @@ function test_calling_multiphase()
             x0 = [1.0, 2.0]
             p0 = [0.5, 0.3]
 
-            Test.@testset "PointConfig" begin
-                config = Common.PointConfig(0.0, x0, 1.0)
+            Test.@testset "StatePointConfig" begin
+                config = Common.StatePointConfig(0.0, x0, 1.0)
                 result = MultiPhase._extract_initial_state(config)
                 Test.@test result === x0
             end
 
-            Test.@testset "TrajectoryConfig" begin
-                config = Common.TrajectoryConfig((0.0, 1.0), x0)
+            Test.@testset "StateTrajectoryConfig" begin
+                config = Common.StateTrajectoryConfig((0.0, 1.0), x0)
                 result = MultiPhase._extract_initial_state(config)
                 Test.@test result === x0
             end
@@ -301,30 +301,30 @@ function test_calling_multiphase()
             x = [1.0, 2.0]
             p = [0.5, 0.3]
 
-            Test.@testset "StateFlow with PointConfig" begin
+            Test.@testset "StateFlow with StatePointConfig" begin
                 sys = FakeStateSystem([1.0, 2.0])
                 integ = MockIntegrator(2.0)  # Multiplier of 2
                 flow = Flows.StateFlow(sys, integ)
                 t0 = 0.0
                 tf = 1.0
 
-                result = MultiPhase._evaluate_phase(flow, t0, tf, x, Common.PointConfig(t0, x, tf); variable=Common.__variable(), unsafe=Common.__unsafe())
+                result = MultiPhase._evaluate_phase(flow, t0, tf, x, Common.StatePointConfig(t0, x, tf); variable=Common.__variable(), unsafe=Common.__unsafe())
                 
                 Test.@test result == x * 2
             end
 
-            Test.@testset "StateFlow with TrajectoryConfig" begin
+            Test.@testset "StateFlow with StateTrajectoryConfig" begin
                 sys = FakeStateSystem([1.0, 2.0])
                 integ = MockIntegrator(2.0)
                 flow = Flows.StateFlow(sys, integ)
                 tspan = (0.0, 1.0)
 
-                result = MultiPhase._evaluate_phase(flow, 0.0, 1.0, x, Common.TrajectoryConfig(tspan, x); variable=Common.__variable(), unsafe=Common.__unsafe())
+                result = MultiPhase._evaluate_phase(flow, 0.0, 1.0, x, Common.StateTrajectoryConfig(tspan, x); variable=Common.__variable(), unsafe=Common.__unsafe())
                 
                 Test.@test result.u == x * 2
             end
 
-            Test.@testset "HamiltonianFlow with PointConfig" begin
+            Test.@testset "HamiltonianFlow with StatePointConfig" begin
                 hsys = FakeHamiltonianSystem([1.0, 2.0])
                 integ = MockIntegrator(2.0)
                 flow = Flows.HamiltonianFlow(hsys, integ)
@@ -337,7 +337,7 @@ function test_calling_multiphase()
                 Test.@test result[2] == p * 2
             end
 
-            Test.@testset "HamiltonianFlow with TrajectoryConfig" begin
+            Test.@testset "HamiltonianFlow with StateTrajectoryConfig" begin
                 hsys = FakeHamiltonianSystem([1.0, 2.0])
                 integ = MockIntegrator(2.0)
                 flow = Flows.HamiltonianFlow(hsys, integ)
@@ -349,7 +349,7 @@ function test_calling_multiphase()
             end
         end
 
-        Test.@testset "_evaluate_multiphase with PointConfig" begin
+        Test.@testset "_evaluate_multiphase with StatePointConfig" begin
             x0 = [1.0, 2.0]
             p0 = [0.5, 0.3]
 
@@ -360,7 +360,7 @@ function test_calling_multiphase()
                 flow2 = Flows.StateFlow(sys, integ)
                 mpf = flow1 * (0.5, flow2)
 
-                result = MultiPhase._evaluate_multiphase(mpf, Common.PointConfig(0.0, x0, 1.0); variable=Common.__variable(), unsafe=Common.__unsafe())
+                result = MultiPhase._evaluate_multiphase(mpf, Common.StatePointConfig(0.0, x0, 1.0); variable=Common.__variable(), unsafe=Common.__unsafe())
                 
                 # Each phase multiplies by 2, so final is x0 * 2 * 2 = x0 * 4
                 Test.@test result == x0 * 4
@@ -374,7 +374,7 @@ function test_calling_multiphase()
                 jump = [0.1, 0.2]
                 mpf = flow1 * (0.5, jump, flow2)
 
-                result = MultiPhase._evaluate_multiphase(mpf, Common.PointConfig(0.0, x0, 1.0); variable=Common.__variable(), unsafe=Common.__unsafe())
+                result = MultiPhase._evaluate_multiphase(mpf, Common.StatePointConfig(0.0, x0, 1.0); variable=Common.__variable(), unsafe=Common.__unsafe())
                 
                 # Phase 1: x0 * 2, then jump applied, then phase 2: (x0 * 2 + jump) * 2
                 expected = (x0 * 2 + jump) * 2
@@ -410,7 +410,7 @@ function test_calling_multiphase()
             end
         end
 
-        Test.@testset "_evaluate_multiphase with TrajectoryConfig" begin
+        Test.@testset "_evaluate_multiphase with StateTrajectoryConfig" begin
             x0 = [1.0, 2.0]
             p0 = [0.5, 0.3]
 
@@ -421,7 +421,7 @@ function test_calling_multiphase()
                 flow2 = Flows.StateFlow(sys, integ)
                 mpf = flow1 * (0.5, flow2)
 
-                result = MultiPhase._evaluate_multiphase(mpf, Common.TrajectoryConfig((0.0, 1.0), x0); variable=Common.__variable(), unsafe=Common.__unsafe())
+                result = MultiPhase._evaluate_multiphase(mpf, Common.StateTrajectoryConfig((0.0, 1.0), x0); variable=Common.__variable(), unsafe=Common.__unsafe())
                 
                 # Result should be a merged MockIntegrationResult
                 Test.@test result isa MockIntegrationResult
@@ -437,7 +437,7 @@ function test_calling_multiphase()
                 jump = [0.1, 0.2]
                 mpf = flow1 * (0.5, jump, flow2)
 
-                result = MultiPhase._evaluate_multiphase(mpf, Common.TrajectoryConfig((0.0, 1.0), x0); variable=Common.__variable(), unsafe=Common.__unsafe())
+                result = MultiPhase._evaluate_multiphase(mpf, Common.StateTrajectoryConfig((0.0, 1.0), x0); variable=Common.__variable(), unsafe=Common.__unsafe())
                 
                 Test.@test result isa MockIntegrationResult
                 # Phase 1: x0*2, then jump, then phase 2: (x0*2+jump)*2

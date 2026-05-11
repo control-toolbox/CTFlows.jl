@@ -7,7 +7,7 @@ This performs the integration and builds the solution.
 
 # Arguments
 - `flow::CTFlows.Flows.AbstractFlow`: The flow to solve.
-- `config::CTFlows.Common.AbstractConfig`: The integration configuration (e.g., `PointConfig`, `TrajectoryConfig`).
+- `config::CTFlows.Common.AbstractConfig`: The integration configuration (e.g., `StatePointConfig`, `StateTrajectoryConfig`).
 - `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
 - `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
 
@@ -18,7 +18,7 @@ This performs the integration and builds the solution.
 \`\`\`julia
 # Conceptual usage pattern
 flow = Flow(system, integrator)
-config = CTFlows.Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+config = CTFlows.Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 sol = call(flow, config; variable=nothing, unsafe=false)
 \`\`\`
 

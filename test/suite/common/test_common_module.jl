@@ -42,16 +42,16 @@ function test_common_module()
                 Test.@test isabstracttype(Common.AbstractConfig)
             end
 
-            Test.@testset "PointConfig is exported" begin
-                Test.@test isdefined(Common, :PointConfig)
-                config = Common.PointConfig(0.0, [1.0], 1.0)
-                Test.@test config isa Common.PointConfig
+            Test.@testset "StatePointConfig is exported" begin
+                Test.@test isdefined(Common, :StatePointConfig)
+                config = Common.StatePointConfig(0.0, [1.0], 1.0)
+                Test.@test config isa Common.StatePointConfig
             end
 
-            Test.@testset "TrajectoryConfig is exported" begin
-                Test.@test isdefined(Common, :TrajectoryConfig)
-                config = Common.TrajectoryConfig((0.0, 1.0), [1.0])
-                Test.@test config isa Common.TrajectoryConfig
+            Test.@testset "StateTrajectoryConfig is exported" begin
+                Test.@test isdefined(Common, :StateTrajectoryConfig)
+                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0])
+                Test.@test config isa Common.StateTrajectoryConfig
             end
         end
 
@@ -62,14 +62,14 @@ function test_common_module()
         Test.@testset "Config Functions" begin
             Test.@testset "tspan is exported" begin
                 Test.@test isdefined(Common, :tspan)
-                config = Common.PointConfig(0.0, [1.0], 1.0)
+                config = Common.StatePointConfig(0.0, [1.0], 1.0)
                 ts = Common.tspan(config)
                 Test.@test ts == (0.0, 1.0)
             end
 
             Test.@testset "initial_condition is exported" begin
                 Test.@test isdefined(Common, :initial_condition)
-                config = Common.PointConfig(0.0, [1.0], 1.0)
+                config = Common.StatePointConfig(0.0, [1.0], 1.0)
                 ic = Common.initial_condition(config)
                 Test.@test ic == [1.0]
             end
@@ -223,8 +223,8 @@ function test_common_module()
             end
 
             Test.@testset "Config hierarchy" begin
-                Test.@test Common.PointConfig <: Common.AbstractConfig
-                Test.@test Common.TrajectoryConfig <: Common.AbstractConfig
+                Test.@test Common.StatePointConfig <: Common.AbstractConfig
+                Test.@test Common.StateTrajectoryConfig <: Common.AbstractConfig
             end
         end
 

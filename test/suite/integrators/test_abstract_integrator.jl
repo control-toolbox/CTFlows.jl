@@ -87,7 +87,7 @@ function test_abstract_integrator()
         Test.@testset "Contract Implementation" begin
             integ = FakeIntegrator()
             sys = FakeSystem(2)
-            config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+            config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
             Test.@testset "Problem building signature" begin
                 result = Integrators.build_problem(integ, sys, config; variable=nothing)
@@ -100,7 +100,7 @@ function test_abstract_integrator()
             end
 
             Test.@testset "build_options signature" begin
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 opts = Integrators.build_options(integ, config)
                 Test.@test opts isa Dict{Symbol,Any}
             end
@@ -113,7 +113,7 @@ function test_abstract_integrator()
         Test.@testset "NotImplemented Errors" begin
             integ = MinimalIntegrator()
             sys = FakeSystem(2)
-            config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+            config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
             Test.@testset "Problem building throws NotImplemented" begin
                 Test.@test_throws Exceptions.NotImplemented Integrators.build_problem(integ, sys, config; variable=nothing)
@@ -124,7 +124,7 @@ function test_abstract_integrator()
             end
 
             Test.@testset "build_options throws NotImplemented" begin
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 Test.@test_throws Exceptions.NotImplemented Integrators.build_options(integ, config)
             end
         end

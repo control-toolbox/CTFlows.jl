@@ -195,7 +195,7 @@ function test_sciml_extension()
                     Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 )
 
-                config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
+                config = Common.StatePointConfig(0.0, [1.0, 2.0], 1.0)
                 integ = Integrators.SciML()
 
                 # Build ODE problem
@@ -212,7 +212,7 @@ function test_sciml_extension()
                     Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
                 )
 
-                config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
+                config = Common.StatePointConfig(0.0, [1.0, 2.0], 1.0)
                 integ = Integrators.SciML()
 
                 # Build ODE problem with variable
@@ -234,7 +234,7 @@ function test_sciml_extension()
                 Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
             )
 
-            config = Common.PointConfig(0.0, [1.0, 2.0], 1.0)
+            config = Common.StatePointConfig(0.0, [1.0, 2.0], 1.0)
             integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
             # Build ODE problem
@@ -255,7 +255,7 @@ function test_sciml_extension()
                 # Create a simple ODE problem that will fail with maxiters=1
                 prob = ODEProblem((du, u, p, t) -> du .= u, [1.0], (0.0, 1.0))
                 integ = Integrators.SciML(maxiters=1)
-                config = Common.PointConfig(0.0, [1.0], 1.0)
+                config = Common.StatePointConfig(0.0, [1.0], 1.0)
                 opts = Integrators.build_options(integ, config)
 
                 # Test that solve_problem throws SolverFailure when unsafe=false
@@ -277,7 +277,7 @@ function test_sciml_extension()
                 # Create a simple ODE problem that will fail with maxiters=1
                 prob = ODEProblem((du, u, p, t) -> du .= u, [1.0], (0.0, 1.0))
                 integ = Integrators.SciML(maxiters=1)
-                config = Common.PointConfig(0.0, [1.0], 1.0)
+                config = Common.StatePointConfig(0.0, [1.0], 1.0)
                 opts = Integrators.build_options(integ, config)
 
                 # With unsafe=true, should not throw even with bad retcode
@@ -295,7 +295,7 @@ function test_sciml_extension()
                 Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
             )
 
-            config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 2.0])
+            config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 2.0])
             integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
             prob = Integrators.build_problem(integ, sys, config; variable=nothing)
@@ -318,12 +318,12 @@ function test_sciml_extension()
         # ====================================================================
 
         Test.@testset "Full Workflow" begin
-            Test.@testset "PointConfig workflow" begin
+            Test.@testset "StatePointConfig workflow" begin
                 sys = Systems.VectorFieldSystem(
                     Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 )
 
-                config = Common.PointConfig(0.0, 1.0, 1.0)
+                config = Common.StatePointConfig(0.0, 1.0, 1.0)
                 integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
                 # Build problem
@@ -341,12 +341,12 @@ function test_sciml_extension()
                 Test.@test flow_sol isa Number
             end
 
-            Test.@testset "TrajectoryConfig workflow" begin
+            Test.@testset "StateTrajectoryConfig workflow" begin
                 sys = Systems.VectorFieldSystem(
                     Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 )
 
-                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 2.0])
+                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 2.0])
                 integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
                 # Build problem
@@ -371,17 +371,17 @@ function test_sciml_extension()
 
         Test.@testset "Config-Dependent Options" begin
             integ = Integrators.SciML()
-            config_point = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
-            config_traj = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+            config_point = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            config_traj = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 
-            Test.@testset "auto defaults resolve correctly for PointConfig" begin
+            Test.@testset "auto defaults resolve correctly for StatePointConfig" begin
                 opts = Integrators.build_options(integ, config_point)
                 Test.@test opts[:dense] === false
                 Test.@test opts[:save_everystep] === false
                 Test.@test opts[:save_start] === false
             end
 
-            Test.@testset "auto defaults resolve correctly for TrajectoryConfig" begin
+            Test.@testset "auto defaults resolve correctly for StateTrajectoryConfig" begin
                 opts = Integrators.build_options(integ, config_traj)
                 Test.@test opts[:dense] === true
                 Test.@test opts[:save_everystep] === true

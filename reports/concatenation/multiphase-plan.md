@@ -108,7 +108,7 @@ grep -E "Error|Fail|Test Summary" /tmp/ctflows_phase1.log
 - Adapter `system`, `integrator`, `build_flow` pour les deux structs :
   - `build_flow(sys::Systems.AbstractStateSystem, int)` → `StateFlow(sys, int)`
   - `build_flow(sys::Systems.AbstractHamiltonianSystem, int)` → `HamiltonianFlow(sys, int)`
-- Adapter le callable `StateFlow` : `(f::StateFlow)(t0, x0, tf; ...)` → `Common.PointConfig`.
+- Adapter le callable `StateFlow` : `(f::StateFlow)(t0, x0, tf; ...)` → `Common.StatePointConfig`.
 - Ajouter les callables `HamiltonianFlow` : `(f)(t0, x0, p0, tf; ...)` → `Common.HamiltonianPointConfig` et `(f)(tspan, x0, p0; ...)` → `Common.HamiltonianTrajectoryConfig`.
 
 ### Step 9 — `src/Flows/building.jl`
@@ -188,8 +188,8 @@ grep -E "Error|Fail|Test Summary" /tmp/ctflows_phase2.log
 > 🔬 Follow `type-stability.md` — pré-allouer `t_all`/`u_all`.
 
 - `_make_phase_config`, `_extract_final_state`, `_apply_jump` (dispatch State vs Hamiltonian).
-- `call(flow, ::PointConfig)` : boucle séquentielle.
-- `call(flow, ::TrajectoryConfig)` : fusion progressive.
+- `call(flow, ::StatePointConfig)` : boucle séquentielle.
+- `call(flow, ::StateTrajectoryConfig)` : fusion progressive.
 - Stub `_build_merged_solution` → `ExtensionError`.
 
 ### Step 17 — `ext/CTFlowsSciML.jl`
@@ -210,7 +210,7 @@ Créer `test/suite/multiphase/test_multiphase.jl` :
 - `@testset "Concatenation"` : `*` sans saut, avec saut, chaînage 3 phases, aplatissement.
 - `@testset "Type constraints"` : types `S` différents → `MethodError`.
 - `@testset "Validation"` : temps non croissants → `IncorrectArgument`.
-- `@testset "call PointConfig"` et `@testset "call TrajectoryConfig"` avec flot trivial.
+- `@testset "call StatePointConfig"` et `@testset "call StateTrajectoryConfig"` avec flot trivial.
 - `@testset "Extension stub"` : `_build_merged_solution` → `ExtensionError`.
 
 ```bash

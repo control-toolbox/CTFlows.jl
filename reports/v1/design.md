@@ -9,7 +9,7 @@ built around one key simplification: **a single strategy family**.
 CTFlows organises its code along three concerns:
 
 - **Objects** — `AbstractSystem`, `AbstractFlow`, `AbstractSolution`, and the config types
-  `PointConfig` / `TrajectoryConfig`. They are *what* is acted upon or returned.
+  `StatePointConfig` / `StateTrajectoryConfig`. They are *what* is acted upon or returned.
 - **Single strategy family** — `AbstractIntegrator <: CTSolvers.Strategies.AbstractStrategy`.
   This is the only family. It controls *how* the Cauchy problem is solved.
 - **Pipelines** — `build_system`, `build_flow`, `integrate`, `build_solution`, `solve`.
@@ -36,10 +36,10 @@ is the right mechanism) and that AD configuration is best expressed as a plain
 Config types carry the call-mode data and drive dispatch in `build_solution`. They are plain
 structs, not strategies.
 
-### `PointConfig`
+### `StatePointConfig`
 
 ```julia
-struct PointConfig{T, X, P}
+struct StatePointConfig{T, X, P}
     t0::T
     x0::X
     p0::P   # nothing if no costate
@@ -49,16 +49,16 @@ end
 
 Constructors:
 
-- `PointConfig(t0, x0, tf)` — no costate (`p0 = nothing`)
-- `PointConfig(t0, x0, p0, tf)` — with costate
+- `StatePointConfig(t0, x0, tf)` — no costate (`p0 = nothing`)
+- `StatePointConfig(t0, x0, p0, tf)` — with costate
 
 **Semantics**: integrate from `t0` to `tf` starting at `x0` (and `p0` if present); return
 only the **final values** `xf` (and `pf` if present).
 
-### `TrajectoryConfig`
+### `StateTrajectoryConfig`
 
 ```julia
-struct TrajectoryConfig{T, X, P}
+struct StateTrajectoryConfig{T, X, P}
     tspan::Tuple{T, T}
     x0::X
     p0::P   # nothing if no costate
@@ -67,8 +67,8 @@ end
 
 Constructors:
 
-- `TrajectoryConfig(tspan, x0)` — no costate
-- `TrajectoryConfig(tspan, x0, p0)` — with costate
+- `StateTrajectoryConfig(tspan, x0)` — no costate
+- `StateTrajectoryConfig(tspan, x0, p0)` — with costate
 
 **Semantics**: integrate over the full time span; return a **solution object** containing
 the trajectory (and possibly the costate) as functions of time.
@@ -107,8 +107,8 @@ build_solution(raw, flow::AbstractFlow, config::AbstractConfig)
   has no further dependency on whatever produced it.
 - `dimensions` is the canonical introspection point; used by the integrator to allocate
   and by the pipeline to verify compatibility.
-- `build_solution` dispatches on `config` type: for `PointConfig` it extracts the final
-  state (and costate); for `TrajectoryConfig` it wraps the full trajectory.
+- `build_solution` dispatches on `config` type: for `StatePointConfig` it extracts the final
+  state (and costate); for `StateTrajectoryConfig` it wraps the full trajectory.
 
 ### 3.2 `AbstractFlow`
 
@@ -122,7 +122,7 @@ abstract type AbstractFlow end
 **Required methods** (`NotImplemented` defaults):
 
 ```julia
-(flow::AbstractFlow)(config)      # dispatch on PointConfig or TrajectoryConfig
+(flow::AbstractFlow)(config)      # dispatch on StatePointConfig or StateTrajectoryConfig
 system(flow::AbstractFlow)        # returns the embedded AbstractSystem
 integrator(flow::AbstractFlow)    # returns the embedded AbstractIntegrator
 ```
@@ -152,7 +152,7 @@ build_flow(system::AbstractSystem, integrator::AbstractIntegrator) = Flow(system
 
 ### 3.3 `AbstractSolution`
 
-Solution wrapper returned by a `TrajectoryConfig` call. Distinct from `CTModels.Solution`
+Solution wrapper returned by a `StateTrajectoryConfig` call. Distinct from `CTModels.Solution`
 (which is an OCP solution); `AbstractSolution` is CTFlows' own trajectory wrapper.
 
 ```julia
@@ -314,13 +314,13 @@ end
 `build_solution` dispatches on the config type:
 
 ```julia
-# PointConfig — extract and return final values
-function build_solution(raw, flow::AbstractFlow, config::PointConfig)
+# StatePointConfig — extract and return final values
+function build_solution(raw, flow::AbstractFlow, config::StatePointConfig)
     # extract xf (and pf if config.p0 ≢ nothing) from raw
 end
 
-# TrajectoryConfig — wrap full trajectory
-function build_solution(raw, flow::AbstractFlow, config::TrajectoryConfig)
+# StateTrajectoryConfig — wrap full trajectory
+function build_solution(raw, flow::AbstractFlow, config::StateTrajectoryConfig)
     # return an AbstractSolution wrapping the raw ODESolution
 end
 ```
@@ -346,8 +346,8 @@ end
 
 | Type | Kind | Required methods |
 | --- | --- | --- |
-| `PointConfig` | object (config) | constructor |
-| `TrajectoryConfig` | object (config) | constructor |
+| `StatePointConfig` | object (config) | constructor |
+| `StateTrajectoryConfig` | object (config) | constructor |
 | `AbstractSystem` | object | `rhs!`, `dimensions`, `build_solution` |
 | `AbstractFlow` | object | `(flow)(config)`, `system`, `integrator` |
 | `AbstractSolution` | object | `state`, `time_grid` |

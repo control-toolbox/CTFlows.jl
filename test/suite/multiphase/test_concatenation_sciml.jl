@@ -182,7 +182,7 @@ function test_concatenation_sciml()
             Test.@test xf_mpf[1] ≈ expected atol = 1e-3
         end
 
-        Test.@testset "TrajectoryConfig and plot" begin
+        Test.@testset "StateTrajectoryConfig and plot" begin
             vf = Data.VectorField(linear_oop)
             sys = Systems.VectorFieldSystem(vf)
             integ = Integrators.SciML()
@@ -190,7 +190,7 @@ function test_concatenation_sciml()
             f = Flows.StateFlow(sys, integ)
             mpf = f * (0.5, f)
 
-            # Call with tspan (TrajectoryConfig)
+            # Call with tspan (StateTrajectoryConfig)
             sol = mpf((0.0, 1.0), [1.0])
 
             # Verify it's a VectorFieldSolution

@@ -49,11 +49,11 @@ function Integrators.solve_problem(integ::FakeIntegFC, prob, options::Dict{Symbo
     return FakeResultFC()
 end
 
-function Solutions.build_solution(result::FakeResultFC, sys::FakeStateSystemFC, config::Common.PointConfig)
+function Solutions.build_solution(result::FakeResultFC, sys::FakeStateSystemFC, config::Common.StatePointConfig)
     return :state_point_sol
 end
 
-function Solutions.build_solution(result::FakeResultFC, sys::FakeStateSystemFC, config::Common.TrajectoryConfig)
+function Solutions.build_solution(result::FakeResultFC, sys::FakeStateSystemFC, config::Common.StateTrajectoryConfig)
     return :state_traj_sol
 end
 
@@ -73,10 +73,10 @@ function test_flow_callables()
     Test.@testset "Flow Callables Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
-        # UNIT TESTS - StateFlow (t0, x0, tf) -> PointConfig
+        # UNIT TESTS - StateFlow (t0, x0, tf) -> StatePointConfig
         # ====================================================================
 
-        Test.@testset "StateFlow (t0, x0, tf) -> PointConfig" begin
+        Test.@testset "StateFlow (t0, x0, tf) -> StatePointConfig" begin
             integ = FakeIntegFC(nothing)
             sys = FakeStateSystemFC(2)
             flow = Flows.StateFlow(sys, integ)
@@ -84,7 +84,7 @@ function test_flow_callables()
             Test.@testset "scalar x0" begin
                 x0 = 1.0
                 result = flow(0.0, x0, 1.0)
-                Test.@test integ.last_config isa Common.PointConfig
+                Test.@test integ.last_config isa Common.StatePointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0
@@ -94,7 +94,7 @@ function test_flow_callables()
             Test.@testset "vector x0" begin
                 x0 = [1.0, 0.0]
                 result = flow(0.0, x0, 1.0)
-                Test.@test integ.last_config isa Common.PointConfig
+                Test.@test integ.last_config isa Common.StatePointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0
@@ -104,7 +104,7 @@ function test_flow_callables()
             Test.@testset "SVector x0" begin
                 x0 = SA[1.0, 0.0]
                 result = flow(0.0, x0, 1.0)
-                Test.@test integ.last_config isa Common.PointConfig
+                Test.@test integ.last_config isa Common.StatePointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0
@@ -114,7 +114,7 @@ function test_flow_callables()
             Test.@testset "matrix x0" begin
                 x0 = [1.0 2.0; 3.0 4.0]
                 result = flow(0.0, x0, 1.0)
-                Test.@test integ.last_config isa Common.PointConfig
+                Test.@test integ.last_config isa Common.StatePointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0
@@ -123,10 +123,10 @@ function test_flow_callables()
         end
 
         # ====================================================================
-        # UNIT TESTS - StateFlow (tspan, x0) -> TrajectoryConfig
+        # UNIT TESTS - StateFlow (tspan, x0) -> StateTrajectoryConfig
         # ====================================================================
 
-        Test.@testset "StateFlow (tspan, x0) -> TrajectoryConfig" begin
+        Test.@testset "StateFlow (tspan, x0) -> StateTrajectoryConfig" begin
             integ = FakeIntegFC(nothing)
             sys = FakeStateSystemFC(2)
             flow = Flows.StateFlow(sys, integ)
@@ -134,7 +134,7 @@ function test_flow_callables()
             Test.@testset "vector x0" begin
                 x0 = [1.0, 0.0]
                 result = flow((0.0, 1.0), x0)
-                Test.@test integ.last_config isa Common.TrajectoryConfig
+                Test.@test integ.last_config isa Common.StateTrajectoryConfig
                 Test.@test integ.last_config.tspan == (0.0, 1.0)
                 Test.@test integ.last_config.x0 === x0
                 Test.@test result === :state_traj_sol
@@ -143,7 +143,7 @@ function test_flow_callables()
             Test.@testset "SVector x0" begin
                 x0 = SA[1.0, 0.0]
                 result = flow((0.0, 1.0), x0)
-                Test.@test integ.last_config isa Common.TrajectoryConfig
+                Test.@test integ.last_config isa Common.StateTrajectoryConfig
                 Test.@test integ.last_config.tspan == (0.0, 1.0)
                 Test.@test integ.last_config.x0 === x0
                 Test.@test result === :state_traj_sol
@@ -152,7 +152,7 @@ function test_flow_callables()
             Test.@testset "matrix x0" begin
                 x0 = [1.0 2.0; 3.0 4.0]
                 result = flow((0.0, 1.0), x0)
-                Test.@test integ.last_config isa Common.TrajectoryConfig
+                Test.@test integ.last_config isa Common.StateTrajectoryConfig
                 Test.@test integ.last_config.tspan == (0.0, 1.0)
                 Test.@test integ.last_config.x0 === x0
                 Test.@test result === :state_traj_sol

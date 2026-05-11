@@ -73,7 +73,7 @@ end
 function Solutions.build_solution(
     result::FakeIntegrationResultForCalling,
     system::FakeSystemForCalling,
-    config::Common.PointConfig
+    config::Common.StatePointConfig
 )
     return Solutions.final_state(result)
 end
@@ -81,7 +81,7 @@ end
 function Solutions.build_solution(
     result::FakeIntegrationResultForCalling,
     system::FakeSystemForCalling,
-    config::Common.TrajectoryConfig
+    config::Common.StateTrajectoryConfig
 )
     return :fake_vector_field_solution
 end
@@ -135,7 +135,7 @@ function test_calling_flows()
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
                 flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 
                 # Execute
                 result = Flows.call(flow, config; variable=nothing, unsafe=false)
@@ -145,7 +145,7 @@ function test_calling_flows()
                 Test.@test integ.build_options_called === true
                 Test.@test integ.solve_problem_called === true
                 
-                # Verify result - for PointConfig it unwraps the vector
+                # Verify result - for StatePointConfig it unwraps the vector
                 Test.@test result == :fake_flow_solution
             end
 
@@ -153,7 +153,7 @@ function test_calling_flows()
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
                 flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 
                 # Call with variable (should be accepted even for Fixed)
                 result = Flows.call(flow, config; variable=0.5, unsafe=false)
@@ -164,11 +164,11 @@ function test_calling_flows()
                 Test.@test result == :fake_flow_solution
             end
 
-            Test.@testset "call with TrajectoryConfig" begin
+            Test.@testset "call with StateTrajectoryConfig" begin
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
                 flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
-                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 
                 result = Flows.call(flow, config; variable=nothing, unsafe=false)
 
@@ -182,7 +182,7 @@ function test_calling_flows()
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
                 flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
                 # Call with unsafe=true
                 result = Flows.call(flow, config; variable=nothing, unsafe=true)

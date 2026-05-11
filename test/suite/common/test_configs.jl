@@ -50,19 +50,19 @@ function test_configs()
             end
 
             Test.@testset "initial_condition handles scalar" begin
-                config = Common.PointConfig(0.0, 1.0, 1.0)
+                config = Common.StatePointConfig(0.0, 1.0, 1.0)
                 ic = Common.initial_condition(config)
                 Test.@test ic isa AbstractVector
                 Test.@test ic == [1.0]
-                Test.@test typeof(config) == Common.PointConfig{Float64, Float64, Float64}  # X0 <: Number
+                Test.@test typeof(config) == Common.StatePointConfig{Float64, Float64, Float64}  # X0 <: Number
             end
 
             Test.@testset "initial_condition handles vector" begin
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 ic = Common.initial_condition(config)
                 Test.@test ic isa AbstractVector
                 Test.@test ic == [1.0, 0.0]
-                Test.@test typeof(config) <: Common.PointConfig{Float64, <:AbstractVector, Float64}  # X0 is vector
+                Test.@test typeof(config) <: Common.StatePointConfig{Float64, <:AbstractVector, Float64}  # X0 is vector
             end
 
             Test.@testset "initial_state is exported" begin
@@ -73,13 +73,13 @@ function test_configs()
                 Test.@test isdefined(Common, :initial_costate)
             end
 
-            Test.@testset "initial_state for PointConfig" begin
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+            Test.@testset "initial_state for StatePointConfig" begin
+                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 Test.@test Common.initial_state(config) == [1.0, 0.0]
             end
 
-            Test.@testset "initial_state for TrajectoryConfig" begin
-                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+            Test.@testset "initial_state for StateTrajectoryConfig" begin
+                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
                 Test.@test Common.initial_state(config) == [1.0, 0.0]
             end
 
@@ -104,11 +104,11 @@ function test_configs()
             end
 
             Test.@testset "initial_costate throws PreconditionError for non-Hamiltonian configs" begin
-                config = Common.PointConfig(0.0, [1.0], 1.0)
+                config = Common.StatePointConfig(0.0, [1.0], 1.0)
                 Test.@test_throws Exceptions.PreconditionError Common.initial_costate(config)
 
                 Test.@testset "PreconditionError message quality" begin
-                    config = Common.PointConfig(0.0, [1.0], 1.0)
+                    config = Common.StatePointConfig(0.0, [1.0], 1.0)
                     e = try
                         Common.initial_costate(config)
                     catch err
@@ -120,15 +120,15 @@ function test_configs()
                 end
             end
 
-            Test.@testset "initial_condition with TrajectoryConfig scalar" begin
-                config = Common.TrajectoryConfig((0.0, 1.0), 1.0)
+            Test.@testset "initial_condition with StateTrajectoryConfig scalar" begin
+                config = Common.StateTrajectoryConfig((0.0, 1.0), 1.0)
                 ic = Common.initial_condition(config)
                 Test.@test ic isa AbstractVector
                 Test.@test ic == [1.0]
             end
 
-            Test.@testset "initial_condition with TrajectoryConfig vector" begin
-                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+            Test.@testset "initial_condition with StateTrajectoryConfig vector" begin
+                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
                 ic = Common.initial_condition(config)
                 Test.@test ic isa AbstractVector
                 Test.@test ic == [1.0, 0.0]
@@ -146,28 +146,28 @@ function test_configs()
                 Test.@test isdefined(Common, :AbstractTrajectoryConfig)
             end
 
-            Test.@testset "PointConfig subtypes AbstractConfig" begin
-                config = Common.PointConfig(0.0, [1.0], 1.0)
+            Test.@testset "StatePointConfig subtypes AbstractConfig" begin
+                config = Common.StatePointConfig(0.0, [1.0], 1.0)
                 Test.@test config isa Common.AbstractConfig
-                Test.@test Common.PointConfig <: Common.AbstractConfig
+                Test.@test Common.StatePointConfig <: Common.AbstractConfig
             end
 
-            Test.@testset "PointConfig subtypes AbstractPointConfig" begin
-                config = Common.PointConfig(0.0, [1.0], 1.0)
+            Test.@testset "StatePointConfig subtypes AbstractPointConfig" begin
+                config = Common.StatePointConfig(0.0, [1.0], 1.0)
                 Test.@test config isa Common.AbstractPointConfig
-                Test.@test Common.PointConfig <: Common.AbstractPointConfig
+                Test.@test Common.StatePointConfig <: Common.AbstractPointConfig
             end
 
-            Test.@testset "TrajectoryConfig subtypes AbstractConfig" begin
-                config = Common.TrajectoryConfig((0.0, 1.0), [1.0])
+            Test.@testset "StateTrajectoryConfig subtypes AbstractConfig" begin
+                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0])
                 Test.@test config isa Common.AbstractConfig
-                Test.@test Common.TrajectoryConfig <: Common.AbstractConfig
+                Test.@test Common.StateTrajectoryConfig <: Common.AbstractConfig
             end
 
-            Test.@testset "TrajectoryConfig subtypes AbstractTrajectoryConfig" begin
-                config = Common.TrajectoryConfig((0.0, 1.0), [1.0])
+            Test.@testset "StateTrajectoryConfig subtypes AbstractTrajectoryConfig" begin
+                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0])
                 Test.@test config isa Common.AbstractTrajectoryConfig
-                Test.@test Common.TrajectoryConfig <: Common.AbstractTrajectoryConfig
+                Test.@test Common.StateTrajectoryConfig <: Common.AbstractTrajectoryConfig
             end
 
             Test.@testset "HamiltonianPointConfig subtypes AbstractPointConfig" begin
@@ -188,17 +188,17 @@ function test_configs()
         # ====================================================================
 
         Test.@testset "Config Structures" begin
-            Test.@testset "PointConfig construction" begin
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
-                Test.@test config isa Common.PointConfig
+            Test.@testset "StatePointConfig construction" begin
+                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+                Test.@test config isa Common.StatePointConfig
                 Test.@test config.t0 === 0.0
                 Test.@test config.x0 == [1.0, 0.0]
                 Test.@test config.tf === 1.0
             end
 
-            Test.@testset "TrajectoryConfig construction" begin
-                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
-                Test.@test config isa Common.TrajectoryConfig
+            Test.@testset "StateTrajectoryConfig construction" begin
+                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+                Test.@test config isa Common.StateTrajectoryConfig
                 Test.@test config.tspan == (0.0, 1.0)
                 Test.@test config.x0 == [1.0, 0.0]
             end
@@ -231,15 +231,15 @@ function test_configs()
                 Test.@test_throws Exceptions.NotImplemented Common.tspan(config)
             end
 
-            Test.@testset "PointConfig tspan returns tuple" begin
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+            Test.@testset "StatePointConfig tspan returns tuple" begin
+                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 ts = Common.tspan(config)
                 Test.@test ts isa Tuple{Real, Real}
                 Test.@test ts == (0.0, 1.0)
             end
 
-            Test.@testset "TrajectoryConfig tspan returns tuple" begin
-                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+            Test.@testset "StateTrajectoryConfig tspan returns tuple" begin
+                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
                 ts = Common.tspan(config)
                 Test.@test ts isa Tuple{Real, Real}
                 Test.@test ts == (0.0, 1.0)
@@ -271,44 +271,44 @@ function test_configs()
         # ====================================================================
 
         Test.@testset "Display Methods" begin
-            Test.@testset "PointConfig show methods" begin
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+            Test.@testset "StatePointConfig show methods" begin
+                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 io = IOBuffer()
                 show(io, config)
                 output = String(take!(io))
-                Test.@test occursin("PointConfig", output)
+                Test.@test occursin("StatePointConfig", output)
                 Test.@test occursin("t0:", output)
                 Test.@test occursin("x0:", output)
                 Test.@test occursin("tf:", output)
             end
 
-            Test.@testset "PointConfig text/plain show method" begin
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+            Test.@testset "StatePointConfig text/plain show method" begin
+                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 io = IOBuffer()
                 show(io, MIME("text/plain"), config)
                 output = String(take!(io))
-                Test.@test occursin("PointConfig", output)
+                Test.@test occursin("StatePointConfig", output)
                 Test.@test occursin("t0:", output)
                 Test.@test occursin("x0:", output)
                 Test.@test occursin("tf:", output)
             end
 
-            Test.@testset "TrajectoryConfig show methods" begin
-                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+            Test.@testset "StateTrajectoryConfig show methods" begin
+                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
                 io = IOBuffer()
                 show(io, config)
                 output = String(take!(io))
-                Test.@test occursin("TrajectoryConfig", output)
+                Test.@test occursin("StateTrajectoryConfig", output)
                 Test.@test occursin("tspan:", output)
                 Test.@test occursin("x0:", output)
             end
 
-            Test.@testset "TrajectoryConfig text/plain show method" begin
-                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+            Test.@testset "StateTrajectoryConfig text/plain show method" begin
+                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
                 io = IOBuffer()
                 show(io, MIME("text/plain"), config)
                 output = String(take!(io))
-                Test.@test occursin("TrajectoryConfig", output)
+                Test.@test occursin("StateTrajectoryConfig", output)
                 Test.@test occursin("tspan:", output)
                 Test.@test occursin("x0:", output)
             end

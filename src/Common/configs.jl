@@ -25,10 +25,10 @@ All subtypes must implement:
 \`\`\`julia-repl
 julia> using CTFlows.Common
 
-julia> PointConfig <: Common.AbstractConfig
+julia> StatePointConfig <: Common.AbstractConfig
 true
 
-julia> TrajectoryConfig <: Common.AbstractConfig
+julia> StateTrajectoryConfig <: Common.AbstractConfig
 true
 \`\`\`
 
@@ -49,7 +49,7 @@ final time, without storing the full trajectory.
 All subtypes must implement:
 - `tspan(config)`: Return the time span as a tuple `(t0, tf)`.
 
-See also: [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Common.HamiltonianPointConfig`](@ref).
+See also: [`CTFlows.Common.StatePointConfig`](@ref), [`CTFlows.Common.HamiltonianPointConfig`](@ref).
 """
 abstract type AbstractPointConfig{X0} <: AbstractConfig{X0} end
 
@@ -66,7 +66,7 @@ generating full trajectories.
 All subtypes must implement:
 - `tspan(config)`: Return the time span as a tuple `(t0, tf)`.
 
-See also: [`CTFlows.Common.TrajectoryConfig`](@ref), [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref).
+See also: [`CTFlows.Common.StateTrajectoryConfig`](@ref), [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref).
 """
 abstract type AbstractTrajectoryConfig{X0} <: AbstractConfig{X0} end
 
@@ -82,7 +82,7 @@ Extract the time span from an `AbstractConfig`.
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
 
-See also: [`CTFlows.Common.AbstractConfig`](@ref), [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Common.TrajectoryConfig`](@ref).
+See also: [`CTFlows.Common.AbstractConfig`](@ref), [`CTFlows.Common.StatePointConfig`](@ref), [`CTFlows.Common.StateTrajectoryConfig`](@ref).
 """
 function tspan(c::AbstractConfig)
     throw(Exceptions.NotImplemented(
@@ -94,7 +94,7 @@ function tspan(c::AbstractConfig)
 end
 
 # =============================================================================
-# PointConfig
+# StatePointConfig
 # =============================================================================
 
 """
@@ -114,16 +114,16 @@ integration from a single initial condition to a specific final time.
 \`\`\`julia-repl
 julia> using CTFlows.Common
 
-julia> config = PointConfig(0.0, [1.0, 0.0], 1.0)
-PointConfig
+julia> config = StatePointConfig(0.0, [1.0, 0.0], 1.0)
+StatePointConfig
   t0: 0.0
   x0: [1.0, 0.0]
   tf: 1.0
 \`\`\`
 
-See also: [`CTFlows.Common.TrajectoryConfig`](@ref)
+See also: [`CTFlows.Common.StateTrajectoryConfig`](@ref)
 """
-struct PointConfig{T0<:Real, X0, TF<:Real} <: AbstractPointConfig{X0}
+struct StatePointConfig{T0<:Real, X0, TF<:Real} <: AbstractPointConfig{X0}
     t0::T0
     x0::X0
     tf::TF
@@ -132,12 +132,12 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Extract the time span from a `PointConfig`.
+Extract the time span from a `StatePointConfig`.
 
-Returns a tuple `(t0, tf)` for consistency with `TrajectoryConfig`.
+Returns a tuple `(t0, tf)` for consistency with `StateTrajectoryConfig`.
 
 # Arguments
-- `c::PointConfig`: The point configuration.
+- `c::StatePointConfig`: The point configuration.
 
 # Returns
 - `Tuple{Real, Real}`: Time span as `(t0, tf)`.
@@ -146,20 +146,20 @@ Returns a tuple `(t0, tf)` for consistency with `TrajectoryConfig`.
 \`\`\`julia-repl
 julia> using CTFlows.Common
 
-julia> config = PointConfig(0.0, [1.0, 0.0], 1.0)
+julia> config = StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
 julia> tspan(config)
 (0.0, 1.0)
 \`\`\`
 
-See also: [`CTFlows.Common.PointConfig`](@ref), [`CTFlows.Common.TrajectoryConfig`](@ref)
+See also: [`CTFlows.Common.StatePointConfig`](@ref), [`CTFlows.Common.StateTrajectoryConfig`](@ref)
 """
-function tspan(c::PointConfig)::Tuple{Real, Real}
+function tspan(c::StatePointConfig)::Tuple{Real, Real}
     return (c.t0, c.tf)
 end
 
 # =============================================================================
-# TrajectoryConfig
+# StateTrajectoryConfig
 # =============================================================================
 
 """
@@ -178,15 +178,15 @@ time interval, useful for generating full trajectories.
 \`\`\`julia-repl
 julia> using CTFlows.Common
 
-julia> config = TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
-TrajectoryConfig
+julia> config = StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+StateTrajectoryConfig
   tspan: (0.0, 1.0)
   x0: [1.0, 0.0]
 \`\`\`
 
-See also: [`CTFlows.Common.PointConfig`](@ref)
+See also: [`CTFlows.Common.StatePointConfig`](@ref)
 """
-struct TrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractTrajectoryConfig{X0}
+struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractTrajectoryConfig{X0}
     tspan::TS
     x0::X0
 end
@@ -194,12 +194,12 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Extract the time span from a `TrajectoryConfig`.
+Extract the time span from a `StateTrajectoryConfig`.
 
 Returns the stored time span tuple.
 
 # Arguments
-- `c::TrajectoryConfig`: The trajectory configuration.
+- `c::StateTrajectoryConfig`: The trajectory configuration.
 
 # Returns
 - `Tuple{Real, Real}`: Time span as `(t0, tf)`.
@@ -208,15 +208,15 @@ Returns the stored time span tuple.
 \`\`\`julia-repl
 julia> using CTFlows.Common
 
-julia> config = TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+julia> config = StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 
 julia> tspan(config)
 (0.0, 1.0)
 \`\`\`
 
-See also: [`CTFlows.Common.TrajectoryConfig`](@ref), [`CTFlows.Common.PointConfig`](@ref)
+See also: [`CTFlows.Common.StateTrajectoryConfig`](@ref), [`CTFlows.Common.StatePointConfig`](@ref)
 """
-function tspan(c::TrajectoryConfig)::Tuple{Real, Real}
+function tspan(c::StateTrajectoryConfig)::Tuple{Real, Real}
     return c.tspan
 end
 
@@ -251,7 +251,7 @@ HamiltonianPointConfig
   tf: 1.0
 \`\`\`
 
-See also: [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Common.PointConfig`](@ref).
+See also: [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Common.StatePointConfig`](@ref).
 """
 struct HamiltonianPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractPointConfig{X0}
     t0::T0
@@ -319,7 +319,7 @@ HamiltonianTrajectoryConfig
   p0: [0.5, 0.3]
 \`\`\`
 
-See also: [`CTFlows.Common.HamiltonianPointConfig`](@ref), [`CTFlows.Common.TrajectoryConfig`](@ref).
+See also: [`CTFlows.Common.HamiltonianPointConfig`](@ref), [`CTFlows.Common.StateTrajectoryConfig`](@ref).
 """
 struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractTrajectoryConfig{X0}
     tspan::TS
@@ -383,13 +383,13 @@ type tests.
 \`\`\`julia-repl
 julia> using CTFlows.Common
 
-julia> config = PointConfig(0.0, 1.0, 1.0)  # scalar x0
+julia> config = StatePointConfig(0.0, 1.0, 1.0)  # scalar x0
 
 julia> initial_condition(config)
 [1.0]
 \`\`\`
 
-See also: [`CTFlows.Common.AbstractConfig`](@ref), [`CTFlows.Common.PointConfig`](@ref).
+See also: [`CTFlows.Common.AbstractConfig`](@ref), [`CTFlows.Common.StatePointConfig`](@ref).
 """
 function initial_condition(c::AbstractConfig{<:Number})
     return [c.x0]
@@ -415,13 +415,13 @@ type tests.
 \`\`\`julia-repl
 julia> using CTFlows.Common
 
-julia> config = PointConfig(0.0, [1.0, 0.0], 1.0)  # vector x0
+julia> config = StatePointConfig(0.0, [1.0, 0.0], 1.0)  # vector x0
 
 julia> initial_condition(config)
 [1.0, 0.0]
 \`\`\`
 
-See also: [`CTFlows.Common.AbstractConfig`](@ref), [`CTFlows.Common.PointConfig`](@ref).
+See also: [`CTFlows.Common.AbstractConfig`](@ref), [`CTFlows.Common.StatePointConfig`](@ref).
 """
 function initial_condition(c::AbstractConfig)
     return c.x0
@@ -479,7 +479,7 @@ configs, returns the state `x0` (separate from costate).
 \`\`\`julia-repl
 julia> using CTFlows.Common
 
-julia> config = PointConfig(0.0, [1.0, 0.0], 1.0)
+julia> config = StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
 julia> initial_state(config)
 [1.0, 0.0]
@@ -540,10 +540,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Display the `PointConfig` in tree-style format.
+Display the `StatePointConfig` in tree-style format.
 """
-function Base.show(io::IO, c::PointConfig)
-    println(io, "PointConfig")
+function Base.show(io::IO, c::StatePointConfig)
+    println(io, "StatePointConfig")
     println(io, "  t0: ", c.t0)
     println(io, "  x0: ", c.x0)
     print(io, "  tf: ", c.tf)
@@ -552,19 +552,19 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Display the `PointConfig` in REPL format.
+Display the `StatePointConfig` in REPL format.
 """
-function Base.show(io::IO, ::MIME"text/plain", c::PointConfig)
+function Base.show(io::IO, ::MIME"text/plain", c::StatePointConfig)
     show(io, c)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Display the `TrajectoryConfig` in tree-style format.
+Display the `StateTrajectoryConfig` in tree-style format.
 """
-function Base.show(io::IO, c::TrajectoryConfig)
-    println(io, "TrajectoryConfig")
+function Base.show(io::IO, c::StateTrajectoryConfig)
+    println(io, "StateTrajectoryConfig")
     println(io, "  tspan: ", c.tspan)
     print(io, "  x0: ", c.x0)
 end
@@ -572,9 +572,9 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Display the `TrajectoryConfig` in REPL format.
+Display the `StateTrajectoryConfig` in REPL format.
 """
-function Base.show(io::IO, ::MIME"text/plain", c::TrajectoryConfig)
+function Base.show(io::IO, ::MIME"text/plain", c::StateTrajectoryConfig)
     show(io, c)
 end
 

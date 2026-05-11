@@ -227,7 +227,7 @@ end
     # Fonction de tir : intègre de t0 à tf, retourne l'état final
     function shoot(p0)
         x0 = [1.0, p0[1]]
-        return flow((0.0, 1.0), x0)   # TrajectoryConfig
+        return flow((0.0, 1.0), x0)   # StateTrajectoryConfig
     end
 
     # Jacobienne — ForwardDiff seed des Dual dans l'état

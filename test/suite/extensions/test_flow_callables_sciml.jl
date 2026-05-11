@@ -40,10 +40,10 @@ function test_flow_callables_sciml()
     Test.@testset "Flow Callables SciML Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
-        # INTEGRATION TESTS - StateFlow PointConfig
+        # INTEGRATION TESTS - StateFlow StatePointConfig
         # ====================================================================
 
-        Test.@testset "StateFlow PointConfig" begin
+        Test.@testset "StateFlow StatePointConfig" begin
             flow = Flows.build_flow(SYS_DECAY, INTEG)
 
             Test.@testset "scalar x0" begin
@@ -104,10 +104,10 @@ function test_flow_callables_sciml()
         end
 
         # ====================================================================
-        # INTEGRATION TESTS - StateFlow TrajectoryConfig
+        # INTEGRATION TESTS - StateFlow StateTrajectoryConfig
         # ====================================================================
 
-        Test.@testset "StateFlow TrajectoryConfig" begin
+        Test.@testset "StateFlow StateTrajectoryConfig" begin
             flow = Flows.build_flow(SYS_DECAY, INTEG)
 
             Test.@testset "vector x0" begin

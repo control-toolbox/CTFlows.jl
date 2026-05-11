@@ -92,11 +92,11 @@ vf = Data.VectorField((t, x, v) -> x, Autonomous(), Fixed())
 flow = Flows.Flow(vf; reltol=1e-8)
 
 # Integrate using a configuration
-config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 sol = Flows.call(flow, config)
 
 # Or point-to-point integration
-config = Common.PointConfig((0.0, 1.0), [1.0, 0.0])
+config = Common.StatePointConfig((0.0, 1.0), [1.0, 0.0])
 final_state = Flows.call(flow, config)
 ```
 

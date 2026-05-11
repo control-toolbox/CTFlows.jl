@@ -8,14 +8,14 @@ $(TYPEDSIGNATURES)
 Extract the initial state from a point configuration.
 
 # Arguments
-- `config::Common.PointConfig`: The point configuration.
+- `config::Common.StatePointConfig`: The point configuration.
 
 # Returns
 - Initial state vector.
 
 See also: [`CTFlows.Common.initial_state`](@ref).
 """
-_extract_initial_state(config::Common.PointConfig) = Common.initial_state(config)
+_extract_initial_state(config::Common.StatePointConfig) = Common.initial_state(config)
 
 """
 $(TYPEDSIGNATURES)
@@ -23,14 +23,14 @@ $(TYPEDSIGNATURES)
 Extract the initial state from a trajectory configuration.
 
 # Arguments
-- `config::Common.TrajectoryConfig`: The trajectory configuration.
+- `config::Common.StateTrajectoryConfig`: The trajectory configuration.
 
 # Returns
 - Initial state vector.
 
 See also: [`CTFlows.Common.initial_state`](@ref).
 """
-_extract_initial_state(config::Common.TrajectoryConfig) = Common.initial_state(config)
+_extract_initial_state(config::Common.StateTrajectoryConfig) = Common.initial_state(config)
 
 """
 $(TYPEDSIGNATURES)
@@ -414,7 +414,7 @@ $(TYPEDSIGNATURES)
 
 Convenience call for `MultiPhaseStateFlow` with point configuration.
 
-Builds a `PointConfig` internally and evaluates the multi-phase flow.
+Builds a `StatePointConfig` internally and evaluates the multi-phase flow.
 
 # Arguments
 - `mpf::MultiPhaseStateFlow`: The multi-phase state flow to evaluate.
@@ -435,7 +435,7 @@ mpf = flow1 * (1.0, flow2) * (2.0, flow3)
 sol = mpf(0.0, [1.0, 0.0], 3.0)
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Common.PointConfig`](@ref).
+See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Common.StatePointConfig`](@ref).
 """
 function (mpf::MultiPhaseStateFlow)(
     t0::Real,
@@ -444,7 +444,7 @@ function (mpf::MultiPhaseStateFlow)(
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 )
-    config = Common.PointConfig(t0, x0, tf)
+    config = Common.StatePointConfig(t0, x0, tf)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
 
@@ -453,7 +453,7 @@ $(TYPEDSIGNATURES)
 
 Convenience call for `MultiPhaseStateFlow` with trajectory configuration.
 
-Builds a `TrajectoryConfig` internally and evaluates the multi-phase flow,
+Builds a `StateTrajectoryConfig` internally and evaluates the multi-phase flow,
 returning a merged trajectory from all phases.
 
 # Arguments
@@ -474,7 +474,7 @@ mpf = flow1 * (1.0, flow2) * (2.0, flow3)
 sol = mpf((0.0, 3.0), [1.0, 0.0])
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Common.TrajectoryConfig`](@ref).
+See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Common.StateTrajectoryConfig`](@ref).
 """
 function (mpf::MultiPhaseStateFlow)(
     tspan::Tuple{Real, Real},
@@ -482,7 +482,7 @@ function (mpf::MultiPhaseStateFlow)(
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 )
-    config = Common.TrajectoryConfig(tspan, x0)
+    config = Common.StateTrajectoryConfig(tspan, x0)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
 

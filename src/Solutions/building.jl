@@ -1,7 +1,7 @@
 """
 $(TYPEDSIGNATURES)
 
-Default implementation for `PointConfig` — return the final state.
+Default implementation for `StatePointConfig` — return the final state.
 
 For scalar configurations (`X0 <: Number`), unwraps the length-1 vector that was
 introduced by scalar-promotion at ODE problem construction time. For vector
@@ -13,14 +13,14 @@ to avoid runtime type tests.
 # Arguments
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
 - `sys::Systems.VectorFieldSystem`: The vector field system.
-- `config::Common.PointConfig{<:Real, <:Number, <:Real}`: Scalar point configuration.
+- `config::Common.StatePointConfig{<:Real, <:Number, <:Real}`: Scalar point configuration.
 
 # Returns
 - `Number`: The unwrapped scalar final state.
 
 See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Common.AbstractConfig`](@ref).
 """
-function build_solution(result::Integrators.AbstractIntegrationResult, sys::Systems.VectorFieldSystem, config::Common.PointConfig{<:Real, <:Number, <:Real})
+function build_solution(result::Integrators.AbstractIntegrationResult, sys::Systems.VectorFieldSystem, config::Common.StatePointConfig{<:Real, <:Number, <:Real})
     return final_state(result)[1]
 end
 
@@ -58,41 +58,41 @@ _ham_split_solution(u, x0::AbstractMatrix) = (u[1:size(x0, 1), :], u[size(x0, 1)
 """
 $(TYPEDSIGNATURES)
 
-Default implementation for `PointConfig` — return the final state.
+Default implementation for `StatePointConfig` — return the final state.
 
 For vector configurations, returns the state vector unchanged.
 
 # Arguments
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
 - `sys::Systems.VectorFieldSystem`: The vector field system.
-- `config::Common.PointConfig`: Vector point configuration.
+- `config::Common.StatePointConfig`: Vector point configuration.
 
 # Returns
 - `AbstractVector`: The final state vector.
 
 See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Common.AbstractConfig`](@ref).
 """
-function build_solution(result::Integrators.AbstractIntegrationResult, sys::Systems.VectorFieldSystem, config::Common.PointConfig)
+function build_solution(result::Integrators.AbstractIntegrationResult, sys::Systems.VectorFieldSystem, config::Common.StatePointConfig)
     return final_state(result)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Default implementation for `TrajectoryConfig` — wrap the integration result
+Default implementation for `StateTrajectoryConfig` — wrap the integration result
 in a `VectorFieldSolution` for future extensibility.
 
 # Arguments
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
 - `sys::Systems.VectorFieldSystem`: The vector field system.
-- `config::Common.TrajectoryConfig`: The trajectory configuration.
+- `config::Common.StateTrajectoryConfig`: The trajectory configuration.
 
 # Returns
 - `VectorFieldSolution`: The wrapped integration result.
 
 See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref).
 """
-function build_solution(result::Integrators.AbstractIntegrationResult, sys::Systems.VectorFieldSystem, config::Common.TrajectoryConfig)
+function build_solution(result::Integrators.AbstractIntegrationResult, sys::Systems.VectorFieldSystem, config::Common.StateTrajectoryConfig)
     return VectorFieldSolution(result)
 end
 

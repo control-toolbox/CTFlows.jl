@@ -125,13 +125,13 @@ function test_abstract_flow()
             end
 
             Test.@testset "callable with config" begin
-                config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 result = flow(config)
                 Test.@test result === :fake_config_trajectory
             end
 
-            Test.@testset "callable with TrajectoryConfig" begin
-                config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+            Test.@testset "callable with StateTrajectoryConfig" begin
+                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
                 result = flow(config)
                 Test.@test result === :fake_config_trajectory
             end
