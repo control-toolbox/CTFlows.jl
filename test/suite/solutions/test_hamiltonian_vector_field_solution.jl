@@ -3,6 +3,7 @@ module TestHamiltonianVectorFieldSolution
 import Test
 import CTFlows.Integrators: Integrators
 import CTFlows.Solutions: Solutions
+import CTBase.Exceptions
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
@@ -15,6 +16,14 @@ struct FakeHamiltonianResult <: Integrators.AbstractIntegrationResult
     final_u::Vector{Float64}
     ts::Vector{Float64}
     us::Vector{Vector{Float64}}
+end
+
+# =============================================================================
+# Fake HamiltonianVectorFieldSolution for testing plot stub
+# =============================================================================
+
+struct FakeHamiltonianVectorFieldSolution <: Solutions.AbstractHamiltonianVectorFieldSolution
+    data::String
 end
 
 Integrators.final_state(r::FakeHamiltonianResult) = r.final_u
@@ -102,6 +111,31 @@ function test_hamiltonian_vector_field_solution()
             
             tg = Solutions.time_grid(sol)
             Test.@test tg == [0.0, 0.5, 1.0]
+        end
+        
+        # ====================================================================
+        # UNIT TESTS - Plot stub
+        # ====================================================================
+        
+        Test.@testset "Plot stub" begin
+            Test.@testset "throws ExtensionError without Plots extension" begin
+                fake_sol = FakeHamiltonianVectorFieldSolution("test data")
+                
+                Test.@test_throws Exceptions.ExtensionError Solutions.plot(fake_sol)
+            end
+            
+            Test.@testset "error message mentions Plots extension" begin
+                fake_sol = FakeHamiltonianVectorFieldSolution("test data")
+                
+                try
+                    Solutions.plot(fake_sol)
+                    Test.@test false  # Should not reach here
+                catch err
+                    Test.@test err isa Exceptions.ExtensionError
+                    msg = sprint(showerror, err)
+                    Test.@test occursin("Plots", msg)
+                end
+            end
         end
     end
 end
