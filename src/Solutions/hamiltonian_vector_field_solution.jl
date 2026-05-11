@@ -243,9 +243,10 @@ See also: [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.
 function RecipesBase.plot(sol::AbstractHamiltonianVectorFieldSolution; kwargs...)
     throw(
         Exceptions.ExtensionError(
-            "Plots extension not loaded";
-            suggestion = "Load Plots.jl with: using Plots",
-            context = "RecipesBase.plot - extension availability check",
+            :Plots;
+            message = "to plot solutions",
+            feature = "Plotting via Plots.jl",
+            context = "Load Plots extension first: using Plots",
         ),
     )
 end

@@ -218,18 +218,17 @@ Plot stub — throws error if Plots extension not loaded.
 - `kwargs...`: Additional plotting keyword arguments (ignored).
 
 # Throws
-- `CTBase.Exceptions.IncorrectArgument`: If Plots extension is not loaded.
+- `CTBase.Exceptions.ExtensionError`: If Plots extension is not loaded.
 
 See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.AbstractVectorFieldSolution`](@ref).
 """
 function RecipesBase.plot(sol::AbstractVectorFieldSolution; kwargs...)
     throw(
-        Exceptions.IncorrectArgument(
-            "Plots extension not loaded";
-            got = "plot call without Plots extension",
-            expected = "Plots.jl to be loaded",
-            suggestion = "Load Plots.jl with: using Plots",
-            context = "RecipesBase.plot - extension availability check",
+        Exceptions.ExtensionError(
+            :Plots;
+            message = "to plot solutions",
+            feature = "Plotting via Plots.jl",
+            context = "Load Plots extension first: using Plots",
         ),
     )
 end
