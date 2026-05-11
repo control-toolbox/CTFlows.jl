@@ -98,10 +98,10 @@ function test_vector_field_solution()
         # ====================================================================
 
         Test.@testset "Plot stub" begin
-            Test.@testset "throws IncorrectArgument without Plots extension" begin
+            Test.@testset "throws ExtensionError without Plots extension" begin
                 fake_sol = FakeVectorFieldSolution("test data")
                 
-                Test.@test_throws Exceptions.IncorrectArgument Solutions.plot(fake_sol)
+                Test.@test_throws Exceptions.ExtensionError Solutions.plot(fake_sol)
             end
 
             Test.@testset "error message mentions Plots extension" begin
@@ -111,9 +111,9 @@ function test_vector_field_solution()
                     Solutions.plot(fake_sol)
                     Test.@test false  # Should not reach here
                 catch err
-                    Test.@test err isa Exceptions.IncorrectArgument
+                    Test.@test err isa Exceptions.ExtensionError
                     msg = sprint(showerror, err)
-                    Test.@test occursin("Plots extension", msg)
+                    Test.@test occursin("Plots", msg)
                 end
             end
         end
