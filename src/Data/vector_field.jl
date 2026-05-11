@@ -30,9 +30,9 @@ traits), and via a **uniform** signature `(t, x, v)` that ignores the
 unused arguments — this uniform form is used internally to build the right-hand
 side of the ODE in a trait-agnostic way.
 
-See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
+See also: [`CTFlows.Data.AbstractVectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
 """
-struct VectorField{F<:Function, TD<:TimeDependence, VD<:VariableDependence}
+struct VectorField{F<:Function, TD<:TimeDependence, VD<:VariableDependence} <: AbstractVectorField{TD, VD}
     f::F
 end
 
@@ -92,86 +92,6 @@ end
 (F::VectorField{<:Function, Autonomous, Fixed})(t, x, v) = F.f(x)
 (F::VectorField{<:Function, NonAutonomous, Fixed})(t, x, v) = F.f(t, x)
 (F::VectorField{<:Function, Autonomous, NonFixed})(t, x, v) = F.f(x, v)
-
-# =============================================================================
-# Trait accessors for VectorField
-# =============================================================================
-
-"""
-$(TYPEDSIGNATURES)
-
-Indicate that `VectorField` has the time-dependence trait.
-
-This implementation declares that all vector fields support time-dependence queries.
-Concrete `VectorField` instances have their time dependence encoded in the type parameter `TD`.
-
-See also: [`CTFlows.Common.time_dependence`](@ref), [`CTFlows.Data.VectorField`](@ref).
-"""
-Common.has_time_dependence_trait(::VectorField) = true
-
-"""
-$(TYPEDSIGNATURES)
-
-Indicate that `VectorField` has the variable-dependence trait.
-
-This implementation declares that all vector fields support variable-dependence queries.
-Concrete `VectorField` instances have their variable dependence encoded in the type parameter `VD`.
-
-See also: [`CTFlows.Common.variable_dependence`](@ref), [`CTFlows.Data.VectorField`](@ref).
-"""
-Common.has_variable_dependence_trait(::VectorField) = true
-
-"""
-$(TYPEDSIGNATURES)
-
-Extract the time dependence trait from a VectorField.
-
-# Returns
-- `Type{<:TimeDependence}`: The time dependence trait type (Autonomous or NonAutonomous).
-
-# Example
-\`\`\`julia
-using CTFlows.Systems
-using CTFlows.Common
-
-vf_autonomous = VectorField(x -> -x; autonomous=true)
-Common.time_dependence(vf_autonomous)  # Returns Autonomous
-
-vf_nonautonomous = VectorField((t, x) -> t .* x; autonomous=false)
-Common.time_dependence(vf_nonautonomous)  # Returns NonAutonomous
-\`\`\`
-
-See also: [`CTFlows.Common.has_time_dependence_trait`](@ref), [`CTFlows.Common.is_autonomous`](@ref).
-"""
-function Common.time_dependence(vf::VectorField{<:Function, TD, <:VariableDependence}) where {TD <: TimeDependence}
-    return TD
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Extract the variable dependence trait from a VectorField.
-
-# Returns
-- `Type{<:VariableDependence}`: The variable dependence trait type (Fixed or NonFixed).
-
-# Example
-\`\`\`julia
-using CTFlows.Systems
-using CTFlows.Common
-
-vf_fixed = VectorField(x -> -x; variable=false)
-Common.variable_dependence(vf_fixed)  # Returns Fixed
-
-vf_nonfixed = VectorField((x, v) -> -x .* v; variable=true)
-Common.variable_dependence(vf_nonfixed)  # Returns NonFixed
-\`\`\`
-
-See also: [`CTFlows.Common.has_variable_dependence_trait`](@ref), [`CTFlows.Common.is_variable`](@ref).
-"""
-function Common.variable_dependence(vf::VectorField{<:Function, <:TimeDependence, VD}) where {VD <: VariableDependence}
-    return VD
-end
 
 # =============================================================================
 # Base.show

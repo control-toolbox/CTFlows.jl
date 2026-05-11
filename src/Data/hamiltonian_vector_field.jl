@@ -32,9 +32,9 @@ Every `HamiltonianVectorField` is callable via its **natural** signature (matchi
 traits), and via a **uniform** signature `(t, x, p, v)` that ignores the
 unused arguments.
 
-See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
+See also: [`CTFlows.Data.AbstractVectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
 """
-struct HamiltonianVectorField{F<:Function, TD<:Common.TimeDependence, VD<:Common.VariableDependence}
+struct HamiltonianVectorField{F<:Function, TD<:Common.TimeDependence, VD<:Common.VariableDependence} <: AbstractVectorField{TD, VD}
     f::F
 end
 
@@ -95,85 +95,6 @@ end
 (H::HamiltonianVectorField{<:Function, Common.NonAutonomous, Common.Fixed})(t, x, p, v) = H.f(t, x, p)
 (H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.NonFixed})(t, x, p, v) = H.f(x, p, v)
 
-# =============================================================================
-# Trait accessors for HamiltonianVectorField
-# =============================================================================
-
-"""
-$(TYPEDSIGNATURES)
-
-Indicate that `HamiltonianVectorField` has the time-dependence trait.
-
-This implementation declares that all Hamiltonian vector fields support time-dependence queries.
-Concrete `HamiltonianVectorField` instances have their time dependence encoded in the type parameter `TD`.
-
-See also: [`CTFlows.Common.time_dependence`](@ref), [`CTFlows.Data.HamiltonianVectorField`](@ref).
-"""
-Common.has_time_dependence_trait(::HamiltonianVectorField) = true
-
-"""
-$(TYPEDSIGNATURES)
-
-Indicate that `HamiltonianVectorField` has the variable-dependence trait.
-
-This implementation declares that all Hamiltonian vector fields support variable-dependence queries.
-Concrete `HamiltonianVectorField` instances have their variable dependence encoded in the type parameter `VD`.
-
-See also: [`CTFlows.Common.variable_dependence`](@ref), [`CTFlows.Data.HamiltonianVectorField`](@ref).
-"""
-Common.has_variable_dependence_trait(::HamiltonianVectorField) = true
-
-"""
-$(TYPEDSIGNATURES)
-
-Extract the time dependence trait from a HamiltonianVectorField.
-
-# Returns
-- `Type{<:TimeDependence}`: The time dependence trait type (Autonomous or NonAutonomous).
-
-# Example
-```julia
-using CTFlows.Systems
-using CTFlows.Common
-
-hvf_autonomous = HamiltonianVectorField((x, p) -> (x, -p); autonomous=true)
-Common.time_dependence(hvf_autonomous)  # Returns Autonomous
-
-hvf_nonautonomous = HamiltonianVectorField((t, x, p) -> (t .* x, -p); autonomous=false)
-Common.time_dependence(hvf_nonautonomous)  # Returns NonAutonomous
-```
-
-See also: [`CTFlows.Common.has_time_dependence_trait`](@ref), [`CTFlows.Common.is_autonomous`](@ref).
-"""
-function Common.time_dependence(hvf::HamiltonianVectorField{<:Function, TD, <:Common.VariableDependence}) where {TD <: Common.TimeDependence}
-    return TD
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Extract the variable dependence trait from a HamiltonianVectorField.
-
-# Returns
-- `Type{<:VariableDependence}`: The variable dependence trait type (Fixed or NonFixed).
-
-# Example
-```julia
-using CTFlows.Systems
-using CTFlows.Common
-
-hvf_fixed = HamiltonianVectorField((x, p) -> (x, -p); variable=false)
-Common.variable_dependence(hvf_fixed)  # Returns Fixed
-
-hvf_nonfixed = HamiltonianVectorField((x, p, v) -> (x .* v, -p); variable=true)
-Common.variable_dependence(hvf_nonfixed)  # Returns NonFixed
-```
-
-See also: [`CTFlows.Common.has_variable_dependence_trait`](@ref), [`CTFlows.Common.is_variable`](@ref).
-"""
-function Common.variable_dependence(hvf::HamiltonianVectorField{<:Function, <:Common.TimeDependence, VD}) where {VD <: Common.VariableDependence}
-    return VD
-end
 
 # =============================================================================
 # Base.show
