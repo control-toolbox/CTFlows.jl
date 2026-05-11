@@ -430,13 +430,13 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Extract the initial condition from a `HamiltonianPointConfig`.
+Extract the initial condition from a Hamiltonian config.
 
 Returns the concatenated state and costate as a single vector, which is the
 expected format for ODE solvers in the Hamiltonian framework.
 
 # Arguments
-- `c::HamiltonianPointConfig`: The Hamiltonian point configuration.
+- `c::Union{HamiltonianPointConfig, HamiltonianTrajectoryConfig}`: The Hamiltonian configuration.
 
 # Returns
 - `AbstractVector`: Concatenated state and costate vector.
@@ -455,43 +455,9 @@ julia> initial_condition(config)
  0.3
 \`\`\`
 
-See also: [`CTFlows.Common.HamiltonianPointConfig`](@ref), [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.initial_costate`](@ref).
+See also: [`CTFlows.Common.HamiltonianPointConfig`](@ref), [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.initial_costate`](@ref).
 """
-function initial_condition(c::HamiltonianPointConfig)
-    return vcat(c.x0, c.p0)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Extract the initial condition from a `HamiltonianTrajectoryConfig`.
-
-Returns the concatenated state and costate as a single vector, which is the
-expected format for ODE solvers in the Hamiltonian framework.
-
-# Arguments
-- `c::HamiltonianTrajectoryConfig`: The Hamiltonian trajectory configuration.
-
-# Returns
-- `AbstractVector`: Concatenated state and costate vector.
-
-# Example
-\`\`\`julia-repl
-julia> using CTFlows.Common
-
-julia> config = HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
-
-julia> initial_condition(config)
-4-element Vector{Float64}:
- 1.0
- 0.0
- 0.5
- 0.3
-\`\`\`
-
-See also: [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.initial_costate`](@ref).
-"""
-function initial_condition(c::HamiltonianTrajectoryConfig)
+function initial_condition(c::Union{HamiltonianPointConfig, HamiltonianTrajectoryConfig})
     return vcat(c.x0, c.p0)
 end
 
