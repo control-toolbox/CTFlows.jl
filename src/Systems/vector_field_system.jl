@@ -8,7 +8,8 @@ wrapped in a `Common.ODEParameters` struct.
 
 # Fields
 - `vf::VectorField{F, TD, VD}`: the underlying vector field.
-- `rhs::RHS`: the pre-computed right-hand side closure with signature `(du, u, p, t) -> nothing`.
+- `rhs::RHS`: the pre-computed in-place right-hand side closure with signature `(du, u, p, t) -> nothing`.
+- `rhs_oop::OOPROHS`: the pre-computed out-of-place right-hand side closure with signature `(u, p, t) -> du`.
 
 # Example
 \`\`\`julia-repl
@@ -29,16 +30,18 @@ VectorFieldSystem
 
 See also: [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
 """
-struct VectorFieldSystem{F<:Function, TD<:Common.TimeDependence, VD<:Common.VariableDependence, RHS<:Function} <: AbstractStateSystem{TD, VD}
+struct VectorFieldSystem{F<:Function, TD<:Common.TimeDependence, VD<:Common.VariableDependence, RHS<:Function, OOPROHS<:Function} <: AbstractStateSystem{TD, VD}
     vf::Data.VectorField{F, TD, VD}
     rhs::RHS
+    rhs_oop::OOPROHS
 
     function VectorFieldSystem(vf::Data.VectorField{F, TD, VD}) where {F, TD, VD}
-        rhs = function (du, u, p, t)
-            du .= vf(t, u, p.variable)
+        rhs = function (du, u, λ, t)
+            du .= vf(t, u, λ.variable)
             return nothing
         end
-        return new{F, TD, VD, typeof(rhs)}(vf, rhs)
+        rhs_oop = (u, λ, t) -> vf(t, u, λ.variable)
+        return new{F, TD, VD, typeof(rhs), typeof(rhs_oop)}(vf, rhs, rhs_oop)
     end
 end
 
@@ -86,16 +89,17 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Out-of-place right-hand side for a `VectorFieldSystem`. Returns a closure
-with signature `(u, p, t) -> du` that uses the uniform `(t, x, v)` call on the
-underlying `VectorField`, where `p` is a `Common.ODEParameters` wrapper
-containing the variable (or `nothing` for `Fixed` systems).
+Out-of-place right-hand side for a `VectorFieldSystem`. Returns the pre-computed
+closure stored in the system, which has signature `(u, p, t) -> du` and uses
+the uniform `(t, x, v)` call on the underlying `VectorField`, where `p`
+is a `Common.ODEParameters` wrapper containing the variable (or `nothing`
+for `Fixed` systems).
 
 # Arguments
 - `sys::VectorFieldSystem`: The system for which to return the RHS function.
 
 # Returns
-- `Function`: The closure with signature `(u, p, t) -> du`.
+- `Function`: The pre-computed closure with signature `(u, p, t) -> du`.
 
 # Example
 ```julia
@@ -112,13 +116,15 @@ du = rhs_oop(u, p, 0.0)
 ```
 
 # Notes
+- The closure is computed once at construction time for performance.
+- Multiple calls to `rhs_oop` return the same function object.
 - This method is used for immutable array types like `StaticArrays.SVector`.
 - The closure uses the uniform `(t, x, v)` signature to work with all trait combinations.
 
 See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.rhs`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
 """
 function rhs_oop(sys::VectorFieldSystem)
-    return (u, p, t) -> sys.vf(t, u, p.variable)
+    return sys.rhs_oop
 end
 
 # =============================================================================
@@ -138,7 +144,7 @@ Shows the type name, time dependence, variable dependence, and the underlying ve
 
 See also: [`CTFlows.Systems.VectorFieldSystem`](@ref).
 """
-function Base.show(io::IO, sys::VectorFieldSystem{F, TD, VD, RHS}) where {F, TD, VD, RHS}
+function Base.show(io::IO, sys::VectorFieldSystem{F, TD, VD, RHS, OOPROHS}) where {F, TD, VD, RHS, OOPROHS}
     println(io, "VectorFieldSystem")
     println(io, "  time_dependence: ", TD)
     println(io, "  variable_dependence: ", VD)
@@ -159,6 +165,6 @@ Delegates to the compact show method.
 
 See also: [`CTFlows.Systems.VectorFieldSystem`](@ref).
 """
-function Base.show(io::IO, ::MIME"text/plain", sys::VectorFieldSystem{F, TD, VD, RHS}) where {F, TD, VD, RHS}
+function Base.show(io::IO, ::MIME"text/plain", sys::VectorFieldSystem{F, TD, VD, RHS, OOPROHS}) where {F, TD, VD, RHS, OOPROHS}
     show(io, sys)
 end
