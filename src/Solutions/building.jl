@@ -24,6 +24,37 @@ function build_solution(result::Integrators.AbstractIntegrationResult, sys::Syst
     return final_state(result)[1]
 end
 
+# =============================================================================
+# Internal helpers for Hamiltonian solution splitting
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Split a combined final state `u` into state `x` and costate `p` components.
+
+Dispatches on the type of the initial condition `x0` to handle scalar, vector, and matrix cases.
+
+# Arguments
+- `u`: Combined final state `[x; p]` from integration.
+- `x0::Number`: Scalar initial condition (splits as `(u[1], u[2])`).
+- `x0::AbstractVector`: Vector initial condition (splits by length).
+- `x0::AbstractMatrix`: Matrix initial condition (splits by number of rows).
+
+# Returns
+- `Tuple`: Tuple `(x, p)` with types matching `x0`:
+  - `Tuple{Number, Number}` for scalar inputs
+  - `Tuple{AbstractVector, AbstractVector}` for vector inputs
+  - `Tuple{AbstractMatrix, AbstractMatrix}` for matrix inputs
+
+# Notes
+- Internal helper used by `build_solution` for `HamiltonianPointConfig`.
+- Enables DRY principle by centralizing solution splitting logic.
+"""
+_ham_split_solution(u, x0::Number) = (u[1], u[2])
+_ham_split_solution(u, x0::AbstractVector) = (u[1:length(x0)], u[length(x0)+1:end])
+_ham_split_solution(u, x0::AbstractMatrix) = (u[1:size(x0, 1), :], u[size(x0, 1)+1:end, :])
+
 """
 $(TYPEDSIGNATURES)
 
@@ -68,47 +99,26 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build a solution for a scalar HamiltonianPointConfig integration.
+Build a solution for a HamiltonianPointConfig integration.
 
-Returns the final state and costate as a tuple of scalars `(xf, pf)`, unwrapping the
-length-1 vectors that were introduced by scalar-promotion at ODE problem construction time.
-
-# Arguments
-- `result::Integrators.AbstractIntegrationResult`: The integration result.
-- `sys::Systems.HamiltonianVectorFieldSystem`: The Hamiltonian vector field system.
-- `config::Common.HamiltonianPointConfig{<:Real, <:Number, <:Number, <:Real}`: Scalar Hamiltonian point configuration.
-
-# Returns
-- `Tuple{Number, Number}`: The final state and costate as scalars.
-
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Common.AbstractConfig`](@ref).
-"""
-function build_solution(result::Integrators.AbstractIntegrationResult, sys::Systems.HamiltonianVectorFieldSystem, config::Common.HamiltonianPointConfig{<:Real, <:Number, <:Number, <:Real})
-    u = Integrators.final_state(result)
-    return (u[1], u[2])
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Build a solution for a vectorial HamiltonianPointConfig integration.
-
-Returns the final state and costate as a tuple of vectors `(xf, pf)`.
+Returns the final state and costate as a tuple `(xf, pf)`, dispatching on the
+type of the initial condition to handle scalar, vector, and matrix cases.
 
 # Arguments
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
 - `sys::Systems.HamiltonianVectorFieldSystem`: The Hamiltonian vector field system.
-- `config::Common.HamiltonianPointConfig`: Vectorial Hamiltonian point configuration.
+- `config::Common.HamiltonianPointConfig`: The Hamiltonian point configuration.
 
 # Returns
-- `Tuple{AbstractVector, AbstractVector}`: The final state and costate vectors.
+- `Tuple`: The final state and costate. Type depends on `x0`/`p0`:
+  - `Tuple{Number, Number}` for scalar inputs
+  - `Tuple{AbstractVector, AbstractVector}` for vector inputs
+  - `Tuple{AbstractMatrix, AbstractMatrix}` for matrix inputs
 
 See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Common.AbstractConfig`](@ref).
 """
 function build_solution(result::Integrators.AbstractIntegrationResult, sys::Systems.HamiltonianVectorFieldSystem, config::Common.HamiltonianPointConfig)
-    u = Integrators.final_state(result)
-    n = length(Common.initial_state(config))
-    return (u[1:n], u[n+1:2n])
+    return _ham_split_solution(Integrators.final_state(result), Common.initial_state(config))
 end
 
 """

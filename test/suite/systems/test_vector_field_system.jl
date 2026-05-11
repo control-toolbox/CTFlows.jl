@@ -135,6 +135,72 @@ function test_vector_field_system()
                 du = rhs_oop(u, p, t)
                 Test.@test du ≈ [-1.0, -2.0] atol=1e-10
             end
+
+            Test.@testset "rhs_oop stored" begin
+                vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                Test.@test sys.rhs_oop isa Function
+                Test.@test Systems.rhs_oop(sys) === sys.rhs_oop
+            end
+
+            Test.@testset "rhs with matrix" begin
+                vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                rhs = Systems.rhs(sys)
+                du = zeros(2, 3)
+                u = [1.0 2.0 3.0; 4.0 5.0 6.0]
+                p = Common.ODEParameters(nothing)
+                rhs(du, u, p, 0.0)
+                Test.@test du ≈ -u  atol=1e-10
+            end
+
+            Test.@testset "rhs_oop with matrix" begin
+                vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                rhs_oop = Systems.rhs_oop(sys)
+                u = [1.0 2.0 3.0; 4.0 5.0 6.0]
+                p = Common.ODEParameters(nothing)
+                du = rhs_oop(u, p, 0.0)
+                Test.@test du ≈ -u  atol=1e-10
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Complex numbers
+        # ====================================================================
+
+        Test.@testset "Complex numbers" begin
+            vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+            sys = Systems.VectorFieldSystem(vf)
+            rhs     = Systems.rhs(sys)
+            rhs_oop = Systems.rhs_oop(sys)
+            p = Common.ODEParameters(nothing)
+
+            Test.@testset "rhs - complex vector" begin
+                u  = [1.0 + 2.0im, 3.0 + 4.0im]
+                du = zeros(ComplexF64, 2)
+                rhs(du, u, p, 0.0)
+                Test.@test du ≈ [-1.0-2.0im, -3.0-4.0im]  atol=1e-10
+            end
+
+            Test.@testset "rhs_oop - complex vector" begin
+                u  = [1.0 + 2.0im, 3.0 + 4.0im]
+                du = rhs_oop(u, p, 0.0)
+                Test.@test du ≈ [-1.0-2.0im, -3.0-4.0im]  atol=1e-10
+            end
+
+            Test.@testset "rhs - complex matrix" begin
+                u  = [1.0+2.0im  5.0+6.0im; 3.0+4.0im  7.0+8.0im]
+                du = zeros(ComplexF64, 2, 2)
+                rhs(du, u, p, 0.0)
+                Test.@test du ≈ -u  atol=1e-10
+            end
+
+            Test.@testset "rhs_oop - complex matrix" begin
+                u  = [1.0+2.0im  5.0+6.0im; 3.0+4.0im  7.0+8.0im]
+                du = rhs_oop(u, p, 0.0)
+                Test.@test du ≈ -u  atol=1e-10
+            end
         end
 
         # ====================================================================
@@ -150,6 +216,16 @@ function test_vector_field_system()
                 p = Common.ODEParameters(nothing)
                 du = rhs_oop(u, p, 0.0)
                 Test.@test du == SA[-1.0, -2.0]
+            end
+
+            Test.@testset "rhs_oop with SVector complex" begin
+                vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                rhs_oop = Systems.rhs_oop(sys)
+                u = SA[1.0+2.0im, 3.0+4.0im]
+                p = Common.ODEParameters(nothing)
+                du = rhs_oop(u, p, 0.0)
+                Test.@test du == SA[-1.0-2.0im, -3.0-4.0im]
             end
         end
 
