@@ -16,7 +16,7 @@ runtime type tests.
 # Arguments
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
 - `sys::Systems.VectorFieldSystem`: The vector field system.
-- `config::Common.AbstractPointConfig{<:Number, Common.StateTag}`: Scalar point configuration.
+- `config::Common.AbstractPointConfig{<:Number, Common.StateTrait}`: Scalar point configuration.
 
 # Returns
 - `Number`: The unwrapped scalar final state.
@@ -26,7 +26,7 @@ See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Com
 function build_solution(
     result::Integrators.AbstractIntegrationResult, 
     sys::Systems.AbstractStateSystem, 
-    config::Common.AbstractPointConfig{<:Number, Common.StateTag}
+    config::Common.AbstractPointConfig{<:Number, Common.StateTrait}
     )
     return final_state(result)[1]
 end
@@ -51,7 +51,7 @@ See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Com
 function build_solution(
     result::Integrators.AbstractIntegrationResult, 
     sys::Systems.AbstractStateSystem, 
-    config::Common.AbstractPointConfig{X0, Common.StateTag}
+    config::Common.AbstractPointConfig{X0, Common.StateTrait}
     ) where {X0}
     return final_state(result)
 end
@@ -75,7 +75,7 @@ See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Sol
 function build_solution(
     result::Integrators.AbstractIntegrationResult, 
     sys::Systems.AbstractStateSystem, 
-    config::Common.AbstractTrajectoryConfig{X0, Common.StateTag}
+    config::Common.AbstractTrajectoryConfig{X0, Common.StateTrait}
     ) where {X0}
     return VectorFieldSolution(result)
 end
@@ -126,7 +126,7 @@ type of the initial condition to handle scalar, vector, and matrix cases.
 # Arguments
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
 - `sys::Systems.HamiltonianVectorFieldSystem`: The Hamiltonian vector field system.
-- `config::Common.AbstractPointConfig{<:Any, Common.HamiltonianTag}`: The Hamiltonian point configuration.
+- `config::Common.AbstractPointConfig{<:Any, Common.HamiltonianTrait}`: The Hamiltonian point configuration.
 
 # Returns
 - `Tuple`: The final state and costate. Type depends on `x0`/`p0`:
@@ -139,7 +139,7 @@ See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Com
 function build_solution(
     result::Integrators.AbstractIntegrationResult, 
     sys::Systems.AbstractHamiltonianSystem, 
-    config::Common.AbstractPointConfig{X0, Common.HamiltonianTag}
+    config::Common.AbstractPointConfig{X0, Common.HamiltonianTrait}
     ) where {X0}
     return _ham_split_solution(Integrators.final_state(result), Common.initial_state(config))
 end
@@ -154,7 +154,7 @@ Wraps the integration result in a `HamiltonianVectorFieldSolution` for future ex
 # Arguments
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
 - `sys::Systems.HamiltonianVectorFieldSystem`: The Hamiltonian vector field system.
-- `config::Common.AbstractTrajectoryConfig{<:Any, Common.HamiltonianTag}`: The Hamiltonian trajectory configuration.
+- `config::Common.AbstractTrajectoryConfig{<:Any, Common.HamiltonianTrait}`: The Hamiltonian trajectory configuration.
 
 # Returns
 - `HamiltonianVectorFieldSolution`: The wrapped integration result.
@@ -164,7 +164,7 @@ See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Sol
 function build_solution(
     result::Integrators.AbstractIntegrationResult, 
     sys::Systems.AbstractHamiltonianSystem, 
-    config::Common.AbstractTrajectoryConfig{X0, Common.HamiltonianTag}
+    config::Common.AbstractTrajectoryConfig{X0, Common.HamiltonianTrait}
     ) where {X0}
     return HamiltonianVectorFieldSolution(result)
 end

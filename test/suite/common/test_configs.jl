@@ -14,7 +14,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake config type for testing the AbstractConfig contract.
 """
-struct FakeConfig{X0} <: Common.AbstractConfigWithMaC{X0, Common.PointTag, Common.StateTag}
+struct FakeConfig{X0} <: Common.AbstractConfigWithMaC{X0, Common.PointTrait, Common.StateTrait}
     x0::X0
 end
 
@@ -22,7 +22,7 @@ end
 Fake config type that implements the tspan contract.
 Used to test contract implementation without relying on concrete types.
 """
-struct FakeConfigWithTspan{X0} <: Common.AbstractConfigWithMaC{X0, Common.PointTag, Common.StateTag}
+struct FakeConfigWithTspan{X0} <: Common.AbstractConfigWithMaC{X0, Common.PointTrait, Common.StateTrait}
     t0::Float64
     tf::Float64
     x0::X0
