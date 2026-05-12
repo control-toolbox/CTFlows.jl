@@ -57,7 +57,8 @@ function _caller_function_name()
         if func_str != "_caller_function_name" &&
            !startswith(func_str, "#") &&
            func_str != "has_time_dependence_trait" &&
-           func_str != "has_variable_dependence_trait"
+           func_str != "has_variable_dependence_trait" &&
+           func_str != "has_mutability_trait"
             return func_name
         end
     end
@@ -175,6 +176,65 @@ function variable_dependence(obj::Any)
 end
 
 # =============================================================================
+# Mutability trait functions
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Check if the object has the mutability trait.
+
+This fallback method throws an error indicating the object does not support
+mutability queries. Concrete types that have the trait should implement
+`has_mutability_trait(obj::MyType) = true`.
+
+The calling function name is automatically detected from the stacktrace
+for better error messages.
+
+# Arguments
+- `obj::Any`: The object to check.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): Always, indicating the object does not have the trait.
+
+See also: [`CTFlows.Common.AbstractMutabilityTrait`](@ref), [`CTFlows.Common.mutability_trait`](@ref).
+"""
+function has_mutability_trait(obj::Any)
+    source_method = _caller_function_name()
+    throw(Exceptions.IncorrectArgument(
+        "Cannot call $(source_method) on object of type $(typeof(obj)): no mutability trait";
+        suggestion = "Implement has_mutability_trait(obj::$(typeof(obj))) = true and mutability_trait(obj::$(typeof(obj))) to enable mutability trait support.",
+        context = "Mutability trait not available",
+    ))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the mutability trait value for the object.
+
+This fallback method throws an error indicating the method is not implemented.
+Concrete types that have the trait should implement `mutability_trait(obj::MyType)`
+to return the specific trait value (`InPlace` or `OutOfPlace`).
+
+# Arguments
+- `obj::Any`: The object to query.
+
+# Throws
+- [`CTBase.Exceptions.NotImplemented`](@extref): Always, indicating the method must be implemented.
+
+See also: [`CTFlows.Common.AbstractMutabilityTrait`](@ref), [`CTFlows.Common.has_mutability_trait`](@ref).
+"""
+function mutability_trait(obj::Any)
+    throw(Exceptions.NotImplemented(
+        "mutability_trait not implemented for $(typeof(obj))";
+        required_method = "mutability_trait(obj::$(typeof(obj)))",
+        suggestion = "Implement mutability_trait for your concrete object type to return the specific mutability trait (InPlace or OutOfPlace).",
+        context = "Mutability trait - required method implementation",
+    ))
+end
+
+# =============================================================================
 # Trait accessors
 # =============================================================================
 
@@ -200,7 +260,7 @@ See also: [`CTModels.OCP.TimeDependence`](@extref), [`CTFlows.Common.time_depend
 """
 function OCP.is_autonomous(obj::Any)
     has_time_dependence_trait(obj)
-    return OCP.is_autonomous(time_dependence(obj))
+    return time_dependence(obj) === OCP.Autonomous
 end
 
 """
@@ -225,7 +285,7 @@ See also: [`CTModels.OCP.TimeDependence`](@extref), [`CTFlows.Common.time_depend
 """
 function OCP.is_nonautonomous(obj::Any)
     has_time_dependence_trait(obj)
-    return OCP.is_nonautonomous(time_dependence(obj))
+    return time_dependence(obj) === OCP.NonAutonomous
 end
 
 """
@@ -250,7 +310,7 @@ See also: [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.variable
 """
 function OCP.is_variable(obj::Any)
     has_variable_dependence_trait(obj)
-    return OCP.is_variable(variable_dependence(obj))
+    return variable_dependence(obj) === NonFixed
 end
 
 """
@@ -275,7 +335,7 @@ See also: [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.variable
 """
 function OCP.is_nonvariable(obj::Any)
     has_variable_dependence_trait(obj)
-    return OCP.is_nonvariable(variable_dependence(obj))
+    return variable_dependence(obj) === Fixed
 end
 
 """
@@ -300,95 +360,60 @@ See also: [`CTFlows.Common.is_variable`](@ref), [`CTFlows.Common.VariableDepende
 """
 function OCP.has_variable(obj::Any)
     has_variable_dependence_trait(obj)
-    return OCP.is_variable(variable_dependence(obj))
+    return variable_dependence(obj) === NonFixed
+end
+
+# =============================================================================
+# Mutability trait accessors
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Return true if the object uses in-place function evaluation.
+
+Checks that the object has the mutability trait, then returns true
+if `mutability_trait(obj)` is `InPlace`.
+
+# Arguments
+- `obj::Any`: The object to check.
+
+# Returns
+- `Bool`: true if the object uses in-place evaluation.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): If the object does not support mutability queries.
+- [`CTBase.Exceptions.NotImplemented`](@extref): If `mutability_trait` is not implemented for the object type.
+
+See also: [`CTFlows.Common.AbstractMutabilityTrait`](@ref), [`CTFlows.Common.mutability_trait`](@ref).
+"""
+function is_inplace(obj::Any)
+    has_mutability_trait(obj)
+    return mutability_trait(obj) === InPlace
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Return true for the `Autonomous` trait type.
+Return true if the object uses out-of-place function evaluation.
+
+Checks that the object has the mutability trait, then returns true
+if `mutability_trait(obj)` is `OutOfPlace`.
+
+# Arguments
+- `obj::Any`: The object to check.
 
 # Returns
-- `Bool`: true for `Autonomous`, false for `NonAutonomous`.
+- `Bool`: true if the object uses out-of-place evaluation.
 
-See also: [`CTModels.OCP.Autonomous`](@extref), [`CTModels.OCP.NonAutonomous`](@extref).
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): If the object does not support mutability queries.
+- [`CTBase.Exceptions.NotImplemented`](@extref): If `mutability_trait` is not implemented for the object type.
+
+See also: [`CTFlows.Common.AbstractMutabilityTrait`](@ref), [`CTFlows.Common.mutability_trait`](@ref).
 """
-function OCP.is_autonomous(::Type{OCP.Autonomous})
-    return true
+function is_outofplace(obj::Any)
+    has_mutability_trait(obj)
+    return mutability_trait(obj) === OutOfPlace
 end
 
-function OCP.is_autonomous(::Type{OCP.NonAutonomous})
-    return false
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Return true for the `NonAutonomous` trait type.
-
-# Returns
-- `Bool`: true for `NonAutonomous`, false for `Autonomous`.
-
-See also: [`CTModels.OCP.NonAutonomous`](@extref), [`CTModels.OCP.Autonomous`](@extref).
-"""
-function OCP.is_nonautonomous(::Type{OCP.Autonomous})
-    return false
-end
-
-function OCP.is_nonautonomous(::Type{OCP.NonAutonomous})
-    return true
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Return true for the `NonFixed` trait type.
-
-# Returns
-- `Bool`: true for `NonFixed`, false for `Fixed`.
-
-See also: [`CTFlows.Common.NonFixed`](@ref), [`CTFlows.Common.Fixed`](@ref).
-"""
-function OCP.is_variable(::Type{NonFixed})
-    return true
-end
-
-function OCP.is_variable(::Type{Fixed})
-    return false
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Return true for the `NonFixed` trait type (alias for `is_variable`).
-
-# Returns
-- `Bool`: true for `NonFixed`, false for `Fixed`.
-
-See also: [`CTFlows.Common.is_variable`](@ref), [`CTFlows.Common.NonFixed`](@ref).
-"""
-function OCP.has_variable(::Type{NonFixed})
-    return true
-end
-
-function OCP.has_variable(::Type{Fixed})
-    return false
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Return true for the `Fixed` trait type.
-
-# Returns
-- `Bool`: true for `Fixed`, false for `NonFixed`.
-
-See also: [`CTFlows.Common.Fixed`](@ref), [`CTFlows.Common.NonFixed`](@ref).
-"""
-function OCP.is_nonvariable(::Type{Fixed})
-    return true
-end
-
-function OCP.is_nonvariable(::Type{NonFixed})
-    return false
-end

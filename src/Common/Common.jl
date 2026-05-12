@@ -39,14 +39,17 @@ include(joinpath(@__DIR__, "internal_norm.jl"))
 @reexport import CTModels.OCP: is_autonomous, is_nonautonomous, is_variable, is_nonvariable, has_variable
 
 export AbstractTag
-export AbstractTrait, AbstractModeTrait, AbstractContentTrait, PointTrait, TrajectoryTrait, StateTrait, HamiltonianTrait
+export AbstractTrait, AbstractModeTrait, AbstractContentTrait, AbstractMutabilityTrait
+export PointTrait, TrajectoryTrait, StateTrait, HamiltonianTrait
+export InPlace, OutOfPlace
 export AbstractConfig, AbstractPointConfig, AbstractTrajectoryConfig, AbstractStateConfig, AbstractHamiltonianConfig
 export StatePointConfig, StateTrajectoryConfig, HamiltonianPointConfig, HamiltonianTrajectoryConfig
 export tspan, initial_condition, initial_state, initial_costate
 export VariableDependence, Fixed, NonFixed
 export ODEParameters
-export has_time_dependence_trait, has_variable_dependence_trait
-export time_dependence, variable_dependence
+export has_time_dependence_trait, has_variable_dependence_trait, has_mutability_trait
+export time_dependence, variable_dependence, mutability_trait
+export is_inplace, is_outofplace
 export __is_autonomous, __is_variable, __variable, __unsafe
 export deepvalue, real_norm
 

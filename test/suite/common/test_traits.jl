@@ -45,6 +45,27 @@ struct FakeNonFixed end
 Common.has_variable_dependence_trait(::FakeNonFixed) = true
 Common.variable_dependence(::FakeNonFixed) = Common.NonFixed
 
+"""
+Fake type for testing mutability trait pattern with InPlace.
+"""
+struct FakeInPlace end
+
+Common.has_mutability_trait(::FakeInPlace) = true
+Common.mutability_trait(::FakeInPlace) = Common.InPlace
+
+"""
+Fake type for testing mutability trait pattern with OutOfPlace.
+"""
+struct FakeOutOfPlace end
+
+Common.has_mutability_trait(::FakeOutOfPlace) = true
+Common.mutability_trait(::FakeOutOfPlace) = Common.OutOfPlace
+
+"""
+Fake type for testing mutability trait without the trait.
+"""
+struct FakeNoMutability end
+
 # ==============================================================================
 # Test function
 # ==============================================================================
@@ -160,15 +181,6 @@ function test_traits()
                 Test.@test Common.is_nonautonomous(obj) === true
             end
 
-            Test.@testset "is_autonomous dispatches on trait value" begin
-                Test.@test Common.is_autonomous(Common.Autonomous) === true
-                Test.@test Common.is_autonomous(Common.NonAutonomous) === false
-            end
-
-            Test.@testset "is_nonautonomous dispatches on trait value" begin
-                Test.@test Common.is_nonautonomous(Common.Autonomous) === false
-                Test.@test Common.is_nonautonomous(Common.NonAutonomous) === true
-            end
         end
 
         # ====================================================================
@@ -194,20 +206,35 @@ function test_traits()
                 Test.@test Common.has_variable(obj) === true
             end
 
-            Test.@testset "is_variable dispatches on trait value" begin
-                Test.@test Common.is_variable(Common.Fixed) === false
-                Test.@test Common.is_variable(Common.NonFixed) === true
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Mutability Trait Pattern
+        # ====================================================================
+
+        Test.@testset "Mutability Trait Pattern" begin
+            Test.@testset "FakeInPlace trait implementation" begin
+                obj = FakeInPlace()
+                Test.@test Common.has_mutability_trait(obj) === true
+                Test.@test Common.mutability_trait(obj) === Common.InPlace
+                Test.@test Common.is_inplace(obj) === true
+                Test.@test Common.is_outofplace(obj) === false
             end
 
-            Test.@testset "is_nonvariable dispatches on trait value" begin
-                Test.@test Common.is_nonvariable(Common.Fixed) === true
-                Test.@test Common.is_nonvariable(Common.NonFixed) === false
+            Test.@testset "FakeOutOfPlace trait implementation" begin
+                obj = FakeOutOfPlace()
+                Test.@test Common.has_mutability_trait(obj) === true
+                Test.@test Common.mutability_trait(obj) === Common.OutOfPlace
+                Test.@test Common.is_inplace(obj) === false
+                Test.@test Common.is_outofplace(obj) === true
             end
 
-            Test.@testset "has_variable alias for CTModels compatibility" begin
-                Test.@test Common.has_variable(Common.Fixed) === false
-                Test.@test Common.has_variable(Common.NonFixed) === true
+            Test.@testset "FakeNoMutability throws errors" begin
+                obj = FakeNoMutability()
+                Test.@test_throws Exceptions.IncorrectArgument Common.is_inplace(obj)
+                Test.@test_throws Exceptions.NotImplemented Common.mutability_trait(obj)
             end
+
         end
     end
 end

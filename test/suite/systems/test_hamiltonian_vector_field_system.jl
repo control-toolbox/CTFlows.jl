@@ -285,6 +285,78 @@ function test_hamiltonian_vector_field_system()
         end
 
         # ====================================================================
+        # UNIT TESTS - InPlace HamiltonianVectorField
+        # ====================================================================
+
+        Test.@testset "InPlace HamiltonianVectorField" begin
+            Test.@testset "OOP: rhs_oop_finalize is Nothing" begin
+                hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+                Test.@test sys.rhs_oop_finalize === nothing
+            end
+
+            Test.@testset "IP: rhs_oop_finalize is Function" begin
+                hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+                Test.@test sys.rhs_oop_finalize isa Function
+            end
+
+            Test.@testset "IP: rhs fills du via views (no _ham_assign! needed)" begin
+                hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+                u   = [1.0, 2.0, 3.0, 4.0]
+                du  = zeros(4)
+                p   = Common.ODEParameters(nothing)
+                Systems.rhs(sys)(du, u, p, 0.0)
+                Test.@test du[1:2] ≈ [1.0, 2.0]
+                Test.@test du[3:4] ≈ [-3.0, -4.0]
+            end
+
+            Test.@testset "IP: rhs_oop(sys, true) === sys.rhs_oop" begin
+                hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+                Test.@test Systems.rhs_oop(sys, true) === sys.rhs_oop
+            end
+
+            Test.@testset "IP: rhs_oop(sys, false) === sys.rhs_oop_finalize and warns" begin
+                hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+                f   = Test.@test_logs (:warn, r"InPlace HamiltonianVectorField") Systems.rhs_oop(sys, false)
+                Test.@test f === sys.rhs_oop_finalize
+            end
+
+            Test.@testset "IP: rhs_oop(sys, true) returns mutable Vector" begin
+                hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+                f   = Systems.rhs_oop(sys, true)
+                u   = [1.0, 2.0, 3.0, 4.0]
+                p   = Common.ODEParameters(nothing)
+                du  = f(u, p, 0.0)
+                Test.@test du[1:2] ≈ [1.0, 2.0]
+                Test.@test du[3:4] ≈ [-3.0, -4.0]
+                Test.@test du isa Vector
+            end
+
+            Test.@testset "IP: rhs_oop_finalize returns SVector for SVector u" begin
+                hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+                f   = sys.rhs_oop_finalize
+                u   = SA[1.0, 2.0, 3.0, 4.0]
+                p   = Common.ODEParameters(nothing)
+                du  = f(u, p, 0.0)
+                Test.@test du ≈ SA[1.0, 2.0, -3.0, -4.0]
+                Test.@test du isa StaticArrays.SVector
+            end
+
+            Test.@testset "OOP: rhs_oop(sys, false) still returns sys.rhs_oop" begin
+                hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+                Test.@test Systems.rhs_oop(sys, true)  === sys.rhs_oop
+                Test.@test Systems.rhs_oop(sys, false) === sys.rhs_oop
+            end
+        end
+
+        # ====================================================================
         # UNIT TESTS - Validation
         # ====================================================================
 

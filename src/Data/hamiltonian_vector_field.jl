@@ -2,7 +2,7 @@
 $(TYPEDEF)
 
 Parametric container for a Hamiltonian vector field function together with its
-time-dependence and variable-dependence traits.
+time-dependence, variable-dependence, and mutability traits.
 
 The function returns a tuple `(dx, dp)` representing the derivatives of state `x`
 and costate `p` according to Hamiltonian dynamics.
@@ -11,6 +11,7 @@ and costate `p` according to Hamiltonian dynamics.
 - `F`: concrete type of the wrapped function.
 - `TD <: TimeDependence`: `Autonomous` or `NonAutonomous`.
 - `VD <: VariableDependence`: `Fixed` or `NonFixed`.
+- `MD <: AbstractMutabilityTrait`: `InPlace` or `OutOfPlace`.
 
 # Fields
 - `f::F`: the Hamiltonian vector field function.
@@ -26,16 +27,90 @@ HamiltonianVectorField((x, p, v) -> ...; variable = true)                # f(x, 
 HamiltonianVectorField((t, x, p, v) -> ...; autonomous = false, variable = true)
 ```
 
+The mutability trait (InPlace/OutOfPlace) is auto-detected from the function signature.
+
 # Call Signatures
 
 Every `HamiltonianVectorField` is callable via its **natural** signature (matching the
 traits), and via a **uniform** signature `(t, x, p, v)` that ignores the
 unused arguments.
 
-See also: [`CTFlows.Data.AbstractVectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
+For InPlace Hamiltonian vector fields, the natural signature includes the derivative
+buffers as the first two arguments (e.g., `(dx, dp, x, p)` for Autonomous/Fixed).
+
+See also: [`CTFlows.Data.AbstractVectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.AbstractMutabilityTrait`](@ref).
 """
-struct HamiltonianVectorField{F<:Function, TD<:Common.TimeDependence, VD<:Common.VariableDependence} <: AbstractVectorField{TD, VD}
+struct HamiltonianVectorField{F<:Function, TD<:Common.TimeDependence, VD<:Common.VariableDependence, MD<:Common.AbstractMutabilityTrait} <: AbstractVectorField{TD, VD, MD}
     f::F
+end
+
+# =============================================================================
+# Internal helpers for mutability detection
+# =============================================================================
+
+"""
+    _oop_arity_hvf(::Type{Autonomous}, ::Type{Fixed}) -> Int
+
+Return the out-of-place arity for Autonomous/Fixed Hamiltonian vector fields (2: x, p).
+"""
+_oop_arity_hvf(::Type{Autonomous}, ::Type{Fixed}) = 2
+
+"""
+    _oop_arity_hvf(::Type{NonAutonomous}, ::Type{Fixed}) -> Int
+
+Return the out-of-place arity for NonAutonomous/Fixed Hamiltonian vector fields (3: t, x, p).
+"""
+_oop_arity_hvf(::Type{NonAutonomous}, ::Type{Fixed}) = 3
+
+"""
+    _oop_arity_hvf(::Type{Autonomous}, ::Type{NonFixed}) -> Int
+
+Return the out-of-place arity for Autonomous/NonFixed Hamiltonian vector fields (3: x, p, v).
+"""
+_oop_arity_hvf(::Type{Autonomous}, ::Type{NonFixed}) = 3
+
+"""
+    _oop_arity_hvf(::Type{NonAutonomous}, ::Type{NonFixed}) -> Int
+
+Return the out-of-place arity for NonAutonomous/NonFixed Hamiltonian vector fields (4: t, x, p, v).
+"""
+_oop_arity_hvf(::Type{NonAutonomous}, ::Type{NonFixed}) = 4
+
+"""
+    _detect_mutability_hvf(f::Function, TD, VD) -> Type{<:AbstractMutabilityTrait}
+
+Detect the mutability trait from the Hamiltonian vector field function signature.
+
+Compares the function arity to the expected out-of-place arity and in-place arity
+(arity + 2 for HamiltonianVectorField, which has two output buffers). Returns `InPlace` or `OutOfPlace` accordingly.
+
+# Arguments
+- `f::Function`: The Hamiltonian vector-field function.
+- `TD`: Time dependence trait type.
+- `VD`: Variable dependence trait type.
+
+# Returns
+- `Type{InPlace}` or `Type{OutOfPlace}`.
+
+# Throws
+- `Exceptions.IncorrectArgument`: If the arity is ambiguous or invalid.
+"""
+function _detect_mutability_hvf(f::Function, TD, VD)
+    arity = first(methods(f)).nargs - 1
+    oop_arity = _oop_arity_hvf(TD, VD)
+    ip_arity = oop_arity + 2  # HamiltonianVectorField has two output buffers (dx, dp)
+
+    if arity == oop_arity
+        return OutOfPlace
+    elseif arity == ip_arity
+        return InPlace
+    else
+        throw(Exceptions.IncorrectArgument(
+            "Invalid function arity: expected $oop_arity (out-of-place) or $ip_arity (in-place), got $arity";
+            suggestion = "Ensure your function signature matches the expected pattern for the given traits.",
+            context = "HamiltonianVectorField mutability detection",
+        ))
+    end
 end
 
 """
@@ -59,12 +134,14 @@ julia> hvf = HamiltonianVectorField((x, p) -> (x, -p))  # Uses defaults: is_auto
 HamiltonianVectorField
   time_dependence: Autonomous
   variable_dependence: Fixed
+  mutability: OutOfPlace
   function: var"#1"
 
 julia> hvf = HamiltonianVectorField((t, x, p) -> (t .* x, -p); is_autonomous=false)
 HamiltonianVectorField
   time_dependence: NonAutonomous
   variable_dependence: Fixed
+  mutability: OutOfPlace
   function: var"#2"
 ```
 
@@ -73,17 +150,25 @@ See also: [`CTFlows.Data.HamiltonianVectorField`](@ref), [`CTFlows.Common.Autono
 function HamiltonianVectorField(f; is_autonomous::Bool = Common.__is_autonomous(), is_variable::Bool = Common.__is_variable())
     TD = is_autonomous ? Common.Autonomous : Common.NonAutonomous
     VD = is_variable ? Common.NonFixed : Common.Fixed
-    return HamiltonianVectorField{typeof(f), TD, VD}(f)
+    MD = _detect_mutability_hvf(f, TD, VD)
+    return HamiltonianVectorField{typeof(f), TD, VD, MD}(f)
 end
 
 # =============================================================================
 # Natural call signatures - one per trait combination
 # =============================================================================
 
-(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.Fixed})(x, p) = H.f(x, p)
-(H::HamiltonianVectorField{<:Function, Common.NonAutonomous, Common.Fixed})(t, x, p) = H.f(t, x, p)
-(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.NonFixed})(x, p, v) = H.f(x, p, v)
-(H::HamiltonianVectorField{<:Function, Common.NonAutonomous, Common.NonFixed})(t, x, p, v) = H.f(t, x, p, v)
+# OutOfPlace signatures (existing)
+(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.Fixed, OutOfPlace})(x, p) = H.f(x, p)
+(H::HamiltonianVectorField{<:Function, Common.NonAutonomous, Common.Fixed, OutOfPlace})(t, x, p) = H.f(t, x, p)
+(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.NonFixed, OutOfPlace})(x, p, v) = H.f(x, p, v)
+(H::HamiltonianVectorField{<:Function, Common.NonAutonomous, Common.NonFixed, OutOfPlace})(t, x, p, v) = H.f(t, x, p, v)
+
+# InPlace signatures (new)
+(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.Fixed, InPlace})(dx, dp, x, p) = H.f(dx, dp, x, p)
+(H::HamiltonianVectorField{<:Function, Common.NonAutonomous, Common.Fixed, InPlace})(dx, dp, t, x, p) = H.f(dx, dp, t, x, p)
+(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.NonFixed, InPlace})(dx, dp, x, p, v) = H.f(dx, dp, x, p, v)
+(H::HamiltonianVectorField{<:Function, Common.NonAutonomous, Common.NonFixed, InPlace})(dx, dp, t, x, p, v) = H.f(dx, dp, t, x, p, v)
 
 # =============================================================================
 # Uniform (t, x, p, v) call - used by HamiltonianVectorFieldSystem.rhs
@@ -91,9 +176,15 @@ end
 # (NonAutonomous, NonFixed) is already covered by the natural signature above.
 # =============================================================================
 
-(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.Fixed})(t, x, p, v) = H.f(x, p)
-(H::HamiltonianVectorField{<:Function, Common.NonAutonomous, Common.Fixed})(t, x, p, v) = H.f(t, x, p)
-(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.NonFixed})(t, x, p, v) = H.f(x, p, v)
+# OutOfPlace uniform signatures (existing)
+(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.Fixed, OutOfPlace})(t, x, p, v) = H.f(x, p)
+(H::HamiltonianVectorField{<:Function, Common.NonAutonomous, Common.Fixed, OutOfPlace})(t, x, p, v) = H.f(t, x, p)
+(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.NonFixed, OutOfPlace})(t, x, p, v) = H.f(x, p, v)
+
+# InPlace uniform signatures (new)
+(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.Fixed, InPlace})(dx, dp, t, x, p, v) = H.f(dx, dp, x, p)
+(H::HamiltonianVectorField{<:Function, Common.NonAutonomous, Common.Fixed, InPlace})(dx, dp, t, x, p, v) = H.f(dx, dp, t, x, p)
+(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.NonFixed, InPlace})(dx, dp, t, x, p, v) = H.f(dx, dp, x, p, v)
 
 
 # =============================================================================
@@ -105,7 +196,7 @@ $(TYPEDSIGNATURES)
 
 Display a compact representation of a HamiltonianVectorField.
 
-Shows the type name, time dependence, variable dependence, and function type.
+Shows the type name, time dependence, variable dependence, mutability, and function type.
 
 # Arguments
 - `io::IO`: The IO stream to write to.
@@ -113,10 +204,11 @@ Shows the type name, time dependence, variable dependence, and function type.
 
 See also: [`CTFlows.Data.HamiltonianVectorField`](@ref).
 """
-function Base.show(io::IO, hvf::HamiltonianVectorField{F, TD, VD}) where {F, TD, VD}
+function Base.show(io::IO, hvf::HamiltonianVectorField{F, TD, VD, MD}) where {F, TD, VD, MD}
     println(io, "HamiltonianVectorField")
     println(io, "  time_dependence: ", nameof(TD))
     println(io, "  variable_dependence: ", nameof(VD))
+    println(io, "  mutability: ", nameof(MD))
     print(io, "  function: ", typeof(hvf.f))
 end
 
@@ -134,6 +226,6 @@ Delegates to the compact show method.
 
 See also: [`CTFlows.Data.HamiltonianVectorField`](@ref).
 """
-function Base.show(io::IO, ::MIME"text/plain", hvf::HamiltonianVectorField{F, TD, VD}) where {F, TD, VD}
+function Base.show(io::IO, ::MIME"text/plain", hvf::HamiltonianVectorField{F, TD, VD, MD}) where {F, TD, VD, MD}
     show(io, hvf)
 end

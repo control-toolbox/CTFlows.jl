@@ -580,7 +580,7 @@ function Integrators.build_problem(
         f! = Systems.rhs(system)
         prob = ODEProblem(f!, u0, Common.tspan(config), p)
     else
-        f = Systems.rhs_oop(system)
+        f = Systems.rhs_oop(system, false)  # false = is_u0_mutable
         prob = ODEProblem(f, u0, Common.tspan(config), p)
     end
     return prob

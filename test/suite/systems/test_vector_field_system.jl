@@ -3,7 +3,7 @@ module TestVectorFieldSystem
 import Test
 import CTFlows.Systems
 import CTFlows.Common
-import StaticArrays: SA
+import StaticArrays: SA, StaticArrays
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -226,6 +226,74 @@ function test_vector_field_system()
                 p = Common.ODEParameters(nothing)
                 du = rhs_oop(u, p, 0.0)
                 Test.@test du == SA[-1.0-2.0im, -3.0-4.0im]
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - InPlace VectorField
+        # ====================================================================
+
+        Test.@testset "InPlace VectorField" begin
+            Test.@testset "OOP: rhs_oop_finalize is Nothing" begin
+                vf  = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                Test.@test sys.rhs_oop_finalize === nothing
+            end
+
+            Test.@testset "IP: rhs_oop_finalize is Function" begin
+                vf  = Systems.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                Test.@test sys.rhs_oop_finalize isa Function
+            end
+
+            Test.@testset "IP: rhs fills du via in-place call" begin
+                vf  = Systems.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                du  = zeros(2)
+                p   = Common.ODEParameters(nothing)
+                Systems.rhs(sys)(du, [1.0, 2.0], p, 0.0)
+                Test.@test du ≈ [-1.0, -2.0]
+            end
+
+            Test.@testset "IP: rhs_oop(sys, true) === sys.rhs_oop" begin
+                vf  = Systems.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                Test.@test Systems.rhs_oop(sys, true) === sys.rhs_oop
+            end
+
+            Test.@testset "IP: rhs_oop(sys, false) === sys.rhs_oop_finalize and warns" begin
+                vf  = Systems.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                f   = Test.@test_logs (:warn, r"InPlace VectorField") Systems.rhs_oop(sys, false)
+                Test.@test f === sys.rhs_oop_finalize
+            end
+
+            Test.@testset "IP: rhs_oop(sys, true) returns mutable Vector" begin
+                vf  = Systems.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                f   = Systems.rhs_oop(sys, true)
+                p   = Common.ODEParameters(nothing)
+                du  = f([1.0, 2.0], p, 0.0)
+                Test.@test du ≈ [-1.0, -2.0]
+                Test.@test du isa Vector
+            end
+
+            Test.@testset "IP: rhs_oop_finalize returns SVector for SVector u" begin
+                vf  = Systems.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                f   = sys.rhs_oop_finalize
+                u   = SA[1.0, 2.0]
+                p   = Common.ODEParameters(nothing)
+                du  = f(u, p, 0.0)
+                Test.@test du ≈ SA[-1.0, -2.0]
+                Test.@test du isa StaticArrays.SVector
+            end
+
+            Test.@testset "OOP: rhs_oop(sys, false) still returns sys.rhs_oop" begin
+                vf  = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                Test.@test Systems.rhs_oop(sys, true)  === sys.rhs_oop
+                Test.@test Systems.rhs_oop(sys, false) === sys.rhs_oop
             end
         end
 
