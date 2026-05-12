@@ -2,12 +2,13 @@
 $(TYPEDEF)
 
 Parametric container for a vector-field function together with its
-time-dependence and variable-dependence traits.
+time-dependence, variable-dependence, and mutability traits.
 
 # Type Parameters
 - `F`: concrete type of the wrapped function.
 - `TD <: TimeDependence`: `Autonomous` or `NonAutonomous`.
 - `VD <: VariableDependence`: `Fixed` or `NonFixed`.
+- `MD <: AbstractMutabilityTrait`: `InPlace` or `OutOfPlace`.
 
 # Fields
 - `f::F`: the vector-field function.
@@ -23,6 +24,8 @@ VectorField((x, v) -> ...; variable = true)                # f(x, v)
 VectorField((t, x, v) -> ...; autonomous = false, variable = true)
 ```
 
+The mutability trait (InPlace/OutOfPlace) is auto-detected from the function signature.
+
 # Call Signatures
 
 Every `VectorField` is callable via its **natural** signature (matching the
@@ -30,10 +33,82 @@ traits), and via a **uniform** signature `(t, x, v)` that ignores the
 unused arguments — this uniform form is used internally to build the right-hand
 side of the ODE in a trait-agnostic way.
 
-See also: [`CTFlows.Data.AbstractVectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
+For InPlace vector fields, the natural signature includes the derivative buffer
+as the first argument (e.g., `(dx, x)` for Autonomous/Fixed).
+
+See also: [`CTFlows.Data.AbstractVectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.AbstractMutabilityTrait`](@ref).
 """
-struct VectorField{F<:Function, TD<:TimeDependence, VD<:VariableDependence} <: AbstractVectorField{TD, VD}
+struct VectorField{F<:Function, TD<:TimeDependence, VD<:VariableDependence, MD<:AbstractMutabilityTrait} <: AbstractVectorField{TD, VD, MD}
     f::F
+end
+
+# =============================================================================
+# Internal helpers for mutability detection
+# =============================================================================
+
+"""
+    _oop_arity_vf(::Type{Autonomous}, ::Type{Fixed}) -> Int
+
+Return the out-of-place arity for Autonomous/Fixed vector fields (1: x).
+"""
+_oop_arity_vf(::Type{Autonomous}, ::Type{Fixed}) = 1
+
+"""
+    _oop_arity_vf(::Type{NonAutonomous}, ::Type{Fixed}) -> Int
+
+Return the out-of-place arity for NonAutonomous/Fixed vector fields (2: t, x).
+"""
+_oop_arity_vf(::Type{NonAutonomous}, ::Type{Fixed}) = 2
+
+"""
+    _oop_arity_vf(::Type{Autonomous}, ::Type{NonFixed}) -> Int
+
+Return the out-of-place arity for Autonomous/NonFixed vector fields (2: x, v).
+"""
+_oop_arity_vf(::Type{Autonomous}, ::Type{NonFixed}) = 2
+
+"""
+    _oop_arity_vf(::Type{NonAutonomous}, ::Type{NonFixed}) -> Int
+
+Return the out-of-place arity for NonAutonomous/NonFixed vector fields (3: t, x, v).
+"""
+_oop_arity_vf(::Type{NonAutonomous}, ::Type{NonFixed}) = 3
+
+"""
+    _detect_mutability_vf(f::Function, TD, VD) -> Type{<:AbstractMutabilityTrait}
+
+Detect the mutability trait from the function signature.
+
+Compares the function arity to the expected out-of-place arity and in-place arity
+(arity + 1 for VectorField). Returns `InPlace` or `OutOfPlace` accordingly.
+
+# Arguments
+- `f::Function`: The vector-field function.
+- `TD`: Time dependence trait type.
+- `VD`: Variable dependence trait type.
+
+# Returns
+- `Type{InPlace}` or `Type{OutOfPlace}`.
+
+# Throws
+- `Exceptions.IncorrectArgument`: If the arity is ambiguous or invalid.
+"""
+function _detect_mutability_vf(f::Function, TD, VD)
+    arity = first(methods(f)).nargs - 1
+    oop_arity = _oop_arity_vf(TD, VD)
+    ip_arity = oop_arity + 1
+
+    if arity == oop_arity
+        return OutOfPlace
+    elseif arity == ip_arity
+        return InPlace
+    else
+        throw(Exceptions.IncorrectArgument(
+            "Invalid function arity: expected $oop_arity (out-of-place) or $ip_arity (in-place), got $arity";
+            suggestion = "Ensure your function signature matches the expected pattern for the given traits.",
+            context = "VectorField mutability detection",
+        ))
+    end
 end
 
 """
@@ -57,12 +132,14 @@ julia> vf = VectorField(x -> -x)  # Uses defaults: is_autonomous=true, is_variab
 VectorField
   time_dependence: Autonomous
   variable_dependence: Fixed
+  mutability: OutOfPlace
   function: var"#1"
 
 julia> vf = VectorField((t, x) -> t .* x; is_autonomous=false)
 VectorField
   time_dependence: NonAutonomous
   variable_dependence: Fixed
+  mutability: OutOfPlace
   function: var"#2"
 \`\`\`
 
@@ -71,17 +148,25 @@ See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Common.Autonomous`](@ref
 function VectorField(f; is_autonomous::Bool = Common.__is_autonomous(), is_variable::Bool = Common.__is_variable())
     TD = is_autonomous ? Autonomous : NonAutonomous
     VD = is_variable ? NonFixed : Fixed
-    return VectorField{typeof(f), TD, VD}(f)
+    MD = _detect_mutability_vf(f, TD, VD)
+    return VectorField{typeof(f), TD, VD, MD}(f)
 end
 
 # =============================================================================
 # Natural call signatures - one per trait combination
 # =============================================================================
 
-(F::VectorField{<:Function, Autonomous, Fixed})(x) = F.f(x)
-(F::VectorField{<:Function, NonAutonomous, Fixed})(t, x) = F.f(t, x)
-(F::VectorField{<:Function, Autonomous, NonFixed})(x, v) = F.f(x, v)
-(F::VectorField{<:Function, NonAutonomous, NonFixed})(t, x, v) = F.f(t, x, v)
+# OutOfPlace signatures (existing)
+(F::VectorField{<:Function, Autonomous, Fixed, OutOfPlace})(x) = F.f(x)
+(F::VectorField{<:Function, NonAutonomous, Fixed, OutOfPlace})(t, x) = F.f(t, x)
+(F::VectorField{<:Function, Autonomous, NonFixed, OutOfPlace})(x, v) = F.f(x, v)
+(F::VectorField{<:Function, NonAutonomous, NonFixed, OutOfPlace})(t, x, v) = F.f(t, x, v)
+
+# InPlace signatures (new)
+(F::VectorField{<:Function, Autonomous, Fixed, InPlace})(dx, x) = F.f(dx, x)
+(F::VectorField{<:Function, NonAutonomous, Fixed, InPlace})(dx, t, x) = F.f(dx, t, x)
+(F::VectorField{<:Function, Autonomous, NonFixed, InPlace})(dx, x, v) = F.f(dx, x, v)
+(F::VectorField{<:Function, NonAutonomous, NonFixed, InPlace})(dx, t, x, v) = F.f(dx, t, x, v)
 
 # =============================================================================
 # Uniform (t, x, v) call - used by VectorFieldSystem.rhs
@@ -89,9 +174,15 @@ end
 # (NonAutonomous, NonFixed) is already covered by the natural signature above.
 # =============================================================================
 
-(F::VectorField{<:Function, Autonomous, Fixed})(t, x, v) = F.f(x)
-(F::VectorField{<:Function, NonAutonomous, Fixed})(t, x, v) = F.f(t, x)
-(F::VectorField{<:Function, Autonomous, NonFixed})(t, x, v) = F.f(x, v)
+# OutOfPlace uniform signatures (existing)
+(F::VectorField{<:Function, Autonomous, Fixed, OutOfPlace})(t, x, v) = F.f(x)
+(F::VectorField{<:Function, NonAutonomous, Fixed, OutOfPlace})(t, x, v) = F.f(t, x)
+(F::VectorField{<:Function, Autonomous, NonFixed, OutOfPlace})(t, x, v) = F.f(x, v)
+
+# InPlace uniform signatures (new)
+(F::VectorField{<:Function, Autonomous, Fixed, InPlace})(dx, t, x, v) = F.f(dx, x)
+(F::VectorField{<:Function, NonAutonomous, Fixed, InPlace})(dx, t, x, v) = F.f(dx, t, x)
+(F::VectorField{<:Function, Autonomous, NonFixed, InPlace})(dx, t, x, v) = F.f(dx, x, v)
 
 # =============================================================================
 # Base.show
@@ -102,7 +193,7 @@ $(TYPEDSIGNATURES)
 
 Display a compact representation of a VectorField.
 
-Shows the type name, time dependence, variable dependence, and function type.
+Shows the type name, time dependence, variable dependence, mutability, and function type.
 
 # Arguments
 - `io::IO`: The IO stream to write to.
@@ -110,10 +201,11 @@ Shows the type name, time dependence, variable dependence, and function type.
 
 See also: [`CTFlows.Data.VectorField`](@ref).
 """
-function Base.show(io::IO, vf::VectorField{F, TD, VD}) where {F, TD, VD}
+function Base.show(io::IO, vf::VectorField{F, TD, VD, MD}) where {F, TD, VD, MD}
     println(io, "VectorField")
     println(io, "  time_dependence: ", nameof(TD))
     println(io, "  variable_dependence: ", nameof(VD))
+    println(io, "  mutability: ", nameof(MD))
     print(io, "  function: ", typeof(vf.f))
 end
 
@@ -131,6 +223,6 @@ Delegates to the compact show method.
 
 See also: [`CTFlows.Data.VectorField`](@ref).
 """
-function Base.show(io::IO, ::MIME"text/plain", vf::VectorField{F, TD, VD}) where {F, TD, VD}
+function Base.show(io::IO, ::MIME"text/plain", vf::VectorField{F, TD, VD, MD}) where {F, TD, VD, MD}
     show(io, vf)
 end

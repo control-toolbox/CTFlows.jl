@@ -279,7 +279,7 @@ du = rhs_oop_func(u, p, t)  # du = [3.0, 8.0]
 
 See also: [`CTFlows.Systems.rhs`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
 """
-function rhs_oop(system::AbstractSystem)
+function rhs_oop(system::AbstractSystem, ::Bool = true)
     throw(
         Exceptions.NotImplemented(
             "AbstractSystem rhs_oop method not implemented";

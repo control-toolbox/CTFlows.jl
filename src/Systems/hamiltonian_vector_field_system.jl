@@ -10,13 +10,16 @@ performance. If `N=nothing`, the dimension is inferred at runtime.
 - `F`: concrete type of the wrapped HamiltonianVectorField function.
 - `TD <: TimeDependence`: `Autonomous` or `NonAutonomous`.
 - `VD <: VariableDependence`: `Fixed` or `NonFixed`.
+- `MD <: AbstractMutabilityTrait`: `InPlace` or `OutOfPlace`.
 - `RHS`: type of the pre-computed in-place right-hand side function.
 - `OOPROHS`: type of the pre-computed out-of-place right-hand side function.
+- `FINRHS`: type of the finalize closure for in-place vector fields, or `Nothing`.
 
 # Fields
-- `hvf::HamiltonianVectorField{F, TD, VD}`: the underlying Hamiltonian vector field.
+- `hvf::HamiltonianVectorField{F, TD, VD, MD}`: the underlying Hamiltonian vector field.
 - `rhs::RHS`: the pre-computed in-place right-hand side closure with signature `(du, u, p, t) -> nothing`.
 - `rhs_oop::OOPROHS`: the pre-computed out-of-place right-hand side closure with signature `(u, p, t) -> du`.
+- `rhs_oop_finalize::FINRHS`: the finalize closure for in-place vector fields with immutable initial conditions, or `nothing` for out-of-place vector fields.
 
 # Example
 ```julia-repl
@@ -26,47 +29,69 @@ julia> hvf = HamiltonianVectorField((x, p) -> (x, -p); autonomous=true, variable
 HamiltonianVectorField
   time_dependence: Autonomous
   variable_dependence: Fixed
+  mutability: OutOfPlace
   function: var"#1"
 
 julia> sys = HamiltonianVectorFieldSystem(hvf, 3)  # with known dimension
 HamiltonianVectorFieldSystem
   time_dependence: Autonomous
   variable_dependence: Fixed
+  mutability: OutOfPlace
   n_state: 3
-  hamiltonian_vector_field: HamiltonianVectorField{var"#1", Autonomous, Fixed}
+  hamiltonian_vector_field: HamiltonianVectorField{var"#1", Autonomous, Fixed, OutOfPlace}
 
 julia> sys = HamiltonianVectorFieldSystem(hvf)  # without dimension
 HamiltonianVectorFieldSystem
   time_dependence: Autonomous
   variable_dependence: Fixed
+  mutability: OutOfPlace
   n_state: unknown
-  hamiltonian_vector_field: HamiltonianVectorField{var"#1", Autonomous, Fixed}
+  hamiltonian_vector_field: HamiltonianVectorField{var"#1", Autonomous, Fixed, OutOfPlace}
 ```
 
 See also: [`CTFlows.Data.HamiltonianVectorField`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
 """
-struct HamiltonianVectorFieldSystem{N, F<:Function, TD<:Common.TimeDependence, VD<:Common.VariableDependence, RHS<:Function, OOPROHS<:Function} <: AbstractHamiltonianSystem{TD, VD}
-    hvf::Data.HamiltonianVectorField{F, TD, VD}
+struct HamiltonianVectorFieldSystem{N, F<:Function, TD<:Common.TimeDependence, VD<:Common.VariableDependence, MD<:Common.AbstractMutabilityTrait, RHS<:Function, OOPROHS<:Function, FINRHS} <: AbstractHamiltonianSystem{TD, VD}
+    hvf::Data.HamiltonianVectorField{F, TD, VD, MD}
     rhs::RHS
     rhs_oop::OOPROHS
+    rhs_oop_finalize::FINRHS
 end
 
 # =============================================================================
 # Constructors
 # =============================================================================
 
-# Constructor with known dimension N
-function HamiltonianVectorFieldSystem(hvf::Data.HamiltonianVectorField{F, TD, VD}, n_state::Int) where {F, TD, VD}
-    rhs = _build_rhs(hvf, Val(n_state))
-    rhs_oop = _build_oop_rhs(hvf, Val(n_state))
-    return HamiltonianVectorFieldSystem{n_state, F, TD, VD, typeof(rhs), typeof(rhs_oop)}(hvf, rhs, rhs_oop)
+# OutOfPlace, with known dimension N
+function HamiltonianVectorFieldSystem(hvf::Data.HamiltonianVectorField{F, TD, VD, OutOfPlace}, n_state::Int) where {F, TD, VD}
+    rhs              = _build_rhs(hvf, Val(n_state))
+    rhs_oop          = _build_oop_rhs(hvf, Val(n_state))
+    rhs_oop_finalize = nothing
+    return HamiltonianVectorFieldSystem{n_state, F, TD, VD, OutOfPlace, typeof(rhs), typeof(rhs_oop), Nothing}(hvf, rhs, rhs_oop, rhs_oop_finalize)
 end
 
-# Constructor without dimension (N=nothing)
-function HamiltonianVectorFieldSystem(hvf::Data.HamiltonianVectorField{F, TD, VD}) where {F, TD, VD}
-    rhs = _build_rhs(hvf, Val(nothing))
-    rhs_oop = _build_oop_rhs(hvf, Val(nothing))
-    return HamiltonianVectorFieldSystem{nothing, F, TD, VD, typeof(rhs), typeof(rhs_oop)}(hvf, rhs, rhs_oop)
+# InPlace, with known dimension N
+function HamiltonianVectorFieldSystem(hvf::Data.HamiltonianVectorField{F, TD, VD, InPlace}, n_state::Int) where {F, TD, VD}
+    rhs              = _build_rhs(hvf, Val(n_state))
+    rhs_oop          = _build_oop_rhs(hvf, Val(n_state))
+    rhs_oop_finalize = _build_finalize_rhs_hvf_ip(hvf, Val(n_state))
+    return HamiltonianVectorFieldSystem{n_state, F, TD, VD, InPlace, typeof(rhs), typeof(rhs_oop), typeof(rhs_oop_finalize)}(hvf, rhs, rhs_oop, rhs_oop_finalize)
+end
+
+# OutOfPlace, without dimension (N=nothing)
+function HamiltonianVectorFieldSystem(hvf::Data.HamiltonianVectorField{F, TD, VD, OutOfPlace}) where {F, TD, VD}
+    rhs              = _build_rhs(hvf, Val(nothing))
+    rhs_oop          = _build_oop_rhs(hvf, Val(nothing))
+    rhs_oop_finalize = nothing
+    return HamiltonianVectorFieldSystem{nothing, F, TD, VD, OutOfPlace, typeof(rhs), typeof(rhs_oop), Nothing}(hvf, rhs, rhs_oop, rhs_oop_finalize)
+end
+
+# InPlace, without dimension (N=nothing)
+function HamiltonianVectorFieldSystem(hvf::Data.HamiltonianVectorField{F, TD, VD, InPlace}) where {F, TD, VD}
+    rhs              = _build_rhs(hvf, Val(nothing))
+    rhs_oop          = _build_oop_rhs(hvf, Val(nothing))
+    rhs_oop_finalize = _build_finalize_rhs_hvf_ip(hvf, Val(nothing))
+    return HamiltonianVectorFieldSystem{nothing, F, TD, VD, InPlace, typeof(rhs), typeof(rhs_oop), typeof(rhs_oop_finalize)}(hvf, rhs, rhs_oop, rhs_oop_finalize)
 end
 
 # =============================================================================
@@ -135,7 +160,7 @@ end
 # Internal helpers for building RHS (in-place)
 # =============================================================================
 
-function _build_rhs(hvf::Data.HamiltonianVectorField, ::Val{N}) where N
+function _build_rhs(hvf::Data.HamiltonianVectorField{F, TD, VD, OutOfPlace}, ::Val{N}) where {F, TD, VD, N}
     return function (du, u, λ, t)
         x, p = _ham_split(u, N)
         dx, dp = hvf(t, x, p, λ.variable)
@@ -144,11 +169,11 @@ function _build_rhs(hvf::Data.HamiltonianVectorField, ::Val{N}) where N
     end
 end
 
-function _build_rhs(hvf::Data.HamiltonianVectorField, ::Val{nothing})
+function _build_rhs(hvf::Data.HamiltonianVectorField{F, TD, VD, InPlace}, ::Val{N}) where {F, TD, VD, N}
     return function (du, u, λ, t)
-        x, p = _ham_split(u, nothing)
-        dx, dp = hvf(t, x, p, λ.variable)
-        _ham_assign!(du, dx, dp, nothing)
+        x, p   = _ham_split(u,  N)
+        dx, dp = _ham_split(du, N)  # mutable views into du — hvf writes directly into du, no _ham_assign! needed
+        hvf(dx, dp, t, x, p, λ.variable)
         return nothing
     end
 end
@@ -157,7 +182,7 @@ end
 # Internal helpers for building RHS (out-of-place for SVector)
 # =============================================================================
 
-function _build_oop_rhs(hvf::Data.HamiltonianVectorField, ::Val{N}) where N
+function _build_oop_rhs(hvf::Data.HamiltonianVectorField{F, TD, VD, OutOfPlace}, ::Val{N}) where {F, TD, VD, N}
     return function (u, λ, t)
         x, p = _ham_split(u, N)
         dx, dp = hvf(t, x, p, λ.variable)
@@ -165,11 +190,25 @@ function _build_oop_rhs(hvf::Data.HamiltonianVectorField, ::Val{N}) where N
     end
 end
 
-function _build_oop_rhs(hvf::Data.HamiltonianVectorField, ::Val{nothing})
+function _build_oop_rhs(hvf::Data.HamiltonianVectorField{F, TD, VD, InPlace}, ::Val{N}) where {F, TD, VD, N}
     return function (u, λ, t)
-        x, p = _ham_split(u, nothing)
-        dx, dp = hvf(t, x, p, λ.variable)
+        x, p   = _ham_split(u, N)
+        dx, dp = similar(x), similar(p)
+        hvf(dx, dp, t, x, p, λ.variable)
         return vcat(dx, dp)
+    end
+end
+
+# =============================================================================
+# Internal helpers for building finalize RHS (in-place with immutable u0)
+# =============================================================================
+
+function _build_finalize_rhs_hvf_ip(hvf::Data.HamiltonianVectorField{F, TD, VD, InPlace}, ::Val{N}) where {F, TD, VD, N}
+    return function (u, λ, t)
+        x, p   = _ham_split(u, N)
+        dx, dp = similar(x), similar(p)
+        hvf(dx, dp, t, x, p, λ.variable)
+        return typeof(u)(vcat(dx, dp))
     end
 end
 
@@ -209,28 +248,54 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Out-of-place right-hand side for a `HamiltonianVectorFieldSystem`. Returns the pre-computed
-closure stored in the system, which has signature `(u, p, t) -> du` and splits the combined
-state `u` into `(x, p)` halves, calls the underlying Hamiltonian vector field, and
-concatenates `(dx, dp)`.
+Out-of-place right-hand side for an `OutOfPlace` `HamiltonianVectorFieldSystem`.
+
+Returns the pre-computed closure with signature `(u, p, t) -> du`. The optional
+`is_u0_mutable` argument is accepted but ignored: for out-of-place Hamiltonian vector
+fields `rhs_oop` is always the correct callable regardless of u0 mutability.
 
 # Arguments
-- `sys::HamiltonianVectorFieldSystem`: The system for which to return the RHS function.
+- `sys::HamiltonianVectorFieldSystem{..., OutOfPlace, ...}`: The out-of-place system.
+- `::Bool`: Ignored. Accepted for API uniformity with the `InPlace` method.
 
 # Returns
 - `Function`: The pre-computed closure with signature `(u, p, t) -> du`.
 
+See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Systems.rhs`](@ref).
+"""
+function rhs_oop(sys::HamiltonianVectorFieldSystem{N, F, TD, VD, OutOfPlace, RHS, OOPROHS, Nothing}, ::Bool = true) where {N, F, TD, VD, RHS, OOPROHS}
+    return sys.rhs_oop
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Out-of-place right-hand side for an `InPlace` `HamiltonianVectorFieldSystem`, dispatching on u0 mutability.
+
+For in-place Hamiltonian vector fields the appropriate callable depends on whether the
+initial condition `u0` is mutable:
+- **`is_u0_mutable = true`** (default): returns `rhs_oop`, which allocates mutable buffers
+  for `dx` and `dp` and returns `vcat(dx, dp)`. Correct when `u0` is a `Vector`.
+- **`is_u0_mutable = false`**: returns `rhs_oop_finalize`, which fills mutable buffers then
+  converts back via `typeof(u)(vcat(dx, dp))`. Correct when `u0` is immutable (e.g. `SVector`).
+  A one-time performance warning is emitted.
+
+# Arguments
+- `sys::HamiltonianVectorFieldSystem{..., InPlace, ...}`: The in-place system.
+- `is_u0_mutable::Bool`: `true` if u0 is mutable, `false` if immutable. Defaults to `true`.
+
+# Returns
+- `Function`: The appropriate closure with signature `(u, p, t) -> du`.
+
 # Notes
-- The closure is computed once at construction time for performance.
-- Multiple calls to `rhs_oop` return the same function object.
-- This method is used for immutable array types like `StaticArrays.SVector`.
-- The RHS splits `u` into state `x` and costate `p` halves: `x = u[1:N]`, `p = u[N+1:2N]`.
-- If `N=nothing`, the split uses `n = length(u) ÷ 2` at runtime.
+- Prefer out-of-place Hamiltonian vector fields when u0 is a `StaticArrays.SVector`.
 
 See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Systems.rhs`](@ref).
 """
-function rhs_oop(sys::HamiltonianVectorFieldSystem)
-    return sys.rhs_oop
+function rhs_oop(sys::HamiltonianVectorFieldSystem{N, F, TD, VD, InPlace, RHS, OOPROHS, FINRHS}, is_u0_mutable::Bool = true) where {N, F, TD, VD, RHS, OOPROHS, FINRHS}
+    is_u0_mutable && return sys.rhs_oop
+    @warn "InPlace HamiltonianVectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
+    return sys.rhs_oop_finalize
 end
 
 # =============================================================================
@@ -300,7 +365,7 @@ $(TYPEDSIGNATURES)
 
 Display a compact representation of a HamiltonianVectorFieldSystem.
 
-Shows the type name, time dependence, variable dependence, state dimension, and
+Shows the type name, time dependence, variable dependence, mutability, state dimension, and
 the underlying Hamiltonian vector field type.
 
 # Arguments
@@ -309,10 +374,11 @@ the underlying Hamiltonian vector field type.
 
 See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
 """
-function Base.show(io::IO, sys::HamiltonianVectorFieldSystem{N, F, TD, VD, RHS, OOPROHS}) where {N, F, TD, VD, RHS, OOPROHS}
+function Base.show(io::IO, sys::HamiltonianVectorFieldSystem{N, F, TD, VD, MD, RHS, OOPROHS, FINRHS}) where {N, F, TD, VD, MD, RHS, OOPROHS, FINRHS}
     println(io, "HamiltonianVectorFieldSystem")
     println(io, "  time_dependence: ", nameof(TD))
     println(io, "  variable_dependence: ", nameof(VD))
+    println(io, "  mutability: ", nameof(MD))
     if N === nothing
         println(io, "  n_state: unknown")
     else
@@ -335,6 +401,6 @@ Delegates to the compact show method.
 
 See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
 """
-function Base.show(io::IO, ::MIME"text/plain", sys::HamiltonianVectorFieldSystem{N, F, TD, VD, RHS, OOPROHS}) where {N, F, TD, VD, RHS, OOPROHS}
+function Base.show(io::IO, ::MIME"text/plain", sys::HamiltonianVectorFieldSystem{N, F, TD, VD, MD, RHS, OOPROHS, FINRHS}) where {N, F, TD, VD, MD, RHS, OOPROHS, FINRHS}
     show(io, sys)
 end

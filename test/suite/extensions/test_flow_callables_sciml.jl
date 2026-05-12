@@ -32,6 +32,15 @@ const HSYS_N1  = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC, 1)         #
 const HSYS_N2  = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC, 2)         # N=2 (for SVector)
 const ATOL = 1e-5
 
+# InPlace variants (same dynamics, different function signature)
+const VF_DECAY_IP = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
+const SYS_DECAY_IP = Systems.VectorFieldSystem(VF_DECAY_IP)
+
+const HVF_HARMONIC_IP = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= p; dp .= -x); is_autonomous=true, is_variable=false)
+const HSYS_IP_NO_N = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC_IP)
+const HSYS_IP_N1   = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC_IP, 1)
+const HSYS_IP_N2   = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC_IP, 2)
+
 # ==============================================================================
 # Test function
 # ==============================================================================
@@ -270,6 +279,43 @@ function test_flow_callables_sciml()
                 hflow = Flows.build_flow(HSYS_N2, INTEG)
                 sol = hflow((0.0, π/2), SA[1.0, 0.0], SA[0.0, 1.0])
                 Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+            end
+        end
+        # ====================================================================
+        # INTEGRATION TESTS - InPlace StateFlow
+        # ====================================================================
+
+        Test.@testset "InPlace StateFlow" begin
+            flow = Flows.build_flow(SYS_DECAY_IP, INTEG)
+
+            Test.@testset "IP VF + Vector u0 (no warning)" begin
+                xf = flow(0.0, [1.0, 2.0], 1.0)
+                Test.@test xf ≈ [exp(-1.0), 2*exp(-1.0)]  atol=ATOL
+            end
+
+            Test.@testset "IP VF + SVector u0 (warns)" begin
+                xf = Test.@test_logs (:warn, r"InPlace VectorField") flow(0.0, SA[1.0, 2.0], 1.0)
+                Test.@test xf ≈ [exp(-1.0), 2*exp(-1.0)]  atol=ATOL
+            end
+        end
+
+        # ====================================================================
+        # INTEGRATION TESTS - InPlace HamiltonianFlow
+        # ====================================================================
+
+        Test.@testset "InPlace HamiltonianFlow" begin
+            Test.@testset "IP HVF + Vector u0 (no warning)" begin
+                hflow = Flows.build_flow(HSYS_IP_N1, INTEG)
+                xf, pf = hflow(0.0, 1.0, 0.0, π/2)
+                Test.@test xf ≈ 0.0   atol=ATOL
+                Test.@test pf ≈ -1.0  atol=ATOL
+            end
+
+            Test.@testset "IP HVF + SVector u0 (warns)" begin
+                hflow = Flows.build_flow(HSYS_IP_N2, INTEG)
+                xf, pf = Test.@test_logs (:warn, r"InPlace HamiltonianVectorField") hflow(0.0, SA[1.0, 0.0], SA[0.0, 1.0], π/2)
+                Test.@test xf ≈ [0.0, 1.0]   atol=ATOL
+                Test.@test pf ≈ [-1.0, 0.0]  atol=ATOL
             end
         end
     end

@@ -11,7 +11,7 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # Fake type for contract testing (defined at module top-level per testing-creation.md)
 # ==============================================================================
 
-struct FakeVectorField{TD, VD} <: Data.AbstractVectorField{TD, VD} end
+struct FakeVectorField{TD, VD, MD} <: Data.AbstractVectorField{TD, VD, MD} end
 
 # ==============================================================================
 # Test function
@@ -34,7 +34,7 @@ function test_abstract_vector_field()
             end
 
             Test.@testset "FakeVectorField subtypes AbstractVectorField" begin
-                fake = FakeVectorField{Common.Autonomous, Common.Fixed}()
+                fake = FakeVectorField{Common.Autonomous, Common.Fixed, Common.OutOfPlace}()
                 Test.@test fake isa Data.AbstractVectorField
             end
         end
@@ -45,25 +45,25 @@ function test_abstract_vector_field()
 
         Test.@testset "Trait Accessors on Abstract Type" begin
             Test.@testset "has_time_dependence_trait returns true" begin
-                fake = FakeVectorField{Common.Autonomous, Common.Fixed}()
+                fake = FakeVectorField{Common.Autonomous, Common.Fixed, Common.OutOfPlace}()
                 Test.@test Common.has_time_dependence_trait(fake) === true
             end
 
             Test.@testset "has_variable_dependence_trait returns true" begin
-                fake = FakeVectorField{Common.Autonomous, Common.Fixed}()
+                fake = FakeVectorField{Common.Autonomous, Common.Fixed, Common.OutOfPlace}()
                 Test.@test Common.has_variable_dependence_trait(fake) === true
             end
 
             Test.@testset "time_dependence returns correct trait" begin
-                fake_aut = FakeVectorField{Common.Autonomous, Common.Fixed}()
-                fake_nonaut = FakeVectorField{Common.NonAutonomous, Common.Fixed}()
+                fake_aut = FakeVectorField{Common.Autonomous, Common.Fixed, Common.OutOfPlace}()
+                fake_nonaut = FakeVectorField{Common.NonAutonomous, Common.Fixed, Common.OutOfPlace}()
                 Test.@test Common.time_dependence(fake_aut) === Common.Autonomous
                 Test.@test Common.time_dependence(fake_nonaut) === Common.NonAutonomous
             end
 
             Test.@testset "variable_dependence returns correct trait" begin
-                fake_fixed = FakeVectorField{Common.Autonomous, Common.Fixed}()
-                fake_nonfixed = FakeVectorField{Common.Autonomous, Common.NonFixed}()
+                fake_fixed = FakeVectorField{Common.Autonomous, Common.Fixed, Common.OutOfPlace}()
+                fake_nonfixed = FakeVectorField{Common.Autonomous, Common.NonFixed, Common.OutOfPlace}()
                 Test.@test Common.variable_dependence(fake_fixed) === Common.Fixed
                 Test.@test Common.variable_dependence(fake_nonfixed) === Common.NonFixed
             end

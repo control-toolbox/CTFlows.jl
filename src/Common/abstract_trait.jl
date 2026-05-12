@@ -6,7 +6,7 @@ Abstract base type for trait markers in CTFlows.
 Traits are empty marker types used as type parameters to encode configuration
 properties at compile time. Unlike tags (which mark extension implementations),
 traits encode semantic properties of the configuration itself (e.g., integration
-mode, content type).
+mode, content type, mutability).
 
 # Trait Pattern
 
@@ -35,7 +35,7 @@ true
 julia> PointTrait <: Common.AbstractModeTrait
 true
 
-julia> # Used as type parameter in configs:
+julia> # Used as type parameters in configs:
 julia> StatePointConfig <: Common.AbstractConfig{<:Any, PointTrait, StateTrait}
 true
 \`\`\`
@@ -46,7 +46,7 @@ true
 - All trait types have zero runtime overhead (empty structs)
 - The trait pattern enables static dispatch on configuration properties
 
-See also: [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.AbstractModeTrait`](@ref), [`CTFlows.Common.AbstractContentTrait`](@ref).
+See also: [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.AbstractModeTrait`](@ref), [`CTFlows.Common.AbstractContentTrait`](@ref), [`CTFlows.Common.AbstractMutabilityTrait`](@ref).
 """
 abstract type AbstractTrait end
 
@@ -119,6 +119,85 @@ true
 See also: [`CTFlows.Common.StateTrait`](@ref), [`CTFlows.Common.HamiltonianTrait`](@ref), [`CTFlows.Common.AbstractConfig`](@ref).
 """
 abstract type AbstractContentTrait <: AbstractTrait end
+
+# =============================================================================
+# Mutability traits (in-place vs out-of-place function evaluation)
+# =============================================================================
+
+"""
+$(TYPEDEF)
+
+Abstract trait for mutability characteristics of function evaluation.
+
+Distinguishes between in-place functions (which modify a pre-allocated buffer)
+and out-of-place functions (which allocate and return new results).
+
+Subtypes must implement:
+- `InPlace`: For functions that write to a mutable buffer
+- `OutOfPlace`: For functions that return newly allocated results
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> InPlace() isa AbstractMutabilityTrait
+true
+
+julia> OutOfPlace() isa AbstractMutabilityTrait
+true
+\`\`\`
+
+See also: [`CTFlows.Common.InPlace`](@ref), [`CTFlows.Common.OutOfPlace`](@ref).
+"""
+abstract type AbstractMutabilityTrait <: AbstractTrait end
+
+"""
+$(TYPEDEF)
+
+Trait for in-place function evaluation.
+
+Indicates that a function modifies a pre-allocated buffer passed as an argument,
+rather than allocating and returning a new result. This pattern is used for
+performance-critical code where avoiding allocations is important.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> ip = InPlace()
+InPlace()
+
+julia> ip isa AbstractMutabilityTrait
+true
+\`\`\`
+
+See also: [`CTFlows.Common.AbstractMutabilityTrait`](@ref), [`CTFlows.Common.OutOfPlace`](@ref).
+"""
+struct InPlace <: AbstractMutabilityTrait end
+
+"""
+$(TYPEDEF)
+
+Trait for out-of-place function evaluation.
+
+Indicates that a function allocates and returns a new result, rather than
+modifying a pre-allocated buffer. This is the default pattern in Julia and
+is suitable for most use cases.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> oop = OutOfPlace()
+OutOfPlace()
+
+julia> oop isa AbstractMutabilityTrait
+true
+\`\`\`
+
+See also: [`CTFlows.Common.AbstractMutabilityTrait`](@ref), [`CTFlows.Common.InPlace`](@ref).
+"""
+struct OutOfPlace <: AbstractMutabilityTrait end
 
 # =============================================================================
 # Concrete mode tags

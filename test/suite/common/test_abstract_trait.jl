@@ -55,6 +55,20 @@ function test_abstract_trait()
                     Test.@test Common.AbstractContentTrait <: Common.AbstractTrait
                 end
             end
+
+            Test.@testset "AbstractMutabilityTrait" begin
+                Test.@testset "AbstractMutabilityTrait is exported" begin
+                    Test.@test isdefined(Common, :AbstractMutabilityTrait)
+                end
+
+                Test.@testset "AbstractMutabilityTrait is abstract" begin
+                    Test.@test isabstracttype(Common.AbstractMutabilityTrait)
+                end
+
+                Test.@testset "AbstractMutabilityTrait subtypes AbstractTrait" begin
+                    Test.@test Common.AbstractMutabilityTrait <: Common.AbstractTrait
+                end
+            end
         end
 
         # ====================================================================
@@ -137,6 +151,44 @@ function test_abstract_trait()
                     Test.@test Common.HamiltonianTrait <: Common.AbstractContentTrait
                 end
             end
+
+            Test.@testset "InPlace" begin
+                Test.@testset "InPlace is exported" begin
+                    Test.@test isdefined(Common, :InPlace)
+                end
+
+                Test.@testset "InPlace is concrete" begin
+                    Test.@test !isabstracttype(Common.InPlace)
+                end
+
+                Test.@testset "InPlace instantiates" begin
+                    ip = Common.InPlace()
+                    Test.@test ip isa Common.InPlace
+                end
+
+                Test.@testset "InPlace subtypes AbstractMutabilityTrait" begin
+                    Test.@test Common.InPlace <: Common.AbstractMutabilityTrait
+                end
+            end
+
+            Test.@testset "OutOfPlace" begin
+                Test.@testset "OutOfPlace is exported" begin
+                    Test.@test isdefined(Common, :OutOfPlace)
+                end
+
+                Test.@testset "OutOfPlace is concrete" begin
+                    Test.@test !isabstracttype(Common.OutOfPlace)
+                end
+
+                Test.@testset "OutOfPlace instantiates" begin
+                    oop = Common.OutOfPlace()
+                    Test.@test oop isa Common.OutOfPlace
+                end
+
+                Test.@testset "OutOfPlace subtypes AbstractMutabilityTrait" begin
+                    Test.@test Common.OutOfPlace <: Common.AbstractMutabilityTrait
+                end
+            end
         end
 
         # ====================================================================
@@ -149,6 +201,8 @@ function test_abstract_trait()
                 Test.@test Common.TrajectoryTrait <: Common.AbstractTrait
                 Test.@test Common.StateTrait <: Common.AbstractTrait
                 Test.@test Common.HamiltonianTrait <: Common.AbstractTrait
+                Test.@test Common.InPlace <: Common.AbstractTrait
+                Test.@test Common.OutOfPlace <: Common.AbstractTrait
             end
 
             Test.@testset "Mode traits are distinct from content traits" begin
@@ -165,8 +219,9 @@ function test_abstract_trait()
 
         Test.@testset "Exports Verification" begin
             Test.@testset "Exported trait types" begin
-                for sym in (:AbstractTrait, :AbstractModeTrait, :AbstractContentTrait,
-                           :PointTrait, :TrajectoryTrait, :StateTrait, :HamiltonianTrait)
+                for sym in (:AbstractTrait, :AbstractModeTrait, :AbstractContentTrait, :AbstractMutabilityTrait,
+                           :PointTrait, :TrajectoryTrait, :StateTrait, :HamiltonianTrait,
+                           :InPlace, :OutOfPlace)
                     Test.@test isdefined(Common, sym)
                 end
             end

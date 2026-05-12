@@ -35,7 +35,7 @@ function test_building_solutions()
 
         Test.@testset "build_solution - StatePointConfig" begin
             Test.@testset "vector initial condition returns final state" begin
-                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; is_autonomous=false, is_variable=false))
+                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; is_autonomous=true, is_variable=false))
                 result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
                 config = Common.StatePointConfig(0.0, [1.0, 2.0], 1.0)
                 
@@ -45,7 +45,7 @@ function test_building_solutions()
             end
 
             Test.@testset "scalar initial condition unwraps length-1 vector" begin
-                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; is_autonomous=false, is_variable=false))
+                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; is_autonomous=true, is_variable=false))
                 result = FakeIntegrationResult([[3.0], [1.5]])
                 config = Common.StatePointConfig(0.0, 3.0, 1.0)
                 
@@ -61,7 +61,7 @@ function test_building_solutions()
 
         Test.@testset "build_solution - StateTrajectoryConfig" begin
             Test.@testset "returns VectorFieldSolution wrapping result" begin
-                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; is_autonomous=false, is_variable=false))
+                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; is_autonomous=true, is_variable=false))
                 result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
                 config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 2.0])
                 
@@ -70,7 +70,7 @@ function test_building_solutions()
             end
 
             Test.@testset "VectorFieldSolution contains correct result" begin
-                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; is_autonomous=false, is_variable=false))
+                sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; is_autonomous=true, is_variable=false))
                 result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
                 config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 2.0])
                 
@@ -86,7 +86,7 @@ function test_building_solutions()
         Test.@testset "build_solution - HamiltonianPointConfig" begin
             Test.@testset "scalar initial condition returns tuple of scalars" begin
                 sys = Systems.HamiltonianVectorFieldSystem(
-                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=false, is_variable=false),
+                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false),
                     1
                 )
                 result = FakeIntegrationResult([[1.0, 0.5], [0.5, 0.25]])
@@ -99,7 +99,7 @@ function test_building_solutions()
 
             Test.@testset "vector initial condition returns tuple of vectors" begin
                 sys = Systems.HamiltonianVectorFieldSystem(
-                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=false, is_variable=false),
+                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false),
                     2
                 )
                 result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])
@@ -113,7 +113,7 @@ function test_building_solutions()
             Test.@testset "vector initial condition uses correct dimension split" begin
                 # Test the bug fix: should use length(initial_state) not length(initial_condition)
                 sys = Systems.HamiltonianVectorFieldSystem(
-                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=false, is_variable=false),
+                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false),
                     3
                 )
                 # Final state has 6 elements: 3 state + 3 costate
@@ -133,7 +133,7 @@ function test_building_solutions()
         Test.@testset "build_solution - HamiltonianTrajectoryConfig" begin
             Test.@testset "returns HamiltonianVectorFieldSolution wrapping result" begin
                 sys = Systems.HamiltonianVectorFieldSystem(
-                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=false, is_variable=false),
+                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false),
                     2
                 )
                 result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])
@@ -145,7 +145,7 @@ function test_building_solutions()
 
             Test.@testset "HamiltonianVectorFieldSolution contains correct result" begin
                 sys = Systems.HamiltonianVectorFieldSystem(
-                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=false, is_variable=false),
+                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false),
                     2
                 )
                 result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])

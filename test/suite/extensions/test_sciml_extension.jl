@@ -17,6 +17,7 @@ struct FakeTag <: Common.AbstractTag end
 # Get extension to access SciML integrator
 using SciMLBase: SciMLBase, ODEProblem
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
+import StaticArrays: SA
 const CTFlowsSciML = Base.get_extension(CTFlows, :CTFlowsSciML)
 const CTFlowsOrdinaryDiffEqTsit5 = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5)
 
@@ -362,6 +363,124 @@ function test_sciml_extension()
                 flow_sol = Solutions.build_solution(result, sys, config)
 
                 Test.@test flow_sol isa Solutions.VectorFieldSolution
+            end
+        end
+
+        # ====================================================================
+        # INTEGRATION TESTS - InPlace VF × mutable/immutable u0
+        # ====================================================================
+
+        Test.@testset "InPlace VF — SciML integration" begin
+            integ = Integrators.SciML(maxiters=10000, reltol=1e-8, abstol=1e-10)
+            # ODE: dx/dt = -x  →  x(t) = x₀ · e^{-t}
+
+            Test.@testset "OOP VF + mutable Vector u0" begin
+                vf  = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                u0  = [1.0, 2.0]
+                config = Common.StatePointConfig(0.0, u0, 1.0)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
+                opts = Integrators.build_options(integ, config)
+                result = Integrators.solve_problem(integ, prob, opts)
+                xf = Solutions.final_state(result)
+                Test.@test xf ≈ exp(-1.0) .* [1.0, 2.0]  atol=1e-5
+            end
+
+            Test.@testset "OOP VF + SVector u0" begin
+                vf  = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                u0  = SA[1.0, 2.0]
+                config = Common.StatePointConfig(0.0, u0, 1.0)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
+                opts = Integrators.build_options(integ, config)
+                result = Integrators.solve_problem(integ, prob, opts)
+                xf = Solutions.final_state(result)
+                Test.@test xf ≈ exp(-1.0) .* [1.0, 2.0]  atol=1e-5
+            end
+
+            Test.@testset "IP VF + mutable Vector u0" begin
+                vf  = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                u0  = [1.0, 2.0]
+                config = Common.StatePointConfig(0.0, u0, 1.0)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
+                opts = Integrators.build_options(integ, config)
+                result = Integrators.solve_problem(integ, prob, opts)
+                xf = Solutions.final_state(result)
+                Test.@test xf ≈ exp(-1.0) .* [1.0, 2.0]  atol=1e-5
+            end
+
+            Test.@testset "IP VF + SVector u0 (warns, uses rhs_oop_finalize)" begin
+                vf  = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                u0  = SA[1.0, 2.0]
+                config = Common.StatePointConfig(0.0, u0, 1.0)
+                prob = Test.@test_logs (:warn, r"InPlace VectorField") Integrators.build_problem(integ, sys, config; variable=nothing)
+                opts = Integrators.build_options(integ, config)
+                result = Integrators.solve_problem(integ, prob, opts)
+                xf = Solutions.final_state(result)
+                Test.@test xf ≈ exp(-1.0) .* [1.0, 2.0]  atol=1e-5
+            end
+        end
+
+        # ====================================================================
+        # INTEGRATION TESTS - InPlace HVF × mutable/immutable u0
+        # ====================================================================
+
+        Test.@testset "InPlace HVF — SciML integration" begin
+            integ = Integrators.SciML(maxiters=10000, reltol=1e-8, abstol=1e-10)
+            # ODE: dx/dt = x, dp/dt = -p  →  x(t)=x₀·eᵗ, p(t)=p₀·e^{-t}
+
+            Test.@testset "OOP HVF + mutable Vector u0" begin
+                hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf, 1)
+                u0  = [1.0, 0.5]
+                config = Common.StatePointConfig(0.0, u0, 1.0)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
+                opts = Integrators.build_options(integ, config)
+                result = Integrators.solve_problem(integ, prob, opts)
+                xf = Solutions.final_state(result)
+                Test.@test xf[1] ≈ exp(1.0)       atol=1e-5
+                Test.@test xf[2] ≈ 0.5*exp(-1.0)  atol=1e-5
+            end
+
+            Test.@testset "OOP HVF + SVector u0" begin
+                hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf, 1)
+                u0  = SA[1.0, 0.5]
+                config = Common.StatePointConfig(0.0, u0, 1.0)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
+                opts = Integrators.build_options(integ, config)
+                result = Integrators.solve_problem(integ, prob, opts)
+                xf = Solutions.final_state(result)
+                Test.@test xf[1] ≈ exp(1.0)       atol=1e-5
+                Test.@test xf[2] ≈ 0.5*exp(-1.0)  atol=1e-5
+            end
+
+            Test.@testset "IP HVF + mutable Vector u0" begin
+                hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf, 1)
+                u0  = [1.0, 0.5]
+                config = Common.StatePointConfig(0.0, u0, 1.0)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
+                opts = Integrators.build_options(integ, config)
+                result = Integrators.solve_problem(integ, prob, opts)
+                xf = Solutions.final_state(result)
+                Test.@test xf[1] ≈ exp(1.0)       atol=1e-5
+                Test.@test xf[2] ≈ 0.5*exp(-1.0)  atol=1e-5
+            end
+
+            Test.@testset "IP HVF + SVector u0 (warns, uses rhs_oop_finalize)" begin
+                hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf, 1)
+                u0  = SA[1.0, 0.5]
+                config = Common.StatePointConfig(0.0, u0, 1.0)
+                prob = Test.@test_logs (:warn, r"InPlace HamiltonianVectorField") Integrators.build_problem(integ, sys, config; variable=nothing)
+                opts = Integrators.build_options(integ, config)
+                result = Integrators.solve_problem(integ, prob, opts)
+                xf = Solutions.final_state(result)
+                Test.@test xf[1] ≈ exp(1.0)       atol=1e-5
+                Test.@test xf[2] ≈ 0.5*exp(-1.0)  atol=1e-5
             end
         end
 
