@@ -18,7 +18,7 @@ If `has_variable_dependence_trait` is not implemented or returns `false`,
 calling `is_variable`, `is_nonvariable`, `has_variable`, or `variable_dependence` will throw an error
 indicating the object does not support variable-dependence queries.
 """
-abstract type VariableDependence end
+abstract type VariableDependence <: AbstractTrait end
 
 """
 $(TYPEDEF)

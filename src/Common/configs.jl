@@ -12,8 +12,8 @@ specific integration scenarios (e.g., point-to-point, trajectory, costate).
 
 The type parameters encode:
 - `X0`: Type of the initial condition (scalar `Number` or vector `AbstractVector`)
-- `Mode`: Integration mode (`PointTag` or `TrajectoryTag`)
-- `Content`: Content type (`StateTag` or `HamiltonianTag`)
+- `Mode`: Integration mode (`PointTrait` or `TrajectoryTrait`)
+- `Content`: Content type (`StateTrait` or `HamiltonianTrait`)
 
 This enables compile-time dispatch on mode and content without runtime type tests.
 
@@ -152,43 +152,43 @@ end
 # Type Aliases for Convenient Dispatch
 # =============================================================================
 
-abstract type AbstractConfigWithMaC{X0, Mode<:AbstractModeTag, Content<:AbstractContentTag} <: AbstractConfig{X0} end
+abstract type AbstractConfigWithMaC{X0, Mode<:AbstractModeTrait, Content<:AbstractContentTrait} <: AbstractConfig{X0} end
 
 """
 $(TYPEDEF)
 
 Alias for point integration mode configurations.
 
-Matches any `AbstractConfig` with `PointTag` as the mode parameter.
+Matches any `AbstractConfig` with `PointTrait` as the mode parameter.
 """
-const AbstractPointConfig{X0, C} = AbstractConfigWithMaC{X0, PointTag, C}
+const AbstractPointConfig{X0, C} = AbstractConfigWithMaC{X0, PointTrait, C}
 
 """
 $(TYPEDEF)
 
 Alias for trajectory integration mode configurations.
 
-Matches any `AbstractConfig` with `TrajectoryTag` as the mode parameter.
+Matches any `AbstractConfig` with `TrajectoryTrait` as the mode parameter.
 """
-const AbstractTrajectoryConfig{X0, C} = AbstractConfigWithMaC{X0, TrajectoryTag, C}
+const AbstractTrajectoryConfig{X0, C} = AbstractConfigWithMaC{X0, TrajectoryTrait, C}
 
 """
 $(TYPEDEF)
 
 Alias for state content configurations.
 
-Matches any `AbstractConfig` with `StateTag` as the content parameter.
+Matches any `AbstractConfig` with `StateTrait` as the content parameter.
 """
-const AbstractStateConfig{X0, M} = AbstractConfigWithMaC{X0, M, StateTag}
+const AbstractStateConfig{X0, M} = AbstractConfigWithMaC{X0, M, StateTrait}
 
 """
 $(TYPEDEF)
 
 Alias for Hamiltonian content configurations.
 
-Matches any `AbstractConfig` with `HamiltonianTag` as the content parameter.
+Matches any `AbstractConfig` with `HamiltonianTrait` as the content parameter.
 """
-const AbstractHamiltonianConfig{X0, M} = AbstractConfigWithMaC{X0, M, HamiltonianTag}
+const AbstractHamiltonianConfig{X0, M} = AbstractConfigWithMaC{X0, M, HamiltonianTrait}
 
 # =============================================================================
 # Interface implementations on abstract config types
@@ -386,7 +386,7 @@ StatePointConfig
 
 See also: [`CTFlows.Common.StateTrajectoryConfig`](@ref)
 """
-struct StatePointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfigWithMaC{X0, PointTag, StateTag}
+struct StatePointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfigWithMaC{X0, PointTrait, StateTrait}
     t0::T0
     x0::X0
     tf::TF
@@ -416,7 +416,7 @@ StateTrajectoryConfig
 
 See also: [`CTFlows.Common.StatePointConfig`](@ref)
 """
-struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractConfigWithMaC{X0, TrajectoryTag, StateTag}
+struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractConfigWithMaC{X0, TrajectoryTrait, StateTrait}
     tspan::TS
     x0::X0
 end
@@ -451,7 +451,7 @@ HamiltonianPointConfig
 
 See also: [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Common.StatePointConfig`](@ref).
 """
-struct HamiltonianPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractConfigWithMaC{X0, PointTag, HamiltonianTag}
+struct HamiltonianPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractConfigWithMaC{X0, PointTrait, HamiltonianTrait}
     t0::T0
     x0::X0
     p0::P0
@@ -485,7 +485,7 @@ HamiltonianTrajectoryConfig
 
 See also: [`CTFlows.Common.HamiltonianPointConfig`](@ref), [`CTFlows.Common.StateTrajectoryConfig`](@ref).
 """
-struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractConfigWithMaC{X0, TrajectoryTag, HamiltonianTag}
+struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractConfigWithMaC{X0, TrajectoryTrait, HamiltonianTrait}
     tspan::TS
     x0::X0
     p0::P0

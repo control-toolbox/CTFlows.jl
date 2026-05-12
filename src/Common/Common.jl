@@ -24,6 +24,7 @@ import CTModels.OCP
 # ==============================================================================
 
 include(joinpath(@__DIR__, "abstract_tag.jl"))
+include(joinpath(@__DIR__, "abstract_trait.jl"))
 include(joinpath(@__DIR__, "configs.jl"))
 include(joinpath(@__DIR__, "traits.jl"))
 include(joinpath(@__DIR__, "ode_parameters.jl"))
@@ -37,7 +38,11 @@ include(joinpath(@__DIR__, "internal_norm.jl"))
 @reexport import CTModels.OCP: Autonomous, NonAutonomous, TimeDependence
 @reexport import CTModels.OCP: is_autonomous, is_nonautonomous, is_variable, is_nonvariable, has_variable
 
-export AbstractTag, AbstractModeTag, AbstractContentTag, PointTag, TrajectoryTag, StateTag, HamiltonianTag, AbstractConfig, AbstractPointConfig, AbstractTrajectoryConfig, AbstractStateConfig, AbstractHamiltonianConfig, StatePointConfig, StateTrajectoryConfig, HamiltonianPointConfig, HamiltonianTrajectoryConfig, tspan, initial_condition, initial_state, initial_costate
+export AbstractTag
+export AbstractTrait, AbstractModeTrait, AbstractContentTrait, PointTrait, TrajectoryTrait, StateTrait, HamiltonianTrait
+export AbstractConfig, AbstractPointConfig, AbstractTrajectoryConfig, AbstractStateConfig, AbstractHamiltonianConfig
+export StatePointConfig, StateTrajectoryConfig, HamiltonianPointConfig, HamiltonianTrajectoryConfig
+export tspan, initial_condition, initial_state, initial_costate
 export VariableDependence, Fixed, NonFixed
 export ODEParameters
 export has_time_dependence_trait, has_variable_dependence_trait
