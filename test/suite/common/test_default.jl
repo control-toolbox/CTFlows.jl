@@ -33,6 +33,10 @@ function test_default()
             Test.@testset "__unsafe returns false" begin
                 Test.@test Common.__unsafe() === false
             end
+
+            Test.@testset "__is_inplace returns nothing" begin
+                Test.@test Common.__is_inplace() === nothing
+            end
         end
     end
 end

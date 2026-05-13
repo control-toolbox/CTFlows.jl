@@ -84,6 +84,9 @@ Detect the mutability trait from the Hamiltonian vector field function signature
 Compares the function arity to the expected out-of-place arity and in-place arity
 (arity + 2 for HamiltonianVectorField, which has two output buffers). Returns `InPlace` or `OutOfPlace` accordingly.
 
+If the function has multiple methods, throws a `PreconditionError` indicating that
+auto-detection is ambiguous and the user should specify `is_inplace` explicitly.
+
 # Arguments
 - `f::Function`: The Hamiltonian vector-field function.
 - `TD`: Time dependence trait type.
@@ -93,9 +96,27 @@ Compares the function arity to the expected out-of-place arity and in-place arit
 - `Type{InPlace}` or `Type{OutOfPlace}`.
 
 # Throws
-- `Exceptions.IncorrectArgument`: If the arity is ambiguous or invalid.
+- `Exceptions.PreconditionError`: If the function has multiple methods, making automatic arity detection ambiguous.
+- `Exceptions.IncorrectArgument`: If the arity is invalid (does not match expected out-of-place or in-place arity).
+
+# Notes
+- This function is called automatically by the `HamiltonianVectorField` constructor when `is_inplace` is `nothing`.
+- Users can bypass auto-detection by specifying `is_inplace=true` or `is_inplace=false` explicitly in the constructor.
+- HamiltonianVectorField has two output buffers (dx, dp), so the in-place arity is `oop_arity + 2`.
+
+See also: [`CTFlows.Data.HamiltonianVectorField`](@ref), [`CTFlows.Common.InPlace`](@ref), [`CTFlows.Common.OutOfPlace`](@ref).
 """
 function _detect_mutability_hvf(f::Function, TD, VD)
+    method_count = length(methods(f))
+    if method_count > 1
+        throw(Exceptions.PreconditionError(
+            "Cannot auto-detect mutability: function has multiple methods";
+            reason = "The function has $method_count methods, making automatic arity detection ambiguous",
+            suggestion = "Specify `is_inplace=true` or `is_inplace=false` explicitly in the constructor",
+            context = "HamiltonianVectorField mutability detection",
+        ))
+    end
+
     arity = first(methods(f)).nargs - 1
     oop_arity = _oop_arity_hvf(TD, VD)
     ip_arity = oop_arity + 2  # HamiltonianVectorField has two output buffers (dx, dp)
@@ -122,6 +143,7 @@ Construct a `HamiltonianVectorField` with trait flags.
 - `f::Function`: The Hamiltonian vector field function returning `(dx, dp)`.
 - `is_autonomous::Bool`: If true, system is autonomous (default: `Common.__is_autonomous()`).
 - `is_variable::Bool`: If true, system depends on variable parameters (default: `Common.__is_variable()`).
+- `is_inplace::Union{Bool, Nothing}`: If true, function is in-place; if false, function is out-of-place; if `nothing`, mutability is auto-detected from function signature (default: `Common.__is_inplace()`).
 
 # Returns
 - `HamiltonianVectorField`: A HamiltonianVectorField with appropriate traits.
@@ -143,14 +165,33 @@ HamiltonianVectorField
   variable_dependence: Fixed
   mutability: OutOfPlace
   function: var"#2"
+
+julia> hvf = HamiltonianVectorField((x, p) -> (x, -p); is_inplace=true)  # Explicit in-place
+HamiltonianVectorField
+  time_dependence: Autonomous
+  variable_dependence: Fixed
+  mutability: InPlace
+  function: var"#3"
 ```
 
-See also: [`CTFlows.Data.HamiltonianVectorField`](@ref), [`CTFlows.Common.Autonomous`](@ref), [`CTFlows.Common.NonAutonomous`](@ref), [`CTFlows.Common.Fixed`](@ref), [`CTFlows.Common.NonFixed`](@ref).
+# Notes
+- If `is_inplace` is `nothing` (default), the mutability is auto-detected from the function signature by checking the number of arguments.
+- If the function has multiple methods, auto-detection will fail with a `PreconditionError`. In this case, specify `is_inplace` explicitly.
+
+See also: [`CTFlows.Data.HamiltonianVectorField`](@ref), [`CTFlows.Common.Autonomous`](@ref), [`CTFlows.Common.NonAutonomous`](@ref), [`CTFlows.Common.Fixed`](@ref), [`CTFlows.Common.NonFixed`](@ref), [`CTFlows.Common.InPlace`](@ref), [`CTFlows.Common.OutOfPlace`](@ref).
 """
-function HamiltonianVectorField(f; is_autonomous::Bool = Common.__is_autonomous(), is_variable::Bool = Common.__is_variable())
+function HamiltonianVectorField(f; 
+    is_autonomous::Bool = Common.__is_autonomous(), 
+    is_variable::Bool = Common.__is_variable(), 
+    is_inplace::Union{Bool, Nothing} = Common.__is_inplace()
+)
     TD = is_autonomous ? Common.Autonomous : Common.NonAutonomous
     VD = is_variable ? Common.NonFixed : Common.Fixed
-    MD = _detect_mutability_hvf(f, TD, VD)
+    MD = if is_inplace === nothing
+        _detect_mutability_hvf(f, TD, VD)
+    else
+        is_inplace ? InPlace : OutOfPlace
+    end
     return HamiltonianVectorField{typeof(f), TD, VD, MD}(f)
 end
 
