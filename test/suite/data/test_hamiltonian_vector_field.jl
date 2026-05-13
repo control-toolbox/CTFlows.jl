@@ -3,9 +3,15 @@ module TestHamiltonianVectorField
 import Test
 import CTFlows.Data: Data
 import CTFlows.Common: Common
+import CTBase.Exceptions
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
+
+# TOP-LEVEL: Fake function with multiple methods for testing
+_multi_method_hvf(x::Int, p) = (x, -p)
+_multi_method_hvf(x::Float64, p) = (x, -p)
+_multi_method_hvf(x::AbstractVector, p) = (x, -p)
 
 function test_hamiltonian_vector_field()
     Test.@testset "Hamiltonian Vector Field Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
@@ -123,6 +129,41 @@ function test_hamiltonian_vector_field()
             hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
             # Just check that show doesn't throw
             Test.@test_nowarn sprint(show, hvf)
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Explicit is_inplace parameter
+        # ====================================================================
+
+        Test.@testset "Explicit is_inplace parameter" begin
+            Test.@testset "is_inplace=true creates InPlace HamiltonianVectorField" begin
+                # Define an out-of-place function but force InPlace
+                f(x, p) = (x, -p)
+                hvf = Data.HamiltonianVectorField(f; is_inplace=true)
+                Test.@test Common.mutability_trait(hvf) === Common.InPlace
+            end
+
+            Test.@testset "is_inplace=false creates OutOfPlace HamiltonianVectorField" begin
+                # Define an in-place function but force OutOfPlace
+                f(x, p) = (x, -p)
+                hvf = Data.HamiltonianVectorField(f; is_inplace=false)
+                Test.@test Common.mutability_trait(hvf) === Common.OutOfPlace
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - PreconditionError for multiple methods
+        # ====================================================================
+
+        Test.@testset "PreconditionError for multiple methods" begin
+            Test.@testset "Throws PreconditionError when is_inplace is not specified" begin
+                Test.@test_throws Exceptions.PreconditionError Data.HamiltonianVectorField(_multi_method_hvf)
+            end
+
+            Test.@testset "No error when is_inplace is explicitly specified" begin
+                hvf = Data.HamiltonianVectorField(_multi_method_hvf; is_inplace=false)
+                Test.@test Common.mutability_trait(hvf) === Common.OutOfPlace
+            end
         end
     end
 end

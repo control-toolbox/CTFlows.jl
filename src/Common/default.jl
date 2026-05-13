@@ -41,3 +41,18 @@ Returns `false` by default, meaning ODE solver retcodes are checked and
 failures throw exceptions unless explicitly bypassed.
 """
 __unsafe()::Bool = false
+
+"""
+$(TYPEDSIGNATURES)
+
+Default value for in-place flag in vector field constructors.
+
+Returns `nothing` by default, meaning mutability is auto-detected from
+the function signature unless specified otherwise.
+
+# Returns
+- `Nothing`: The default value for the `is_inplace` parameter.
+
+See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Data.HamiltonianVectorField`](@ref).
+"""
+__is_inplace() = nothing

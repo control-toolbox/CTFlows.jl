@@ -3,9 +3,15 @@ module TestVectorField
 import Test
 import CTFlows.Data
 import CTFlows.Common
+import CTBase.Exceptions
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+
+# TOP-LEVEL: Fake function with multiple methods for testing
+_multi_method_f(x::Int) = -x
+_multi_method_f(x::Float64) = -x
+_multi_method_f(x::AbstractVector) = -x
 
 # ==============================================================================
 # Test function
@@ -293,6 +299,41 @@ function test_vector_field()
         Test.@testset "Exports Verification" begin
             Test.@testset "Exported types" begin
                 Test.@test isdefined(Data, :VectorField)
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Explicit is_inplace parameter
+        # ====================================================================
+
+        Test.@testset "Explicit is_inplace parameter" begin
+            Test.@testset "is_inplace=true creates InPlace VectorField" begin
+                # Define an out-of-place function but force InPlace
+                f(x) = -x
+                vf = Data.VectorField(f; is_inplace=true)
+                Test.@test Common.mutability_trait(vf) === Common.InPlace
+            end
+
+            Test.@testset "is_inplace=false creates OutOfPlace VectorField" begin
+                # Define an in-place function but force OutOfPlace
+                f(x) = -x
+                vf = Data.VectorField(f; is_inplace=false)
+                Test.@test Common.mutability_trait(vf) === Common.OutOfPlace
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - PreconditionError for multiple methods
+        # ====================================================================
+
+        Test.@testset "PreconditionError for multiple methods" begin
+            Test.@testset "Throws PreconditionError when is_inplace is not specified" begin
+                Test.@test_throws Exceptions.PreconditionError Data.VectorField(_multi_method_f)
+            end
+
+            Test.@testset "No error when is_inplace is explicitly specified" begin
+                vf = Data.VectorField(_multi_method_f; is_inplace=false)
+                Test.@test Common.mutability_trait(vf) === Common.OutOfPlace
             end
         end
     end

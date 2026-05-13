@@ -82,6 +82,9 @@ Detect the mutability trait from the function signature.
 Compares the function arity to the expected out-of-place arity and in-place arity
 (arity + 1 for VectorField). Returns `InPlace` or `OutOfPlace` accordingly.
 
+If the function has multiple methods, throws a `PreconditionError` indicating that
+auto-detection is ambiguous and the user should specify `is_inplace` explicitly.
+
 # Arguments
 - `f::Function`: The vector-field function.
 - `TD`: Time dependence trait type.
@@ -91,9 +94,26 @@ Compares the function arity to the expected out-of-place arity and in-place arit
 - `Type{InPlace}` or `Type{OutOfPlace}`.
 
 # Throws
-- `Exceptions.IncorrectArgument`: If the arity is ambiguous or invalid.
+- `Exceptions.PreconditionError`: If the function has multiple methods, making automatic arity detection ambiguous.
+- `Exceptions.IncorrectArgument`: If the arity is invalid (does not match expected out-of-place or in-place arity).
+
+# Notes
+- This function is called automatically by the `VectorField` constructor when `is_inplace` is `nothing`.
+- Users can bypass auto-detection by specifying `is_inplace=true` or `is_inplace=false` explicitly in the constructor.
+
+See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Common.InPlace`](@ref), [`CTFlows.Common.OutOfPlace`](@ref).
 """
 function _detect_mutability_vf(f::Function, TD, VD)
+    method_count = length(methods(f))
+    if method_count > 1
+        throw(Exceptions.PreconditionError(
+            "Cannot auto-detect mutability: function has multiple methods";
+            reason = "The function has $method_count methods, making automatic arity detection ambiguous",
+            suggestion = "Specify `is_inplace=true` or `is_inplace=false` explicitly in the constructor",
+            context = "VectorField mutability detection",
+        ))
+    end
+
     arity = first(methods(f)).nargs - 1
     oop_arity = _oop_arity_vf(TD, VD)
     ip_arity = oop_arity + 1
@@ -120,6 +140,7 @@ Construct a `VectorField` with trait flags.
 - `f::Function`: The vector-field function.
 - `is_autonomous::Bool`: If true, system is autonomous (default: `Common.__is_autonomous()`).
 - `is_variable::Bool`: If true, system depends on variable parameters (default: `Common.__is_variable()`).
+- `is_inplace::Union{Bool, Nothing}`: If true, function is in-place; if false, function is out-of-place; if `nothing`, mutability is auto-detected from function signature (default: `Common.__is_inplace()`).
 
 # Returns
 - `VectorField`: A VectorField with appropriate traits.
@@ -141,14 +162,33 @@ VectorField
   variable_dependence: Fixed
   mutability: OutOfPlace
   function: var"#2"
+
+julia> vf = VectorField(x -> -x; is_inplace=true)  # Explicit in-place
+VectorField
+  time_dependence: Autonomous
+  variable_dependence: Fixed
+  mutability: InPlace
+  function: var"#3"
 \`\`\`
 
-See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Common.Autonomous`](@ref), [`CTFlows.Common.NonAutonomous`](@ref), [`CTFlows.Common.Fixed`](@ref), [`CTFlows.Common.NonFixed`](@ref).
+# Notes
+- If `is_inplace` is `nothing` (default), the mutability is auto-detected from the function signature by checking the number of arguments.
+- If the function has multiple methods, auto-detection will fail with a `PreconditionError`. In this case, specify `is_inplace` explicitly.
+
+See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Common.Autonomous`](@ref), [`CTFlows.Common.NonAutonomous`](@ref), [`CTFlows.Common.Fixed`](@ref), [`CTFlows.Common.NonFixed`](@ref), [`CTFlows.Common.InPlace`](@ref), [`CTFlows.Common.OutOfPlace`](@ref).
 """
-function VectorField(f; is_autonomous::Bool = Common.__is_autonomous(), is_variable::Bool = Common.__is_variable())
+function VectorField(f; 
+    is_autonomous::Bool = Common.__is_autonomous(), 
+    is_variable::Bool = Common.__is_variable(), 
+    is_inplace::Union{Bool, Nothing} = Common.__is_inplace()
+)
     TD = is_autonomous ? Autonomous : NonAutonomous
     VD = is_variable ? NonFixed : Fixed
-    MD = _detect_mutability_vf(f, TD, VD)
+    MD = if is_inplace === nothing
+        _detect_mutability_vf(f, TD, VD)
+    else
+        is_inplace ? InPlace : OutOfPlace
+    end
     return VectorField{typeof(f), TD, VD, MD}(f)
 end
 
