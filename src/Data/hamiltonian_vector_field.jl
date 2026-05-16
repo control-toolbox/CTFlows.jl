@@ -153,25 +153,19 @@ Construct a `HamiltonianVectorField` with trait flags.
 julia> using CTFlows.Systems, CTFlows.Common
 
 julia> hvf = HamiltonianVectorField((x, p) -> (x, -p))  # Uses defaults: is_autonomous=true, is_variable=false
-HamiltonianVectorField
-  time_dependence: Autonomous
-  variable_dependence: Fixed
-  mutability: OutOfPlace
-  function: var"#1"
+HamiltonianVectorField: autonomous, fixed (no variable), out-of-place
+  natural : f(x, p)
+  uniform : f(t, x, p, v)
 
 julia> hvf = HamiltonianVectorField((t, x, p) -> (t .* x, -p); is_autonomous=false)
-HamiltonianVectorField
-  time_dependence: NonAutonomous
-  variable_dependence: Fixed
-  mutability: OutOfPlace
-  function: var"#2"
+HamiltonianVectorField: non-autonomous, fixed (no variable), out-of-place
+  natural : f(t, x, p)
+  uniform : f(t, x, p, v)
 
 julia> hvf = HamiltonianVectorField((x, p) -> (x, -p); is_inplace=true)  # Explicit in-place
-HamiltonianVectorField
-  time_dependence: Autonomous
-  variable_dependence: Fixed
-  mutability: InPlace
-  function: var"#3"
+HamiltonianVectorField: autonomous, fixed (no variable), in-place
+  natural : f(dx, dp, x, p)
+  uniform : f(dx, dp, t, x, p, v)
 ```
 
 # Notes
@@ -246,11 +240,12 @@ Shows the type name, time dependence, variable dependence, mutability, and funct
 See also: [`CTFlows.Data.HamiltonianVectorField`](@ref).
 """
 function Base.show(io::IO, hvf::HamiltonianVectorField{F, TD, VD, MD}) where {F, TD, VD, MD}
-    println(io, "HamiltonianVectorField")
-    println(io, "  time_dependence: ", nameof(TD))
-    println(io, "  variable_dependence: ", nameof(VD))
-    println(io, "  mutability: ", nameof(MD))
-    print(io, "  function: ", typeof(hvf.f))
+    header = "HamiltonianVectorField: $(_td_label(TD)), $(_vd_label(VD)), $(_md_label(MD))"
+    natural = _natural_sig_hvf(TD, VD, MD)
+    uniform = _uniform_sig_hvf(MD)
+    println(io, header)
+    println(io, "  natural : ", natural)
+    print(io, "  uniform : ", uniform)
 end
 
 """

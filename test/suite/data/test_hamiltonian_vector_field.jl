@@ -165,6 +165,35 @@ function test_hamiltonian_vector_field()
                 Test.@test Common.mutability_trait(hvf) === Common.OutOfPlace
             end
         end
+
+        # ====================================================================
+        # UNIT TESTS - Show Methods
+        # ====================================================================
+
+        Test.@testset "Show Methods" begin
+            hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+
+            Test.@testset "Base.show (compact)" begin
+                io = IOBuffer()
+                show(io, hvf)
+                str = String(take!(io))
+                Test.@test occursin("HamiltonianVectorField", str)
+                Test.@test occursin("autonomous", str)
+                Test.@test occursin("fixed (no variable)", str)
+                Test.@test occursin("out-of-place", str)
+                Test.@test occursin("natural :", str)
+                Test.@test occursin("uniform :", str)
+            end
+
+            Test.@testset "Base.show (text/plain)" begin
+                io = IOBuffer()
+                show(io, MIME("text/plain"), hvf)
+                str = String(take!(io))
+                Test.@test occursin("HamiltonianVectorField", str)
+                Test.@test occursin("autonomous", str)
+                Test.@test occursin("fixed (no variable)", str)
+            end
+        end
     end
 end
 

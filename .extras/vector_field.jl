@@ -9,7 +9,7 @@ Pkg.develop(path=joinpath(@__DIR__, ".."))
 using CTFlows.Data
 using CTFlows.Common
 using CTFlows.Systems
-using CTFlows.StateFlows
+using CTFlows.Flows
 using CTFlows.Integrators
 using CTFlows.Solutions
 using OrdinaryDiffEqTsit5
