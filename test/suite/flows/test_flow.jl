@@ -26,7 +26,7 @@ end
 # Minimal strategy contract implementation
 CTSolvers.Strategies.id(::Type{FakeIntegrator}) = :fake_integrator
 CTSolvers.Strategies.metadata(::Type{FakeIntegrator}) = CTSolvers.Strategies.StrategyMetadata()
-CTSolvers.Strategies.options(integ::FakeIntegrator) = CTSolvers.Options.StrategyOptions()
+CTSolvers.Strategies.options(integ::FakeIntegrator) = CTSolvers.Strategies.StrategyOptions()
 
 """
 Fake flow for testing Flow contract without requiring SciML extension.
@@ -317,6 +317,8 @@ function test_flow()
                 Test.@test occursin("Flow", output)
                 Test.@test occursin("system", output)
                 Test.@test occursin("integrator", output)
+                Test.@test occursin("  system:     ", output)
+                Test.@test occursin("  integrator: ", output)
             end
 
             Test.@testset "compact" begin
@@ -324,8 +326,8 @@ function test_flow()
                 show(io, flow)
                 output = String(take!(io))
                 Test.@test occursin("Flow", output)
-                Test.@test occursin("system", output)
-                Test.@test occursin("integrator", output)
+                Test.@test occursin("system=", output)
+                Test.@test occursin("integrator=", output)
             end
         end
     end

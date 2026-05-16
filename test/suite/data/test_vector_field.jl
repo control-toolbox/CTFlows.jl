@@ -269,8 +269,8 @@ function test_vector_field()
                 Test.@test occursin("autonomous", str)
                 Test.@test occursin("fixed (no variable)", str)
                 Test.@test occursin("out-of-place", str)
-                Test.@test occursin("natural :", str)
-                Test.@test occursin("uniform :", str)
+                Test.@test occursin("natural call", str)
+                Test.@test occursin("uniform call", str)
             end
 
             Test.@testset "Base.show (text/plain)" begin
