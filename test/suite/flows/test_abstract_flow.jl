@@ -5,7 +5,9 @@ import CTBase.Exceptions
 import CTFlows.Systems
 import CTFlows.Flows
 import CTFlows.Common
+import CTFlows.Integrators
 import CTFlows.Data
+import CTSolvers
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -27,6 +29,14 @@ end
 function Systems.rhs(sys::FakeSystem)
     return (du, u, p, t) -> nothing
 end
+
+struct FakeIntegrator <: Integrators.AbstractIntegrator
+    result::Any
+end
+
+CTSolvers.Strategies.id(::Type{FakeIntegrator}) = :fake_integrator
+CTSolvers.Strategies.metadata(::Type{FakeIntegrator}) = CTSolvers.Strategies.StrategyMetadata()
+CTSolvers.Strategies.options(integ::FakeIntegrator) = CTSolvers.Strategies.StrategyOptions()
 
 """
 Fake flow for testing the AbstractFlow contract.
@@ -172,7 +182,7 @@ function test_abstract_flow()
 
         Test.@testset "Base.show" begin
             sys = FakeSystem(2)
-            flow = FakeFlow(sys, :fake_integ)
+            flow = FakeFlow(sys, FakeIntegrator(0))
 
             Test.@testset "MIME text/plain" begin
                 io = IOBuffer()
@@ -196,7 +206,8 @@ function test_abstract_flow()
         Test.@testset "Predicate Methods" begin
             Test.@testset "FakeFlow with FakeSystem" begin
                 sys = FakeSystem(2)
-                flow = FakeFlow(sys, :fake_integ)
+                int = FakeIntegrator(0)
+                flow = FakeFlow(sys, int)
 
                 Test.@testset "is_autonomous" begin
                     Test.@test Flows.is_autonomous(flow) === true

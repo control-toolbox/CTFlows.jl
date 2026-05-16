@@ -150,25 +150,19 @@ Construct a `VectorField` with trait flags.
 julia> using CTFlows.Systems, CTFlows.Common
 
 julia> vf = VectorField(x -> -x)  # Uses defaults: is_autonomous=true, is_variable=false
-VectorField
-  time_dependence: Autonomous
-  variable_dependence: Fixed
-  mutability: OutOfPlace
-  function: var"#1"
+VectorField: autonomous, fixed (no variable), out-of-place
+  natural : f(x)
+  uniform : f(t, x, v)
 
 julia> vf = VectorField((t, x) -> t .* x; is_autonomous=false)
-VectorField
-  time_dependence: NonAutonomous
-  variable_dependence: Fixed
-  mutability: OutOfPlace
-  function: var"#2"
+VectorField: non-autonomous, fixed (no variable), out-of-place
+  natural : f(t, x)
+  uniform : f(t, x, v)
 
 julia> vf = VectorField(x -> -x; is_inplace=true)  # Explicit in-place
-VectorField
-  time_dependence: Autonomous
-  variable_dependence: Fixed
-  mutability: InPlace
-  function: var"#3"
+VectorField: autonomous, fixed (no variable), in-place
+  natural : f(dx, x)
+  uniform : f(dx, t, x, v)
 \`\`\`
 
 # Notes
@@ -242,11 +236,12 @@ Shows the type name, time dependence, variable dependence, mutability, and funct
 See also: [`CTFlows.Data.VectorField`](@ref).
 """
 function Base.show(io::IO, vf::VectorField{F, TD, VD, MD}) where {F, TD, VD, MD}
-    println(io, "VectorField")
-    println(io, "  time_dependence: ", nameof(TD))
-    println(io, "  variable_dependence: ", nameof(VD))
-    println(io, "  mutability: ", nameof(MD))
-    print(io, "  function: ", typeof(vf.f))
+    header = "VectorField: $(_td_label(TD)), $(_vd_label(VD)), $(_md_label(MD))"
+    natural = _natural_sig_vf(TD, VD, MD)
+    uniform = _uniform_sig_vf(MD)
+    println(io, header)
+    println(io, "  natural call: ", natural)
+    print(io, "  uniform call: ", uniform)
 end
 
 """

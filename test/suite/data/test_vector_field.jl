@@ -260,24 +260,26 @@ function test_vector_field()
 
         Test.@testset "Show Methods" begin
             vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
-            
+
             Test.@testset "Base.show (compact)" begin
                 io = IOBuffer()
                 show(io, vf)
                 str = String(take!(io))
                 Test.@test occursin("VectorField", str)
-                Test.@test occursin("time_dependence: Autonomous", str)
-                Test.@test occursin("variable_dependence: Fixed", str)
-                Test.@test occursin("function:", str)
+                Test.@test occursin("autonomous", str)
+                Test.@test occursin("fixed (no variable)", str)
+                Test.@test occursin("out-of-place", str)
+                Test.@test occursin("natural call", str)
+                Test.@test occursin("uniform call", str)
             end
-            
+
             Test.@testset "Base.show (text/plain)" begin
                 io = IOBuffer()
                 show(io, MIME("text/plain"), vf)
                 str = String(take!(io))
                 Test.@test occursin("VectorField", str)
-                Test.@test occursin("time_dependence: Autonomous", str)
-                Test.@test occursin("variable_dependence: Fixed", str)
+                Test.@test occursin("autonomous", str)
+                Test.@test occursin("fixed (no variable)", str)
             end
         end
 

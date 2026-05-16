@@ -201,24 +201,35 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Display the flow in tree-style format.
+Display the flow in tree-style format with proper indentation for multi-line system displays.
 
 # Example
 ```julia-repl
 julia> using CTFlows.Flows
 
 julia> flow = Flow(system, integrator)
-Flow
-  system: FakeSystem(n_x=2, n_p=2)
-  integrator: FakeIntegrator
+StateFlow
+  system:     VectorFieldSystem
+                wraps: VectorField: autonomous, fixed (no variable), out-of-place
+  integrator: SciML (abstol = 1e-8, reltol = 1e-6)
 ```
 """
 function Base.show(io::IO, ::MIME"text/plain", flow::AbstractFlow)
-    print(io, nameof(typeof(flow)))
-    sys = system(flow)
+    sys   = system(flow)
     integ = integrator(flow)
-    print(io, "\n  system: ", sys)
-    print(io, "\n  integrator: ", nameof(typeof(integ)))
+
+    # "system:" and "integrator:" padded to the same width for column alignment
+    lbl_sys  = "  system:     "
+    lbl_int  = "  integrator: "
+
+    # Capture system display; indent continuation lines to sit under the first
+    sys_str = sprint(show, sys)
+    sys_display = _indent_continuation(sys_str, length(lbl_sys))
+
+    println(io, nameof(typeof(flow)))
+    println(io, lbl_sys, sys_display)
+    print(io,   lbl_int, nameof(typeof(integ)))
+    _print_user_options(io, integ)
 end
 
 """
@@ -242,5 +253,64 @@ function Base.show(io::IO, flow::AbstractFlow)
     push!(parts, "system=$(sys)")
     push!(parts, "integrator=$(nameof(typeof(integ)))")
     print(io, join(parts, ", "))
+    print(io, ")")
+end
+
+# =============================================================================
+# Internal helpers for show
+# =============================================================================
+
+"""
+    _indent_continuation(s::String, n::Int) -> String
+
+Indent every line of a multiline string by `n` spaces, except the first line.
+
+# Arguments
+- `s::String`: The multiline string to indent.
+- `n::Int`: Number of spaces to indent continuation lines.
+
+# Returns
+- `String`: The indented string.
+
+# Example
+\`\`\`julia
+_indent_continuation("line1\\nline2\\nline3", 4)  # Returns "line1\\n    line2\\n    line3"
+\`\`\`
+"""
+function _indent_continuation(s::String, n::Int)
+    pad   = " " ^ n
+    lines = split(s, "\n")
+    return join((i == 1 ? l : pad * l for (i, l) in enumerate(lines)), "\n")
+end
+
+"""
+    _print_user_options(io::IO, integ::Integrators.AbstractIntegrator)
+
+Print user-supplied integrator options inline: `(key = val, …)`.
+Silently does nothing when no user options are set.
+
+# Arguments
+- `io::IO`: The IO stream to write to.
+- `integ::Integrators.AbstractIntegrator`: The integrator to inspect for user options.
+
+# Example
+\`\`\`julia
+# If user options are set: prints " (abstol = 1e-8, reltol = 1e-6)"
+# If no user options: prints nothing
+\`\`\`
+"""
+function _print_user_options(io::IO, integ::Integrators.AbstractIntegrator)
+    opts      = CTSolvers.Strategies.options(integ)
+    user_opts = sort!(
+        [(k, CTSolvers.value(v)) for (k, v) in pairs(opts.options)
+         if CTSolvers.is_user(opts, k)];
+        by = x -> string(x[1]),
+    )
+    isempty(user_opts) && return
+    print(io, " (")
+    for (i, (k, v)) in enumerate(user_opts)
+        i > 1 && print(io, ", ")
+        print(io, k, " = ", v)
+    end
     print(io, ")")
 end

@@ -194,7 +194,7 @@ $(TYPEDSIGNATURES)
 
 Display a compact representation of a VectorFieldSystem.
 
-Shows the type name, time dependence, variable dependence, mutability, and the underlying vector field type.
+Shows the type name and the wrapped VectorField with its traits.
 
 # Arguments
 - `io::IO`: The IO stream to write to.
@@ -204,10 +204,8 @@ See also: [`CTFlows.Systems.VectorFieldSystem`](@ref).
 """
 function Base.show(io::IO, sys::VectorFieldSystem{F, TD, VD, MD, RHS, OOPROHS, FINRHS}) where {F, TD, VD, MD, RHS, OOPROHS, FINRHS}
     println(io, "VectorFieldSystem")
-    println(io, "  time_dependence: ", nameof(TD))
-    println(io, "  variable_dependence: ", nameof(VD))
-    println(io, "  mutability: ", nameof(MD))
-    print(io, "  vector_field: ", typeof(sys.vf))
+    wraps = "VectorField: $(Data._td_label(TD)), $(Data._vd_label(VD)), $(Data._md_label(MD))"
+    print(io, "  wraps: ", wraps)
 end
 
 """
