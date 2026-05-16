@@ -12,9 +12,9 @@ dx, dp = Hv([t ,] x, p[, v])
 @building.jl#L1-38 
 @vector_field_system.jl#L1-126 
 
-Il faudra sûrement créer un HamiltonianVectorFieldSystem.
+Il faudra sûrement créer un HamiltonianSystem.
 
-A partir d'un HamiltonianVectorFieldSystem, il faudra pouvoir créer un flot hamiltonien, qui en principe existe déjà : 
+A partir d'un HamiltonianSystem, il faudra pouvoir créer un flot hamiltonien, qui en principe existe déjà : 
 
 @abstract_flow.jl#L1-247
  @flow.jl#L131-134 à comparer avec @flow.jl#L101-104. 
