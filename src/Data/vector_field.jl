@@ -240,8 +240,8 @@ function Base.show(io::IO, vf::VectorField{F, TD, VD, MD}) where {F, TD, VD, MD}
     natural = _natural_sig_vf(TD, VD, MD)
     uniform = _uniform_sig_vf(MD)
     println(io, header)
-    println(io, "  natural : ", natural)
-    print(io, "  uniform : ", uniform)
+    println(io, "  natural call: ", natural)
+    print(io, "  uniform call: ", uniform)
 end
 
 """

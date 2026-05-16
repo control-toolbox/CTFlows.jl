@@ -126,11 +126,11 @@ println("\n4. Config Objects")
 println("-" ^ 80)
 
 # PointConfig for single point integration
-point_config = Common.PointConfig(0.0, [1.0, 0.0], 1.0)
+point_config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 display(point_config)
 
 # TrajectoryConfig for full trajectory
-traj_config = Common.TrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+traj_config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 display(traj_config)
 
 # =============================================================================

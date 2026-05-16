@@ -244,8 +244,8 @@ function Base.show(io::IO, hvf::HamiltonianVectorField{F, TD, VD, MD}) where {F,
     natural = _natural_sig_hvf(TD, VD, MD)
     uniform = _uniform_sig_hvf(MD)
     println(io, header)
-    println(io, "  natural : ", natural)
-    print(io, "  uniform : ", uniform)
+    println(io, "  natural call: ", natural)
+    print(io, "  uniform call: ", uniform)
 end
 
 """

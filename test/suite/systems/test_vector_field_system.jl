@@ -324,6 +324,34 @@ function test_vector_field_system()
         end
 
         # ====================================================================
+        # UNIT TESTS - Show Methods
+        # ====================================================================
+
+        Test.@testset "Show Methods" begin
+            vf = Systems.VectorField(x -> x; is_autonomous=true, is_variable=false)
+            sys = Systems.VectorFieldSystem(vf)
+
+            Test.@testset "Base.show (compact)" begin
+                io = IOBuffer()
+                show(io, sys)
+                str = String(take!(io))
+                Test.@test occursin("VectorFieldSystem", str)
+                Test.@test occursin("wraps:", str)
+                Test.@test occursin("autonomous", str)
+                Test.@test occursin("fixed (no variable)", str)
+                Test.@test occursin("out-of-place", str)
+            end
+
+            Test.@testset "Base.show (text/plain)" begin
+                io = IOBuffer()
+                show(io, MIME("text/plain"), sys)
+                str = String(take!(io))
+                Test.@test occursin("VectorFieldSystem", str)
+                Test.@test occursin("wraps:", str)
+            end
+        end
+
+        # ====================================================================
         # UNIT TESTS - Common Trait Predicates
         # ====================================================================
 

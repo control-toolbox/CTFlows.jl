@@ -365,8 +365,7 @@ $(TYPEDSIGNATURES)
 
 Display a compact representation of a HamiltonianVectorFieldSystem.
 
-Shows the type name, time dependence, variable dependence, mutability, state dimension, and
-the underlying Hamiltonian vector field type.
+Shows the type name, state dimension, and the wrapped HamiltonianVectorField with its traits.
 
 # Arguments
 - `io::IO`: The IO stream to write to.
@@ -376,15 +375,10 @@ See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
 """
 function Base.show(io::IO, sys::HamiltonianVectorFieldSystem{N, F, TD, VD, MD, RHS, OOPROHS, FINRHS}) where {N, F, TD, VD, MD, RHS, OOPROHS, FINRHS}
     println(io, "HamiltonianVectorFieldSystem")
-    println(io, "  time_dependence: ", nameof(TD))
-    println(io, "  variable_dependence: ", nameof(VD))
-    println(io, "  mutability: ", nameof(MD))
-    if N === nothing
-        println(io, "  n_state: unknown")
-    else
-        println(io, "  n_state: ", N)
-    end
-    print(io, "  hamiltonian_vector_field: ", typeof(sys.hvf))
+    state_dim = N === nothing ? "unknown" : string(N)
+    println(io, "  state dimension: ", state_dim)
+    wraps = "HamiltonianVectorField: $(Data._td_label(TD)), $(Data._vd_label(VD)), $(Data._md_label(MD))"
+    print(io, "  wraps: ", wraps)
 end
 
 """

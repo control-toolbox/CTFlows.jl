@@ -387,17 +387,41 @@ function test_hamiltonian_vector_field_system()
         # ====================================================================
         # UNIT TESTS - Base.show
         # ====================================================================
-        
+
         Test.@testset "Base.show" begin
             hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
-            
-            # Without dimension
-            sys1 = Systems.HamiltonianVectorFieldSystem(hvf)
-            Test.@test_nowarn sprint(show, sys1)
-            
-            # With dimension
-            sys2 = Systems.HamiltonianVectorFieldSystem(hvf, 3)
-            Test.@test_nowarn sprint(show, sys2)
+
+            Test.@testset "Without dimension" begin
+                sys1 = Systems.HamiltonianVectorFieldSystem(hvf)
+                io = IOBuffer()
+                show(io, sys1)
+                str = String(take!(io))
+                Test.@test occursin("HamiltonianVectorFieldSystem", str)
+                Test.@test occursin("state dimension: unknown", str)
+                Test.@test occursin("wraps:", str)
+                Test.@test occursin("autonomous", str)
+                Test.@test occursin("fixed (no variable)", str)
+                Test.@test occursin("out-of-place", str)
+            end
+
+            Test.@testset "With dimension" begin
+                sys2 = Systems.HamiltonianVectorFieldSystem(hvf, 3)
+                io = IOBuffer()
+                show(io, sys2)
+                str = String(take!(io))
+                Test.@test occursin("HamiltonianVectorFieldSystem", str)
+                Test.@test occursin("state dimension: 3", str)
+                Test.@test occursin("wraps:", str)
+            end
+
+            Test.@testset "text/plain MIME type" begin
+                sys = Systems.HamiltonianVectorFieldSystem(hvf)
+                io = IOBuffer()
+                show(io, MIME("text/plain"), sys)
+                str = String(take!(io))
+                Test.@test occursin("HamiltonianVectorFieldSystem", str)
+                Test.@test occursin("wraps:", str)
+            end
         end
         
         # ====================================================================
