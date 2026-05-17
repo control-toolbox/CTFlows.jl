@@ -11,6 +11,7 @@ import CTFlows.Solutions
 
 using OrdinaryDiffEqTsit5
 using Plots
+using SciMLBase: SciMLBase, ODEFunction
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -199,6 +200,47 @@ function test_concatenation_sciml()
             # Test plot function
             p = plot(sol; label="x(t)", title="Trajectory")
             Test.@test p isa Plots.Plot
+        end
+
+        # ====================================================================
+        # INTEGRATION TESTS - SciMLFunctionSystem Multi-phase
+        # ====================================================================
+
+        Test.@testset "SciMLFunctionSystem — Two-phase iip ODEFunction" begin
+            f = ODEFunction((du, u, p, t) -> du .= -u)
+            flow = Flows.Flow(f)
+            mpf = flow * (0.5, flow)
+            xf = mpf(0.0, [1.0], 1.0)
+            Test.@test xf[1] ≈ exp(-1.0) atol=1e-3
+        end
+
+        Test.@testset "SciMLFunctionSystem — Two-phase oop ODEFunction" begin
+            f = ODEFunction{false}((u, p, t) -> -u)
+            flow = Flows.Flow(f)
+            mpf = flow * (0.5, flow)
+            xf = mpf(0.0, [1.0], 1.0)
+            Test.@test xf[1] ≈ exp(-1.0) atol=1e-3
+        end
+
+        Test.@testset "SciMLFunctionSystem — Jump at switching time" begin
+            f = ODEFunction((du, u, p, t) -> du .= -u)
+            flow = Flows.Flow(f)
+            jump = 10.0
+            mpf = flow * (0.5, jump, flow)
+            x0 = [1.0]
+            xf = mpf(0.0, x0, 1.0)
+            expected = (exp(-0.5) + 10.0) * exp(-0.5)
+            Test.@test xf[1] ≈ expected atol=1e-3
+        end
+
+        Test.@testset "SciMLFunctionSystem — Trajectory merging" begin
+            f = ODEFunction((du, u, p, t) -> du .= -u)
+            flow = Flows.Flow(f)
+            mpf = flow * (0.5, flow)
+            sol = mpf((0.0, 1.0), [1.0])
+            Test.@test sol isa Solutions.VectorFieldSolution
+            xf = Integrators.final_state(sol)
+            Test.@test xf[1] ≈ exp(-1.0) atol=1e-4
         end
 
     end
