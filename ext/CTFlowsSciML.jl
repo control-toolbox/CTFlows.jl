@@ -464,7 +464,7 @@ $(TYPEDSIGNATURES)
 
 Return the final state vector from the SciML ODE solution.
 """
-Integrators.final_state(r::SciMLIntegrationResult) = r.ode_sol.u[end]
+Integrators.final_state(r::SciMLIntegrationResult) = last(r.ode_sol.u)
 
 """
 $(TYPEDSIGNATURES)
