@@ -133,13 +133,13 @@ function test_common_module()
             Test.@testset "constructs with nothing" begin
                 params = Common.ODEParameters(nothing)
                 Test.@test params isa Common.ODEParameters
-                Test.@test params.variable === nothing
+                Test.@test Common.variable(params) === nothing
             end
 
             Test.@testset "constructs with value" begin
                 params = Common.ODEParameters(0.5)
                 Test.@test params isa Common.ODEParameters
-                Test.@test params.variable == 0.5
+                Test.@test Common.variable(params) == 0.5
             end
         end
 

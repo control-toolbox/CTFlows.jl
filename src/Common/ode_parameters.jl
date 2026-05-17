@@ -33,10 +33,48 @@ params_nonfixed = ODEParameters(0.5)
 # Notes
 - This type is used exclusively by the SciML extension to wrap the variable
   before passing it to `ODEProblem`.
-- The RHS closure reads `p.variable` to access the actual variable value.
+- The RHS closure reads `variable(p)` to access the actual variable value.
 
 See also: [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.Fixed`](@ref), [`CTFlows.Common.NonFixed`](@ref).
 """
 struct ODEParameters{V}
     variable::V
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Accessor for the variable field of `ODEParameters`.
+
+Returns the variable parameter stored in the `ODEParameters` wrapper.
+For `Fixed` systems, this is `nothing`. For `NonFixed` systems, this is
+the actual variable value (scalar or vector).
+
+# Arguments
+- `p::ODEParameters`: The ODEParameters instance.
+
+# Returns
+- The variable value (or `nothing` for Fixed systems).
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> params_fixed = ODEParameters(nothing)
+ODEParameters{Nothing}(nothing)
+
+julia> variable(params_fixed)
+nothing
+
+julia> params_nonfixed = ODEParameters(0.5)
+ODEParameters{Float64}(0.5)
+
+julia> variable(params_nonfixed)
+0.5
+\`\`\`
+
+See also: [`CTFlows.Common.ODEParameters`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
+"""
+function variable(p::ODEParameters)
+    return p.variable
 end
