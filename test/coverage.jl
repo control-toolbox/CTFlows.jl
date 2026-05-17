@@ -18,8 +18,16 @@
 # - coverage/cov/: Archived .cov files
 #
 # ==============================================================================
-
 pushfirst!(LOAD_PATH, @__DIR__)
 using Coverage
 using CTBase
-CTBase.postprocess_coverage(; root_dir=dirname(@__DIR__))
+
+const WORST_N_FILES = 50
+const MAX_UNCOVERED_LINES = 500
+
+CTBase.postprocess_coverage(;
+    root_dir=dirname(@__DIR__),
+    dest_dir="coverage",
+    worst_n_files=WORST_N_FILES,
+    max_uncovered_lines=MAX_UNCOVERED_LINES,
+)

@@ -36,6 +36,24 @@ function Integrators.evaluate_at(r::FakeHamiltonianResult, t::Real)
     return r.us[idx]
 end
 
+# Implement merge for FakeHamiltonianResult to support merge tests
+function Integrators.merge(results::AbstractVector{<:FakeHamiltonianResult})
+    if isempty(results)
+        throw(Exceptions.IncorrectArgument(
+            "Cannot merge empty sequence of FakeHamiltonianResult";
+            got = "0 results",
+            expected = "at least 1 result",
+            context = "FakeHamiltonianResult merge",
+        ))
+    end
+    # Combine times and states from all results
+    all_ts = vcat([r.ts for r in results]...)
+    all_us = vcat([r.us for r in results]...)
+    # Use final_u from the last result
+    final_u = results[end].final_u
+    return FakeHamiltonianResult(final_u, all_ts, all_us)
+end
+
 function test_hamiltonian_vector_field_solution()
     Test.@testset "Hamiltonian Vector Field Solution Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
         
@@ -111,6 +129,70 @@ function test_hamiltonian_vector_field_solution()
             
             tg = Solutions.time_grid(sol)
             Test.@test tg == [0.0, 0.5, 1.0]
+        end
+        
+        # ====================================================================
+        # UNIT TESTS - Integrators.merge
+        # ====================================================================
+        
+        Test.@testset "Integrators.merge" begin
+            Test.@testset "merge single segment" begin
+                result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
+                sol = Solutions.HamiltonianVectorFieldSolution(result)
+                
+                merged = Integrators.merge([sol])
+                Test.@test merged isa Solutions.HamiltonianVectorFieldSolution
+            end
+            
+            Test.@testset "merge multiple segments" begin
+                result1 = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5]])
+                result2 = FakeHamiltonianResult([1.5, 2.5, 3.5, 4.5], [0.5, 1.0], [[2, 3, 4, 5], [2.5, 3.5, 4.5, 5.5]])
+                sol1 = Solutions.HamiltonianVectorFieldSolution(result1)
+                sol2 = Solutions.HamiltonianVectorFieldSolution(result2)
+                
+                merged = Integrators.merge([sol1, sol2])
+                Test.@test merged isa Solutions.HamiltonianVectorFieldSolution
+            end
+            
+            Test.@testset "merge throws on empty sequence" begin
+                Test.@test_throws Exceptions.IncorrectArgument Integrators.merge(Solutions.HamiltonianVectorFieldSolution[])
+            end
+        end
+        
+        # ====================================================================
+        # UNIT TESTS - Base.show
+        # ====================================================================
+        
+        Test.@testset "Base.show" begin
+            Test.@testset "text/plain format" begin
+                result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
+                sol = Solutions.HamiltonianVectorFieldSolution(result)
+                
+                io = IOBuffer()
+                show(io, MIME("text/plain"), sol)
+                output = String(take!(io))
+                Test.@test occursin("HamiltonianVectorFieldSolution", output)
+            end
+            
+            Test.@testset "compact format" begin
+                result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
+                sol = Solutions.HamiltonianVectorFieldSolution(result)
+                
+                io = IOBuffer()
+                show(io, sol)
+                output = String(take!(io))
+                Test.@test occursin("HamiltonianVectorFieldSolution", output)
+            end
+            
+            Test.@testset "show handles empty times gracefully" begin
+                result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], Float64[], Vector{Vector{Float64}}[])
+                sol = Solutions.HamiltonianVectorFieldSolution(result)
+                
+                io = IOBuffer()
+                show(io, MIME("text/plain"), sol)
+                output = String(take!(io))
+                Test.@test occursin("HamiltonianVectorFieldSolution", output)
+            end
         end
         
         # ====================================================================

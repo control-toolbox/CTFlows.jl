@@ -2,6 +2,7 @@ module TestPlotsExtension
 
 import Test
 import CTFlows: CTFlows
+import CTFlows.Integrators: Integrators
 import CTFlows.Solutions: Solutions
 
 # Get extension to access plotting functions
@@ -33,6 +34,26 @@ end
 # Make our FakePlotIntegrationResult callable so sol.(ts) works
 function (r::FakePlotIntegrationResult)(t::Real)
     return Solutions.evaluate_at(r, t)
+end
+
+"""
+Fake integration result for Hamiltonian solution testing.
+"""
+struct FakeHamiltonianPlotResult <: Solutions.AbstractIntegrationResult
+    t::Vector{Float64}
+    u::Vector{Vector{Float64}}
+end
+
+Integrators.times(r::FakeHamiltonianPlotResult) = r.t
+
+function Integrators.evaluate_at(r::FakeHamiltonianPlotResult, t::Real)
+    idx = findfirst(==(t), r.t)
+    return isnothing(idx) ? r.u[1] : r.u[idx]
+end
+
+# Make our FakeHamiltonianPlotResult callable
+function (r::FakeHamiltonianPlotResult)(t::Real)
+    return Integrators.evaluate_at(r, t)
 end
 
 # ==============================================================================
@@ -133,6 +154,98 @@ function test_plots_extension()
                 sol = Solutions.VectorFieldSolution(fake_result)
 
                 # Create a plot and plot! onto it with explicit plot object
+                p = Plots.plot([1, 2, 3])
+                Test.@test_nowarn Plots.plot!(p, sol)
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Internal Helper _ham_sol_to_arrays
+        # ====================================================================
+
+        Test.@testset "Internal Helper _ham_sol_to_arrays" begin
+            Test.@testset "scalar state and costate" begin
+                fake_result = FakeHamiltonianPlotResult(
+                    [0.0, 1.0],
+                    [
+                        [1.0, 5.0],
+                        [3.0, 7.0],
+                    ],
+                )
+                sol = Solutions.HamiltonianVectorFieldSolution(fake_result)
+
+                ts, states, costates = CTFlowsPlots._ham_sol_to_arrays(sol)
+                Test.@test ts == [0.0, 1.0]
+                Test.@test size(states) == (2, 1)
+                Test.@test size(costates) == (2, 1)
+                Test.@test states[:, 1] == [1.0, 3.0]
+                Test.@test costates[:, 1] == [5.0, 7.0]
+            end
+
+            Test.@testset "vector state and costate" begin
+                fake_result = FakeHamiltonianPlotResult(
+                    [0.0, 1.0],
+                    [
+                        [1.0, 2.0, 5.0, 6.0],
+                        [3.0, 4.0, 7.0, 8.0],
+                    ],
+                )
+                sol = Solutions.HamiltonianVectorFieldSolution(fake_result)
+
+                ts, states, costates = CTFlowsPlots._ham_sol_to_arrays(sol)
+                Test.@test ts == [0.0, 1.0]
+                Test.@test size(states) == (2, 2)
+                Test.@test size(costates) == (2, 2)
+                Test.@test states == [1.0 2.0; 3.0 4.0]
+                Test.@test costates == [5.0 6.0; 7.0 8.0]
+            end
+        end
+
+        # ====================================================================
+        # INTEGRATION TESTS - Plotting HamiltonianVectorFieldSolution
+        # ====================================================================
+
+        Test.@testset "HamiltonianVectorFieldSolution Plotting" begin
+            Test.@testset "plot accepts HamiltonianVectorFieldSolution" begin
+                fake_result = FakeHamiltonianPlotResult(
+                    [0.0, 0.5, 1.0],
+                    [
+                        [1.0, 2.0],
+                        [0.5, 1.0],
+                        [0.25, 0.5],
+                    ],
+                )
+                sol = Solutions.HamiltonianVectorFieldSolution(fake_result)
+
+                Test.@test_nowarn Plots.plot(sol, legend=false)
+            end
+
+            Test.@testset "plot! accepts HamiltonianVectorFieldSolution" begin
+                fake_result = FakeHamiltonianPlotResult(
+                    [0.0, 0.5, 1.0],
+                    [
+                        [1.0, 2.0],
+                        [0.5, 1.0],
+                        [0.25, 0.5],
+                    ],
+                )
+                sol = Solutions.HamiltonianVectorFieldSolution(fake_result)
+
+                p = Plots.plot([1, 2, 3])
+                Test.@test_nowarn Plots.plot!(p, sol)
+            end
+
+            Test.@testset "plot!(p, sol) accepts HamiltonianVectorFieldSolution" begin
+                fake_result = FakeHamiltonianPlotResult(
+                    [0.0, 0.5, 1.0],
+                    [
+                        [1.0, 2.0],
+                        [0.5, 1.0],
+                        [0.25, 0.5],
+                    ],
+                )
+                sol = Solutions.HamiltonianVectorFieldSolution(fake_result)
+
                 p = Plots.plot([1, 2, 3])
                 Test.@test_nowarn Plots.plot!(p, sol)
             end

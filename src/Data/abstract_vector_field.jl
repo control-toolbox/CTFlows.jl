@@ -51,7 +51,9 @@ Concrete `AbstractVectorField` instances have their time dependence encoded in t
 
 See also: [`CTFlows.Common.time_dependence`](@ref), [`CTFlows.Data.AbstractVectorField`](@ref).
 """
-Common.has_time_dependence_trait(::AbstractVectorField) = true
+function Common.has_time_dependence_trait(::AbstractVectorField)
+    return true
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -63,7 +65,9 @@ Concrete `AbstractVectorField` instances have their variable dependence encoded 
 
 See also: [`CTFlows.Common.variable_dependence`](@ref), [`CTFlows.Data.AbstractVectorField`](@ref).
 """
-Common.has_variable_dependence_trait(::AbstractVectorField) = true
+function Common.has_variable_dependence_trait(::AbstractVectorField)
+    return true
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -75,7 +79,9 @@ Concrete `AbstractVectorField` instances have their mutability encoded in the ty
 
 See also: [`CTFlows.Common.mutability_trait`](@ref), [`CTFlows.Data.AbstractVectorField`](@ref).
 """
-Common.has_mutability_trait(::AbstractVectorField) = true
+function Common.has_mutability_trait(::AbstractVectorField)
+    return true
+end
 
 """
 $(TYPEDSIGNATURES)

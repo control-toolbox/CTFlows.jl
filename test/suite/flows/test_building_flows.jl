@@ -123,6 +123,47 @@ function test_building_flows()
         end
 
         # ====================================================================
+        # UNIT TESTS - HamiltonianFlow constructor from HamiltonianVectorField
+        # ====================================================================
+
+        Test.@testset "HamiltonianFlow constructor from HamiltonianVectorField" begin
+            Test.@testset "default constructor" begin
+                hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+                flow = Flows.Flow(hvf)
+
+                Test.@test flow isa Flows.HamiltonianFlow
+                Test.@test flow isa Flows.AbstractFlow
+                Test.@test flow.system isa Systems.HamiltonianVectorFieldSystem
+                Test.@test flow.integrator isa Integrators.AbstractIntegrator
+            end
+
+            Test.@testset "with state_dimension" begin
+                hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+                flow = Flows.Flow(hvf; state_dimension=3)
+
+                Test.@test flow isa Flows.HamiltonianFlow
+                Test.@test flow.system isa Systems.HamiltonianVectorFieldSystem
+            end
+
+            Test.@testset "with keyword options" begin
+                hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+                flow = Flows.Flow(hvf; reltol=1e-10)
+
+                Test.@test flow isa Flows.HamiltonianFlow
+                Test.@test flow.integrator isa Integrators.AbstractIntegrator
+            end
+
+            Test.@testset "with state_dimension and keyword options" begin
+                hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+                flow = Flows.Flow(hvf; state_dimension=3, reltol=1e-10)
+
+                Test.@test flow isa Flows.HamiltonianFlow
+                Test.@test flow.system isa Systems.HamiltonianVectorFieldSystem
+                Test.@test flow.integrator isa Integrators.AbstractIntegrator
+            end
+        end
+
+        # ====================================================================
         # UNIT TESTS - Exports Verification
         # ====================================================================
 
