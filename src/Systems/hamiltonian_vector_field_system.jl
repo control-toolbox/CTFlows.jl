@@ -37,7 +37,7 @@ HamiltonianVectorFieldSystem
   time_dependence: Autonomous
   variable_dependence: Fixed
   mutability: OutOfPlace
-  n_state: 3
+  state_dimension: 3
   hamiltonian_vector_field: HamiltonianVectorField{var"#1", Autonomous, Fixed, OutOfPlace}
 
 julia> sys = HamiltonianVectorFieldSystem(hvf)  # without dimension
@@ -45,7 +45,7 @@ HamiltonianVectorFieldSystem
   time_dependence: Autonomous
   variable_dependence: Fixed
   mutability: OutOfPlace
-  n_state: unknown
+  state_dimension: unknown
   hamiltonian_vector_field: HamiltonianVectorField{var"#1", Autonomous, Fixed, OutOfPlace}
 ```
 
@@ -62,36 +62,20 @@ end
 # Constructors
 # =============================================================================
 
-# OutOfPlace, with known dimension N
-function HamiltonianVectorFieldSystem(hvf::Data.HamiltonianVectorField{F, TD, VD, OutOfPlace}, n_state::Int) where {F, TD, VD}
-    rhs              = _build_rhs(hvf, Val(n_state))
-    rhs_oop          = _build_oop_rhs(hvf, Val(n_state))
+# OutOfPlace, with optional dimension
+function HamiltonianVectorFieldSystem(hvf::Data.HamiltonianVectorField{F, TD, VD, OutOfPlace}; state_dimension::Union{Int, Nothing}=Common.__state_dimension()) where {F, TD, VD}
+    rhs              = _build_rhs(hvf, Val(state_dimension))
+    rhs_oop          = _build_oop_rhs(hvf, Val(state_dimension))
     rhs_oop_finalize = nothing
-    return HamiltonianVectorFieldSystem{n_state, F, TD, VD, OutOfPlace, typeof(rhs), typeof(rhs_oop), Nothing}(hvf, rhs, rhs_oop, rhs_oop_finalize)
+    return HamiltonianVectorFieldSystem{state_dimension, F, TD, VD, OutOfPlace, typeof(rhs), typeof(rhs_oop), Nothing}(hvf, rhs, rhs_oop, rhs_oop_finalize)
 end
 
-# InPlace, with known dimension N
-function HamiltonianVectorFieldSystem(hvf::Data.HamiltonianVectorField{F, TD, VD, InPlace}, n_state::Int) where {F, TD, VD}
-    rhs              = _build_rhs(hvf, Val(n_state))
-    rhs_oop          = _build_oop_rhs(hvf, Val(n_state))
-    rhs_oop_finalize = _build_finalize_rhs_hvf_ip(hvf, Val(n_state))
-    return HamiltonianVectorFieldSystem{n_state, F, TD, VD, InPlace, typeof(rhs), typeof(rhs_oop), typeof(rhs_oop_finalize)}(hvf, rhs, rhs_oop, rhs_oop_finalize)
-end
-
-# OutOfPlace, without dimension (N=nothing)
-function HamiltonianVectorFieldSystem(hvf::Data.HamiltonianVectorField{F, TD, VD, OutOfPlace}) where {F, TD, VD}
-    rhs              = _build_rhs(hvf, Val(nothing))
-    rhs_oop          = _build_oop_rhs(hvf, Val(nothing))
-    rhs_oop_finalize = nothing
-    return HamiltonianVectorFieldSystem{nothing, F, TD, VD, OutOfPlace, typeof(rhs), typeof(rhs_oop), Nothing}(hvf, rhs, rhs_oop, rhs_oop_finalize)
-end
-
-# InPlace, without dimension (N=nothing)
-function HamiltonianVectorFieldSystem(hvf::Data.HamiltonianVectorField{F, TD, VD, InPlace}) where {F, TD, VD}
-    rhs              = _build_rhs(hvf, Val(nothing))
-    rhs_oop          = _build_oop_rhs(hvf, Val(nothing))
-    rhs_oop_finalize = _build_finalize_rhs_hvf_ip(hvf, Val(nothing))
-    return HamiltonianVectorFieldSystem{nothing, F, TD, VD, InPlace, typeof(rhs), typeof(rhs_oop), typeof(rhs_oop_finalize)}(hvf, rhs, rhs_oop, rhs_oop_finalize)
+# InPlace, with optional dimension
+function HamiltonianVectorFieldSystem(hvf::Data.HamiltonianVectorField{F, TD, VD, InPlace}; state_dimension::Union{Int, Nothing}=Common.__state_dimension()) where {F, TD, VD}
+    rhs              = _build_rhs(hvf, Val(state_dimension))
+    rhs_oop          = _build_oop_rhs(hvf, Val(state_dimension))
+    rhs_oop_finalize = _build_finalize_rhs_hvf_ip(hvf, Val(state_dimension))
+    return HamiltonianVectorFieldSystem{state_dimension, F, TD, VD, InPlace, typeof(rhs), typeof(rhs_oop), typeof(rhs_oop_finalize)}(hvf, rhs, rhs_oop, rhs_oop_finalize)
 end
 
 # =============================================================================

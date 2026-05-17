@@ -21,7 +21,7 @@ using CTFlowsStaticArrays  # Loads this extension
 
 # Now HamiltonianFlow works efficiently with SVector
 hvf = HamiltonianVectorField((x, p) -> (p, -x); autonomous=true, variable=false)
-sys = HamiltonianVectorFieldSystem(hvf, 2)  # N=2 known
+sys = HamiltonianVectorFieldSystem(hvf; state_dimension=2)  # N=2 known
 flow = build_flow(sys, SciML())
 xf, pf = flow(0.0, SA[1.0, 0.0], SA[0.0, 1.0], π/2)
 

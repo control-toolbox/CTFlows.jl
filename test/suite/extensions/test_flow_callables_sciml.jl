@@ -28,8 +28,8 @@ const INTEG = Integrators.SciML()
 # Solution: x(t) = x0 cos(t) + p0 sin(t),  p(t) = -x0 sin(t) + p0 cos(t)
 const HVF_HARMONIC = Data.HamiltonianVectorField((x, p) -> (p, -x); is_autonomous=true, is_variable=false)
 const HSYS_NO_N = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC)           # N=nothing
-const HSYS_N1  = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC, 1)         # N=1 (scalar)
-const HSYS_N2  = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC, 2)         # N=2 (for SVector)
+const HSYS_N1  = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC; state_dimension=1)         # N=1 (scalar)
+const HSYS_N2  = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC; state_dimension=2)         # N=2 (for SVector)
 const ATOL = 1e-5
 
 # InPlace variants (same dynamics, different function signature)
@@ -38,8 +38,8 @@ const SYS_DECAY_IP = Systems.VectorFieldSystem(VF_DECAY_IP)
 
 const HVF_HARMONIC_IP = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= p; dp .= -x); is_autonomous=true, is_variable=false)
 const HSYS_IP_NO_N = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC_IP)
-const HSYS_IP_N1   = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC_IP, 1)
-const HSYS_IP_N2   = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC_IP, 2)
+const HSYS_IP_N1   = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC_IP; state_dimension=1)
+const HSYS_IP_N2   = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC_IP; state_dimension=2)
 
 # ==============================================================================
 # Test function
