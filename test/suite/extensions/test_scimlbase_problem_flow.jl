@@ -10,7 +10,6 @@ import CTFlows.Flows: Flows, AbstractFlow
 # Get extension to access SciML integrator
 using SciMLBase: SciMLBase, ODEProblem, ODEFunction
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
-const CTFlowsSciMLBase = Base.get_extension(CTFlows, :CTFlowsSciMLBase)
 const CTFlowsSciML = Base.get_extension(CTFlows, :CTFlowsSciML)
 const CTFlowsOrdinaryDiffEqTsit5 = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5)
 
@@ -33,8 +32,8 @@ function test_scimlbase_problem_flow()
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
                 prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
                 integ = Integrators.SciML()
-                flow = CTFlowsSciMLBase.SciMLProblemFlow(prob, integ)
-                Test.@test flow isa CTFlowsSciMLBase.SciMLProblemFlow
+                flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
+                Test.@test flow isa CTFlowsSciML.SciMLProblemFlow
                 Test.@test flow isa AbstractFlow
                 Test.@test flow.prob === prob
                 Test.@test flow.integrator === integ
@@ -44,8 +43,8 @@ function test_scimlbase_problem_flow()
                 f = ODEFunction{false}((u, p, t) -> -p .* u)
                 prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
                 integ = Integrators.SciML()
-                flow = CTFlowsSciMLBase.SciMLProblemFlow(prob, integ)
-                Test.@test flow isa CTFlowsSciMLBase.SciMLProblemFlow
+                flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
+                Test.@test flow isa CTFlowsSciML.SciMLProblemFlow
                 Test.@test flow isa AbstractFlow
                 Test.@test flow.prob === prob
                 Test.@test flow.integrator === integ
@@ -61,7 +60,7 @@ function test_scimlbase_problem_flow()
                 f = ODEFunction((du, u, p, t) -> du .= -u)
                 prob = ODEProblem(f, [1.0], (0.0, 1.0))
                 integ = Integrators.SciML()
-                flow = CTFlowsSciMLBase.SciMLProblemFlow(prob, integ)
+                flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
                 Test.@test Flows.system(flow) === nothing
             end
 
@@ -69,7 +68,7 @@ function test_scimlbase_problem_flow()
                 f = ODEFunction((du, u, p, t) -> du .= -u)
                 prob = ODEProblem(f, [1.0], (0.0, 1.0))
                 integ = Integrators.SciML()
-                flow = CTFlowsSciMLBase.SciMLProblemFlow(prob, integ)
+                flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
                 Test.@test Flows.integrator(flow) === integ
             end
         end
@@ -83,7 +82,7 @@ function test_scimlbase_problem_flow()
                 f = ODEFunction((du, u, p, t) -> du .= -u)
                 prob = ODEProblem(f, [1.0], (0.0, 1.0))
                 integ = Integrators.SciML()
-                flow = CTFlowsSciMLBase.SciMLProblemFlow(prob, integ)
+                flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
                 str = sprint(show, flow)
                 Test.@test occursin("SciMLProblemFlow", str)
                 Test.@test occursin("tspan", str)
@@ -93,7 +92,7 @@ function test_scimlbase_problem_flow()
                 f = ODEFunction((du, u, p, t) -> du .= -u)
                 prob = ODEProblem(f, [1.0], (0.0, 1.0))
                 integ = Integrators.SciML()
-                flow = CTFlowsSciMLBase.SciMLProblemFlow(prob, integ)
+                flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
                 str = sprint(show, MIME"text/plain"(), flow)
                 Test.@test occursin("SciMLProblemFlow", str)
                 Test.@test occursin("tspan:", str)
@@ -116,8 +115,10 @@ function test_scimlbase_problem_flow()
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
                 prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
                 integ = Integrators.SciML()
-                flow = CTFlowsSciMLBase.SciMLProblemFlow(prob, integ)
-                xf = flow(0.0, [1.0], 1.0; unsafe=false)
+                flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
+                result = flow(0.0, [1.0], 1.0; unsafe=false)
+                Test.@test result isa CTFlowsSciML.SciMLIntegrationResult
+                xf = Integrators.final_state(result)
                 Test.@test xf isa Vector
                 Test.@test length(xf) == 1
                 # Expected: exp(-2*1) * 1 = exp(-2) ≈ 0.1353
@@ -128,8 +129,10 @@ function test_scimlbase_problem_flow()
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
                 prob = ODEProblem(f, [1.0, 2.0], (0.0, 1.0), 2.0)
                 integ = Integrators.SciML()
-                flow = CTFlowsSciMLBase.SciMLProblemFlow(prob, integ)
-                xf = flow(0.0, [1.0, 2.0], 1.0; unsafe=false)
+                flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
+                result = flow(0.0, [1.0, 2.0], 1.0; unsafe=false)
+                Test.@test result isa CTFlowsSciML.SciMLIntegrationResult
+                xf = Integrators.final_state(result)
                 Test.@test xf isa Vector
                 Test.@test length(xf) == 2
             end
@@ -138,8 +141,9 @@ function test_scimlbase_problem_flow()
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
                 prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
                 integ = Integrators.SciML()
-                flow = CTFlowsSciMLBase.SciMLProblemFlow(prob, integ)
-                xf = flow(0.0, [1.0], 1.0; variable=3.0, unsafe=false)
+                flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
+                result = flow(0.0, [1.0], 1.0; variable=3.0, unsafe=false)
+                xf = Integrators.final_state(result)
                 # Expected: exp(-3*1) * 1 = exp(-3) ≈ 0.0498
                 Test.@test isapprox(xf[1], exp(-3.0), rtol=1e-6)
             end
@@ -155,10 +159,10 @@ function test_scimlbase_problem_flow()
                 f = ODEFunction((du, u, p, t) -> du .= p .* u)
                 prob = ODEProblem(f, [1.0], (0.0, 10.0), 1.0)
                 integ = Integrators.SciML()
-                flow = CTFlowsSciMLBase.SciMLProblemFlow(prob, integ)
+                flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
                 # This should not throw even if integration fails
-                xf = flow(0.0, [1.0], 10.0; unsafe=true)
-                Test.@test xf isa Vector
+                result = flow(0.0, [1.0], 10.0; unsafe=true)
+                Test.@test result isa CTFlowsSciML.SciMLIntegrationResult
             end
         end
     end

@@ -25,7 +25,6 @@ CTFlowsForwardDiff = ["ForwardDiff"]
 CTFlowsOrdinaryDiffEqTsit5 = ["OrdinaryDiffEqTsit5"]
 CTFlowsPlots = ["Plots"]
 CTFlowsSciML = ["DiffEqBase", "SciMLBase"]
-CTFlowsSciMLBase = ["SciMLBase"]
 CTFlowsStaticArrays = ["StaticArrays"]
 
 [compat]

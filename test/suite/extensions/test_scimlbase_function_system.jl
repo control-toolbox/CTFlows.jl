@@ -16,7 +16,6 @@ struct FakeTag <: Common.AbstractTag end
 using SciMLBase: SciMLBase, ODEProblem, ODEFunction
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 
-const CTFlowsSciMLBase = Base.get_extension(CTFlows, :CTFlowsSciMLBase)
 const CTFlowsSciML = Base.get_extension(CTFlows, :CTFlowsSciML)
 const CTFlowsOrdinaryDiffEqTsit5 = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5)
 
@@ -36,11 +35,11 @@ function test_scimlbase_function_system()
 
         Test.@testset "Extension Loading" begin
             Test.@testset "extension is loaded" begin
-                Test.@test !isnothing(CTFlowsSciMLBase)
+                Test.@test !isnothing(CTFlowsSciML)
             end
 
             Test.@testset "extension is a Module" begin
-                Test.@test CTFlowsSciMLBase isa Module
+                Test.@test CTFlowsSciML isa Module
             end
         end
 
@@ -51,16 +50,16 @@ function test_scimlbase_function_system()
         Test.@testset "SciMLFunctionSystem Construction" begin
             Test.@testset "in-place ODEFunction" begin
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
-                sys = CTFlowsSciMLBase.SciMLFunctionSystem(f)
-                Test.@test sys isa CTFlowsSciMLBase.SciMLFunctionSystem
+                sys = CTFlowsSciML.SciMLFunctionSystem(f)
+                Test.@test sys isa CTFlowsSciML.SciMLFunctionSystem
                 Test.@test sys isa Systems.AbstractStateSystem
                 Test.@test sys.f === f
             end
 
             Test.@testset "out-of-place ODEFunction" begin
                 f = ODEFunction{false}((u, p, t) -> -p .* u)
-                sys = CTFlowsSciMLBase.SciMLFunctionSystem(f)
-                Test.@test sys isa CTFlowsSciMLBase.SciMLFunctionSystem
+                sys = CTFlowsSciML.SciMLFunctionSystem(f)
+                Test.@test sys isa CTFlowsSciML.SciMLFunctionSystem
                 Test.@test sys isa Systems.AbstractStateSystem
                 Test.@test sys.f === f
             end
@@ -71,28 +70,52 @@ function test_scimlbase_function_system()
         # ====================================================================
 
         Test.@testset "rhs Dispatch" begin
-            Test.@testset "in-place returns function directly" begin
+            Test.@testset "in-place returns pre-computed closure" begin
                 f = ODEFunction((du, u, p, t) -> du .= -u)
-                sys = CTFlowsSciMLBase.SciMLFunctionSystem(f)
-                Test.@test Systems.rhs(sys) === f
+                sys = CTFlowsSciML.SciMLFunctionSystem(f)
+                rhs_fn = Systems.rhs(sys)
+                Test.@test rhs_fn !== f  # Not the raw function, but a wrapper
+                # Test that the wrapper works
+                du = zeros(2)
+                u = [1.0, 2.0]
+                p = Common.ODEParameters(2.0)
+                rhs_fn(du, u, p, 0.0)
+                Test.@test du ≈ [-1.0, -2.0]
             end
 
-            Test.@testset "out-of-place returns function directly" begin
+            Test.@testset "out-of-place returns pre-computed closure" begin
                 f = ODEFunction{false}((u, p, t) -> -u)
-                sys = CTFlowsSciMLBase.SciMLFunctionSystem(f)
-                Test.@test Systems.rhs_oop(sys) === f
+                sys = CTFlowsSciML.SciMLFunctionSystem(f)
+                rhs_oop_fn = Systems.rhs_oop(sys)
+                Test.@test rhs_oop_fn !== f  # Not the raw function, but a wrapper
+                # Test that the wrapper works
+                u = [1.0, 2.0]
+                p = Common.ODEParameters(2.0)
+                du = rhs_oop_fn(u, p, 0.0)
+                Test.@test du ≈ [-1.0, -2.0]
             end
 
-            Test.@testset "rhs on out-of-place throws PreconditionError" begin
+            Test.@testset "rhs on out-of-place returns iip wrapper (cross-adapter)" begin
                 f = ODEFunction{false}((u, p, t) -> -u)
-                sys = CTFlowsSciMLBase.SciMLFunctionSystem(f)
-                Test.@test_throws Exceptions.PreconditionError Systems.rhs(sys)
+                sys = CTFlowsSciML.SciMLFunctionSystem(f)
+                rhs_fn = Systems.rhs(sys)
+                # Should return a wrapper that makes the oop function iip
+                du = zeros(2)
+                u = [1.0, 2.0]
+                p = Common.ODEParameters(2.0)
+                rhs_fn(du, u, p, 0.0)
+                Test.@test du ≈ [-1.0, -2.0]
             end
 
-            Test.@testset "rhs_oop on in-place throws PreconditionError" begin
+            Test.@testset "rhs_oop on in-place returns oop wrapper (cross-adapter)" begin
                 f = ODEFunction((du, u, p, t) -> du .= -u)
-                sys = CTFlowsSciMLBase.SciMLFunctionSystem(f)
-                Test.@test_throws Exceptions.PreconditionError Systems.rhs_oop(sys)
+                sys = CTFlowsSciML.SciMLFunctionSystem(f)
+                rhs_oop_fn = Systems.rhs_oop(sys)
+                # Should return a wrapper that allocates a buffer
+                u = [1.0, 2.0]
+                p = Common.ODEParameters(2.0)
+                du = rhs_oop_fn(u, p, 0.0)
+                Test.@test du ≈ [-1.0, -2.0]
             end
         end
 
@@ -101,23 +124,25 @@ function test_scimlbase_function_system()
         # ====================================================================
 
         Test.@testset "build_problem" begin
-            Test.@testset "returns SciMLBaseODEProblem wrapper" begin
+            Test.@testset "returns raw ODEProblem (no wrapper)" begin
                 f = ODEFunction((du, u, p, t) -> du .= -u)
-                sys = CTFlowsSciMLBase.SciMLFunctionSystem(f)
+                sys = CTFlowsSciML.SciMLFunctionSystem(f)
                 integ = Integrators.SciML()
                 config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=2.0)
-                Test.@test prob isa CTFlowsSciMLBase.SciMLBaseODEProblem
-                Test.@test prob.prob.p == 2.0
+                Test.@test prob isa SciMLBase.ODEProblem
+                Test.@test prob.p isa Common.ODEParameters
+                Test.@test prob.p.variable == 2.0
             end
 
-            Test.@testset "variable passed directly as p" begin
+            Test.@testset "variable wrapped in ODEParameters" begin
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
-                sys = CTFlowsSciMLBase.SciMLFunctionSystem(f)
+                sys = CTFlowsSciML.SciMLFunctionSystem(f)
                 integ = Integrators.SciML()
                 config = Common.StatePointConfig(0.0, [1.0], 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=3.5)
-                Test.@test prob.prob.p == 3.5
+                Test.@test prob.p isa Common.ODEParameters
+                Test.@test prob.p.variable == 3.5
             end
         end
 
@@ -128,14 +153,14 @@ function test_scimlbase_function_system()
         Test.@testset "Base.show" begin
             Test.@testset "in-place display" begin
                 f = ODEFunction((du, u, p, t) -> du .= -u)
-                sys = CTFlowsSciMLBase.SciMLFunctionSystem(f)
+                sys = CTFlowsSciML.SciMLFunctionSystem(f)
                 str = sprint(show, sys)
                 Test.@test occursin("in-place", str)
             end
 
             Test.@testset "out-of-place display" begin
                 f = ODEFunction{false}((u, p, t) -> -u)
-                sys = CTFlowsSciMLBase.SciMLFunctionSystem(f)
+                sys = CTFlowsSciML.SciMLFunctionSystem(f)
                 str = sprint(show, sys)
                 Test.@test occursin("out-of-place", str)
             end

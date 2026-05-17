@@ -1,0 +1,216 @@
+# =============================================================================
+# SciMLFunctionSystem
+# =============================================================================
+
+"""
+$(TYPEDEF)
+
+Concrete `AbstractStateSystem` wrapping a `SciMLBase.AbstractODEFunction`.
+
+Unlike CTFlows-native systems (`VectorFieldSystem`), this system passes `p = variable`
+directly to the ODE — no `ODEParameters` wrapper — so users can pass arbitrary
+SciML parameter objects.
+
+The mutability trait is encoded in the `iip` type parameter of the wrapped function:
+- `AbstractODEFunction{true}` → in-place `f!(du, u, p, t)`
+- `AbstractODEFunction{false}` → out-of-place `f(u, p, t) -> du`
+
+The system pre-computes cross-adapters for both in-place and out-of-place call modes,
+similar to `VectorFieldSystem`, ensuring compatibility with the generic `build_problem`
+which dispatches based on `u0` mutability.
+
+# Type Parameters
+- `F <: SciMLBase.AbstractODEFunction`: The wrapped ODE function.
+- `RHS<:Function`: Pre-computed in-place RHS closure.
+- `OOPROHS<:Function`: Pre-computed out-of-place RHS closure.
+- `FINRHS`: Finalize closure for in-place functions with immutable `u0`, or `Nothing`.
+
+# Fields
+- `f::F`: The wrapped SciML ODE function.
+- `rhs_fn::RHS`: In-place RHS with signature `(du, u, λ, t)`.
+- `rhs_oop_fn::OOPROHS`: Out-of-place RHS with signature `(u, λ, t)`.
+- `rhs_oop_finalize_fn::FINRHS`: Out-of-place RHS for immutable `u0` (iip only), or `Nothing`.
+
+# Example
+```julia
+using SciMLBase, CTFlows
+
+f = ODEFunction((du, u, p, t) -> du .= -p .* u)
+sys = SciMLFunctionSystem(f)
+# sys.rhs_fn is pre-computed in-place closure
+# sys.rhs_oop_fn is pre-computed out-of-place closure (allocates buffer)
+```
+"""
+struct SciMLFunctionSystem{
+    F <: SciMLBase.AbstractODEFunction,
+    RHS<:Function,
+    OOPROHS<:Function,
+    FINRHS
+} <: Systems.AbstractStateSystem{Common.NonAutonomous, Common.NonFixed}
+    f::F
+    rhs_fn::RHS
+    rhs_oop_fn::OOPROHS
+    rhs_oop_finalize_fn::FINRHS
+end
+
+# =============================================================================
+# Constructors
+# =============================================================================
+
+function SciMLFunctionSystem(f::SciMLBase.AbstractODEFunction{true})
+    # In-place function: f!(du, u, p, t)
+    rhs_fn = (du, u, λ, t) -> (f(du, u, Common.variable(λ), t); nothing)
+    
+    # Out-of-place wrapper: allocates buffer
+    rhs_oop_fn = (u, λ, t) -> begin
+        dx = similar(u)
+        f(dx, u, Common.variable(λ), t)
+        return dx
+    end
+    
+    # Out-of-place finalize for immutable u0
+    rhs_oop_finalize_fn = (u, λ, t) -> begin
+        dx = similar(u)
+        f(dx, u, Common.variable(λ), t)
+        return typeof(u)(dx)
+    end
+    
+    return SciMLFunctionSystem{typeof(f), typeof(rhs_fn), typeof(rhs_oop_fn), typeof(rhs_oop_finalize_fn)}(
+        f, rhs_fn, rhs_oop_fn, rhs_oop_finalize_fn
+    )
+end
+
+function SciMLFunctionSystem(f::SciMLBase.AbstractODEFunction{false})
+    # Out-of-place function: f(u, p, t) -> du
+    rhs_fn = (du, u, λ, t) -> (du .= f(u, Common.variable(λ), t); nothing)
+    
+    # Out-of-place direct
+    rhs_oop_fn = (u, λ, t) -> f(u, Common.variable(λ), t)
+    
+    # No finalize needed for out-of-place
+    rhs_oop_finalize_fn = nothing
+    
+    return SciMLFunctionSystem{typeof(f), typeof(rhs_fn), typeof(rhs_oop_fn), Nothing}(
+        f, rhs_fn, rhs_oop_fn, rhs_oop_finalize_fn
+    )
+end
+
+# =============================================================================
+# rhs and rhs_oop methods
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+In-place right-hand side for a `SciMLFunctionSystem`.
+
+Returns the pre-computed in-place closure stored in the system, which has signature
+`(du, u, λ, t)` where `λ` is a `Common.ODEParameters` wrapper. The closure extracts
+`Common.variable(λ)` and calls the underlying SciML function.
+
+# Arguments
+- `sys::SciMLFunctionSystem`: The system for which to return the RHS function.
+
+# Returns
+- `Function`: The pre-computed closure with signature `(du, u, λ, t)`.
+
+See also: [`SciMLFunctionSystem`](@ref), [`Systems.rhs_oop`](@ref).
+"""
+Systems.rhs(sys::SciMLFunctionSystem) = sys.rhs_fn
+
+"""
+$(TYPEDSIGNATURES)
+
+Out-of-place right-hand side for a `SciMLFunctionSystem` with out-of-place function.
+
+Returns the pre-computed out-of-place closure with signature `(u, λ, t)`. The optional
+`is_mutable` argument is accepted but ignored: for out-of-place systems `rhs_oop` is
+always the correct callable regardless of u0 mutability.
+
+# Arguments
+- `sys::SciMLFunctionSystem{..., Nothing}`: The out-of-place system.
+- `::Bool`: Ignored. Accepted for API uniformity.
+
+# Returns
+- `Function`: The pre-computed closure with signature `(u, λ, t)`.
+
+See also: [`SciMLFunctionSystem`](@ref), [`Systems.rhs`](@ref).
+"""
+function Systems.rhs_oop(sys::SciMLFunctionSystem{F, RHS, OOPROHS, Nothing}, ::Bool = true) where {F, RHS, OOPROHS}
+    return sys.rhs_oop_fn
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Out-of-place right-hand side for a `SciMLFunctionSystem` with in-place function,
+dispatching on u0 mutability.
+
+For in-place SciML functions the appropriate callable depends on whether the initial
+condition `u0` is mutable:
+- **`is_mutable = true`** (default): returns `rhs_oop_fn`, which allocates a mutable
+  buffer and returns it. Correct when `u0` is a `Vector` or similar mutable array.
+- **`is_mutable = false`**: returns `rhs_oop_finalize_fn`, which allocates a mutable
+  buffer, fills it via the in-place call, then converts back to `typeof(u)`. A one-time
+  performance warning is emitted in this case.
+
+# Arguments
+- `sys::SciMLFunctionSystem{..., FINRHS}`: The in-place system.
+- `is_mutable::Bool`: `true` if u0 is mutable, `false` if immutable. Defaults to `true`.
+
+# Returns
+- `Function`: The appropriate closure with signature `(u, λ, t)`.
+
+# Notes
+- Prefer out-of-place SciML functions when u0 is immutable (e.g. `StaticArrays.SVector`)
+  for best performance.
+
+See also: [`SciMLFunctionSystem`](@ref), [`Systems.rhs`](@ref).
+"""
+function Systems.rhs_oop(sys::SciMLFunctionSystem{F, RHS, OOPROHS, FINRHS}, is_mutable::Bool = true) where {F, RHS, OOPROHS, FINRHS}
+    is_mutable && return sys.rhs_oop_fn
+    @warn "InPlace SciMLFunction with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
+    return sys.rhs_oop_finalize_fn
+end
+
+# =============================================================================
+# Base.show
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of a `SciMLFunctionSystem`.
+
+Shows the type name, the wrapped ODE function type, and its mutability trait.
+
+# Arguments
+- `io::IO`: The IO stream to write to.
+- `sys::SciMLFunctionSystem`: The system to display.
+
+See also: [`SciMLFunctionSystem`](@ref).
+"""
+function Base.show(io::IO, sys::SciMLFunctionSystem{F}) where F
+    println(io, "SciMLFunctionSystem")
+    iip = SciMLBase.isinplace(sys.f)
+    mut = iip ? "in-place" : "out-of-place"
+    print(io, "  wraps: ODEFunction: non-autonomous, variable, ", mut)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a `SciMLFunctionSystem` in the REPL with text/plain MIME type.
+
+Delegates to the compact show method.
+
+# Arguments
+- `io::IO`: The IO stream to write to.
+- `::MIME"text/plain"`: The MIME type for REPL display.
+- `sys::SciMLFunctionSystem`: The system to display.
+
+See also: [`SciMLFunctionSystem`](@ref).
+"""
+function Base.show(io::IO, ::MIME"text/plain", sys::SciMLFunctionSystem)
+    show(io, sys)
+end

@@ -10,7 +10,6 @@ import CTFlows.Flows: Flows, AbstractFlow, StateFlow, build_flow
 import SciMLBase: SciMLBase, ODEProblem, ODEFunction
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 
-const CTFlowsSciMLBase = Base.get_extension(CTFlows, :CTFlowsSciMLBase)
 const CTFlowsSciML = Base.get_extension(CTFlows, :CTFlowsSciML)
 const CTFlowsOrdinaryDiffEqTsit5 = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5)
 
@@ -34,7 +33,7 @@ function test_scimlbase_flow_constructors()
                 flow = Flows.Flow(f; reltol=1e-10)
                 Test.@test flow isa StateFlow
                 Test.@test flow isa AbstractFlow
-                Test.@test Flows.system(flow) isa CTFlowsSciMLBase.SciMLFunctionSystem
+                Test.@test Flows.system(flow) isa CTFlowsSciML.SciMLFunctionSystem
             end
 
             Test.@testset "out-of-place function returns StateFlow" begin
@@ -42,7 +41,7 @@ function test_scimlbase_flow_constructors()
                 flow = Flows.Flow(f; reltol=1e-10)
                 Test.@test flow isa StateFlow
                 Test.@test flow isa AbstractFlow
-                Test.@test Flows.system(flow) isa CTFlowsSciMLBase.SciMLFunctionSystem
+                Test.@test Flows.system(flow) isa CTFlowsSciML.SciMLFunctionSystem
             end
 
             Test.@testset "kwargs passed to integrator" begin
@@ -62,7 +61,7 @@ function test_scimlbase_flow_constructors()
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
                 prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
                 flow = Flows.Flow(prob; reltol=1e-10)
-                Test.@test flow isa CTFlowsSciMLBase.SciMLProblemFlow
+                Test.@test flow isa CTFlowsSciML.SciMLProblemFlow
                 Test.@test flow isa AbstractFlow
             end
 
@@ -109,38 +108,13 @@ function test_scimlbase_flow_constructors()
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
                 prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
                 flow = Flows.Flow(prob; reltol=1e-10)
-                xf = flow(0.0, [1.0], 1.0; variable=3.0)
+                result = flow(0.0, [1.0], 1.0; variable=3.0)
+                Test.@test result isa CTFlowsSciML.SciMLIntegrationResult
+                xf = Integrators.final_state(result)
                 Test.@test xf isa Vector
                 Test.@test length(xf) == 1
                 # Expected: exp(-3*1) * 1 = exp(-3) ≈ 0.0498
                 Test.@test isapprox(xf[1], exp(-3.0), rtol=1e-6)
-            end
-        end
-
-        # ====================================================================
-        # INTEGRATION TESTS - Coexistence with CTFlowsSciML
-        # ====================================================================
-
-        Test.@testset "Coexistence with CTFlowsSciML" begin
-            Test.@testset "both extensions can be loaded" begin
-                # Both extensions should be available when SciMLBase and DiffEqBase are loaded
-                Test.@test !isnothing(CTFlowsSciMLBase)
-                Test.@test !isnothing(CTFlowsSciML)
-            end
-
-            Test.@testset "Flow(::AbstractODEFunction) uses CTFlowsSciMLBase" begin
-                f = ODEFunction((du, u, p, t) -> du .= -u)
-                flow = Flows.Flow(f; reltol=1e-10)
-                # Should use SciMLFunctionSystem from CTFlowsSciMLBase
-                Test.@test Flows.system(flow) isa CTFlowsSciMLBase.SciMLFunctionSystem
-            end
-
-            Test.@testset "Flow(::AbstractODEProblem) uses CTFlowsSciMLBase" begin
-                f = ODEFunction((du, u, p, t) -> du .= -u)
-                prob = ODEProblem(f, [1.0], (0.0, 1.0))
-                flow = Flows.Flow(prob; reltol=1e-10)
-                # Should use SciMLProblemFlow from CTFlowsSciMLBase
-                Test.@test flow isa CTFlowsSciMLBase.SciMLProblemFlow
             end
         end
     end
