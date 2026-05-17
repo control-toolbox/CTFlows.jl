@@ -7,8 +7,10 @@ import CTFlows.Common: Common
 import CTFlows.Systems: Systems
 import CTFlows.Integrators: Integrators
 import CTFlows.Flows: Flows, AbstractFlow, StateFlow, build_flow
+import CTFlows.Solutions: Solutions
 import SciMLBase: SciMLBase, ODEProblem, ODEFunction
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
+using StaticArrays: SA, SVector
 
 const CTFlowsSciML = Base.get_extension(CTFlows, :CTFlowsSciML)
 const CTFlowsOrdinaryDiffEqTsit5 = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5)
@@ -116,6 +118,39 @@ function test_scimlbase_flow_constructors()
                 # Expected: exp(-3*1) * 1 = exp(-3) ≈ 0.0498
                 Test.@test isapprox(xf[1], exp(-3.0), rtol=1e-6)
             end
+        end
+
+        # ====================================================================
+        # INTEGRATION TESTS - Flow(::AbstractODEFunction) Trajectory + SVector
+        # ====================================================================
+
+        Test.@testset "Integration: Flow(::AbstractODEFunction) trajectory call" begin
+            Test.@testset "trajectory call returns VectorFieldSolution" begin
+                f = ODEFunction((du, u, p, t) -> du .= -p .* u)
+                flow = Flows.Flow(f; reltol=1e-10)
+                sol = flow((0.0, 1.0), [1.0]; variable=2.0)
+                Test.@test sol isa Solutions.VectorFieldSolution
+                Test.@test sol(0.5)[1] ≈ exp(-2.0 * 0.5) rtol=1e-6
+            end
+        end
+
+        Test.@testset "Integration: Flow(::AbstractODEFunction) variable=nothing" begin
+            Test.@testset "autonomous ODE" begin
+                f = ODEFunction((du, u, p, t) -> du .= -u)
+                flow = Flows.Flow(f; reltol=1e-10)
+                xf = flow(0.0, [1.0, 2.0], 1.0)
+                Test.@test xf isa Vector
+                Test.@test length(xf) == 2
+                Test.@test xf ≈ [exp(-1.0), 2.0 * exp(-1.0)] rtol=1e-6
+            end
+        end
+
+        Test.@testset "Integration: iip ODEFunction + SVector u0 (cross-adapter path)" begin
+            f = ODEFunction((du, u, p, t) -> du .= -p .* u)
+            flow = Flows.Flow(f; reltol=1e-10)
+            xf = Test.@test_logs (:warn, r"InPlace SciMLFunction") flow(0.0, SA[1.0], 1.0; variable=2.0)
+            Test.@test xf isa SVector
+            Test.@test xf[1] ≈ exp(-2.0) rtol=1e-6
         end
     end
 end

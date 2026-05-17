@@ -523,6 +523,54 @@ function test_sciml_extension()
                 Test.@test opts_point !== opts_traj
             end
         end
+
+        # ====================================================================
+        # UNIT TESTS - Integrators.merge
+        # ====================================================================
+
+        Test.@testset "Integrators.merge" begin
+            Test.@testset "merge of single segment returns same result" begin
+                sys = Systems.VectorFieldSystem(
+                    Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                )
+                config = Common.StatePointConfig(0.0, [1.0], 0.5)
+                integ = Integrators.SciML(reltol=1e-8)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
+                opts = Integrators.build_options(integ, config)
+                result = Integrators.solve_problem(integ, prob, opts)
+                merged = Integrators.merge([result])
+                Test.@test merged === result
+            end
+
+            Test.@testset "merge of two segments concatenates t and u" begin
+                sys = Systems.VectorFieldSystem(
+                    Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                )
+                integ = Integrators.SciML(reltol=1e-8)
+                
+                # First segment: [0, 0.5]
+                config1 = Common.StatePointConfig(0.0, [1.0], 0.5)
+                prob1 = Integrators.build_problem(integ, sys, config1; variable=nothing)
+                opts1 = Integrators.build_options(integ, config1)
+                result1 = Integrators.solve_problem(integ, prob1, opts1)
+                
+                # Second segment: [0.5, 1.0]
+                xf1 = Solutions.final_state(result1)
+                config2 = Common.StatePointConfig(0.5, xf1, 1.0)
+                prob2 = Integrators.build_problem(integ, sys, config2; variable=nothing)
+                opts2 = Integrators.build_options(integ, config2)
+                result2 = Integrators.solve_problem(integ, prob2, opts2)
+                
+                merged = Integrators.merge([result1, result2])
+                Test.@test length(merged.ode_sol.t) > 1
+                xf_merged = Integrators.final_state(merged)
+                Test.@test xf_merged[1] ≈ exp(-1.0) atol=1e-5
+            end
+
+            Test.@testset "merge of empty vector throws IncorrectArgument" begin
+                Test.@test_throws Exceptions.IncorrectArgument Integrators.merge(CTFlowsSciML.SciMLIntegrationResult[])
+            end
+        end
     end
 end
 

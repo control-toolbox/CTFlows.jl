@@ -102,9 +102,23 @@ function test_scimlbase_problem_flow()
 
         # ====================================================================
         # INTEGRATION TESTS - No-arg Call
-        # NOTE: No-arg call requires build_options from CTFlowsSciML.
-        # Will be tested via Flow constructors in Step 7.
         # ====================================================================
+
+        Test.@testset "Integration: No-arg Call" begin
+            Test.@testset "no-arg call uses original problem" begin
+                f = ODEFunction((du, u, p, t) -> du .= -p .* u)
+                prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
+                integ = Integrators.SciML()
+                flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
+                result = flow(; unsafe=false)
+                Test.@test result isa CTFlowsSciML.SciMLIntegrationResult
+                xf = Integrators.final_state(result)
+                Test.@test xf isa Vector
+                Test.@test length(xf) == 1
+                # Expected: exp(-2*1) * 1 = exp(-2) ≈ 0.1353
+                Test.@test isapprox(xf[1], exp(-2.0), rtol=1e-6)
+            end
+        end
 
         # ====================================================================
         # INTEGRATION TESTS - Remake Call

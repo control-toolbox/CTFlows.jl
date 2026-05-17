@@ -50,7 +50,7 @@ Flows.system(f::SciMLProblemFlow) = nothing
 Flows.integrator(f::SciMLProblemFlow) = f.integrator
 
 # No-arg call: solve problem as-is with trajectory options
-function (f::SciMLProblemFlow; unsafe = Common.__unsafe())
+function (f::SciMLProblemFlow)(; unsafe = Common.__unsafe())
     opts = Integrators.build_options(f.integrator, nothing)
     sol = SciMLBase.solve(f.prob; opts...)
     _check_retcode(sol, unsafe)
