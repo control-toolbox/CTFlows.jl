@@ -111,8 +111,8 @@ HamiltonianVectorField(f; is_autonomous, is_variable, is_inplace)
     │       ├── Dimension inférée à l'exécution
     │       └── Stocke le HamiltonianVectorField
     │
-    ├─ build_system(hvf, n_state) [avec dimension]
-    │   └─> HamiltonianSystem(hvf, n_state)  (N=n_state)
+    ├─ build_system(hvf, state_dimension) [avec dimension]
+    │   └─> HamiltonianSystem(hvf, state_dimension)  (N=state_dimension)
     │       ├── Construit rhs avec N connu (type-stable)
     │       ├── Validation compile-time de la dimension
     │       └── Stocke le HamiltonianVectorField
@@ -140,8 +140,8 @@ Flow(hvf::HamiltonianVectorField; opts...)
     = build_flow(build_system(hvf), build_integrator(; opts...))
 
 # Pour les systèmes hamiltoniens (avec dimension)
-Flow(hvf::HamiltonianVectorField, n_state::Int; opts...)
-    = build_flow(build_system(hvf, n_state), build_integrator(; opts...))
+Flow(hvf::HamiltonianVectorField, state_dimension::Int; opts...)
+    = build_flow(build_system(hvf, state_dimension), build_integrator(; opts...))
 ```
 
 ## Résumé des Transformations

@@ -338,7 +338,7 @@ end
   end
   ```
 
-**Deux constructeurs** pour chaque dimension (`n_state::Int` et `nothing`), dispatching sur `OutOfPlace`/`InPlace`.
+**Deux constructeurs** pour chaque dimension (`state_dimension::Int` et `nothing`), dispatching sur `OutOfPlace`/`InPlace`.
 
 **Deux méthodes `rhs_oop`** avec la même logique que Step 9 (dispatch sur `Common.OutOfPlace`/`Common.InPlace`, warning dans la branche InPlace + `is_u0_mutable=false`).
 

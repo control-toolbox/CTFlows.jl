@@ -164,9 +164,9 @@ function build_system(h::Data.Hamiltonian, ad::Integrators.AbstractADStrategy)
 end
 
 # Avec dimension connue
-function build_system(h::Data.Hamiltonian, n_state::Int, ad::Integrators.AbstractADStrategy)
+function build_system(h::Data.Hamiltonian, state_dimension::Int, ad::Integrators.AbstractADStrategy)
     hvf = Data.hamiltonian_vector_field(h, ad)
-    return HamiltonianSystem(hvf, n_state)
+    return HamiltonianSystem(hvf, state_dimension)
 end
 ```
 
@@ -298,9 +298,9 @@ function Flow(h::Data.Hamiltonian; ad=nothing, opts...)
     return build_flow(system, integrator)
 end
 
-function Flow(h::Data.Hamiltonian, n_state::Int; ad=nothing, opts...)
+function Flow(h::Data.Hamiltonian, state_dimension::Int; ad=nothing, opts...)
     ad_strategy  = Integrators.build_ad_strategy(; backend=ad)
-    system       = Systems.build_system(h, n_state, ad_strategy)
+    system       = Systems.build_system(h, state_dimension, ad_strategy)
     integrator   = Integrators.build_integrator(; opts...)
     return build_flow(system, integrator)
 end

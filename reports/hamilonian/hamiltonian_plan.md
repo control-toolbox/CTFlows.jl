@@ -290,7 +290,7 @@ end
 ```
 
 Accessors `rhs`, `rhs_oop`, `rhs_augmented`, `state_dimension` follow the same pattern
-as `HamiltonianVectorFieldSystem`. Constructors with and without known `n_state`.
+as `HamiltonianVectorFieldSystem`. Constructors with and without known `state_dimension`.
 
 ### Step 15 — `src/Systems/building.jl` (modified)
 
@@ -301,8 +301,8 @@ function build_system(h::Data.AbstractHamiltonian, backend::Differentiation.Abst
     return HamiltonianSystem(h, backend)
 end
 
-function build_system(h::Data.AbstractHamiltonian, n_state::Int, backend::Differentiation.AbstractADBackend)
-    return HamiltonianSystem(h, backend, n_state)
+function build_system(h::Data.AbstractHamiltonian, state_dimension::Int, backend::Differentiation.AbstractADBackend)
+    return HamiltonianSystem(h, backend, state_dimension)
 end
 ```
 
@@ -312,7 +312,7 @@ Add `include("hamiltonian_system.jl")`. Export `HamiltonianSystem`.
 
 ### Step 17 — Test Checkpoint: `HamiltonianSystem`
 
-- `@testset "Unit: Construction with/without n_state"`
+- `@testset "Unit: Construction with/without state_dimension"`
 - `@testset "Unit: ad_trait returns WithAD"`
 - `@testset "Unit: rhs_augmented is Nothing for Fixed"`
 - `@testset "Unit: rhs_augmented is a Function for NonFixed"`
@@ -554,9 +554,9 @@ function Flow(h::Data.AbstractHamiltonian; ad_backend=nothing, opts...)
     return build_flow(sys, integ)
 end
 
-function Flow(h::Data.AbstractHamiltonian, n_state::Int; ad_backend=nothing, opts...)
+function Flow(h::Data.AbstractHamiltonian, state_dimension::Int; ad_backend=nothing, opts...)
     backend = _resolve_ad_backend(ad_backend)
-    sys     = Systems.build_system(h, n_state, backend)
+    sys     = Systems.build_system(h, state_dimension, backend)
     integ   = Integrators.build_integrator(; opts...)
     return build_flow(sys, integ)
 end

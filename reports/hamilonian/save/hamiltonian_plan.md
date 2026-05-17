@@ -282,7 +282,7 @@ end
 
 Accessors `rhs`, `rhs_oop`, `rhs_augmented`, `state_dimension` follow the same pattern as `HamiltonianSystem`.
 
-Constructors: with and without known dimension `n_state`.
+Constructors: with and without known dimension `state_dimension`.
 
 ### Step 15 — `src/Systems/building.jl` (modified)
 
@@ -293,8 +293,8 @@ function build_system(h::Data.AbstractHamiltonian, backend::Differentiation.Abst
     return ScalarHamiltonianSystem(h, backend)
 end
 
-function build_system(h::Data.AbstractHamiltonian, n_state::Int, backend::Differentiation.AbstractADBackend)
-    return ScalarHamiltonianSystem(h, backend, n_state)
+function build_system(h::Data.AbstractHamiltonian, state_dimension::Int, backend::Differentiation.AbstractADBackend)
+    return ScalarHamiltonianSystem(h, backend, state_dimension)
 end
 ```
 
@@ -304,7 +304,7 @@ Add `include("scalar_hamiltonian_system.jl")`.
 
 ### Step 17 — Test Checkpoint: `ScalarHamiltonianSystem`
 
-- `@testset "Unit: Construction with/without n_state"`
+- `@testset "Unit: Construction with/without state_dimension"`
 - `@testset "Unit: ad_trait returns WithAD"`
 - `@testset "Unit: rhs_augmented is Nothing for Fixed"`
 - `@testset "Unit: rhs_augmented is a Function for NonFixed"`
@@ -556,9 +556,9 @@ function Flow(h::Data.AbstractHamiltonian; ad_backend=nothing, opts...)
     return build_flow(system, integ)
 end
 
-function Flow(h::Data.AbstractHamiltonian, n_state::Int; ad_backend=nothing, opts...)
+function Flow(h::Data.AbstractHamiltonian, state_dimension::Int; ad_backend=nothing, opts...)
     backend = _resolve_ad_backend(ad_backend)
-    system  = Systems.build_system(h, n_state, backend)
+    system  = Systems.build_system(h, state_dimension, backend)
     integ   = Integrators.build_integrator(; opts...)
     return build_flow(system, integ)
 end

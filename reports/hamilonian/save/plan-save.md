@@ -18,7 +18,7 @@ This plan adds a `Hamiltonian` type that wraps a scalar Hamiltonian function `H(
 - `gradient_hamiltonian(backend, h, t, x, p, v)` - computes (∂H/∂p, -∂H/∂x) using DifferentiationInterface backends
 - `gradient_hamiltonian_variable(backend, h, t, x, p, v)` - computes -∂H/∂v for augmented integration
 - `build_system(h::Hamiltonian, backend)` - builds HamiltonianSystem from Hamiltonian
-- `build_system(h::Hamiltonian, n_state::Int, backend)` - builds with known dimension
+- `build_system(h::Hamiltonian, state_dimension::Int, backend)` - builds with known dimension
 - `Flow(h::Hamiltonian; backend=AutoForwardDiff(), ...)` - high-level constructor for Hamiltonian flows
 - `build_augmented_solution(result, sys, config)` - extracts (xf, pf, pvf) from augmented integration
 
@@ -332,9 +332,9 @@ grep -E "Error|Fail|Test Summary" /tmp/phase4.log
   - Call `build_hamiltonian_vector_field(h, ad)` to get HamiltonianVectorField
   - Call `HamiltonianSystem(hvf)` with `cache=nothing`
   - Return HamiltonianSystem
-- Add `function build_system(h::Data.Hamiltonian, n_state::Int, ad::Differentiation.AbstractADBackend)`
+- Add `function build_system(h::Data.Hamiltonian, state_dimension::Int, ad::Differentiation.AbstractADBackend)`
   - Call `build_hamiltonian_vector_field(h, ad)` to get HamiltonianVectorField
-  - Call `HamiltonianSystem(hvf, n_state)` with `cache=nothing`
+  - Call `HamiltonianSystem(hvf, state_dimension)` with `cache=nothing`
   - Return HamiltonianSystem
 
 > ⛔ Do NOT write docstrings in this step. Leave TODO comments only.
@@ -345,7 +345,7 @@ grep -E "Error|Fail|Test Summary" /tmp/phase4.log
 
 - Create `test/suite/systems/test_hamiltonian_to_system.jl`
 - Test sections:
-  - `@testset "Unit: build_system from Hamiltonian"` - with and without n_state
+  - `@testset "Unit: build_system from Hamiltonian"` - with and without state_dimension
   - `@testset "Integration: H -> Hv -> System"` - end-to-end with simple Hamiltonian
   - `@testset "Integration: H -> System -> RHS"` - verify RHS works without cache
 
@@ -565,7 +565,7 @@ grep -E "Error|Fail|Test Summary" /tmp/phase8.log
   - Return `build_flow(system, integrator, ad_backend)` (pass ad_backend to flow)
   - Note: If ad_backend is not provided, uses default DifferentiationInterface() which resolves to AutoForwardDiff() via CTFlowsForwardDiff extension
   - Note: This is user-friendly API that hides strategy construction details, analogous to `Flow(data::Data.VectorField; opts...)`
-- Implement overload with `n_state::Int` parameter
+- Implement overload with `state_dimension::Int` parameter
 - Modify `build_flow` to accept optional `ad_backend` argument
 
 > ⛔ Do NOT write docstrings in this step. Leave TODO comments only.
