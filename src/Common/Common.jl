@@ -50,7 +50,7 @@ export ODEParameters
 export has_time_dependence_trait, has_variable_dependence_trait, has_mutability_trait
 export time_dependence, variable_dependence, mutability_trait
 export is_inplace, is_outofplace
-export __is_autonomous, __is_variable, __variable, __unsafe, __is_inplace
+export __is_autonomous, __is_variable, __variable, __unsafe, __is_inplace, __state_dimension
 export deepvalue, real_norm
 
 end # module Common

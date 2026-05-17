@@ -27,7 +27,7 @@ function test_hamiltonian_vector_field_system()
             Test.@test Systems.state_dimension(sys1) === nothing
             
             # From HamiltonianVectorField with dimension
-            sys2 = Systems.HamiltonianVectorFieldSystem(hvf, 3)
+            sys2 = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=3)
             Test.@test sys2 isa Systems.HamiltonianVectorFieldSystem
             Test.@test Systems.state_dimension(sys2) == 3
         end
@@ -45,7 +45,7 @@ function test_hamiltonian_vector_field_system()
             Test.@test Systems.state_dimension(sys1) === nothing
             
             # With dimension
-            sys2 = Systems.build_system(hvf, 3)
+            sys2 = Systems.build_system(hvf; state_dimension=3)
             Test.@test sys2 isa Systems.HamiltonianVectorFieldSystem
             Test.@test Systems.state_dimension(sys2) == 3
         end
@@ -167,7 +167,7 @@ function test_hamiltonian_vector_field_system()
             Test.@test dp_c == SA[-5.0-6.0im, -7.0-8.0im]
 
             # Call rhs_oop with SVector and N=2 (type-stable with extension)
-            sys = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+            sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
             rhs_oop = Systems.rhs_oop(sys)
             u = SA[1.0, 2.0, 3.0, 4.0]
             p_param = Common.ODEParameters(nothing)
@@ -274,7 +274,7 @@ function test_hamiltonian_vector_field_system()
             hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
 
             # With N known
-            sys1 = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+            sys1 = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
             Test.@test sys1.rhs_oop isa Function
             Test.@test Systems.rhs_oop(sys1) === sys1.rhs_oop
 
@@ -291,19 +291,19 @@ function test_hamiltonian_vector_field_system()
         Test.@testset "InPlace HamiltonianVectorField" begin
             Test.@testset "OOP: rhs_oop_finalize is Nothing" begin
                 hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
-                sys = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
                 Test.@test sys.rhs_oop_finalize === nothing
             end
 
             Test.@testset "IP: rhs_oop_finalize is Function" begin
                 hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
-                sys = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
                 Test.@test sys.rhs_oop_finalize isa Function
             end
 
             Test.@testset "IP: rhs fills du via views (no _ham_assign! needed)" begin
                 hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
-                sys = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
                 u   = [1.0, 2.0, 3.0, 4.0]
                 du  = zeros(4)
                 p   = Common.ODEParameters(nothing)
@@ -314,20 +314,20 @@ function test_hamiltonian_vector_field_system()
 
             Test.@testset "IP: rhs_oop(sys, true) === sys.rhs_oop" begin
                 hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
-                sys = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
                 Test.@test Systems.rhs_oop(sys, true) === sys.rhs_oop
             end
 
             Test.@testset "IP: rhs_oop(sys, false) === sys.rhs_oop_finalize and warns" begin
                 hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
-                sys = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
                 f   = Test.@test_logs (:warn, r"InPlace HamiltonianVectorField") Systems.rhs_oop(sys, false)
                 Test.@test f === sys.rhs_oop_finalize
             end
 
             Test.@testset "IP: rhs_oop(sys, true) returns mutable Vector" begin
                 hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
-                sys = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
                 f   = Systems.rhs_oop(sys, true)
                 u   = [1.0, 2.0, 3.0, 4.0]
                 p   = Common.ODEParameters(nothing)
@@ -339,7 +339,7 @@ function test_hamiltonian_vector_field_system()
 
             Test.@testset "IP: rhs_oop_finalize returns SVector for SVector u" begin
                 hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
-                sys = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
                 f   = sys.rhs_oop_finalize
                 u   = SA[1.0, 2.0, 3.0, 4.0]
                 p   = Common.ODEParameters(nothing)
@@ -350,7 +350,7 @@ function test_hamiltonian_vector_field_system()
 
             Test.@testset "OOP: rhs_oop(sys, false) still returns sys.rhs_oop" begin
                 hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
-                sys = Systems.HamiltonianVectorFieldSystem(hvf, 2)
+                sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
                 Test.@test Systems.rhs_oop(sys, true)  === sys.rhs_oop
                 Test.@test Systems.rhs_oop(sys, false) === sys.rhs_oop
             end
@@ -364,7 +364,7 @@ function test_hamiltonian_vector_field_system()
             hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
 
             # System with known dimension
-            sys = Systems.HamiltonianVectorFieldSystem(hvf, 3)
+            sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=3)
 
             # Correct dimension (vector)
             Test.@test Systems._check_state_dimension(sys, [1.0, 2.0, 3.0]) == true
@@ -405,7 +405,7 @@ function test_hamiltonian_vector_field_system()
             end
 
             Test.@testset "With dimension" begin
-                sys2 = Systems.HamiltonianVectorFieldSystem(hvf, 3)
+                sys2 = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=3)
                 io = IOBuffer()
                 show(io, sys2)
                 str = String(take!(io))
@@ -431,7 +431,7 @@ function test_hamiltonian_vector_field_system()
         Test.@testset "Type parameter N" begin
             hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
             
-            sys_with_n = Systems.HamiltonianVectorFieldSystem(hvf, 3)
+            sys_with_n = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=3)
             Test.@test Systems.state_dimension(sys_with_n) == 3
             
             sys_without_n = Systems.HamiltonianVectorFieldSystem(hvf)
