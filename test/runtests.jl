@@ -27,6 +27,7 @@ module TestOptions
 const VERBOSE = true
 const SHOWTIMING = true
 end
+
 using .TestOptions: VERBOSE, SHOWTIMING
 
 # Run tests using the TestRunner extension
@@ -40,3 +41,21 @@ CTBase.run_tests(;
     showtiming=SHOWTIMING,
     test_dir=@__DIR__,
 )
+
+# If running with coverage enabled, remind the user to run the post-processing script
+# because .cov files are flushed at process exit and cannot be cleaned up by this script.
+if Base.JLOptions().code_coverage != 0
+    println(
+        """
+
+================================================================================
+[CTFlows] Coverage files generated.
+
+To process them, move them to the coverage/ directory, and generate a report,
+please run:
+
+    julia --project=@. -e 'using Pkg; Pkg.test("CTFlows"; coverage=true); include("test/coverage.jl")'
+================================================================================
+""",
+    )
+end
