@@ -204,7 +204,7 @@ function test_sciml_extension()
 
                 Test.@test prob isa SciMLBase.AbstractODEProblem
                 Test.@test prob.p isa Common.ODEParameters
-                Test.@test prob.p.variable === nothing
+                Test.@test Common.variable(prob.p) === nothing
             end
             
             Test.@testset "builds ODEProblem with variable parameter" begin
@@ -221,7 +221,7 @@ function test_sciml_extension()
 
                 Test.@test prob isa SciMLBase.AbstractODEProblem
                 Test.@test prob.p isa Common.ODEParameters
-                Test.@test prob.p.variable == 0.5
+                Test.@test Common.variable(prob.p) == 0.5
             end
         end
 

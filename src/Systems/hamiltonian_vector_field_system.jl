@@ -147,7 +147,7 @@ end
 function _build_rhs(hvf::Data.HamiltonianVectorField{F, TD, VD, OutOfPlace}, ::Val{N}) where {F, TD, VD, N}
     return function (du, u, λ, t)
         x, p = _ham_split(u, N)
-        dx, dp = hvf(t, x, p, λ.variable)
+        dx, dp = hvf(t, x, p, variable(λ))
         _ham_assign!(du, dx, dp, N)
         return nothing
     end
@@ -157,7 +157,7 @@ function _build_rhs(hvf::Data.HamiltonianVectorField{F, TD, VD, InPlace}, ::Val{
     return function (du, u, λ, t)
         x, p   = _ham_split(u,  N)
         dx, dp = _ham_split(du, N)  # mutable views into du — hvf writes directly into du, no _ham_assign! needed
-        hvf(dx, dp, t, x, p, λ.variable)
+        hvf(dx, dp, t, x, p, variable(λ))
         return nothing
     end
 end
@@ -169,7 +169,7 @@ end
 function _build_oop_rhs(hvf::Data.HamiltonianVectorField{F, TD, VD, OutOfPlace}, ::Val{N}) where {F, TD, VD, N}
     return function (u, λ, t)
         x, p = _ham_split(u, N)
-        dx, dp = hvf(t, x, p, λ.variable)
+        dx, dp = hvf(t, x, p, variable(λ))
         return vcat(dx, dp)
     end
 end
@@ -178,7 +178,7 @@ function _build_oop_rhs(hvf::Data.HamiltonianVectorField{F, TD, VD, InPlace}, ::
     return function (u, λ, t)
         x, p   = _ham_split(u, N)
         dx, dp = similar(x), similar(p)
-        hvf(dx, dp, t, x, p, λ.variable)
+        hvf(dx, dp, t, x, p, variable(λ))
         return vcat(dx, dp)
     end
 end
@@ -191,7 +191,7 @@ function _build_finalize_rhs_hvf_ip(hvf::Data.HamiltonianVectorField{F, TD, VD, 
     return function (u, λ, t)
         x, p   = _ham_split(u, N)
         dx, dp = similar(x), similar(p)
-        hvf(dx, dp, t, x, p, λ.variable)
+        hvf(dx, dp, t, x, p, variable(λ))
         return typeof(u)(vcat(dx, dp))
     end
 end

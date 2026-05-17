@@ -63,21 +63,21 @@ end
 # =============================================================================
 
 function _build_rhs_vf_oop(vf::Data.VectorField{F, TD, VD, OutOfPlace}) where {F, TD, VD}
-    return (du, u, λ, t) -> (du .= vf(t, u, λ.variable); nothing)
+    return (du, u, λ, t) -> (du .= vf(t, u, variable(λ)); nothing)
 end
 
 function _build_rhs_vf_ip(vf::Data.VectorField{F, TD, VD, InPlace}) where {F, TD, VD}
-    return (du, u, λ, t) -> (vf(du, t, u, λ.variable); nothing)
+    return (du, u, λ, t) -> (vf(du, t, u, variable(λ)); nothing)
 end
 
 function _build_oop_rhs_vf_oop(vf::Data.VectorField{F, TD, VD, OutOfPlace}) where {F, TD, VD}
-    return (u, λ, t) -> vf(t, u, λ.variable)
+    return (u, λ, t) -> vf(t, u, variable(λ))
 end
 
 function _build_oop_rhs_vf_ip(vf::Data.VectorField{F, TD, VD, InPlace}) where {F, TD, VD}
     return function (u, λ, t)
         dx = similar(u)
-        vf(dx, t, u, λ.variable)
+        vf(dx, t, u, variable(λ))
         return dx
     end
 end
@@ -85,7 +85,7 @@ end
 function _build_finalize_rhs_vf_ip(vf::Data.VectorField{F, TD, VD, InPlace}) where {F, TD, VD}
     return function (u, λ, t)
         dx = similar(u)
-        vf(dx, t, u, λ.variable)
+        vf(dx, t, u, variable(λ))
         return typeof(u)(dx)
     end
 end
@@ -123,7 +123,7 @@ rhs(du, u, p, 0.0)
 # Notes
 - The closure is computed once at construction time for performance.
 - Multiple calls to `rhs` return the same function object.
-- The closure reads `p.variable` to access the actual variable value.
+- The closure reads `variable(p)` to access the actual variable value.
 
 See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
 """

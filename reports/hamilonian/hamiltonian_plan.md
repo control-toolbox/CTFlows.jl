@@ -82,6 +82,14 @@ end
 
 Add a convenience constructor `ODEParameters(variable) = ODEParameters(variable, nothing)` to keep all existing call sites unchanged.
 
+Add a getter for the cache:
+
+```julia
+function cache(p::ODEParameters)
+    return p.cache
+end
+```
+
 ### Step 3 — Test Checkpoint: Common traits and ODEParameters
 
 - `@testset "Unit: WithAD / WithoutAD construction"` — subtypes of `AbstractADTrait`
@@ -241,7 +249,7 @@ Update `HamiltonianVectorFieldSystem` parent type to `AbstractHamiltonianSystem{
 ### Step 14 — `src/Systems/hamiltonian_system.jl` (new file)
 
 `HamiltonianSystem` is the new type built from a scalar `Hamiltonian` and an AD backend.
-It carries `WithAD` and pre-builds RHS closures that read `λ.cache` at each ODE step.
+It carries `WithAD` and pre-builds RHS closures that read `cache(λ)` at each ODE step.
 
 ```julia
 struct HamiltonianSystem{
@@ -262,13 +270,13 @@ struct HamiltonianSystem{
 end
 ```
 
-**RHS construction** — captures `h` and `backend`; reads `λ.cache` at each step:
+**RHS construction** — captures `h` and `backend`; reads `cache(λ)` at each step:
 
 ```julia
 function _build_rhs(h, backend, ::Val{N}) where N
     return function (du, u, λ, t)
         x, p   = _ham_split(u, N)
-        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, x, p, λ.variable, λ.cache)
+        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, x, p, variable(λ), cache(λ))
         _ham_assign!(du, ∂p, -∂x, N)   # ẋ = ∂H/∂p,  ṗ = -∂H/∂x
         return nothing
     end
@@ -281,8 +289,8 @@ end
 function _build_rhs_augmented(h, backend, ::Val{N}) where N
     return function (du, u, λ, t)
         x, p, pv = _aug_split(u, N)
-        ∂x, ∂p  = Differentiation.hamiltonian_gradient(backend, h, t, x, p, λ.variable, λ.cache)
-        ∂v       = Differentiation.variable_gradient(backend, h, t, x, p, λ.variable, λ.cache)
+        ∂x, ∂p  = Differentiation.hamiltonian_gradient(backend, h, t, x, p, variable(λ), cache(λ))
+        ∂v       = Differentiation.variable_gradient(backend, h, t, x, p, variable(λ), cache(λ))
         _aug_assign!(du, ∂p, -∂x, -∂v, N)   # ṗv = -∂H/∂v
         return nothing
     end

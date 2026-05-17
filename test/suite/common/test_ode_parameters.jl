@@ -21,17 +21,38 @@ function test_ode_parameters()
 
             Test.@testset "accepts nothing for Fixed systems" begin
                 params = Common.ODEParameters(nothing)
-                Test.@test params.variable === nothing
+                Test.@test Common.variable(params) === nothing
             end
 
             Test.@testset "accepts value for NonFixed systems" begin
                 params = Common.ODEParameters(0.5)
-                Test.@test params.variable == 0.5
+                Test.@test Common.variable(params) == 0.5
             end
 
             Test.@testset "accepts vector for NonFixed systems" begin
                 params = Common.ODEParameters([1.0, 2.0])
-                Test.@test params.variable == [1.0, 2.0]
+                Test.@test Common.variable(params) == [1.0, 2.0]
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Accessor function
+        # ====================================================================
+
+        Test.@testset "Accessor function" begin
+            Test.@testset "variable accessor returns nothing" begin
+                params = Common.ODEParameters(nothing)
+                Test.@test Common.variable(params) === nothing
+            end
+
+            Test.@testset "variable accessor returns value" begin
+                params = Common.ODEParameters(0.5)
+                Test.@test Common.variable(params) == 0.5
+            end
+
+            Test.@testset "variable accessor returns vector" begin
+                params = Common.ODEParameters([1.0, 2.0])
+                Test.@test Common.variable(params) == [1.0, 2.0]
             end
         end
 
