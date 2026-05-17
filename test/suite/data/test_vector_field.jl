@@ -13,6 +13,9 @@ _multi_method_f(x::Int) = -x
 _multi_method_f(x::Float64) = -x
 _multi_method_f(x::AbstractVector) = -x
 
+# TOP-LEVEL: Fake function with invalid arity for testing error branches
+_bad_arity_f(x, y, z) = x + y + z
+
 # ==============================================================================
 # Test function
 # ==============================================================================
@@ -230,8 +233,113 @@ function test_vector_field()
         end
 
         # ====================================================================
-        # UNIT TESTS - Common Trait Predicates
+        # UNIT TESTS - InPlace Call Signatures
         # ====================================================================
+
+        Test.@testset "InPlace Call Signatures" begin
+            Test.@testset "Autonomous Fixed - (dx, x)" begin
+                f(dx, x) = dx .= -x
+                vf = Data.VectorField(f; is_autonomous=true, is_variable=false, is_inplace=true)
+                
+                Test.@testset "scalar" begin
+                    dx = [0.0]
+                    x = 3.0
+                    vf(dx, x)
+                    Test.@test dx[1] == -3.0
+                end
+                
+                Test.@testset "vector" begin
+                    dx = [0.0, 0.0]
+                    x = [1.0, 2.0]
+                    vf(dx, x)
+                    Test.@test dx == [-1.0, -2.0]
+                end
+            end
+
+            Test.@testset "NonAutonomous Fixed - (dx, t, x)" begin
+                f(dx, t, x) = dx .= t .* x
+                vf = Data.VectorField(f; is_autonomous=false, is_variable=false, is_inplace=true)
+                
+                Test.@testset "scalar" begin
+                    dx = [0.0]
+                    vf(dx, 2.0, 3.0)
+                    Test.@test dx[1] == 6.0
+                end
+                
+                Test.@testset "vector" begin
+                    dx = [0.0, 0.0]
+                    vf(dx, 2.0, [1.0, 2.0])
+                    Test.@test dx == [2.0, 4.0]
+                end
+            end
+
+            Test.@testset "Autonomous NonFixed - (dx, x, v)" begin
+                f(dx, x, v) = dx .= x .+ v
+                vf = Data.VectorField(f; is_autonomous=true, is_variable=true, is_inplace=true)
+                
+                Test.@testset "scalar" begin
+                    dx = [0.0]
+                    vf(dx, 3.0, 0.5)
+                    Test.@test dx[1] == 3.5
+                end
+                
+                Test.@testset "vector" begin
+                    dx = [0.0, 0.0]
+                    vf(dx, [1.0, 2.0], 0.5)
+                    Test.@test dx == [1.5, 2.5]
+                end
+            end
+
+            Test.@testset "NonAutonomous NonFixed - (dx, t, x, v)" begin
+                f(dx, t, x, v) = dx .= t .* x .+ v
+                vf = Data.VectorField(f; is_autonomous=false, is_variable=true, is_inplace=true)
+                
+                Test.@testset "scalar" begin
+                    dx = [0.0]
+                    vf(dx, 2.0, 3.0, 0.5)
+                    Test.@test dx[1] == 6.5
+                end
+                
+                Test.@testset "vector" begin
+                    dx = [0.0, 0.0]
+                    vf(dx, 2.0, [1.0, 2.0], 0.5)
+                    Test.@test dx == [2.5, 4.5]
+                end
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Uniform InPlace Call Signature
+        # ====================================================================
+
+        Test.@testset "Uniform InPlace Signature" begin
+            Test.@testset "Autonomous Fixed InPlace uniform" begin
+                f(dx, x) = dx .= -x
+                vf = Data.VectorField(f; is_autonomous=true, is_variable=false, is_inplace=true)
+                
+                dx = [0.0, 0.0]
+                vf(dx, 0.0, [1.0, 2.0], 0.0)
+                Test.@test dx == [-1.0, -2.0]
+            end
+
+            Test.@testset "NonAutonomous Fixed InPlace uniform" begin
+                f(dx, t, x) = dx .= t .* x
+                vf = Data.VectorField(f; is_autonomous=false, is_variable=false, is_inplace=true)
+                
+                dx = [0.0, 0.0]
+                vf(dx, 2.0, [1.0, 2.0], 0.0)
+                Test.@test dx == [2.0, 4.0]
+            end
+
+            Test.@testset "Autonomous NonFixed InPlace uniform" begin
+                f(dx, x, v) = dx .= x .+ v
+                vf = Data.VectorField(f; is_autonomous=true, is_variable=true, is_inplace=true)
+                
+                dx = [0.0, 0.0]
+                vf(dx, 0.0, [1.0, 2.0], 0.5)
+                Test.@test dx == [1.5, 2.5]
+            end
+        end
 
         Test.@testset "Common Trait Predicates" begin
             vf_aut = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
@@ -336,6 +444,31 @@ function test_vector_field()
             Test.@testset "No error when is_inplace is explicitly specified" begin
                 vf = Data.VectorField(_multi_method_f; is_inplace=false)
                 Test.@test Common.mutability_trait(vf) === Common.OutOfPlace
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Internal Helpers
+        # ====================================================================
+
+        Test.@testset "Internal Helpers" begin
+            Test.@testset "_oop_arity_vf" begin
+                Test.@test Data._oop_arity_vf(Common.Autonomous, Common.Fixed) == 1
+                Test.@test Data._oop_arity_vf(Common.NonAutonomous, Common.Fixed) == 2
+                Test.@test Data._oop_arity_vf(Common.Autonomous, Common.NonFixed) == 2
+                Test.@test Data._oop_arity_vf(Common.NonAutonomous, Common.NonFixed) == 3
+            end
+
+            Test.@testset "_natural_sig_vf helpers" begin
+                Test.@test Data._natural_sig_vf(Common.Autonomous, Common.Fixed, Common.OutOfPlace) == "f(x)"
+                Test.@test Data._natural_sig_vf(Common.NonAutonomous, Common.Fixed, Common.OutOfPlace) == "f(t, x)"
+                Test.@test Data._natural_sig_vf(Common.Autonomous, Common.Fixed, Common.InPlace) == "f(dx, x)"
+                Test.@test Data._uniform_sig_vf(Common.OutOfPlace) == "f(t, x, v)"
+                Test.@test Data._uniform_sig_vf(Common.InPlace) == "f(dx, t, x, v)"
+            end
+
+            Test.@testset "_detect_mutability_vf invalid arity" begin
+                Test.@test_throws Exceptions.IncorrectArgument Data._detect_mutability_vf(_bad_arity_f, Common.Autonomous, Common.Fixed)
             end
         end
     end

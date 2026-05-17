@@ -185,6 +185,17 @@ function test_abstract_system()
                 end
             end
 
+            Test.@testset "rhs_oop with explicit Bool throws NotImplemented" begin
+                try
+                    Systems.rhs_oop(sys, false)
+                    Test.@test false  # Should not reach here
+                catch err
+                    Test.@test err isa Exceptions.NotImplemented
+                    Test.@test occursin("rhs_oop", err.msg)
+                    Test.@test occursin("AbstractSystem", err.context)
+                end
+            end
+
             Test.@testset "NotImplemented error contains required fields" begin
                 try
                     Systems.rhs(sys)

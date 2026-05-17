@@ -23,8 +23,12 @@ Return a user-friendly label for time dependence traits.
 
 See also: [`_vd_label`](@ref), [`_md_label`](@ref).
 """
-_td_label(::Type{Common.Autonomous}) = "autonomous"
-_td_label(::Type{Common.NonAutonomous}) = "non-autonomous"
+function _td_label(::Type{Common.Autonomous})
+    return "autonomous"
+end
+function _td_label(::Type{Common.NonAutonomous})
+    return "non-autonomous"
+end
 
 """
     _vd_label(::Type{Fixed}) -> String
@@ -40,8 +44,12 @@ Return a user-friendly label for variable dependence traits.
 
 See also: [`_td_label`](@ref), [`_md_label`](@ref).
 """
-_vd_label(::Type{Common.Fixed}) = "fixed (no variable)"
-_vd_label(::Type{Common.NonFixed}) = "variable"
+function _vd_label(::Type{Common.Fixed})
+    return "fixed (no variable)"
+end
+function _vd_label(::Type{Common.NonFixed})
+    return "variable"
+end
 
 """
     _md_label(::Type{OutOfPlace}) -> String
@@ -57,8 +65,12 @@ Return a user-friendly label for mutability traits.
 
 See also: [`_td_label`](@ref), [`_vd_label`](@ref).
 """
-_md_label(::Type{Common.OutOfPlace}) = "out-of-place"
-_md_label(::Type{Common.InPlace}) = "in-place"
+function _md_label(::Type{Common.OutOfPlace})
+    return "out-of-place"
+end
+function _md_label(::Type{Common.InPlace})
+    return "in-place"
+end
 
 # =============================================================================
 # VectorField-specific signature helpers
@@ -120,8 +132,12 @@ and includes the derivative buffer (dx) for in-place variants.
 
 See also: [`_natural_sig_vf`](@ref).
 """
-_uniform_sig_vf(::Type{Common.OutOfPlace}) = "f(t, x, v)"
-_uniform_sig_vf(::Type{Common.InPlace}) = "f(dx, t, x, v)"
+function _uniform_sig_vf(::Type{Common.OutOfPlace})
+    return "f(t, x, v)"
+end
+function _uniform_sig_vf(::Type{Common.InPlace})
+    return "f(dx, t, x, v)"
+end
 
 # =============================================================================
 # HamiltonianVectorField-specific signature helpers
@@ -185,5 +201,9 @@ and includes the derivative buffers (dx, dp) for in-place variants.
 
 See also: [`_natural_sig_hvf`](@ref).
 """
-_uniform_sig_hvf(::Type{Common.OutOfPlace}) = "f(t, x, p, v)"
-_uniform_sig_hvf(::Type{Common.InPlace}) = "f(dx, dp, t, x, p, v)"
+function _uniform_sig_hvf(::Type{Common.OutOfPlace})
+    return "f(t, x, p, v)"
+end
+function _uniform_sig_hvf(::Type{Common.InPlace})
+    return "f(dx, dp, t, x, p, v)"
+end

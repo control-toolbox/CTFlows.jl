@@ -83,6 +83,35 @@ function test_helpers()
                 Test.@test Data._uniform_sig_hvf(Common.OutOfPlace) == "f(t, x, p, v)"
                 Test.@test Data._uniform_sig_hvf(Common.InPlace) == "f(dx, dp, t, x, p, v)"
             end
+
+            Test.@testset "Uniform signatures" begin
+                Test.@testset "VectorField uniform signatures" begin
+                    Test.@test Data._uniform_sig_vf(Common.OutOfPlace) == "f(t, x, v)"
+                    Test.@test Data._uniform_sig_vf(Common.InPlace) == "f(dx, t, x, v)"
+                end
+
+                Test.@testset "HamiltonianVectorField uniform signatures" begin
+                    Test.@test Data._uniform_sig_hvf(Common.OutOfPlace) == "f(t, x, p, v)"
+                    Test.@test Data._uniform_sig_hvf(Common.InPlace) == "f(dx, dp, t, x, p, v)"
+                end
+            end
+
+            Test.@testset "Direct label calls" begin
+                Test.@testset "Time dependence labels" begin
+                    Test.@test Data._td_label(Common.Autonomous) == "autonomous"
+                    Test.@test Data._td_label(Common.NonAutonomous) == "non-autonomous"
+                end
+
+                Test.@testset "Variable dependence labels" begin
+                    Test.@test Data._vd_label(Common.Fixed) == "fixed (no variable)"
+                    Test.@test Data._vd_label(Common.NonFixed) == "variable"
+                end
+
+                Test.@testset "Mutability labels" begin
+                    Test.@test Data._md_label(Common.OutOfPlace) == "out-of-place"
+                    Test.@test Data._md_label(Common.InPlace) == "in-place"
+                end
+            end
         end
     end
 end
