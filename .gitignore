@@ -28,5 +28,6 @@ Manifest*.toml
 
 #
 .reports/
-.windsurf/
 .extras/
+# .windsurf/
+# AGENTS.md
