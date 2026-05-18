@@ -28,6 +28,11 @@ struct FakeConfigWithTspan{X0} <: Common.AbstractConfigWithMaC{X0, Common.PointT
     x0::X0
 end
 
+"""
+Fake bare config that intentionally does not implement any AbstractConfig stubs.
+"""
+struct FakeBareConfig <: Common.AbstractConfig{Float64} end
+
 function Common.tspan(c::FakeConfigWithTspan)
     return (c.t0, c.tf)
 end
@@ -89,6 +94,14 @@ function test_configs()
 
             Test.@testset "initial_costate is exported" begin
                 Test.@test isdefined(Common, :initial_costate)
+            end
+
+            Test.@testset "AbstractConfig stub methods throw NotImplemented" begin
+                config = FakeBareConfig()
+                Test.@test_throws Exceptions.NotImplemented Common.tspan(config)
+                Test.@test_throws Exceptions.NotImplemented Common.initial_condition(config)
+                Test.@test_throws Exceptions.NotImplemented Common.initial_state(config)
+                Test.@test_throws Exceptions.NotImplemented Common.initial_costate(config)
             end
 
             Test.@testset "initial_state for StatePointConfig" begin

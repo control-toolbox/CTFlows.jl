@@ -47,11 +47,19 @@ function test_abstract_vector_field()
             Test.@testset "has_time_dependence_trait returns true" begin
                 fake = FakeVectorField{Common.Autonomous, Common.Fixed, Common.OutOfPlace}()
                 Test.@test Common.has_time_dependence_trait(fake) === true
+                Test.@test Base.invokelatest(Common.has_time_dependence_trait, fake) === true
             end
 
             Test.@testset "has_variable_dependence_trait returns true" begin
                 fake = FakeVectorField{Common.Autonomous, Common.Fixed, Common.OutOfPlace}()
                 Test.@test Common.has_variable_dependence_trait(fake) === true
+                Test.@test Base.invokelatest(Common.has_variable_dependence_trait, fake) === true
+            end
+
+            Test.@testset "has_mutability_trait returns true" begin
+                fake = FakeVectorField{Common.Autonomous, Common.Fixed, Common.OutOfPlace}()
+                Test.@test Common.has_mutability_trait(fake) === true
+                Test.@test Base.invokelatest(Common.has_mutability_trait, fake) === true
             end
 
             Test.@testset "time_dependence returns correct trait" begin
@@ -66,6 +74,53 @@ function test_abstract_vector_field()
                 fake_nonfixed = FakeVectorField{Common.Autonomous, Common.NonFixed, Common.OutOfPlace}()
                 Test.@test Common.variable_dependence(fake_fixed) === Common.Fixed
                 Test.@test Common.variable_dependence(fake_nonfixed) === Common.NonFixed
+            end
+
+            Test.@testset "mutability_trait returns correct trait" begin
+                fake_oop = FakeVectorField{Common.Autonomous, Common.Fixed, Common.OutOfPlace}()
+                fake_ip = FakeVectorField{Common.Autonomous, Common.Fixed, Common.InPlace}()
+                Test.@test Common.mutability_trait(fake_oop) === Common.OutOfPlace
+                Test.@test Common.mutability_trait(fake_ip) === Common.InPlace
+            end
+
+            Test.@testset "explicit dispatch on AbstractVectorField methods" begin
+                fake = FakeVectorField{Common.NonAutonomous, Common.NonFixed, Common.InPlace}()
+
+                Test.@test invoke(
+                    Common.has_time_dependence_trait,
+                    Tuple{Data.AbstractVectorField},
+                    fake,
+                ) === true
+
+                Test.@test invoke(
+                    Common.has_variable_dependence_trait,
+                    Tuple{Data.AbstractVectorField},
+                    fake,
+                ) === true
+
+                Test.@test invoke(
+                    Common.has_mutability_trait,
+                    Tuple{Data.AbstractVectorField},
+                    fake,
+                ) === true
+
+                Test.@test invoke(
+                    Common.time_dependence,
+                    Tuple{Data.AbstractVectorField{Common.NonAutonomous, Common.NonFixed, Common.InPlace}},
+                    fake,
+                ) === Common.NonAutonomous
+
+                Test.@test invoke(
+                    Common.variable_dependence,
+                    Tuple{Data.AbstractVectorField{Common.NonAutonomous, Common.NonFixed, Common.InPlace}},
+                    fake,
+                ) === Common.NonFixed
+
+                Test.@test invoke(
+                    Common.mutability_trait,
+                    Tuple{Data.AbstractVectorField{Common.NonAutonomous, Common.NonFixed, Common.InPlace}},
+                    fake,
+                ) === Common.InPlace
             end
         end
 

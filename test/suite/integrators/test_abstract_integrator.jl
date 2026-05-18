@@ -22,6 +22,17 @@ struct FakeSystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
 end
 
 """
+Fake integration result for testing merge stub behavior.
+"""
+struct FakeIntegrationResult <: Integrators.AbstractIntegrationResult
+    data::Vector{Float64}
+end
+
+Integrators.final_state(r::FakeIntegrationResult) = r.data
+Integrators.times(r::FakeIntegrationResult) = collect(eachindex(r.data))
+Integrators.evaluate_at(r::FakeIntegrationResult, t::Real) = r.data[Int(clamp(round(t), 1, length(r.data)))]
+
+"""
 Fake integrator for testing the AbstractIntegrator contract.
 
 This minimal implementation provides all three required callable signatures
@@ -126,6 +137,12 @@ function test_abstract_integrator()
             Test.@testset "build_options throws NotImplemented" begin
                 config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 Test.@test_throws Exceptions.NotImplemented Integrators.build_options(integ, config)
+            end
+
+            Test.@testset "merge throws NotImplemented" begin
+                result = FakeIntegrationResult([1.0, 2.0])
+                Test.@test_throws Exceptions.NotImplemented Integrators.merge([result])
+                Test.@test_throws Exceptions.NotImplemented Integrators.merge(FakeIntegrationResult[])
             end
         end
     end
