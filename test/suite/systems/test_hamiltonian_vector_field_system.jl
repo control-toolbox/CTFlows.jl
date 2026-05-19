@@ -25,11 +25,22 @@ function test_hamiltonian_vector_field_system()
             Test.@test sys1 isa Systems.HamiltonianVectorFieldSystem
             Test.@test sys1 isa Systems.AbstractHamiltonianSystem
             Test.@test Systems.state_dimension(sys1) === nothing
-            
+
             # From HamiltonianVectorField with dimension
             sys2 = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=3)
             Test.@test sys2 isa Systems.HamiltonianVectorFieldSystem
             Test.@test Systems.state_dimension(sys2) == 3
+
+            # Hierarchy check: supertype with WithoutAD
+            Test.@test sys1 isa Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed, Common.WithoutAD}
+        end
+
+        Test.@testset "ad_trait" begin
+            hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+            sys = Systems.HamiltonianVectorFieldSystem(hvf)
+
+            Test.@test Systems.ad_trait(sys) === Common.WithoutAD
+            Test.@test Test.@inferred Systems.ad_trait(sys) === Common.WithoutAD
         end
         
         # ====================================================================

@@ -190,6 +190,25 @@ Matches any `AbstractConfig` with `HamiltonianTrait` as the content parameter.
 """
 const AbstractHamiltonianConfig{X0, M} = AbstractConfigWithMaC{X0, M, HamiltonianTrait}
 
+"""
+$(TYPEDEF)
+
+Type alias for augmented Hamiltonian configurations, which include state, costate, and augmented variable initial conditions.
+
+# Type Parameters
+- `X0`: Type of the initial condition (typically a vector concatenating state, costate, and augmented variable).
+- `M`: Type of the mutability trait (`InPlace` or `OutOfPlace`).
+
+# Notes
+- Augmented Hamiltonian configurations are used for systems where the Hamiltonian depends on an additional variable (e.g., a control parameter or optimization variable).
+- The initial condition typically has the form `vcat(x0, p0, pv0)` where `x0` is the initial state, `p0` is the initial costate, and `pv0` is the initial augmented variable.
+- Subtypes [`CTFlows.Common.AbstractConfigWithMaC`](@ref) with [`CTFlows.Common.AugmentedHamiltonianTrait`](@ref).
+- Used in conjunction with [`CTFlows.Systems.HamiltonianSystem`](@ref) for automatic differentiation-based Hamiltonian integration.
+
+See also: [`CTFlows.Common.AbstractHamiltonianConfig`](@ref), [`CTFlows.Common.AugmentedHamiltonianTrait`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref).
+"""
+const AbstractAugmentedHamiltonianConfig{X0, M} = AbstractConfigWithMaC{X0, M, AugmentedHamiltonianTrait}
+
 # =============================================================================
 # Interface implementations on abstract config types
 # =============================================================================

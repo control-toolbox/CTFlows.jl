@@ -19,6 +19,7 @@ import CTBase.Exceptions
 
 using ..Common
 using ..Data
+using ..Differentiation
 
 # ==============================================================================
 # Include files
@@ -27,6 +28,7 @@ using ..Data
 include(joinpath(@__DIR__, "abstract_system.jl"))
 include(joinpath(@__DIR__, "vector_field_system.jl"))
 include(joinpath(@__DIR__, "hamiltonian_vector_field_system.jl"))
+include(joinpath(@__DIR__, "hamiltonian_system.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 
 # ==============================================================================
@@ -39,6 +41,9 @@ export rhs_oop
 export state_dimension
 export VectorFieldSystem
 export HamiltonianVectorFieldSystem
+export HamiltonianSystem
 export build_system
+export build_rhs_augmented
+export ad_trait
 
 end # module Systems

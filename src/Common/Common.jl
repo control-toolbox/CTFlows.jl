@@ -40,11 +40,11 @@ include(joinpath(@__DIR__, "internal_norm.jl"))
 
 export AbstractTag
 export AbstractTrait, AbstractModeTrait, AbstractContentTrait, AbstractMutabilityTrait, AbstractADTrait
-export PointTrait, TrajectoryTrait, StateTrait, HamiltonianTrait
+export PointTrait, TrajectoryTrait, StateTrait, HamiltonianTrait, AugmentedHamiltonianTrait
 export InPlace, OutOfPlace
 export WithAD, WithoutAD
 export AbstractCache
-export AbstractConfig, AbstractPointConfig, AbstractTrajectoryConfig, AbstractStateConfig, AbstractHamiltonianConfig
+export AbstractConfig, AbstractPointConfig, AbstractTrajectoryConfig, AbstractStateConfig, AbstractHamiltonianConfig, AbstractAugmentedHamiltonianConfig
 export StatePointConfig, StateTrajectoryConfig, HamiltonianPointConfig, HamiltonianTrajectoryConfig
 export tspan, initial_condition, initial_state, initial_costate
 export VariableDependence, Fixed, NonFixed
