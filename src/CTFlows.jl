@@ -33,6 +33,9 @@ using .Common
 include(joinpath(@__DIR__, "Data", "Data.jl"))
 using .Data
 
+include(joinpath(@__DIR__, "Differentiation", "Differentiation.jl"))
+using .Differentiation
+
 include(joinpath(@__DIR__, "Systems", "Systems.jl"))
 using .Systems
 

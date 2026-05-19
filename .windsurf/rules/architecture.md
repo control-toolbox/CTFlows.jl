@@ -1,5 +1,6 @@
 ---
-trigger: always_on
+trigger: glob
+glob: "src/**/*.jl, ext/**/*.jl"
 ---
 
 # Julia Architecture and Design Principles
@@ -16,11 +17,16 @@ This document defines architecture and design principles for Julia code. These p
 
 ## Core Principles
 
-1. **Single Responsibility**: Each module, function, and type has one clear purpose
-2. **Open/Closed**: Open for extension, closed for modification
-3. **Liskov Substitution**: Subtypes must honor parent contracts
-4. **Interface Segregation**: Keep interfaces small and focused
-5. **Dependency Inversion**: Depend on abstractions, not concrete implementations
+1. **SRP** — Each module, function, and type has one clear purpose
+2. **OCP** — Open for extension, closed for modification
+3. **LSP** — Subtypes must honor parent contracts
+4. **ISP** — Keep interfaces small and focused
+5. **DIP** — Depend on abstractions, not concrete implementations
+6. **DRY** — No code duplication
+7. **KISS** — Prefer simple solutions
+8. **YAGNI** — Don't add functionality until actually needed
+
+---
 
 ## SOLID Principles in Julia
 
@@ -60,10 +66,13 @@ end
 ```
 
 **Red flags:**
+
 - Function names with "and" or "or"
 - Functions longer than 50 lines
 - Multiple `if-else` branches handling different concerns
 - Modules mixing unrelated functionality
+
+---
 
 ### Open/Closed Principle (OCP)
 
@@ -108,10 +117,13 @@ end
 ```
 
 **How to apply:**
+
 - Use abstract types to define interfaces
 - Leverage multiple dispatch for extensibility
 - Avoid type checking with `isa` or `typeof`
 - Design type hierarchies that allow new subtypes
+
+---
 
 ### Liskov Substitution Principle (LSP)
 
@@ -162,6 +174,7 @@ end
 ```
 
 **How to apply:**
+
 - Define clear contracts for abstract types (via docstrings)
 - Ensure all subtypes implement required methods consistently
 - Return types should be compatible across hierarchy
@@ -179,6 +192,8 @@ end
     end
 end
 ```
+
+---
 
 ### Interface Segregation Principle (ISP)
 
@@ -235,10 +250,13 @@ integrate(sf::SimpleFunction, a, b) = error("not integrable")  # Forced!
 ```
 
 **How to apply:**
+
 - Create small, focused abstract types
 - Use `Union` types for multiple interfaces
 - Don't force implementations of unused methods
 - Export only necessary functions
+
+---
 
 ### Dependency Inversion Principle (DIP)
 
@@ -289,10 +307,13 @@ end
 ```
 
 **How to apply:**
+
 - Define abstract types for dependencies
 - Pass abstract types as arguments
 - Use dependency injection
 - Avoid hard-coding concrete types
+
+---
 
 ## Other Design Principles
 
@@ -330,6 +351,8 @@ function create_problem(n::Int, m::Int)
 end
 ```
 
+---
+
 ### KISS - Keep It Simple, Stupid
 
 Prefer simple solutions over complex ones. Avoid over-engineering.
@@ -355,6 +378,8 @@ function compute_mean(xs)
     return accumulator / counter
 end
 ```
+
+---
 
 ### YAGNI - You Aren't Gonna Need It
 
@@ -384,6 +409,8 @@ struct Model
 end
 ```
 
+---
+
 ## Julia-Specific Patterns
 
 ### Multiple Dispatch
@@ -407,6 +434,8 @@ end
 # Extensible: add new methods without modifying existing code
 ```
 
+---
+
 ### Type Hierarchies
 
 Design type hierarchies that reflect conceptual relationships:
@@ -421,6 +450,8 @@ struct DirectShooting <: AbstractDirectMethod end
 struct DirectCollocation <: AbstractDirectMethod end
 struct IndirectShooting <: AbstractIndirectMethod end
 ```
+
+---
 
 ### Composition Over Inheritance
 
@@ -437,6 +468,8 @@ end
 # Not: OptimizationModel <: AbstractSolver
 ```
 
+---
+
 ### Parametric Types
 
 Use parametric types for type stability and flexibility:
@@ -452,13 +485,15 @@ c1 = Container([1, 2, 3])        # Container{Int}
 c2 = Container([1.0, 2.0, 3.0])  # Container{Float64}
 ```
 
+---
+
 ## Module Organization
 
 ### Layered Architecture
 
 Organize code in layers with clear dependencies:
 
-```
+```text
 Low-level (Core types, utilities)
     ↓
 Mid-level (Business logic, algorithms)
@@ -493,6 +528,8 @@ module API
 end
 ```
 
+---
+
 ### Separation of Concerns
 
 Keep different concerns in separate modules:
@@ -520,6 +557,8 @@ module Core
 end
 ```
 
+---
+
 ## Quality Checklist
 
 Before finalizing code, verify:
@@ -535,6 +574,8 @@ Before finalizing code, verify:
 - [ ] Multiple dispatch used appropriately
 - [ ] Type hierarchies reflect conceptual relationships
 - [ ] Module organization follows layered architecture
+
+---
 
 ## Common Anti-Patterns
 
@@ -569,6 +610,8 @@ struct StateManager
 end
 ```
 
+---
+
 ### Primitive Obsession
 
 **❌ Avoid:** Using primitives instead of domain types
@@ -597,6 +640,8 @@ function create_problem(dims::Dimensions, time::TimeInterval)
 end
 ```
 
+---
+
 ### Feature Envy
 
 **❌ Avoid:** Methods that use more of another type's data
@@ -616,11 +661,15 @@ function compute_cost(data::Data)
 end
 ```
 
+---
+
 ## References
 
 - [Julia Style Guide](https://docs.julialang.org/en/v1/manual/style-guide/)
 - [SOLID Principles](https://en.wikipedia.org/wiki/SOLID)
 - [Design Patterns in Julia](https://github.com/JuliaLang/julia/blob/master/CONTRIBUTING.md)
+
+---
 
 ## Related Rules
 

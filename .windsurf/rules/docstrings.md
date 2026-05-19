@@ -1,5 +1,6 @@
 ---
-trigger: always_on
+trigger: glob
+glob: "src/**/*.jl, ext/**/*.jl"
 ---
 
 # Julia Documentation Standards
@@ -51,7 +52,7 @@ Every docstring should contain:
 For symbols within the current package or its dependencies, use `[@ref]` syntax with **full module path** including the root package and submodules:
 
 ```julia
-See also: [`PackageName.Submodule.related_function`](@ref), [`PackageName.Submodule.RelatedType`](@ref)
+See also: [`CTFlows.Flows.build_flow`](@ref), [`CTFlows.Flows.AbstractFlow`](@ref)
 ```
 
 **Rules for @ref:**
@@ -65,8 +66,8 @@ See also: [`PackageName.Submodule.related_function`](@ref), [`PackageName.Submod
 ✅ **Correct internal references:**
 
 - [`CTFlows.Integrators.SciMLTag`](@ref)
-- [`CTFlows.Options.OptionValue`](@ref)
-- [`CTFlows.Systems.AbstractSystem`](@ref)
+- [`CTFlows.Flows.AbstractFlow`](@ref)
+- [`CTFlows.Common.AbstractTag`](@ref)
 
 ❌ **Incorrect internal references:**
 
@@ -92,9 +93,9 @@ See also: [`CTSolvers.Options.OptionValue`](@extref)
 
 ✅ **Correct external references:**
 
-- [`CTSolvers.Options.OptionValue`](@extref)
 - [`CTBase.Exceptions.IncorrectArgument`](@extref)
-- [`CTModels.Init.build_initial_guess`](@extref)
+- [`CTSolvers.Options.OptionValue`](@extref)
+- [`CTBase.Tags.Autonomous`](@extref)
 
 ❌ **Incorrect external references:**
 
@@ -103,10 +104,28 @@ See also: [`CTSolvers.Options.OptionValue`](@extref)
 
 **When to use which:**
 
-- Use `[@ref]` for symbols within OptimalControl or its included documentation
-- Use `[@extref]` for symbols from external packages with separate documentation
+- Use `[@ref]` for symbols within CTFlows or its included documentation
+- Use `[@extref]` for symbols from external packages with separate documentation (CTBase, CTSolvers)
 
-## Templates
+## CTFlows Submodule Qualification
+
+Public symbols are always accessed through their submodule, never through the root package:
+
+```julia
+CTFlows.Flows.build_flow(...)    # ✅ correct
+CTFlows.build_flow(...)          # ❌ wrong — nothing exported at root level
+```
+
+### Exposed Submodules
+
+| Submodule | Exported symbols (examples) |
+| --- | --- |
+| `CTFlows.Common` | `AbstractTag`, `AbstractTrait`, `Autonomous`, `Fixed` |
+| `CTFlows.Data` | `VectorField`, `HamiltonianVectorField` |
+| `CTFlows.Flows` | `AbstractFlow`, `Flow`, `MultiPhaseFlow` |
+| `CTFlows.Integrators` | `AbstractIntegrator`, `AbstractIntegrationResult` |
+
+## Docstring Templates
 
 ### Function Template
 
@@ -133,7 +152,7 @@ Optional detailed explanation covering:
 
 # Example
 \`\`\`julia-repl
-julia> using CTModels.ModuleName
+julia> using CTFlows.Flows
 
 julia> result = function_name(arg1, arg2)
 expected_output
@@ -144,12 +163,14 @@ expected_output
 - Thread safety (if relevant)
 - Stability guarantees
 
-See also: [`PackageName.ModuleName.related_function`](@ref), [`PackageName.ModuleName.RelatedType`](@ref)
+See also: [`CTFlows.Flows.related_function`](@ref), [`CTFlows.Flows.RelatedType`](@ref)
 """
 function function_name(arg1::Type1, arg2::Type2)::ReturnType
     # implementation
 end
 ```
+
+---
 
 ### Struct Template
 
@@ -174,7 +195,7 @@ Describe any validation performed by constructors (if applicable).
 
 # Example
 \`\`\`julia-repl
-julia> using CTModels.ModuleName
+julia> using CTFlows.Flows
 
 julia> obj = StructName(value1, value2)
 StructName(...)
@@ -187,13 +208,15 @@ value1
 - Mutability status (if not obvious from declaration)
 - Performance considerations
 
-See also: [`ModuleName.related_type`](@ref), [`ModuleName.constructor_function`](@ref)
+See also: [`CTFlows.Flows.related_type`](@ref), [`CTFlows.Flows.constructor_function`](@ref)
 """
 struct StructName{T}
     field1::Type1
     field2::Type2
 end
 ```
+
+---
 
 ### Abstract Type Template
 
@@ -215,16 +238,18 @@ List methods that subtypes must implement:
 
 # Example
 \`\`\`julia-repl
-julia> using CTModels.ModuleName
+julia> using CTFlows.Common
 
 julia> MyType <: AbstractTypeName
 true
 \`\`\`
 
-See also: [`ModuleName.ConcreteSubtype1`](@ref), [`ModuleName.ConcreteSubtype2`](@ref)
+See also: [`CTFlows.Common.ConcreteSubtype1`](@ref), [`CTFlows.Common.ConcreteSubtype2`](@ref)
 """
 abstract type AbstractTypeName end
 ```
+
+---
 
 ## Example Safety Policy
 
@@ -235,7 +260,7 @@ Examples in docstrings must be **safe and reproducible**:
 - Pure computations with deterministic results
 - Constructors with simple, valid inputs
 - Queries on created objects
-- Examples that start with `using CTModels.ModuleName`
+- Examples that start with `using CTFlows.Submodule`
 
 ### ❌ Unsafe Examples
 
@@ -250,34 +275,50 @@ Examples in docstrings must be **safe and reproducible**:
 ### Fallback for Complex Cases
 
 If a safe, runnable example cannot be provided:
+
 - Use a plain code block (\`\`\`julia) instead of REPL block (\`\`\`julia-repl)
 - Show usage patterns without claiming specific output
 - Provide a conceptual sketch of how to use the API
 
 Example:
+
 ```julia
 # Example
 \`\`\`julia
 # Conceptual usage pattern
-ocp = Model(...)
-constraint!(ocp, :state, 0.0, :initial)
-sol = solve(ocp, strategy=MyStrategy())
+flow = CTFlows.Flows.build_flow(sys, integrator)
+result = CTFlows.Flows.evaluate(flow, t0, tf)
 \`\`\`
 ```
 
 ## Module Prefix Convention
 
 - **Exported symbols**: Use directly without module prefix
+
   ```julia-repl
-  julia> using CTModels.Options
-  julia> opt = OptionValue(100, :user)  # OptionValue is exported
+  julia> using CTFlows.Flows
+  julia> flow = build_flow(sys, integrator)  # build_flow is exported
   ```
 
 - **Internal symbols**: Use module prefix
+
   ```julia-repl
-  julia> using CTModels.Options
-  julia> Options.internal_function(...)  # Not exported
+  julia> using CTFlows.Flows
+  julia> Flows.internal_function(...)  # Not exported
   ```
+
+When a docstring is defined inside `src/Flows/flow.jl`, the public prefix shown in the docs is `CTFlows.Flows.`:
+
+```julia
+"""
+$(TYPEDSIGNATURES)
+
+Build a flow from a system and an integrator.
+
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref)
+"""
+function build_flow(sys::AbstractSystem, integrator::AbstractIntegrator)
+```
 
 ## DocStringExtensions Macros
 
@@ -298,6 +339,14 @@ Before finalizing a docstring, verify:
 - [ ] Return value is documented (if applicable)
 - [ ] Exceptions are documented (if thrown)
 - [ ] Example is safe, runnable, and demonstrates typical usage
-- [ ] Cross-references use `[@ref]` syntax for related items
+- [ ] Cross-references use `[@ref]` for internal symbols
+- [ ] Cross-references use `[@extref]` for external symbols
+- [ ] Full module paths are used (e.g., `CTFlows.Flows.build_flow`)
 - [ ] No invented behavior or aspirational features
 - [ ] Consistent with project style and terminology
+
+## Related Rules
+
+- `.windsurf/rules/architecture.md` - Architecture and design principles
+- `.windsurf/rules/testing.md` - Testing standards
+- `.windsurf/rules/type-stability.md` - Type stability standards

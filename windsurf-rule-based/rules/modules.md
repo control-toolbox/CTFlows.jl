@@ -1,5 +1,6 @@
 ---
-trigger: always_on
+trigger: glob
+glob: "src/**/*.jl, ext/**/*.jl"
 ---
 
 # Julia Submodule Architecture Standards
@@ -307,28 +308,30 @@ The `export` inside each submodule makes the unqualified form available to users
 
 ## Proposed CTFlows Layout
 
-Informed by the current implementation, the CTFlows submodule breakdown is:
+Informed by [`reports/design.md`](../../reports/design.md), the CTFlows submodule breakdown mirrors CTSolvers' separation of concerns:
 
 ```text
 src/
 ├── CTFlows.jl                  # top-level manifest, exports nothing
-├── Common/Common.jl            # shared types, traits, and configuration
-├── Data/Data.jl                # VectorField data structures with traits
-├── Systems/Systems.jl          # AbstractSystem + concrete systems
-├── Integrators/Integrators.jl  # AbstractIntegrator + concrete integrators
-├── Flows/Flows.jl              # AbstractFlow, Flow, integration pipeline
-└── Solutions/Solutions.jl      # VectorFieldSolution and solution building
+├── Core/Core.jl                # shared types and utilities
+├── Systems/Systems.jl          # AbstractSystem + concrete systems + MultiPhaseSystem
+├── Flows/Flows.jl              # AbstractFlow, Flow, MultiPhaseFlow
+├── Modelers/Modelers.jl        # AbstractFlowModeler + concrete modelers
+├── Integrators/Integrators.jl  # AbstractODEIntegrator + concrete integrators
+├── ADBackends/ADBackends.jl    # AbstractADBackend + concrete backends
+└── Pipelines/Pipelines.jl      # build_system, build_flow, integrate, build_solution, solve
 ```
 
 Dependency order (topologically sorted):
 
 ```text
-Common
- ├── Data
+Core
  ├── Systems
  ├── Integrators
- ├── Flows            (depends on Data, Systems, Integrators)
- └── Solutions        (depends on Systems)
+ ├── ADBackends
+ ├── Modelers         (depends on Systems, ADBackends)
+ ├── Flows            (depends on Systems, Integrators)
+ └── Pipelines        (depends on all of the above)
 ```
 
 The `Options` and `Strategies` infrastructure is consumed from CTSolvers via standard package imports (`using CTSolvers: CTSolvers` then qualified calls like `CTSolvers.Strategies.AbstractStrategy`).
