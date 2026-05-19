@@ -69,6 +69,30 @@ function test_abstract_trait()
                     Test.@test Common.AbstractMutabilityTrait <: Common.AbstractTrait
                 end
             end
+
+            Test.@testset "AbstractADTrait" begin
+                Test.@testset "AbstractADTrait is exported" begin
+                    Test.@test isdefined(Common, :AbstractADTrait)
+                end
+
+                Test.@testset "AbstractADTrait is abstract" begin
+                    Test.@test isabstracttype(Common.AbstractADTrait)
+                end
+
+                Test.@testset "AbstractADTrait subtypes AbstractTrait" begin
+                    Test.@test Common.AbstractADTrait <: Common.AbstractTrait
+                end
+            end
+
+            Test.@testset "AbstractCache" begin
+                Test.@testset "AbstractCache is exported" begin
+                    Test.@test isdefined(Common, :AbstractCache)
+                end
+
+                Test.@testset "AbstractCache is abstract" begin
+                    Test.@test isabstracttype(Common.AbstractCache)
+                end
+            end
         end
 
         # ====================================================================
@@ -189,6 +213,44 @@ function test_abstract_trait()
                     Test.@test Common.OutOfPlace <: Common.AbstractMutabilityTrait
                 end
             end
+
+            Test.@testset "WithAD" begin
+                Test.@testset "WithAD is exported" begin
+                    Test.@test isdefined(Common, :WithAD)
+                end
+
+                Test.@testset "WithAD is concrete" begin
+                    Test.@test !isabstracttype(Common.WithAD)
+                end
+
+                Test.@testset "WithAD instantiates" begin
+                    with = Common.WithAD()
+                    Test.@test with isa Common.WithAD
+                end
+
+                Test.@testset "WithAD subtypes AbstractADTrait" begin
+                    Test.@test Common.WithAD <: Common.AbstractADTrait
+                end
+            end
+
+            Test.@testset "WithoutAD" begin
+                Test.@testset "WithoutAD is exported" begin
+                    Test.@test isdefined(Common, :WithoutAD)
+                end
+
+                Test.@testset "WithoutAD is concrete" begin
+                    Test.@test !isabstracttype(Common.WithoutAD)
+                end
+
+                Test.@testset "WithoutAD instantiates" begin
+                    without = Common.WithoutAD()
+                    Test.@test without isa Common.WithoutAD
+                end
+
+                Test.@testset "WithoutAD subtypes AbstractADTrait" begin
+                    Test.@test Common.WithoutAD <: Common.AbstractADTrait
+                end
+            end
         end
 
         # ====================================================================
@@ -203,6 +265,8 @@ function test_abstract_trait()
                 Test.@test Common.HamiltonianTrait <: Common.AbstractTrait
                 Test.@test Common.InPlace <: Common.AbstractTrait
                 Test.@test Common.OutOfPlace <: Common.AbstractTrait
+                Test.@test Common.WithAD <: Common.AbstractTrait
+                Test.@test Common.WithoutAD <: Common.AbstractTrait
             end
 
             Test.@testset "Mode traits are distinct from content traits" begin
@@ -219,9 +283,9 @@ function test_abstract_trait()
 
         Test.@testset "Exports Verification" begin
             Test.@testset "Exported trait types" begin
-                for sym in (:AbstractTrait, :AbstractModeTrait, :AbstractContentTrait, :AbstractMutabilityTrait,
+                for sym in (:AbstractTrait, :AbstractModeTrait, :AbstractContentTrait, :AbstractMutabilityTrait, :AbstractADTrait,
                            :PointTrait, :TrajectoryTrait, :StateTrait, :HamiltonianTrait,
-                           :InPlace, :OutOfPlace)
+                           :InPlace, :OutOfPlace, :WithAD, :WithoutAD, :AbstractCache)
                     Test.@test isdefined(Common, sym)
                 end
             end

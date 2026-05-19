@@ -334,3 +334,125 @@ true
 See also: [`CTFlows.Common.StateTrait`](@ref), [`CTFlows.Common.AbstractContentTrait`](@ref), [`CTFlows.Common.HamiltonianPointConfig`](@ref).
 """
 struct HamiltonianTrait <: AbstractContentTrait end
+
+# =============================================================================
+# AD trait family (automatic differentiation capability)
+# =============================================================================
+
+"""
+$(TYPEDEF)
+
+Abstract base type for automatic differentiation capability traits.
+
+AD traits encode whether a system carries a scalar Hamiltonian with an AD backend
+(`WithAD`) or a pre-computed Hamiltonian vector field (`WithoutAD`). This distinction
+enables compile-time dispatch for cache preparation and gradient computation.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> WithAD() isa Common.AbstractADTrait
+true
+
+julia> WithoutAD() isa Common.AbstractADTrait
+true
+\`\`\`
+
+# Notes
+- AD traits are used as type parameters in system types to enable static dispatch
+- `WithAD` indicates the system carries a `Hamiltonian` and an AD backend
+- `WithoutAD` indicates the system carries a `HamiltonianVectorField` directly
+
+See also: [`CTFlows.Common.WithAD`](@ref), [`CTFlows.Common.WithoutAD`](@ref), [`CTFlows.Common.AbstractCache`](@ref).
+"""
+abstract type AbstractADTrait <: AbstractTrait end
+
+"""
+$(TYPEDEF)
+
+Trait for systems with automatic differentiation support.
+
+Indicates that a system carries a scalar Hamiltonian function and an AD backend,
+enabling automatic computation of the vector field via gradients. Such systems
+require cache preparation before ODE integration.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> with = WithAD()
+WithAD()
+
+julia> with isa Common.AbstractADTrait
+true
+\`\`\`
+
+# Notes
+- Used as a type parameter in `AbstractHamiltonianSystem` to enable AD-based gradient computation
+- Systems with `WithAD` require cache preparation via the backend's `prepare_cache` method
+- The cache is passed through `ODEParameters` during integration
+
+See also: [`CTFlows.Common.AbstractADTrait`](@ref), [`CTFlows.Common.WithoutAD`](@ref), [`CTFlows.Common.AbstractCache`](@ref).
+"""
+struct WithAD <: AbstractADTrait end  # system carries H + AD backend
+
+"""
+$(TYPEDEF)
+
+Trait for systems without automatic differentiation support.
+
+Indicates that a system carries a pre-computed Hamiltonian vector field directly,
+without requiring AD or cache preparation. This is the traditional mode where the
+user provides the vector field manually.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> without = WithoutAD()
+WithoutAD()
+
+julia> without isa Common.AbstractADTrait
+true
+\`\`\`
+
+# Notes
+- Used as a type parameter in `AbstractHamiltonianSystem` for vector field-based systems
+- No cache preparation is required for `WithoutAD` systems
+- This is the default mode for `HamiltonianVectorFieldSystem`
+
+See also: [`CTFlows.Common.AbstractADTrait`](@ref), [`CTFlows.Common.WithAD`](@ref).
+"""
+struct WithoutAD <: AbstractADTrait end  # system carries HVF directly
+
+# =============================================================================
+# Common abstract cache (for runtime AD preparation results)
+# =============================================================================
+
+"""
+$(TYPEDEF)
+
+Abstract base type for automatic differentiation caches.
+
+Caches store pre-allocated buffers and prepared differentiation plans to avoid
+repeated allocation during ODE integration. Concrete cache types are extension-specific
+(e.g., `DifferentiationInterfaceCache` from the `CTFlowsDifferentiationInterface` extension).
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> isabstracttype(Common.AbstractCache)
+true
+\`\`\`
+
+# Notes
+- Caches are passed through `ODEParameters` during ODE integration
+- The cache field defaults to `nothing` for systems that don't require AD
+- Concrete cache types are defined in extensions that provide AD backends
+- The RHS closure reads `cache(p)` to access the prepared cache
+
+See also: [`CTFlows.Common.ODEParameters`](@ref), [`CTFlows.Common.AbstractADTrait`](@ref).
+"""
+abstract type AbstractCache end
