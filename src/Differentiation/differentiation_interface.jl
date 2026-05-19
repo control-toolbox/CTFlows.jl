@@ -7,7 +7,7 @@ $(TYPEDEF)
 
 Concrete AD backend strategy wrapping DifferentiationInterface.jl backends.
 
-`DifferentiationInterface` stores a `:backend` option (e.g., `AutoForwardDiff()`,
+`DifferentiationInterface` stores a `:ad_backend` option (e.g., `AutoForwardDiff()`,
 `AutoZygote()`) and uses it to compute gradients via the DifferentiationInterface.jl
 ecosystem.
 
@@ -75,10 +75,11 @@ Return metadata defining `DifferentiationInterface` options and their specificat
 function CTSolvers.Strategies.metadata(::Type{<:DifferentiationInterface})
     return CTSolvers.Strategies.StrategyMetadata(
         CTSolvers.Strategies.OptionDefinition(;
-            name = :backend,
+            name = :ad_backend,
             type = ADTypes.AbstractADType,
             default = ADTypes.AutoForwardDiff(),  # ADTypes.jl — always available (hard dep)
             description = "DifferentiationInterface.jl backend (e.g. AutoForwardDiff()).",
+            aliases=(:backend,),
         ),
     )
 end

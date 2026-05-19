@@ -44,7 +44,7 @@ function test_ad_backend()
 
             # Default backend is AutoForwardDiff
             metadata = CTSolvers.Strategies.metadata(Differentiation.DifferentiationInterface)
-            Test.@test metadata[:backend].default === ADTypes.AutoForwardDiff()
+            Test.@test metadata[:ad_backend].default === ADTypes.AutoForwardDiff()
 
             # Custom backend
             di_custom = Differentiation.DifferentiationInterface(backend=ADTypes.AutoZygote())
@@ -65,7 +65,7 @@ function test_ad_backend()
             metadata = CTSolvers.Strategies.metadata(Differentiation.DifferentiationInterface)
             Test.@test metadata isa CTSolvers.Strategies.StrategyMetadata
             Test.@test length(metadata) > 0
-            Test.@test :backend in keys(metadata)
+            Test.@test :ad_backend in keys(metadata)
         end
 
         Test.@testset "Unit: build_ad_backend" begin

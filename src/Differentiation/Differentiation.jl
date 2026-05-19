@@ -14,7 +14,7 @@ The module defines an abstract contract `AbstractADBackend` with three methods:
 - `prepare_cache(backend, h, typical_x, typical_p, typical_v)` → AbstractCache
 
 The concrete strategy `DifferentiationInterface` wraps DifferentiationInterface.jl backends
-(e.g., `AutoForwardDiff()`) and stores them in its `:backend` option.
+(e.g., `AutoForwardDiff()`) and stores them in its `:ad_backend` option.
 
 ## Dependencies
 
