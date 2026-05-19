@@ -21,13 +21,13 @@ struct FakeStateSystem <: Systems.AbstractStateSystem{Common.Autonomous, Common.
     tag::Symbol
 end
 
-Systems.rhs(sys::FakeStateSystem) = (du, u, p, t) -> (du .= u)
+Systems.rhs(::FakeStateSystem) = (du, u, p, t) -> (du .= u)
 
 struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed}
     tag::Symbol
 end
 
-Systems.rhs(sys::FakeHamiltonianSystem) = (dz, z, p, t) -> (dz .= z)
+Systems.rhs(::FakeHamiltonianSystem) = (dz, z, p, t) -> (dz .= z)
 
 struct FakeIntegrator <: Integrators.AbstractIntegrator end
 
@@ -178,7 +178,7 @@ function test_concatenation()
                 mpf  = mpf1 * (2.0, jump, f3)
                 Test.@test length(mpf.flows)          == 3
                 Test.@test mpf.switching_times        == [1.0, 2.0]
-                Test.@test mpf.jumps[1]               == nothing
+                Test.@test mpf.jumps[1]               === nothing
                 Test.@test mpf.jumps[2]               === jump
             end
 
@@ -202,7 +202,7 @@ function test_concatenation()
                 Test.@test length(mpf.flows)          == 3
                 Test.@test mpf.switching_times        == [0.5, 1.0]
                 Test.@test mpf.jumps[1]               === jump
-                Test.@test mpf.jumps[2]               == nothing
+                Test.@test mpf.jumps[2]               === nothing
             end
 
             # ------------------------------------------------------------------
@@ -320,7 +320,7 @@ function test_concatenation()
                 f3   = _ham_flow(:h3)
                 mpf  = mpf1 * (2.0, jump, f3)
                 Test.@test length(mpf.flows)          == 3
-                Test.@test mpf.jumps[1]               == nothing
+                Test.@test mpf.jumps[1]               === nothing
                 Test.@test mpf.jumps[2]               === jump
             end
 
@@ -343,7 +343,7 @@ function test_concatenation()
                 mpf  = f1 * (0.5, jump, mpf2)
                 Test.@test length(mpf.flows)          == 3
                 Test.@test mpf.jumps[1]               === jump
-                Test.@test mpf.jumps[2]               == nothing
+                Test.@test mpf.jumps[2]               === nothing
             end
 
             Test.@testset "1 × n — with (jump_x, jump_p)" begin
@@ -352,7 +352,7 @@ function test_concatenation()
                 mpf  = f1 * (0.5, jump_x, jump_p, mpf2)
                 Test.@test length(mpf.flows)          == 3
                 Test.@test mpf.jumps[1]               == (jump_x, jump_p)
-                Test.@test mpf.jumps[2]               == nothing
+                Test.@test mpf.jumps[2]               === nothing
             end
 
             # ------------------------------------------------------------------

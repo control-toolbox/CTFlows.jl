@@ -63,6 +63,47 @@ function test_data_module()
         end
 
         # ====================================================================
+        # Hamiltonian Type
+        # ====================================================================
+
+        Test.@testset "Hamiltonian Type" begin
+            Test.@testset "Hamiltonian is exported" begin
+                Test.@test isdefined(Data, :Hamiltonian)
+                Test.@test Data.Hamiltonian <: Data.Hamiltonian
+            end
+
+            Test.@testset "Hamiltonian constructor is exported" begin
+                Test.@test isdefined(Data, :Hamiltonian)
+                h = Data.Hamiltonian((x, p) -> x + p; is_autonomous=true, is_variable=false)
+                Test.@test h isa Data.Hamiltonian
+            end
+
+            Test.@testset "Hamiltonian with Autonomous trait" begin
+                h = Data.Hamiltonian((x, p) -> x + p; is_autonomous=true, is_variable=false)
+                Test.@test Common.time_dependence(h) === Common.Autonomous
+                Test.@test Common.variable_dependence(h) === Common.Fixed
+            end
+
+            Test.@testset "Hamiltonian with NonAutonomous trait" begin
+                h = Data.Hamiltonian((t, x, p) -> t + x + p; is_autonomous=false, is_variable=false)
+                Test.@test Common.time_dependence(h) === Common.NonAutonomous
+                Test.@test Common.variable_dependence(h) === Common.Fixed
+            end
+
+            Test.@testset "Hamiltonian with NonFixed trait" begin
+                h = Data.Hamiltonian((x, p, v) -> x + p + v; is_autonomous=true, is_variable=true)
+                Test.@test Common.time_dependence(h) === Common.Autonomous
+                Test.@test Common.variable_dependence(h) === Common.NonFixed
+            end
+
+            Test.@testset "Hamiltonian with NonAutonomous and NonFixed traits" begin
+                h = Data.Hamiltonian((t, x, p, v) -> t + x + p + v; is_autonomous=false, is_variable=true)
+                Test.@test Common.time_dependence(h) === Common.NonAutonomous
+                Test.@test Common.variable_dependence(h) === Common.NonFixed
+            end
+        end
+
+        # ====================================================================
         # Trait Support
         # ====================================================================
 

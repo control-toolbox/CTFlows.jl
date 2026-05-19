@@ -212,14 +212,14 @@ end
 # =============================================================================
 
 # OutOfPlace uniform signatures (existing)
-(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.Fixed, OutOfPlace})(t, x, p, v) = H.f(x, p)
-(H::HamiltonianVectorField{<:Function, Common.NonAutonomous, Common.Fixed, OutOfPlace})(t, x, p, v) = H.f(t, x, p)
-(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.NonFixed, OutOfPlace})(t, x, p, v) = H.f(x, p, v)
+(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.Fixed, OutOfPlace})(_, x, p, _) = H.f(x, p)
+(H::HamiltonianVectorField{<:Function, Common.NonAutonomous, Common.Fixed, OutOfPlace})(t, x, p, _) = H.f(t, x, p)
+(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.NonFixed, OutOfPlace})(_, x, p, v) = H.f(x, p, v)
 
 # InPlace uniform signatures (new)
-(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.Fixed, InPlace})(dx, dp, t, x, p, v) = H.f(dx, dp, x, p)
-(H::HamiltonianVectorField{<:Function, Common.NonAutonomous, Common.Fixed, InPlace})(dx, dp, t, x, p, v) = H.f(dx, dp, t, x, p)
-(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.NonFixed, InPlace})(dx, dp, t, x, p, v) = H.f(dx, dp, x, p, v)
+(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.Fixed, InPlace})(dx, dp, _, x, p, _) = H.f(dx, dp, x, p)
+(H::HamiltonianVectorField{<:Function, Common.NonAutonomous, Common.Fixed, InPlace})(dx, dp, t, x, p, _) = H.f(dx, dp, t, x, p)
+(H::HamiltonianVectorField{<:Function, Common.Autonomous, Common.NonFixed, InPlace})(dx, dp, _, x, p, v) = H.f(dx, dp, x, p, v)
 
 
 # =============================================================================
@@ -239,7 +239,7 @@ Shows the type name, time dependence, variable dependence, mutability, and funct
 
 See also: [`CTFlows.Data.HamiltonianVectorField`](@ref).
 """
-function Base.show(io::IO, hvf::HamiltonianVectorField{F, TD, VD, MD}) where {F, TD, VD, MD}
+function Base.show(io::IO, ::HamiltonianVectorField{F, TD, VD, MD}) where {F, TD, VD, MD}
     header = "HamiltonianVectorField: $(_td_label(TD)), $(_vd_label(VD)), $(_md_label(MD))"
     natural = _natural_sig_hvf(TD, VD, MD)
     uniform = _uniform_sig_hvf(MD)

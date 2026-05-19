@@ -119,10 +119,8 @@ end
 
 - Out-of-place only (a scalar return has no meaningful in-place form).
 - Trait accessors `time_dependence`, `variable_dependence` implemented at the abstract level.
-- Internal helper `_oop_arity_h` for each trait combination (2, 3, 3, 4).
-- Constructor `Hamiltonian(f; is_autonomous, is_variable)` with auto-detection from arity.
-  - Throws `PreconditionError` if function has multiple methods.
-  - Throws `IncorrectArgument` if arity does not match any trait combination.
+- Constructor `Hamiltonian(f; is_autonomous, is_variable)` with Bool flags and defaults (no auto-detection).
+  - Defaults from `Common.__is_autonomous()` and `Common.__is_variable()`.
 - Natural call signatures: 4 combinations (Autonomous/NonAutonomous × Fixed/NonFixed).
 - Uniform call signature `(t, x, p, v)` forwarding to the natural signature.
 - `Base.show`.
@@ -135,11 +133,9 @@ end
 ### Step 6 — Test Checkpoint: `Data.Hamiltonian`
 
 - `@testset "Unit: Construction with all trait combinations"`
-- `@testset "Unit: Auto-detection of traits from arity"`
 - `@testset "Unit: Natural call signatures"` — all 4 combinations
-- `@testset "Unit: Uniform call signature"` — `(t, x, p, v)` forwarding
-- `@testset "Error: Multiple methods"` — `PreconditionError`
-- `@testset "Error: Invalid arity"` — `IncorrectArgument`
+- `@testset "Unit: Uniform call signature (t, x, p, v)"` — all 4 combinations
+- `@testset "Unit: Type stability"` — uniform call type stability
 - `@testset "Exports"` — `AbstractHamiltonian`, `Hamiltonian` exported from `Data`
 
 ---

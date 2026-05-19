@@ -207,3 +207,52 @@ end
 function _uniform_sig_hvf(::Type{Common.InPlace})
     return "f(dx, dp, t, x, p, v)"
 end
+
+# =============================================================================
+# Hamiltonian-specific signature helpers
+# =============================================================================
+
+"""
+    _natural_sig_h(::Type{TD}, ::Type{VD}) where {TD, VD} -> String
+
+Return the natural call signature for a Hamiltonian based on its traits.
+
+# Arguments
+- `TD`: Time dependence type (`Autonomous` or `NonAutonomous`)
+- `VD`: Variable dependence type (`Fixed` or `NonFixed`)
+
+# Returns
+- `String`: Natural call signature (e.g., "h(x, p)", "h(t, x, p)")
+
+# Example
+\`\`\`julia
+_natural_sig_h(Autonomous, Fixed)  # Returns "h(x, p)"
+_natural_sig_h(NonAutonomous, Fixed)  # Returns "h(t, x, p)"
+\`\`\`
+
+See also: [`_uniform_sig_h`](@ref).
+"""
+function _natural_sig_h(::Type{TD}, ::Type{VD}) where {TD, VD}
+    args = String[]
+    TD === Common.NonAutonomous && push!(args, "t")
+    push!(args, "x")
+    push!(args, "p")
+    VD === Common.NonFixed && push!(args, "v")
+    return "h(" * join(args, ", ") * ")"
+end
+
+"""
+    _uniform_sig_h() -> String
+
+Return the uniform call signature for a Hamiltonian.
+
+The uniform signature always includes all arguments (t, x, p, v) regardless of traits.
+
+# Returns
+- `String`: Uniform call signature ("h(t, x, p, v)")
+
+See also: [`_natural_sig_h`](@ref).
+"""
+function _uniform_sig_h()
+    return "h(t, x, p, v)"
+end
