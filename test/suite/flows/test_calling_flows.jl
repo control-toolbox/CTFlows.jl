@@ -24,7 +24,7 @@ end
 """
 Fake Hamiltonian system for testing the calling workflow.
 """
-struct FakeHamiltonianSystemForCalling <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed}
+struct FakeHamiltonianSystemForCalling <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed, Common.WithoutAD}
     state_dim::Int
 end
 

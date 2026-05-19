@@ -335,6 +335,20 @@ See also: [`CTFlows.Common.StateTrait`](@ref), [`CTFlows.Common.AbstractContentT
 """
 struct HamiltonianTrait <: AbstractContentTrait end
 
+"""
+$(TYPEDEF)
+
+Trait marker for augmented Hamiltonian systems, where the Hamiltonian includes an augmented variable (e.g., a parameter or control variable) in addition to state and costate variables.
+
+# Notes
+- Used in conjunction with [`CTFlows.Common.AbstractAugmentedHamiltonianConfig`](@ref) to specify that a configuration is for an augmented Hamiltonian system.
+- Subtypes [`CTFlows.Common.AbstractContentTrait`](@ref).
+- Used to distinguish augmented Hamiltonian systems from standard Hamiltonian systems in trait-based dispatch.
+
+See also: [`CTFlows.Common.HamiltonianTrait`](@ref), [`CTFlows.Common.AbstractAugmentedHamiltonianConfig`](@ref), [`CTFlows.Common.AbstractContentTrait`](@ref).
+"""
+struct AugmentedHamiltonianTrait <: AbstractContentTrait end
+
 # =============================================================================
 # AD trait family (automatic differentiation capability)
 # =============================================================================

@@ -176,6 +176,25 @@ function test_abstract_trait()
                 end
             end
 
+            Test.@testset "AugmentedHamiltonianTrait" begin
+                Test.@testset "AugmentedHamiltonianTrait is exported" begin
+                    Test.@test isdefined(Common, :AugmentedHamiltonianTrait)
+                end
+
+                Test.@testset "AugmentedHamiltonianTrait is concrete" begin
+                    Test.@test !isabstracttype(Common.AugmentedHamiltonianTrait)
+                end
+
+                Test.@testset "AugmentedHamiltonianTrait instantiates" begin
+                    aug = Common.AugmentedHamiltonianTrait()
+                    Test.@test aug isa Common.AugmentedHamiltonianTrait
+                end
+
+                Test.@testset "AugmentedHamiltonianTrait subtypes AbstractContentTrait" begin
+                    Test.@test Common.AugmentedHamiltonianTrait <: Common.AbstractContentTrait
+                end
+            end
+
             Test.@testset "InPlace" begin
                 Test.@testset "InPlace is exported" begin
                     Test.@test isdefined(Common, :InPlace)
@@ -263,6 +282,7 @@ function test_abstract_trait()
                 Test.@test Common.TrajectoryTrait <: Common.AbstractTrait
                 Test.@test Common.StateTrait <: Common.AbstractTrait
                 Test.@test Common.HamiltonianTrait <: Common.AbstractTrait
+                Test.@test Common.AugmentedHamiltonianTrait <: Common.AbstractTrait
                 Test.@test Common.InPlace <: Common.AbstractTrait
                 Test.@test Common.OutOfPlace <: Common.AbstractTrait
                 Test.@test Common.WithAD <: Common.AbstractTrait
@@ -274,6 +294,7 @@ function test_abstract_trait()
                 Test.@test !(Common.TrajectoryTrait <: Common.AbstractContentTrait)
                 Test.@test !(Common.StateTrait <: Common.AbstractModeTrait)
                 Test.@test !(Common.HamiltonianTrait <: Common.AbstractModeTrait)
+                Test.@test !(Common.AugmentedHamiltonianTrait <: Common.AbstractModeTrait)
             end
         end
 
@@ -284,8 +305,15 @@ function test_abstract_trait()
         Test.@testset "Exports Verification" begin
             Test.@testset "Exported trait types" begin
                 for sym in (:AbstractTrait, :AbstractModeTrait, :AbstractContentTrait, :AbstractMutabilityTrait, :AbstractADTrait,
-                           :PointTrait, :TrajectoryTrait, :StateTrait, :HamiltonianTrait,
+                           :PointTrait, :TrajectoryTrait, :StateTrait, :HamiltonianTrait, :AugmentedHamiltonianTrait,
                            :InPlace, :OutOfPlace, :WithAD, :WithoutAD, :AbstractCache)
+                    Test.@test isdefined(Common, sym)
+                end
+            end
+
+            Test.@testset "Exported config aliases" begin
+                for sym in (:AbstractConfig, :AbstractPointConfig, :AbstractTrajectoryConfig, :AbstractStateConfig,
+                           :AbstractHamiltonianConfig, :AbstractAugmentedHamiltonianConfig)
                     Test.@test isdefined(Common, sym)
                 end
             end

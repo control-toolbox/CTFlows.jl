@@ -68,6 +68,7 @@ Carries the time-dependence and variable-dependence traits for compile-time disp
 # Type Parameters
 - `TD <: TimeDependence`: Time dependence trait (Autonomous or NonAutonomous)
 - `VD <: VariableDependence`: Variable dependence trait (Fixed or NonFixed)
+- `AT <: AbstractADTrait`: AD capability trait (WithAD or WithoutAD)
 
 # Example
 \`\`\`julia-repl
@@ -79,7 +80,7 @@ true
 
 See also: [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Systems.AbstractStateSystem`](@ref).
 """
-abstract type AbstractHamiltonianSystem{TD, VD} <: AbstractSystem{TD, VD} end
+abstract type AbstractHamiltonianSystem{TD, VD, AT<:Common.AbstractADTrait} <: AbstractSystem{TD, VD} end
 
 """
 $(TYPEDSIGNATURES)
@@ -189,6 +190,28 @@ See also: [`CTFlows.Common.has_variable_dependence_trait`](@ref), [`CTFlows.Comm
 """
 function Common.variable_dependence(sys::AbstractSystem{<:TimeDependence, VD}) where {VD <: VariableDependence}
     return VD
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the automatic differentiation capability trait of a Hamiltonian system.
+
+# Arguments
+- `sys::AbstractHamiltonianSystem`: The Hamiltonian system.
+
+# Returns
+- `AT <: AbstractADTrait`: The AD capability trait, either [`CTFlows.Common.WithAD`](@ref) or [`CTFlows.Common.WithoutAD`](@ref).
+
+# Notes
+- [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref) always returns `WithoutAD` since it uses an explicitly provided vector field.
+- [`CTFlows.Systems.HamiltonianSystem`](@ref) returns `WithAD` since it uses automatic differentiation to compute gradients from a scalar Hamiltonian function.
+- This trait is used for dispatch in flow integration and cache preparation.
+
+See also: [`CTFlows.Common.AbstractADTrait`](@ref), [`CTFlows.Common.WithAD`](@ref), [`CTFlows.Common.WithoutAD`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref).
+"""
+function ad_trait(sys::AbstractHamiltonianSystem{TD, VD, AT}) where {TD, VD, AT}
+    return AT
 end
 
 """

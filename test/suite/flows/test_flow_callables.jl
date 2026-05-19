@@ -20,7 +20,7 @@ struct FakeStateSystemFC <: Systems.AbstractStateSystem{Common.Autonomous, Commo
     n::Int
 end
 
-struct FakeHamSysFC <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed}
+struct FakeHamSysFC <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed, Common.WithoutAD}
     n::Int
 end
 

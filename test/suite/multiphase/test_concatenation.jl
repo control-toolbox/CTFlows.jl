@@ -23,7 +23,7 @@ end
 
 Systems.rhs(::FakeStateSystem) = (du, u, p, t) -> (du .= u)
 
-struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed}
+struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed, Common.WithoutAD}
     tag::Symbol
 end
 
