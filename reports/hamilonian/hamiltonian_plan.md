@@ -44,7 +44,6 @@ Flows  (HamiltonianFlow, _prepare_cache dispatch, augment=true)
 Solutions
     ↓
 ext/CTFlowsDifferentiationInterface  (concrete cache, gradient implementations)
-ext/CTFlowsForwardDiff               (default backend resolution)
 ```
 
 ---
@@ -186,6 +185,16 @@ end
 ```
 
 Implements `CTSolvers.Strategies.id`, `description`, `metadata` for the strategy contract.
+`ADTypes` is a hard dependency (`[deps]`), so `AutoForwardDiff` is always available.
+The `:backend` option definition uses `AutoForwardDiff()` directly as the default:
+
+```julia
+default = AutoForwardDiff()   # ADTypes.jl — always available (hard dep)
+```
+
+No tag/stub pattern needed — unlike `SciML` where the default algorithm (`Tsit5()`) comes
+from a substantial optional package, `AutoForwardDiff()` is a zero-cost type from the
+lightweight `ADTypes.jl` hard dep.
 
 ### Step 9 — `src/Differentiation/building.jl` (new file)
 
@@ -201,6 +210,8 @@ Parallel to `Integrators.build_integrator`.
 
 Module manifest: imports, includes in order, exports.
 
+External imports include `using ADTypes: ADTypes` (hard dep — provides `AutoForwardDiff`).
+
 Exports: `AbstractADBackend`, `DifferentiationInterface`, `build_ad_backend`,
 `hamiltonian_gradient`, `variable_gradient`, `prepare_cache`.
 
@@ -210,7 +221,7 @@ Add `include("Differentiation/Differentiation.jl")` and `using .Differentiation`
 
 ### Step 12 — Test Checkpoint: `Differentiation` module
 
-- `@testset "Unit: DifferentiationInterface construction"`
+- `@testset "Unit: DifferentiationInterface construction"` — `DifferentiationInterface()` works; default `:backend` is `AutoForwardDiff()`
 - `@testset "Unit: CTSolvers.Strategies contract"` — `id`, `description`, `metadata`
 - `@testset "Unit: build_ad_backend"`
 - `@testset "Error: hamiltonian_gradient stub throws NotImplemented"`
@@ -368,16 +379,43 @@ a cache is available, falling back to plain `DI.gradient` otherwise.
 > critical path of this plan. It can be added later in `Differentiation` as a public
 > utility if a concrete use case arises (e.g. inspection, interoperability).
 
-### Step 19 — `ext/CTFlowsForwardDiff.jl` (modified)
+### Step 19 — `Project.toml` (modified)
 
-Register the default AD backend when ForwardDiff is loaded — parallel to
-`CTFlowsOrdinaryDiffEqTsit5` providing the default integrator algorithm:
+`ADTypes.jl` is added as a **hard dependency** (`[deps]`) — it is ultra-lightweight
+(type definitions only, no computation) and ensures `AutoForwardDiff` is always
+available in core without any extension.
 
-```julia
-function Differentiation.__default_ad_backend()
-    return AutoForwardDiff()
-end
+`DifferentiationInterface.jl` is added as a **weak dependency** (`[weakdeps]`) to
+trigger the `CTFlowsDifferentiationInterface` extension (gradient computation).
+
+```toml
+[deps]
+# add:
+ADTypes = "<uuid>"
+
+[weakdeps]
+# add:
+DifferentiationInterface = "<uuid>"
+
+[extensions]
+# add:
+CTFlowsDifferentiationInterface = ["DifferentiationInterface"]
+
+[compat]
+# add:
+ADTypes = "1"
+DifferentiationInterface = "1"
+
+[extras]
+# add:
+DifferentiationInterface = "<uuid>"
+
+[targets]
+# add to test list:
+"DifferentiationInterface"
 ```
+
+`CTFlowsForwardDiff.jl` is **not modified** in this feature.
 
 ### Step 20 — Test Checkpoint: Extension
 
@@ -650,7 +688,7 @@ Expected: all suites pass, zero failures, zero errors.
 - `src/Flows/building.jl` — `Flow(h::AbstractHamiltonian; ...)`
 - `src/Solutions/building.jl` — `build_augmented_solution`
 - `ext/CTFlowsSciML.jl` — `cache` keyword in `build_problem`
-- `ext/CTFlowsForwardDiff.jl` — `__default_ad_backend` registration
+- `Project.toml` — add `ADTypes` hard dep, `DifferentiationInterface` weakdep, `CTFlowsDifferentiationInterface` extension
 
 ### Deleted
 None.
