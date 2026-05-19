@@ -3,13 +3,13 @@ CTFlowsStaticArrays
 
 Extension module providing type-stable support for `StaticArrays.SVector` and `SMatrix` in Hamiltonian flows.
 
-This module extends the internal `_ham_split` function to handle `StaticVector` and `StaticMatrix` inputs efficiently when the state dimension `N` is known at compile time. This enables zero-allocation operations for Hamiltonian systems with immutable array types.
+This module extends the internal `_ham_split` function to handle `SVector` and `SMatrix` inputs efficiently when the state dimension `N` is known at compile time. This enables zero-allocation operations for Hamiltonian systems with immutable array types.
 
 # Extension Details
 
 The extension provides:
-- `_ham_split(u::StaticVector, N::Int)`: Type-stable splitting of `StaticVector` into `(x, p)` components using `SVector` constructors.
-- `_ham_split(u::StaticMatrix, N::Int)`: Type-stable splitting of `StaticMatrix` into `(X, P)` components using `SMatrix` constructors.
+- `_ham_split(u::SVector, N::Int)`: Type-stable splitting of `SVector` into `(x, p)` components using `SVector` constructors.
+- `_ham_split(u::SMatrix, N::Int)`: Type-stable splitting of `SMatrix` into `(X, P)` components using `SMatrix` constructors.
 
 # Usage
 
@@ -39,13 +39,13 @@ module CTFlowsStaticArrays
 
 using CTFlows
 import CTFlows.Systems: _ham_split
-using StaticArrays: StaticVector, StaticMatrix, SVector, SMatrix
+using StaticArrays: SVector, SMatrix
 
 """
-Type-stable split of a `StaticVector` into state and costate components.
+Type-stable split of a `SVector` into state and costate components.
 
 # Arguments
-- `u::StaticVector`: Combined state vector `[x; p]`.
+- `u::SVector`: Combined state vector `[x; p]`.
 - `N::Int`: Known state dimension (compile-time).
 
 # Returns
@@ -55,13 +55,13 @@ Type-stable split of a `StaticVector` into state and costate components.
 - This method provides type stability for SciML's out-of-place ODE solvers when using `StaticArrays`.
 - Used automatically when the `CTFlowsStaticArrays` extension is loaded.
 """
-function _ham_split(u::StaticVector{NN, T}, N::Int) where {NN, T}
+function _ham_split(u::SVector{NN, T}, N::Int) where {NN, T}
     x  = SVector{N, T}(ntuple(i -> u[i],   Val(N)))
     pk = SVector{N, T}(ntuple(i -> u[N+i], Val(N)))
     return (x, pk)
 end
 
-function _ham_split(u::StaticVector{NN, T}, ::Nothing) where {NN, T}
+function _ham_split(u::SVector{NN, T}, ::Nothing) where {NN, T}
     N = NN ÷ 2  # Compile-time: NN is a type parameter
     x  = SVector{N, T}(ntuple(i -> u[i],   Val(N)))
     pk = SVector{N, T}(ntuple(i -> u[N+i], Val(N)))
@@ -69,10 +69,10 @@ function _ham_split(u::StaticVector{NN, T}, ::Nothing) where {NN, T}
 end
 
 """
-Type-stable split of a `StaticMatrix` into state and costate components.
+Type-stable split of a `SMatrix` into state and costate components.
 
 # Arguments
-- `u::StaticMatrix{NN,M,T}`: Combined state matrix stacked vertically `[X; P]`.
+- `u::SMatrix{NN,M,T}`: Combined state matrix stacked vertically `[X; P]`.
 - `N::Int` or `::Nothing`: Known state dimension, or `nothing` to infer it as `NN ÷ 2`.
 
 # Returns
@@ -85,14 +85,14 @@ Type-stable split of a `StaticMatrix` into state and costate components.
   row = `(k-1) % N + 1`, col = `(k-1) ÷ N + 1`.
 - Used automatically when the `CTFlowsStaticArrays` extension is loaded.
 """
-function _ham_split(u::StaticMatrix{NN, M, T}, N::Int) where {NN, M, T}
+function _ham_split(u::SMatrix{NN, M, T}, N::Int) where {NN, M, T}
     # Enumerate result elements in column-major order via single index k
     X = SMatrix{N, M, T}(ntuple(k -> u[(k-1) % N + 1,     (k-1) ÷ N + 1], Val(N*M)))
     P = SMatrix{N, M, T}(ntuple(k -> u[N + (k-1) % N + 1, (k-1) ÷ N + 1], Val(N*M)))
     return (X, P)
 end
 
-function _ham_split(u::StaticMatrix{NN, M, T}, ::Nothing) where {NN, M, T}
+function _ham_split(u::SMatrix{NN, M, T}, ::Nothing) where {NN, M, T}
     N = NN ÷ 2  # Compile-time: NN is a type parameter
     X = SMatrix{N, M, T}(ntuple(k -> u[(k-1) % N + 1,     (k-1) ÷ N + 1], Val(N*M)))
     P = SMatrix{N, M, T}(ntuple(k -> u[N + (k-1) % N + 1, (k-1) ÷ N + 1], Val(N*M)))
