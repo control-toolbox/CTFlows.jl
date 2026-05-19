@@ -286,6 +286,6 @@ Before finalizing code, verify:
 
 ## Related Skills
 
-- `performance` skill — profiling, benchmarking, allocation reduction
-- `testing-creation` skill — type stability test patterns
-- `architecture` skill — parametric type design
+- `performance` rule — profiling, benchmarking, allocation reduction
+- `testing-creation` rule — type stability test patterns
+- `architecture` rule — parametric type design

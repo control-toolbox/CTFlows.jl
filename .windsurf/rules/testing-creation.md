@@ -634,7 +634,7 @@ Test.@testset "Check stuff"
 
 For performance-critical code, add type stability and allocation tests.
 
-**See also:** `type-stability` skill for comprehensive standards.
+**See also:** `type-stability` rule for comprehensive standards.
 
 #### Type Stability Tests
 

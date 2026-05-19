@@ -18,7 +18,7 @@ This document defines performance and type stability standards for the Control T
 
 1. **Measure First**: Profile before optimizing
 2. **Focus on Hot Paths**: Optimize where it matters (inner loops, critical functions)
-3. **Type Stability**: Ensure type-stable code (see `type-stability` skill)
+3. **Type Stability**: Ensure type-stable code (see `type-stability` rule)
 4. **Avoid Premature Optimization**: Optimize only when necessary
 5. **Maintain Readability**: Don't sacrifice clarity for marginal gains
 
@@ -299,6 +299,6 @@ Before finalizing performance optimizations:
 
 ## Related Skills
 
-- `type-stability` skill — type stability standards (critical for performance)
-- `testing-creation` skill — performance testing patterns
-- `architecture` skill — architecture patterns that affect performance
+- `type-stability` rule — type stability standards (critical for performance)
+- `testing-creation` rule — performance testing patterns
+- `architecture` rule — architecture patterns that affect performance
