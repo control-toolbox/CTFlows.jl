@@ -34,7 +34,7 @@ function Differentiation.variable_gradient(backend::FakeHarmonicADBackend, h, t,
     return v === nothing ? 0.0 : v
 end
 
-function Differentiation.prepare_cache(backend::FakeHarmonicADBackend, h, typical_x, typical_p, typical_v)
+function Differentiation.prepare_cache(backend::FakeHarmonicADBackend, h, typical_t, typical_x, typical_p, typical_v)
     return nothing
 end
 

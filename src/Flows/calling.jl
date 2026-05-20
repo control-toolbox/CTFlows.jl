@@ -52,6 +52,13 @@ end
 # prepare_cache — cache preparation for Hamiltonian systems
 # ==============================================================================
 
+function prepare_cache(
+    sys::Systems.AbstractSystem,
+    config::Common.AbstractConfig; variable
+)
+    return nothing
+end
+
 """
 $(TYPEDSIGNATURES)
 

@@ -47,7 +47,7 @@ function FakeIntegrator()
 end
 
 # Implement the three required callable signatures
-function Integrators.build_problem(integ::FakeIntegrator, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)
+function Integrators.build_problem(integ::FakeIntegrator, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable, cache)
     p = Common.ODEParameters(variable)
     return :fake_ode_problem
 end
@@ -101,7 +101,7 @@ function test_abstract_integrator()
             config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
             Test.@testset "Problem building signature" begin
-                result = Integrators.build_problem(integ, sys, config; variable=nothing)
+                result = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 Test.@test result === :fake_ode_problem
             end
 
@@ -127,7 +127,7 @@ function test_abstract_integrator()
             config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
             Test.@testset "Problem building throws NotImplemented" begin
-                Test.@test_throws Exceptions.NotImplemented Integrators.build_problem(integ, sys, config; variable=nothing)
+                Test.@test_throws Exceptions.NotImplemented Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
             end
 
             Test.@testset "Integration throws NotImplemented" begin

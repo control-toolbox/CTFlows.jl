@@ -67,7 +67,7 @@ function test_ad_backend()
             Test.@test length(metadata) > 0
             Test.@test :ad_backend in keys(metadata)
             Test.@test :prepare_cache in keys(metadata)
-            Test.@test metadata[:prepare_cache].default === true
+            Test.@test metadata[:prepare_cache].default === false
         end
 
         Test.@testset "Unit: build_ad_backend" begin

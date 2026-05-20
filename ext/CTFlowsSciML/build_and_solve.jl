@@ -61,7 +61,7 @@ function Integrators.build_problem(
     system::Systems.AbstractSystem, 
     config::Common.AbstractConfig; 
     variable,
-    cache=nothing,
+    cache,
     )
     u0 = Common.initial_condition(config)
     p = Common.ODEParameters(variable, cache)
