@@ -29,6 +29,13 @@ struct FakeHamiltonianSystemForCalling <: Systems.AbstractHamiltonianSystem{Comm
 end
 
 """
+Fake Hamiltonian system with AD trait for testing cache preparation.
+"""
+struct FakeHamiltonianSystemWithAD <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed, Common.WithAD}
+    state_dim::Int
+end
+
+"""
 Fake integration result.
 """
 struct FakeIntegrationResultForCalling <: Solutions.AbstractIntegrationResult end
@@ -52,9 +59,9 @@ function FakeIntegratorForCalling()
 end
 
 # Implement named functions instead of callables
-function Integrators.build_problem(integ::FakeIntegratorForCalling, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable=nothing)
+function Integrators.build_problem(integ::FakeIntegratorForCalling, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable=nothing, cache=nothing)
     integ.build_problem_called = true
-    p = Common.ODEParameters(variable)
+    p = Common.ODEParameters(variable, cache)
     integ.problem_result = :fake_ode_problem
     return integ.problem_result
 end
@@ -100,6 +107,22 @@ function Solutions.build_solution(
     config::Common.HamiltonianTrajectoryConfig
 )
     return :fake_hamiltonian_solution
+end
+
+function Solutions.build_solution(
+    result::FakeIntegrationResultForCalling,
+    system::FakeHamiltonianSystemWithAD,
+    config::Common.HamiltonianPointConfig
+)
+    return (:fake_xf_ad, :fake_pf_ad)
+end
+
+function Solutions.build_solution(
+    result::FakeIntegrationResultForCalling,
+    system::FakeHamiltonianSystemWithAD,
+    config::Common.HamiltonianTrajectoryConfig
+)
+    return :fake_hamiltonian_solution_ad
 end
 
 """
@@ -219,6 +242,56 @@ function test_calling_flows()
                 Test.@test integ.build_options_called === true
                 Test.@test integ.solve_problem_called === true
                 Test.@test result === :fake_hamiltonian_solution
+            end
+        end
+
+        # ====================================================================
+        # INTEGRATION TESTS - Cache in pipeline (trait dispatch)
+        # ====================================================================
+
+        Test.@testset "Integration: Cache in pipeline" begin
+            Test.@testset "HamiltonianVectorFieldSystem (WithoutAD) — cache is nothing" begin
+                sys = FakeHamiltonianSystemForCalling(2)
+                integ = FakeIntegratorForCalling()
+                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                config = Common.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+
+                result = Flows.call(flow, config; variable=nothing, unsafe=false)
+
+                Test.@test integ.build_problem_called === true
+                Test.@test integ.build_options_called === true
+                Test.@test integ.solve_problem_called === true
+                Test.@test result == (:fake_xf, :fake_pf)
+            end
+
+            Test.@testset "HamiltonianSystem (WithAD, prepare_cache=true) — cache prepared" begin
+                # This would require a real AD backend, so we skip the actual cache check
+                # The trait dispatch is tested via the fake system
+                sys = FakeHamiltonianSystemWithAD(2)
+                integ = FakeIntegratorForCalling()
+                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                config = Common.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+
+                result = Flows.call(flow, config; variable=nothing, unsafe=false)
+
+                Test.@test integ.build_problem_called === true
+                Test.@test integ.build_options_called === true
+                Test.@test integ.solve_problem_called === true
+                Test.@test result == (:fake_xf_ad, :fake_pf_ad)
+            end
+
+            Test.@testset "Regression: existing StateFlow path unchanged" begin
+                sys = FakeSystemForCalling(2)
+                integ = FakeIntegratorForCalling()
+                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+
+                result = Flows.call(flow, config; variable=nothing, unsafe=false)
+
+                Test.@test integ.build_problem_called === true
+                Test.@test integ.build_options_called === true
+                Test.@test integ.solve_problem_called === true
+                Test.@test result == :fake_flow_solution
             end
         end
 

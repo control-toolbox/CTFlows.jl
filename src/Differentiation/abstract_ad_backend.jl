@@ -116,6 +116,7 @@ Prepare a cache for efficient gradient computation using typical values.
 # Arguments
 - `backend::AbstractADBackend`: The AD backend.
 - `h`: The Hamiltonian function or type.
+- `typical_t`: Typical time value (used for cache pre-allocation).
 - `typical_x`: Typical state vector (used for cache pre-allocation).
 - `typical_p`: Typical costate vector (used for cache pre-allocation).
 - `typical_v`: Typical variable value (scalar or `nothing` for Fixed problems).
@@ -139,10 +140,10 @@ See also: [`CTFlows.Differentiation.hamiltonian_gradient`](@ref),
 [`CTFlows.Common.AbstractCache`](@ref),
 [`CTFlows.Common.ODEParameters`](@ref).
 """
-function prepare_cache(backend::AbstractADBackend, h, typical_x, typical_p, typical_v)
+function prepare_cache(backend::AbstractADBackend, h, typical_t, typical_x, typical_p, typical_v)
     throw(Exceptions.NotImplemented(
         "prepare_cache not implemented for $(typeof(backend))",
-        required_method = "prepare_cache(backend::$(typeof(backend)), h, typical_x, typical_p, typical_v)",
+        required_method = "prepare_cache(backend::$(typeof(backend)), h, typical_t, typical_x, typical_p, typical_v)",
         suggestion = "Implement prepare_cache for $(typeof(backend)) or load an extension that provides cache preparation (e.g., CTFlowsDifferentiationInterface)",
         context = "AD backend contract"
     ))

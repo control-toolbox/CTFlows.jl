@@ -61,9 +61,10 @@ function Integrators.build_problem(
     system::Systems.AbstractSystem, 
     config::Common.AbstractConfig; 
     variable,
+    cache=nothing,
     )
     u0 = Common.initial_condition(config)
-    p = Common.ODEParameters(variable)
+    p = Common.ODEParameters(variable, cache)
     if ismutable(u0)
         f! = Systems.rhs(system)
         prob = ODEProblem(f!, u0, Common.tspan(config), p)
