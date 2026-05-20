@@ -86,9 +86,10 @@ function test_ad_backend()
             x = [1.0, 2.0]
             p = [3.0, 4.0]
             v = 5.0
+            cache = nothing
 
             try
-                Differentiation.hamiltonian_gradient(backend, h, t, x, p, v)
+                Differentiation.hamiltonian_gradient(backend, h, t, x, p, v, cache)
                 Test.@test false  # Should not reach here
             catch err
                 Test.@test err isa Exceptions.NotImplemented
@@ -103,9 +104,10 @@ function test_ad_backend()
             x = [1.0, 2.0]
             p = [3.0, 4.0]
             v = 5.0
+            cache = nothing
 
             try
-                Differentiation.variable_gradient(backend, h, t, x, p, v)
+                Differentiation.variable_gradient(backend, h, t, x, p, v, cache)
                 Test.@test false  # Should not reach here
             catch err
                 Test.@test err isa Exceptions.NotImplemented

@@ -9,6 +9,7 @@ import CTFlows.Integrators
 import CTFlows.Solutions
 import CTFlows.Common
 import ADTypes
+import DifferentiationInterface
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -46,13 +47,13 @@ function Systems.backend(sys::FakeHamiltonianSystemWithAD)
     return Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff(), prepare_cache=true)
 end
 
-function Differentiation.prepare_cache(
-    backend::Differentiation.DifferentiationInterface,
-    h::Data.AbstractHamiltonian,
-    typical_t, typical_x, typical_p, typical_v
-)
-    return nothing
-end
+# function Differentiation.prepare_cache(
+#     backend::Differentiation.DifferentiationInterface,
+#     h::Data.AbstractHamiltonian,
+#     typical_t, typical_x, typical_p, typical_v
+# )
+#     return nothing
+# end
 
 """
 Fake integration result.
