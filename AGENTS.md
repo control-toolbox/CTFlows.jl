@@ -38,32 +38,20 @@ docs/                   # Documenter.jl site (auto-generated API via CTBase)
 
 ---
 
-## Windsurf Skills
-
-Skills are loaded on demand (progressive disclosure — no permanent token cost).
-Invoke by name or let the model decide based on context.
-
-| Skill | When to use |
-|---|---|
-| `architecture` | Introducing new types, restructuring modules, reviewing SOLID/patterns |
-| `plan` | Writing an implementation plan before coding |
-| `testing-creation` | Writing or reviewing test files under `test/suite/` |
-| `docstrings` | Writing or reviewing Julia docstrings |
-| `exceptions` | Adding error paths, contract stubs, argument validation |
-| `performance` | Hot paths, inner loops, profiling, benchmarking |
-| `type-stability` | New structs, parametric types, `@inferred` test design |
-
-Skills live in `.windsurf/skills/<name>/SKILL.md`.
-
----
-
 ## Windsurf Rules (always active)
 
 | Rule | Trigger | Purpose |
 |---|---|---|
-| `modules.md` | `glob: src/**/*.jl, ext/**/*.jl` | Submodule conventions: qualified imports, manifest pattern, export policy, DAG ordering |
+| `architecture.md` | — | Introducing new types, restructuring modules, reviewing SOLID/patterns |
+| `docstrings.md` | — | Writing or reviewing Julia docstrings |
 | `documentation.md` | `glob: docs/**/*` | Documenter.jl layout, `make.jl` template, `api_reference.jl`, `InterLinks` setup |
+| `exceptions.md` | — | Adding error paths, contract stubs, argument validation |
+| `modules.md` | `glob: src/**/*.jl, ext/**/*.jl` | Submodule conventions: qualified imports, manifest pattern, export policy, DAG ordering |
+| `performance.md` | — | Hot paths, inner loops, profiling, benchmarking |
+| `plan.md` | — | Writing an implementation plan before coding |
+| `testing-creation.md` | — | Writing or reviewing test files under `test/suite/` |
 | `testing-execution.md` | `model_decision` | How to run tests (commands, `tee` capture, `jtest` alias) |
+| `type-stability.md` | — | New structs, parametric types, `@inferred` test design |
 
 Rules live in `.windsurf/rules/`.
 
@@ -74,5 +62,5 @@ Rules live in `.windsurf/rules/`.
 - **No top-level exports** — use `CTFlows.Submodule.symbol` everywhere.
 - **Qualified imports** — `using PackageName: PackageName`, never bare `using`.
 - **Fake types at module top-level** — never inside test functions.
-- **Plans before code** — write a full plan (see `plan` skill) before touching files.
+- **Plans before code** — write a full plan (see `plan.md` rule) before touching files.
 - **Docstrings last** — written only after all implementation steps are stable.
