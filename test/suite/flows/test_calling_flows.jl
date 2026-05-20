@@ -2,10 +2,13 @@ module TestCallingFlows
 
 import Test
 import CTFlows.Systems
+import CTFlows.Data
+import CTFlows.Differentiation
 import CTFlows.Flows
 import CTFlows.Integrators
 import CTFlows.Solutions
 import CTFlows.Common
+import ADTypes
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -33,6 +36,22 @@ Fake Hamiltonian system with AD trait for testing cache preparation.
 """
 struct FakeHamiltonianSystemWithAD <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed, Common.WithAD}
     state_dim::Int
+end
+
+function Systems.hamiltonian(sys::FakeHamiltonianSystemWithAD)
+    return Data.Hamiltonian((x, p) -> 0.5 * sum(x.^2) + sum(p.^2); is_autonomous=true, is_variable=false)
+end
+
+function Systems.backend(sys::FakeHamiltonianSystemWithAD)
+    return Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff(), prepare_cache=true)
+end
+
+function Differentiation.prepare_cache(
+    backend::Differentiation.DifferentiationInterface,
+    h::Data.AbstractHamiltonian,
+    typical_t, typical_x, typical_p, typical_v
+)
+    return nothing
 end
 
 """

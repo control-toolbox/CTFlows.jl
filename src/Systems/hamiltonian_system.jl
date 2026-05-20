@@ -57,6 +57,14 @@ struct HamiltonianSystem{
     rhs_oop::OOPROHS
 end
 
+function hamiltonian(sys::HamiltonianSystem)
+    return sys.h
+end
+
+function backend(sys::HamiltonianSystem)
+    return sys.backend
+end
+
 # =============================================================================
 # Constructors
 # =============================================================================

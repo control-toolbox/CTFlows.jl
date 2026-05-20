@@ -146,11 +146,11 @@ backend's `prepare_cache` method to prepare gradient plans.
 """
 function prepare_cache(
     ::Type{Common.WithAD},
-    sys::Systems.HamiltonianSystem,
+    sys::Systems.AbstractHamiltonianSystem,
     config::Common.AbstractConfig; variable
 )
     t0 = Common.initial_time(config)
     x0 = Common.initial_state(config)
     p0 = Common.initial_costate(config)
-    return Differentiation.prepare_cache(sys.backend, sys.h, t0, x0, p0, variable)
+    return Differentiation.prepare_cache(Systems.backend(sys), Systems.hamiltonian(sys), t0, x0, p0, variable)
 end
