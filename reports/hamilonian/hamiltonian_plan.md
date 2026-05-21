@@ -642,7 +642,7 @@ end
 
 # Any AT — Fixed: clear message
 function call_augmented(
-    ::Type{<:Common.AbstractADTrait}, ::Type{Common.Fixed},
+    ::Type{<:Common.WithAD}, ::Type{Common.Fixed},
     flow::HamiltonianFlow, config::Common.HamiltonianPointConfig; variable, unsafe
 )
     throw(IncorrectArgument(
