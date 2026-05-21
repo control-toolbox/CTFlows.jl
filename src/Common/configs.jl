@@ -199,6 +199,58 @@ end
 abstract type AbstractConfigWithMaC{X0, Mode<:AbstractModeTrait, Content<:AbstractContentTrait} <: AbstractConfig{X0} end
 
 """
+$(TYPEDSIGNATURES)
+
+Return the mode trait type of a configuration.
+
+Extracts the `Mode` type parameter from the configuration's parametric type,
+enabling trait-based dispatch on the integration mode (point vs trajectory).
+
+# Arguments
+- `::AbstractConfigWithMaC{X0, Mode, Content}`: Any concrete configuration subtype.
+
+# Returns
+- `Type{Mode}`: The mode trait type (e.g., `PointTrait` or `TrajectoryTrait`).
+
+# Example
+```julia
+config = Common.HamiltonianPointConfig(0.0, [1.0], [0.5], 1.0)
+Common.mode_trait(config) === Common.PointTrait  # true
+```
+
+See also: [`CTFlows.Common.AbstractConfigWithMaC`](@ref), [`CTFlows.Common.PointTrait`](@ref), [`CTFlows.Common.TrajectoryTrait`](@ref), [`CTFlows.Common.content_trait`](@ref).
+"""
+function mode_trait(::AbstractConfigWithMaC{X0, Mode, Content}) where {X0, Mode, Content}
+    return Mode
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the content trait type of a configuration.
+
+Extracts the `Content` type parameter from the configuration's parametric type,
+enabling trait-based dispatch on the integration content (state, Hamiltonian, augmented Hamiltonian).
+
+# Arguments
+- `::AbstractConfigWithMaC{X0, Mode, Content}`: Any concrete configuration subtype.
+
+# Returns
+- `Type{Content}`: The content trait type (e.g., `StateTrait`, `HamiltonianTrait`, or `AugmentedHamiltonianTrait`).
+
+# Example
+```julia
+config = Common.HamiltonianPointConfig(0.0, [1.0], [0.5], 1.0)
+Common.content_trait(config) === Common.HamiltonianTrait  # true
+```
+
+See also: [`CTFlows.Common.AbstractConfigWithMaC`](@ref), [`CTFlows.Common.StateTrait`](@ref), [`CTFlows.Common.HamiltonianTrait`](@ref), [`CTFlows.Common.AugmentedHamiltonianTrait`](@ref), [`CTFlows.Common.mode_trait`](@ref).
+"""
+function content_trait(::AbstractConfigWithMaC{X0, Mode, Content}) where {X0, Mode, Content}
+    return Content
+end
+
+"""
 $(TYPEDEF)
 
 Alias for point integration mode configurations.

@@ -64,17 +64,17 @@ end
 
 # OutOfPlace, with optional dimension
 function HamiltonianVectorFieldSystem(hvf::Data.HamiltonianVectorField{F, TD, VD, OutOfPlace}; state_dimension::Union{Int, Nothing}=Common.__state_dimension()) where {F, TD, VD}
-    rhs              = _build_rhs(hvf, Val(state_dimension))
-    rhs_oop          = _build_oop_rhs(hvf, Val(state_dimension))
+    rhs              = _build_rhs(OutOfPlace, hvf, Val(state_dimension))
+    rhs_oop          = _build_oop_rhs(OutOfPlace, hvf, Val(state_dimension))
     rhs_oop_finalize = nothing
     return HamiltonianVectorFieldSystem{state_dimension, F, TD, VD, OutOfPlace, typeof(rhs), typeof(rhs_oop), Nothing}(hvf, rhs, rhs_oop, rhs_oop_finalize)
 end
 
 # InPlace, with optional dimension
 function HamiltonianVectorFieldSystem(hvf::Data.HamiltonianVectorField{F, TD, VD, InPlace}; state_dimension::Union{Int, Nothing}=Common.__state_dimension()) where {F, TD, VD}
-    rhs              = _build_rhs(hvf, Val(state_dimension))
-    rhs_oop          = _build_oop_rhs(hvf, Val(state_dimension))
-    rhs_oop_finalize = _build_finalize_rhs_hvf_ip(hvf, Val(state_dimension))
+    rhs              = _build_rhs(InPlace, hvf, Val(state_dimension))
+    rhs_oop          = _build_oop_rhs(InPlace, hvf, Val(state_dimension))
+    rhs_oop_finalize = _build_finalize_rhs_hvf_ip(InPlace, hvf, Val(state_dimension))
     return HamiltonianVectorFieldSystem{state_dimension, F, TD, VD, InPlace, typeof(rhs), typeof(rhs_oop), typeof(rhs_oop_finalize)}(hvf, rhs, rhs_oop, rhs_oop_finalize)
 end
 
@@ -144,7 +144,24 @@ end
 # Internal helpers for building RHS (in-place)
 # =============================================================================
 
-function _build_rhs(hvf::Data.HamiltonianVectorField{F, TD, VD, OutOfPlace}, ::Val{N}) where {F, TD, VD, N}
+"""
+$(TYPEDSIGNATURES)
+
+Build the in-place RHS closure for an out-of-place Hamiltonian vector field.
+
+For out-of-place Hamiltonian vector fields, the RHS splits the combined state
+into state and costate components, calls the Hamiltonian vector field, and
+assigns the results back using `_ham_assign!`.
+
+# Arguments
+- `::Type{OutOfPlace}`: The out-of-place mutability trait.
+- `hvf::Data.HamiltonianVectorField`: The Hamiltonian vector field data structure.
+- `::Val{N}`: The state dimension as a compile-time value.
+
+# Returns
+- `Function`: A closure with signature `(du, u, λ, t) -> nothing`.
+"""
+function _build_rhs(::Type{OutOfPlace}, hvf::Data.HamiltonianVectorField, ::Val{N}) where {N}
     return function (du, u, λ, t)
         x, p = _ham_split(u, N)
         dx, dp = hvf(t, x, p, variable(λ))
@@ -153,7 +170,24 @@ function _build_rhs(hvf::Data.HamiltonianVectorField{F, TD, VD, OutOfPlace}, ::V
     end
 end
 
-function _build_rhs(hvf::Data.HamiltonianVectorField{F, TD, VD, InPlace}, ::Val{N}) where {F, TD, VD, N}
+"""
+$(TYPEDSIGNATURES)
+
+Build the in-place RHS closure for an in-place Hamiltonian vector field.
+
+For in-place Hamiltonian vector fields, the RHS splits both the source and
+destination arrays into state and costate views, and calls the Hamiltonian
+vector field directly with these views (no assignment needed).
+
+# Arguments
+- `::Type{InPlace}`: The in-place mutability trait.
+- `hvf::Data.HamiltonianVectorField`: The Hamiltonian vector field data structure.
+- `::Val{N}`: The state dimension as a compile-time value.
+
+# Returns
+- `Function`: A closure with signature `(du, u, λ, t) -> nothing`.
+"""
+function _build_rhs(::Type{InPlace}, hvf::Data.HamiltonianVectorField, ::Val{N}) where {N}
     return function (du, u, λ, t)
         x, p   = _ham_split(u,  N)
         dx, dp = _ham_split(du, N)  # mutable views into du — hvf writes directly into du, no _ham_assign! needed
@@ -166,7 +200,23 @@ end
 # Internal helpers for building RHS (out-of-place for SVector)
 # =============================================================================
 
-function _build_oop_rhs(hvf::Data.HamiltonianVectorField{F, TD, VD, OutOfPlace}, ::Val{N}) where {F, TD, VD, N}
+"""
+$(TYPEDSIGNATURES)
+
+Build the out-of-place RHS closure for an out-of-place Hamiltonian vector field.
+
+For out-of-place Hamiltonian vector fields, the RHS splits the combined state,
+calls the Hamiltonian vector field, and concatenates the results.
+
+# Arguments
+- `::Type{OutOfPlace}`: The out-of-place mutability trait.
+- `hvf::Data.HamiltonianVectorField`: The Hamiltonian vector field data structure.
+- `::Val{N}`: The state dimension as a compile-time value.
+
+# Returns
+- `Function`: A closure with signature `(u, λ, t) -> du`.
+"""
+function _build_oop_rhs(::Type{OutOfPlace}, hvf::Data.HamiltonianVectorField, ::Val{N}) where {N}
     return function (u, λ, t)
         x, p = _ham_split(u, N)
         dx, dp = hvf(t, x, p, variable(λ))
@@ -174,7 +224,24 @@ function _build_oop_rhs(hvf::Data.HamiltonianVectorField{F, TD, VD, OutOfPlace},
     end
 end
 
-function _build_oop_rhs(hvf::Data.HamiltonianVectorField{F, TD, VD, InPlace}, ::Val{N}) where {F, TD, VD, N}
+"""
+$(TYPEDSIGNATURES)
+
+Build the out-of-place RHS closure for an in-place Hamiltonian vector field.
+
+For in-place Hamiltonian vector fields, the RHS allocates new arrays for the state
+and costate derivatives, calls the Hamiltonian vector field with them, and
+concatenates the results.
+
+# Arguments
+- `::Type{InPlace}`: The in-place mutability trait.
+- `hvf::Data.HamiltonianVectorField`: The Hamiltonian vector field data structure.
+- `::Val{N}`: The state dimension as a compile-time value.
+
+# Returns
+- `Function`: A closure with signature `(u, λ, t) -> du`.
+"""
+function _build_oop_rhs(::Type{InPlace}, hvf::Data.HamiltonianVectorField, ::Val{N}) where {N}
     return function (u, λ, t)
         x, p   = _ham_split(u, N)
         dx, dp = similar(x), similar(p)
@@ -187,7 +254,24 @@ end
 # Internal helpers for building finalize RHS (in-place with immutable u0)
 # =============================================================================
 
-function _build_finalize_rhs_hvf_ip(hvf::Data.HamiltonianVectorField{F, TD, VD, InPlace}, ::Val{N}) where {F, TD, VD, N}
+"""
+$(TYPEDSIGNATURES)
+
+Build the finalize RHS closure for an in-place Hamiltonian vector field with immutable u0.
+
+This is used when the initial condition is immutable (e.g., SVector), requiring
+a conversion to the appropriate type after the in-place computation.
+
+# Arguments
+- `::Type{InPlace}`: The in-place mutability trait.
+- `hvf::Data.HamiltonianVectorField`: The Hamiltonian vector field data structure.
+- `::Val{N}`: The state dimension as a compile-time value.
+
+# Returns
+- `Function`: A closure with signature `(u, λ, t) -> du` that returns the result
+  converted to the same type as `u`.
+"""
+function _build_finalize_rhs_hvf_ip(::Type{InPlace}, hvf::Data.HamiltonianVectorField, ::Val{N}) where {N}
     return function (u, λ, t)
         x, p   = _ham_split(u, N)
         dx, dp = similar(x), similar(p)
@@ -379,6 +463,6 @@ Delegates to the compact show method.
 
 See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
 """
-function Base.show(io::IO, ::MIME"text/plain", sys::HamiltonianVectorFieldSystem{N, F, TD, VD, MD, RHS, OOPROHS, FINRHS}) where {N, F, TD, VD, MD, RHS, OOPROHS, FINRHS}
+function Base.show(io::IO, ::MIME"text/plain", sys::HamiltonianVectorFieldSystem)
     show(io, sys)
 end

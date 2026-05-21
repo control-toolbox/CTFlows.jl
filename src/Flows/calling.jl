@@ -248,7 +248,12 @@ function core_call(flow::Flows.AbstractFlow, config::Common.AbstractConfig; vari
     result = Integrators.solve_problem(int, prob, opts; unsafe=unsafe)
 
     # build flow solution
-    flow_sol = Solutions.build_solution(result, sys, config)
+    flow_sol = Solutions.build_solution(
+        Common.mode_trait(config),
+        Common.content_trait(config),
+        Common.initial_state(config),
+        result,
+    )
 
     return flow_sol
 end

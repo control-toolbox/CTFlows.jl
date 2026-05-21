@@ -7,27 +7,28 @@ $(TYPEDSIGNATURES)
 
 Default implementation for scalar point configs — return the final state.
 
-For scalar configurations (`X0 <: Number`), unwraps the length-1 vector that was
+For scalar configurations (`initial_state <: Number`), unwraps the length-1 vector that was
 introduced by scalar-promotion at ODE problem construction time.
 
-This uses compile-time dispatch on the configuration's type parameter to avoid
-runtime type tests.
+This uses compile-time dispatch on the initial state type to avoid runtime type tests.
 
 # Arguments
+- `::Type{Common.PointTrait}`: The point mode trait type.
+- `::Type{Common.StateTrait}`: The state content trait type.
+- `initial_state::Number`: The scalar initial state.
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
-- `sys::Systems.VectorFieldSystem`: The vector field system.
-- `config::Common.AbstractPointConfig{<:Number, Common.StateTrait}`: Scalar point configuration.
 
 # Returns
 - `Number`: The unwrapped scalar final state.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Common.AbstractPointConfig`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Common.PointTrait`](@ref), [`CTFlows.Common.StateTrait`](@ref).
 """
 function build_solution(
+    ::Type{Common.PointTrait},
+    ::Type{Common.StateTrait},
+    initial_state::Number,
     result::Integrators.AbstractIntegrationResult, 
-    sys::Systems.AbstractStateSystem, 
-    config::Common.AbstractPointConfig{<:Number, Common.StateTrait}
-    )
+)
     return final_state(result)[1]
 end
 
@@ -39,20 +40,22 @@ Default implementation for point configs — return the final state.
 For vector configurations, returns the state vector unchanged.
 
 # Arguments
+- `::Type{Common.PointTrait}`: The point mode trait type.
+- `::Type{Common.StateTrait}`: The state content trait type.
+- `initial_state`: The initial state (vector or scalar).
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
-- `sys::Systems.VectorFieldSystem`: The vector field system.
-- `config::Common.AbstractPointConfig`: Point configuration.
 
 # Returns
 - `AbstractVector`: The final state vector.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Common.AbstractPointConfig`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Common.PointTrait`](@ref), [`CTFlows.Common.StateTrait`](@ref).
 """
 function build_solution(
+    ::Type{Common.PointTrait},
+    ::Type{Common.StateTrait},
+    initial_state,
     result::Integrators.AbstractIntegrationResult, 
-    sys::Systems.AbstractStateSystem, 
-    config::Common.AbstractPointConfig{X0, Common.StateTrait}
-    ) where {X0}
+)
     return final_state(result)
 end
 
@@ -63,20 +66,22 @@ Default implementation for trajectory configs — wrap the integration result
 in a `VectorFieldSolution` for future extensibility.
 
 # Arguments
+- `::Type{Common.TrajectoryTrait}`: The trajectory mode trait type.
+- `::Type{Common.StateTrait}`: The state content trait type.
+- `initial_state`: The initial state.
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
-- `sys::Systems.VectorFieldSystem`: The vector field system.
-- `config::Common.AbstractTrajectoryConfig`: The trajectory configuration.
 
 # Returns
 - `VectorFieldSolution`: The wrapped integration result.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Common.AbstractTrajectoryConfig`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Common.TrajectoryTrait`](@ref), [`CTFlows.Common.StateTrait`](@ref).
 """
 function build_solution(
+    ::Type{Common.TrajectoryTrait},
+    ::Type{Common.StateTrait},
+    initial_state,
     result::Integrators.AbstractIntegrationResult, 
-    sys::Systems.AbstractStateSystem, 
-    config::Common.AbstractTrajectoryConfig{X0, Common.StateTrait}
-    ) where {X0}
+)
     return VectorFieldSolution(result)
 end
 
@@ -107,7 +112,7 @@ Dispatches on the type of the initial condition `x0` to handle scalar, vector, a
 - Internal helper used by `build_solution` for `HamiltonianPointConfig`.
 - Enables DRY principle by centralizing solution splitting logic.
 """
-_ham_split_solution(u, x0::Number) = (u[1], u[2])
+_ham_split_solution(u, ::Number) = (u[1], u[2])
 _ham_split_solution(u, x0::AbstractVector) = (u[1:length(x0)], u[length(x0)+1:end])
 _ham_split_solution(u, x0::AbstractMatrix) = (u[1:size(x0, 1), :], u[size(x0, 1)+1:end, :])
 
@@ -121,27 +126,29 @@ $(TYPEDSIGNATURES)
 Build a solution for Hamiltonian point configs.
 
 Returns the final state and costate as a tuple `(xf, pf)`, dispatching on the
-type of the initial condition to handle scalar, vector, and matrix cases.
+type of the initial state to handle scalar, vector, and matrix cases.
 
 # Arguments
+- `::Type{Common.PointTrait}`: The point mode trait type.
+- `::Type{Common.HamiltonianTrait}`: The Hamiltonian content trait type.
+- `initial_state`: The initial state (scalar, vector, or matrix).
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
-- `sys::Systems.HamiltonianVectorFieldSystem`: The Hamiltonian vector field system.
-- `config::Common.AbstractPointConfig{<:Any, Common.HamiltonianTrait}`: The Hamiltonian point configuration.
 
 # Returns
-- `Tuple`: The final state and costate. Type depends on `x0`/`p0`:
+- `Tuple`: The final state and costate. Type depends on `initial_state`:
   - `Tuple{Number, Number}` for scalar inputs
   - `Tuple{AbstractVector, AbstractVector}` for vector inputs
   - `Tuple{AbstractMatrix, AbstractMatrix}` for matrix inputs
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Common.AbstractPointConfig`](@ref), [`CTFlows.Common.AbstractHamiltonianConfig`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Common.PointTrait`](@ref), [`CTFlows.Common.HamiltonianTrait`](@ref).
 """
 function build_solution(
-    result::Integrators.AbstractIntegrationResult, 
-    sys::Systems.AbstractHamiltonianSystem, 
-    config::Common.AbstractPointConfig{X0, Common.HamiltonianTrait}
-    ) where {X0}
-    return _ham_split_solution(Integrators.final_state(result), Common.initial_state(config))
+    ::Type{Common.PointTrait},
+    ::Type{Common.HamiltonianTrait},
+    initial_state,
+    result::Integrators.AbstractIntegrationResult,
+    )
+    return _ham_split_solution(Integrators.final_state(result), initial_state)
 end
 
 """
@@ -152,19 +159,21 @@ Build a solution for Hamiltonian trajectory configs.
 Wraps the integration result in a `HamiltonianVectorFieldSolution` for future extensibility.
 
 # Arguments
+- `::Type{Common.TrajectoryTrait}`: The trajectory mode trait type.
+- `::Type{Common.HamiltonianTrait}`: The Hamiltonian content trait type.
+- `initial_state`: The initial state.
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
-- `sys::Systems.HamiltonianVectorFieldSystem`: The Hamiltonian vector field system.
-- `config::Common.AbstractTrajectoryConfig{<:Any, Common.HamiltonianTrait}`: The Hamiltonian trajectory configuration.
 
 # Returns
 - `HamiltonianVectorFieldSolution`: The wrapped integration result.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Common.AbstractTrajectoryConfig`](@ref), [`CTFlows.Common.AbstractHamiltonianConfig`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Common.TrajectoryTrait`](@ref), [`CTFlows.Common.HamiltonianTrait`](@ref).
 """
 function build_solution(
-    result::Integrators.AbstractIntegrationResult, 
-    sys::Systems.AbstractHamiltonianSystem, 
-    config::Common.AbstractTrajectoryConfig{X0, Common.HamiltonianTrait}
-    ) where {X0}
+    ::Type{Common.TrajectoryTrait},
+    ::Type{Common.HamiltonianTrait},
+    initial_state,
+    result::Integrators.AbstractIntegrationResult,
+    )
     return HamiltonianVectorFieldSolution(result)
 end

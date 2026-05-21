@@ -210,7 +210,7 @@ Return the automatic differentiation capability trait of a Hamiltonian system.
 
 See also: [`CTFlows.Common.AbstractADTrait`](@ref), [`CTFlows.Common.WithAD`](@ref), [`CTFlows.Common.WithoutAD`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref).
 """
-function ad_trait(sys::AbstractHamiltonianSystem{TD, VD, AT}) where {TD, VD, AT}
+function ad_trait(::AbstractHamiltonianSystem{TD, VD, AT}) where {TD, VD, AT}
     return AT
 end
 

@@ -103,59 +103,39 @@ function Integrators.solve_problem(integ::FakeIntegratorForCalling, prob, option
 end
 
 function Solutions.build_solution(
+    ::Type{Common.PointTrait},
+    ::Type{Common.StateTrait},
+    initial_state,
     result::FakeIntegrationResultForCalling,
-    system::FakeSystemForCalling,
-    config::Common.StatePointConfig
 )
     return Solutions.final_state(result)
 end
 
 function Solutions.build_solution(
+    ::Type{Common.TrajectoryTrait},
+    ::Type{Common.StateTrait},
+    initial_state,
     result::FakeIntegrationResultForCalling,
-    system::FakeSystemNonFixed,
-    config::Common.StatePointConfig
-)
-    return Solutions.final_state(result)
-end
-
-function Solutions.build_solution(
-    result::FakeIntegrationResultForCalling,
-    system::FakeSystemForCalling,
-    config::Common.StateTrajectoryConfig
 )
     return :fake_vector_field_solution
 end
 
 function Solutions.build_solution(
+    ::Type{Common.PointTrait},
+    ::Type{Common.HamiltonianTrait},
+    initial_state,
     result::FakeIntegrationResultForCalling,
-    system::FakeHamiltonianSystemForCalling,
-    config::Common.HamiltonianPointConfig
 )
     return (:fake_xf, :fake_pf)
 end
 
 function Solutions.build_solution(
+    ::Type{Common.TrajectoryTrait},
+    ::Type{Common.HamiltonianTrait},
+    initial_state,
     result::FakeIntegrationResultForCalling,
-    system::FakeHamiltonianSystemForCalling,
-    config::Common.HamiltonianTrajectoryConfig
 )
     return :fake_hamiltonian_solution
-end
-
-function Solutions.build_solution(
-    result::FakeIntegrationResultForCalling,
-    system::FakeHamiltonianSystemWithAD,
-    config::Common.HamiltonianPointConfig
-)
-    return (:fake_xf_ad, :fake_pf_ad)
-end
-
-function Solutions.build_solution(
-    result::FakeIntegrationResultForCalling,
-    system::FakeHamiltonianSystemWithAD,
-    config::Common.HamiltonianTrajectoryConfig
-)
-    return :fake_hamiltonian_solution_ad
 end
 
 """
@@ -305,7 +285,7 @@ function test_calling_flows()
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
                 Test.@test integ.solve_problem_called === true
-                Test.@test result == (:fake_xf_ad, :fake_pf_ad)
+                Test.@test result == (:fake_xf, :fake_pf)
             end
 
             Test.@testset "Regression: existing StateFlow path unchanged" begin
