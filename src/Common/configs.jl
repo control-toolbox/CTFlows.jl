@@ -166,6 +166,32 @@ function initial_costate(c::AbstractConfig)
     ))
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the initial variable costate for a configuration (stub method).
+
+This is a stub method on the base `AbstractConfig` type that throws
+`NotImplemented`. Concrete subtypes should implement this method to return
+their specific initial variable costate (if applicable).
+
+# Arguments
+- `c::AbstractConfig`: The configuration.
+
+# Throws
+- `Exceptions.NotImplemented`: Always thrown for the base abstract type.
+
+See also: [`CTFlows.Common.AbstractConfig`](@ref).
+"""
+function initial_variable_costate(c::AbstractConfig)
+    throw(Exceptions.NotImplemented(
+        "AbstractConfig initial_variable_costate method not implemented";
+        required_method = "initial_variable_costate(c::$(typeof(c)))",
+        suggestion = "Return the initial variable costate for this configuration.",
+        context = "AbstractConfig.initial_variable_costate - required method implementation",
+    ))
+end
+
 # =============================================================================
 # Type Aliases for Convenient Dispatch
 # =============================================================================
@@ -604,6 +630,103 @@ struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: Abstract
     p0::P0
 end
 
+"""
+$(TYPEDEF)
+
+Configuration for an augmented Hamiltonian point-to-point integration problem.
+
+Defines the initial and final time points along with the initial state, costate,
+and variable costate for integration from a single initial condition to a specific
+final time in the augmented Hamiltonian framework.
+
+# Fields
+- `t0::T0`: Initial time
+- `x0::X0`: Initial state vector
+- `p0::P0`: Initial costate vector
+- `pv0::PV0`: Initial variable costate vector (typically zeros)
+- `tf::TF`: Final time
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> config = AugmentedHamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+AugmentedHamiltonianPointConfig
+  t0: 0.0
+  x0: [1.0, 0.0]
+  p0: [0.5, 0.3]
+  pv0: [0.0, 0.0]
+  tf: 1.0
+\`\`\`
+
+See also: [`CTFlows.Common.HamiltonianPointConfig`](@ref), [`CTFlows.Common.AugmentedHamiltonianTrait`](@ref).
+"""
+struct AugmentedHamiltonianPointConfig{T0<:Real, X0, P0, PV0, TF<:Real} <: AbstractConfigWithMaC{X0, PointTrait, AugmentedHamiltonianTrait}
+    t0::T0
+    x0::X0
+    p0::P0
+    pv0::PV0
+    tf::TF
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the initial condition for augmented Hamiltonian configurations.
+
+For augmented Hamiltonian systems, the initial condition is the concatenation of the
+initial state, initial costate, and initial variable costate: `vcat(x0, p0, pv0)`.
+
+# Arguments
+- `c::AugmentedHamiltonianPointConfig`: The augmented Hamiltonian configuration.
+
+# Returns
+- Concatenated vector `[x0; p0; pv0]`.
+
+See also: [`CTFlows.Common.AugmentedHamiltonianPointConfig`](@ref), [`CTFlows.Common.initial_state`](@ref), [`CTFlows.Common.initial_costate`](@ref), [`CTFlows.Common.initial_variable_costate`](@ref).
+"""
+function initial_condition(c::AugmentedHamiltonianPointConfig)
+    return vcat(c.x0, c.p0, c.pv0)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the initial costate for augmented Hamiltonian configurations.
+
+Extracts the initial costate field from the augmented Hamiltonian configuration.
+
+# Arguments
+- `c::AugmentedHamiltonianPointConfig`: The augmented Hamiltonian configuration.
+
+# Returns
+- The initial costate vector.
+
+See also: [`CTFlows.Common.AugmentedHamiltonianPointConfig`](@ref).
+"""
+function initial_costate(c::AugmentedHamiltonianPointConfig)
+    return c.p0
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the initial variable costate for augmented Hamiltonian configurations.
+
+Extracts the initial variable costate field from the augmented Hamiltonian configuration.
+
+# Arguments
+- `c::AugmentedHamiltonianPointConfig`: The augmented Hamiltonian configuration.
+
+# Returns
+- The initial variable costate vector.
+
+See also: [`CTFlows.Common.AugmentedHamiltonianPointConfig`](@ref).
+"""
+function initial_variable_costate(c::AugmentedHamiltonianPointConfig)
+    return c.pv0
+end
+
 # =============================================================================
 # Base.show
 # =============================================================================
@@ -689,5 +812,28 @@ $(TYPEDSIGNATURES)
 Display the `HamiltonianTrajectoryConfig` in REPL format.
 """
 function Base.show(io::IO, ::MIME"text/plain", c::HamiltonianTrajectoryConfig)
+    show(io, c)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display the `AugmentedHamiltonianPointConfig` in tree-style format.
+"""
+function Base.show(io::IO, c::AugmentedHamiltonianPointConfig)
+    println(io, "AugmentedHamiltonianPointConfig")
+    println(io, "  t0: ", c.t0)
+    println(io, "  x0: ", c.x0)
+    println(io, "  p0: ", c.p0)
+    println(io, "  pv0: ", c.pv0)
+    print(io, "  tf: ", c.tf)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display the `AugmentedHamiltonianPointConfig` in REPL format.
+"""
+function Base.show(io::IO, ::MIME"text/plain", c::AugmentedHamiltonianPointConfig)
     show(io, c)
 end

@@ -45,14 +45,14 @@ export InPlace, OutOfPlace
 export WithAD, WithoutAD
 export AbstractCache
 export AbstractConfig, AbstractPointConfig, AbstractTrajectoryConfig, AbstractStateConfig, AbstractHamiltonianConfig, AbstractAugmentedHamiltonianConfig
-export StatePointConfig, StateTrajectoryConfig, HamiltonianPointConfig, HamiltonianTrajectoryConfig
-export tspan, initial_condition, initial_state, initial_costate, initial_time, final_time
+export StatePointConfig, StateTrajectoryConfig, HamiltonianPointConfig, HamiltonianTrajectoryConfig, AugmentedHamiltonianPointConfig
+export tspan, initial_condition, initial_state, initial_costate, initial_variable_costate, initial_time, final_time
 export VariableDependence, Fixed, NonFixed, NotProvided
 export ODEParameters, variable, cache
 export has_time_dependence_trait, has_variable_dependence_trait, has_mutability_trait
 export time_dependence, variable_dependence, mutability_trait
 export is_inplace, is_outofplace
-export __is_autonomous, __is_variable, __variable, __unsafe, __is_inplace, __state_dimension
+export __is_autonomous, __is_variable, __variable, __unsafe, __is_inplace, __state_dimension, _variable_costate
 export deepvalue, real_norm
 
 end # module Common

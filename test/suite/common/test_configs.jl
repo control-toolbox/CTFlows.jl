@@ -134,6 +134,20 @@ function test_configs()
                 Test.@test Common.initial_costate(config) == [0.5, 0.3]
             end
 
+            Test.@testset "initial_variable_costate is exported" begin
+                Test.@test isdefined(Common, :initial_variable_costate)
+            end
+
+            Test.@testset "initial_variable_costate stub throws NotImplemented on bare config" begin
+                config = FakeBareConfig()
+                Test.@test_throws Exceptions.NotImplemented Common.initial_variable_costate(config)
+            end
+
+            Test.@testset "initial_variable_costate throws NotImplemented on HamiltonianPointConfig" begin
+                config = Common.HamiltonianPointConfig(0.0, [1.0], [0.5], 1.0)
+                Test.@test_throws Exceptions.NotImplemented Common.initial_variable_costate(config)
+            end
+
             Test.@testset "tspan unified dispatch" begin
                 sp = Common.StatePointConfig(0.0, [1.0], 1.0)
                 st = Common.StateTrajectoryConfig((0.0, 1.0), [1.0])
@@ -261,6 +275,63 @@ function test_configs()
                 Test.@test config.tspan == (0.0, 1.0)
                 Test.@test config.x0 == [1.0, 0.0]
                 Test.@test config.p0 == [0.5, 0.3]
+            end
+
+            Test.@testset "AugmentedHamiltonianPointConfig construction" begin
+                config = Common.AugmentedHamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+                Test.@test config isa Common.AugmentedHamiltonianPointConfig
+                Test.@test config.t0 === 0.0
+                Test.@test config.x0 == [1.0, 0.0]
+                Test.@test config.p0 == [0.5, 0.3]
+                Test.@test config.pv0 == [0.0, 0.0]
+                Test.@test config.tf === 1.0
+            end
+
+            Test.@testset "AugmentedHamiltonianPointConfig initial_condition" begin
+                config = Common.AugmentedHamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+                ic = Common.initial_condition(config)
+                Test.@test ic == [1.0, 0.0, 0.5, 0.3, 0.0, 0.0]
+            end
+
+            Test.@testset "AugmentedHamiltonianPointConfig initial_state" begin
+                config = Common.AugmentedHamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+                Test.@test Common.initial_state(config) == [1.0, 0.0]
+            end
+
+            Test.@testset "AugmentedHamiltonianPointConfig initial_costate" begin
+                config = Common.AugmentedHamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+                Test.@test Common.initial_costate(config) == [0.5, 0.3]
+            end
+
+            Test.@testset "AugmentedHamiltonianPointConfig initial_variable_costate" begin
+                config = Common.AugmentedHamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+                Test.@test Common.initial_variable_costate(config) == [0.0, 0.0]
+            end
+
+            Test.@testset "AugmentedHamiltonianPointConfig tspan" begin
+                config = Common.AugmentedHamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+                Test.@test Common.tspan(config) == (0.0, 1.0)
+            end
+
+            Test.@testset "AugmentedHamiltonianPointConfig subtypes AbstractAugmentedHamiltonianConfig" begin
+                config = Common.AugmentedHamiltonianPointConfig(0.0, [1.0], [0.5], [0.0], 1.0)
+                Test.@test config isa Common.AbstractAugmentedHamiltonianConfig
+                Test.@test Common.AugmentedHamiltonianPointConfig <: Common.AbstractAugmentedHamiltonianConfig
+            end
+
+            Test.@testset "AugmentedHamiltonianPointConfig subtypes AbstractPointConfig" begin
+                config = Common.AugmentedHamiltonianPointConfig(0.0, [1.0], [0.5], [0.0], 1.0)
+                Test.@test config isa Common.AbstractPointConfig
+                Test.@test Common.AugmentedHamiltonianPointConfig <: Common.AbstractPointConfig
+            end
+
+            Test.@testset "Type Stability: AugmentedHamiltonianPointConfig getters" begin
+                config = Common.AugmentedHamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+                Test.@test Test.@inferred(Common.initial_condition(config)) == [1.0, 0.0, 0.5, 0.3, 0.0, 0.0]
+                Test.@test Test.@inferred(Common.initial_state(config)) == [1.0, 0.0]
+                Test.@test Test.@inferred(Common.initial_costate(config)) == [0.5, 0.3]
+                Test.@test Test.@inferred(Common.initial_variable_costate(config)) == [0.0, 0.0]
+                Test.@test Test.@inferred(Common.tspan(config)) == (0.0, 1.0)
             end
         end
 
@@ -395,6 +466,46 @@ function test_configs()
                 Test.@test occursin("tspan:", output)
                 Test.@test occursin("x0:", output)
                 Test.@test occursin("p0:", output)
+            end
+
+            Test.@testset "AugmentedHamiltonianPointConfig show methods" begin
+                config = Common.AugmentedHamiltonianPointConfig(0.0, [1.0], [0.5], [0.0], 1.0)
+                io = IOBuffer()
+                show(io, config)
+                output = String(take!(io))
+                Test.@test occursin("AugmentedHamiltonianPointConfig", output)
+                Test.@test occursin("t0:", output)
+                Test.@test occursin("x0:", output)
+                Test.@test occursin("p0:", output)
+                Test.@test occursin("pv0:", output)
+                Test.@test occursin("tf:", output)
+            end
+
+            Test.@testset "AugmentedHamiltonianPointConfig text/plain show method" begin
+                config = Common.AugmentedHamiltonianPointConfig(0.0, [1.0], [0.5], [0.0], 1.0)
+                io = IOBuffer()
+                show(io, MIME("text/plain"), config)
+                output = String(take!(io))
+                Test.@test occursin("AugmentedHamiltonianPointConfig", output)
+                Test.@test occursin("t0:", output)
+                Test.@test occursin("x0:", output)
+                Test.@test occursin("p0:", output)
+                Test.@test occursin("pv0:", output)
+                Test.@test occursin("tf:", output)
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Exports
+        # ====================================================================
+
+        Test.@testset "Exports" begin
+            Test.@testset "AugmentedHamiltonianPointConfig is exported" begin
+                Test.@test isdefined(Common, :AugmentedHamiltonianPointConfig)
+            end
+
+            Test.@testset "initial_variable_costate is exported" begin
+                Test.@test isdefined(Common, :initial_variable_costate)
             end
         end
     end

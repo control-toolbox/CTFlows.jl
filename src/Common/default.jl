@@ -92,3 +92,18 @@ is stored as a type parameter for compile-time validation and performance.
 See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Systems.build_system`](@ref).
 """
 __state_dimension() = nothing
+
+"""
+$(TYPEDSIGNATURES)
+
+Default value for variable_costate flag in Hamiltonian flow calls.
+
+Returns `false` by default, meaning the flow does not integrate the augmented
+variable costate equation `ṗᵥ = -∂H/∂v` unless explicitly requested.
+
+# Returns
+- `Bool`: The default value for the `variable_costate` parameter.
+
+See also: [`CTFlows.Common.AugmentedHamiltonianPointConfig`](@ref).
+"""
+_variable_costate()::Bool = false
