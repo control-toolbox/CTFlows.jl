@@ -36,7 +36,7 @@ function FakeIntegFC()
     return FakeIntegFC(nothing)
 end
 
-function Integrators.build_problem(integ::FakeIntegFC, sys::Systems.AbstractSystem, config::Common.AbstractConfig; variable=nothing)
+function Integrators.build_problem(integ::FakeIntegFC, sys::Systems.AbstractSystem, config::Common.AbstractConfig; variable=nothing, cache=nothing)
     integ.last_config = config
     return :fake_prob
 end

@@ -70,6 +70,24 @@ function tspan(c::AbstractConfig)
     ))
 end
 
+function initial_time(c::AbstractConfig)
+    throw(Exceptions.NotImplemented(
+        "AbstractConfig initial_time method not implemented";
+        required_method = "initial_time(c::$(typeof(c)))",
+        suggestion = "Return the initial time for this configuration.",
+        context = "AbstractConfig.initial_time - required method implementation",
+    ))
+end
+
+function final_time(c::AbstractConfig)
+    throw(Exceptions.NotImplemented(
+        "AbstractConfig final_time method not implemented";
+        required_method = "final_time(c::$(typeof(c)))",
+        suggestion = "Return the final time for this configuration.",
+        context = "AbstractConfig.final_time - required method implementation",
+    ))
+end
+
 """
 $(TYPEDSIGNATURES)
 
@@ -250,6 +268,82 @@ See also: [`CTFlows.Common.AbstractTrajectoryConfig`](@ref), [`CTFlows.Common.ts
 """
 function tspan(c::AbstractTrajectoryConfig)::Tuple{Real, Real}
     return c.tspan
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the initial time for point configurations.
+
+For point configurations, returns the stored `t0` field directly.
+
+# Arguments
+- `c::AbstractPointConfig`: The point configuration.
+
+# Returns
+- `Real`: Initial time t0.
+
+See also: [`CTFlows.Common.AbstractPointConfig`](@ref), [`CTFlows.Common.initial_time`](@ref).
+"""
+function initial_time(c::AbstractPointConfig)::Real
+    return c.t0
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the initial time for trajectory configurations.
+
+For trajectory configurations, returns the first element of the stored `tspan` field.
+
+# Arguments
+- `c::AbstractTrajectoryConfig`: The trajectory configuration.
+
+# Returns
+- `Real`: Initial time t0.
+
+See also: [`CTFlows.Common.AbstractTrajectoryConfig`](@ref), [`CTFlows.Common.initial_time`](@ref).
+"""
+function initial_time(c::AbstractTrajectoryConfig)::Real
+    return c.tspan[1]
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the final time for point configurations.
+
+For point configurations, returns the stored `tf` field directly.
+
+# Arguments
+- `c::AbstractPointConfig`: The point configuration.
+
+# Returns
+- `Real`: Final time tf.
+
+See also: [`CTFlows.Common.AbstractPointConfig`](@ref), [`CTFlows.Common.final_time`](@ref).
+"""
+function final_time(c::AbstractPointConfig)::Real
+    return c.tf
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the final time for trajectory configurations.
+
+For trajectory configurations, returns the second element of the stored `tspan` field.
+
+# Arguments
+- `c::AbstractTrajectoryConfig`: The trajectory configuration.
+
+# Returns
+- `Real`: Final time tf.
+
+See also: [`CTFlows.Common.AbstractTrajectoryConfig`](@ref), [`CTFlows.Common.final_time`](@ref).
+"""
+function final_time(c::AbstractTrajectoryConfig)::Real
+    return c.tspan[2]
 end
 
 """

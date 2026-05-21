@@ -42,7 +42,7 @@ Compute the Hamiltonian gradient (∂H/∂x, ∂H/∂p) using the backend.
 - `x`: State vector.
 - `p`: Costate vector.
 - `v`: Variable (scalar or `nothing` for Fixed problems).
-- `cache=nothing`: Optional pre-allocated cache for efficient computation.
+- `cache`: Optional pre-allocated cache for efficient computation.
 
 # Returns
 - `(∂H_∂x, ∂H_∂p)`: Tuple of partial derivatives, **non-negated**. The RHS closure
@@ -60,7 +60,7 @@ Compute the Hamiltonian gradient (∂H/∂x, ∂H/∂p) using the backend.
 See also: [`CTFlows.Differentiation.variable_gradient`](@ref),
 [`CTFlows.Differentiation.prepare_cache`](@ref).
 """
-function hamiltonian_gradient(backend::AbstractADBackend, h, t, x, p, v, cache=nothing)
+function hamiltonian_gradient(backend::AbstractADBackend, h, t, x, p, v, cache)
     throw(Exceptions.NotImplemented(
         "hamiltonian_gradient not implemented for $(typeof(backend))",
         required_method = "hamiltonian_gradient(backend::$(typeof(backend)), h, t, x, p, v[, cache])",
@@ -81,7 +81,7 @@ Compute the variable gradient ∂H/∂v using the backend.
 - `x`: State vector.
 - `p`: Costate vector.
 - `v`: Variable (scalar or `nothing` for Fixed problems).
-- `cache=nothing`: Optional pre-allocated cache for efficient computation.
+- `cache`: Optional pre-allocated cache for efficient computation.
 
 # Returns
 - `∂H_∂v`: Partial derivative with respect to the variable, **non-negated**. The RHS
@@ -99,7 +99,7 @@ Compute the variable gradient ∂H/∂v using the backend.
 See also: [`CTFlows.Differentiation.hamiltonian_gradient`](@ref),
 [`CTFlows.Differentiation.prepare_cache`](@ref).
 """
-function variable_gradient(backend::AbstractADBackend, h, t, x, p, v, cache=nothing)
+function variable_gradient(backend::AbstractADBackend, h, t, x, p, v, cache)
     throw(Exceptions.NotImplemented(
         "variable_gradient not implemented for $(typeof(backend))",
         required_method = "variable_gradient(backend::$(typeof(backend)), h, t, x, p, v[, cache])",
@@ -116,6 +116,7 @@ Prepare a cache for efficient gradient computation using typical values.
 # Arguments
 - `backend::AbstractADBackend`: The AD backend.
 - `h`: The Hamiltonian function or type.
+- `typical_t`: Typical time value (used for cache pre-allocation).
 - `typical_x`: Typical state vector (used for cache pre-allocation).
 - `typical_p`: Typical costate vector (used for cache pre-allocation).
 - `typical_v`: Typical variable value (scalar or `nothing` for Fixed problems).
@@ -139,10 +140,10 @@ See also: [`CTFlows.Differentiation.hamiltonian_gradient`](@ref),
 [`CTFlows.Common.AbstractCache`](@ref),
 [`CTFlows.Common.ODEParameters`](@ref).
 """
-function prepare_cache(backend::AbstractADBackend, h, typical_x, typical_p, typical_v)
+function prepare_cache(backend::AbstractADBackend, h, typical_t, typical_x, typical_p, typical_v)
     throw(Exceptions.NotImplemented(
         "prepare_cache not implemented for $(typeof(backend))",
-        required_method = "prepare_cache(backend::$(typeof(backend)), h, typical_x, typical_p, typical_v)",
+        required_method = "prepare_cache(backend::$(typeof(backend)), h, typical_t, typical_x, typical_p, typical_v)",
         suggestion = "Implement prepare_cache for $(typeof(backend)) or load an extension that provides cache preparation (e.g., CTFlowsDifferentiationInterface)",
         context = "AD backend contract"
     ))

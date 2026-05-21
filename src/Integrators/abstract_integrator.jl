@@ -22,7 +22,7 @@ Methods defined on **instances** that provide the actual configuration:
 
 All subtypes must implement three named functions:
 
-- `build_problem(integrator::AbstractIntegrator, system::CTFlows.Systems.AbstractSystem, config::CTFlows.Common.AbstractConfig; variable)`: Build the ODE problem representation from a system and configuration.
+- `build_problem(integrator::AbstractIntegrator, system::CTFlows.Systems.AbstractSystem, config::CTFlows.Common.AbstractConfig; variable, cache)`: Build the ODE problem representation from a system and configuration.
 - `build_options(integrator::AbstractIntegrator, config::Union{CTFlows.Common.AbstractConfig, Nothing})`: Build solver options dict for the given configuration.
 - `solve_problem(integrator::AbstractIntegrator, prob, options::Dict{Symbol,Any})`: Solve the given ODE problem with resolved options (tspan is embedded in `prob`).
 
@@ -47,6 +47,7 @@ Build the ODE problem representation from a system and configuration.
 - `system::CTFlows.Systems.AbstractSystem`: The system to build a problem for.
 - `config::CTFlows.Common.AbstractConfig`: The integration configuration.
 - `variable`: The variable parameter value (required for NonFixed systems).
+- `cache`: The cache for Hamiltonian systems (returns nothing for WithoutAD).
 
 # Returns
 - The ODE problem representation (type varies by concrete integrator).
@@ -56,11 +57,11 @@ Build the ODE problem representation from a system and configuration.
 
 See also: [`CTFlows.Integrators.AbstractIntegrator`](@ref), [`CTFlows.Integrators.solve_problem`](@ref).
 """
-function build_problem(integrator::AbstractIntegrator, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)
+function build_problem(integrator::AbstractIntegrator, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable, cache)
     throw(Exceptions.NotImplemented(
         "AbstractIntegrator problem building not implemented";
-        required_method = "build_problem(integrator::$(typeof(integrator)), system::Systems.AbstractSystem, config::Common.AbstractConfig; variable)",
-        suggestion = "Implement build_problem(i::YourIntegrator, system, config; variable) returning an ODE problem representation.",
+        required_method = "build_problem(integrator::$(typeof(integrator)), system::Systems.AbstractSystem, config::Common.AbstractConfig; variable, cache)",
+        suggestion = "Implement build_problem(i::YourIntegrator, system, config; variable, cache) returning an ODE problem representation.",
         context = "AbstractIntegrator problem building - required method implementation",
     ))
 end

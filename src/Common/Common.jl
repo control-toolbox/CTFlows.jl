@@ -46,7 +46,7 @@ export WithAD, WithoutAD
 export AbstractCache
 export AbstractConfig, AbstractPointConfig, AbstractTrajectoryConfig, AbstractStateConfig, AbstractHamiltonianConfig, AbstractAugmentedHamiltonianConfig
 export StatePointConfig, StateTrajectoryConfig, HamiltonianPointConfig, HamiltonianTrajectoryConfig
-export tspan, initial_condition, initial_state, initial_costate
+export tspan, initial_condition, initial_state, initial_costate, initial_time, final_time
 export VariableDependence, Fixed, NonFixed
 export ODEParameters, variable, cache
 export has_time_dependence_trait, has_variable_dependence_trait, has_mutability_trait

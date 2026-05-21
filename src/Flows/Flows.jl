@@ -22,6 +22,7 @@ using CTSolvers: CTSolvers
 
 using ..Common
 using ..Data
+using ..Differentiation
 using ..Systems
 using ..Integrators
 using ..Solutions
@@ -43,5 +44,6 @@ export AbstractFlow, AbstractStateFlow, AbstractHamiltonianFlow, Flow, StateFlow
 export system, integrator
 export call
 export build_flow
+export prepare_cache
 
 end # module Flows

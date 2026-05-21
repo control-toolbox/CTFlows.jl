@@ -81,5 +81,11 @@ function CTSolvers.Strategies.metadata(::Type{<:DifferentiationInterface})
             description = "DifferentiationInterface.jl backend (e.g. AutoForwardDiff()).",
             aliases=(:backend, :ad),
         ),
+        CTSolvers.Strategies.OptionDefinition(;
+            name = :prepare_cache,
+            type = Bool,
+            default = false,
+            description = "If true, call DI.prepare_gradient once at cache-preparation time and reuse the plan. If false, call plain DI.gradient at every integration step (no preallocation).",
+        ),
     )
 end
