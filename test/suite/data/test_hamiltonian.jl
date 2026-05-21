@@ -104,14 +104,49 @@ function test_hamiltonian()
         end
 
         # ====================================================================
+        # UNIT TESTS - Show Methods
+        # ====================================================================
+
+        Test.@testset "Show Methods" begin
+            h = Data.Hamiltonian((x, p) -> x .+ p; is_autonomous=true, is_variable=false)
+
+            Test.@testset "Base.show (compact)" begin
+                io = IOBuffer()
+                show(io, h)
+                str = String(take!(io))
+                Test.@test occursin("Hamiltonian", str)
+                Test.@test occursin("autonomous", str)
+                Test.@test occursin("fixed (no variable)", str)
+                Test.@test occursin("natural call", str)
+                Test.@test occursin("uniform call", str)
+            end
+
+            Test.@testset "Base.show (text/plain)" begin
+                io = IOBuffer()
+                show(io, MIME("text/plain"), h)
+                str = String(take!(io))
+                Test.@test occursin("Hamiltonian", str)
+                Test.@test occursin("autonomous", str)
+                Test.@test occursin("fixed (no variable)", str)
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Subtyping
+        # ====================================================================
+
+        Test.@testset "Subtyping" begin
+            Test.@testset "Hamiltonian is an AbstractHamiltonian" begin
+                h = Data.Hamiltonian((x, p) -> x .+ p; is_autonomous=true, is_variable=false)
+                Test.@test h isa Data.AbstractHamiltonian
+            end
+        end
+
+        # ====================================================================
         # EXPORTS TESTS
         # ====================================================================
 
         Test.@testset "Exports" begin
-            Test.@testset "AbstractHamiltonian is exported" begin
-                Test.@test isdefined(Data, :AbstractHamiltonian)
-            end
-
             Test.@testset "Hamiltonian is exported" begin
                 Test.@test isdefined(Data, :Hamiltonian)
             end

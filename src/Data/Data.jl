@@ -25,8 +25,9 @@ using ..Common
 include(joinpath(@__DIR__, "helpers.jl"))
 include(joinpath(@__DIR__, "abstract_vector_field.jl"))
 include(joinpath(@__DIR__, "vector_field.jl"))
-include(joinpath(@__DIR__, "hamiltonian_vector_field.jl"))
+include(joinpath(@__DIR__, "abstract_hamiltonian.jl"))
 include(joinpath(@__DIR__, "hamiltonian.jl"))
+include(joinpath(@__DIR__, "hamiltonian_vector_field.jl"))
 
 # ==============================================================================
 # Module exports
