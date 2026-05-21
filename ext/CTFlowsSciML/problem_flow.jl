@@ -11,9 +11,10 @@ Unlike `StateFlow` which wraps an `AbstractSystem` and an `AbstractIntegrator`,
 `SciMLProblemFlow` wraps a fully-assembled ODE problem. The `system` method returns
 `nothing` because there is no CTFlows `AbstractSystem` to extract.
 
-The flow supports two call modes:
+The flow supports three call modes:
 - **No-arg call** `f(; unsafe)` — solves the problem as-is with trajectory options.
-- **Remake call** `f(t0, x0, tf; variable, unsafe)` — calls `SciMLBase.remake` first with point options.
+- **Point call** `f(t0, x0, tf; variable, unsafe)` — calls `SciMLBase.remake` first with point options, returns final state only.
+- **Trajectory call** `f(tspan, x0; variable, unsafe)` — calls `SciMLBase.remake` first with trajectory options, returns complete solution.
 
 # Type Parameters
 - `P <: SciMLBase.AbstractODEProblem`: The wrapped ODE problem.
@@ -33,9 +34,11 @@ flow = SciMLProblemFlow(prob, Integrators.SciML())
 # No-arg call: solve as-is
 sol = flow(; unsafe=false)
 
-# Remake call: modify initial condition and time span
-result = flow(0.5, [2.0], 2.0; variable=3.0, unsafe=false)
-xf = Integrators.final_state(result)
+# Point call: modify initial condition and time span, returns final state
+xf = flow(0.5, [2.0], 2.0; variable=3.0, unsafe=false)
+
+# Trajectory call: modify initial condition and time span, returns complete solution
+sol = flow((0.5, 2.0), [2.0]; variable=3.0, unsafe=false)
 ```
 """
 struct SciMLProblemFlow{
@@ -62,15 +65,60 @@ function (f::SciMLProblemFlow)(
     t0::Real,
     x0,
     tf::Real;
-    variable = nothing,
+    variable = Common.__variable(),
     unsafe = Common.__unsafe(),
 )
     kw = (; u0 = x0, tspan = (t0, tf))
-    if !isnothing(variable)
+    if !(variable isa Common.NotProvided)
         kw = merge(kw, (; p = variable))
     end
     prob = SciMLBase.remake(f.prob; kw...)
     config = Common.StatePointConfig(t0, x0, tf)
+    opts = Integrators.build_options(f.integrator, config)
+    sol = SciMLBase.solve(prob; opts...)
+    _check_retcode(sol, unsafe)
+    result = SciMLIntegrationResult(sol)
+    return Integrators.final_state(result)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Convenience call for `SciMLProblemFlow` with trajectory configuration.
+
+Builds a `StateTrajectoryConfig` internally and returns the complete solution.
+
+# Arguments
+- `f::SciMLProblemFlow`: The SciML problem flow to solve.
+- `tspan::Tuple{Real, Real}`: Time span as a tuple (t0, tf).
+- `x0`: Initial state vector.
+- `variable`: The variable parameter value (optional, passed to remake).
+- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+
+# Returns
+- `SciMLIntegrationResult`: The complete integration result with trajectory data.
+
+# Example
+```julia
+prob = ODEProblem((du, u, p, t) -> du .= -p .* u, [1.0], (0.0, 1.0), 2.0)
+flow = SciMLProblemFlow(prob, Integrators.SciML())
+
+# Trajectory call: get full solution
+sol = flow((0.0, 1.0), [1.0])
+```
+"""
+function (f::SciMLProblemFlow)(
+    tspan::Tuple{Real, Real},
+    x0;
+    variable = Common.__variable(),
+    unsafe = Common.__unsafe(),
+)
+    kw = (; u0 = x0, tspan = tspan)
+    if !(variable isa Common.NotProvided)
+        kw = merge(kw, (; p = variable))
+    end
+    prob = SciMLBase.remake(f.prob; kw...)
+    config = Common.StateTrajectoryConfig(tspan, x0)
     opts = Integrators.build_options(f.integrator, config)
     sol = SciMLBase.solve(prob; opts...)
     _check_retcode(sol, unsafe)

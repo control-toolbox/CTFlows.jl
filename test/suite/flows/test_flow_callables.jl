@@ -6,6 +6,7 @@ import CTFlows.Flows
 import CTFlows.Integrators
 import CTFlows.Solutions
 import CTFlows.Common
+import CTBase.Exceptions
 
 using StaticArrays: SA
 
@@ -242,20 +243,20 @@ function test_flow_callables()
         # ====================================================================
 
         Test.@testset "variable and unsafe kwarg propagation" begin
-            Test.@testset "StateFlow with variable kwarg" begin
+            Test.@testset "StateFlow with variable kwarg → PreconditionError" begin
                 integ = FakeIntegFC(nothing)
                 sys = FakeStateSystemFC(2)
                 flow = Flows.StateFlow(sys, integ)
-                result = flow(0.0, [1.0, 0.0], 1.0; variable=0.5, unsafe=true)
-                Test.@test result === :state_point_sol
+                # Fixed flows must not receive a variable parameter
+                Test.@test_throws Exceptions.PreconditionError flow(0.0, [1.0, 0.0], 1.0; variable=0.5, unsafe=true)
             end
 
-            Test.@testset "HamiltonianFlow with variable kwarg" begin
+            Test.@testset "HamiltonianFlow with variable kwarg → PreconditionError" begin
                 integ = FakeIntegFC(nothing)
                 sys = FakeHamSysFC(2)
                 flow = Flows.HamiltonianFlow(sys, integ)
-                result = flow(0.0, [1.0, 0.0], [0.0, 1.0], 1.0; variable=0.5, unsafe=true)
-                Test.@test result === :ham_point_sol
+                # Fixed flows must not receive a variable parameter
+                Test.@test_throws Exceptions.PreconditionError flow(0.0, [1.0, 0.0], [0.0, 1.0], 1.0; variable=0.5, unsafe=true)
             end
         end
 

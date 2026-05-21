@@ -121,16 +121,54 @@ function test_scimlbase_problem_flow()
         end
 
         # ====================================================================
-        # INTEGRATION TESTS - Remake Call
+        # INTEGRATION TESTS - Point Call
         # ====================================================================
 
-        Test.@testset "Integration: Remake Call" begin
-            Test.@testset "scalar state returns xf" begin
+        Test.@testset "Integration: Point Call" begin
+            Test.@testset "scalar state returns xf directly" begin
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
                 prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
                 integ = Integrators.SciML()
                 flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
-                result = flow(0.0, [1.0], 1.0; unsafe=false)
+                xf = flow(0.0, [1.0], 1.0; unsafe=false)
+                Test.@test xf isa Vector
+                Test.@test length(xf) == 1
+                # Expected: exp(-2*1) * 1 = exp(-2) ≈ 0.1353
+                Test.@test isapprox(xf[1], exp(-2.0), rtol=1e-6)
+            end
+
+            Test.@testset "vector state returns xf directly" begin
+                f = ODEFunction((du, u, p, t) -> du .= -p .* u)
+                prob = ODEProblem(f, [1.0, 2.0], (0.0, 1.0), 2.0)
+                integ = Integrators.SciML()
+                flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
+                xf = flow(0.0, [1.0, 2.0], 1.0; unsafe=false)
+                Test.@test xf isa Vector
+                Test.@test length(xf) == 2
+            end
+
+            Test.@testset "point call with variable overrides p" begin
+                f = ODEFunction((du, u, p, t) -> du .= -p .* u)
+                prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
+                integ = Integrators.SciML()
+                flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
+                xf = flow(0.0, [1.0], 1.0; variable=3.0, unsafe=false)
+                # Expected: exp(-3*1) * 1 = exp(-3) ≈ 0.0498
+                Test.@test isapprox(xf[1], exp(-3.0), rtol=1e-6)
+            end
+        end
+
+        # ====================================================================
+        # INTEGRATION TESTS - Trajectory Call
+        # ====================================================================
+
+        Test.@testset "Integration: Trajectory Call" begin
+            Test.@testset "trajectory call returns SciMLIntegrationResult" begin
+                f = ODEFunction((du, u, p, t) -> du .= -p .* u)
+                prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
+                integ = Integrators.SciML()
+                flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
+                result = flow((0.0, 1.0), [1.0]; unsafe=false)
                 Test.@test result isa CTFlowsSciML.SciMLIntegrationResult
                 xf = Integrators.final_state(result)
                 Test.@test xf isa Vector
@@ -139,27 +177,27 @@ function test_scimlbase_problem_flow()
                 Test.@test isapprox(xf[1], exp(-2.0), rtol=1e-6)
             end
 
-            Test.@testset "vector state returns xf" begin
-                f = ODEFunction((du, u, p, t) -> du .= -p .* u)
-                prob = ODEProblem(f, [1.0, 2.0], (0.0, 1.0), 2.0)
-                integ = Integrators.SciML()
-                flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
-                result = flow(0.0, [1.0, 2.0], 1.0; unsafe=false)
-                Test.@test result isa CTFlowsSciML.SciMLIntegrationResult
-                xf = Integrators.final_state(result)
-                Test.@test xf isa Vector
-                Test.@test length(xf) == 2
-            end
-
-            Test.@testset "remake with variable overrides p" begin
+            Test.@testset "trajectory call with variable overrides p" begin
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
                 prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
                 integ = Integrators.SciML()
                 flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
-                result = flow(0.0, [1.0], 1.0; variable=3.0, unsafe=false)
+                result = flow((0.0, 1.0), [1.0]; variable=3.0, unsafe=false)
                 xf = Integrators.final_state(result)
                 # Expected: exp(-3*1) * 1 = exp(-3) ≈ 0.0498
                 Test.@test isapprox(xf[1], exp(-3.0), rtol=1e-6)
+            end
+
+            Test.@testset "trajectory call can evaluate at intermediate times" begin
+                f = ODEFunction((du, u, p, t) -> du .= -p .* u)
+                prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
+                integ = Integrators.SciML()
+                flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
+                result = flow((0.0, 1.0), [1.0]; unsafe=false)
+                # Can evaluate at intermediate time
+                u_mid = Integrators.evaluate_at(result, 0.5)
+                Test.@test u_mid isa Vector
+                Test.@test isapprox(u_mid[1], exp(-2.0 * 0.5), rtol=1e-6)
             end
         end
 
@@ -168,14 +206,25 @@ function test_scimlbase_problem_flow()
         # ====================================================================
 
         Test.@testset "Error Handling" begin
-            Test.@testset "unsafe=true skips retcode check" begin
+            Test.@testset "unsafe=true skips retcode check for point call" begin
                 # Create a problem that will fail (negative parameter with unstable ODE)
                 f = ODEFunction((du, u, p, t) -> du .= p .* u)
                 prob = ODEProblem(f, [1.0], (0.0, 10.0), 1.0)
                 integ = Integrators.SciML()
                 flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
                 # This should not throw even if integration fails
-                result = flow(0.0, [1.0], 10.0; unsafe=true)
+                xf = flow(0.0, [1.0], 10.0; unsafe=true)
+                Test.@test xf isa Vector
+            end
+
+            Test.@testset "unsafe=true skips retcode check for trajectory call" begin
+                # Create a problem that will fail (negative parameter with unstable ODE)
+                f = ODEFunction((du, u, p, t) -> du .= p .* u)
+                prob = ODEProblem(f, [1.0], (0.0, 10.0), 1.0)
+                integ = Integrators.SciML()
+                flow = CTFlowsSciML.SciMLProblemFlow(prob, integ)
+                # This should not throw even if integration fails
+                result = flow((0.0, 10.0), [1.0]; unsafe=true)
                 Test.@test result isa CTFlowsSciML.SciMLIntegrationResult
             end
         end

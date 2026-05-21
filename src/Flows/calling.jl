@@ -1,30 +1,79 @@
 """
 $(TYPEDSIGNATURES)
 
-Solve an ODE problem using a flow.
+Solve an ODE problem using a flow with trait-based dispatch on the variable parameter.
 
-This performs the integration and builds the solution.
+This function dispatches to one of four specialized implementations based on:
+1. The flow's `VariableDependence` trait (`Fixed` or `NonFixed`)
+2. Whether the `variable` parameter was provided (`NotProvided` vs any other type)
+
+# Dispatch Rules
+- **`Fixed` + `NotProvided`**: Variable not required, proceeds with `variable=nothing`.
+- **`Fixed` + provided**: Throws `PreconditionError` (Fixed systems must not receive a variable).
+- **`NonFixed` + provided**: Variable required, proceeds with the provided value.
+- **`NonFixed` + `NotProvided`**: Throws `PreconditionError` (NonFixed systems require a variable).
 
 # Arguments
 - `flow::CTFlows.Flows.AbstractFlow`: The flow to solve.
 - `config::CTFlows.Common.AbstractConfig`: The integration configuration (e.g., `StatePointConfig`, `StateTrajectoryConfig`).
-- `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
+- `variable`: The variable parameter value (required for NonFixed systems, must be omitted for Fixed systems).
 - `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
 
 # Returns
 - The packaged solution (type varies by config type).
 
+# Throws
+- `CTBase.Exceptions.PreconditionError`: If the variable parameter violates the flow's trait contract.
+
 # Example
 \`\`\`julia
-# Conceptual usage pattern
-flow = Flow(system, integrator)
+# Fixed flow: no variable parameter allowed
+flow_fixed = Flow(system_fixed, integrator)
 config = CTFlows.Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
-sol = call(flow, config; variable=nothing, unsafe=false)
+sol = call(flow_fixed, config; unsafe=false)  # OK, no variable
+
+# NonFixed flow: variable parameter required
+flow_nonfixed = Flow(system_nonfixed, integrator)
+sol = call(flow_nonfixed, config; variable=0.5, unsafe=false)  # OK, variable provided
 \`\`\`
 
-See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.NotProvided`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
 """
 function call(flow::Flows.AbstractFlow, config::Common.AbstractConfig; variable, unsafe)
+    VD = Common.variable_dependence(flow)
+    return call(VD, typeof(variable), flow, config; variable=variable, unsafe=unsafe)
+end
+
+# =============================================================================
+# core_call — implementation body (renamed from call)
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Internal implementation body for flow integration.
+
+This function performs the actual ODE integration workflow after trait-based
+dispatch has validated the variable parameter. It extracts the system and
+integrator from the flow, prepares cache, builds the ODE problem, solves it,
+and constructs the solution.
+
+# Arguments
+- `flow::CTFlows.Flows.AbstractFlow`: The flow to solve.
+- `config::CTFlows.Common.AbstractConfig`: The integration configuration.
+- `variable`: The variable parameter value (may be `nothing` for Fixed systems).
+- `unsafe`: If `true`, bypass ODE solver retcode checking.
+
+# Returns
+- The packaged solution (type varies by config type).
+
+# Notes
+This is an internal function called by the trait-dispatch overloads of `call`.
+Users should call the public `call` function instead.
+
+See also: [`call`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
+"""
+function core_call(flow::Flows.AbstractFlow, config::Common.AbstractConfig; variable, unsafe)
 
     # get system and integrator
     sys = system(flow)
@@ -46,6 +95,96 @@ function call(flow::Flows.AbstractFlow, config::Common.AbstractConfig; variable,
     flow_sol = Solutions.build_solution(result, sys, config)
 
     return flow_sol
+end
+
+# =============================================================================
+# call trait-dispatch overloads
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Dispatch for `NonFixed` flows when the variable parameter was not provided.
+
+This overload is selected when a `NonFixed` flow (which requires a variable) is called
+without providing the `variable` argument. It throws a `PreconditionError` to enforce
+the contract that NonFixed systems must receive a variable parameter.
+
+# Throws
+- `CTBase.Exceptions.PreconditionError`: Always, with message explaining that a variable is required.
+
+# See also
+[`call`](@ref), [`Common.NonFixed`](@ref), [`Common.NotProvided`](@ref).
+"""
+function call(::Type{Common.NonFixed}, ::Type{Common.NotProvided}, flow, config; unsafe, variable)
+    throw(Exceptions.PreconditionError(
+        "variable not provided for a NonFixed flow";
+        reason    = "flow depends on an extra variable parameter but none was given",
+        suggestion = "Pass `variable=v` when calling the flow",
+        context   = "call — NonFixed flow with missing variable",
+    ))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Dispatch for `Fixed` flows when the variable parameter was not provided.
+
+This overload is selected when a `Fixed` flow (which does not require a variable) is called
+without providing the `variable` argument. This is the expected and valid case, so it
+forwards to `core_call` with `variable=nothing`.
+
+# Returns
+- The result of `core_call`.
+
+# See also
+[`call`](@ref), [`Common.Fixed`](@ref), [`Common.NotProvided`](@ref), [`core_call`](@ref).
+"""
+function call(::Type{Common.Fixed}, ::Type{Common.NotProvided}, flow, config; unsafe, variable)
+    return core_call(flow, config; variable=nothing, unsafe=unsafe)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Dispatch for `NonFixed` flows when a variable parameter is provided.
+
+This overload is selected when a `NonFixed` flow (which requires a variable) is called
+with a provided variable parameter. This is the expected and valid case, so it forwards
+to `core_call` with the provided variable value.
+
+# Returns
+- The result of `core_call`.
+
+# See also
+[`call`](@ref), [`Common.NonFixed`](@ref), [`core_call`](@ref).
+"""
+function call(::Type{Common.NonFixed}, ::Type{VT}, flow, config; unsafe, variable) where {VT}
+    return core_call(flow, config; variable=variable, unsafe=unsafe)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Dispatch for `Fixed` flows when a variable parameter is provided.
+
+This overload is selected when a `Fixed` flow (which does not require a variable) is called
+with a provided variable parameter. This violates the contract that Fixed systems must not
+receive a variable parameter, so it throws a `PreconditionError`.
+
+# Throws
+- `CTBase.Exceptions.PreconditionError`: Always, with message explaining that variables must not be provided to Fixed flows.
+
+# See also
+[`call`](@ref), [`Common.Fixed`](@ref).
+"""
+function call(::Type{Common.Fixed}, ::Type{VT}, flow, config; unsafe, variable) where {VT}
+    throw(Exceptions.PreconditionError(
+        "variable provided for a Fixed flow";
+        reason    = "flow does not depend on any variable parameter",
+        suggestion = "Remove the `variable` keyword argument when calling this flow",
+        context   = "call — Fixed flow with unexpected variable",
+    ))
 end
 
 # ==============================================================================

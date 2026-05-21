@@ -23,14 +23,34 @@ specified otherwise.
 __is_variable()::Bool = false
 
 """
+$(TYPEDEF)
+
+Sentinel type indicating that a variable parameter was not provided.
+
+Used as the default value for the `variable` keyword argument in flow calls
+to distinguish between "user did not provide a variable" and "user explicitly
+passed `nothing`". This enables proper dispatch based on the system's
+`VariableDependence` trait.
+
+# Example
+```julia
+# Default value for variable parameter
+__variable()::NotProvided = NotProvided()
+```
+
+See also: [`VariableDependence`](@ref), [`Fixed`](@ref), [`NonFixed`](@ref).
+"""
+struct NotProvided end
+
+"""
 $(TYPEDSIGNATURES)
 
 Default value for variable parameter in user-facing API calls.
 
-Returns `nothing` by default, meaning the variable parameter is optional
+Returns `NotProvided()` by default, meaning the variable parameter is optional
 unless required by the system's trait (e.g., NonFixed systems).
 """
-__variable() = nothing
+__variable()::NotProvided = NotProvided()
 
 """
 $(TYPEDSIGNATURES)

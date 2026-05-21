@@ -207,37 +207,37 @@ function test_concatenation_sciml()
         # ====================================================================
 
         Test.@testset "SciMLFunctionSystem — Two-phase iip ODEFunction" begin
-            f = ODEFunction((du, u, p, t) -> du .= -u)
+            f = ODEFunction((du, u, p, t) -> du .= -p .* u)
             flow = Flows.Flow(f)
             mpf = flow * (0.5, flow)
-            xf = mpf(0.0, [1.0], 1.0)
+            xf = mpf(0.0, [1.0], 1.0; variable=1.0)
             Test.@test xf[1] ≈ exp(-1.0) atol=1e-3
         end
 
         Test.@testset "SciMLFunctionSystem — Two-phase oop ODEFunction" begin
-            f = ODEFunction{false}((u, p, t) -> -u)
+            f = ODEFunction{false}((u, p, t) -> -p .* u)
             flow = Flows.Flow(f)
             mpf = flow * (0.5, flow)
-            xf = mpf(0.0, [1.0], 1.0)
+            xf = mpf(0.0, [1.0], 1.0; variable=1.0)
             Test.@test xf[1] ≈ exp(-1.0) atol=1e-3
         end
 
         Test.@testset "SciMLFunctionSystem — Jump at switching time" begin
-            f = ODEFunction((du, u, p, t) -> du .= -u)
+            f = ODEFunction((du, u, p, t) -> du .= -p .* u)
             flow = Flows.Flow(f)
             jump = 10.0
             mpf = flow * (0.5, jump, flow)
             x0 = [1.0]
-            xf = mpf(0.0, x0, 1.0)
+            xf = mpf(0.0, x0, 1.0; variable=1.0)
             expected = (exp(-0.5) + 10.0) * exp(-0.5)
             Test.@test xf[1] ≈ expected atol=1e-3
         end
 
         Test.@testset "SciMLFunctionSystem — Trajectory merging" begin
-            f = ODEFunction((du, u, p, t) -> du .= -u)
+            f = ODEFunction((du, u, p, t) -> du .= -p .* u)
             flow = Flows.Flow(f)
             mpf = flow * (0.5, flow)
-            sol = mpf((0.0, 1.0), [1.0])
+            sol = mpf((0.0, 1.0), [1.0]; variable=1.0)
             Test.@test sol isa Solutions.VectorFieldSolution
             xf = Integrators.final_state(sol)
             Test.@test xf[1] ≈ exp(-1.0) atol=1e-4

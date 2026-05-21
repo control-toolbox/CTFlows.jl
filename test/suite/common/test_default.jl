@@ -26,8 +26,8 @@ function test_default()
                 Test.@test Common.__is_variable() === false
             end
 
-            Test.@testset "__variable returns nothing" begin
-                Test.@test Common.__variable() === nothing
+            Test.@testset "__variable returns NotProvided" begin
+                Test.@test Common.__variable() isa Common.NotProvided
             end
 
             Test.@testset "__unsafe returns false" begin
@@ -36,6 +36,16 @@ function test_default()
 
             Test.@testset "__is_inplace returns nothing" begin
                 Test.@test Common.__is_inplace() === nothing
+            end
+        end
+
+        Test.@testset "NotProvided type" begin
+            Test.@testset "NotProvided is a concrete type" begin
+                Test.@test Common.NotProvided <: Any
+            end
+
+            Test.@testset "NotProvided is exported" begin
+                Test.@test isdefined(Common, :NotProvided)
             end
         end
     end

@@ -10,6 +10,7 @@ import CTFlows.Solutions
 import CTFlows.Common
 import ADTypes
 import DifferentiationInterface
+import CTBase.Exceptions
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -22,6 +23,10 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 Fake system for testing the calling workflow.
 """
 struct FakeSystemForCalling <: Systems.AbstractStateSystem{Common.Autonomous, Common.Fixed}
+    state_dim::Int
+end
+
+struct FakeSystemNonFixed <: Systems.AbstractStateSystem{Common.Autonomous, Common.NonFixed}
     state_dim::Int
 end
 
@@ -107,6 +112,14 @@ end
 
 function Solutions.build_solution(
     result::FakeIntegrationResultForCalling,
+    system::FakeSystemNonFixed,
+    config::Common.StatePointConfig
+)
+    return Solutions.final_state(result)
+end
+
+function Solutions.build_solution(
+    result::FakeIntegrationResultForCalling,
     system::FakeSystemForCalling,
     config::Common.StateTrajectoryConfig
 )
@@ -181,7 +194,7 @@ function test_calling_flows()
                 config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 
                 # Execute
-                result = Flows.call(flow, config; variable=nothing, unsafe=false)
+                result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
                 
                 # Verify all steps were called
                 Test.@test integ.build_problem_called === true
@@ -192,19 +205,14 @@ function test_calling_flows()
                 Test.@test result == :fake_flow_solution
             end
 
-            Test.@testset "call with variable parameter (Fixed system)" begin
+            Test.@testset "call with variable parameter (Fixed system) → PreconditionError" begin
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
                 flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 
-                # Call with variable (should be accepted even for Fixed)
-                result = Flows.call(flow, config; variable=0.5, unsafe=false)
-                
-                Test.@test integ.build_problem_called === true
-                Test.@test integ.build_options_called === true
-                Test.@test integ.solve_problem_called === true
-                Test.@test result == :fake_flow_solution
+                # Call with variable (should now raise PreconditionError for Fixed flow)
+                Test.@test_throws Exceptions.PreconditionError Flows.call(flow, config; variable=0.5, unsafe=false)
             end
 
             Test.@testset "call with StateTrajectoryConfig" begin
@@ -213,7 +221,7 @@ function test_calling_flows()
                 flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 
-                result = Flows.call(flow, config; variable=nothing, unsafe=false)
+                result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -228,7 +236,7 @@ function test_calling_flows()
                 config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
                 # Call with unsafe=true
-                result = Flows.call(flow, config; variable=nothing, unsafe=true)
+                result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=true)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -242,7 +250,7 @@ function test_calling_flows()
                 flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Common.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 
-                result = Flows.call(flow, config; variable=nothing, unsafe=false)
+                result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -256,7 +264,7 @@ function test_calling_flows()
                 flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Common.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
 
-                result = Flows.call(flow, config; variable=nothing, unsafe=false)
+                result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -276,7 +284,7 @@ function test_calling_flows()
                 flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Common.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 
-                result = Flows.call(flow, config; variable=nothing, unsafe=false)
+                result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -292,7 +300,7 @@ function test_calling_flows()
                 flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Common.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 
-                result = Flows.call(flow, config; variable=nothing, unsafe=false)
+                result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -306,13 +314,64 @@ function test_calling_flows()
                 flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
-                result = Flows.call(flow, config; variable=nothing, unsafe=false)
+                result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
                 Test.@test integ.solve_problem_called === true
                 Test.@test result == :fake_flow_solution
             end
+
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Dispatch: 4-way trait dispatch
+        # ====================================================================
+
+        Test.@testset "Dispatch: Fixed + NotProvided → core_call (no error)" begin
+            sys = FakeSystemForCalling(2)
+            integ = FakeIntegratorForCalling()
+            flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+            config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+
+            result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
+
+            Test.@test integ.build_problem_called === true
+            Test.@test integ.build_options_called === true
+            Test.@test integ.solve_problem_called === true
+            Test.@test result == :fake_flow_solution
+        end
+
+        Test.@testset "Dispatch: Fixed + variable provided → PreconditionError" begin
+            sys = FakeSystemForCalling(2)
+            integ = FakeIntegratorForCalling()
+            flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+            config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+
+            Test.@test_throws Exceptions.PreconditionError Flows.call(flow, config; variable=0.5, unsafe=false)
+        end
+
+        Test.@testset "Dispatch: NonFixed + variable provided → core_call" begin
+            sys = FakeSystemNonFixed(2)
+            integ = FakeIntegratorForCalling()
+            flow = FakeFlowForCalling{Common.Autonomous, Common.NonFixed, typeof(sys), typeof(integ)}(sys, integ)
+            config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+
+            result = Flows.call(flow, config; variable=0.5, unsafe=false)
+
+            Test.@test integ.build_problem_called === true
+            Test.@test integ.build_options_called === true
+            Test.@test integ.solve_problem_called === true
+            Test.@test result == :fake_flow_solution
+        end
+
+        Test.@testset "Dispatch: NonFixed + NotProvided → PreconditionError" begin
+            sys = FakeSystemNonFixed(2)
+            integ = FakeIntegratorForCalling()
+            flow = FakeFlowForCalling{Common.Autonomous, Common.NonFixed, typeof(sys), typeof(integ)}(sys, integ)
+            config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+
+            Test.@test_throws Exceptions.PreconditionError Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
         end
 
         # ====================================================================

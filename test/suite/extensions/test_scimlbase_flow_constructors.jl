@@ -106,11 +106,22 @@ function test_scimlbase_flow_constructors()
         # ====================================================================
 
         Test.@testset "Integration: Flow(::AbstractODEProblem)" begin
-            Test.@testset "remake call end-to-end" begin
+            Test.@testset "point call end-to-end" begin
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
                 prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
                 flow = Flows.Flow(prob; reltol=1e-10)
-                result = flow(0.0, [1.0], 1.0; variable=3.0)
+                xf = flow(0.0, [1.0], 1.0; variable=3.0)
+                Test.@test xf isa Vector
+                Test.@test length(xf) == 1
+                # Expected: exp(-3*1) * 1 = exp(-3) ≈ 0.0498
+                Test.@test isapprox(xf[1], exp(-3.0), rtol=1e-6)
+            end
+
+            Test.@testset "trajectory call end-to-end" begin
+                f = ODEFunction((du, u, p, t) -> du .= -p .* u)
+                prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
+                flow = Flows.Flow(prob; reltol=1e-10)
+                result = flow((0.0, 1.0), [1.0]; variable=3.0)
                 Test.@test result isa CTFlowsSciML.SciMLIntegrationResult
                 xf = Integrators.final_state(result)
                 Test.@test xf isa Vector
@@ -134,11 +145,11 @@ function test_scimlbase_flow_constructors()
             end
         end
 
-        Test.@testset "Integration: Flow(::AbstractODEFunction) variable=nothing" begin
+        Test.@testset "Integration: Flow(::AbstractODEFunction) with variable" begin
             Test.@testset "autonomous ODE" begin
-                f = ODEFunction((du, u, p, t) -> du .= -u)
+                f = ODEFunction((du, u, p, t) -> du .= -p .* u)
                 flow = Flows.Flow(f; reltol=1e-10)
-                xf = flow(0.0, [1.0, 2.0], 1.0)
+                xf = flow(0.0, [1.0, 2.0], 1.0; variable=1.0)
                 Test.@test xf isa Vector
                 Test.@test length(xf) == 2
                 Test.@test xf ≈ [exp(-1.0), 2.0 * exp(-1.0)] rtol=1e-6
