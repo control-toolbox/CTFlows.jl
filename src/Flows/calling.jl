@@ -1,6 +1,162 @@
 """
 $(TYPEDSIGNATURES)
 
+Convenience call for `StateFlow` with point configuration.
+
+Builds a `StatePointConfig` internally and calls the flow with it.
+
+# Arguments
+- `f::StateFlow`: The state flow to integrate.
+- `t0::Real`: Initial time.
+- `x0`: Initial state vector.
+- `tf::Real`: Final time.
+- `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
+- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+
+# Returns
+- The integrated solution (type varies by system).
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Flows
+
+julia> flow = StateFlow(system, integrator)
+
+julia> sol = flow(0.0, [1.0, 0.0], 1.0)
+\`\`\`
+
+See also: [`CTFlows.Common.StatePointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+"""
+function (f::AbstractStateFlow)(
+    t0::Real,
+    x0,
+    tf::Real;
+    variable=Common.__variable(),
+    unsafe=Common.__unsafe(),
+)
+    return call(f, Common.StatePointConfig(t0, x0, tf); variable=variable, unsafe=unsafe)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Convenience call for `HamiltonianFlow` with point configuration.
+
+Builds a `HamiltonianPointConfig` internally and calls the flow with it.
+
+# Arguments
+- `f::HamiltonianFlow`: The Hamiltonian flow to integrate.
+- `t0::Real`: Initial time.
+- `x0`: Initial state vector.
+- `p0`: Initial costate vector.
+- `tf::Real`: Final time.
+- `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
+- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+
+# Returns
+- The integrated solution (type varies by system).
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Flows
+
+julia> flow = HamiltonianFlow(system, integrator)
+
+julia> sol = flow(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+\`\`\`
+
+See also: [`CTFlows.Common.HamiltonianPointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+"""
+function (f::AbstractHamiltonianFlow)(
+    t0::Real,
+    x0,
+    p0,
+    tf::Real;
+    variable=Common.__variable(),
+    unsafe=Common.__unsafe(),
+)
+    return call(f, Common.HamiltonianPointConfig(t0, x0, p0, tf); variable=variable, unsafe=unsafe)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Convenience call for `StateFlow` with trajectory configuration.
+
+Builds a `StateTrajectoryConfig` internally and calls the flow with it.
+
+# Arguments
+- `f::StateFlow`: The state flow to integrate.
+- `tspan::Tuple{Real, Real}`: Time span as a tuple (t0, tf).
+- `x0`: Initial state vector.
+- `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
+- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+
+# Returns
+- The integrated solution (type varies by system).
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Flows
+
+julia> flow = StateFlow(system, integrator)
+
+julia> sol = flow((0.0, 1.0), [1.0, 0.0])
+\`\`\`
+
+See also: [`CTFlows.Common.StateTrajectoryConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+"""
+function (f::AbstractStateFlow)(
+    tspan::Tuple{Real, Real},
+    x0;
+    variable=Common.__variable(),
+    unsafe=Common.__unsafe(),
+)
+    return call(f, Common.StateTrajectoryConfig(tspan, x0); variable=variable, unsafe=unsafe)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Convenience call for `HamiltonianFlow` with trajectory configuration.
+
+Builds a `HamiltonianTrajectoryConfig` internally and calls the flow with it.
+
+# Arguments
+- `f::HamiltonianFlow`: The Hamiltonian flow to integrate.
+- `tspan::Tuple{Real, Real}`: Time span as a tuple (t0, tf).
+- `x0`: Initial state vector.
+- `p0`: Initial costate vector.
+- `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
+- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+
+# Returns
+- The integrated solution (type varies by system).
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Flows
+
+julia> flow = HamiltonianFlow(system, integrator)
+
+julia> sol = flow((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
+\`\`\`
+
+See also: [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+"""
+function (f::AbstractHamiltonianFlow)(
+    tspan::Tuple{Real, Real},
+    x0,
+    p0;
+    variable=Common.__variable(),
+    unsafe=Common.__unsafe(),
+)
+    return call(f, Common.HamiltonianTrajectoryConfig(tspan, x0, p0); variable=variable, unsafe=unsafe)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Solve an ODE problem using a flow with trait-based dispatch on the variable parameter.
 
 This function dispatches to one of four specialized implementations based on:
