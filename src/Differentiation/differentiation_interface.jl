@@ -57,7 +57,7 @@ $(TYPEDSIGNATURES)
 
 Return the strategy identifier for `DifferentiationInterface`.
 """
-CTSolvers.Strategies.id(::Type{<:DifferentiationInterface}) = :differentiation_interface
+CTSolvers.Strategies.id(::Type{<:DifferentiationInterface}) = :di
 
 """
 $(TYPEDSIGNATURES)

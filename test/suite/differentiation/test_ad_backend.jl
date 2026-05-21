@@ -54,7 +54,7 @@ function test_ad_backend()
         Test.@testset "Unit: CTSolvers.Strategies contract" begin
             # id
             Test.@test CTSolvers.Strategies.id(Differentiation.DifferentiationInterface) ===
-                  :differentiation_interface
+                  :di
 
             # description
             desc = CTSolvers.Strategies.description(Differentiation.DifferentiationInterface)
