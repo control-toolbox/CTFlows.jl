@@ -724,7 +724,7 @@ Returns `(xf, pf, pvf)`. `build_augmented_solution` from the original draft is *
 ## Phase 8 — High-Level `Flow(h::Hamiltonian; ...)` Constructor
 
 >[!NOTE]
-> Deprecated: this phase is replaced by the next one.
+> Deprecated: this phase is replaced by "Phase 8 (révisée) — Routage des options vers `:di` et `:sciml` dans `Flow(h::Hamiltonian; ...)`"
 
 ### Step 27 — `src/Flows/building.jl` (modified)
 
@@ -800,3 +800,218 @@ Expected: all suites pass, zero failures, zero errors.
 
 ---
 
+# Phase 8 (révisée) — Routage des options vers `:di` et `:sciml` dans `Flow(h::Hamiltonian; ...)`
+
+## Vue d'ensemble
+
+L'objectif est de remplacer `ad_backend=nothing` par un mécanisme flat-kwargs identique à ce que fait `solve_descriptive` dans OptimalControl.jl. La description complète est fixe : `(:di, :sciml)`. Il n'y a pas d'options d'action — seules existent les options de stratégie.
+
+La chaîne d'appel sera :
+
+```
+Flow(h; kwargs...)
+  └─ _flow_families()                     # (backend, integrator) → types abstraits
+  └─ _route_flow_options(kwargs)          # route_all_options avec action_defs=[]
+  └─ _build_flow_components(h, routed)    # build_strategy_from_resolved ×2
+  └─ build_flow(sys, integ)               # inchangé
+```
+
+---
+
+## Step 27a — Registre CTFlows `src/Flows/registry.jl` (nouveau fichier)
+
+CTFlows a besoin d'un `StrategyRegistry` propre à son périmètre, exactement comme OptimalControl.jl. Ce fichier est le **seul endroit** où les deux familles sont inscrites ensemble.
+
+```julia
+# src/Flows/registry.jl
+
+"""
+Default strategy registry for CTFlows.
+Maps AbstractADBackend and AbstractIntegrator to their concrete implementations.
+"""
+const _FLOW_REGISTRY = CTSolvers.Strategies.create_registry(
+    Differentiation.AbstractADBackend => (Differentiation.DifferentiationInterface,),
+    Integrators.AbstractIntegrator    => (Integrators.SciML,),
+)
+
+function flow_registry()
+    return _FLOW_REGISTRY
+end
+```
+
+Note : le registre est déclaré comme constante de module (pattern identique à OptimalControl.jl). Il est exposé via `flow_registry()` pour faciliter les tests et une éventuelle extension future (registre injecté).
+
+---
+
+## Step 27b — Helpers de routage `src/Flows/flow_routing.jl` (nouveau fichier)
+
+Ce fichier est l'analogue direct de `descriptive_routing.jl` dans OptimalControl.jl, simplifié car il n'y a aucune option d'action.
+
+```julia
+# src/Flows/flow_routing.jl
+
+# ---------------------------------------------------------------------------
+# F1 — Familles
+# ---------------------------------------------------------------------------
+
+"""
+Return the strategy families for Flow option routing.
+  :backend    → AbstractADBackend     (strategy id: :di)
+  :integrator → AbstractIntegrator    (strategy id: :sciml)
+"""
+function _flow_families()
+    return (
+        backend    = Differentiation.AbstractADBackend,
+        integrator = Integrators.AbstractIntegrator,
+    )
+end
+
+# La description complète est fixe pour Flow(h::Hamiltonian; ...)
+const _FLOW_DESCRIPTION = (:di, :sciml)
+
+# ---------------------------------------------------------------------------
+# F2 — Routage des options
+# ---------------------------------------------------------------------------
+
+"""
+Route all kwargs to :backend or :integrator families.
+No action options — action_defs is empty.
+"""
+function _route_flow_options(kwargs)
+    return CTSolvers.Orchestration.route_all_options(
+        _FLOW_DESCRIPTION,
+        _flow_families(),
+        CTSolvers.Options.OptionDefinition[],   # pas d'options d'action
+        (; kwargs...),
+        flow_registry();
+        source_mode = :description,
+    )
+end
+
+# ---------------------------------------------------------------------------
+# F3 — Construction des composants
+# ---------------------------------------------------------------------------
+
+"""
+Build backend + integrator from routed options.
+Returns (backend::AbstractADBackend, integrator::AbstractIntegrator).
+"""
+function _build_flow_components(routed)
+    families = _flow_families()
+    resolved = CTSolvers.Orchestration.resolve_method(
+        _FLOW_DESCRIPTION, families, flow_registry()
+    )
+    backend = CTSolvers.Orchestration.build_strategy_from_resolved(
+        resolved, :backend, families, flow_registry();
+        routed.strategies.backend...
+    )
+    integrator = CTSolvers.Orchestration.build_strategy_from_resolved(
+        resolved, :integrator, families, flow_registry();
+        routed.strategies.integrator...
+    )
+    return (backend = backend, integrator = integrator)
+end
+```
+
+Points importants :
+
+- `action_defs = []` — aucune option d'action, tout passe dans les stratégies.
+- `source_mode = :description` — messages d'erreur orientés utilisateur.
+- `_FLOW_DESCRIPTION` est une constante : la description est toujours `(:di, :sciml)`, il n'y a pas à la compléter dynamiquement.
+- On évite un double appel à `resolve_method` en factorisant dans `_build_flow_components`.
+
+---
+
+## Step 27c — `src/Flows/building.jl` (modifié)
+
+Le constructeur `Flow(h::Hamiltonian; ...)` devient :
+
+```julia
+function Flow(h::Data.AbstractHamiltonian; kwargs...)
+    routed     = _route_flow_options(kwargs)
+    components = _build_flow_components(routed)
+    sys        = Systems.build_system(h, components.backend)
+    return build_flow(sys, components.integrator)
+end
+
+function Flow(h::Data.AbstractHamiltonian, state_dimension::Int; kwargs...)
+    routed     = _route_flow_options(kwargs)
+    components = _build_flow_components(routed)
+    sys        = Systems.build_system(h, state_dimension, components.backend)
+    return build_flow(sys, components.integrator)
+end
+```
+
+Il n'y a plus de `_resolve_ad_backend` ni de `ad_backend=nothing`. Le backend par défaut est déclaré dans `Differentiation.DifferentiationInterface` via son `OptionDefinition` (`:backend` → `AutoForwardDiff()` par défaut). Si `DifferentiationInterface.jl` n'est pas chargé, le stub `hamiltonian_gradient` lancera `NotImplemented` au moment de l'appel, pas à la construction — ce comportement est cohérent avec le pattern extension/weakdep.
+
+---
+
+## Step 27d — `src/Flows/Flows.jl` (modifié)
+
+Ajouter les deux nouveaux includes (dans l'ordre, après les imports de `Differentiation` et `Integrators`) :
+
+```julia
+include("registry.jl")
+include("flow_routing.jl")
+```
+
+---
+
+## Step 28 — Test Checkpoint : routage des options
+
+Fichier : `test/suite/flows/test_flow_routing.jl`
+
+| Testset | Ce qui est vérifié |
+|---|---|
+| `"Unit: _flow_families"` | Renvoie un `NamedTuple` avec les deux clés et les bons types abstraits |
+| `"Unit: _FLOW_DESCRIPTION"` | Vaut `(:di, :sciml)` |
+| `"Unit: flow_registry"` | Les deux familles sont inscrites avec les bons types concrets |
+| `"Unit: _route_flow_options — empty kwargs"` | `routed.strategies.backend` et `.integrator` vides, pas d'erreur |
+| `"Unit: _route_flow_options — integrator option"` | Ex. `abstol=1e-10` routé vers `:integrator` |
+| `"Unit: _route_flow_options — backend option"` | Ex. `backend=AutoForwardDiff()` routé vers `:backend` |
+| `"Unit: _route_flow_options — unknown option"` | `IncorrectArgument` avec suggestion |
+| `"Unit: _route_flow_options — disambiguation"` | `route_to(di=..., sciml=...)` accepté si option ambiguë |
+| `"Unit: _build_flow_components — defaults"` | Renvoie `DifferentiationInterface` + `SciML` avec options par défaut |
+| `"Unit: _build_flow_components — with options"` | Les options sont bien passées aux constructeurs |
+| `"Integration: Flow(h) — end-to-end"` | Flot créé, callable, résultat correct |
+| `"Integration: Flow(h, n) — end-to-end"` | Idem avec `state_dimension` |
+| `"Integration: Flow(h; reltol=1e-9)"` | Option SciML passée, vérifiable via `options(integrator(sys))` |
+| `"Regression: no ad_backend kwarg needed"` | `Flow(h)` fonctionne sans aucun kwarg |
+
+---
+
+## Fichiers impactés (delta vs plan initial)
+
+| Fichier | Statut | Changement |
+|---|---|---|
+| `src/Flows/registry.jl` | **nouveau** | Registre CTFlows |
+| `src/Flows/flow_routing.jl` | **nouveau** | `_flow_families`, `_route_flow_options`, `_build_flow_components` |
+| `src/Flows/building.jl` | **modifié** | Supprime `_resolve_ad_backend`/`ad_backend=nothing`, délègue au routeur |
+| `src/Flows/Flows.jl` | **modifié** | Ajoute les deux `include` |
+| `test/suite/flows/test_flow_from_hamiltonian.jl` | **modifié** | Remplace les testsets Step 28 du plan initial par ceux ci-dessus |
+
+`_resolve_ad_backend` et `Differentiation.__default_ad_backend()` du plan initial sont **supprimés** — la valeur par défaut est portée par le `OptionDefinition` de `DifferentiationInterface`, pas par une variable globale dans `Differentiation`.
+
+---
+
+## Note sur les dépendances
+
+`CTSolvers.Orchestration` doit être importé dans `Flows.jl` (il l'est peut-être déjà via `Integrators` qui utilise `CTSolvers.Strategies`). Si ce n'est pas le cas, ajouter `using CTSolvers: CTSolvers` dans `Flows.jl` et qualifier `CTSolvers.Orchestration.route_all_options` explicitement, exactement comme le fait OptimalControl.jl.
+
+## Ressources
+
+### Documentation CTSolvers
+
+- <https://control-toolbox.org/CTSolvers.jl/stable/guides/orchestration_and_routing.html>
+- <https://control-toolbox.org/CTSolvers.jl/stable/api/orchestration_public.html#CTSolvers.Orchestration.route_all_options>
+- <https://control-toolbox.org/CTSolvers.jl/stable/api/orchestration_public.html#resolve_method>
+- <https://control-toolbox.org/CTSolvers.jl/stable/api/orchestration_public.html#build_strategy_from_resolved>
+
+### Code source OptimalControl.jl (référence d'implémentation)
+
+- <https://github.com/control-toolbox/OptimalControl.jl/blob/main/src/solve/descriptive.jl>
+- <https://github.com/control-toolbox/OptimalControl.jl/blob/main/src/helpers/descriptive_routing.jl>
+
+### Dépôt cible
+
+- <https://github.com/control-toolbox/CTFlows.jl/tree/develop>

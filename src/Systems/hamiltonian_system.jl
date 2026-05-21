@@ -142,10 +142,10 @@ function build_rhs_augmented(sys::HamiltonianSystem, n_x::Int, n_v::Int)
     return function (du, u, λ, t)
         v = Common.variable(λ)
         _check_aug_batch_compat(u, v)             # no-op if not matrix or matrix compatible
-        x, p, pv = _aug_split(u, n_x, n_v)
+        x, p, _ = _aug_split(u, n_x, n_v)
         ∂x, ∂p   = Differentiation.hamiltonian_gradient(backend, h, t, x, p, v, Common.cache(λ))
-        ∂v        = Differentiation.variable_gradient(backend, h, t, x, p, v, Common.cache(λ))
-        _aug_assign!(du, ∂p, -∂x, -∂v, n_x, n_v)
+        ∂pv      = Differentiation.variable_gradient(backend, h, t, x, p, v, Common.cache(λ))
+        _aug_assign!(du, ∂p, -∂x, -∂pv, n_x, n_v)
         return nothing
     end
 end
