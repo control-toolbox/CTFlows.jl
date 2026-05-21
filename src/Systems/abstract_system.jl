@@ -210,9 +210,30 @@ Return the automatic differentiation capability trait of a Hamiltonian system.
 
 See also: [`CTFlows.Common.AbstractADTrait`](@ref), [`CTFlows.Common.WithAD`](@ref), [`CTFlows.Common.WithoutAD`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref).
 """
-function ad_trait(::AbstractHamiltonianSystem{TD, VD, AT}) where {TD, VD, AT}
+function Common.ad_trait(::AbstractHamiltonianSystem{TD, VD, AT}) where {TD, VD, AT}
     return AT
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the variable costate capability trait of a system.
+
+# Arguments
+- `sys::AbstractSystem`: The system (default implementation returns `NoVariableCostate`).
+
+# Returns
+- `Type{<:AbstractVariableCostateCapability}`: The capability trait, either
+  `SupportsVariableCostate` or `NoVariableCostate`.
+
+# Notes
+- Default implementation returns `NoVariableCostate` for all systems
+- Specialized implementation on `HamiltonianSystem` with `NonFixed` returns `SupportsVariableCostate`
+- This trait is used for dispatch in `call_variable_costate` to determine if augmented integration is possible
+
+See also: [`CTFlows.Common.AbstractVariableCostateCapability`](@ref), [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.NoVariableCostate`](@ref).
+"""
+Common.variable_costate_trait(::AbstractSystem) = Common.NoVariableCostate
 
 """
 $(TYPEDSIGNATURES)

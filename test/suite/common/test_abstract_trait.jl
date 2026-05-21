@@ -84,6 +84,20 @@ function test_abstract_trait()
                 end
             end
 
+            Test.@testset "AbstractVariableCostateCapability" begin
+                Test.@testset "AbstractVariableCostateCapability is exported" begin
+                    Test.@test isdefined(Common, :AbstractVariableCostateCapability)
+                end
+
+                Test.@testset "AbstractVariableCostateCapability is abstract" begin
+                    Test.@test isabstracttype(Common.AbstractVariableCostateCapability)
+                end
+
+                Test.@testset "AbstractVariableCostateCapability subtypes AbstractTrait" begin
+                    Test.@test Common.AbstractVariableCostateCapability <: Common.AbstractTrait
+                end
+            end
+
             Test.@testset "AbstractCache" begin
                 Test.@testset "AbstractCache is exported" begin
                     Test.@test isdefined(Common, :AbstractCache)
@@ -270,6 +284,44 @@ function test_abstract_trait()
                     Test.@test Common.WithoutAD <: Common.AbstractADTrait
                 end
             end
+
+            Test.@testset "SupportsVariableCostate" begin
+                Test.@testset "SupportsVariableCostate is exported" begin
+                    Test.@test isdefined(Common, :SupportsVariableCostate)
+                end
+
+                Test.@testset "SupportsVariableCostate is concrete" begin
+                    Test.@test !isabstracttype(Common.SupportsVariableCostate)
+                end
+
+                Test.@testset "SupportsVariableCostate instantiates" begin
+                    svc = Common.SupportsVariableCostate()
+                    Test.@test svc isa Common.SupportsVariableCostate
+                end
+
+                Test.@testset "SupportsVariableCostate subtypes AbstractVariableCostateCapability" begin
+                    Test.@test Common.SupportsVariableCostate <: Common.AbstractVariableCostateCapability
+                end
+            end
+
+            Test.@testset "NoVariableCostate" begin
+                Test.@testset "NoVariableCostate is exported" begin
+                    Test.@test isdefined(Common, :NoVariableCostate)
+                end
+
+                Test.@testset "NoVariableCostate is concrete" begin
+                    Test.@test !isabstracttype(Common.NoVariableCostate)
+                end
+
+                Test.@testset "NoVariableCostate instantiates" begin
+                    nvc = Common.NoVariableCostate()
+                    Test.@test nvc isa Common.NoVariableCostate
+                end
+
+                Test.@testset "NoVariableCostate subtypes AbstractVariableCostateCapability" begin
+                    Test.@test Common.NoVariableCostate <: Common.AbstractVariableCostateCapability
+                end
+            end
         end
 
         # ====================================================================
@@ -287,6 +339,8 @@ function test_abstract_trait()
                 Test.@test Common.OutOfPlace <: Common.AbstractTrait
                 Test.@test Common.WithAD <: Common.AbstractTrait
                 Test.@test Common.WithoutAD <: Common.AbstractTrait
+                Test.@test Common.SupportsVariableCostate <: Common.AbstractTrait
+                Test.@test Common.NoVariableCostate <: Common.AbstractTrait
             end
 
             Test.@testset "Mode traits are distinct from content traits" begin
@@ -295,6 +349,11 @@ function test_abstract_trait()
                 Test.@test !(Common.StateTrait <: Common.AbstractModeTrait)
                 Test.@test !(Common.HamiltonianTrait <: Common.AbstractModeTrait)
                 Test.@test !(Common.AugmentedHamiltonianTrait <: Common.AbstractModeTrait)
+            end
+
+            Test.@testset "Variable costate traits subtype AbstractVariableCostateCapability" begin
+                Test.@test Common.SupportsVariableCostate <: Common.AbstractVariableCostateCapability
+                Test.@test Common.NoVariableCostate <: Common.AbstractVariableCostateCapability
             end
         end
 
@@ -305,8 +364,11 @@ function test_abstract_trait()
         Test.@testset "Exports Verification" begin
             Test.@testset "Exported trait types" begin
                 for sym in (:AbstractTrait, :AbstractModeTrait, :AbstractContentTrait, :AbstractMutabilityTrait, :AbstractADTrait,
+                           :AbstractVariableCostateCapability,
                            :PointTrait, :TrajectoryTrait, :StateTrait, :HamiltonianTrait, :AugmentedHamiltonianTrait,
-                           :InPlace, :OutOfPlace, :WithAD, :WithoutAD, :AbstractCache)
+                           :InPlace, :OutOfPlace, :WithAD, :WithoutAD,
+                           :SupportsVariableCostate, :NoVariableCostate,
+                           :AbstractCache)
                     Test.@test isdefined(Common, sym)
                 end
             end
@@ -316,6 +378,18 @@ function test_abstract_trait()
                            :AbstractHamiltonianConfig, :AbstractAugmentedHamiltonianConfig)
                     Test.@test isdefined(Common, sym)
                 end
+            end
+
+            Test.@testset "Exported trait getters" begin
+                for sym in (:ad_trait, :variable_costate_trait)
+                    Test.@test isdefined(Common, sym)
+                end
+            end
+
+            Test.@testset "variable_costate_trait default returns NoVariableCostate" begin
+                Test.@test Common.variable_costate_trait(42) === Common.NoVariableCostate
+                Test.@test Common.variable_costate_trait("anything") === Common.NoVariableCostate
+                Test.@test Common.variable_costate_trait(nothing) === Common.NoVariableCostate
             end
         end
     end

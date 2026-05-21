@@ -74,8 +74,11 @@ function (f::AbstractHamiltonianFlow)(
     tf::Real;
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
+    variable_costate::Bool=Common._variable_costate(),
 )
-    return call(f, Common.HamiltonianPointConfig(t0, x0, p0, tf); variable=variable, unsafe=unsafe)
+    config = Common.HamiltonianPointConfig(t0, x0, p0, tf)
+    variable_costate && return call_variable_costate(f, config; variable=variable, unsafe=unsafe)
+    return call(f, config; variable=variable, unsafe=unsafe)
 end
 
 """
@@ -150,8 +153,11 @@ function (f::AbstractHamiltonianFlow)(
     p0;
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
+    variable_costate::Bool=Common._variable_costate(),
 )
-    return call(f, Common.HamiltonianTrajectoryConfig(tspan, x0, p0); variable=variable, unsafe=unsafe)
+    config = Common.HamiltonianTrajectoryConfig(tspan, x0, p0)
+    variable_costate && return call_variable_costate(f, config; variable=variable, unsafe=unsafe)
+    return call(f, config; variable=variable, unsafe=unsafe)
 end
 
 """
@@ -392,7 +398,7 @@ function prepare_cache(
     sys::Systems.AbstractHamiltonianSystem,
     config::Common.AbstractConfig; variable
 )
-    return prepare_cache(Systems.ad_trait(sys), sys, config; variable=variable)
+    return prepare_cache(Common.ad_trait(sys), sys, config; variable=variable)
 end
 
 """
@@ -453,4 +459,96 @@ function prepare_cache(
     x0 = Common.initial_state(config)
     p0 = Common.initial_costate(config)
     return Differentiation.prepare_cache(Systems.backend(sys), Systems.hamiltonian(sys), t0, x0, p0, variable)
+end
+
+# =============================================================================
+# call_variable_costate — augmented Hamiltonian integration
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Call a Hamiltonian flow with variable costate integration.
+
+Dispatches on the flow's `variable_costate_trait` to determine if augmented
+integration is supported.
+
+# Arguments
+- `flow::AbstractHamiltonianFlow`: The Hamiltonian flow.
+- `config::Common.HamiltonianPointConfig`: The Hamiltonian point configuration.
+- `variable`: The variable parameter value.
+- `unsafe`: If `true`, bypass ODE solver retcode checking.
+
+# Returns
+- The augmented solution `(xf, pf, pvf)` if supported, or throws an error.
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: If the flow does not support variable costate.
+
+See also: [`CTFlows.Common.variable_costate_trait`](@ref), [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.NoVariableCostate`](@ref).
+"""
+function call_variable_costate(
+    flow::AbstractHamiltonianFlow,
+    config::Common.HamiltonianPointConfig; variable, unsafe
+)
+    return call_variable_costate(
+        Common.variable_costate_trait(flow),
+        flow, config; variable=variable, unsafe=unsafe
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Variable costate call for flows that do not support it.
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: Always, with a descriptive message.
+
+See also: [`CTFlows.Common.NoVariableCostate`](@ref).
+"""
+function call_variable_costate(
+    ::Type{Common.NoVariableCostate},
+    flow::AbstractHamiltonianFlow,
+    config::Common.HamiltonianPointConfig; variable, unsafe
+)
+    throw(Exceptions.IncorrectArgument(
+        "variable_costate=true is not supported on this flow";
+        reason     = "Only flows built from a variable-dependent scalar Hamiltonian support it",
+        suggestion = "Use Flow(h::Hamiltonian; is_variable=true) with an AD backend",
+        context    = "HamiltonianFlow call with variable_costate=true",
+    ))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Variable costate call for flows that support it.
+
+Constructs an `AugmentedHamiltonianPointConfig` with zero initial variable costate
+and calls the flow with it.
+
+# Arguments
+- `::Type{Common.SupportsVariableCostate}`: The capability trait.
+- `flow::AbstractHamiltonianFlow`: The Hamiltonian flow.
+- `config::Common.HamiltonianPointConfig`: The base Hamiltonian point configuration.
+- `variable`: The variable parameter value.
+- `unsafe`: If `true`, bypass ODE solver retcode checking.
+
+# Returns
+- `Tuple{AbstractVector, AbstractVector, AbstractVector}`: The augmented solution `(xf, pf, pvf)`.
+
+See also: [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.AugmentedHamiltonianPointConfig`](@ref).
+"""
+function call_variable_costate(
+    ::Type{Common.SupportsVariableCostate},
+    flow::AbstractHamiltonianFlow,
+    config::Common.HamiltonianPointConfig; variable, unsafe
+)
+    x0  = Common.initial_state(config)
+    pv0 = zeros(eltype(x0), length(variable))
+    config_aug = Common.AugmentedHamiltonianPointConfig(
+        config.t0, x0, Common.initial_costate(config), pv0, config.tf
+    )
+    return call(flow, config_aug; variable=variable, unsafe=unsafe)
 end

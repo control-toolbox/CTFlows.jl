@@ -163,6 +163,73 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Return the automatic differentiation capability trait of a flow.
+
+# Returns
+- `Type{<:AbstractADTrait}`: The AD capability trait, either `WithAD` or `WithoutAD`.
+
+# Notes
+- Default implementation returns `WithoutAD` for all flows
+- Specialized implementation on `AbstractHamiltonianFlow` delegates to the system's trait
+- This trait is used for dispatch in cache preparation and augmented integration
+
+See also: [`CTFlows.Common.AbstractADTrait`](@ref), [`CTFlows.Common.WithAD`](@ref), [`CTFlows.Common.WithoutAD`](@ref).
+"""
+Common.ad_trait(::AbstractFlow) = Common.WithoutAD
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the automatic differentiation capability trait of a Hamiltonian flow.
+
+# Returns
+- `Type{<:AbstractADTrait}`: The AD capability trait from the flow's system.
+
+# Notes
+- Delegates to the system's AD trait via `Common.ad_trait(system(flow))`
+- This enables dispatch based on whether the flow was built from a scalar Hamiltonian or a vector field
+
+See also: [`CTFlows.Common.AbstractADTrait`](@ref), [`CTFlows.Common.ad_trait`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
+"""
+Common.ad_trait(f::AbstractHamiltonianFlow) = Common.ad_trait(system(f))
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the variable costate capability trait of a flow.
+
+# Returns
+- `Type{<:AbstractVariableCostateCapability}`: The capability trait, either
+  `SupportsVariableCostate` or `NoVariableCostate`.
+
+# Notes
+- Default implementation returns `NoVariableCostate` for all flows
+- Specialized implementation on `AbstractHamiltonianFlow` delegates to the system's trait
+- This trait is used for dispatch in `call_variable_costate` to determine if augmented integration is possible
+
+See also: [`CTFlows.Common.AbstractVariableCostateCapability`](@ref), [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.NoVariableCostate`](@ref).
+"""
+Common.variable_costate_trait(::AbstractFlow) = Common.NoVariableCostate
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the variable costate capability trait of a Hamiltonian flow.
+
+# Returns
+- `Type{<:AbstractVariableCostateCapability}`: The capability trait from the flow's system.
+
+# Notes
+- Delegates to the system's variable costate trait via `Common.variable_costate_trait(system(flow))`
+- This enables dispatch based on whether the flow's system can compute ∂H/∂v
+
+See also: [`CTFlows.Common.AbstractVariableCostateCapability`](@ref), [`CTFlows.Common.variable_costate_trait`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
+"""
+Common.variable_costate_trait(f::AbstractHamiltonianFlow) = Common.variable_costate_trait(system(f))
+
+"""
+$(TYPEDSIGNATURES)
+
 Return the associated `AbstractSystem` for the flow.
 
 # Throws

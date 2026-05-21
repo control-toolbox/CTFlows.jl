@@ -75,6 +75,46 @@ function Integrators.build_problem(
     return prob
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Build an `ODEProblem` for augmented Hamiltonian systems.
+
+Specialized overload for `HamiltonianSystem` with `AbstractAugmentedHamiltonianConfig`.
+Uses the augmented RHS that computes state, costate, and variable costate derivatives.
+
+# Arguments
+- `integ::SciML`: The SciML integrator strategy.
+- `system::Systems.HamiltonianSystem`: The Hamiltonian system.
+- `config::Common.AbstractAugmentedHamiltonianConfig`: The augmented Hamiltonian configuration.
+- `variable`: Variable parameter for the augmented system.
+- `cache`: Cache for automatic differentiation.
+
+# Returns
+- `SciMLBase.ODEProblem`: The ODE problem with augmented RHS.
+
+# Notes
+- Only in-place implementation (mutable arrays) since `pv0 = zeros(...)` guarantees mutability.
+- TODO: Add out-of-place path for SVector support in the future.
+- Uses `Systems.build_rhs_augmented` to construct the augmented RHS function.
+
+See also: [`CTFlows.Systems.build_rhs_augmented`](@ref), [`CTFlows.Common.AbstractAugmentedHamiltonianConfig`](@ref).
+"""
+function Integrators.build_problem(
+    integ::SciML,
+    system::Systems.HamiltonianSystem,
+    config::Common.AbstractAugmentedHamiltonianConfig;
+    variable,
+    cache,
+)
+    u0  = Common.initial_condition(config)          # vcat(x0, p0, pv0)
+    p   = Common.ODEParameters(variable, cache)
+    n_x = length(Common.initial_state(config))
+    n_v = length(Common.initial_variable_costate(config))
+    f!  = Systems.build_rhs_augmented(system, n_x, n_v)
+    return ODEProblem(f!, u0, Common.tspan(config), p)
+end
+
 # =============================================================================
 # SciML solve — actual implementation (generic)
 # =============================================================================

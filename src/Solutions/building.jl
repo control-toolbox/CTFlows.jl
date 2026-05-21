@@ -116,6 +116,31 @@ _ham_split_solution(u, ::Number) = (u[1], u[2])
 _ham_split_solution(u, x0::AbstractVector) = (u[1:length(x0)], u[length(x0)+1:end])
 _ham_split_solution(u, x0::AbstractMatrix) = (u[1:size(x0, 1), :], u[size(x0, 1)+1:end, :])
 
+"""
+$(TYPEDSIGNATURES)
+
+Split an augmented final state `u` into state `x`, costate `p`, and variable costate `pv` components.
+
+For Hamiltonian systems, `n_p = n_x` always, so the augmented state is `[x; p; pv]` where
+`n_pv = length(u) - 2 * n_x`.
+
+# Arguments
+- `u`: Augmented final state `[x; p; pv]` from integration.
+- `n::Int`: The state dimension `n_x = n_p`.
+
+# Returns
+- `Tuple{AbstractVector, AbstractVector, AbstractVector}`: Tuple `(x, p, pv)`.
+
+# Notes
+- Internal helper used by `build_solution` for `AugmentedHamiltonianPointConfig`.
+- Assumes `n_p = n_x` invariant for Hamiltonian systems.
+"""
+_aug_split_solution(u, n::Int) = (
+    u[1:n],
+    u[n+1:2n],
+    u[2n+1:end],
+)
+
 # =============================================================================
 # Solution from HamiltonianVectorFieldSystem
 # =============================================================================
@@ -176,4 +201,41 @@ function build_solution(
     result::Integrators.AbstractIntegrationResult,
     )
     return HamiltonianVectorFieldSolution(result)
+end
+
+# =============================================================================
+# Solution from augmented Hamiltonian systems
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Build a solution for augmented Hamiltonian point configs.
+
+Returns the final state, costate, and variable costate as a tuple `(xf, pf, pvf)`.
+For Hamiltonian systems, `n_p = n_x` always, so the augmented state `[x; p; pv]`
+splits using only the state dimension `n = length(initial_state)`.
+
+# Arguments
+- `::Type{Common.PointTrait}`: The point mode trait type.
+- `::Type{Common.AugmentedHamiltonianTrait}`: The augmented Hamiltonian content trait type.
+- `initial_state`: The initial state (used to determine state dimension `n`).
+- `result::Integrators.AbstractIntegrationResult`: The integration result.
+
+# Returns
+- `Tuple{AbstractVector, AbstractVector, AbstractVector}`: Tuple `(xf, pf, pvf)`.
+
+# Notes
+- Uses `_aug_split_solution` helper to split the augmented final state.
+- Assumes `n_p = n_x` invariant for Hamiltonian systems.
+
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Common.PointTrait`](@ref), [`CTFlows.Common.AugmentedHamiltonianTrait`](@ref).
+"""
+function build_solution(
+    ::Type{Common.PointTrait},
+    ::Type{Common.AugmentedHamiltonianTrait},
+    initial_state,
+    result::Integrators.AbstractIntegrationResult,
+)
+    return _aug_split_solution(Integrators.final_state(result), length(initial_state))
 end

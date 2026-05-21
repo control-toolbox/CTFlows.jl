@@ -44,6 +44,5 @@ export HamiltonianVectorFieldSystem
 export HamiltonianSystem
 export build_system
 export build_rhs_augmented
-export ad_trait
 
 end # module Systems
