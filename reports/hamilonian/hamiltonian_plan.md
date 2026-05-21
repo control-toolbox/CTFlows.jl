@@ -494,7 +494,7 @@ function call(flow::Flows.HamiltonianFlow, config::Common.AbstractConfig; variab
     prob   = Integrators.build_problem(int, sys, config; variable=variable, cache=cache)
     opts   = Integrators.build_options(int, config)
     result = Integrators.solve_problem(int, prob, opts; unsafe=unsafe)
-    return Solutions.build_solution(result, sys, config)
+    return Solutions.build_solution(result, config)
 end
 ```
 
@@ -723,6 +723,9 @@ Returns `(xf, pf, pvf)`. `build_augmented_solution` from the original draft is *
 
 ## Phase 8 — High-Level `Flow(h::Hamiltonian; ...)` Constructor
 
+>[!NOTE]
+> Deprecated: this phase is replaced by the next one.
+
 ### Step 27 — `src/Flows/building.jl` (modified)
 
 ```julia
@@ -797,37 +800,3 @@ Expected: all suites pass, zero failures, zero errors.
 
 ---
 
-## Files Summary
-
-### New
-- `src/Data/hamiltonian.jl`
-- `src/Differentiation/Differentiation.jl`
-- `src/Differentiation/abstract_ad_backend.jl`
-- `src/Differentiation/differentiation_interface.jl`
-- `src/Differentiation/building.jl`
-- `src/Systems/hamiltonian_system.jl`
-- `ext/CTFlowsDifferentiationInterface.jl`
-- `test/suite/data/test_hamiltonian.jl`
-- `test/suite/differentiation/test_ad_backend.jl`
-- `test/suite/systems/test_hamiltonian_system.jl`
-- `test/suite/flows/test_cache_pipeline.jl`
-- `test/suite/flows/test_hamiltonian_augmented.jl`
-- `test/suite/flows/test_flow_from_hamiltonian.jl`
-
-### Modified
-- `src/Common/abstract_trait.jl` — `AbstractADTrait`, `WithAD`, `WithoutAD`, `AbstractCache`, `AugmentedHamiltonianTrait`
-- `src/Common/ode_parameters.jl` — `cache` field in `ODEParameters`
-- `src/Common/configs.jl` — `AugmentedHamiltonianPointConfig`, `initial_variable_costate` getter
-- `src/Data/Data.jl` — include and export `Hamiltonian`
-- `src/CTFlows.jl` — add `Differentiation` module
-- `src/Systems/abstract_system.jl` — `AT` parameter on `AbstractHamiltonianSystem`
-- `src/Systems/building.jl` — `build_system` overloads for `Hamiltonian`
-- `src/Systems/Systems.jl` — include `hamiltonian_system.jl`
-- `src/Flows/calling.jl` — `prepare_cache` (three-layer dispatch), unified `call`, `call_augmented` (trait dispatch)
-- `src/Flows/building.jl` — `Flow(h::AbstractHamiltonian; ...)`
-- `src/Solutions/building.jl` — `_aug_split_solution`, `build_solution` overload for `AugmentedHamiltonianTrait`
-- `ext/CTFlowsSciML/build_and_solve.jl` — `cache` kwarg on `build_problem`; new overload for `AugmentedHamiltonianPointConfig`
-- `Project.toml` — add `ADTypes` hard dep, `DifferentiationInterface` weakdep, `CTFlowsDifferentiationInterface` extension
-
-### Deleted
-None.

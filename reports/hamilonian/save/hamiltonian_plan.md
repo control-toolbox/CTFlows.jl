@@ -416,7 +416,7 @@ function call(flow::Flows.HamiltonianFlow, config::Common.AbstractConfig; variab
     prob   = Integrators.build_problem(int, sys, config; variable=variable, cache=cache)
     opts   = Integrators.build_options(int, config)
     result = Integrators.solve_problem(int, prob, opts; unsafe=unsafe)
-    return Solutions.build_solution(result, sys, config)
+    return Solutions.build_solution(result, config)
 end
 ```
 

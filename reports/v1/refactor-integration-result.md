@@ -108,7 +108,7 @@ Full docstrings (TYPEDEF + TYPEDSIGNATURES, @ref cross-refs).
   ```julia
   prob   = Integrators.build_problem(int, sys, config; variable=variable)
   result = Integrators.solve_problem(int, prob)
-  return Solutions.build_solution(result, sys, config)
+  return Solutions.build_solution(result, config)
   ```
 - Update docstring for `call`
 
