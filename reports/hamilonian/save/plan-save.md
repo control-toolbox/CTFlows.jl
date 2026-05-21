@@ -150,7 +150,7 @@ grep -E "Error|Fail|Test Summary" /tmp/phase1.log
 > 🏗️ Applying Modules Rule — Follow Integrators/sciml.jl pattern
 
 - Define `struct DifferentiationInterface{O<:CTSolvers.Strategies.StrategyOptions} <: AbstractADBackend` with field `options::O`
-- Implement `CTSolvers.Strategies.id(::Type{<:DifferentiationInterface}) = :differentiation_interface`
+- Implement `CTSolvers.Strategies.id(::Type{<:DifferentiationInterface}) = :di`
 - Implement `CTSolvers.Strategies.description(::Type{<:DifferentiationInterface})`
 - Implement `CTSolvers.Strategies.metadata(::Type{<:DifferentiationInterface})` with options (backend, prepare)
 
