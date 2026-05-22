@@ -142,10 +142,10 @@ function build_rhs_augmented(sys::HamiltonianSystem, n_x::Int, n_v::Int)
     return function (du, u, λ, t)
         v = Common.variable(λ)
         _check_aug_batch_compat(u, v)             # no-op if not matrix or matrix compatible
-        x, p, pv = _aug_split(u, n_x, n_v)
+        x, p, _ = _aug_split(u, n_x, n_v)
         ∂x, ∂p   = Differentiation.hamiltonian_gradient(backend, h, t, x, p, v, Common.cache(λ))
-        ∂v        = Differentiation.variable_gradient(backend, h, t, x, p, v, Common.cache(λ))
-        _aug_assign!(du, ∂p, -∂x, -∂v, n_x, n_v)
+        ∂pv      = Differentiation.variable_gradient(backend, h, t, x, p, v, Common.cache(λ))
+        _aug_assign!(du, ∂p, -∂x, -∂pv, n_x, n_v)
         return nothing
     end
 end
@@ -201,4 +201,33 @@ function Base.show(io::IO, sys::HamiltonianSystem)
     println(io, "  state_dimension: ", sys.N === nothing ? "unknown" : sys.N)
     println(io, "  hamiltonian: ", sys.h)
     println(io, "  backend: ", sys.backend)
+end
+
+# =============================================================================
+# Trait getters
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the variable costate capability trait of a variable-dependent Hamiltonian system.
+
+# Arguments
+- `sys::HamiltonianSystem`: A Hamiltonian system with variable dependence.
+
+# Returns
+- `SupportsVariableCostate` if the system has `NonFixed` variable dependence.
+- `NoVariableCostate` if the system has `Fixed` variable dependence.
+
+# Notes
+- Only `HamiltonianSystem` with `NonFixed` variable dependence supports variable costate integration
+- This is because only variable-dependent systems have a variable `v` to differentiate against
+- This trait enables the `variable_costate=true` kwarg in Hamiltonian flow calls
+
+See also: [`CTFlows.Common.AbstractVariableCostateCapability`](@ref), [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.NoVariableCostate`](@ref).
+"""
+function Common.variable_costate_trait(
+    ::HamiltonianSystem{N, F, TD, Common.NonFixed, B, R, O}
+) where {N, F, TD, B, R, O}
+    return Common.SupportsVariableCostate
 end

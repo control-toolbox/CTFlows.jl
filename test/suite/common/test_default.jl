@@ -37,6 +37,10 @@ function test_default()
             Test.@testset "__is_inplace returns nothing" begin
                 Test.@test Common.__is_inplace() === nothing
             end
+
+            Test.@testset "_variable_costate returns false" begin
+                Test.@test Common._variable_costate() === false
+            end
         end
 
         Test.@testset "NotProvided type" begin
@@ -46,6 +50,12 @@ function test_default()
 
             Test.@testset "NotProvided is exported" begin
                 Test.@test isdefined(Common, :NotProvided)
+            end
+        end
+
+        Test.@testset "_variable_costate export" begin
+            Test.@testset "_variable_costate is exported" begin
+                Test.@test isdefined(Common, :_variable_costate)
             end
         end
     end

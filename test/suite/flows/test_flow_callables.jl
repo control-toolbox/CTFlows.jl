@@ -50,19 +50,19 @@ function Integrators.solve_problem(integ::FakeIntegFC, prob, options::Dict{Symbo
     return FakeResultFC()
 end
 
-function Solutions.build_solution(result::FakeResultFC, sys::FakeStateSystemFC, config::Common.StatePointConfig)
+function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.StateTrait}, config::Common.AbstractConfig, result::FakeResultFC)
     return :state_point_sol
 end
 
-function Solutions.build_solution(result::FakeResultFC, sys::FakeStateSystemFC, config::Common.StateTrajectoryConfig)
+function Solutions.build_solution(::Type{Common.TrajectoryTrait}, ::Type{Common.StateTrait}, config::Common.AbstractConfig, result::FakeResultFC)
     return :state_traj_sol
 end
 
-function Solutions.build_solution(result::FakeResultFC, sys::FakeHamSysFC, config::Common.HamiltonianPointConfig)
+function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.HamiltonianTrait}, config::Common.AbstractConfig, result::FakeResultFC)
     return :ham_point_sol
 end
 
-function Solutions.build_solution(result::FakeResultFC, sys::FakeHamSysFC, config::Common.HamiltonianTrajectoryConfig)
+function Solutions.build_solution(::Type{Common.TrajectoryTrait}, ::Type{Common.HamiltonianTrait}, config::Common.AbstractConfig, result::FakeResultFC)
     return :ham_traj_sol
 end
 

@@ -412,7 +412,7 @@ grep -E "Error|Fail|Test Summary" /tmp/phase5.log
       prob = Integrators.build_problem(int, sys, config; variable=variable, cache=cache)
       opts = Integrators.build_options(int, config)
       result = Integrators.solve_problem(int, prob, opts; unsafe=unsafe)
-      flow_sol = Solutions.build_solution(result, sys, config)
+      flow_sol = Solutions.build_solution(result, config)
       return flow_sol
   end
   ```

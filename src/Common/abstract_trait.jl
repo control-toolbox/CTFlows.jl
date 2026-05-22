@@ -441,6 +441,139 @@ See also: [`CTFlows.Common.AbstractADTrait`](@ref), [`CTFlows.Common.WithAD`](@r
 struct WithoutAD <: AbstractADTrait end  # system carries HVF directly
 
 # =============================================================================
+# Variable costate capability trait family
+# =============================================================================
+
+"""
+$(TYPEDEF)
+
+Abstract base type for variable costate capability traits.
+
+Variable costate capability traits encode whether a system or flow can compute
+the costate of an augmented variable (∂H/∂v integration). This is used for
+trait-based dispatch in augmented Hamiltonian integration.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> SupportsVariableCostate() isa Common.AbstractVariableCostateCapability
+true
+
+julia> NoVariableCostate() isa Common.AbstractVariableCostateCapability
+true
+\`\`\`
+
+# Notes
+- `SupportsVariableCostate` indicates the system can compute ∂H/∂v (e.g., a scalar Hamiltonian with AD)
+- `NoVariableCostate` indicates the system cannot compute ∂H/∂v (e.g., a pre-computed Hamiltonian vector field)
+- This trait is used for dispatch in `call_variable_costate` to determine whether augmented integration is possible
+
+See also: [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.NoVariableCostate`](@ref).
+"""
+abstract type AbstractVariableCostateCapability <: AbstractTrait end
+
+"""
+$(TYPEDEF)
+
+Trait for systems/flows that support variable costate integration.
+
+Indicates that the system or flow can compute the costate of an augmented variable
+via automatic differentiation from a scalar Hamiltonian. Only systems built from
+a scalar Hamiltonian with an AD backend and variable dependence support this trait.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> svc = SupportsVariableCostate()
+SupportsVariableCostate()
+
+julia> svc isa Common.AbstractVariableCostateCapability
+true
+\`\`\`
+
+# Notes
+- Used as a return value from `variable_costate_trait` for systems that can compute ∂H/∂v
+- Currently, only `HamiltonianSystem` with `WithAD` and `NonFixed` traits return this
+- This trait enables the `variable_costate=true` kwarg in Hamiltonian flow calls
+
+See also: [`CTFlows.Common.AbstractVariableCostateCapability`](@ref), [`CTFlows.Common.NoVariableCostate`](@ref), [`CTFlows.Common.variable_costate_trait`](@ref).
+"""
+struct SupportsVariableCostate <: AbstractVariableCostateCapability end
+
+"""
+$(TYPEDEF)
+
+Trait for systems/flows that do not support variable costate integration.
+
+Indicates that the system or flow cannot compute the costate of an augmented variable.
+This is the default for most systems, including those built from pre-computed
+Hamiltonian vector fields or fixed systems.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Common
+
+julia> nvc = NoVariableCostate()
+NoVariableCostate()
+
+julia> nvc isa Common.AbstractVariableCostateCapability
+true
+\`\`\`
+
+# Notes
+- Default return value from `variable_costate_trait` for most systems and flows
+- Systems with `WithoutAD` trait or fixed variable dependence return this
+- Calling a Hamiltonian flow with `variable_costate=true` on such systems throws an error
+
+See also: [`CTFlows.Common.AbstractVariableCostateCapability`](@ref), [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.variable_costate_trait`](@ref).
+"""
+struct NoVariableCostate <: AbstractVariableCostateCapability end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the variable costate capability trait of a system or flow.
+
+# Arguments
+- `obj`: Any object (default implementation returns `NoVariableCostate`).
+
+# Returns
+- `Type{<:AbstractVariableCostateCapability}`: The capability trait, either
+  `SupportsVariableCostate` or `NoVariableCostate`.
+
+# Notes
+- Default implementation returns `NoVariableCostate` for all objects
+- Specialized implementations on `AbstractSystem` and `AbstractFlow` return the
+  appropriate trait based on the system type
+- Used for dispatch in `call_variable_costate` to determine if augmented integration is possible
+
+See also: [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.NoVariableCostate`](@ref).
+"""
+variable_costate_trait(::Any) = NoVariableCostate
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the automatic differentiation capability trait of a system or flow.
+
+# Arguments
+- `obj`: Any object (default implementation returns `WithoutAD`).
+
+# Returns
+- `Type{<:AbstractADTrait}`: The AD capability trait, either `WithAD` or `WithoutAD`.
+
+# Notes
+- Default implementation returns `WithoutAD` for all objects
+- Specialized implementations on `AbstractHamiltonianSystem` return the appropriate trait based on the system type
+- Used for dispatch in cache preparation and augmented integration
+
+See also: [`CTFlows.Common.AbstractADTrait`](@ref), [`CTFlows.Common.WithAD`](@ref), [`CTFlows.Common.WithoutAD`](@ref).
+"""
+ad_trait(::Any) = WithoutAD
+
+# =============================================================================
 # Common abstract cache (for runtime AD preparation results)
 # =============================================================================
 

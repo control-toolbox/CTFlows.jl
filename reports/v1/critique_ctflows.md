@@ -115,7 +115,7 @@ function call(flow, config; variable=nothing)
     sys = system(flow); int = integrator(flow)
     prob   = build_problem(int, sys, config; variable)
     result = solve_problem(int, prob)                   # → AbstractIntegrationResult
-    return Solutions.build_solution(result, sys, config) # plus d'intégrateur ici
+    return Solutions.build_solution(result, config) # plus d'intégrateur ici
 end
 ```
 
@@ -387,7 +387,7 @@ end
 function call(flow, config; variable=nothing, unsafe=false)
     prob   = Integrators.build_problem(int, sys, config; variable=variable)
     result = Integrators.solve_problem(int, prob; unsafe=unsafe)
-    return Solutions.build_solution(result, sys, config)
+    return Solutions.build_solution(result, config)
 end
 
 # abstract_integrator.jl — stub mis à jour

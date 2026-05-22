@@ -74,8 +74,11 @@ function (f::AbstractHamiltonianFlow)(
     tf::Real;
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
+    variable_costate::Bool=Common._variable_costate(),
 )
-    return call(f, Common.HamiltonianPointConfig(t0, x0, p0, tf); variable=variable, unsafe=unsafe)
+    config = Common.HamiltonianPointConfig(t0, x0, p0, tf)
+    variable_costate && return call_variable_costate(f, config; variable=variable, unsafe=unsafe)
+    return call(f, config; variable=variable, unsafe=unsafe)
 end
 
 """
@@ -150,8 +153,11 @@ function (f::AbstractHamiltonianFlow)(
     p0;
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
+    variable_costate::Bool=Common._variable_costate(),
 )
-    return call(f, Common.HamiltonianTrajectoryConfig(tspan, x0, p0); variable=variable, unsafe=unsafe)
+    config = Common.HamiltonianTrajectoryConfig(tspan, x0, p0)
+    variable_costate && return call_variable_costate(f, config; variable=variable, unsafe=unsafe)
+    return call(f, config; variable=variable, unsafe=unsafe)
 end
 
 """
@@ -248,7 +254,12 @@ function core_call(flow::Flows.AbstractFlow, config::Common.AbstractConfig; vari
     result = Integrators.solve_problem(int, prob, opts; unsafe=unsafe)
 
     # build flow solution
-    flow_sol = Solutions.build_solution(result, sys, config)
+    flow_sol = Solutions.build_solution(
+        Common.mode_trait(config),
+        Common.content_trait(config),
+        config,
+        result,
+    )
 
     return flow_sol
 end
@@ -387,7 +398,7 @@ function prepare_cache(
     sys::Systems.AbstractHamiltonianSystem,
     config::Common.AbstractConfig; variable
 )
-    return prepare_cache(Systems.ad_trait(sys), sys, config; variable=variable)
+    return prepare_cache(Common.ad_trait(sys), sys, config; variable=variable)
 end
 
 """
@@ -448,4 +459,158 @@ function prepare_cache(
     x0 = Common.initial_state(config)
     p0 = Common.initial_costate(config)
     return Differentiation.prepare_cache(Systems.backend(sys), Systems.hamiltonian(sys), t0, x0, p0, variable)
+end
+
+# =============================================================================
+# call_variable_costate — augmented Hamiltonian integration
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Call a Hamiltonian flow with variable costate integration.
+
+Dispatches on the flow's `variable_costate_trait` to determine if augmented
+integration is supported.
+
+# Arguments
+- `flow::AbstractHamiltonianFlow`: The Hamiltonian flow.
+- `config::Common.AbstractHamiltonianConfig`: The Hamiltonian point configuration.
+- `variable`: The variable parameter value.
+- `unsafe`: If `true`, bypass ODE solver retcode checking.
+
+# Returns
+- The augmented solution `(xf, pf, pvf)` if supported, or throws an error.
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: If the flow does not support variable costate.
+
+See also: [`CTFlows.Common.variable_costate_trait`](@ref), [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.NoVariableCostate`](@ref).
+"""
+function call_variable_costate(
+    flow::AbstractHamiltonianFlow,
+    config::Common.AbstractHamiltonianConfig; variable, unsafe
+)
+    return call_variable_costate(
+        Common.variable_costate_trait(flow),
+        typeof(variable),
+        flow, config; variable=variable, unsafe=unsafe
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Variable costate call for flows that do not support it.
+
+This method handles the error case where a flow does not support variable costate computation
+(typically because the Hamiltonian is not variable-dependent).
+
+# Throws
+- `CTBase.Exceptions.PreconditionError`: Always, with a descriptive message indicating that the flow does not support variable costate.
+
+See also: [`CTFlows.Common.NoVariableCostate`](@ref).
+"""
+function call_variable_costate(
+    ::Type{Common.NoVariableCostate},
+    ::Type{VT},
+    flow::AbstractHamiltonianFlow,
+    config::Common.HamiltonianPointConfig; variable, unsafe
+) where {VT}
+    throw(Exceptions.PreconditionError(
+        "variable_costate=true is not supported on this flow";
+        reason     = "Only flows built from a variable-dependent scalar Hamiltonian support it",
+        suggestion = "Use a Hamiltonian with is_variable=true and an AD backend",
+        context    = "HamiltonianFlow call with variable_costate=true",
+    ))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Variable costate call for flows that support it.
+
+Constructs an `AugmentedHamiltonianPointConfig` with zero initial variable costate
+and calls the flow with it.
+
+# Arguments
+- `::Type{Common.SupportsVariableCostate}`: The capability trait.
+- `flow::AbstractHamiltonianFlow`: The Hamiltonian flow.
+- `config::Common.HamiltonianPointConfig`: The base Hamiltonian point configuration.
+- `variable`: The variable parameter value.
+- `unsafe`: If `true`, bypass ODE solver retcode checking.
+
+# Returns
+- `Tuple{AbstractVector, AbstractVector, AbstractVector}`: The augmented solution `(xf, pf, pvf)`.
+
+See also: [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.AugmentedHamiltonianPointConfig`](@ref).
+"""
+function call_variable_costate(
+    ::Type{Common.SupportsVariableCostate},
+    ::Type{VT},
+    flow::AbstractHamiltonianFlow,
+    config::Common.HamiltonianPointConfig; variable, unsafe
+) where {VT}
+    t0  = Common.initial_time(config) 
+    x0  = Common.initial_state(config)
+    p0  = Common.initial_costate(config)
+    pv0 = Common.scalarize(zeros(eltype(x0), length(variable)), variable)
+    tf  = Common.final_time(config)
+    config_aug = Common.AugmentedHamiltonianPointConfig(t0, x0, p0, pv0, tf)
+    return call(flow, config_aug; variable=variable, unsafe=unsafe)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Variable costate call when the variable parameter is not provided.
+
+This method handles the error case where a flow supports variable costate computation
+but the user did not provide the required variable parameter.
+
+# Throws
+- `CTBase.Exceptions.PreconditionError`: Always, with a descriptive message indicating that the variable parameter must be provided.
+
+See also: [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.NotProvided`](@ref).
+"""
+function call_variable_costate(
+    ::Type{Common.SupportsVariableCostate},
+    ::Type{Common.NotProvided},
+    flow::AbstractHamiltonianFlow,
+    config::Common.HamiltonianPointConfig; variable, unsafe
+)
+    throw(Exceptions.PreconditionError(
+        "variable must be provided when variable_costate=true";
+        reason     = "The system supports variable costate computation, which requires the variable parameter",
+        suggestion = "Provide the variable parameter, e.g., flow(t0, x0, p0, tf; variable=v, variable_costate=true)",
+        context    = "HamiltonianFlow call with variable_costate=true but no variable provided",
+    ))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Variable costate call for trajectory configurations.
+
+Variable costate computation is only supported for point configurations, not trajectory
+configurations. This method throws an error when attempting to use variable_costate=true
+with a trajectory configuration.
+
+# Throws
+- `CTBase.Exceptions.PreconditionError`: Always, with a descriptive message indicating that variable_costate is only supported for point configurations.
+
+See also: [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref).
+"""
+function call_variable_costate(
+    ::Type{Common.SupportsVariableCostate},
+    ::Type{VT},
+    flow::AbstractHamiltonianFlow,
+    config::Common.HamiltonianTrajectoryConfig; variable, unsafe
+) where {VT}
+    throw(Exceptions.PreconditionError(
+        "variable_costate=true is not supported for trajectory configurations";
+        reason     = "Variable costate computation is only implemented for point configurations, not full trajectories",
+        suggestion = "Use variable_costate=true with a point configuration (t0, x0, p0, tf) instead of a trajectory configuration (tspan, x0, p0)",
+        context    = "HamiltonianFlow call with variable_costate=true and HamiltonianTrajectoryConfig",
+    ))
 end
