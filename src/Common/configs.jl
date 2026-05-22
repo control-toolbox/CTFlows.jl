@@ -713,7 +713,7 @@ AugmentedHamiltonianPointConfig
 
 See also: [`CTFlows.Common.HamiltonianPointConfig`](@ref), [`CTFlows.Common.AugmentedHamiltonianTrait`](@ref).
 """
-struct AugmentedHamiltonianPointConfig{T0<:Real, X0, P0, PV0, TF<:Real} <: AbstractConfigWithMaC{X0, PointTrait, AugmentedHamiltonianTrait}
+struct AugmentedHamiltonianPointConfig{T0<:Real, X0, P0, PV0, TF<:Real} <: AbstractAugmentedHamiltonianConfig{X0, PointTrait}
     t0::T0
     x0::X0
     p0::P0

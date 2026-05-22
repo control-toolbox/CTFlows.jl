@@ -39,7 +39,7 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
                 config = Common.StatePointConfig(0.0, [1.0, 2.0], 1.0)
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), Common.initial_state(config), result)
+                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
                 Test.@test output == [0.5, 1.0]
                 Test.@test typeof(config) <: Common.StatePointConfig{Float64, <:AbstractVector, Float64}
             end
@@ -49,7 +49,7 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[3.0], [1.5]])
                 config = Common.StatePointConfig(0.0, 3.0, 1.0)
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), Common.initial_state(config), result)
+                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
                 Test.@test output == 1.5
                 Test.@test typeof(config) == Common.StatePointConfig{Float64, Float64, Float64}
             end
@@ -65,7 +65,7 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
                 config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 2.0])
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), Common.initial_state(config), result)
+                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
                 Test.@test output isa Solutions.VectorFieldSolution
             end
 
@@ -74,7 +74,7 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
                 config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 2.0])
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), Common.initial_state(config), result)
+                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
                 Test.@test output.result === result
             end
         end
@@ -92,7 +92,7 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[1.0, 0.5], [0.5, 0.25]])
                 config = Common.HamiltonianPointConfig(0.0, 1.0, 0.5, 1.0)
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), Common.initial_state(config), result)
+                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
                 Test.@test output == (0.5, 0.25)
                 Test.@test typeof(config) == Common.HamiltonianPointConfig{Float64, Float64, Float64, Float64}
             end
@@ -105,7 +105,7 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])
                 config = Common.HamiltonianPointConfig(0.0, [1.0, 2.0], [0.5, 0.3], 1.0)
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), Common.initial_state(config), result)
+                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
                 Test.@test output == ([0.5, 1.0], [0.25, 0.15])
                 Test.@test typeof(config) <: Common.HamiltonianPointConfig{Float64, <:AbstractVector, <:AbstractVector, Float64}
             end
@@ -120,7 +120,7 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[1.0, 2.0, 3.0, 0.5, 0.6, 0.7], [0.5, 1.0, 1.5, 0.25, 0.3, 0.35]])
                 config = Common.HamiltonianPointConfig(0.0, [1.0, 2.0, 3.0], [0.5, 0.6, 0.7], 1.0)
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), Common.initial_state(config), result)
+                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
                 # Should split into first 3 (state) and last 3 (costate)
                 Test.@test output == ([0.5, 1.0, 1.5], [0.25, 0.3, 0.35])
             end
@@ -139,7 +139,7 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])
                 config = Common.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 2.0], [0.5, 0.3])
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), Common.initial_state(config), result)
+                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
                 Test.@test output isa Solutions.HamiltonianVectorFieldSolution
             end
 
@@ -151,7 +151,7 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])
                 config = Common.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 2.0], [0.5, 0.3])
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), Common.initial_state(config), result)
+                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
                 Test.@test output.result === result
             end
         end

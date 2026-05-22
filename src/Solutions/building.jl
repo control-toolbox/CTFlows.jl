@@ -26,37 +26,10 @@ See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Com
 function build_solution(
     ::Type{Common.PointTrait},
     ::Type{Common.StateTrait},
-    initial_state::Number,
+    config::Common.AbstractConfig,
     result::Integrators.AbstractIntegrationResult, 
 )
-    return final_state(result)[1]
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Default implementation for point configs — return the final state.
-
-For vector configurations, returns the state vector unchanged.
-
-# Arguments
-- `::Type{Common.PointTrait}`: The point mode trait type.
-- `::Type{Common.StateTrait}`: The state content trait type.
-- `initial_state`: The initial state (vector or scalar).
-- `result::Integrators.AbstractIntegrationResult`: The integration result.
-
-# Returns
-- `AbstractVector`: The final state vector.
-
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Common.PointTrait`](@ref), [`CTFlows.Common.StateTrait`](@ref).
-"""
-function build_solution(
-    ::Type{Common.PointTrait},
-    ::Type{Common.StateTrait},
-    initial_state,
-    result::Integrators.AbstractIntegrationResult, 
-)
-    return final_state(result)
+    return Common.scalarize(final_state(result), Common.initial_state(config))
 end
 
 """
@@ -79,7 +52,7 @@ See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Sol
 function build_solution(
     ::Type{Common.TrajectoryTrait},
     ::Type{Common.StateTrait},
-    initial_state,
+    config::Common.AbstractConfig,
     result::Integrators.AbstractIntegrationResult, 
 )
     return VectorFieldSolution(result)
@@ -135,11 +108,14 @@ For Hamiltonian systems, `n_p = n_x` always, so the augmented state is `[x; p; p
 - Internal helper used by `build_solution` for `AugmentedHamiltonianPointConfig`.
 - Assumes `n_p = n_x` invariant for Hamiltonian systems.
 """
-_aug_split_solution(u, n::Int) = (
-    u[1:n],
-    u[n+1:2n],
-    u[2n+1:end],
-)
+function _aug_split_solution(u, x0, pv0)
+    n = length(x0)
+    return (
+        Common.scalarize(u[1:n], x0), 
+        Common.scalarize(u[n+1:2n], x0), 
+        Common.scalarize(u[2n+1:end], pv0),
+    )
+end
 
 # =============================================================================
 # Solution from HamiltonianVectorFieldSystem
@@ -170,10 +146,10 @@ See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Com
 function build_solution(
     ::Type{Common.PointTrait},
     ::Type{Common.HamiltonianTrait},
-    initial_state,
+    config::Common.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
     )
-    return _ham_split_solution(Integrators.final_state(result), initial_state)
+    return _ham_split_solution(Integrators.final_state(result), Common.initial_state(config))
 end
 
 """
@@ -197,7 +173,7 @@ See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Sol
 function build_solution(
     ::Type{Common.TrajectoryTrait},
     ::Type{Common.HamiltonianTrait},
-    initial_state,
+    config::Common.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
     )
     return HamiltonianVectorFieldSolution(result)
@@ -234,8 +210,8 @@ See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Com
 function build_solution(
     ::Type{Common.PointTrait},
     ::Type{Common.AugmentedHamiltonianTrait},
-    initial_state,
+    config::Common.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
 )
-    return _aug_split_solution(Integrators.final_state(result), length(initial_state))
+    return _aug_split_solution(Integrators.final_state(result), Common.initial_state(config), Common.initial_variable_costate(config))
 end

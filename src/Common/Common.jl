@@ -30,6 +30,7 @@ include(joinpath(@__DIR__, "traits.jl"))
 include(joinpath(@__DIR__, "ode_parameters.jl"))
 include(joinpath(@__DIR__, "default.jl"))
 include(joinpath(@__DIR__, "internal_norm.jl"))
+include(joinpath(@__DIR__, "helpers.jl"))
 
 # ==============================================================================
 # Module exports
@@ -54,6 +55,6 @@ export time_dependence, variable_dependence, mutability_trait
 export ad_trait, variable_costate_trait
 export is_inplace, is_outofplace
 export __is_autonomous, __is_variable, __variable, __unsafe, __is_inplace, __state_dimension, _variable_costate
-export deepvalue, real_norm
+export deepvalue, real_norm, scalarize
 
 end # module Common

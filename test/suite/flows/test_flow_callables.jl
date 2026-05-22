@@ -50,23 +50,19 @@ function Integrators.solve_problem(integ::FakeIntegFC, prob, options::Dict{Symbo
     return FakeResultFC()
 end
 
-function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.StateTrait}, initial_state::Union{AbstractVector, AbstractMatrix}, result::FakeResultFC)
+function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.StateTrait}, config::Common.AbstractConfig, result::FakeResultFC)
     return :state_point_sol
 end
 
-function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.StateTrait}, initial_state::Number, result::FakeResultFC)
-    return :state_point_sol
-end
-
-function Solutions.build_solution(::Type{Common.TrajectoryTrait}, ::Type{Common.StateTrait}, initial_state, result::FakeResultFC)
+function Solutions.build_solution(::Type{Common.TrajectoryTrait}, ::Type{Common.StateTrait}, config::Common.AbstractConfig, result::FakeResultFC)
     return :state_traj_sol
 end
 
-function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.HamiltonianTrait}, initial_state, result::FakeResultFC)
+function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.HamiltonianTrait}, config::Common.AbstractConfig, result::FakeResultFC)
     return :ham_point_sol
 end
 
-function Solutions.build_solution(::Type{Common.TrajectoryTrait}, ::Type{Common.HamiltonianTrait}, initial_state, result::FakeResultFC)
+function Solutions.build_solution(::Type{Common.TrajectoryTrait}, ::Type{Common.HamiltonianTrait}, config::Common.AbstractConfig, result::FakeResultFC)
     return :ham_traj_sol
 end
 

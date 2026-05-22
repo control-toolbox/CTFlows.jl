@@ -105,7 +105,7 @@ end
 function Solutions.build_solution(
     ::Type{Common.PointTrait},
     ::Type{Common.StateTrait},
-    initial_state,
+    config::Common.AbstractConfig,
     result::FakeIntegrationResultForCalling,
 )
     return Solutions.final_state(result)
@@ -114,7 +114,7 @@ end
 function Solutions.build_solution(
     ::Type{Common.TrajectoryTrait},
     ::Type{Common.StateTrait},
-    initial_state,
+    config::Common.AbstractConfig,
     result::FakeIntegrationResultForCalling,
 )
     return :fake_vector_field_solution
@@ -123,7 +123,7 @@ end
 function Solutions.build_solution(
     ::Type{Common.PointTrait},
     ::Type{Common.HamiltonianTrait},
-    initial_state,
+    config::Common.AbstractConfig,
     result::FakeIntegrationResultForCalling,
 )
     return (:fake_xf, :fake_pf)
@@ -132,7 +132,7 @@ end
 function Solutions.build_solution(
     ::Type{Common.TrajectoryTrait},
     ::Type{Common.HamiltonianTrait},
-    initial_state,
+    config::Common.AbstractConfig,
     result::FakeIntegrationResultForCalling,
 )
     return :fake_hamiltonian_solution

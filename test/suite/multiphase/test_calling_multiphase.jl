@@ -146,17 +146,17 @@ function Solutions.evaluate_at(result::MockIntegrationResult, t::Real)
     end
 end
 
-function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.StateTrait}, initial_state, result::MockIntegrationResult)
+function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.StateTrait}, config::Common.AbstractConfig, result::MockIntegrationResult)
     # For StatePointConfig, return the final state directly (as expected by _evaluate_phase)
     return result.u
 end
 
-function Solutions.build_solution(::Type{Common.TrajectoryTrait}, ::Type{Common.StateTrait}, initial_state, result::MockIntegrationResult)
+function Solutions.build_solution(::Type{Common.TrajectoryTrait}, ::Type{Common.StateTrait}, config::Common.AbstractConfig, result::MockIntegrationResult)
     # For StateTrajectoryConfig with StateFlow, return the full result
     return result
 end
 
-function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.HamiltonianTrait}, initial_state, result::MockIntegrationResult)
+function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.HamiltonianTrait}, config::Common.AbstractConfig, result::MockIntegrationResult)
     # For HamiltonianFlow, return a tuple (x, p) matching _ham_split_solution behavior
     x_len = length(result.u) ÷ 2
     x_part = result.u[1:x_len]
@@ -164,7 +164,7 @@ function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.Hamil
     return (x_part, p_part)
 end
 
-function Solutions.build_solution(::Type{Common.TrajectoryTrait}, ::Type{Common.HamiltonianTrait}, initial_state, result::MockIntegrationResult)
+function Solutions.build_solution(::Type{Common.TrajectoryTrait}, ::Type{Common.HamiltonianTrait}, config::Common.AbstractConfig, result::MockIntegrationResult)
     # For HamiltonianTrajectoryConfig, return the full result
     return result
 end
