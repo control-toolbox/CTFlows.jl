@@ -26,10 +26,10 @@ See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Tra
 function build_solution(
     ::Type{Traits.PointTrait},
     ::Type{Traits.StateTrait},
-    config::Common.AbstractConfig,
+    config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult, 
 )
-    return Common.scalarize(Integrators.final_state(result), Common.initial_state(config))
+    return Common.scalarize(Integrators.final_state(result), Configs.initial_state(config))
 end
 
 """
@@ -47,12 +47,12 @@ in a `VectorFieldSolution` for future extensibility.
 # Returns
 - `VectorFieldSolution`: The wrapped integration result.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Common.TrajectoryTrait`](@ref), [`CTFlows.Common.StateTrait`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Configs.TrajectoryTrait`](@ref), [`CTFlows.Configs.StateTrait`](@ref).
 """
 function build_solution(
     ::Type{Traits.TrajectoryTrait},
     ::Type{Traits.StateTrait},
-    config::Common.AbstractConfig,
+    config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult, 
 )
     return VectorFieldSolution(result)
@@ -141,15 +141,15 @@ type of the initial state to handle scalar, vector, and matrix cases.
   - `Tuple{AbstractVector, AbstractVector}` for vector inputs
   - `Tuple{AbstractMatrix, AbstractMatrix}` for matrix inputs
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Common.HamiltonianTrait`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Configs.HamiltonianTrait`](@ref).
 """
 function build_solution(
     ::Type{Traits.PointTrait},
     ::Type{Traits.HamiltonianTrait},
-    config::Common.AbstractConfig,
+    config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
     )
-    return _ham_split_solution(Integrators.final_state(result), Common.initial_state(config))
+    return _ham_split_solution(Integrators.final_state(result), Configs.initial_state(config))
 end
 
 """
@@ -168,12 +168,12 @@ Wraps the integration result in a `HamiltonianVectorFieldSolution` for future ex
 # Returns
 - `HamiltonianVectorFieldSolution`: The wrapped integration result.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Common.TrajectoryTrait`](@ref), [`CTFlows.Common.HamiltonianTrait`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Configs.TrajectoryTrait`](@ref), [`CTFlows.Configs.HamiltonianTrait`](@ref).
 """
 function build_solution(
     ::Type{Traits.TrajectoryTrait},
     ::Type{Traits.HamiltonianTrait},
-    config::Common.AbstractConfig,
+    config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
     )
     return HamiltonianVectorFieldSolution(result)
@@ -205,13 +205,13 @@ splits using only the state dimension `n = length(initial_state)`.
 - Uses `_aug_split_solution` helper to split the augmented final state.
 - Assumes `n_p = n_x` invariant for Hamiltonian systems.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Common.AugmentedHamiltonianTrait`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Configs.AugmentedHamiltonianTrait`](@ref).
 """
 function build_solution(
     ::Type{Traits.PointTrait},
     ::Type{Traits.AugmentedHamiltonianTrait},
-    config::Common.AbstractConfig,
+    config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
 )
-    return _aug_split_solution(Integrators.final_state(result), Common.initial_state(config), Common.initial_variable_costate(config))
+    return _aug_split_solution(Integrators.final_state(result), Configs.initial_state(config), Configs.initial_variable_costate(config))
 end

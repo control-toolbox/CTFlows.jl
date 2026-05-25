@@ -269,7 +269,7 @@ avoiding repeated resolution during integration.
   on the configuration type.
 
 See also: [`CTFlows.Integrators.build_options`](@ref), [`CTFlows.Integrators.SciML`](@ref),
-[`CTFlows.Common.StatePointConfig`](@ref), [`CTFlows.Common.StateTrajectoryConfig`](@ref).
+[`CTFlows.Configs.StatePointConfig`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref).
 """
 function CTFlows.Integrators.build_sciml_integrator(
     ::Type{CTFlows.Integrators.SciMLTag}; mode::Symbol = :strict, kwargs...,
@@ -324,14 +324,14 @@ since only the final state is needed.
 
 # Arguments
 - `integ::SciML`: The SciML integrator with pre-computed option caches.
-- `config::Common.AbstractPointConfig`: The point configuration.
+- `config::Configs.AbstractPointConfig`: The point configuration.
 
 # Returns
 - `Dict{Symbol,Any}`: Pre-computed options optimized for point integration.
 
-See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref), [`CTFlows.Common.AbstractPointConfig`](@ref).
+See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref), [`CTFlows.Configs.AbstractPointConfig`](@ref).
 """
-function Integrators.build_options(integ::SciML, config::Common.AbstractPointConfig)
+function Integrators.build_options(integ::SciML, config::Configs.AbstractPointConfig)
     return integ.options_point
 end
 
@@ -346,14 +346,14 @@ full trajectory storage and interpolation.
 
 # Arguments
 - `integ::SciML`: The SciML integrator with pre-computed option caches.
-- `config::Common.AbstractTrajectoryConfig`: The trajectory configuration.
+- `config::Configs.AbstractTrajectoryConfig`: The trajectory configuration.
 
 # Returns
 - `Dict{Symbol,Any}`: Pre-computed options optimized for trajectory integration.
 
-See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref), [`CTFlows.Common.AbstractTrajectoryConfig`](@ref).
+See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref), [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref).
 """
-function Integrators.build_options(integ::SciML, config::Common.AbstractTrajectoryConfig)
+function Integrators.build_options(integ::SciML, config::Configs.AbstractTrajectoryConfig)
     return integ.options_trajectory
 end
 

@@ -18,7 +18,7 @@ julia> HamiltonianTrait <: Traits.AbstractContentTrait
 true
 
 julia> # Used in configuration type parameters:
-julia> StatePointConfig <: CTFlows.Common.AbstractConfig{<:Any, <:Traits.AbstractModeTrait, StateTrait}
+julia> StatePointConfig <: CTFlows.Configs.AbstractConfig{<:Any, <:Traits.AbstractModeTrait, StateTrait}
 true
 \`\`\`
 
@@ -27,7 +27,7 @@ true
 - State trait indicates configurations with only state variables (no costate)
 - Hamiltonian trait indicates configurations with both state and costate variables
 
-See also: [`CTFlows.Traits.StateTrait`](@ref), [`CTFlows.Traits.HamiltonianTrait`](@ref), [`CTFlows.Common.AbstractConfig`](@ref).
+See also: [`CTFlows.Traits.StateTrait`](@ref), [`CTFlows.Traits.HamiltonianTrait`](@ref), [`CTFlows.Configs.AbstractConfig`](@ref).
 """
 abstract type AbstractContentTrait <: AbstractTrait end
 
@@ -50,7 +50,7 @@ julia> st isa Traits.AbstractContentTrait
 true
 
 julia> # Used in state-only configurations:
-julia> StatePointConfig <: CTFlows.Common.AbstractConfig{<:Any, <:Traits.AbstractModeTrait, StateTrait}
+julia> StatePointConfig <: CTFlows.Configs.AbstractConfig{<:Any, <:Traits.AbstractModeTrait, StateTrait}
 true
 \`\`\`
 
@@ -59,7 +59,7 @@ true
 - The `initial_costate` accessor throws a `PreconditionError` for state configurations
 - This mode is suitable for standard ODE integration without adjoint variables
 
-See also: [`CTFlows.Traits.HamiltonianTrait`](@ref), [`CTFlows.Traits.AbstractContentTrait`](@ref), [`CTFlows.Common.StatePointConfig`](@ref).
+See also: [`CTFlows.Traits.HamiltonianTrait`](@ref), [`CTFlows.Traits.AbstractContentTrait`](@ref), [`CTFlows.Configs.StatePointConfig`](@ref).
 """
 struct StateTrait <: AbstractContentTrait end
 
@@ -82,7 +82,7 @@ julia> ham isa Traits.AbstractContentTrait
 true
 
 julia> # Used in Hamiltonian configurations:
-julia> HamiltonianPointConfig <: CTFlows.Common.AbstractConfig{<:Any, <:Traits.AbstractModeTrait, HamiltonianTrait}
+julia> HamiltonianPointConfig <: CTFlows.Configs.AbstractConfig{<:Any, <:Traits.AbstractModeTrait, HamiltonianTrait}
 true
 \`\`\`
 
@@ -91,7 +91,7 @@ true
 - The `initial_condition` accessor returns `vcat(x0, p0)` for Hamiltonian configurations
 - This mode is suitable for optimal control problems with Pontryagin's maximum principle
 
-See also: [`CTFlows.Traits.StateTrait`](@ref), [`CTFlows.Traits.AbstractContentTrait`](@ref), [`CTFlows.Common.HamiltonianPointConfig`](@ref).
+See also: [`CTFlows.Traits.StateTrait`](@ref), [`CTFlows.Traits.AbstractContentTrait`](@ref), [`CTFlows.Configs.HamiltonianPointConfig`](@ref).
 """
 struct HamiltonianTrait <: AbstractContentTrait end
 
@@ -101,10 +101,10 @@ $(TYPEDEF)
 Trait marker for augmented Hamiltonian systems, where the Hamiltonian includes an augmented variable (e.g., a parameter or control variable) in addition to state and costate variables.
 
 # Notes
-- Used in conjunction with [`CTFlows.Common.AbstractAugmentedHamiltonianConfig`](@ref) to specify that a configuration is for an augmented Hamiltonian system.
+- Used in conjunction with [`CTFlows.Configs.AbstractAugmentedHamiltonianConfig`](@ref) to specify that a configuration is for an augmented Hamiltonian system.
 - Subtypes [`CTFlows.Traits.AbstractContentTrait`](@ref).
 - Used to distinguish augmented Hamiltonian systems from standard Hamiltonian systems in trait-based dispatch.
 
-See also: [`CTFlows.Traits.HamiltonianTrait`](@ref), [`CTFlows.Common.AbstractAugmentedHamiltonianConfig`](@ref), [`CTFlows.Traits.AbstractContentTrait`](@ref).
+See also: [`CTFlows.Traits.HamiltonianTrait`](@ref), [`CTFlows.Configs.AbstractAugmentedHamiltonianConfig`](@ref), [`CTFlows.Traits.AbstractContentTrait`](@ref).
 """
 struct AugmentedHamiltonianTrait <: AbstractContentTrait end

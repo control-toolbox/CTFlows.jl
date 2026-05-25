@@ -10,6 +10,7 @@ import Test
 import CTBase.Exceptions: Exceptions
 import CTFlows: CTFlows
 import CTFlows.Common: Common
+import CTFlows.Configs: Configs
 import CTFlows.Traits: Traits
 import CTFlows.Systems: Systems
 import CTFlows.Flows: Flows
@@ -119,12 +120,12 @@ function test_variable_costate_flows()
             x0 = [1.0, 2.0]  # n = 2
             p0 = [3.0, 4.0]
             pv0 = [5.0, 6.0, 7.0, 8.0]
-            config = Common.AugmentedHamiltonianPointConfig(0, x0, p0, pv0, 1)
+            config = Configs.AugmentedHamiltonianPointConfig(0, x0, p0, pv0, 1)
             result = FakeIntegrationResult(u_final)
 
             xf, pf, pvf = Solutions.build_solution(
-                Common.mode_trait(config),
-                Common.content_trait(config),
+                Configs.mode_trait(config),
+                Configs.content_trait(config),
                 config,
                 result,
             )

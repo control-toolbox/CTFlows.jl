@@ -4,6 +4,7 @@ import Test
 import CTBase.Exceptions: Exceptions
 import CTFlows: CTFlows
 import CTFlows.Common: Common
+import CTFlows.Configs: Configs
 import CTFlows.Systems: Systems
 import CTFlows.Integrators: Integrators
 import CTFlows.Flows: Flows
@@ -130,7 +131,7 @@ function test_scimlbase_function_system()
                 f = ODEFunction((du, u, p, t) -> du .= -u)
                 sys = CTFlowsSciML.SciMLFunctionSystem(f)
                 integ = Integrators.SciML()
-                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=2.0, cache=nothing)
                 Test.@test prob isa SciMLBase.ODEProblem
                 Test.@test prob.p isa Common.ODEParameters
@@ -141,7 +142,7 @@ function test_scimlbase_function_system()
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
                 sys = CTFlowsSciML.SciMLFunctionSystem(f)
                 integ = Integrators.SciML()
-                config = Common.StatePointConfig(0.0, [1.0], 1.0)
+                config = Configs.StatePointConfig(0.0, [1.0], 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=3.5, cache=nothing)
                 Test.@test prob.p isa Common.ODEParameters
                 Test.@test prob.p.variable == 3.5

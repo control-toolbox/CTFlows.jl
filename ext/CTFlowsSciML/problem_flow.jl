@@ -73,7 +73,7 @@ function (f::SciMLProblemFlow)(
         kw = merge(kw, (; p = variable))
     end
     prob = SciMLBase.remake(f.prob; kw...)
-    config = Common.StatePointConfig(t0, x0, tf)
+    config = Configs.StatePointConfig(t0, x0, tf)
     opts = Integrators.build_options(f.integrator, config)
     sol = SciMLBase.solve(prob; opts...)
     _check_retcode(sol, unsafe)
@@ -118,7 +118,7 @@ function (f::SciMLProblemFlow)(
         kw = merge(kw, (; p = variable))
     end
     prob = SciMLBase.remake(f.prob; kw...)
-    config = Common.StateTrajectoryConfig(tspan, x0)
+    config = Configs.StateTrajectoryConfig(tspan, x0)
     opts = Integrators.build_options(f.integrator, config)
     sol = SciMLBase.solve(prob; opts...)
     _check_retcode(sol, unsafe)

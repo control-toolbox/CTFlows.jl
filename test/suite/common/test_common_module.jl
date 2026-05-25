@@ -34,47 +34,11 @@ function test_common_module()
         end
 
         # ====================================================================
-        # Config Types
+        # Config Types (now in Configs module)
         # ====================================================================
 
-        Test.@testset "Config Types" begin
-            Test.@testset "AbstractConfig is exported" begin
-                Test.@test isdefined(Common, :AbstractConfig)
-                Test.@test isabstracttype(Common.AbstractConfig)
-            end
-
-            Test.@testset "StatePointConfig is exported" begin
-                Test.@test isdefined(Common, :StatePointConfig)
-                config = Common.StatePointConfig(0.0, [1.0], 1.0)
-                Test.@test config isa Common.StatePointConfig
-            end
-
-            Test.@testset "StateTrajectoryConfig is exported" begin
-                Test.@test isdefined(Common, :StateTrajectoryConfig)
-                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0])
-                Test.@test config isa Common.StateTrajectoryConfig
-            end
-        end
-
-        # ====================================================================
-        # Config Functions
-        # ====================================================================
-
-        Test.@testset "Config Functions" begin
-            Test.@testset "tspan is exported" begin
-                Test.@test isdefined(Common, :tspan)
-                config = Common.StatePointConfig(0.0, [1.0], 1.0)
-                ts = Common.tspan(config)
-                Test.@test ts == (0.0, 1.0)
-            end
-
-            Test.@testset "initial_condition is exported" begin
-                Test.@test isdefined(Common, :initial_condition)
-                config = Common.StatePointConfig(0.0, [1.0], 1.0)
-                ic = Common.initial_condition(config)
-                Test.@test ic == [1.0]
-            end
-        end
+        # Config types have been moved to CTFlows.Configs module
+        # See test/suite/configs/test_configs.jl for config tests
 
         # ====================================================================
         # Trait Types (now in Traits module)

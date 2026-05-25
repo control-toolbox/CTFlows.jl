@@ -4,6 +4,7 @@ import Test
 import CTBase.Exceptions: Exceptions
 import CTFlows: CTFlows
 import CTFlows.Common: Common
+import CTFlows.Configs: Configs
 import CTFlows.Data: Data
 import CTFlows.Systems: Systems
 import CTFlows.Integrators: Integrators
@@ -196,7 +197,7 @@ function test_sciml_extension()
                     Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 )
 
-                config = Common.StatePointConfig(0.0, [1.0, 2.0], 1.0)
+                config = Configs.StatePointConfig(0.0, [1.0, 2.0], 1.0)
                 integ = Integrators.SciML()
 
                 # Build ODE problem
@@ -213,7 +214,7 @@ function test_sciml_extension()
                     Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
                 )
 
-                config = Common.StatePointConfig(0.0, [1.0, 2.0], 1.0)
+                config = Configs.StatePointConfig(0.0, [1.0, 2.0], 1.0)
                 integ = Integrators.SciML()
 
                 # Build ODE problem with variable
@@ -235,7 +236,7 @@ function test_sciml_extension()
                 Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
             )
 
-            config = Common.StatePointConfig(0.0, [1.0, 2.0], 1.0)
+            config = Configs.StatePointConfig(0.0, [1.0, 2.0], 1.0)
             integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
             # Build ODE problem
@@ -256,7 +257,7 @@ function test_sciml_extension()
                 # Create a simple ODE problem that will fail with maxiters=1
                 prob = ODEProblem((du, u, p, t) -> du .= u, [1.0], (0.0, 1.0))
                 integ = Integrators.SciML(maxiters=1)
-                config = Common.StatePointConfig(0.0, [1.0], 1.0)
+                config = Configs.StatePointConfig(0.0, [1.0], 1.0)
                 opts = Integrators.build_options(integ, config)
 
                 # Test that solve_problem throws SolverFailure when unsafe=false
@@ -278,7 +279,7 @@ function test_sciml_extension()
                 # Create a simple ODE problem that will fail with maxiters=1
                 prob = ODEProblem((du, u, p, t) -> du .= u, [1.0], (0.0, 1.0))
                 integ = Integrators.SciML(maxiters=1)
-                config = Common.StatePointConfig(0.0, [1.0], 1.0)
+                config = Configs.StatePointConfig(0.0, [1.0], 1.0)
                 opts = Integrators.build_options(integ, config)
 
                 # With unsafe=true, should not throw even with bad retcode
@@ -296,7 +297,7 @@ function test_sciml_extension()
                 Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
             )
 
-            config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 2.0])
+            config = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 2.0])
             integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
             prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
@@ -324,7 +325,7 @@ function test_sciml_extension()
                     Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 )
 
-                config = Common.StatePointConfig(0.0, 1.0, 1.0)
+                config = Configs.StatePointConfig(0.0, 1.0, 1.0)
                 integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
                 # Build problem
@@ -337,7 +338,7 @@ function test_sciml_extension()
                 result = Integrators.solve_problem(integ, prob, opts)
 
                 # Build solution
-                flow_sol = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
+                flow_sol = Solutions.build_solution(Configs.mode_trait(config), Configs.content_trait(config), config, result)
 
                 Test.@test flow_sol isa Number
             end
@@ -347,7 +348,7 @@ function test_sciml_extension()
                     Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 )
 
-                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 2.0])
+                config = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 2.0])
                 integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
                 # Build problem
@@ -360,7 +361,7 @@ function test_sciml_extension()
                 result = Integrators.solve_problem(integ, prob, opts)
 
                 # Build solution
-                flow_sol = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
+                flow_sol = Solutions.build_solution(Configs.mode_trait(config), Configs.content_trait(config), config, result)
 
                 Test.@test flow_sol isa Solutions.VectorFieldSolution
             end
@@ -378,7 +379,7 @@ function test_sciml_extension()
                 vf  = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 u0  = [1.0, 2.0]
-                config = Common.StatePointConfig(0.0, u0, 1.0)
+                config = Configs.StatePointConfig(0.0, u0, 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
@@ -390,7 +391,7 @@ function test_sciml_extension()
                 vf  = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 u0  = SA[1.0, 2.0]
-                config = Common.StatePointConfig(0.0, u0, 1.0)
+                config = Configs.StatePointConfig(0.0, u0, 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
@@ -402,7 +403,7 @@ function test_sciml_extension()
                 vf  = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 u0  = [1.0, 2.0]
-                config = Common.StatePointConfig(0.0, u0, 1.0)
+                config = Configs.StatePointConfig(0.0, u0, 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
@@ -414,7 +415,7 @@ function test_sciml_extension()
                 vf  = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 u0  = SA[1.0, 2.0]
-                config = Common.StatePointConfig(0.0, u0, 1.0)
+                config = Configs.StatePointConfig(0.0, u0, 1.0)
                 prob = Test.@test_logs (:warn, r"InPlace VectorField") Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
@@ -435,7 +436,7 @@ function test_sciml_extension()
                 hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
                 sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=1)
                 u0  = [1.0, 0.5]
-                config = Common.StatePointConfig(0.0, u0, 1.0)
+                config = Configs.StatePointConfig(0.0, u0, 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
@@ -448,7 +449,7 @@ function test_sciml_extension()
                 hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
                 sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=1)
                 u0  = SA[1.0, 0.5]
-                config = Common.StatePointConfig(0.0, u0, 1.0)
+                config = Configs.StatePointConfig(0.0, u0, 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
@@ -461,7 +462,7 @@ function test_sciml_extension()
                 hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
                 sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=1)
                 u0  = [1.0, 0.5]
-                config = Common.StatePointConfig(0.0, u0, 1.0)
+                config = Configs.StatePointConfig(0.0, u0, 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
@@ -474,7 +475,7 @@ function test_sciml_extension()
                 hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
                 sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=1)
                 u0  = SA[1.0, 0.5]
-                config = Common.StatePointConfig(0.0, u0, 1.0)
+                config = Configs.StatePointConfig(0.0, u0, 1.0)
                 prob = Test.@test_logs (:warn, r"InPlace HamiltonianVectorField") Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
@@ -490,8 +491,8 @@ function test_sciml_extension()
 
         Test.@testset "Config-Dependent Options" begin
             integ = Integrators.SciML()
-            config_point = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
-            config_traj = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+            config_point = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            config_traj = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 
             Test.@testset "auto defaults resolve correctly for StatePointConfig" begin
                 opts = Integrators.build_options(integ, config_point)
@@ -533,7 +534,7 @@ function test_sciml_extension()
                 sys = Systems.VectorFieldSystem(
                     Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 )
-                config = Common.StatePointConfig(0.0, [1.0], 0.5)
+                config = Configs.StatePointConfig(0.0, [1.0], 0.5)
                 integ = Integrators.SciML(reltol=1e-8)
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
@@ -549,14 +550,14 @@ function test_sciml_extension()
                 integ = Integrators.SciML(reltol=1e-8)
                 
                 # First segment: [0, 0.5]
-                config1 = Common.StatePointConfig(0.0, [1.0], 0.5)
+                config1 = Configs.StatePointConfig(0.0, [1.0], 0.5)
                 prob1 = Integrators.build_problem(integ, sys, config1; variable=nothing, cache=nothing)
                 opts1 = Integrators.build_options(integ, config1)
                 result1 = Integrators.solve_problem(integ, prob1, opts1)
                 
                 # Second segment: [0.5, 1.0]
                 xf1 = Integrators.final_state(result1)
-                config2 = Common.StatePointConfig(0.5, xf1, 1.0)
+                config2 = Configs.StatePointConfig(0.5, xf1, 1.0)
                 prob2 = Integrators.build_problem(integ, sys, config2; variable=nothing, cache=nothing)
                 opts2 = Integrators.build_options(integ, config2)
                 result2 = Integrators.solve_problem(integ, prob2, opts2)

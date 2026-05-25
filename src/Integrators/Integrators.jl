@@ -20,6 +20,7 @@ import CTBase.Exceptions
 # ==============================================================================
 
 import ..Common: Common
+import ..Configs: Configs
 import ..Systems: Systems
 using CTSolvers: CTSolvers
 

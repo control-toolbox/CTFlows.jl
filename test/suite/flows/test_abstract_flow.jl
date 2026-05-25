@@ -5,6 +5,7 @@ import CTBase.Exceptions
 import CTFlows.Systems
 import CTFlows.Flows
 import CTFlows.Common
+import CTFlows.Configs
 import CTFlows.Traits
 import CTFlows.Integrators
 import CTFlows.Data
@@ -69,7 +70,7 @@ function (f::FakeFlow)(t0, x0, p0, tf)
     return :fake_trajectory_with_costate
 end
 
-function (f::FakeFlow)(config::Common.AbstractConfig)
+function (f::FakeFlow)(config::Configs.AbstractConfig)
     return :fake_config_trajectory
 end
 
@@ -136,13 +137,13 @@ function test_abstract_flow()
             end
 
             Test.@testset "callable with config" begin
-                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 result = flow(config)
                 Test.@test result === :fake_config_trajectory
             end
 
             Test.@testset "callable with StateTrajectoryConfig" begin
-                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+                config = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
                 result = flow(config)
                 Test.@test result === :fake_config_trajectory
             end

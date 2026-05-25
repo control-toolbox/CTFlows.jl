@@ -18,7 +18,7 @@ julia> TrajectoryTrait <: Traits.AbstractModeTrait
 true
 
 julia> # Used in configuration type parameters:
-julia> StatePointConfig <: CTFlows.Common.AbstractConfig{<:Any, PointTrait, <:Traits.AbstractContentTrait}
+julia> StatePointConfig <: CTFlows.Configs.AbstractConfig{<:Any, PointTrait, <:Traits.AbstractContentTrait}
 true
 \`\`\`
 
@@ -27,7 +27,7 @@ true
 - Point mode indicates integration from a single initial condition to a specific final time
 - Trajectory mode indicates integration over a continuous time interval
 
-See also: [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Traits.TrajectoryTrait`](@ref), [`CTFlows.Common.AbstractConfig`](@ref).
+See also: [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Traits.TrajectoryTrait`](@ref), [`CTFlows.Configs.AbstractConfig`](@ref).
 """
 abstract type AbstractModeTrait <: AbstractTrait end
 
@@ -50,7 +50,7 @@ julia> pt isa Traits.AbstractModeTrait
 true
 
 julia> # Used in point-to-point configurations:
-julia> StatePointConfig <: CTFlows.Common.AbstractConfig{<:Any, PointTrait, <:Traits.AbstractContentTrait}
+julia> StatePointConfig <: CTFlows.Configs.AbstractConfig{<:Any, PointTrait, <:Traits.AbstractContentTrait}
 true
 \`\`\`
 
@@ -59,7 +59,7 @@ true
 - This mode is suitable for boundary value problems and shooting methods
 - The `tspan` accessor returns `(c.t0, c.tf)` for point configurations
 
-See also: [`CTFlows.Traits.TrajectoryTrait`](@ref), [`CTFlows.Traits.AbstractModeTrait`](@ref), [`CTFlows.Common.StatePointConfig`](@ref).
+See also: [`CTFlows.Traits.TrajectoryTrait`](@ref), [`CTFlows.Traits.AbstractModeTrait`](@ref), [`CTFlows.Configs.StatePointConfig`](@ref).
 """
 struct PointTrait <: AbstractModeTrait end
 
@@ -82,7 +82,7 @@ julia> traj isa Traits.AbstractModeTrait
 true
 
 julia> # Used in trajectory configurations:
-julia> StateTrajectoryConfig <: CTFlows.Common.AbstractConfig{<:Any, TrajectoryTrait, <:Traits.AbstractContentTrait}
+julia> StateTrajectoryConfig <: CTFlows.Configs.AbstractConfig{<:Any, TrajectoryTrait, <:Traits.AbstractContentTrait}
 true
 \`\`\`
 
@@ -91,6 +91,6 @@ true
 - This mode is suitable for generating full time evolution and visualization
 - The `tspan` accessor returns `c.tspan` directly for trajectory configurations
 
-See also: [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Traits.AbstractModeTrait`](@ref), [`CTFlows.Common.StateTrajectoryConfig`](@ref).
+See also: [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Traits.AbstractModeTrait`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref).
 """
 struct TrajectoryTrait <: AbstractModeTrait end

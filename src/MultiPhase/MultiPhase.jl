@@ -19,6 +19,7 @@ import CTSolvers.Options
 # ==============================================================================
 
 import ..Common: Common
+import ..Configs: Configs
 import ..Traits: Traits
 import ..Systems: Systems
 import ..Integrators: Integrators

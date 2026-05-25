@@ -36,7 +36,7 @@ julia> PointTrait <: Traits.AbstractModeTrait
 true
 
 julia> # Used as type parameters in configs:
-julia> StatePointConfig <: CTFlows.Common.AbstractConfig{<:Any, PointTrait, StateTrait}
+julia> StatePointConfig <: CTFlows.Configs.AbstractConfig{<:Any, PointTrait, StateTrait}
 true
 \`\`\`
 

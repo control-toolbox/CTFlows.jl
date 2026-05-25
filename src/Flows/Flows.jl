@@ -21,6 +21,7 @@ using CTSolvers: CTSolvers
 # ==============================================================================
 
 import ..Common: Common
+import ..Configs: Configs
 import ..Traits: Traits
 import ..Data: Data
 import ..Differentiation: Differentiation
