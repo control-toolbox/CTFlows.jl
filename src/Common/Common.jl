@@ -20,17 +20,25 @@ import CTBase.Exceptions
 import CTModels.OCP
 
 # ==============================================================================
+# Sibling imports (temporary - will be removed after full refactoring)
+# ==============================================================================
+
+using ..Traits
+
+# ==============================================================================
 # Includes
 # ==============================================================================
 
+include(joinpath(@__DIR__, "helpers.jl"))
 include(joinpath(@__DIR__, "abstract_tag.jl"))
-include(joinpath(@__DIR__, "abstract_trait.jl"))
+include(joinpath(@__DIR__, "abstract_cache.jl"))
+# Temporarily keeping these for now - will be removed after Configs module is created
+# include(joinpath(@__DIR__, "abstract_trait.jl"))
 include(joinpath(@__DIR__, "configs.jl"))
-include(joinpath(@__DIR__, "traits.jl"))
+# include(joinpath(@__DIR__, "traits.jl"))
 include(joinpath(@__DIR__, "ode_parameters.jl"))
 include(joinpath(@__DIR__, "default.jl"))
 include(joinpath(@__DIR__, "internal_norm.jl"))
-include(joinpath(@__DIR__, "helpers.jl"))
 
 # ==============================================================================
 # Module exports

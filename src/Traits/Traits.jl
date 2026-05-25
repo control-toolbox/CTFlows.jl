@@ -1,0 +1,45 @@
+module Traits
+
+# ==============================================================================
+# External package imports
+# ==============================================================================
+
+import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
+import CTBase.Exceptions
+import CTModels.OCP
+
+# ==============================================================================
+# Includes
+# ==============================================================================
+
+include(joinpath(@__DIR__, "helpers.jl"))
+include(joinpath(@__DIR__, "abstract.jl"))
+include(joinpath(@__DIR__, "mode.jl"))
+include(joinpath(@__DIR__, "content.jl"))
+include(joinpath(@__DIR__, "ad.jl"))
+include(joinpath(@__DIR__, "variable_costate.jl"))
+include(joinpath(@__DIR__, "mutability.jl"))
+include(joinpath(@__DIR__, "time_dependence.jl"))
+include(joinpath(@__DIR__, "variable_dependence.jl"))
+
+# ==============================================================================
+# Module exports
+# ==============================================================================
+
+export AbstractTrait
+export AbstractModeTrait, AbstractContentTrait
+export AbstractMutabilityTrait
+export AbstractADTrait
+export AbstractVariableCostateCapability
+export PointTrait, TrajectoryTrait
+export StateTrait, HamiltonianTrait, AugmentedHamiltonianTrait
+export InPlace, OutOfPlace
+export WithAD, WithoutAD
+export SupportsVariableCostate, NoVariableCostate
+export VariableDependence, Fixed, NonFixed
+export ad_trait, variable_costate_trait
+export is_inplace, is_outofplace
+export has_time_dependence_trait, time_dependence, has_mutability_trait, mutability_trait
+export has_variable_dependence_trait, variable_dependence
+
+end # module Traits
