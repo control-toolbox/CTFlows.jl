@@ -20,12 +20,14 @@ using CTSolvers: CTSolvers
 # Internal sibling-submodule imports
 # ==============================================================================
 
-using ..Common
-using ..Data
-using ..Differentiation
-using ..Systems
-using ..Integrators
-using ..Solutions
+import ..Common: Common
+import ..Configs: Configs
+import ..Traits: Traits
+import ..Data: Data
+import ..Differentiation: Differentiation
+import ..Systems: Systems
+import ..Integrators: Integrators
+import ..Solutions: Solutions
 
 # ==============================================================================
 # Include files

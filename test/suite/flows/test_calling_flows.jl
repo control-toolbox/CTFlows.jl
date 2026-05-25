@@ -8,6 +8,8 @@ import CTFlows.Flows
 import CTFlows.Integrators
 import CTFlows.Solutions
 import CTFlows.Common
+import CTFlows.Configs
+import CTFlows.Traits
 import ADTypes
 import DifferentiationInterface
 import CTBase.Exceptions
@@ -22,25 +24,25 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake system for testing the calling workflow.
 """
-struct FakeSystemForCalling <: Systems.AbstractStateSystem{Common.Autonomous, Common.Fixed}
+struct FakeSystemForCalling <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
     state_dim::Int
 end
 
-struct FakeSystemNonFixed <: Systems.AbstractStateSystem{Common.Autonomous, Common.NonFixed}
+struct FakeSystemNonFixed <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.NonFixed}
     state_dim::Int
 end
 
 """
 Fake Hamiltonian system for testing the calling workflow.
 """
-struct FakeHamiltonianSystemForCalling <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed, Common.WithoutAD}
+struct FakeHamiltonianSystemForCalling <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD}
     state_dim::Int
 end
 
 """
 Fake Hamiltonian system with AD trait for testing cache preparation.
 """
-struct FakeHamiltonianSystemWithAD <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed, Common.WithAD}
+struct FakeHamiltonianSystemWithAD <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithAD}
     state_dim::Int
 end
 
@@ -63,9 +65,9 @@ end
 """
 Fake integration result.
 """
-struct FakeIntegrationResultForCalling <: Solutions.AbstractIntegrationResult end
+struct FakeIntegrationResultForCalling <: Integrators.AbstractIntegrationResult end
 
-Solutions.final_state(::FakeIntegrationResultForCalling) = :fake_flow_solution
+Integrators.final_state(::FakeIntegrationResultForCalling) = :fake_flow_solution
 
 """
 Fake integrator for testing the calling workflow.
@@ -84,14 +86,14 @@ function FakeIntegratorForCalling()
 end
 
 # Implement named functions instead of callables
-function Integrators.build_problem(integ::FakeIntegratorForCalling, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable=nothing, cache=nothing)
+function Integrators.build_problem(integ::FakeIntegratorForCalling, system::Systems.AbstractSystem, config::Configs.AbstractConfig; variable=nothing, cache=nothing)
     integ.build_problem_called = true
     p = Common.ODEParameters(variable, cache)
     integ.problem_result = :fake_ode_problem
     return integ.problem_result
 end
 
-function Integrators.build_options(integ::FakeIntegratorForCalling, config::Union{Common.AbstractConfig, Nothing})
+function Integrators.build_options(integ::FakeIntegratorForCalling, config::Union{Configs.AbstractConfig, Nothing})
     integ.build_options_called = true
     return Dict{Symbol,Any}()
 end
@@ -103,36 +105,36 @@ function Integrators.solve_problem(integ::FakeIntegratorForCalling, prob, option
 end
 
 function Solutions.build_solution(
-    ::Type{Common.PointTrait},
-    ::Type{Common.StateTrait},
-    config::Common.AbstractConfig,
+    ::Type{Traits.PointTrait},
+    ::Type{Traits.StateTrait},
+    config::Configs.AbstractConfig,
     result::FakeIntegrationResultForCalling,
 )
-    return Solutions.final_state(result)
+    return Integrators.final_state(result)
 end
 
 function Solutions.build_solution(
-    ::Type{Common.TrajectoryTrait},
-    ::Type{Common.StateTrait},
-    config::Common.AbstractConfig,
+    ::Type{Traits.TrajectoryTrait},
+    ::Type{Traits.StateTrait},
+    config::Configs.AbstractConfig,
     result::FakeIntegrationResultForCalling,
 )
     return :fake_vector_field_solution
 end
 
 function Solutions.build_solution(
-    ::Type{Common.PointTrait},
-    ::Type{Common.HamiltonianTrait},
-    config::Common.AbstractConfig,
+    ::Type{Traits.PointTrait},
+    ::Type{Traits.HamiltonianTrait},
+    config::Configs.AbstractConfig,
     result::FakeIntegrationResultForCalling,
 )
     return (:fake_xf, :fake_pf)
 end
 
 function Solutions.build_solution(
-    ::Type{Common.TrajectoryTrait},
-    ::Type{Common.HamiltonianTrait},
-    config::Common.AbstractConfig,
+    ::Type{Traits.TrajectoryTrait},
+    ::Type{Traits.HamiltonianTrait},
+    config::Configs.AbstractConfig,
     result::FakeIntegrationResultForCalling,
 )
     return :fake_hamiltonian_solution
@@ -141,7 +143,7 @@ end
 """
 Fake flow for testing the calling workflow.
 """
-struct FakeFlowForCalling{TD<:Common.TimeDependence, VD<:Common.VariableDependence, S<:Systems.AbstractSystem{TD, VD}, I} <: Flows.AbstractFlow{TD, VD}
+struct FakeFlowForCalling{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, S<:Systems.AbstractSystem{TD, VD}, I} <: Flows.AbstractFlow{TD, VD}
     sys::S
     integ::I
 end
@@ -170,8 +172,8 @@ function test_calling_flows()
                 # Setup
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
-                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
-                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+                flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 
                 # Execute
                 result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
@@ -188,8 +190,8 @@ function test_calling_flows()
             Test.@testset "call with variable parameter (Fixed system) → PreconditionError" begin
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
-                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
-                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+                flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 
                 # Call with variable (should now raise PreconditionError for Fixed flow)
                 Test.@test_throws Exceptions.PreconditionError Flows.call(flow, config; variable=0.5, unsafe=false)
@@ -198,8 +200,8 @@ function test_calling_flows()
             Test.@testset "call with StateTrajectoryConfig" begin
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
-                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
-                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+                flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                config = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 
                 result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
 
@@ -212,8 +214,8 @@ function test_calling_flows()
             Test.@testset "call with unsafe kwarg" begin
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
-                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
-                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+                flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
                 # Call with unsafe=true
                 result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=true)
@@ -227,8 +229,8 @@ function test_calling_flows()
             Test.@testset "call with HamiltonianPointConfig" begin
                 sys = FakeHamiltonianSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
-                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
-                config = Common.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+                flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                config = Configs.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 
                 result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
 
@@ -241,8 +243,8 @@ function test_calling_flows()
             Test.@testset "call with HamiltonianTrajectoryConfig" begin
                 sys = FakeHamiltonianSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
-                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
-                config = Common.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
+                flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                config = Configs.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
 
                 result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
 
@@ -261,8 +263,8 @@ function test_calling_flows()
             Test.@testset "HamiltonianVectorFieldSystem (WithoutAD) — cache is nothing" begin
                 sys = FakeHamiltonianSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
-                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
-                config = Common.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+                flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                config = Configs.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 
                 result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
 
@@ -277,8 +279,8 @@ function test_calling_flows()
                 # The trait dispatch is tested via the fake system
                 sys = FakeHamiltonianSystemWithAD(2)
                 integ = FakeIntegratorForCalling()
-                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
-                config = Common.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+                flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                config = Configs.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 
                 result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
 
@@ -291,8 +293,8 @@ function test_calling_flows()
             Test.@testset "Regression: existing StateFlow path unchanged" begin
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
-                flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
-                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+                flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
                 result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
 
@@ -311,8 +313,8 @@ function test_calling_flows()
         Test.@testset "Dispatch: Fixed + NotProvided → core_call (no error)" begin
             sys = FakeSystemForCalling(2)
             integ = FakeIntegratorForCalling()
-            flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
-            config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+            config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
             result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
 
@@ -325,8 +327,8 @@ function test_calling_flows()
         Test.@testset "Dispatch: Fixed + variable provided → PreconditionError" begin
             sys = FakeSystemForCalling(2)
             integ = FakeIntegratorForCalling()
-            flow = FakeFlowForCalling{Common.Autonomous, Common.Fixed, typeof(sys), typeof(integ)}(sys, integ)
-            config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
+            config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
             Test.@test_throws Exceptions.PreconditionError Flows.call(flow, config; variable=0.5, unsafe=false)
         end
@@ -334,8 +336,8 @@ function test_calling_flows()
         Test.@testset "Dispatch: NonFixed + variable provided → core_call" begin
             sys = FakeSystemNonFixed(2)
             integ = FakeIntegratorForCalling()
-            flow = FakeFlowForCalling{Common.Autonomous, Common.NonFixed, typeof(sys), typeof(integ)}(sys, integ)
-            config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            flow = FakeFlowForCalling{Traits.Autonomous, Traits.NonFixed, typeof(sys), typeof(integ)}(sys, integ)
+            config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
             result = Flows.call(flow, config; variable=0.5, unsafe=false)
 
@@ -348,8 +350,8 @@ function test_calling_flows()
         Test.@testset "Dispatch: NonFixed + NotProvided → PreconditionError" begin
             sys = FakeSystemNonFixed(2)
             integ = FakeIntegratorForCalling()
-            flow = FakeFlowForCalling{Common.Autonomous, Common.NonFixed, typeof(sys), typeof(integ)}(sys, integ)
-            config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            flow = FakeFlowForCalling{Traits.Autonomous, Traits.NonFixed, typeof(sys), typeof(integ)}(sys, integ)
+            config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
             Test.@test_throws Exceptions.PreconditionError Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
         end

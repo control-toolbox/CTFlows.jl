@@ -5,6 +5,8 @@ import CTBase.Exceptions
 import CTFlows.Integrators
 import CTFlows.Systems
 import CTFlows.Common
+import CTFlows.Configs
+import CTFlows.Traits
 import CTSolvers: CTSolvers
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -17,7 +19,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake system for testing the AbstractIntegrator contract.
 """
-struct FakeSystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
+struct FakeSystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed}
     state_dim::Int
 end
 
@@ -47,12 +49,12 @@ function FakeIntegrator()
 end
 
 # Implement the three required callable signatures
-function Integrators.build_problem(integ::FakeIntegrator, system::Systems.AbstractSystem, config::Common.AbstractConfig; variable, cache)
+function Integrators.build_problem(integ::FakeIntegrator, system::Systems.AbstractSystem, config::Configs.AbstractConfig; variable, cache)
     p = Common.ODEParameters(variable)
     return :fake_ode_problem
 end
 
-function Integrators.build_options(integ::FakeIntegrator, config::Union{Common.AbstractConfig, Nothing})
+function Integrators.build_options(integ::FakeIntegrator, config::Union{Configs.AbstractConfig, Nothing})
     return Dict{Symbol,Any}()
 end
 
@@ -98,7 +100,7 @@ function test_abstract_integrator()
         Test.@testset "Contract Implementation" begin
             integ = FakeIntegrator()
             sys = FakeSystem(2)
-            config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
             Test.@testset "Problem building signature" begin
                 result = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
@@ -111,7 +113,7 @@ function test_abstract_integrator()
             end
 
             Test.@testset "build_options signature" begin
-                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 opts = Integrators.build_options(integ, config)
                 Test.@test opts isa Dict{Symbol,Any}
             end
@@ -124,7 +126,7 @@ function test_abstract_integrator()
         Test.@testset "NotImplemented Errors" begin
             integ = MinimalIntegrator()
             sys = FakeSystem(2)
-            config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
             Test.@testset "Problem building throws NotImplemented" begin
                 Test.@test_throws Exceptions.NotImplemented Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
@@ -135,7 +137,7 @@ function test_abstract_integrator()
             end
 
             Test.@testset "build_options throws NotImplemented" begin
-                config = Common.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 Test.@test_throws Exceptions.NotImplemented Integrators.build_options(integ, config)
             end
 

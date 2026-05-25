@@ -29,8 +29,8 @@ mpf = MultiPhaseStateFlow([flow1, flow2], [1.0], [nothing])
 See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Flows.StateFlow`](@ref).
 """
 struct MultiPhaseStateFlow{
-        TD<:Common.TimeDependence, 
-        VD<:Common.VariableDependence, 
+        TD<:Traits.TimeDependence, 
+        VD<:Traits.VariableDependence, 
         S<:Systems.AbstractStateSystem{TD, VD}, 
         I<:Integrators.AbstractIntegrator,
         ST<:Vector{<:Real},
@@ -71,9 +71,9 @@ mpf = MultiPhaseHamiltonianFlow([flow1, flow2], [1.0], [nothing])
 See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref).
 """
 struct MultiPhaseHamiltonianFlow{
-        TD<:Common.TimeDependence,
-        VD<:Common.VariableDependence,
-        S<:Systems.AbstractHamiltonianSystem{TD, VD, <:Common.AbstractADTrait},
+        TD<:Traits.TimeDependence,
+        VD<:Traits.VariableDependence,
+        S<:Systems.AbstractHamiltonianSystem{TD, VD, <:Traits.AbstractADTrait},
         I<:Integrators.AbstractIntegrator,
         ST<:Vector{<:Real},
         J<:Vector{<:Any}} <: Flows.AbstractHamiltonianFlow{TD, VD, S}

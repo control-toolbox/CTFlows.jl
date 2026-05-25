@@ -40,17 +40,17 @@ HamiltonianSystem
   backend: AutoForwardDiff()
 ```
 
-See also: [`CTFlows.Data.Hamiltonian`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), [`CTFlows.Common.AbstractADTrait`](@ref).
+See also: [`CTFlows.Data.Hamiltonian`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), [`CTFlows.Traits.AbstractADTrait`](@ref).
 """
 struct HamiltonianSystem{
     N,
     F<:Function,
-    TD<:Common.TimeDependence,
-    VD<:Common.VariableDependence,
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
     BACKEND<:Differentiation.AbstractADBackend,
     RHS<:Function,
     OOPROHS<:Function,
-} <: AbstractHamiltonianSystem{TD, VD, Common.WithAD}
+} <: AbstractHamiltonianSystem{TD, VD, Traits.WithAD}
     h::Data.Hamiltonian{F, TD, VD}
     backend::BACKEND
     rhs::RHS
@@ -196,8 +196,8 @@ end
 
 function Base.show(io::IO, sys::HamiltonianSystem)
     println(io, "HamiltonianSystem")
-    println(io, "  time_dependence: ", Common.time_dependence(sys))
-    println(io, "  variable_dependence: ", Common.variable_dependence(sys))
+    println(io, "  time_dependence: ", Traits.time_dependence(sys))
+    println(io, "  variable_dependence: ", Traits.variable_dependence(sys))
     println(io, "  state_dimension: ", sys.N === nothing ? "unknown" : sys.N)
     println(io, "  hamiltonian: ", sys.h)
     println(io, "  backend: ", sys.backend)
@@ -224,10 +224,10 @@ Return the variable costate capability trait of a variable-dependent Hamiltonian
 - This is because only variable-dependent systems have a variable `v` to differentiate against
 - This trait enables the `variable_costate=true` kwarg in Hamiltonian flow calls
 
-See also: [`CTFlows.Common.AbstractVariableCostateCapability`](@ref), [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.NoVariableCostate`](@ref).
+See also: [`CTFlows.Traits.AbstractVariableCostateCapability`](@ref), [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Traits.NoVariableCostate`](@ref).
 """
-function Common.variable_costate_trait(
-    ::HamiltonianSystem{N, F, TD, Common.NonFixed, B, R, O}
+function Traits.variable_costate_trait(
+    ::HamiltonianSystem{N, F, TD, Traits.NonFixed, B, R, O}
 ) where {N, F, TD, B, R, O}
-    return Common.SupportsVariableCostate
+    return Traits.SupportsVariableCostate
 end

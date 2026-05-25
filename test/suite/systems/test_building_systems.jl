@@ -4,6 +4,7 @@ import Test
 import CTFlows.Systems
 import CTFlows.Data
 import CTFlows.Common
+import CTFlows.Traits
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -30,29 +31,29 @@ function test_building_systems()
             Test.@testset "build_system preserves traits - Autonomous Fixed" begin
                 vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
                 sys = Systems.build_system(vf)
-                Test.@test Common.time_dependence(sys) === Common.Autonomous
-                Test.@test Common.variable_dependence(sys) === Common.Fixed
+                Test.@test Traits.time_dependence(sys) === Traits.Autonomous
+                Test.@test Traits.variable_dependence(sys) === Traits.Fixed
             end
 
             Test.@testset "build_system preserves traits - NonAutonomous Fixed" begin
                 vf = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
                 sys = Systems.build_system(vf)
-                Test.@test Common.time_dependence(sys) === Common.NonAutonomous
-                Test.@test Common.variable_dependence(sys) === Common.Fixed
+                Test.@test Traits.time_dependence(sys) === Traits.NonAutonomous
+                Test.@test Traits.variable_dependence(sys) === Traits.Fixed
             end
 
             Test.@testset "build_system preserves traits - Autonomous NonFixed" begin
                 vf = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
                 sys = Systems.build_system(vf)
-                Test.@test Common.time_dependence(sys) === Common.Autonomous
-                Test.@test Common.variable_dependence(sys) === Common.NonFixed
+                Test.@test Traits.time_dependence(sys) === Traits.Autonomous
+                Test.@test Traits.variable_dependence(sys) === Traits.NonFixed
             end
 
             Test.@testset "build_system preserves traits - NonAutonomous NonFixed" begin
                 vf = Data.VectorField((t, x, v) -> t .* x .+ v; is_autonomous=false, is_variable=true)
                 sys = Systems.build_system(vf)
-                Test.@test Common.time_dependence(sys) === Common.NonAutonomous
-                Test.@test Common.variable_dependence(sys) === Common.NonFixed
+                Test.@test Traits.time_dependence(sys) === Traits.NonAutonomous
+                Test.@test Traits.variable_dependence(sys) === Traits.NonFixed
             end
         end
 

@@ -19,7 +19,7 @@ using CTFlows.Systems
 using CTFlows.Common
 
 # Define a concrete system
-struct MySystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
+struct MySystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed}
     data::Vector{Float64}
 end
 
@@ -29,9 +29,9 @@ function Systems.rhs(sys::MySystem)
 end
 \`\`\`
 
-See also: [`CTFlows.Systems.rhs`](@ref), [`CTFlows.Common.time_dependence`](@ref), [`CTFlows.Common.variable_dependence`](@ref).
+See also: [`CTFlows.Systems.rhs`](@ref), [`CTFlows.Traits.time_dependence`](@ref), [`CTFlows.Traits.variable_dependence`](@ref).
 """
-abstract type AbstractSystem{TD<:Common.TimeDependence, VD<:Common.VariableDependence} end
+abstract type AbstractSystem{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence} end
 
 """
 $(TYPEDEF)
@@ -80,7 +80,7 @@ true
 
 See also: [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Systems.AbstractStateSystem`](@ref).
 """
-abstract type AbstractHamiltonianSystem{TD, VD, AT<:Common.AbstractADTrait} <: AbstractSystem{TD, VD} end
+abstract type AbstractHamiltonianSystem{TD, VD, AT<:Traits.AbstractADTrait} <: AbstractSystem{TD, VD} end
 
 """
 $(TYPEDSIGNATURES)
@@ -99,17 +99,17 @@ using CTFlows.Common
 struct MySystem <: Systems.AbstractSystem end
 
 # All systems have the time-dependence trait
-Common.has_time_dependence_trait(MySystem)  # Returns true
+Traits.has_time_dependence_trait(MySystem)  # Returns true
 
 # Concrete subtypes must implement time_dependence
-function Common.time_dependence(sys::MySystem)
-    return Common.Autonomous
+function Traits.time_dependence(sys::MySystem)
+    return Traits.Autonomous
 end
 \`\`\`
 
-See also: [`CTFlows.Common.time_dependence`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
+See also: [`CTFlows.Traits.time_dependence`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
 """
-Common.has_time_dependence_trait(::AbstractSystem) = true
+Traits.has_time_dependence_trait(::AbstractSystem) = true
 
 """
 $(TYPEDSIGNATURES)
@@ -128,17 +128,17 @@ using CTFlows.Common
 struct MySystem <: Systems.AbstractSystem end
 
 # All systems have the variable-dependence trait
-Common.has_variable_dependence_trait(MySystem)  # Returns true
+Traits.has_variable_dependence_trait(MySystem)  # Returns true
 
 # Concrete subtypes must implement variable_dependence
-function Common.variable_dependence(sys::MySystem)
-    return Common.NonFixed
+function Traits.variable_dependence(sys::MySystem)
+    return Traits.NonFixed
 end
 \`\`\`
 
-See also: [`CTFlows.Common.variable_dependence`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
+See also: [`CTFlows.Traits.variable_dependence`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
 """
-Common.has_variable_dependence_trait(::AbstractSystem) = true
+Traits.has_variable_dependence_trait(::AbstractSystem) = true
 
 """
 $(TYPEDSIGNATURES)
@@ -153,16 +153,16 @@ Extract the time dependence trait from an `AbstractSystem`.
 using CTFlows.Systems
 using CTFlows.Common
 
-struct MySystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
+struct MySystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed}
     data::Vector{Float64}
 end
 
-Common.time_dependence(MySystem)  # Returns Autonomous
+Traits.time_dependence(MySystem)  # Returns Autonomous
 \`\`\`
 
-See also: [`CTFlows.Common.has_time_dependence_trait`](@ref), [`CTFlows.Common.is_autonomous`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
+See also: [`CTFlows.Traits.has_time_dependence_trait`](@ref), [`CTFlows.Traits.is_autonomous`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
 """
-function Common.time_dependence(sys::AbstractSystem{TD, <:VariableDependence}) where {TD <: TimeDependence}
+function Traits.time_dependence(sys::AbstractSystem{TD, <:Traits.VariableDependence}) where {TD <: Traits.TimeDependence}
     return TD
 end
 
@@ -179,16 +179,16 @@ Extract the variable dependence trait from an `AbstractSystem`.
 using CTFlows.Systems
 using CTFlows.Common
 
-struct MySystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
+struct MySystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed}
     data::Vector{Float64}
 end
 
-Common.variable_dependence(MySystem)  # Returns Fixed
+Traits.variable_dependence(MySystem)  # Returns Fixed
 \`\`\`
 
-See also: [`CTFlows.Common.has_variable_dependence_trait`](@ref), [`CTFlows.Common.is_variable`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
+See also: [`CTFlows.Traits.has_variable_dependence_trait`](@ref), [`CTFlows.Traits.is_variable`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
 """
-function Common.variable_dependence(sys::AbstractSystem{<:TimeDependence, VD}) where {VD <: VariableDependence}
+function Traits.variable_dependence(sys::AbstractSystem{<:Traits.TimeDependence, VD}) where {VD <: Traits.VariableDependence}
     return VD
 end
 
@@ -201,16 +201,16 @@ Return the automatic differentiation capability trait of a Hamiltonian system.
 - `sys::AbstractHamiltonianSystem`: The Hamiltonian system.
 
 # Returns
-- `AT <: AbstractADTrait`: The AD capability trait, either [`CTFlows.Common.WithAD`](@ref) or [`CTFlows.Common.WithoutAD`](@ref).
+- `AT <: AbstractADTrait`: The AD capability trait, either [`CTFlows.Traits.WithAD`](@ref) or [`CTFlows.Traits.WithoutAD`](@ref).
 
 # Notes
 - [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref) always returns `WithoutAD` since it uses an explicitly provided vector field.
 - [`CTFlows.Systems.HamiltonianSystem`](@ref) returns `WithAD` since it uses automatic differentiation to compute gradients from a scalar Hamiltonian function.
 - This trait is used for dispatch in flow integration and cache preparation.
 
-See also: [`CTFlows.Common.AbstractADTrait`](@ref), [`CTFlows.Common.WithAD`](@ref), [`CTFlows.Common.WithoutAD`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref).
+See also: [`CTFlows.Traits.AbstractADTrait`](@ref), [`CTFlows.Traits.WithAD`](@ref), [`CTFlows.Traits.WithoutAD`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref).
 """
-function Common.ad_trait(::AbstractHamiltonianSystem{TD, VD, AT}) where {TD, VD, AT}
+function Traits.ad_trait(::AbstractHamiltonianSystem{TD, VD, AT}) where {TD, VD, AT}
     return AT
 end
 
@@ -231,9 +231,9 @@ Return the variable costate capability trait of a system.
 - Specialized implementation on `HamiltonianSystem` with `NonFixed` returns `SupportsVariableCostate`
 - This trait is used for dispatch in `call_variable_costate` to determine if augmented integration is possible
 
-See also: [`CTFlows.Common.AbstractVariableCostateCapability`](@ref), [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.NoVariableCostate`](@ref).
+See also: [`CTFlows.Traits.AbstractVariableCostateCapability`](@ref), [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Traits.NoVariableCostate`](@ref).
 """
-Common.variable_costate_trait(::AbstractSystem) = Common.NoVariableCostate
+Traits.variable_costate_trait(::AbstractSystem) = Traits.NoVariableCostate
 
 """
 $(TYPEDSIGNATURES)
@@ -248,7 +248,7 @@ fill `du` in place with the derivative at state `u`, parameters `p`, and time `t
 \`\`\`julia
 using CTFlows.Systems
 
-struct MySystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
+struct MySystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed}
     data::Vector{Float64}
 end
 
@@ -296,7 +296,7 @@ operations are not possible.
 ```julia
 using CTFlows.Systems
 
-struct MySystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
+struct MySystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed}
     data::Vector{Float64}
 end
 

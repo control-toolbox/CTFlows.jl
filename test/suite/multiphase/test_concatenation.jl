@@ -7,6 +7,7 @@ import CTFlows.Systems
 import CTFlows.Integrators
 import CTFlows.Flows
 import CTFlows.Common
+import CTFlows.Traits
 import CTSolvers.Strategies
 import CTSolvers.Options
 
@@ -17,13 +18,13 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # Fake types — module top-level (testing-creation.md §1)
 # ==============================================================================
 
-struct FakeStateSystem <: Systems.AbstractStateSystem{Common.Autonomous, Common.Fixed}
+struct FakeStateSystem <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
     tag::Symbol
 end
 
 Systems.rhs(::FakeStateSystem) = (du, u, p, t) -> (du .= u)
 
-struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed, Common.WithoutAD}
+struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD}
     tag::Symbol
 end
 

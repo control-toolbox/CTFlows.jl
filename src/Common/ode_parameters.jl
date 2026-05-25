@@ -46,8 +46,8 @@ params_with_ad = ODEParameters(0.5, cache)
 - A single-argument constructor `ODEParameters(variable)` defaults `cache` to `nothing`
   for backward compatibility.
 
-See also: [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.Fixed`](@ref), [`CTFlows.Common.NonFixed`](@ref),
-[`CTFlows.Common.AbstractCache`](@ref), [`CTFlows.Common.AbstractADTrait`](@ref).
+See also: [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Traits.Fixed`](@ref), [`CTFlows.Traits.NonFixed`](@ref),
+[`CTFlows.Common.AbstractCache`](@ref), [`CTFlows.Traits.AbstractADTrait`](@ref).
 """
 struct ODEParameters{V, C<:Union{AbstractCache, Nothing}}
     variable::V
@@ -130,7 +130,7 @@ julia> variable(params_nonfixed)
 0.5
 \`\`\`
 
-See also: [`CTFlows.Common.ODEParameters`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
+See also: [`CTFlows.Common.ODEParameters`](@ref), [`CTFlows.Traits.VariableDependence`](@ref).
 """
 function variable(p::ODEParameters)
     return p.variable

@@ -19,8 +19,9 @@ import CTBase.Exceptions
 # Internal sibling-submodule imports
 # ==============================================================================
 
-using ..Common
-using ..Systems
+import ..Common: Common
+import ..Configs: Configs
+import ..Systems: Systems
 using CTSolvers: CTSolvers
 
 # ==============================================================================

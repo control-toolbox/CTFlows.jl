@@ -4,7 +4,9 @@ import Test
 import CTFlows.Solutions
 import CTFlows.Systems
 import CTFlows.Common
+import CTFlows.Configs
 import CTFlows.Data
+import CTFlows.Integrators
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -16,11 +18,11 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake integration result for testing build_solution.
 """
-struct FakeIntegrationResult <: Solutions.AbstractIntegrationResult
+struct FakeIntegrationResult <: Integrators.AbstractIntegrationResult
     u::Vector{Vector{Float64}}
 end
 
-Solutions.final_state(r::FakeIntegrationResult) = r.u[end]
+Integrators.final_state(r::FakeIntegrationResult) = r.u[end]
 
 # ==============================================================================
 # Test function
@@ -37,21 +39,21 @@ function test_building_solutions()
             Test.@testset "vector initial condition returns final state" begin
                 sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; is_autonomous=true, is_variable=false))
                 result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
-                config = Common.StatePointConfig(0.0, [1.0, 2.0], 1.0)
+                config = Configs.StatePointConfig(0.0, [1.0, 2.0], 1.0)
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
+                output = Solutions.build_solution(Configs.mode_trait(config), Configs.content_trait(config), config, result)
                 Test.@test output == [0.5, 1.0]
-                Test.@test typeof(config) <: Common.StatePointConfig{Float64, <:AbstractVector, Float64}
+                Test.@test typeof(config) <: Configs.StatePointConfig{Float64, <:AbstractVector, Float64}
             end
 
             Test.@testset "scalar initial condition unwraps length-1 vector" begin
                 sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; is_autonomous=true, is_variable=false))
                 result = FakeIntegrationResult([[3.0], [1.5]])
-                config = Common.StatePointConfig(0.0, 3.0, 1.0)
+                config = Configs.StatePointConfig(0.0, 3.0, 1.0)
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
+                output = Solutions.build_solution(Configs.mode_trait(config), Configs.content_trait(config), config, result)
                 Test.@test output == 1.5
-                Test.@test typeof(config) == Common.StatePointConfig{Float64, Float64, Float64}
+                Test.@test typeof(config) == Configs.StatePointConfig{Float64, Float64, Float64}
             end
         end
 
@@ -63,18 +65,18 @@ function test_building_solutions()
             Test.@testset "returns VectorFieldSolution wrapping result" begin
                 sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; is_autonomous=true, is_variable=false))
                 result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
-                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 2.0])
+                config = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 2.0])
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
+                output = Solutions.build_solution(Configs.mode_trait(config), Configs.content_trait(config), config, result)
                 Test.@test output isa Solutions.VectorFieldSolution
             end
 
             Test.@testset "VectorFieldSolution contains correct result" begin
                 sys = Systems.VectorFieldSystem(Data.VectorField(x -> -x; is_autonomous=true, is_variable=false))
                 result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
-                config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 2.0])
+                config = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 2.0])
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
+                output = Solutions.build_solution(Configs.mode_trait(config), Configs.content_trait(config), config, result)
                 Test.@test output.result === result
             end
         end
@@ -90,11 +92,11 @@ function test_building_solutions()
                     state_dimension=1
                 )
                 result = FakeIntegrationResult([[1.0, 0.5], [0.5, 0.25]])
-                config = Common.HamiltonianPointConfig(0.0, 1.0, 0.5, 1.0)
+                config = Configs.HamiltonianPointConfig(0.0, 1.0, 0.5, 1.0)
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
+                output = Solutions.build_solution(Configs.mode_trait(config), Configs.content_trait(config), config, result)
                 Test.@test output == (0.5, 0.25)
-                Test.@test typeof(config) == Common.HamiltonianPointConfig{Float64, Float64, Float64, Float64}
+                Test.@test typeof(config) == Configs.HamiltonianPointConfig{Float64, Float64, Float64, Float64}
             end
 
             Test.@testset "vector initial condition returns tuple of vectors" begin
@@ -103,11 +105,11 @@ function test_building_solutions()
                     state_dimension=2
                 )
                 result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])
-                config = Common.HamiltonianPointConfig(0.0, [1.0, 2.0], [0.5, 0.3], 1.0)
+                config = Configs.HamiltonianPointConfig(0.0, [1.0, 2.0], [0.5, 0.3], 1.0)
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
+                output = Solutions.build_solution(Configs.mode_trait(config), Configs.content_trait(config), config, result)
                 Test.@test output == ([0.5, 1.0], [0.25, 0.15])
-                Test.@test typeof(config) <: Common.HamiltonianPointConfig{Float64, <:AbstractVector, <:AbstractVector, Float64}
+                Test.@test typeof(config) <: Configs.HamiltonianPointConfig{Float64, <:AbstractVector, <:AbstractVector, Float64}
             end
 
             Test.@testset "vector initial condition uses correct dimension split" begin
@@ -118,9 +120,9 @@ function test_building_solutions()
                 )
                 # Final state has 6 elements: 3 state + 3 costate
                 result = FakeIntegrationResult([[1.0, 2.0, 3.0, 0.5, 0.6, 0.7], [0.5, 1.0, 1.5, 0.25, 0.3, 0.35]])
-                config = Common.HamiltonianPointConfig(0.0, [1.0, 2.0, 3.0], [0.5, 0.6, 0.7], 1.0)
+                config = Configs.HamiltonianPointConfig(0.0, [1.0, 2.0, 3.0], [0.5, 0.6, 0.7], 1.0)
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
+                output = Solutions.build_solution(Configs.mode_trait(config), Configs.content_trait(config), config, result)
                 # Should split into first 3 (state) and last 3 (costate)
                 Test.@test output == ([0.5, 1.0, 1.5], [0.25, 0.3, 0.35])
             end
@@ -137,9 +139,9 @@ function test_building_solutions()
                     state_dimension=2
                 )
                 result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])
-                config = Common.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 2.0], [0.5, 0.3])
+                config = Configs.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 2.0], [0.5, 0.3])
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
+                output = Solutions.build_solution(Configs.mode_trait(config), Configs.content_trait(config), config, result)
                 Test.@test output isa Solutions.HamiltonianVectorFieldSolution
             end
 
@@ -149,9 +151,9 @@ function test_building_solutions()
                     state_dimension=2
                 )
                 result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])
-                config = Common.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 2.0], [0.5, 0.3])
+                config = Configs.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 2.0], [0.5, 0.3])
                 
-                output = Solutions.build_solution(Common.mode_trait(config), Common.content_trait(config), config, result)
+                output = Solutions.build_solution(Configs.mode_trait(config), Configs.content_trait(config), config, result)
                 Test.@test output.result === result
             end
         end

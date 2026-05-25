@@ -130,7 +130,7 @@ tg = time_grid(sol)  # same as times(sol)
 See also: [`CTFlows.Solutions.times`](@ref), [`CTFlows.Solutions.state`](@ref).
 """
 function time_grid(sol::VectorFieldSolution)
-    return times(sol)
+    return Integrators.times(sol)
 end
 
 """
@@ -148,7 +148,7 @@ Evaluate the solution at a given time by delegating to the integration result.
 See also: [`CTFlows.Solutions.evaluate_at`](@ref), [`CTFlows.Solutions.times`](@ref).
 """
 function (sol::VectorFieldSolution)(t::Real)
-    return evaluate_at(sol.result, t)
+    return Integrators.evaluate_at(sol.result, t)
 end
 
 """

@@ -4,6 +4,7 @@ import Test
 import CTBase.Exceptions
 import CTFlows.Data: Data
 import CTFlows.Common: Common
+import CTFlows.Traits: Traits
 import CTFlows.Systems: Systems
 import CTFlows.Solutions: Solutions
 import StaticArrays: SA, StaticArrays
@@ -32,15 +33,15 @@ function test_hamiltonian_vector_field_system()
             Test.@test Systems.state_dimension(sys2) == 3
 
             # Hierarchy check: supertype with WithoutAD
-            Test.@test sys1 isa Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed, Common.WithoutAD}
+            Test.@test sys1 isa Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD}
         end
 
         Test.@testset "ad_trait" begin
             hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
             sys = Systems.HamiltonianVectorFieldSystem(hvf)
 
-            Test.@test Systems.ad_trait(sys) === Common.WithoutAD
-            Test.@test Test.@inferred Systems.ad_trait(sys) === Common.WithoutAD
+            Test.@test Traits.ad_trait(sys) === Traits.WithoutAD
+            Test.@test Test.@inferred Traits.ad_trait(sys) === Traits.WithoutAD
         end
         
         # ====================================================================

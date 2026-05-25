@@ -16,7 +16,8 @@ import CTBase.Exceptions
 # Internal sibling-submodule imports
 # ==============================================================================
 
-using ..Common
+import ..Common: Common
+import ..Traits: Traits
 
 # ==============================================================================
 # Include files

@@ -3,6 +3,7 @@ module TestVectorField
 import Test
 import CTFlows.Data
 import CTFlows.Common
+import CTFlows.Traits
 import CTBase.Exceptions
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -40,26 +41,26 @@ function test_vector_field()
             Test.@testset "keyword constructor with defaults" begin
                 vf = Data.VectorField(x -> x)
                 Test.@test vf isa Data.VectorField
-                Test.@test Common.time_dependence(vf) === Common.Autonomous
-                Test.@test Common.variable_dependence(vf) === Common.Fixed
+                Test.@test Traits.time_dependence(vf) === Traits.Autonomous
+                Test.@test Traits.variable_dependence(vf) === Traits.Fixed
             end
 
             Test.@testset "keyword constructor with explicit flags" begin
                 vf_autonomous = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
-                Test.@test Common.time_dependence(vf_autonomous) === Common.Autonomous
-                Test.@test Common.variable_dependence(vf_autonomous) === Common.Fixed
+                Test.@test Traits.time_dependence(vf_autonomous) === Traits.Autonomous
+                Test.@test Traits.variable_dependence(vf_autonomous) === Traits.Fixed
 
                 vf_nonautonomous = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
-                Test.@test Common.time_dependence(vf_nonautonomous) === Common.NonAutonomous
-                Test.@test Common.variable_dependence(vf_nonautonomous) === Common.Fixed
+                Test.@test Traits.time_dependence(vf_nonautonomous) === Traits.NonAutonomous
+                Test.@test Traits.variable_dependence(vf_nonautonomous) === Traits.Fixed
 
                 vf_nonfixed = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
-                Test.@test Common.time_dependence(vf_nonfixed) === Common.Autonomous
-                Test.@test Common.variable_dependence(vf_nonfixed) === Common.NonFixed
+                Test.@test Traits.time_dependence(vf_nonfixed) === Traits.Autonomous
+                Test.@test Traits.variable_dependence(vf_nonfixed) === Traits.NonFixed
 
                 vf_full = Data.VectorField((t, x, v) -> t .* x .+ v; is_autonomous=false, is_variable=true)
-                Test.@test Common.time_dependence(vf_full) === Common.NonAutonomous
-                Test.@test Common.variable_dependence(vf_full) === Common.NonFixed
+                Test.@test Traits.time_dependence(vf_full) === Traits.NonAutonomous
+                Test.@test Traits.variable_dependence(vf_full) === Traits.NonFixed
             end
         end
 
@@ -74,23 +75,23 @@ function test_vector_field()
             vf_nonfixed = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
 
             Test.@testset "has_time_dependence_trait returns true" begin
-                Test.@test Common.has_time_dependence_trait(vf_aut) === true
-                Test.@test Common.has_time_dependence_trait(vf_nonaut) === true
+                Test.@test Traits.has_time_dependence_trait(vf_aut) === true
+                Test.@test Traits.has_time_dependence_trait(vf_nonaut) === true
             end
 
             Test.@testset "has_variable_dependence_trait returns true" begin
-                Test.@test Common.has_variable_dependence_trait(vf_fixed) === true
-                Test.@test Common.has_variable_dependence_trait(vf_nonfixed) === true
+                Test.@test Traits.has_variable_dependence_trait(vf_fixed) === true
+                Test.@test Traits.has_variable_dependence_trait(vf_nonfixed) === true
             end
 
             Test.@testset "time_dependence returns correct trait" begin
-                Test.@test Common.time_dependence(vf_aut) === Common.Autonomous
-                Test.@test Common.time_dependence(vf_nonaut) === Common.NonAutonomous
+                Test.@test Traits.time_dependence(vf_aut) === Traits.Autonomous
+                Test.@test Traits.time_dependence(vf_nonaut) === Traits.NonAutonomous
             end
 
             Test.@testset "variable_dependence returns correct trait" begin
-                Test.@test Common.variable_dependence(vf_fixed) === Common.Fixed
-                Test.@test Common.variable_dependence(vf_nonfixed) === Common.NonFixed
+                Test.@test Traits.variable_dependence(vf_fixed) === Traits.Fixed
+                Test.@test Traits.variable_dependence(vf_nonfixed) === Traits.NonFixed
             end
         end
 
@@ -348,17 +349,17 @@ function test_vector_field()
             vf_nonfixed = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
 
             Test.@testset "is_autonomous / is_nonautonomous" begin
-                Test.@test Common.is_autonomous(vf_aut) === true
-                Test.@test Common.is_nonautonomous(vf_aut) === false
-                Test.@test Common.is_autonomous(vf_nonaut) === false
-                Test.@test Common.is_nonautonomous(vf_nonaut) === true
+                Test.@test Traits.is_autonomous(vf_aut) === true
+                Test.@test Traits.is_nonautonomous(vf_aut) === false
+                Test.@test Traits.is_autonomous(vf_nonaut) === false
+                Test.@test Traits.is_nonautonomous(vf_nonaut) === true
             end
 
             Test.@testset "is_variable / is_nonvariable" begin
-                Test.@test Common.is_variable(vf_fixed) === false
-                Test.@test Common.is_nonvariable(vf_fixed) === true
-                Test.@test Common.is_variable(vf_nonfixed) === true
-                Test.@test Common.is_nonvariable(vf_nonfixed) === false
+                Test.@test Traits.is_variable(vf_fixed) === false
+                Test.@test Traits.is_nonvariable(vf_fixed) === true
+                Test.@test Traits.is_variable(vf_nonfixed) === true
+                Test.@test Traits.is_nonvariable(vf_nonfixed) === false
             end
         end
 
@@ -421,14 +422,14 @@ function test_vector_field()
                 # Define an out-of-place function but force InPlace
                 f(x) = -x
                 vf = Data.VectorField(f; is_inplace=true)
-                Test.@test Common.mutability_trait(vf) === Common.InPlace
+                Test.@test Traits.mutability_trait(vf) === Traits.InPlace
             end
 
             Test.@testset "is_inplace=false creates OutOfPlace VectorField" begin
                 # Define an in-place function but force OutOfPlace
                 f(x) = -x
                 vf = Data.VectorField(f; is_inplace=false)
-                Test.@test Common.mutability_trait(vf) === Common.OutOfPlace
+                Test.@test Traits.mutability_trait(vf) === Traits.OutOfPlace
             end
         end
 
@@ -443,7 +444,7 @@ function test_vector_field()
 
             Test.@testset "No error when is_inplace is explicitly specified" begin
                 vf = Data.VectorField(_multi_method_f; is_inplace=false)
-                Test.@test Common.mutability_trait(vf) === Common.OutOfPlace
+                Test.@test Traits.mutability_trait(vf) === Traits.OutOfPlace
             end
         end
 
@@ -453,22 +454,22 @@ function test_vector_field()
 
         Test.@testset "Internal Helpers" begin
             Test.@testset "_oop_arity_vf" begin
-                Test.@test Data._oop_arity_vf(Common.Autonomous, Common.Fixed) == 1
-                Test.@test Data._oop_arity_vf(Common.NonAutonomous, Common.Fixed) == 2
-                Test.@test Data._oop_arity_vf(Common.Autonomous, Common.NonFixed) == 2
-                Test.@test Data._oop_arity_vf(Common.NonAutonomous, Common.NonFixed) == 3
+                Test.@test Data._oop_arity_vf(Traits.Autonomous, Traits.Fixed) == 1
+                Test.@test Data._oop_arity_vf(Traits.NonAutonomous, Traits.Fixed) == 2
+                Test.@test Data._oop_arity_vf(Traits.Autonomous, Traits.NonFixed) == 2
+                Test.@test Data._oop_arity_vf(Traits.NonAutonomous, Traits.NonFixed) == 3
             end
 
             Test.@testset "_natural_sig_vf helpers" begin
-                Test.@test Data._natural_sig_vf(Common.Autonomous, Common.Fixed, Common.OutOfPlace) == "f(x)"
-                Test.@test Data._natural_sig_vf(Common.NonAutonomous, Common.Fixed, Common.OutOfPlace) == "f(t, x)"
-                Test.@test Data._natural_sig_vf(Common.Autonomous, Common.Fixed, Common.InPlace) == "f(dx, x)"
-                Test.@test Data._uniform_sig_vf(Common.OutOfPlace) == "f(t, x, v)"
-                Test.@test Data._uniform_sig_vf(Common.InPlace) == "f(dx, t, x, v)"
+                Test.@test Data._natural_sig_vf(Traits.Autonomous, Traits.Fixed, Traits.OutOfPlace) == "f(x)"
+                Test.@test Data._natural_sig_vf(Traits.NonAutonomous, Traits.Fixed, Traits.OutOfPlace) == "f(t, x)"
+                Test.@test Data._natural_sig_vf(Traits.Autonomous, Traits.Fixed, Traits.InPlace) == "f(dx, x)"
+                Test.@test Data._uniform_sig_vf(Traits.OutOfPlace) == "f(t, x, v)"
+                Test.@test Data._uniform_sig_vf(Traits.InPlace) == "f(dx, t, x, v)"
             end
 
             Test.@testset "_detect_mutability_vf invalid arity" begin
-                Test.@test_throws Exceptions.IncorrectArgument Data._detect_mutability_vf(_bad_arity_f, Common.Autonomous, Common.Fixed)
+                Test.@test_throws Exceptions.IncorrectArgument Data._detect_mutability_vf(_bad_arity_f, Traits.Autonomous, Traits.Fixed)
             end
         end
     end

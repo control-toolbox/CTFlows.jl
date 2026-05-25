@@ -43,7 +43,7 @@ This allows zero-allocation integration with immutable array types like `StaticA
 # Arguments
 - `integ::SciML`: The SciML integrator strategy.
 - `system::Systems.AbstractSystem`: The system to build an ODE problem for.
-- `config::Common.AbstractConfig`: The configuration containing initial condition and time span.
+- `config::Configs.AbstractConfig`: The configuration containing initial condition and time span.
 - `variable`: Optional variable parameter for non-fixed systems.
 
 # Returns
@@ -59,18 +59,18 @@ See also: [`CTFlows.Systems.rhs`](@ref), [`CTFlows.Systems.rhs_oop`](@ref), [`CT
 function Integrators.build_problem(
     integ::SciML, 
     system::Systems.AbstractSystem, 
-    config::Common.AbstractConfig; 
+    config::Configs.AbstractConfig; 
     variable,
     cache,
     )
-    u0 = Common.initial_condition(config)
+    u0 = Configs.initial_condition(config)
     p = Common.ODEParameters(variable, cache)
     if ismutable(u0)
         f! = Systems.rhs(system)
-        prob = ODEProblem(f!, u0, Common.tspan(config), p)
+        prob = ODEProblem(f!, u0, Configs.tspan(config), p)
     else
         f = Systems.rhs_oop(system, false)  # false = is_u0_mutable
-        prob = ODEProblem(f, u0, Common.tspan(config), p)
+        prob = ODEProblem(f, u0, Configs.tspan(config), p)
     end
     return prob
 end
@@ -86,7 +86,7 @@ Uses the augmented RHS that computes state, costate, and variable costate deriva
 # Arguments
 - `integ::SciML`: The SciML integrator strategy.
 - `system::Systems.HamiltonianSystem`: The Hamiltonian system.
-- `config::Common.AbstractAugmentedHamiltonianConfig`: The augmented Hamiltonian configuration.
+- `config::Configs.AbstractAugmentedHamiltonianConfig`: The augmented Hamiltonian configuration.
 - `variable`: Variable parameter for the augmented system.
 - `cache`: Cache for automatic differentiation.
 
@@ -98,21 +98,21 @@ Uses the augmented RHS that computes state, costate, and variable costate deriva
 - TODO: Add out-of-place path for SVector support in the future.
 - Uses `Systems.build_rhs_augmented` to construct the augmented RHS function.
 
-See also: [`CTFlows.Systems.build_rhs_augmented`](@ref), [`CTFlows.Common.AbstractAugmentedHamiltonianConfig`](@ref).
+See also: [`CTFlows.Systems.build_rhs_augmented`](@ref), [`CTFlows.Configs.AbstractAugmentedHamiltonianConfig`](@ref).
 """
 function Integrators.build_problem(
     integ::SciML,
     system::Systems.HamiltonianSystem,
-    config::Common.AbstractAugmentedHamiltonianConfig;
+    config::Configs.AbstractAugmentedHamiltonianConfig;
     variable,
     cache,
 )
-    u0  = Common.initial_condition(config)          # vcat(x0, p0, pv0)
+    u0  = Configs.initial_condition(config)          # vcat(x0, p0, pv0)
     p   = Common.ODEParameters(variable, cache)
-    n_x = length(Common.initial_state(config))
-    n_v = length(Common.initial_variable_costate(config))
+    n_x = length(Configs.initial_state(config))
+    n_v = length(Configs.initial_variable_costate(config))
     f!  = Systems.build_rhs_augmented(system, n_x, n_v)
-    return ODEProblem(f!, u0, Common.tspan(config), p)
+    return ODEProblem(f!, u0, Configs.tspan(config), p)
 end
 
 # =============================================================================

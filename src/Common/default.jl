@@ -38,7 +38,7 @@ passed `nothing`". This enables proper dispatch based on the system's
 __variable()::NotProvided = NotProvided()
 ```
 
-See also: [`VariableDependence`](@ref), [`Fixed`](@ref), [`NonFixed`](@ref).
+See also: [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Traits.Fixed`](@ref), [`CTFlows.Traits.NonFixed`](@ref).
 """
 struct NotProvided end
 
@@ -104,6 +104,6 @@ variable costate equation `ṗᵥ = -∂H/∂v` unless explicitly requested.
 # Returns
 - `Bool`: The default value for the `variable_costate` parameter.
 
-See also: [`CTFlows.Common.AugmentedHamiltonianPointConfig`](@ref).
+See also: [`CTFlows.Configs.AugmentedHamiltonianPointConfig`](@ref).
 """
 _variable_costate()::Bool = false

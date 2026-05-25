@@ -10,6 +10,7 @@ import DocStringExtensions: TYPEDSIGNATURES
 
 using CTFlows: CTFlows
 using CTFlows.Solutions: Solutions
+using CTFlows.Integrators: Integrators
 using Plots: Plots
 
 # =============================================================================
@@ -40,7 +41,7 @@ Internal helper to convert a solution to time and state arrays.
 - Internal function, not part of public API.
 """
 function _sol_to_arrays(sol::Solutions.VectorFieldSolution)
-    ts = Solutions.times(sol)
+    ts = Integrators.times(sol)
     x = Solutions.state(sol)
     states = reduce(hcat, x.(ts))'
     return ts, states
@@ -144,7 +145,7 @@ Internal helper to convert a Hamiltonian solution to time, state, and costate ar
 - Internal function, not part of public API.
 """
 function _ham_sol_to_arrays(sol::Solutions.HamiltonianVectorFieldSolution)
-    ts = Solutions.times(sol)
+    ts = Integrators.times(sol)
     x = Solutions.state(sol)
     p = Solutions.costate(sol)
     states = reduce(hcat, x.(ts))'

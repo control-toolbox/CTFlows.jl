@@ -3,6 +3,7 @@ module TestHamiltonian
 import Test
 import CTFlows.Data
 import CTFlows.Common
+import CTFlows.Traits
 import CTBase.Exceptions
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -19,26 +20,26 @@ function test_hamiltonian()
             # Autonomous, Fixed
             h_aut_fixed = Data.Hamiltonian((x, p) -> x + p; is_autonomous=true, is_variable=false)
             Test.@test h_aut_fixed isa Data.Hamiltonian
-            Test.@test Common.time_dependence(h_aut_fixed) == Common.Autonomous
-            Test.@test Common.variable_dependence(h_aut_fixed) == Common.Fixed
+            Test.@test Traits.time_dependence(h_aut_fixed) == Traits.Autonomous
+            Test.@test Traits.variable_dependence(h_aut_fixed) == Traits.Fixed
 
             # NonAutonomous, Fixed
             h_nonaut_fixed = Data.Hamiltonian((t, x, p) -> t + x + p; is_autonomous=false, is_variable=false)
             Test.@test h_nonaut_fixed isa Data.Hamiltonian
-            Test.@test Common.time_dependence(h_nonaut_fixed) == Common.NonAutonomous
-            Test.@test Common.variable_dependence(h_nonaut_fixed) == Common.Fixed
+            Test.@test Traits.time_dependence(h_nonaut_fixed) == Traits.NonAutonomous
+            Test.@test Traits.variable_dependence(h_nonaut_fixed) == Traits.Fixed
 
             # Autonomous, NonFixed
             h_aut_nonfixed = Data.Hamiltonian((x, p, v) -> x + p + v; is_autonomous=true, is_variable=true)
             Test.@test h_aut_nonfixed isa Data.Hamiltonian
-            Test.@test Common.time_dependence(h_aut_nonfixed) == Common.Autonomous
-            Test.@test Common.variable_dependence(h_aut_nonfixed) == Common.NonFixed
+            Test.@test Traits.time_dependence(h_aut_nonfixed) == Traits.Autonomous
+            Test.@test Traits.variable_dependence(h_aut_nonfixed) == Traits.NonFixed
 
             # NonAutonomous, NonFixed
             h_nonaut_nonfixed = Data.Hamiltonian((t, x, p, v) -> t + x + p + v; is_autonomous=false, is_variable=true)
             Test.@test h_nonaut_nonfixed isa Data.Hamiltonian
-            Test.@test Common.time_dependence(h_nonaut_nonfixed) == Common.NonAutonomous
-            Test.@test Common.variable_dependence(h_nonaut_nonfixed) == Common.NonFixed
+            Test.@test Traits.time_dependence(h_nonaut_nonfixed) == Traits.NonAutonomous
+            Test.@test Traits.variable_dependence(h_nonaut_nonfixed) == Traits.NonFixed
         end
 
         # ====================================================================

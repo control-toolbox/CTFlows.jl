@@ -6,6 +6,7 @@ import CTFlows.Systems
 import CTFlows.Integrators
 import CTFlows.Flows
 import CTFlows.Common
+import CTFlows.Traits
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -14,7 +15,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # Fake types for testing
 # ==============================================================================
 
-struct FakeStateSystem <: Systems.AbstractStateSystem{Common.Autonomous, Common.Fixed}
+struct FakeStateSystem <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
     data::Vector{Float64}
 end
 

@@ -6,6 +6,8 @@ import CTFlows.Flows
 import CTFlows.Integrators
 import CTFlows.Solutions
 import CTFlows.Common
+import CTFlows.Configs
+import CTFlows.Traits
 import CTBase.Exceptions
 
 using StaticArrays: SA
@@ -17,17 +19,17 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # Fake types for testing flow callables
 # ==============================================================================
 
-struct FakeStateSystemFC <: Systems.AbstractStateSystem{Common.Autonomous, Common.Fixed}
+struct FakeStateSystemFC <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
     n::Int
 end
 
-struct FakeHamSysFC <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed, Common.WithoutAD}
+struct FakeHamSysFC <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD}
     n::Int
 end
 
-struct FakeResultFC <: Solutions.AbstractIntegrationResult end
+struct FakeResultFC <: Integrators.AbstractIntegrationResult end
 
-Solutions.final_state(::FakeResultFC) = [0.0, 0.0]
+Integrators.final_state(::FakeResultFC) = [0.0, 0.0]
 
 mutable struct FakeIntegFC <: Integrators.AbstractIntegrator
     last_config::Any
@@ -37,12 +39,12 @@ function FakeIntegFC()
     return FakeIntegFC(nothing)
 end
 
-function Integrators.build_problem(integ::FakeIntegFC, sys::Systems.AbstractSystem, config::Common.AbstractConfig; variable=nothing, cache=nothing)
+function Integrators.build_problem(integ::FakeIntegFC, sys::Systems.AbstractSystem, config::Configs.AbstractConfig; variable=nothing, cache=nothing)
     integ.last_config = config
     return :fake_prob
 end
 
-function Integrators.build_options(integ::FakeIntegFC, config::Union{Common.AbstractConfig, Nothing})
+function Integrators.build_options(integ::FakeIntegFC, config::Union{Configs.AbstractConfig, Nothing})
     return Dict{Symbol,Any}()
 end
 
@@ -50,19 +52,19 @@ function Integrators.solve_problem(integ::FakeIntegFC, prob, options::Dict{Symbo
     return FakeResultFC()
 end
 
-function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.StateTrait}, config::Common.AbstractConfig, result::FakeResultFC)
+function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.StateTrait}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :state_point_sol
 end
 
-function Solutions.build_solution(::Type{Common.TrajectoryTrait}, ::Type{Common.StateTrait}, config::Common.AbstractConfig, result::FakeResultFC)
+function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.StateTrait}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :state_traj_sol
 end
 
-function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.HamiltonianTrait}, config::Common.AbstractConfig, result::FakeResultFC)
+function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.HamiltonianTrait}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :ham_point_sol
 end
 
-function Solutions.build_solution(::Type{Common.TrajectoryTrait}, ::Type{Common.HamiltonianTrait}, config::Common.AbstractConfig, result::FakeResultFC)
+function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.HamiltonianTrait}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :ham_traj_sol
 end
 
@@ -85,7 +87,7 @@ function test_flow_callables()
             Test.@testset "scalar x0" begin
                 x0 = 1.0
                 result = flow(0.0, x0, 1.0)
-                Test.@test integ.last_config isa Common.StatePointConfig
+                Test.@test integ.last_config isa Configs.StatePointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0
@@ -95,7 +97,7 @@ function test_flow_callables()
             Test.@testset "vector x0" begin
                 x0 = [1.0, 0.0]
                 result = flow(0.0, x0, 1.0)
-                Test.@test integ.last_config isa Common.StatePointConfig
+                Test.@test integ.last_config isa Configs.StatePointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0
@@ -105,7 +107,7 @@ function test_flow_callables()
             Test.@testset "SVector x0" begin
                 x0 = SA[1.0, 0.0]
                 result = flow(0.0, x0, 1.0)
-                Test.@test integ.last_config isa Common.StatePointConfig
+                Test.@test integ.last_config isa Configs.StatePointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0
@@ -115,7 +117,7 @@ function test_flow_callables()
             Test.@testset "matrix x0" begin
                 x0 = [1.0 2.0; 3.0 4.0]
                 result = flow(0.0, x0, 1.0)
-                Test.@test integ.last_config isa Common.StatePointConfig
+                Test.@test integ.last_config isa Configs.StatePointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0
@@ -135,7 +137,7 @@ function test_flow_callables()
             Test.@testset "vector x0" begin
                 x0 = [1.0, 0.0]
                 result = flow((0.0, 1.0), x0)
-                Test.@test integ.last_config isa Common.StateTrajectoryConfig
+                Test.@test integ.last_config isa Configs.StateTrajectoryConfig
                 Test.@test integ.last_config.tspan == (0.0, 1.0)
                 Test.@test integ.last_config.x0 === x0
                 Test.@test result === :state_traj_sol
@@ -144,7 +146,7 @@ function test_flow_callables()
             Test.@testset "SVector x0" begin
                 x0 = SA[1.0, 0.0]
                 result = flow((0.0, 1.0), x0)
-                Test.@test integ.last_config isa Common.StateTrajectoryConfig
+                Test.@test integ.last_config isa Configs.StateTrajectoryConfig
                 Test.@test integ.last_config.tspan == (0.0, 1.0)
                 Test.@test integ.last_config.x0 === x0
                 Test.@test result === :state_traj_sol
@@ -153,7 +155,7 @@ function test_flow_callables()
             Test.@testset "matrix x0" begin
                 x0 = [1.0 2.0; 3.0 4.0]
                 result = flow((0.0, 1.0), x0)
-                Test.@test integ.last_config isa Common.StateTrajectoryConfig
+                Test.@test integ.last_config isa Configs.StateTrajectoryConfig
                 Test.@test integ.last_config.tspan == (0.0, 1.0)
                 Test.@test integ.last_config.x0 === x0
                 Test.@test result === :state_traj_sol
@@ -173,7 +175,7 @@ function test_flow_callables()
                 x0 = 1.0
                 p0 = 0.0
                 result = flow(0.0, x0, p0, 1.0)
-                Test.@test integ.last_config isa Common.HamiltonianPointConfig
+                Test.@test integ.last_config isa Configs.HamiltonianPointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0
@@ -185,7 +187,7 @@ function test_flow_callables()
                 x0 = [1.0, 0.0]
                 p0 = [0.0, 1.0]
                 result = flow(0.0, x0, p0, 1.0)
-                Test.@test integ.last_config isa Common.HamiltonianPointConfig
+                Test.@test integ.last_config isa Configs.HamiltonianPointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0
@@ -197,7 +199,7 @@ function test_flow_callables()
                 x0 = SA[1.0, 0.0]
                 p0 = SA[0.0, 1.0]
                 result = flow(0.0, x0, p0, 1.0)
-                Test.@test integ.last_config isa Common.HamiltonianPointConfig
+                Test.@test integ.last_config isa Configs.HamiltonianPointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0
@@ -219,7 +221,7 @@ function test_flow_callables()
                 x0 = [1.0, 0.0]
                 p0 = [0.0, 1.0]
                 result = flow((0.0, 1.0), x0, p0)
-                Test.@test integ.last_config isa Common.HamiltonianTrajectoryConfig
+                Test.@test integ.last_config isa Configs.HamiltonianTrajectoryConfig
                 Test.@test integ.last_config.tspan == (0.0, 1.0)
                 Test.@test integ.last_config.x0 === x0
                 Test.@test integ.last_config.p0 === p0
@@ -230,7 +232,7 @@ function test_flow_callables()
                 x0 = SA[1.0, 0.0]
                 p0 = SA[0.0, 1.0]
                 result = flow((0.0, 1.0), x0, p0)
-                Test.@test integ.last_config isa Common.HamiltonianTrajectoryConfig
+                Test.@test integ.last_config isa Configs.HamiltonianTrajectoryConfig
                 Test.@test integ.last_config.tspan == (0.0, 1.0)
                 Test.@test integ.last_config.x0 === x0
                 Test.@test integ.last_config.p0 === p0

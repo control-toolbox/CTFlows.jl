@@ -24,6 +24,8 @@ import CTSolvers.Options
 
 using CTFlows: CTFlows
 using CTFlows.Common: Common
+using CTFlows.Configs: Configs
+using CTFlows.Traits: Traits
 using CTFlows.Systems: Systems
 using CTFlows.Integrators: Integrators, SciML, SciMLTag, Tsit5Tag
 using CTFlows.Flows: Flows, AbstractFlow, build_flow

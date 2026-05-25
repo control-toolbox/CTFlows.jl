@@ -18,11 +18,13 @@ import CTSolvers.Options
 # Internal sibling-submodule imports
 # ==============================================================================
 
-using ..Common
-using ..Systems
-using ..Integrators
-using ..Flows
-using ..Solutions
+import ..Common: Common
+import ..Configs: Configs
+import ..Traits: Traits
+import ..Systems: Systems
+import ..Integrators: Integrators
+import ..Flows: Flows
+import ..Solutions: Solutions
 
 # ==============================================================================
 # Include files

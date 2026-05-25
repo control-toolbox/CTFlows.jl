@@ -53,7 +53,7 @@ using ADTypes: ADTypes  # Hard dep — provides AutoForwardDiff
 # Internal Sibling Imports
 # ==============================================================================
 
-using ..Common
+import ..Common: Common
 
 # ==============================================================================
 # Includes (in dependency order)

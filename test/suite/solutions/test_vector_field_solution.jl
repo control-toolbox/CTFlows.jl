@@ -4,6 +4,7 @@ import Test
 import CTFlows.Solutions
 import CTBase.Exceptions
 import CTFlows.Common
+import CTFlows.Integrators
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -15,14 +16,14 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake integration result for testing VectorFieldSolution callable interface.
 """
-struct FakeIntegrationResult <: Solutions.AbstractIntegrationResult
+struct FakeIntegrationResult <: Integrators.AbstractIntegrationResult
     t::Vector{Float64}
     u::Vector{Vector{Float64}}
 end
 
-Solutions.times(r::FakeIntegrationResult) = r.t
-Solutions.final_state(r::FakeIntegrationResult) = r.u[end]
-function Solutions.evaluate_at(r::FakeIntegrationResult, t::Real)
+Integrators.times(r::FakeIntegrationResult) = r.t
+Integrators.final_state(r::FakeIntegrationResult) = r.u[end]
+function Integrators.evaluate_at(r::FakeIntegrationResult, t::Real)
     # Simple interpolation for testing
     return r.u[1]
 end
@@ -61,13 +62,13 @@ function test_vector_field_solution()
             Test.@testset "delegates evaluate_at to result" begin
                 result = FakeIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
                 sol = Solutions.VectorFieldSolution(result)
-                Test.@test sol(0.5) === Solutions.evaluate_at(result, 0.5)
+                Test.@test sol(0.5) === Integrators.evaluate_at(result, 0.5)
             end
 
             Test.@testset "delegates times to result" begin
                 result = FakeIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
                 sol = Solutions.VectorFieldSolution(result)
-                Test.@test Solutions.times(sol) === Solutions.times(result)
+                Test.@test Integrators.times(sol) === Integrators.times(result)
             end
 
             Test.@testset "state accessor returns sol itself" begin
@@ -81,14 +82,14 @@ function test_vector_field_solution()
                 result = FakeIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
                 sol = Solutions.VectorFieldSolution(result)
                 x = Solutions.state(sol)
-                Test.@test x(0.5) ≈ Solutions.evaluate_at(result, 0.5)
+                Test.@test x(0.5) ≈ Integrators.evaluate_at(result, 0.5)
             end
 
             Test.@testset "time_grid alias works" begin
                 result = FakeIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
                 sol = Solutions.VectorFieldSolution(result)
                 tg = Solutions.time_grid(sol)
-                ts = Solutions.times(sol)
+                ts = Integrators.times(sol)
                 Test.@test tg === ts  # Returns same object
             end
         end

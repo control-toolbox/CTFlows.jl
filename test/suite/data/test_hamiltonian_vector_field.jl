@@ -3,6 +3,7 @@ module TestHamiltonianVectorField
 import Test
 import CTFlows.Data: Data
 import CTFlows.Common: Common
+import CTFlows.Traits: Traits
 import CTBase.Exceptions
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
@@ -27,26 +28,26 @@ function test_hamiltonian_vector_field()
             # Autonomous, Fixed
             hvf_autonomous_fixed = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
             Test.@test hvf_autonomous_fixed isa Data.HamiltonianVectorField
-            Test.@test Common.time_dependence(hvf_autonomous_fixed) == Common.Autonomous
-            Test.@test Common.variable_dependence(hvf_autonomous_fixed) == Common.Fixed
+            Test.@test Traits.time_dependence(hvf_autonomous_fixed) == Traits.Autonomous
+            Test.@test Traits.variable_dependence(hvf_autonomous_fixed) == Traits.Fixed
             
             # NonAutonomous, Fixed
             hvf_nonautonomous_fixed = Data.HamiltonianVectorField((t, x, p) -> (x, -p); is_autonomous=false, is_variable=false)
             Test.@test hvf_nonautonomous_fixed isa Data.HamiltonianVectorField
-            Test.@test Common.time_dependence(hvf_nonautonomous_fixed) == Common.NonAutonomous
-            Test.@test Common.variable_dependence(hvf_nonautonomous_fixed) == Common.Fixed
+            Test.@test Traits.time_dependence(hvf_nonautonomous_fixed) == Traits.NonAutonomous
+            Test.@test Traits.variable_dependence(hvf_nonautonomous_fixed) == Traits.Fixed
             
             # Autonomous, NonFixed
             hvf_autonomous_nonfixed = Data.HamiltonianVectorField((x, p, v) -> (x .* v, -p); is_autonomous=true, is_variable=true)
             Test.@test hvf_autonomous_nonfixed isa Data.HamiltonianVectorField
-            Test.@test Common.time_dependence(hvf_autonomous_nonfixed) == Common.Autonomous
-            Test.@test Common.variable_dependence(hvf_autonomous_nonfixed) == Common.NonFixed
+            Test.@test Traits.time_dependence(hvf_autonomous_nonfixed) == Traits.Autonomous
+            Test.@test Traits.variable_dependence(hvf_autonomous_nonfixed) == Traits.NonFixed
             
             # NonAutonomous, NonFixed
             hvf_nonautonomous_nonfixed = Data.HamiltonianVectorField((t, x, p, v) -> (x .* v, -p); is_autonomous=false, is_variable=true)
             Test.@test hvf_nonautonomous_nonfixed isa Data.HamiltonianVectorField
-            Test.@test Common.time_dependence(hvf_nonautonomous_nonfixed) == Common.NonAutonomous
-            Test.@test Common.variable_dependence(hvf_nonautonomous_nonfixed) == Common.NonFixed
+            Test.@test Traits.time_dependence(hvf_nonautonomous_nonfixed) == Traits.NonAutonomous
+            Test.@test Traits.variable_dependence(hvf_nonautonomous_nonfixed) == Traits.NonFixed
         end
         
         # ====================================================================
@@ -107,10 +108,10 @@ function test_hamiltonian_vector_field()
         
         Test.@testset "Trait Accessors" begin
             hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
-            Test.@test Common.has_time_dependence_trait(hvf) == true
-            Test.@test Common.has_variable_dependence_trait(hvf) == true
-            Test.@test Common.time_dependence(hvf) == Common.Autonomous
-            Test.@test Common.variable_dependence(hvf) == Common.Fixed
+            Test.@test Traits.has_time_dependence_trait(hvf) == true
+            Test.@test Traits.has_variable_dependence_trait(hvf) == true
+            Test.@test Traits.time_dependence(hvf) == Traits.Autonomous
+            Test.@test Traits.variable_dependence(hvf) == Traits.Fixed
         end
         
         # ====================================================================
@@ -143,14 +144,14 @@ function test_hamiltonian_vector_field()
                 # Define an out-of-place function but force InPlace
                 f(x, p) = (x, -p)
                 hvf = Data.HamiltonianVectorField(f; is_inplace=true)
-                Test.@test Common.mutability_trait(hvf) === Common.InPlace
+                Test.@test Traits.mutability_trait(hvf) === Traits.InPlace
             end
 
             Test.@testset "is_inplace=false creates OutOfPlace HamiltonianVectorField" begin
                 # Define an in-place function but force OutOfPlace
                 f(x, p) = (x, -p)
                 hvf = Data.HamiltonianVectorField(f; is_inplace=false)
-                Test.@test Common.mutability_trait(hvf) === Common.OutOfPlace
+                Test.@test Traits.mutability_trait(hvf) === Traits.OutOfPlace
             end
         end
 
@@ -165,7 +166,7 @@ function test_hamiltonian_vector_field()
 
             Test.@testset "No error when is_inplace is explicitly specified" begin
                 hvf = Data.HamiltonianVectorField(_multi_method_hvf; is_inplace=false)
-                Test.@test Common.mutability_trait(hvf) === Common.OutOfPlace
+                Test.@test Traits.mutability_trait(hvf) === Traits.OutOfPlace
             end
         end
 
@@ -175,22 +176,22 @@ function test_hamiltonian_vector_field()
 
         Test.@testset "Internal Helpers" begin
             Test.@testset "_oop_arity_hvf" begin
-                Test.@test Data._oop_arity_hvf(Common.Autonomous, Common.Fixed) == 2
-                Test.@test Data._oop_arity_hvf(Common.NonAutonomous, Common.Fixed) == 3
-                Test.@test Data._oop_arity_hvf(Common.Autonomous, Common.NonFixed) == 3
-                Test.@test Data._oop_arity_hvf(Common.NonAutonomous, Common.NonFixed) == 4
+                Test.@test Data._oop_arity_hvf(Traits.Autonomous, Traits.Fixed) == 2
+                Test.@test Data._oop_arity_hvf(Traits.NonAutonomous, Traits.Fixed) == 3
+                Test.@test Data._oop_arity_hvf(Traits.Autonomous, Traits.NonFixed) == 3
+                Test.@test Data._oop_arity_hvf(Traits.NonAutonomous, Traits.NonFixed) == 4
             end
 
             Test.@testset "_natural_sig_hvf helpers" begin
-                Test.@test Data._natural_sig_hvf(Common.Autonomous, Common.Fixed, Common.OutOfPlace) == "f(x, p)"
-                Test.@test Data._natural_sig_hvf(Common.NonAutonomous, Common.Fixed, Common.OutOfPlace) == "f(t, x, p)"
-                Test.@test Data._natural_sig_hvf(Common.Autonomous, Common.Fixed, Common.InPlace) == "f(dx, dp, x, p)"
-                Test.@test Data._uniform_sig_hvf(Common.OutOfPlace) == "f(t, x, p, v)"
-                Test.@test Data._uniform_sig_hvf(Common.InPlace) == "f(dx, dp, t, x, p, v)"
+                Test.@test Data._natural_sig_hvf(Traits.Autonomous, Traits.Fixed, Traits.OutOfPlace) == "f(x, p)"
+                Test.@test Data._natural_sig_hvf(Traits.NonAutonomous, Traits.Fixed, Traits.OutOfPlace) == "f(t, x, p)"
+                Test.@test Data._natural_sig_hvf(Traits.Autonomous, Traits.Fixed, Traits.InPlace) == "f(dx, dp, x, p)"
+                Test.@test Data._uniform_sig_hvf(Traits.OutOfPlace) == "f(t, x, p, v)"
+                Test.@test Data._uniform_sig_hvf(Traits.InPlace) == "f(dx, dp, t, x, p, v)"
             end
 
             Test.@testset "_detect_mutability_hvf invalid arity" begin
-                Test.@test_throws Exceptions.IncorrectArgument Data._detect_mutability_hvf(_bad_arity_hvf, Common.Autonomous, Common.Fixed)
+                Test.@test_throws Exceptions.IncorrectArgument Data._detect_mutability_hvf(_bad_arity_hvf, Traits.Autonomous, Traits.Fixed)
             end
         end
 

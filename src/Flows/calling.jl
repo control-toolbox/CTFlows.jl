@@ -25,7 +25,7 @@ julia> flow = StateFlow(system, integrator)
 julia> sol = flow(0.0, [1.0, 0.0], 1.0)
 \`\`\`
 
-See also: [`CTFlows.Common.StatePointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+See also: [`CTFlows.Configs.StatePointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
 """
 function (f::AbstractStateFlow)(
     t0::Real,
@@ -34,7 +34,7 @@ function (f::AbstractStateFlow)(
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 )
-    return call(f, Common.StatePointConfig(t0, x0, tf); variable=variable, unsafe=unsafe)
+    return call(f, Configs.StatePointConfig(t0, x0, tf); variable=variable, unsafe=unsafe)
 end
 
 """
@@ -65,7 +65,7 @@ julia> flow = HamiltonianFlow(system, integrator)
 julia> sol = flow(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 \`\`\`
 
-See also: [`CTFlows.Common.HamiltonianPointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+See also: [`CTFlows.Configs.HamiltonianPointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
 """
 function (f::AbstractHamiltonianFlow)(
     t0::Real,
@@ -76,7 +76,7 @@ function (f::AbstractHamiltonianFlow)(
     unsafe=Common.__unsafe(),
     variable_costate::Bool=Common._variable_costate(),
 )
-    config = Common.HamiltonianPointConfig(t0, x0, p0, tf)
+    config = Configs.HamiltonianPointConfig(t0, x0, p0, tf)
     variable_costate && return call_variable_costate(f, config; variable=variable, unsafe=unsafe)
     return call(f, config; variable=variable, unsafe=unsafe)
 end
@@ -107,7 +107,7 @@ julia> flow = StateFlow(system, integrator)
 julia> sol = flow((0.0, 1.0), [1.0, 0.0])
 \`\`\`
 
-See also: [`CTFlows.Common.StateTrajectoryConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+See also: [`CTFlows.Configs.StateTrajectoryConfig`](@ref), [`CTFlows.Flows.call`](@ref).
 """
 function (f::AbstractStateFlow)(
     tspan::Tuple{Real, Real},
@@ -115,7 +115,7 @@ function (f::AbstractStateFlow)(
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 )
-    return call(f, Common.StateTrajectoryConfig(tspan, x0); variable=variable, unsafe=unsafe)
+    return call(f, Configs.StateTrajectoryConfig(tspan, x0); variable=variable, unsafe=unsafe)
 end
 
 """
@@ -145,7 +145,7 @@ julia> flow = HamiltonianFlow(system, integrator)
 julia> sol = flow((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
 \`\`\`
 
-See also: [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+See also: [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Flows.call`](@ref).
 """
 function (f::AbstractHamiltonianFlow)(
     tspan::Tuple{Real, Real},
@@ -155,7 +155,7 @@ function (f::AbstractHamiltonianFlow)(
     unsafe=Common.__unsafe(),
     variable_costate::Bool=Common._variable_costate(),
 )
-    config = Common.HamiltonianTrajectoryConfig(tspan, x0, p0)
+    config = Configs.HamiltonianTrajectoryConfig(tspan, x0, p0)
     variable_costate && return call_variable_costate(f, config; variable=variable, unsafe=unsafe)
     return call(f, config; variable=variable, unsafe=unsafe)
 end
@@ -177,7 +177,7 @@ This function dispatches to one of four specialized implementations based on:
 
 # Arguments
 - `flow::CTFlows.Flows.AbstractFlow`: The flow to solve.
-- `config::CTFlows.Common.AbstractConfig`: The integration configuration (e.g., `StatePointConfig`, `StateTrajectoryConfig`).
+- `config::CTFlows.Configs.AbstractConfig`: The integration configuration (e.g., `StatePointConfig`, `StateTrajectoryConfig`).
 - `variable`: The variable parameter value (required for NonFixed systems, must be omitted for Fixed systems).
 - `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
 
@@ -191,7 +191,7 @@ This function dispatches to one of four specialized implementations based on:
 \`\`\`julia
 # Fixed flow: no variable parameter allowed
 flow_fixed = Flow(system_fixed, integrator)
-config = CTFlows.Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+config = CTFlows.Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 sol = call(flow_fixed, config; unsafe=false)  # OK, no variable
 
 # NonFixed flow: variable parameter required
@@ -199,10 +199,10 @@ flow_nonfixed = Flow(system_nonfixed, integrator)
 sol = call(flow_nonfixed, config; variable=0.5, unsafe=false)  # OK, variable provided
 \`\`\`
 
-See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.NotProvided`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Configs.VariableDependence`](@ref), [`CTFlows.Common.NotProvided`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
 """
-function call(flow::Flows.AbstractFlow, config::Common.AbstractConfig; variable, unsafe)
-    VD = Common.variable_dependence(flow)
+function call(flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe)
+    VD = Traits.variable_dependence(flow)
     return call(VD, typeof(variable), flow, config; variable=variable, unsafe=unsafe)
 end
 
@@ -222,7 +222,7 @@ and constructs the solution.
 
 # Arguments
 - `flow::CTFlows.Flows.AbstractFlow`: The flow to solve.
-- `config::CTFlows.Common.AbstractConfig`: The integration configuration.
+- `config::CTFlows.Configs.AbstractConfig`: The integration configuration.
 - `variable`: The variable parameter value (may be `nothing` for Fixed systems).
 - `unsafe`: If `true`, bypass ODE solver retcode checking.
 
@@ -235,7 +235,7 @@ Users should call the public `call` function instead.
 
 See also: [`call`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
 """
-function core_call(flow::Flows.AbstractFlow, config::Common.AbstractConfig; variable, unsafe)
+function core_call(flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe)
 
     # get system and integrator
     sys = system(flow)
@@ -255,8 +255,8 @@ function core_call(flow::Flows.AbstractFlow, config::Common.AbstractConfig; vari
 
     # build flow solution
     flow_sol = Solutions.build_solution(
-        Common.mode_trait(config),
-        Common.content_trait(config),
+        Configs.mode_trait(config),
+        Configs.content_trait(config),
         config,
         result,
     )
@@ -281,9 +281,9 @@ the contract that NonFixed systems must receive a variable parameter.
 - `CTBase.Exceptions.PreconditionError`: Always, with message explaining that a variable is required.
 
 # See also
-[`call`](@ref), [`Common.NonFixed`](@ref), [`Common.NotProvided`](@ref).
+[`call`](@ref), [`Configs.NonFixed`](@ref), [`Common.NotProvided`](@ref).
 """
-function call(::Type{Common.NonFixed}, ::Type{Common.NotProvided}, flow, config; unsafe, variable)
+function call(::Type{Traits.NonFixed}, ::Type{Common.NotProvided}, flow, config; unsafe, variable)
     throw(Exceptions.PreconditionError(
         "variable not provided for a NonFixed flow";
         reason    = "flow depends on an extra variable parameter but none was given",
@@ -305,9 +305,9 @@ forwards to `core_call` with `variable=nothing`.
 - The result of `core_call`.
 
 # See also
-[`call`](@ref), [`Common.Fixed`](@ref), [`Common.NotProvided`](@ref), [`core_call`](@ref).
+[`call`](@ref), [`Configs.Fixed`](@ref), [`Common.NotProvided`](@ref), [`core_call`](@ref).
 """
-function call(::Type{Common.Fixed}, ::Type{Common.NotProvided}, flow, config; unsafe, variable)
+function call(::Type{Traits.Fixed}, ::Type{Common.NotProvided}, flow, config; unsafe, variable)
     return core_call(flow, config; variable=nothing, unsafe=unsafe)
 end
 
@@ -324,9 +324,9 @@ to `core_call` with the provided variable value.
 - The result of `core_call`.
 
 # See also
-[`call`](@ref), [`Common.NonFixed`](@ref), [`core_call`](@ref).
+[`call`](@ref), [`Configs.NonFixed`](@ref), [`core_call`](@ref).
 """
-function call(::Type{Common.NonFixed}, ::Type{VT}, flow, config; unsafe, variable) where {VT}
+function call(::Type{Traits.NonFixed}, ::Type{VT}, flow, config; unsafe, variable) where {VT}
     return core_call(flow, config; variable=variable, unsafe=unsafe)
 end
 
@@ -343,9 +343,9 @@ receive a variable parameter, so it throws a `PreconditionError`.
 - `CTBase.Exceptions.PreconditionError`: Always, with message explaining that variables must not be provided to Fixed flows.
 
 # See also
-[`call`](@ref), [`Common.Fixed`](@ref).
+[`call`](@ref), [`Configs.Fixed`](@ref).
 """
-function call(::Type{Common.Fixed}, ::Type{VT}, flow, config; unsafe, variable) where {VT}
+function call(::Type{Traits.Fixed}, ::Type{VT}, flow, config; unsafe, variable) where {VT}
     throw(Exceptions.PreconditionError(
         "variable provided for a Fixed flow";
         reason    = "flow does not depend on any variable parameter",
@@ -360,7 +360,7 @@ end
 
 function prepare_cache(
     sys::Systems.AbstractSystem,
-    config::Common.AbstractConfig; variable
+    config::Configs.AbstractConfig; variable
 )
     return nothing
 end
@@ -374,7 +374,7 @@ This is the front-end entry point that delegates to trait-specific implementatio
 
 # Arguments
 - `sys::Systems.AbstractHamiltonianSystem`: The Hamiltonian system.
-- `config::Common.AbstractConfig`: The integration configuration (provides typical x0, p0).
+- `config::Configs.AbstractConfig`: The integration configuration (provides typical x0, p0).
 - `variable`: The variable parameter value (for type inference in cache preparation).
 
 # Returns
@@ -396,9 +396,9 @@ to support augmented configs like `AugmentedHamiltonianPointConfig`, which defin
 """
 function prepare_cache(
     sys::Systems.AbstractHamiltonianSystem,
-    config::Common.AbstractConfig; variable
+    config::Configs.AbstractConfig; variable
 )
-    return prepare_cache(Common.ad_trait(sys), sys, config; variable=variable)
+    return prepare_cache(Traits.ad_trait(sys), sys, config; variable=variable)
 end
 
 """
@@ -410,9 +410,9 @@ Returns `nothing` since these systems carry a pre-computed Hamiltonian vector fi
 and do not require automatic differentiation.
 
 # Arguments
-- `::Type{Common.WithoutAD}`: The `WithoutAD` trait (dispatch tag).
+- `::Type{Traits.WithoutAD}`: The `WithoutAD` trait (dispatch tag).
 - `sys::Systems.AbstractHamiltonianSystem`: The Hamiltonian system.
-- `config::Common.AbstractConfig`: The integration configuration (unused).
+- `config::Configs.AbstractConfig`: The integration configuration (unused).
 - `variable`: The variable parameter value (unused).
 
 # Returns
@@ -422,9 +422,9 @@ and do not require automatic differentiation.
 - [`CTFlows.Flows.prepare_cache`](@ref)
 """
 function prepare_cache(
-    ::Type{Common.WithoutAD},
+    ::Type{Traits.WithoutAD},
     sys::Systems.AbstractHamiltonianSystem,
-    config::Common.AbstractConfig; variable
+    config::Configs.AbstractConfig; variable
 )
     return nothing
 end
@@ -438,9 +438,9 @@ Extracts typical initial state and costate from the config and delegates to the
 backend's `prepare_cache` method to prepare gradient plans.
 
 # Arguments
-- `::Type{Common.WithAD}`: The `WithAD` trait (dispatch tag).
+- `::Type{Traits.WithAD}`: The `WithAD` trait (dispatch tag).
 - `sys::Systems.HamiltonianSystem`: The Hamiltonian system (carries `backend` and `h`).
-- `config::Common.AbstractConfig`: The integration configuration (provides x0, p0).
+- `config::Configs.AbstractConfig`: The integration configuration (provides x0, p0).
 - `variable`: The variable parameter value (passed to backend for type inference).
 
 # Returns
@@ -451,13 +451,13 @@ backend's `prepare_cache` method to prepare gradient plans.
 - [`CTFlows.Flows.prepare_cache`](@ref)
 """
 function prepare_cache(
-    ::Type{Common.WithAD},
+    ::Type{Traits.WithAD},
     sys::Systems.AbstractHamiltonianSystem,
-    config::Common.AbstractConfig; variable
+    config::Configs.AbstractConfig; variable
 )
-    t0 = Common.initial_time(config)
-    x0 = Common.initial_state(config)
-    p0 = Common.initial_costate(config)
+    t0 = Configs.initial_time(config)
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
     return Differentiation.prepare_cache(Systems.backend(sys), Systems.hamiltonian(sys), t0, x0, p0, variable)
 end
 
@@ -475,7 +475,7 @@ integration is supported.
 
 # Arguments
 - `flow::AbstractHamiltonianFlow`: The Hamiltonian flow.
-- `config::Common.AbstractHamiltonianConfig`: The Hamiltonian point configuration.
+- `config::Configs.AbstractHamiltonianConfig`: The Hamiltonian point configuration.
 - `variable`: The variable parameter value.
 - `unsafe`: If `true`, bypass ODE solver retcode checking.
 
@@ -485,14 +485,14 @@ integration is supported.
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: If the flow does not support variable costate.
 
-See also: [`CTFlows.Common.variable_costate_trait`](@ref), [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.NoVariableCostate`](@ref).
+See also: [`CTFlows.Traits.variable_costate_trait`](@ref), [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Traits.NoVariableCostate`](@ref).
 """
 function call_variable_costate(
     flow::AbstractHamiltonianFlow,
-    config::Common.AbstractHamiltonianConfig; variable, unsafe
+    config::Configs.AbstractHamiltonianConfig; variable, unsafe
 )
     return call_variable_costate(
-        Common.variable_costate_trait(flow),
+        Traits.variable_costate_trait(flow),
         typeof(variable),
         flow, config; variable=variable, unsafe=unsafe
     )
@@ -509,13 +509,13 @@ This method handles the error case where a flow does not support variable costat
 # Throws
 - `CTBase.Exceptions.PreconditionError`: Always, with a descriptive message indicating that the flow does not support variable costate.
 
-See also: [`CTFlows.Common.NoVariableCostate`](@ref).
+See also: [`CTFlows.Traits.NoVariableCostate`](@ref).
 """
 function call_variable_costate(
-    ::Type{Common.NoVariableCostate},
+    ::Type{Traits.NoVariableCostate},
     ::Type{VT},
     flow::AbstractHamiltonianFlow,
-    config::Common.HamiltonianPointConfig; variable, unsafe
+    config::Configs.HamiltonianPointConfig; variable, unsafe
 ) where {VT}
     throw(Exceptions.PreconditionError(
         "variable_costate=true is not supported on this flow";
@@ -534,29 +534,29 @@ Constructs an `AugmentedHamiltonianPointConfig` with zero initial variable costa
 and calls the flow with it.
 
 # Arguments
-- `::Type{Common.SupportsVariableCostate}`: The capability trait.
+- `::Type{Traits.SupportsVariableCostate}`: The capability trait.
 - `flow::AbstractHamiltonianFlow`: The Hamiltonian flow.
-- `config::Common.HamiltonianPointConfig`: The base Hamiltonian point configuration.
+- `config::Configs.HamiltonianPointConfig`: The base Hamiltonian point configuration.
 - `variable`: The variable parameter value.
 - `unsafe`: If `true`, bypass ODE solver retcode checking.
 
 # Returns
 - `Tuple{AbstractVector, AbstractVector, AbstractVector}`: The augmented solution `(xf, pf, pvf)`.
 
-See also: [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.AugmentedHamiltonianPointConfig`](@ref).
+See also: [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Configs.AugmentedHamiltonianPointConfig`](@ref).
 """
 function call_variable_costate(
-    ::Type{Common.SupportsVariableCostate},
+    ::Type{Traits.SupportsVariableCostate},
     ::Type{VT},
     flow::AbstractHamiltonianFlow,
-    config::Common.HamiltonianPointConfig; variable, unsafe
+    config::Configs.HamiltonianPointConfig; variable, unsafe
 ) where {VT}
-    t0  = Common.initial_time(config) 
-    x0  = Common.initial_state(config)
-    p0  = Common.initial_costate(config)
+    t0  = Configs.initial_time(config) 
+    x0  = Configs.initial_state(config)
+    p0  = Configs.initial_costate(config)
     pv0 = Common.scalarize(zeros(eltype(x0), length(variable)), variable)
-    tf  = Common.final_time(config)
-    config_aug = Common.AugmentedHamiltonianPointConfig(t0, x0, p0, pv0, tf)
+    tf  = Configs.final_time(config)
+    config_aug = Configs.AugmentedHamiltonianPointConfig(t0, x0, p0, pv0, tf)
     return call(flow, config_aug; variable=variable, unsafe=unsafe)
 end
 
@@ -571,13 +571,13 @@ but the user did not provide the required variable parameter.
 # Throws
 - `CTBase.Exceptions.PreconditionError`: Always, with a descriptive message indicating that the variable parameter must be provided.
 
-See also: [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.NotProvided`](@ref).
+See also: [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Common.NotProvided`](@ref).
 """
 function call_variable_costate(
-    ::Type{Common.SupportsVariableCostate},
+    ::Type{Traits.SupportsVariableCostate},
     ::Type{Common.NotProvided},
     flow::AbstractHamiltonianFlow,
-    config::Common.HamiltonianPointConfig; variable, unsafe
+    config::Configs.HamiltonianPointConfig; variable, unsafe
 )
     throw(Exceptions.PreconditionError(
         "variable must be provided when variable_costate=true";
@@ -599,13 +599,13 @@ with a trajectory configuration.
 # Throws
 - `CTBase.Exceptions.PreconditionError`: Always, with a descriptive message indicating that variable_costate is only supported for point configurations.
 
-See also: [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref).
+See also: [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref).
 """
 function call_variable_costate(
-    ::Type{Common.SupportsVariableCostate},
+    ::Type{Traits.SupportsVariableCostate},
     ::Type{VT},
     flow::AbstractHamiltonianFlow,
-    config::Common.HamiltonianTrajectoryConfig; variable, unsafe
+    config::Configs.HamiltonianTrajectoryConfig; variable, unsafe
 ) where {VT}
     throw(Exceptions.PreconditionError(
         "variable_costate=true is not supported for trajectory configurations";

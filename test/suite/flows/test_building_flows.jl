@@ -7,6 +7,7 @@ import CTFlows.Flows
 import CTFlows.Systems
 import CTFlows.Integrators
 import CTFlows.Common
+import CTFlows.Traits
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -51,32 +52,32 @@ function test_building_flows()
                 vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
                 flow = Flows.Flow(vf)
                 
-                Test.@test Common.time_dependence(flow) === Common.Autonomous
-                Test.@test Common.variable_dependence(flow) === Common.Fixed
+                Test.@test Traits.time_dependence(flow) === Traits.Autonomous
+                Test.@test Traits.variable_dependence(flow) === Traits.Fixed
             end
 
             Test.@testset "NonAutonomous Fixed" begin
                 vf = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
                 flow = Flows.Flow(vf)
                 
-                Test.@test Common.time_dependence(flow) === Common.NonAutonomous
-                Test.@test Common.variable_dependence(flow) === Common.Fixed
+                Test.@test Traits.time_dependence(flow) === Traits.NonAutonomous
+                Test.@test Traits.variable_dependence(flow) === Traits.Fixed
             end
 
             Test.@testset "Autonomous NonFixed" begin
                 vf = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
                 flow = Flows.Flow(vf)
                 
-                Test.@test Common.time_dependence(flow) === Common.Autonomous
-                Test.@test Common.variable_dependence(flow) === Common.NonFixed
+                Test.@test Traits.time_dependence(flow) === Traits.Autonomous
+                Test.@test Traits.variable_dependence(flow) === Traits.NonFixed
             end
 
             Test.@testset "NonAutonomous NonFixed" begin
                 vf = Data.VectorField((t, x, v) -> t .* x .+ v; is_autonomous=false, is_variable=true)
                 flow = Flows.Flow(vf)
                 
-                Test.@test Common.time_dependence(flow) === Common.NonAutonomous
-                Test.@test Common.variable_dependence(flow) === Common.NonFixed
+                Test.@test Traits.time_dependence(flow) === Traits.NonAutonomous
+                Test.@test Traits.variable_dependence(flow) === Traits.NonFixed
             end
         end
 
@@ -117,8 +118,8 @@ function test_building_flows()
                 # Both should be VectorFieldSystem with same traits
                 Test.@test sys_direct isa Systems.VectorFieldSystem
                 Test.@test sys_from_flow isa Systems.VectorFieldSystem
-                Test.@test Common.time_dependence(sys_direct) === Common.time_dependence(sys_from_flow)
-                Test.@test Common.variable_dependence(sys_direct) === Common.variable_dependence(sys_from_flow)
+                Test.@test Traits.time_dependence(sys_direct) === Traits.time_dependence(sys_from_flow)
+                Test.@test Traits.variable_dependence(sys_direct) === Traits.variable_dependence(sys_from_flow)
             end
         end
 
