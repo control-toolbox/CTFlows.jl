@@ -15,6 +15,7 @@ import CTFlows.Systems
 import CTFlows.Integrators
 import CTFlows.Data
 import CTFlows.Common
+import CTFlows.Traits
 import CTSolvers: CTSolvers
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -32,7 +33,7 @@ Fake system for testing the Flow contract.
 This minimal implementation provides the required contract methods to test
 routing and default behavior without full system complexity.
 """
-struct FakeSystem <: Systems.AbstractStateSystem{Common.Autonomous, Common.Fixed}
+struct FakeSystem <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
     state_dim::Int
     param_dim::Int
 end
@@ -43,13 +44,13 @@ function Systems.rhs(sys::FakeSystem)
 end
 
 # Implement contract: time_dependence
-function Common.time_dependence(sys::FakeSystem)
-    return Common.Autonomous
+function Traits.time_dependence(sys::FakeSystem)
+    return Traits.Autonomous
 end
 
 # Implement contract: variable_dependence
-function Common.variable_dependence(sys::FakeSystem)
-    return Common.Fixed
+function Traits.variable_dependence(sys::FakeSystem)
+    return Traits.Fixed
 end
 
 """
@@ -165,28 +166,28 @@ function test_flow_module()
                 sys = FakeSystem(2, 2)
                 integ = FakeIntegrator()
                 flow = Flows.StateFlow(sys, integ)
-                Test.@test Common.has_time_dependence_trait(flow)
+                Test.@test Traits.has_time_dependence_trait(flow)
             end
 
             Test.@testset "StateFlow has variable dependence trait" begin
                 sys = FakeSystem(2, 2)
                 integ = FakeIntegrator()
                 flow = Flows.StateFlow(sys, integ)
-                Test.@test Common.has_variable_dependence_trait(flow)
+                Test.@test Traits.has_variable_dependence_trait(flow)
             end
 
             Test.@testset "time_dependence delegates to system" begin
                 sys = FakeSystem(2, 2)
                 integ = FakeIntegrator()
                 flow = Flows.StateFlow(sys, integ)
-                Test.@test Common.time_dependence(flow) === Common.Autonomous
+                Test.@test Traits.time_dependence(flow) === Traits.Autonomous
             end
 
             Test.@testset "variable_dependence delegates to system" begin
                 sys = FakeSystem(2, 2)
                 integ = FakeIntegrator()
                 flow = Flows.StateFlow(sys, integ)
-                Test.@test Common.variable_dependence(flow) === Common.Fixed
+                Test.@test Traits.variable_dependence(flow) === Traits.Fixed
             end
         end
 

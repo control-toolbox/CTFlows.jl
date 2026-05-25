@@ -2,7 +2,9 @@ module TestVectorFieldSystem
 
 import Test
 import CTFlows.Systems
+import CTFlows.Data
 import CTFlows.Common
+import CTFlows.Traits
 import StaticArrays: SA, StaticArrays
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -20,7 +22,7 @@ function test_vector_field_system()
         # ====================================================================
 
         Test.@testset "Abstract Types" begin
-            vf = Systems.VectorField(x -> x; is_autonomous=true, is_variable=false)
+            vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
             sys = Systems.VectorFieldSystem(vf)
             Test.@test sys isa Systems.VectorFieldSystem
             Test.@test sys isa Systems.AbstractSystem
@@ -32,38 +34,38 @@ function test_vector_field_system()
 
         Test.@testset "Construction" begin
             Test.@testset "constructs from VectorField" begin
-                vf = Systems.VectorField(x -> x; is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 Test.@test sys isa Systems.VectorFieldSystem
                 Test.@test sys isa Systems.AbstractSystem
             end
 
             Test.@testset "trait propagation - Autonomous Fixed" begin
-                vf = Systems.VectorField(x -> x; is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                Test.@test Common.time_dependence(sys) === Common.Autonomous
-                Test.@test Common.variable_dependence(sys) === Common.Fixed
+                Test.@test Traits.time_dependence(sys) === Traits.Autonomous
+                Test.@test Traits.variable_dependence(sys) === Traits.Fixed
             end
 
             Test.@testset "trait propagation - NonAutonomous Fixed" begin
-                vf = Systems.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
+                vf = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                Test.@test Common.time_dependence(sys) === Common.NonAutonomous
-                Test.@test Common.variable_dependence(sys) === Common.Fixed
+                Test.@test Traits.time_dependence(sys) === Traits.NonAutonomous
+                Test.@test Traits.variable_dependence(sys) === Traits.Fixed
             end
 
             Test.@testset "trait propagation - Autonomous NonFixed" begin
-                vf = Systems.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
+                vf = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
                 sys = Systems.VectorFieldSystem(vf)
-                Test.@test Common.time_dependence(sys) === Common.Autonomous
-                Test.@test Common.variable_dependence(sys) === Common.NonFixed
+                Test.@test Traits.time_dependence(sys) === Traits.Autonomous
+                Test.@test Traits.variable_dependence(sys) === Traits.NonFixed
             end
 
             Test.@testset "trait propagation - NonAutonomous NonFixed" begin
-                vf = Systems.VectorField((t, x, v) -> t .* x .+ v; is_autonomous=false, is_variable=true)
+                vf = Data.VectorField((t, x, v) -> t .* x .+ v; is_autonomous=false, is_variable=true)
                 sys = Systems.VectorFieldSystem(vf)
-                Test.@test Common.time_dependence(sys) === Common.NonAutonomous
-                Test.@test Common.variable_dependence(sys) === Common.NonFixed
+                Test.@test Traits.time_dependence(sys) === Traits.NonAutonomous
+                Test.@test Traits.variable_dependence(sys) === Traits.NonFixed
             end
         end
 
@@ -73,14 +75,14 @@ function test_vector_field_system()
 
         Test.@testset "Contract Implementation" begin
             Test.@testset "rhs returns callable" begin
-                vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 rhs = Systems.rhs(sys)
                 Test.@test rhs isa Function
             end
 
             Test.@testset "rhs function has correct signature (du, u, p, t)" begin
-                vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 rhs = Systems.rhs(sys)
                 du = zeros(2)
@@ -93,7 +95,7 @@ function test_vector_field_system()
             end
 
             Test.@testset "rhs function fills du in place" begin
-                vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 rhs = Systems.rhs(sys)
                 du = zeros(2)
@@ -103,8 +105,8 @@ function test_vector_field_system()
             end
 
             Test.@testset "rhs function uses underlying VectorField" begin
-                vf1 = Systems.VectorField(x -> 2 .* x; is_autonomous=true, is_variable=false)
-                vf2 = Systems.VectorField(x -> 3 .* x; is_autonomous=true, is_variable=false)
+                vf1 = Data.VectorField(x -> 2 .* x; is_autonomous=true, is_variable=false)
+                vf2 = Data.VectorField(x -> 3 .* x; is_autonomous=true, is_variable=false)
                 sys1 = Systems.VectorFieldSystem(vf1)
                 sys2 = Systems.VectorFieldSystem(vf2)
                 rhs1 = Systems.rhs(sys1)
@@ -119,14 +121,14 @@ function test_vector_field_system()
             end
 
             Test.@testset "rhs_oop returns callable" begin
-                vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 rhs_oop = Systems.rhs_oop(sys)
                 Test.@test rhs_oop isa Function
             end
 
             Test.@testset "rhs_oop function has correct signature (u, p, t)" begin
-                vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 rhs_oop = Systems.rhs_oop(sys)
                 u = [1.0, 2.0]
@@ -137,14 +139,14 @@ function test_vector_field_system()
             end
 
             Test.@testset "rhs_oop stored" begin
-                vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 Test.@test sys.rhs_oop isa Function
                 Test.@test Systems.rhs_oop(sys) === sys.rhs_oop
             end
 
             Test.@testset "rhs with matrix" begin
-                vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 rhs = Systems.rhs(sys)
                 du = zeros(2, 3)
@@ -155,7 +157,7 @@ function test_vector_field_system()
             end
 
             Test.@testset "rhs_oop with matrix" begin
-                vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 rhs_oop = Systems.rhs_oop(sys)
                 u = [1.0 2.0 3.0; 4.0 5.0 6.0]
@@ -170,7 +172,7 @@ function test_vector_field_system()
         # ====================================================================
 
         Test.@testset "Complex numbers" begin
-            vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+            vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
             sys = Systems.VectorFieldSystem(vf)
             rhs     = Systems.rhs(sys)
             rhs_oop = Systems.rhs_oop(sys)
@@ -209,7 +211,7 @@ function test_vector_field_system()
 
         Test.@testset "SVector unit" begin
             Test.@testset "rhs_oop with SVector" begin
-                vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 rhs_oop = Systems.rhs_oop(sys)
                 u = SA[1.0, 2.0]
@@ -219,7 +221,7 @@ function test_vector_field_system()
             end
 
             Test.@testset "rhs_oop with SVector complex" begin
-                vf = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 rhs_oop = Systems.rhs_oop(sys)
                 u = SA[1.0+2.0im, 3.0+4.0im]
@@ -235,19 +237,19 @@ function test_vector_field_system()
 
         Test.@testset "InPlace VectorField" begin
             Test.@testset "OOP: rhs_oop_finalize is Nothing" begin
-                vf  = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                vf  = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 Test.@test sys.rhs_oop_finalize === nothing
             end
 
             Test.@testset "IP: rhs_oop_finalize is Function" begin
-                vf  = Systems.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
+                vf  = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 Test.@test sys.rhs_oop_finalize isa Function
             end
 
             Test.@testset "IP: rhs fills du via in-place call" begin
-                vf  = Systems.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
+                vf  = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 du  = zeros(2)
                 p   = Common.ODEParameters(nothing)
@@ -256,20 +258,20 @@ function test_vector_field_system()
             end
 
             Test.@testset "IP: rhs_oop(sys, true) === sys.rhs_oop" begin
-                vf  = Systems.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
+                vf  = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 Test.@test Systems.rhs_oop(sys, true) === sys.rhs_oop
             end
 
             Test.@testset "IP: rhs_oop(sys, false) === sys.rhs_oop_finalize and warns" begin
-                vf  = Systems.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
+                vf  = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 f   = Test.@test_logs (:warn, r"InPlace VectorField") Systems.rhs_oop(sys, false)
                 Test.@test f === sys.rhs_oop_finalize
             end
 
             Test.@testset "IP: rhs_oop(sys, true) returns mutable Vector" begin
-                vf  = Systems.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
+                vf  = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 f   = Systems.rhs_oop(sys, true)
                 p   = Common.ODEParameters(nothing)
@@ -279,7 +281,7 @@ function test_vector_field_system()
             end
 
             Test.@testset "IP: rhs_oop_finalize returns SVector for SVector u" begin
-                vf  = Systems.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
+                vf  = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 f   = sys.rhs_oop_finalize
                 u   = SA[1.0, 2.0]
@@ -290,7 +292,7 @@ function test_vector_field_system()
             end
 
             Test.@testset "OOP: rhs_oop(sys, false) still returns sys.rhs_oop" begin
-                vf  = Systems.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                vf  = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 Test.@test Systems.rhs_oop(sys, true)  === sys.rhs_oop
                 Test.@test Systems.rhs_oop(sys, false) === sys.rhs_oop
@@ -303,23 +305,23 @@ function test_vector_field_system()
 
         Test.@testset "Trait Methods" begin
             Test.@testset "time_dependence returns correct trait" begin
-                vf_aut = Systems.VectorField(x -> x; is_autonomous=true, is_variable=false)
+                vf_aut = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
                 sys_aut = Systems.VectorFieldSystem(vf_aut)
-                Test.@test Common.time_dependence(sys_aut) === Common.Autonomous
+                Test.@test Traits.time_dependence(sys_aut) === Traits.Autonomous
 
-                vf_nonaut = Systems.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
+                vf_nonaut = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
                 sys_nonaut = Systems.VectorFieldSystem(vf_nonaut)
-                Test.@test Common.time_dependence(sys_nonaut) === Common.NonAutonomous
+                Test.@test Traits.time_dependence(sys_nonaut) === Traits.NonAutonomous
             end
 
             Test.@testset "variable_dependence returns correct trait" begin
-                vf_fixed = Systems.VectorField(x -> x; is_autonomous=true, is_variable=false)
+                vf_fixed = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
                 sys_fixed = Systems.VectorFieldSystem(vf_fixed)
-                Test.@test Common.variable_dependence(sys_fixed) === Common.Fixed
+                Test.@test Traits.variable_dependence(sys_fixed) === Traits.Fixed
 
-                vf_nonfixed = Systems.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
+                vf_nonfixed = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
                 sys_nonfixed = Systems.VectorFieldSystem(vf_nonfixed)
-                Test.@test Common.variable_dependence(sys_nonfixed) === Common.NonFixed
+                Test.@test Traits.variable_dependence(sys_nonfixed) === Traits.NonFixed
             end
         end
 
@@ -328,7 +330,7 @@ function test_vector_field_system()
         # ====================================================================
 
         Test.@testset "Show Methods" begin
-            vf = Systems.VectorField(x -> x; is_autonomous=true, is_variable=false)
+            vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
             sys = Systems.VectorFieldSystem(vf)
 
             Test.@testset "Base.show (compact)" begin
@@ -357,39 +359,39 @@ function test_vector_field_system()
 
         Test.@testset "Common Trait Predicates" begin
             Test.@testset "has_time_dependence_trait returns true" begin
-                vf = Systems.VectorField(x -> x; is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                Test.@test Common.has_time_dependence_trait(sys) === true
+                Test.@test Traits.has_time_dependence_trait(sys) === true
             end
 
             Test.@testset "has_variable_dependence_trait returns true" begin
-                vf = Systems.VectorField(x -> x; is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                Test.@test Common.has_variable_dependence_trait(sys) === true
+                Test.@test Traits.has_variable_dependence_trait(sys) === true
             end
 
             Test.@testset "is_autonomous / is_nonautonomous" begin
-                vf_aut = Systems.VectorField(x -> x; is_autonomous=true, is_variable=false)
+                vf_aut = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
                 sys_aut = Systems.VectorFieldSystem(vf_aut)
-                Test.@test Common.is_autonomous(sys_aut) === true
-                Test.@test Common.is_nonautonomous(sys_aut) === false
+                Test.@test Traits.is_autonomous(sys_aut) === true
+                Test.@test Traits.is_nonautonomous(sys_aut) === false
 
-                vf_nonaut = Systems.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
+                vf_nonaut = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
                 sys_nonaut = Systems.VectorFieldSystem(vf_nonaut)
-                Test.@test Common.is_autonomous(sys_nonaut) === false
-                Test.@test Common.is_nonautonomous(sys_nonaut) === true
+                Test.@test Traits.is_autonomous(sys_nonaut) === false
+                Test.@test Traits.is_nonautonomous(sys_nonaut) === true
             end
 
             Test.@testset "is_variable / is_nonvariable" begin
-                vf_fixed = Systems.VectorField(x -> x; is_autonomous=true, is_variable=false)
+                vf_fixed = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
                 sys_fixed = Systems.VectorFieldSystem(vf_fixed)
-                Test.@test Common.is_variable(sys_fixed) === false
-                Test.@test Common.is_nonvariable(sys_fixed) === true
+                Test.@test Traits.is_variable(sys_fixed) === false
+                Test.@test Traits.is_nonvariable(sys_fixed) === true
 
-                vf_nonfixed = Systems.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
+                vf_nonfixed = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
                 sys_nonfixed = Systems.VectorFieldSystem(vf_nonfixed)
-                Test.@test Common.is_variable(sys_nonfixed) === true
-                Test.@test Common.is_nonvariable(sys_nonfixed) === false
+                Test.@test Traits.is_variable(sys_nonfixed) === true
+                Test.@test Traits.is_nonvariable(sys_nonfixed) === false
             end
         end
 

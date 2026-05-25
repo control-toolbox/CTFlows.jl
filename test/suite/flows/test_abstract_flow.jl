@@ -5,6 +5,7 @@ import CTBase.Exceptions
 import CTFlows.Systems
 import CTFlows.Flows
 import CTFlows.Common
+import CTFlows.Traits
 import CTFlows.Integrators
 import CTFlows.Data
 import CTSolvers
@@ -22,7 +23,7 @@ Fake system for testing the AbstractFlow contract.
 This minimal implementation provides the required contract methods for AbstractSystem
 to test flow behavior without full system complexity.
 """
-struct FakeSystem <: Systems.AbstractStateSystem{Common.Autonomous, Common.Fixed}
+struct FakeSystem <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
     state_dim::Int
 end
 
@@ -44,11 +45,11 @@ Fake flow for testing the AbstractFlow contract.
 This minimal implementation provides the required contract methods to test
 routing and default behavior without full flow complexity.
 """
-struct FakeFlow{TD<:Common.TimeDependence, VD<:Common.VariableDependence} <: Flows.AbstractFlow{TD, VD}
+struct FakeFlow{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence} <: Flows.AbstractFlow{TD, VD}
     sys::Systems.AbstractSystem{TD, VD}
     integ::Any
     function FakeFlow(sys::Systems.AbstractSystem, integ::Any)
-        return new{Common.time_dependence(sys), Common.variable_dependence(sys)}(sys, integ)
+        return new{Traits.time_dependence(sys), Traits.variable_dependence(sys)}(sys, integ)
     end
 end
 
@@ -75,8 +76,8 @@ end
 """
 Minimal flow that does not implement the contract (for error testing).
 """
-struct MinimalFlow <: Flows.AbstractFlow{Common.Autonomous, Common.Fixed}
-    sys::Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
+struct MinimalFlow <: Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed}
+    sys::Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed}
 end
 
 # ==============================================================================
@@ -121,7 +122,7 @@ function test_abstract_flow()
             end
 
             Test.@testset "FakeFlow has correct VD parameter" begin
-                Test.@test flow isa FakeFlow{Common.Autonomous, Common.Fixed}
+                Test.@test flow isa FakeFlow{Traits.Autonomous, Traits.Fixed}
             end
 
             Test.@testset "callable (t0, x0, tf)" begin
@@ -210,23 +211,23 @@ function test_abstract_flow()
                 flow = FakeFlow(sys, int)
 
                 Test.@testset "is_autonomous" begin
-                    Test.@test Flows.is_autonomous(flow) === true
+                    Test.@test Traits.is_autonomous(flow) === true
                 end
 
                 Test.@testset "is_nonautonomous" begin
-                    Test.@test Flows.is_nonautonomous(flow) === false
+                    Test.@test Traits.is_nonautonomous(flow) === false
                 end
 
                 Test.@testset "is_variable" begin
-                    Test.@test Flows.is_variable(flow) === false
+                    Test.@test Traits.is_variable(flow) === false
                 end
 
                 Test.@testset "is_nonvariable" begin
-                    Test.@test Flows.is_nonvariable(flow) === true
+                    Test.@test Traits.is_nonvariable(flow) === true
                 end
 
                 Test.@testset "has_variable" begin
-                    Test.@test Flows.has_variable(flow) === false
+                    Test.@test Traits.has_variable(flow) === false
                 end
             end
 
@@ -236,12 +237,12 @@ function test_abstract_flow()
 
                 Test.@testset "is_autonomous works from type parameter" begin
                     # Predicates now read directly from type parameters, not from system
-                    Test.@test Flows.is_autonomous(flow) === true
+                    Test.@test Traits.is_autonomous(flow) === true
                 end
 
                 Test.@testset "is_variable works from type parameter" begin
                     # Predicates now read directly from type parameters, not from system
-                    Test.@test Flows.is_variable(flow) === false
+                    Test.@test Traits.is_variable(flow) === false
                 end
             end
         end
@@ -257,12 +258,12 @@ function test_abstract_flow()
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
 
-                Test.@test flow isa FakeFlow{Common.Autonomous, Common.Fixed}
-                Test.@test Flows.is_autonomous(flow) === true
-                Test.@test Flows.is_nonautonomous(flow) === false
-                Test.@test Flows.is_variable(flow) === false
-                Test.@test Flows.is_nonvariable(flow) === true
-                Test.@test Flows.has_variable(flow) === false
+                Test.@test flow isa FakeFlow{Traits.Autonomous, Traits.Fixed}
+                Test.@test Traits.is_autonomous(flow) === true
+                Test.@test Traits.is_nonautonomous(flow) === false
+                Test.@test Traits.is_variable(flow) === false
+                Test.@test Traits.is_nonvariable(flow) === true
+                Test.@test Traits.has_variable(flow) === false
             end
 
             Test.@testset "NonAutonomous Fixed Flow" begin
@@ -271,12 +272,12 @@ function test_abstract_flow()
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
 
-                Test.@test flow isa FakeFlow{Common.NonAutonomous, Common.Fixed}
-                Test.@test Flows.is_autonomous(flow) === false
-                Test.@test Flows.is_nonautonomous(flow) === true
-                Test.@test Flows.is_variable(flow) === false
-                Test.@test Flows.is_nonvariable(flow) === true
-                Test.@test Flows.has_variable(flow) === false
+                Test.@test flow isa FakeFlow{Traits.NonAutonomous, Traits.Fixed}
+                Test.@test Traits.is_autonomous(flow) === false
+                Test.@test Traits.is_nonautonomous(flow) === true
+                Test.@test Traits.is_variable(flow) === false
+                Test.@test Traits.is_nonvariable(flow) === true
+                Test.@test Traits.has_variable(flow) === false
             end
 
             Test.@testset "Autonomous NonFixed Flow" begin
@@ -285,12 +286,12 @@ function test_abstract_flow()
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
 
-                Test.@test flow isa FakeFlow{Common.Autonomous, Common.NonFixed}
-                Test.@test Flows.is_autonomous(flow) === true
-                Test.@test Flows.is_nonautonomous(flow) === false
-                Test.@test Flows.is_variable(flow) === true
-                Test.@test Flows.is_nonvariable(flow) === false
-                Test.@test Flows.has_variable(flow) === true
+                Test.@test flow isa FakeFlow{Traits.Autonomous, Traits.NonFixed}
+                Test.@test Traits.is_autonomous(flow) === true
+                Test.@test Traits.is_nonautonomous(flow) === false
+                Test.@test Traits.is_variable(flow) === true
+                Test.@test Traits.is_nonvariable(flow) === false
+                Test.@test Traits.has_variable(flow) === true
             end
         end
     end

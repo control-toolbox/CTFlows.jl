@@ -248,7 +248,7 @@ function test_sciml_extension()
             result = Integrators.solve_problem(integ, prob, opts)
 
             Test.@test result isa CTFlowsSciML.SciMLIntegrationResult
-            Test.@test result isa Solutions.AbstractIntegrationResult
+            Test.@test result isa Integrators.AbstractIntegrationResult
         end
 
         redirect_stderr(devnull) do
@@ -303,15 +303,15 @@ function test_sciml_extension()
             opts = Integrators.build_options(integ, config)
             result = Integrators.solve_problem(integ, prob, opts)
 
-            Test.@test Solutions.final_state(result) isa Vector{Float64}
-            Test.@test length(Solutions.final_state(result)) == 2
+            Test.@test Integrators.final_state(result) isa Vector{Float64}
+            Test.@test length(Integrators.final_state(result)) == 2
             
-            ts = Solutions.times(result)
+            ts = Integrators.times(result)
             Test.@test ts isa Vector{Float64}
             Test.@test ts[1] == 0.0
             Test.@test ts[end] == 1.0
 
-            Test.@test Solutions.evaluate_at(result, 0.5) isa Vector{Float64}
+            Test.@test Integrators.evaluate_at(result, 0.5) isa Vector{Float64}
         end
 
         # ====================================================================
@@ -382,7 +382,7 @@ function test_sciml_extension()
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
-                xf = Solutions.final_state(result)
+                xf = Integrators.final_state(result)
                 Test.@test xf ≈ exp(-1.0) .* [1.0, 2.0]  atol=1e-5
             end
 
@@ -394,7 +394,7 @@ function test_sciml_extension()
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
-                xf = Solutions.final_state(result)
+                xf = Integrators.final_state(result)
                 Test.@test xf ≈ exp(-1.0) .* [1.0, 2.0]  atol=1e-5
             end
 
@@ -406,7 +406,7 @@ function test_sciml_extension()
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
-                xf = Solutions.final_state(result)
+                xf = Integrators.final_state(result)
                 Test.@test xf ≈ exp(-1.0) .* [1.0, 2.0]  atol=1e-5
             end
 
@@ -418,7 +418,7 @@ function test_sciml_extension()
                 prob = Test.@test_logs (:warn, r"InPlace VectorField") Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
-                xf = Solutions.final_state(result)
+                xf = Integrators.final_state(result)
                 Test.@test xf ≈ exp(-1.0) .* [1.0, 2.0]  atol=1e-5
             end
         end
@@ -439,7 +439,7 @@ function test_sciml_extension()
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
-                xf = Solutions.final_state(result)
+                xf = Integrators.final_state(result)
                 Test.@test xf[1] ≈ exp(1.0)       atol=1e-5
                 Test.@test xf[2] ≈ 0.5*exp(-1.0)  atol=1e-5
             end
@@ -452,7 +452,7 @@ function test_sciml_extension()
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
-                xf = Solutions.final_state(result)
+                xf = Integrators.final_state(result)
                 Test.@test xf[1] ≈ exp(1.0)       atol=1e-5
                 Test.@test xf[2] ≈ 0.5*exp(-1.0)  atol=1e-5
             end
@@ -465,7 +465,7 @@ function test_sciml_extension()
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
-                xf = Solutions.final_state(result)
+                xf = Integrators.final_state(result)
                 Test.@test xf[1] ≈ exp(1.0)       atol=1e-5
                 Test.@test xf[2] ≈ 0.5*exp(-1.0)  atol=1e-5
             end
@@ -478,7 +478,7 @@ function test_sciml_extension()
                 prob = Test.@test_logs (:warn, r"InPlace HamiltonianVectorField") Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
-                xf = Solutions.final_state(result)
+                xf = Integrators.final_state(result)
                 Test.@test xf[1] ≈ exp(1.0)       atol=1e-5
                 Test.@test xf[2] ≈ 0.5*exp(-1.0)  atol=1e-5
             end
@@ -555,7 +555,7 @@ function test_sciml_extension()
                 result1 = Integrators.solve_problem(integ, prob1, opts1)
                 
                 # Second segment: [0.5, 1.0]
-                xf1 = Solutions.final_state(result1)
+                xf1 = Integrators.final_state(result1)
                 config2 = Common.StatePointConfig(0.5, xf1, 1.0)
                 prob2 = Integrators.build_problem(integ, sys, config2; variable=nothing, cache=nothing)
                 opts2 = Integrators.build_options(integ, config2)

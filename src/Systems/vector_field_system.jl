@@ -31,9 +31,9 @@ VectorFieldSystem
   vector_field: VectorField{var"#1", Autonomous, Fixed, OutOfPlace}
 \`\`\`
 
-See also: [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
+See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Traits.TimeDependence`](@ref), [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
 """
-struct VectorFieldSystem{F<:Function, TD<:Common.TimeDependence, VD<:Common.VariableDependence, MD<:Common.AbstractMutabilityTrait, RHS<:Function, OOPROHS<:Function, FINRHS} <: AbstractStateSystem{TD, VD}
+struct VectorFieldSystem{F<:Function, TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, MD<:Traits.AbstractMutabilityTrait, RHS<:Function, OOPROHS<:Function, FINRHS} <: AbstractStateSystem{TD, VD}
     vf::Data.VectorField{F, TD, VD, MD}
     rhs::RHS
     rhs_oop::OOPROHS
@@ -44,18 +44,18 @@ end
 # Constructors
 # =============================================================================
 
-function VectorFieldSystem(vf::Data.VectorField{F, TD, VD, OutOfPlace}) where {F, TD, VD}
-    rhs              = _build_rhs_vf_oop(OutOfPlace, vf)
-    rhs_oop          = _build_oop_rhs_vf_oop(OutOfPlace, vf)
+function VectorFieldSystem(vf::Data.VectorField{F, TD, VD, Traits.OutOfPlace}) where {F, TD, VD}
+    rhs              = _build_rhs_vf_oop(Traits.OutOfPlace, vf)
+    rhs_oop          = _build_oop_rhs_vf_oop(Traits.OutOfPlace, vf)
     rhs_oop_finalize = nothing
-    return VectorFieldSystem{F, TD, VD, OutOfPlace, typeof(rhs), typeof(rhs_oop), Nothing}(vf, rhs, rhs_oop, rhs_oop_finalize)
+    return VectorFieldSystem{F, TD, VD, Traits.OutOfPlace, typeof(rhs), typeof(rhs_oop), Nothing}(vf, rhs, rhs_oop, rhs_oop_finalize)
 end
 
-function VectorFieldSystem(vf::Data.VectorField{F, TD, VD, InPlace}) where {F, TD, VD}
-    rhs              = _build_rhs_vf_ip(InPlace, vf)
-    rhs_oop          = _build_oop_rhs_vf_ip(InPlace, vf)
-    rhs_oop_finalize = _build_finalize_rhs_vf_ip(InPlace, vf)
-    return VectorFieldSystem{F, TD, VD, InPlace, typeof(rhs), typeof(rhs_oop), typeof(rhs_oop_finalize)}(vf, rhs, rhs_oop, rhs_oop_finalize)
+function VectorFieldSystem(vf::Data.VectorField{F, TD, VD, Traits.InPlace}) where {F, TD, VD}
+    rhs              = _build_rhs_vf_ip(Traits.InPlace, vf)
+    rhs_oop          = _build_oop_rhs_vf_ip(Traits.InPlace, vf)
+    rhs_oop_finalize = _build_finalize_rhs_vf_ip(Traits.InPlace, vf)
+    return VectorFieldSystem{F, TD, VD, Traits.InPlace, typeof(rhs), typeof(rhs_oop), typeof(rhs_oop_finalize)}(vf, rhs, rhs_oop, rhs_oop_finalize)
 end
 
 # =============================================================================
@@ -77,8 +77,8 @@ the result into the destination array.
 # Returns
 - `Function`: A closure with signature `(du, u, λ, t) -> nothing`.
 """
-function _build_rhs_vf_oop(::Type{OutOfPlace}, vf::Data.VectorField)
-    return (du, u, λ, t) -> (du .= vf(t, u, variable(λ)); nothing)
+function _build_rhs_vf_oop(::Type{Traits.OutOfPlace}, vf::Data.VectorField)
+    return (du, u, λ, t) -> (du .= vf(t, u, Common.variable(λ)); nothing)
 end
 
 """
@@ -96,8 +96,8 @@ destination array as the first argument.
 # Returns
 - `Function`: A closure with signature `(du, u, λ, t) -> nothing`.
 """
-function _build_rhs_vf_ip(::Type{InPlace}, vf::Data.VectorField)
-    return (du, u, λ, t) -> (vf(du, t, u, variable(λ)); nothing)
+function _build_rhs_vf_ip(::Type{Traits.InPlace}, vf::Data.VectorField)
+    return (du, u, λ, t) -> (vf(du, t, u, Common.variable(λ)); nothing)
 end
 
 """
@@ -114,8 +114,8 @@ For out-of-place vector fields, the RHS directly calls the vector field.
 # Returns
 - `Function`: A closure with signature `(u, λ, t) -> du`.
 """
-function _build_oop_rhs_vf_oop(::Type{OutOfPlace}, vf::Data.VectorField)
-    return (u, λ, t) -> vf(t, u, variable(λ))
+function _build_oop_rhs_vf_oop(::Type{Traits.OutOfPlace}, vf::Data.VectorField)
+    return (u, λ, t) -> vf(t, u, Common.variable(λ))
 end
 
 """
@@ -133,10 +133,10 @@ field with it as the destination.
 # Returns
 - `Function`: A closure with signature `(u, λ, t) -> du`.
 """
-function _build_oop_rhs_vf_ip(::Type{InPlace}, vf::Data.VectorField)
+function _build_oop_rhs_vf_ip(::Type{Traits.InPlace}, vf::Data.VectorField)
     return function (u, λ, t)
         dx = similar(u)
-        vf(dx, t, u, variable(λ))
+        vf(dx, t, u, Common.variable(λ))
         return dx
     end
 end
@@ -157,10 +157,10 @@ a conversion to the appropriate type after the in-place computation.
 - `Function`: A closure with signature `(u, λ, t) -> du` that returns the result
   converted to the same type as `u`.
 """
-function _build_finalize_rhs_vf_ip(::Type{InPlace}, vf::Data.VectorField)
+function _build_finalize_rhs_vf_ip(::Type{Traits.InPlace}, vf::Data.VectorField)
     return function (u, λ, t)
         dx = similar(u)
-        vf(dx, t, u, variable(λ))
+        vf(dx, t, u, Common.variable(λ))
         return typeof(u)(dx)
     end
 end
@@ -224,7 +224,7 @@ Returns the pre-computed closure with signature `(u, p, t) -> du`. The optional
 
 See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.rhs`](@ref).
 """
-function rhs_oop(sys::VectorFieldSystem{F, TD, VD, OutOfPlace, RHS, OOPROHS, Nothing}, ::Bool = true) where {F, TD, VD, RHS, OOPROHS}
+function rhs_oop(sys::VectorFieldSystem{F, TD, VD, Traits.OutOfPlace, RHS, OOPROHS, Nothing}, ::Bool = true) where {F, TD, VD, RHS, OOPROHS}
     return sys.rhs_oop
 end
 
@@ -254,7 +254,7 @@ condition `u0` is mutable:
 
 See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.rhs`](@ref).
 """
-function rhs_oop(sys::VectorFieldSystem{F, TD, VD, InPlace, RHS, OOPROHS, FINRHS}, is_u0_mutable::Bool = true) where {F, TD, VD, RHS, OOPROHS, FINRHS}
+function rhs_oop(sys::VectorFieldSystem{F, TD, VD, Traits.InPlace, RHS, OOPROHS, FINRHS}, is_u0_mutable::Bool = true) where {F, TD, VD, RHS, OOPROHS, FINRHS}
     is_u0_mutable && return sys.rhs_oop
     @warn "InPlace VectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
     return sys.rhs_oop_finalize

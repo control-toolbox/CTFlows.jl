@@ -4,6 +4,7 @@ import Test
 import CTBase.Exceptions
 import CTFlows.Data: Data
 import CTFlows.Common: Common
+import CTFlows.Traits: Traits
 import CTFlows.Systems: Systems
 import CTFlows.Differentiation: Differentiation
 
@@ -55,7 +56,7 @@ function test_hamiltonian_system()
             backend = FakeADBackend()
             sys = Systems.HamiltonianSystem(h, backend)
 
-            Test.@test Systems.ad_trait(sys) === Common.WithAD
+            Test.@test Traits.ad_trait(sys) === Traits.WithAD
         end
 
         # ====================================================================
@@ -226,11 +227,11 @@ function test_hamiltonian_system()
 
             sys1 = Systems.HamiltonianSystem(h, backend)
             Test.@test Test.@inferred Systems.state_dimension(sys1) === nothing
-            Test.@test Test.@inferred Systems.ad_trait(sys1) === Common.WithAD
+            Test.@test Test.@inferred Traits.ad_trait(sys1) === Traits.WithAD
 
             sys2 = Systems.HamiltonianSystem(h, backend; state_dimension=2)
             Test.@test Test.@inferred Systems.state_dimension(sys2) == 2
-            Test.@test Test.@inferred Systems.ad_trait(sys2) === Common.WithAD
+            Test.@test Test.@inferred Traits.ad_trait(sys2) === Traits.WithAD
         end
 
         # ====================================================================
@@ -242,7 +243,7 @@ function test_hamiltonian_system()
             sys = Systems.HamiltonianVectorFieldSystem(hvf)
             Test.@test sys isa Systems.HamiltonianVectorFieldSystem
             Test.@test sys isa Systems.AbstractHamiltonianSystem
-            Test.@test Systems.ad_trait(sys) === Common.WithoutAD
+            Test.@test Traits.ad_trait(sys) === Traits.WithoutAD
         end
     end
 end

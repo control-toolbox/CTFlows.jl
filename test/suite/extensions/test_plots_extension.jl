@@ -19,27 +19,27 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake integration result for testing plotting.
 """
-struct FakePlotIntegrationResult{T} <: Solutions.AbstractIntegrationResult
+struct FakePlotIntegrationResult{T} <: Integrators.AbstractIntegrationResult
     t::Vector{Float64}
     u::Vector{T}
 end
 
-Solutions.times(r::FakePlotIntegrationResult) = r.t
+Integrators.times(r::FakePlotIntegrationResult) = r.t
 
-function Solutions.evaluate_at(r::FakePlotIntegrationResult, t::Real)
+function Integrators.evaluate_at(r::FakePlotIntegrationResult, t::Real)
     idx = findfirst(==(t), r.t)
     return isnothing(idx) ? r.u[1] : r.u[idx]
 end
 
 # Make our FakePlotIntegrationResult callable so sol.(ts) works
 function (r::FakePlotIntegrationResult)(t::Real)
-    return Solutions.evaluate_at(r, t)
+    return Integrators.evaluate_at(r, t)
 end
 
 """
 Fake integration result for Hamiltonian solution testing.
 """
-struct FakeHamiltonianPlotResult <: Solutions.AbstractIntegrationResult
+struct FakeHamiltonianPlotResult <: Integrators.AbstractIntegrationResult
     t::Vector{Float64}
     u::Vector{Vector{Float64}}
 end

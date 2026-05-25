@@ -5,6 +5,7 @@ import CTFlows.Solutions
 import CTFlows.Systems
 import CTFlows.Common
 import CTFlows.Data
+import CTFlows.Integrators
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -16,11 +17,11 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake integration result for testing build_solution.
 """
-struct FakeIntegrationResult <: Solutions.AbstractIntegrationResult
+struct FakeIntegrationResult <: Integrators.AbstractIntegrationResult
     u::Vector{Vector{Float64}}
 end
 
-Solutions.final_state(r::FakeIntegrationResult) = r.u[end]
+Integrators.final_state(r::FakeIntegrationResult) = r.u[end]
 
 # ==============================================================================
 # Test function

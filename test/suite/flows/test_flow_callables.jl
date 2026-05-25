@@ -6,6 +6,7 @@ import CTFlows.Flows
 import CTFlows.Integrators
 import CTFlows.Solutions
 import CTFlows.Common
+import CTFlows.Traits
 import CTBase.Exceptions
 
 using StaticArrays: SA
@@ -17,17 +18,17 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # Fake types for testing flow callables
 # ==============================================================================
 
-struct FakeStateSystemFC <: Systems.AbstractStateSystem{Common.Autonomous, Common.Fixed}
+struct FakeStateSystemFC <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
     n::Int
 end
 
-struct FakeHamSysFC <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed, Common.WithoutAD}
+struct FakeHamSysFC <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD}
     n::Int
 end
 
-struct FakeResultFC <: Solutions.AbstractIntegrationResult end
+struct FakeResultFC <: Integrators.AbstractIntegrationResult end
 
-Solutions.final_state(::FakeResultFC) = [0.0, 0.0]
+Integrators.final_state(::FakeResultFC) = [0.0, 0.0]
 
 mutable struct FakeIntegFC <: Integrators.AbstractIntegrator
     last_config::Any
@@ -50,19 +51,19 @@ function Integrators.solve_problem(integ::FakeIntegFC, prob, options::Dict{Symbo
     return FakeResultFC()
 end
 
-function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.StateTrait}, config::Common.AbstractConfig, result::FakeResultFC)
+function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.StateTrait}, config::Common.AbstractConfig, result::FakeResultFC)
     return :state_point_sol
 end
 
-function Solutions.build_solution(::Type{Common.TrajectoryTrait}, ::Type{Common.StateTrait}, config::Common.AbstractConfig, result::FakeResultFC)
+function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.StateTrait}, config::Common.AbstractConfig, result::FakeResultFC)
     return :state_traj_sol
 end
 
-function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.HamiltonianTrait}, config::Common.AbstractConfig, result::FakeResultFC)
+function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.HamiltonianTrait}, config::Common.AbstractConfig, result::FakeResultFC)
     return :ham_point_sol
 end
 
-function Solutions.build_solution(::Type{Common.TrajectoryTrait}, ::Type{Common.HamiltonianTrait}, config::Common.AbstractConfig, result::FakeResultFC)
+function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.HamiltonianTrait}, config::Common.AbstractConfig, result::FakeResultFC)
     return :ham_traj_sol
 end
 

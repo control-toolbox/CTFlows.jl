@@ -11,6 +11,7 @@ module TestCommonModule
 
 import Test
 import CTFlows.Common
+import CTFlows.Traits
 import CTModels.OCP
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -76,48 +77,44 @@ function test_common_module()
         end
 
         # ====================================================================
-        # Time-Dependence Trait Types
+        # Trait Types (now in Traits module)
         # ====================================================================
 
-        Test.@testset "Time-Dependence Trait Types" begin
-            Test.@testset "TimeDependence is exported" begin
-                Test.@test isdefined(OCP, :TimeDependence)
-                Test.@test isabstracttype(Common.TimeDependence)
+        Test.@testset "Trait Types (Traits module)" begin
+            Test.@testset "TimeDependence is exported from Traits" begin
+                Test.@test isdefined(Traits, :TimeDependence)
+                Test.@test isabstracttype(Traits.TimeDependence)
             end
 
-            Test.@testset "Autonomous is exported" begin
+            Test.@testset "Autonomous is exported from Traits" begin
                 Test.@test isdefined(OCP, :Autonomous)
-                Test.@test Common.Autonomous <: Common.TimeDependence
+                Test.@test Traits.Autonomous <: Traits.TimeDependence
             end
 
-            Test.@testset "NonAutonomous is exported" begin
+            Test.@testset "NonAutonomous is exported from Traits" begin
                 Test.@test isdefined(OCP, :NonAutonomous)
-                Test.@test Common.NonAutonomous <: Common.TimeDependence
+                Test.@test Traits.NonAutonomous <: Traits.TimeDependence
             end
         end
 
-        # ====================================================================
-        # Variable-Dependence Trait Types
-        # ====================================================================
-
-        Test.@testset "Variable-Dependence Trait Types" begin
-            Test.@testset "VariableDependence is exported" begin
-                Test.@test isdefined(Common, :VariableDependence)
-                Test.@test isabstracttype(Common.VariableDependence)
+        Test.@testset "Variable-Dependence Trait Types (Traits module)" begin
+            Test.@testset "VariableDependence is exported from Traits" begin
+                Test.@test isdefined(Traits, :VariableDependence)
+                Test.@test isabstracttype(Traits.VariableDependence)
             end
 
-            Test.@testset "Fixed is exported" begin
-                Test.@test isdefined(Common, :Fixed)
-                Test.@test Common.Fixed <: Common.VariableDependence
-                trait = Common.Fixed()
-                Test.@test trait isa Common.Fixed
+            Test.@testset "Fixed is exported from Traits" begin
+                Test.@test isdefined(Traits, :Fixed)
+                Test.@test Traits.Fixed <: Traits.VariableDependence
+                trait = Traits.Fixed()
+                Test.@test trait isa Traits.Fixed
             end
 
-            Test.@testset "NonFixed is exported" begin
-                Test.@test isdefined(Common, :NonFixed)
-                Test.@test Common.NonFixed <: Common.VariableDependence
-                trait = Common.NonFixed()
-                Test.@test trait isa Common.NonFixed
+            Test.@testset "NonFixed is exported from Traits" begin
+                Test.@test isdefined(Traits, :NonFixed)
+                Test.@test Traits.NonFixed <: Traits.VariableDependence
+                trait = Traits.NonFixed()
+                Test.@test trait isa Traits.NonFixed
             end
         end
 
@@ -144,77 +141,72 @@ function test_common_module()
         end
 
         # ====================================================================
-        # Trait Check Functions
+        # Trait Check Functions (now in Traits module)
         # ====================================================================
 
-        Test.@testset "Trait Check Functions" begin
-            Test.@testset "has_time_dependence_trait is exported" begin
-                Test.@test isdefined(Common, :has_time_dependence_trait)
+        Test.@testset "Trait Check Functions (Traits module)" begin
+            Test.@testset "has_time_dependence_trait is exported from Traits" begin
+                Test.@test isdefined(Traits, :has_time_dependence_trait)
             end
 
-            Test.@testset "has_variable_dependence_trait is exported" begin
-                Test.@test isdefined(Common, :has_variable_dependence_trait)
+            Test.@testset "has_variable_dependence_trait is exported from Traits" begin
+                Test.@test isdefined(Traits, :has_variable_dependence_trait)
             end
         end
 
         # ====================================================================
-        # Trait Query Functions
+        # Trait Query Functions (now in Traits module)
         # ====================================================================
 
-        Test.@testset "Trait Query Functions" begin
-            Test.@testset "time_dependence is exported" begin
-                Test.@test isdefined(Common, :time_dependence)
+        Test.@testset "Trait Query Functions (Traits module)" begin
+            Test.@testset "time_dependence is exported from Traits" begin
+                Test.@test isdefined(Traits, :time_dependence)
             end
 
-            Test.@testset "variable_dependence is exported" begin
-                Test.@test isdefined(Common, :variable_dependence)
+            Test.@testset "variable_dependence is exported from Traits" begin
+                Test.@test isdefined(Traits, :variable_dependence)
             end
         end
 
         # ====================================================================
-        # Trait Accessor Functions
+        # Trait Accessor Functions (now in Traits module)
         # ====================================================================
 
-        Test.@testset "Trait Accessor Functions" begin
-            Test.@testset "is_autonomous is exported" begin
-                Test.@test isdefined(Common, :is_autonomous)
+        Test.@testset "Trait Accessor Functions (Traits module)" begin
+            Test.@testset "is_autonomous is exported from Traits" begin
+                Test.@test isdefined(Traits, :is_autonomous)
             end
 
-            Test.@testset "is_nonautonomous is exported" begin
-                Test.@test isdefined(Common, :is_nonautonomous)
+            Test.@testset "is_nonautonomous is exported from Traits" begin
+                Test.@test isdefined(Traits, :is_nonautonomous)
             end
 
-            Test.@testset "is_variable is exported" begin
-                Test.@test isdefined(Common, :is_variable)
+            Test.@testset "is_variable is exported from Traits" begin
+                Test.@test isdefined(Traits, :is_variable)
             end
 
-            Test.@testset "is_nonvariable is exported" begin
-                Test.@test isdefined(Common, :is_nonvariable)
+            Test.@testset "is_nonvariable is exported from Traits" begin
+                Test.@test isdefined(Traits, :is_nonvariable)
             end
 
-            Test.@testset "has_variable is exported" begin
-                Test.@test isdefined(Common, :has_variable)
+            Test.@testset "has_variable is exported from Traits" begin
+                Test.@test isdefined(Traits, :has_variable)
             end
         end
 
         # ====================================================================
-        # Type Hierarchy Verification
+        # Type Hierarchy Verification (Traits module)
         # ====================================================================
 
-        Test.@testset "Type Hierarchy" begin
+        Test.@testset "Type Hierarchy (Traits module)" begin
             Test.@testset "TimeDependence hierarchy" begin
-                Test.@test Common.Autonomous <: Common.TimeDependence
-                Test.@test Common.NonAutonomous <: Common.TimeDependence
+                Test.@test Traits.Autonomous <: Traits.TimeDependence
+                Test.@test Traits.NonAutonomous <: Traits.TimeDependence
             end
 
             Test.@testset "VariableDependence hierarchy" begin
-                Test.@test Common.Fixed <: Common.VariableDependence
-                Test.@test Common.NonFixed <: Common.VariableDependence
-            end
-
-            Test.@testset "Config hierarchy" begin
-                Test.@test Common.StatePointConfig <: Common.AbstractConfig
-                Test.@test Common.StateTrajectoryConfig <: Common.AbstractConfig
+                Test.@test Traits.Fixed <: Traits.VariableDependence
+                Test.@test Traits.NonFixed <: Traits.VariableDependence
             end
         end
 

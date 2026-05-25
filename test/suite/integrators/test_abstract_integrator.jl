@@ -5,6 +5,7 @@ import CTBase.Exceptions
 import CTFlows.Integrators
 import CTFlows.Systems
 import CTFlows.Common
+import CTFlows.Traits
 import CTSolvers: CTSolvers
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -17,7 +18,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake system for testing the AbstractIntegrator contract.
 """
-struct FakeSystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
+struct FakeSystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed}
     state_dim::Int
 end
 

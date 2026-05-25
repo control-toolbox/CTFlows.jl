@@ -20,7 +20,7 @@ This constructor builds a complete flow by:
 \`\`\`julia
 using CTFlows.Data, CTFlows.Flows, CTFlows.Common
 
-vf = Data.VectorField((t, x, v) -> x, Common.Autonomous(), Common.Fixed())
+vf = Data.VectorField((t, x, v) -> x, Traits.Autonomous(), Traits.Fixed())
 flow = Flows.Flow(vf; reltol=1e-8)
 \`\`\`
 

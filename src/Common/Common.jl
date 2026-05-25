@@ -14,7 +14,6 @@ module Common
 # External package imports
 # ==============================================================================
 
-using Reexport
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
 import CTModels.OCP
@@ -23,7 +22,7 @@ import CTModels.OCP
 # Sibling imports (temporary - will be removed after full refactoring)
 # ==============================================================================
 
-using ..Traits
+import ..Traits: Traits
 
 # ==============================================================================
 # Includes
@@ -44,24 +43,13 @@ include(joinpath(@__DIR__, "internal_norm.jl"))
 # Module exports
 # ==============================================================================
 
-@reexport import CTModels.OCP: Autonomous, NonAutonomous, TimeDependence
-@reexport import CTModels.OCP: is_autonomous, is_nonautonomous, is_variable, is_nonvariable, has_variable
-
 export AbstractTag
-export AbstractTrait, AbstractModeTrait, AbstractContentTrait, AbstractMutabilityTrait, AbstractADTrait, AbstractVariableCostateCapability
-export PointTrait, TrajectoryTrait, StateTrait, HamiltonianTrait, AugmentedHamiltonianTrait, content_trait, mode_trait
-export InPlace, OutOfPlace
-export WithAD, WithoutAD, SupportsVariableCostate, NoVariableCostate
 export AbstractCache
 export AbstractConfig, AbstractPointConfig, AbstractTrajectoryConfig, AbstractStateConfig, AbstractHamiltonianConfig, AbstractAugmentedHamiltonianConfig
 export StatePointConfig, StateTrajectoryConfig, HamiltonianPointConfig, HamiltonianTrajectoryConfig, AugmentedHamiltonianPointConfig
 export tspan, initial_condition, initial_state, initial_costate, initial_variable_costate, initial_time, final_time
-export VariableDependence, Fixed, NonFixed, NotProvided
+export NotProvided
 export ODEParameters, variable, cache
-export has_time_dependence_trait, has_variable_dependence_trait, has_mutability_trait
-export time_dependence, variable_dependence, mutability_trait
-export ad_trait, variable_costate_trait
-export is_inplace, is_outofplace
 export __is_autonomous, __is_variable, __variable, __unsafe, __is_inplace, __state_dimension, _variable_costate
 export deepvalue, real_norm, scalarize
 

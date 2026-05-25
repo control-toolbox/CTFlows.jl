@@ -4,6 +4,7 @@ module Traits
 # External package imports
 # ==============================================================================
 
+using Reexport
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
 import CTModels.OCP
@@ -25,6 +26,9 @@ include(joinpath(@__DIR__, "variable_dependence.jl"))
 # ==============================================================================
 # Module exports
 # ==============================================================================
+
+@reexport import CTModels.OCP: Autonomous, NonAutonomous, TimeDependence
+@reexport import CTModels.OCP: is_autonomous, is_nonautonomous, is_variable, is_nonvariable, has_variable
 
 export AbstractTrait
 export AbstractModeTrait, AbstractContentTrait

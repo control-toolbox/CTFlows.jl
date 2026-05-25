@@ -32,7 +32,7 @@ true
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref).
 """
-abstract type AbstractFlow{TD<:Common.TimeDependence, VD<:Common.VariableDependence} end
+abstract type AbstractFlow{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence} end
 
 """
 $(TYPEDEF)
@@ -82,7 +82,7 @@ true
 
 See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractStateFlow`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
 """
-abstract type AbstractHamiltonianFlow{TD, VD, S<:Systems.AbstractHamiltonianSystem{TD,VD,<:Common.AbstractADTrait}} <: AbstractFlow{TD, VD} end
+abstract type AbstractHamiltonianFlow{TD, VD, S<:Systems.AbstractHamiltonianSystem{TD,VD,<:Traits.AbstractADTrait}} <: AbstractFlow{TD, VD} end
 
 """
 $(TYPEDSIGNATURES)
@@ -92,9 +92,9 @@ Indicate that `AbstractFlow` has the time-dependence trait.
 # Returns
 - `Bool`: Always `true` for `AbstractFlow`.
 
-See also: [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.time_dependence`](@ref).
+See also: [`CTFlows.Traits.TimeDependence`](@ref), [`CTFlows.Traits.time_dependence`](@ref).
 """
-Common.has_time_dependence_trait(::AbstractFlow) = true
+Traits.has_time_dependence_trait(::AbstractFlow) = true
 
 """
 $(TYPEDSIGNATURES)
@@ -104,9 +104,9 @@ Indicate that `AbstractFlow` has the variable-dependence trait.
 # Returns
 - `Bool`: Always `true` for `AbstractFlow`.
 
-See also: [`CTFlows.Common.VariableDependence`](@ref), [`CTFlows.Common.variable_dependence`](@ref).
+See also: [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Traits.variable_dependence`](@ref).
 """
-Common.has_variable_dependence_trait(::AbstractFlow) = true
+Traits.has_variable_dependence_trait(::AbstractFlow) = true
 
 """
 $(TYPEDSIGNATURES)
@@ -121,16 +121,16 @@ Extract the time dependence trait from an `AbstractFlow`.
 using CTFlows.Flows
 using CTFlows.Common
 
-struct MyFlow <: Flows.AbstractFlow{Common.Autonomous, Common.Fixed}
+struct MyFlow <: Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed}
     data::Vector{Float64}
 end
 
-Common.time_dependence(MyFlow)  # Returns Autonomous
+Traits.time_dependence(MyFlow)  # Returns Autonomous
 \`\`\`
 
-See also: [`CTFlows.Common.has_time_dependence_trait`](@ref), [`CTFlows.Common.is_autonomous`](@ref), [`CTFlows.Flows.AbstractFlow`](@ref).
+See also: [`CTFlows.Traits.has_time_dependence_trait`](@ref), [`CTFlows.Traits.is_autonomous`](@ref), [`CTFlows.Flows.AbstractFlow`](@ref).
 """
-function Common.time_dependence(flow::AbstractFlow{TD, <:VariableDependence}) where {TD <: TimeDependence}
+function Traits.time_dependence(flow::AbstractFlow{TD, <:Traits.VariableDependence}) where {TD <: Traits.TimeDependence}
     return TD
 end
 
@@ -147,16 +147,16 @@ Extract the variable dependence trait from an `AbstractFlow`.
 using CTFlows.Flows
 using CTFlows.Common
 
-struct MyFlow <: Flows.AbstractFlow{Common.Autonomous, Common.Fixed}
+struct MyFlow <: Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed}
     data::Vector{Float64}
 end
 
-Common.variable_dependence(MyFlow)  # Returns Fixed
+Traits.variable_dependence(MyFlow)  # Returns Fixed
 \`\`\`
 
-See also: [`CTFlows.Common.has_variable_dependence_trait`](@ref), [`CTFlows.Common.is_variable`](@ref), [`CTFlows.Flows.AbstractFlow`](@ref).
+See also: [`CTFlows.Traits.has_variable_dependence_trait`](@ref), [`CTFlows.Traits.is_variable`](@ref), [`CTFlows.Flows.AbstractFlow`](@ref).
 """
-function Common.variable_dependence(flow::AbstractFlow{<:TimeDependence, VD}) where {VD <: VariableDependence}
+function Traits.variable_dependence(flow::AbstractFlow{<:Traits.TimeDependence, VD}) where {VD <: Traits.VariableDependence}
     return VD
 end
 
@@ -173,9 +173,9 @@ Return the automatic differentiation capability trait of a flow.
 - Specialized implementation on `AbstractHamiltonianFlow` delegates to the system's trait
 - This trait is used for dispatch in cache preparation and augmented integration
 
-See also: [`CTFlows.Common.AbstractADTrait`](@ref), [`CTFlows.Common.WithAD`](@ref), [`CTFlows.Common.WithoutAD`](@ref).
+See also: [`CTFlows.Traits.AbstractADTrait`](@ref), [`CTFlows.Traits.WithAD`](@ref), [`CTFlows.Traits.WithoutAD`](@ref).
 """
-Common.ad_trait(::AbstractFlow) = Common.WithoutAD
+Traits.ad_trait(::AbstractFlow) = Traits.WithoutAD
 
 """
 $(TYPEDSIGNATURES)
@@ -189,9 +189,9 @@ Return the automatic differentiation capability trait of a Hamiltonian flow.
 - Delegates to the system's AD trait via `Common.ad_trait(system(flow))`
 - This enables dispatch based on whether the flow was built from a scalar Hamiltonian or a vector field
 
-See also: [`CTFlows.Common.AbstractADTrait`](@ref), [`CTFlows.Common.ad_trait`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
+See also: [`CTFlows.Traits.AbstractADTrait`](@ref), [`CTFlows.Traits.ad_trait`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
 """
-Common.ad_trait(f::AbstractHamiltonianFlow) = Common.ad_trait(system(f))
+Traits.ad_trait(f::AbstractHamiltonianFlow) = Traits.ad_trait(system(f))
 
 """
 $(TYPEDSIGNATURES)
@@ -207,9 +207,9 @@ Return the variable costate capability trait of a flow.
 - Specialized implementation on `AbstractHamiltonianFlow` delegates to the system's trait
 - This trait is used for dispatch in `call_variable_costate` to determine if augmented integration is possible
 
-See also: [`CTFlows.Common.AbstractVariableCostateCapability`](@ref), [`CTFlows.Common.SupportsVariableCostate`](@ref), [`CTFlows.Common.NoVariableCostate`](@ref).
+See also: [`CTFlows.Traits.AbstractVariableCostateCapability`](@ref), [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Traits.NoVariableCostate`](@ref).
 """
-Common.variable_costate_trait(::AbstractFlow) = Common.NoVariableCostate
+Traits.variable_costate_trait(::AbstractFlow) = Traits.NoVariableCostate
 
 """
 $(TYPEDSIGNATURES)
@@ -223,9 +223,9 @@ Return the variable costate capability trait of a Hamiltonian flow.
 - Delegates to the system's variable costate trait via `Common.variable_costate_trait(system(flow))`
 - This enables dispatch based on whether the flow's system can compute ∂H/∂v
 
-See also: [`CTFlows.Common.AbstractVariableCostateCapability`](@ref), [`CTFlows.Common.variable_costate_trait`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
+See also: [`CTFlows.Traits.AbstractVariableCostateCapability`](@ref), [`CTFlows.Traits.variable_costate_trait`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
 """
-Common.variable_costate_trait(f::AbstractHamiltonianFlow) = Common.variable_costate_trait(system(f))
+Traits.variable_costate_trait(f::AbstractHamiltonianFlow) = Traits.variable_costate_trait(system(f))
 
 """
 $(TYPEDSIGNATURES)

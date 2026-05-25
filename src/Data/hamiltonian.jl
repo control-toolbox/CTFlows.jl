@@ -56,7 +56,7 @@ Hamiltonian: non-autonomous, fixed (no variable)
   uniform call: h(t, x, p, v)
 ```
 
-See also: [`CTFlows.Data.AbstractHamiltonian`](@ref), [`CTFlows.Common.TimeDependence`](@ref), [`CTFlows.Common.VariableDependence`](@ref).
+See also: [`CTFlows.Data.AbstractHamiltonian`](@ref), [`CTFlows.Traits.TimeDependence`](@ref), [`CTFlows.Traits.VariableDependence`](@ref).
 """
 struct Hamiltonian{F<:Function, TD, VD} <: AbstractHamiltonian{TD, VD}
     f::F
@@ -103,14 +103,14 @@ Hamiltonian: autonomous, non-fixed (variable)
 - The default values for `is_autonomous` and `is_variable` come from `Common.__is_autonomous()` and `Common.__is_variable()`.
 - The function signature should match the specified traits (e.g., if `is_autonomous=true` and `is_variable=false`, the function should accept `(x, p)`).
 
-See also: [`CTFlows.Data.Hamiltonian`](@ref), [`CTFlows.Common.Autonomous`](@ref), [`CTFlows.Common.NonAutonomous`](@ref), [`CTFlows.Common.Fixed`](@ref), [`CTFlows.Common.NonFixed`](@ref).
+See also: [`CTFlows.Data.Hamiltonian`](@ref), [`CTFlows.Traits.Autonomous`](@ref), [`CTFlows.Traits.NonAutonomous`](@ref), [`CTFlows.Traits.Fixed`](@ref), [`CTFlows.Traits.NonFixed`](@ref).
 """
 function Hamiltonian(f;
     is_autonomous::Bool = Common.__is_autonomous(),
     is_variable::Bool   = Common.__is_variable()
 )
-    TD = is_autonomous ? Autonomous : NonAutonomous
-    VD = is_variable   ? NonFixed   : Fixed
+    TD = is_autonomous ? Traits.Autonomous : Traits.NonAutonomous
+    VD = is_variable   ? Traits.NonFixed   : Traits.Fixed
     return Hamiltonian{typeof(f), TD, VD}(f)
 end
 
@@ -118,10 +118,10 @@ end
 # Natural call signatures - one per trait combination
 # =============================================================================
 
-(H::Hamiltonian{<:Function, Autonomous, Fixed})(x, p) = H.f(x, p)
-(H::Hamiltonian{<:Function, NonAutonomous, Fixed})(t, x, p) = H.f(t, x, p)
-(H::Hamiltonian{<:Function, Autonomous, NonFixed})(x, p, v) = H.f(x, p, v)
-(H::Hamiltonian{<:Function, NonAutonomous, NonFixed})(t, x, p, v) = H.f(t, x, p, v)
+(H::Hamiltonian{<:Function, Traits.Autonomous, Traits.Fixed})(x, p) = H.f(x, p)
+(H::Hamiltonian{<:Function, Traits.NonAutonomous, Traits.Fixed})(t, x, p) = H.f(t, x, p)
+(H::Hamiltonian{<:Function, Traits.Autonomous, Traits.NonFixed})(x, p, v) = H.f(x, p, v)
+(H::Hamiltonian{<:Function, Traits.NonAutonomous, Traits.NonFixed})(t, x, p, v) = H.f(t, x, p, v)
 
 # =============================================================================
 # Uniform (t, x, p, v) call - used by future HamiltonianSystem.rhs
@@ -129,9 +129,9 @@ end
 # (NonAutonomous, NonFixed) is already covered by the natural signature above.
 # =============================================================================
 
-(H::Hamiltonian{<:Function, Autonomous, Fixed})(_, x, p, _) = H.f(x, p)
-(H::Hamiltonian{<:Function, NonAutonomous, Fixed})(t, x, p, _) = H.f(t, x, p)
-(H::Hamiltonian{<:Function, Autonomous, NonFixed})(_, x, p, v) = H.f(x, p, v)
+(H::Hamiltonian{<:Function, Traits.Autonomous, Traits.Fixed})(_, x, p, _) = H.f(x, p)
+(H::Hamiltonian{<:Function, Traits.NonAutonomous, Traits.Fixed})(t, x, p, _) = H.f(t, x, p)
+(H::Hamiltonian{<:Function, Traits.Autonomous, Traits.NonFixed})(_, x, p, v) = H.f(x, p, v)
 
 # =============================================================================
 # Base.show

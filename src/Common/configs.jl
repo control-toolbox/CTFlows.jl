@@ -196,7 +196,7 @@ end
 # Type Aliases for Convenient Dispatch
 # =============================================================================
 
-abstract type AbstractConfigWithMaC{X0, Mode<:AbstractModeTrait, Content<:AbstractContentTrait} <: AbstractConfig{X0} end
+abstract type AbstractConfigWithMaC{X0, Mode<:Traits.AbstractModeTrait, Content<:Traits.AbstractContentTrait} <: AbstractConfig{X0} end
 
 """
 $(TYPEDSIGNATURES)
@@ -215,10 +215,10 @@ enabling trait-based dispatch on the integration mode (point vs trajectory).
 # Example
 ```julia
 config = Common.HamiltonianPointConfig(0.0, [1.0], [0.5], 1.0)
-Common.mode_trait(config) === Common.PointTrait  # true
+Common.mode_trait(config) === Traits.PointTrait  # true
 ```
 
-See also: [`CTFlows.Common.AbstractConfigWithMaC`](@ref), [`CTFlows.Common.PointTrait`](@ref), [`CTFlows.Common.TrajectoryTrait`](@ref), [`CTFlows.Common.content_trait`](@ref).
+See also: [`CTFlows.Common.AbstractConfigWithMaC`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Traits.TrajectoryTrait`](@ref), [`CTFlows.Common.content_trait`](@ref).
 """
 function mode_trait(::AbstractConfigWithMaC{X0, Mode, Content}) where {X0, Mode, Content}
     return Mode
@@ -241,10 +241,10 @@ enabling trait-based dispatch on the integration content (state, Hamiltonian, au
 # Example
 ```julia
 config = Common.HamiltonianPointConfig(0.0, [1.0], [0.5], 1.0)
-Common.content_trait(config) === Common.HamiltonianTrait  # true
+Common.content_trait(config) === Traits.HamiltonianTrait  # true
 ```
 
-See also: [`CTFlows.Common.AbstractConfigWithMaC`](@ref), [`CTFlows.Common.StateTrait`](@ref), [`CTFlows.Common.HamiltonianTrait`](@ref), [`CTFlows.Common.AugmentedHamiltonianTrait`](@ref), [`CTFlows.Common.mode_trait`](@ref).
+See also: [`CTFlows.Common.AbstractConfigWithMaC`](@ref), [`CTFlows.Traits.StateTrait`](@ref), [`CTFlows.Traits.HamiltonianTrait`](@ref), [`CTFlows.Traits.AugmentedHamiltonianTrait`](@ref), [`CTFlows.Common.mode_trait`](@ref).
 """
 function content_trait(::AbstractConfigWithMaC{X0, Mode, Content}) where {X0, Mode, Content}
     return Content
@@ -257,7 +257,7 @@ Alias for point integration mode configurations.
 
 Matches any `AbstractConfig` with `PointTrait` as the mode parameter.
 """
-const AbstractPointConfig{X0, C} = AbstractConfigWithMaC{X0, PointTrait, C}
+const AbstractPointConfig{X0, C} = AbstractConfigWithMaC{X0, Traits.PointTrait, C}
 
 """
 $(TYPEDEF)
@@ -266,7 +266,7 @@ Alias for trajectory integration mode configurations.
 
 Matches any `AbstractConfig` with `TrajectoryTrait` as the mode parameter.
 """
-const AbstractTrajectoryConfig{X0, C} = AbstractConfigWithMaC{X0, TrajectoryTrait, C}
+const AbstractTrajectoryConfig{X0, C} = AbstractConfigWithMaC{X0, Traits.TrajectoryTrait, C}
 
 """
 $(TYPEDEF)
@@ -275,7 +275,7 @@ Alias for state content configurations.
 
 Matches any `AbstractConfig` with `StateTrait` as the content parameter.
 """
-const AbstractStateConfig{X0, M} = AbstractConfigWithMaC{X0, M, StateTrait}
+const AbstractStateConfig{X0, M} = AbstractConfigWithMaC{X0, M, Traits.StateTrait}
 
 """
 $(TYPEDEF)
@@ -284,7 +284,7 @@ Alias for Hamiltonian content configurations.
 
 Matches any `AbstractConfig` with `HamiltonianTrait` as the content parameter.
 """
-const AbstractHamiltonianConfig{X0, M} = AbstractConfigWithMaC{X0, M, HamiltonianTrait}
+const AbstractHamiltonianConfig{X0, M} = AbstractConfigWithMaC{X0, M, Traits.HamiltonianTrait}
 
 """
 $(TYPEDEF)
@@ -298,12 +298,12 @@ Type alias for augmented Hamiltonian configurations, which include state, costat
 # Notes
 - Augmented Hamiltonian configurations are used for systems where the Hamiltonian depends on an additional variable (e.g., a control parameter or optimization variable).
 - The initial condition typically has the form `vcat(x0, p0, pv0)` where `x0` is the initial state, `p0` is the initial costate, and `pv0` is the initial augmented variable.
-- Subtypes [`CTFlows.Common.AbstractConfigWithMaC`](@ref) with [`CTFlows.Common.AugmentedHamiltonianTrait`](@ref).
+- Subtypes [`CTFlows.Common.AbstractConfigWithMaC`](@ref) with [`CTFlows.Traits.AugmentedHamiltonianTrait`](@ref).
 - Used in conjunction with [`CTFlows.Systems.HamiltonianSystem`](@ref) for automatic differentiation-based Hamiltonian integration.
 
-See also: [`CTFlows.Common.AbstractHamiltonianConfig`](@ref), [`CTFlows.Common.AugmentedHamiltonianTrait`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref).
+See also: [`CTFlows.Common.AbstractHamiltonianConfig`](@ref), [`CTFlows.Traits.AugmentedHamiltonianTrait`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref).
 """
-const AbstractAugmentedHamiltonianConfig{X0, M} = AbstractConfigWithMaC{X0, M, AugmentedHamiltonianTrait}
+const AbstractAugmentedHamiltonianConfig{X0, M} = AbstractConfigWithMaC{X0, M, Traits.AugmentedHamiltonianTrait}
 
 # =============================================================================
 # Interface implementations on abstract config types
@@ -577,7 +577,7 @@ StatePointConfig
 
 See also: [`CTFlows.Common.StateTrajectoryConfig`](@ref)
 """
-struct StatePointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfigWithMaC{X0, PointTrait, StateTrait}
+struct StatePointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfigWithMaC{X0, Traits.PointTrait, Traits.StateTrait}
     t0::T0
     x0::X0
     tf::TF
@@ -607,7 +607,7 @@ StateTrajectoryConfig
 
 See also: [`CTFlows.Common.StatePointConfig`](@ref)
 """
-struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractConfigWithMaC{X0, TrajectoryTrait, StateTrait}
+struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractConfigWithMaC{X0, Traits.TrajectoryTrait, Traits.StateTrait}
     tspan::TS
     x0::X0
 end
@@ -642,7 +642,7 @@ HamiltonianPointConfig
 
 See also: [`CTFlows.Common.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Common.StatePointConfig`](@ref).
 """
-struct HamiltonianPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractConfigWithMaC{X0, PointTrait, HamiltonianTrait}
+struct HamiltonianPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractConfigWithMaC{X0, Traits.PointTrait, Traits.HamiltonianTrait}
     t0::T0
     x0::X0
     p0::P0
@@ -676,7 +676,7 @@ HamiltonianTrajectoryConfig
 
 See also: [`CTFlows.Common.HamiltonianPointConfig`](@ref), [`CTFlows.Common.StateTrajectoryConfig`](@ref).
 """
-struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractConfigWithMaC{X0, TrajectoryTrait, HamiltonianTrait}
+struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractConfigWithMaC{X0, Traits.TrajectoryTrait, Traits.HamiltonianTrait}
     tspan::TS
     x0::X0
     p0::P0
@@ -711,9 +711,9 @@ AugmentedHamiltonianPointConfig
   tf: 1.0
 \`\`\`
 
-See also: [`CTFlows.Common.HamiltonianPointConfig`](@ref), [`CTFlows.Common.AugmentedHamiltonianTrait`](@ref).
+See also: [`CTFlows.Common.HamiltonianPointConfig`](@ref), [`CTFlows.Traits.AugmentedHamiltonianTrait`](@ref).
 """
-struct AugmentedHamiltonianPointConfig{T0<:Real, X0, P0, PV0, TF<:Real} <: AbstractAugmentedHamiltonianConfig{X0, PointTrait}
+struct AugmentedHamiltonianPointConfig{T0<:Real, X0, P0, PV0, TF<:Real} <: AbstractAugmentedHamiltonianConfig{X0, Traits.PointTrait}
     t0::T0
     x0::X0
     p0::P0

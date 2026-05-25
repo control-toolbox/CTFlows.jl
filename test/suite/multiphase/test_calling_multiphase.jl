@@ -6,6 +6,7 @@ import CTFlows.Systems
 import CTFlows.Integrators
 import CTFlows.Flows
 import CTFlows.Common
+import CTFlows.Traits
 import CTFlows.Solutions
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -15,7 +16,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # Fake types for testing (testing-creation.md §1)
 # ==============================================================================
 
-struct FakeStateSystem <: Systems.AbstractStateSystem{Common.Autonomous, Common.Fixed}
+struct FakeStateSystem <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
     data::Vector{Float64}
 end
 
@@ -23,7 +24,7 @@ function Systems.rhs(sys::FakeStateSystem)
     return (du, u, p, t) -> du .= sys.data .* u
 end
 
-struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed, Common.WithoutAD}
+struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD}
     data::Vector{Float64}
 end
 
@@ -51,7 +52,7 @@ struct MockODEProblem
 end
 
 # Mock integration result type
-struct MockIntegrationResult <: Solutions.AbstractIntegrationResult
+struct MockIntegrationResult <: Integrators.AbstractIntegrationResult
     u::Vector{Float64}
     t::Vector{Float64}
 end
@@ -126,15 +127,15 @@ end
 # Mock Solutions Interface Implementation
 # ==============================================================================
 
-function Solutions.final_state(result::MockIntegrationResult)
+function Integrators.final_state(result::MockIntegrationResult)
     return result.u
 end
 
-function Solutions.times(result::MockIntegrationResult)
+function Integrators.times(result::MockIntegrationResult)
     return result.t
 end
 
-function Solutions.evaluate_at(result::MockIntegrationResult, t::Real)
+function Integrators.evaluate_at(result::MockIntegrationResult, t::Real)
     # Simple linear interpolation
     t0, tf = result.t[1], result.t[end]
     if t <= t0
@@ -146,17 +147,17 @@ function Solutions.evaluate_at(result::MockIntegrationResult, t::Real)
     end
 end
 
-function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.StateTrait}, config::Common.AbstractConfig, result::MockIntegrationResult)
+function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.StateTrait}, config::Common.AbstractConfig, result::MockIntegrationResult)
     # For StatePointConfig, return the final state directly (as expected by _evaluate_phase)
     return result.u
 end
 
-function Solutions.build_solution(::Type{Common.TrajectoryTrait}, ::Type{Common.StateTrait}, config::Common.AbstractConfig, result::MockIntegrationResult)
+function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.StateTrait}, config::Common.AbstractConfig, result::MockIntegrationResult)
     # For StateTrajectoryConfig with StateFlow, return the full result
     return result
 end
 
-function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.HamiltonianTrait}, config::Common.AbstractConfig, result::MockIntegrationResult)
+function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.HamiltonianTrait}, config::Common.AbstractConfig, result::MockIntegrationResult)
     # For HamiltonianFlow, return a tuple (x, p) matching _ham_split_solution behavior
     x_len = length(result.u) ÷ 2
     x_part = result.u[1:x_len]
@@ -164,7 +165,7 @@ function Solutions.build_solution(::Type{Common.PointTrait}, ::Type{Common.Hamil
     return (x_part, p_part)
 end
 
-function Solutions.build_solution(::Type{Common.TrajectoryTrait}, ::Type{Common.HamiltonianTrait}, config::Common.AbstractConfig, result::MockIntegrationResult)
+function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.HamiltonianTrait}, config::Common.AbstractConfig, result::MockIntegrationResult)
     # For HamiltonianTrajectoryConfig, return the full result
     return result
 end

@@ -3,6 +3,7 @@ module TestConfigs
 import Test
 import CTBase.Exceptions
 import CTFlows.Common
+import CTFlows.Traits
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -14,7 +15,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake config type for testing the AbstractConfig contract.
 """
-struct FakeConfig{X0} <: Common.AbstractConfigWithMaC{X0, Common.PointTrait, Common.StateTrait}
+struct FakeConfig{X0} <: Common.AbstractConfigWithMaC{X0, Traits.PointTrait, Traits.StateTrait}
     x0::X0
 end
 
@@ -22,7 +23,7 @@ end
 Fake config type that implements the tspan contract.
 Used to test contract implementation without relying on concrete types.
 """
-struct FakeConfigWithTspan{X0} <: Common.AbstractConfigWithMaC{X0, Common.PointTrait, Common.StateTrait}
+struct FakeConfigWithTspan{X0} <: Common.AbstractConfigWithMaC{X0, Traits.PointTrait, Traits.StateTrait}
     t0::Float64
     tf::Float64
     x0::X0

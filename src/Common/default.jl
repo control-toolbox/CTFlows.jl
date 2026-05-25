@@ -38,7 +38,7 @@ passed `nothing`". This enables proper dispatch based on the system's
 __variable()::NotProvided = NotProvided()
 ```
 
-See also: [`VariableDependence`](@ref), [`Fixed`](@ref), [`NonFixed`](@ref).
+See also: [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Traits.Fixed`](@ref), [`CTFlows.Traits.NonFixed`](@ref).
 """
 struct NotProvided end
 

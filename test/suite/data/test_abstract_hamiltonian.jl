@@ -3,6 +3,7 @@ module TestAbstractHamiltonian
 import Test
 import CTFlows.Data
 import CTFlows.Common
+import CTFlows.Traits
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
@@ -34,7 +35,7 @@ function test_abstract_hamiltonian()
             end
 
             Test.@testset "FakeHamiltonian subtypes AbstractHamiltonian" begin
-                fake = FakeHamiltonian{Common.Autonomous, Common.Fixed}()
+                fake = FakeHamiltonian{Traits.Autonomous, Traits.Fixed}()
                 Test.@test fake isa Data.AbstractHamiltonian
             end
         end
@@ -45,57 +46,57 @@ function test_abstract_hamiltonian()
 
         Test.@testset "Trait Accessors on Abstract Type" begin
             Test.@testset "has_time_dependence_trait returns true" begin
-                fake = FakeHamiltonian{Common.Autonomous, Common.Fixed}()
-                Test.@test Common.has_time_dependence_trait(fake) === true
-                Test.@test Base.invokelatest(Common.has_time_dependence_trait, fake) === true
+                fake = FakeHamiltonian{Traits.Autonomous, Traits.Fixed}()
+                Test.@test Traits.has_time_dependence_trait(fake) === true
+                Test.@test Base.invokelatest(Traits.has_time_dependence_trait, fake) === true
             end
 
             Test.@testset "has_variable_dependence_trait returns true" begin
-                fake = FakeHamiltonian{Common.Autonomous, Common.Fixed}()
-                Test.@test Common.has_variable_dependence_trait(fake) === true
-                Test.@test Base.invokelatest(Common.has_variable_dependence_trait, fake) === true
+                fake = FakeHamiltonian{Traits.Autonomous, Traits.Fixed}()
+                Test.@test Traits.has_variable_dependence_trait(fake) === true
+                Test.@test Base.invokelatest(Traits.has_variable_dependence_trait, fake) === true
             end
 
             Test.@testset "time_dependence returns correct trait" begin
-                fake_aut = FakeHamiltonian{Common.Autonomous, Common.Fixed}()
-                fake_nonaut = FakeHamiltonian{Common.NonAutonomous, Common.Fixed}()
-                Test.@test Common.time_dependence(fake_aut) === Common.Autonomous
-                Test.@test Common.time_dependence(fake_nonaut) === Common.NonAutonomous
+                fake_aut = FakeHamiltonian{Traits.Autonomous, Traits.Fixed}()
+                fake_nonaut = FakeHamiltonian{Traits.NonAutonomous, Traits.Fixed}()
+                Test.@test Traits.time_dependence(fake_aut) === Traits.Autonomous
+                Test.@test Traits.time_dependence(fake_nonaut) === Traits.NonAutonomous
             end
 
             Test.@testset "variable_dependence returns correct trait" begin
-                fake_fixed = FakeHamiltonian{Common.Autonomous, Common.Fixed}()
-                fake_nonfixed = FakeHamiltonian{Common.Autonomous, Common.NonFixed}()
-                Test.@test Common.variable_dependence(fake_fixed) === Common.Fixed
-                Test.@test Common.variable_dependence(fake_nonfixed) === Common.NonFixed
+                fake_fixed = FakeHamiltonian{Traits.Autonomous, Traits.Fixed}()
+                fake_nonfixed = FakeHamiltonian{Traits.Autonomous, Traits.NonFixed}()
+                Test.@test Traits.variable_dependence(fake_fixed) === Traits.Fixed
+                Test.@test Traits.variable_dependence(fake_nonfixed) === Traits.NonFixed
             end
 
             Test.@testset "explicit dispatch on AbstractHamiltonian methods" begin
-                fake = FakeHamiltonian{Common.NonAutonomous, Common.NonFixed}()
+                fake = FakeHamiltonian{Traits.NonAutonomous, Traits.NonFixed}()
 
                 Test.@test invoke(
-                    Common.has_time_dependence_trait,
+                    Traits.has_time_dependence_trait,
                     Tuple{Data.AbstractHamiltonian},
                     fake,
                 ) === true
 
                 Test.@test invoke(
-                    Common.has_variable_dependence_trait,
+                    Traits.has_variable_dependence_trait,
                     Tuple{Data.AbstractHamiltonian},
                     fake,
                 ) === true
 
                 Test.@test invoke(
-                    Common.time_dependence,
-                    Tuple{Data.AbstractHamiltonian{Common.NonAutonomous, Common.NonFixed}},
+                    Traits.time_dependence,
+                    Tuple{Data.AbstractHamiltonian{Traits.NonAutonomous, Traits.NonFixed}},
                     fake,
-                ) === Common.NonAutonomous
+                ) === Traits.NonAutonomous
 
                 Test.@test invoke(
-                    Common.variable_dependence,
-                    Tuple{Data.AbstractHamiltonian{Common.NonAutonomous, Common.NonFixed}},
+                    Traits.variable_dependence,
+                    Tuple{Data.AbstractHamiltonian{Traits.NonAutonomous, Traits.NonFixed}},
                     fake,
-                ) === Common.NonFixed
+                ) === Traits.NonFixed
             end
         end
 
@@ -116,11 +117,11 @@ function test_abstract_hamiltonian()
 
         Test.@testset "Type Stability" begin
             Test.@testset "Trait accessors are type-stable" begin
-                fake = FakeHamiltonian{Common.Autonomous, Common.Fixed}()
-                Test.@test Test.@inferred(Common.has_time_dependence_trait(fake)) === true
-                Test.@test Test.@inferred(Common.has_variable_dependence_trait(fake)) === true
-                Test.@test Test.@inferred(Common.time_dependence(fake)) === Common.Autonomous
-                Test.@test Test.@inferred(Common.variable_dependence(fake)) === Common.Fixed
+                fake = FakeHamiltonian{Traits.Autonomous, Traits.Fixed}()
+                Test.@test Test.@inferred(Traits.has_time_dependence_trait(fake)) === true
+                Test.@test Test.@inferred(Traits.has_variable_dependence_trait(fake)) === true
+                Test.@test Test.@inferred(Traits.time_dependence(fake)) === Traits.Autonomous
+                Test.@test Test.@inferred(Traits.variable_dependence(fake)) === Traits.Fixed
             end
         end
 

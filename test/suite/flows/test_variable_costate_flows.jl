@@ -4,12 +4,13 @@ Test suite for variable costate integration (augmented Hamiltonian systems).
 Tests the `variable_costate=true` kwarg on Hamiltonian flows, which enables
 integration of the augmented state `[x; p; pv]` where `pv` is the costate of the variable.
 """
-module TestVariableCostate
+module TestVariableCostateFlows
 
 import Test
 import CTBase.Exceptions: Exceptions
 import CTFlows: CTFlows
 import CTFlows.Common: Common
+import CTFlows.Traits: Traits
 import CTFlows.Systems: Systems
 import CTFlows.Flows: Flows
 import CTFlows.Solutions: Solutions
@@ -94,7 +95,7 @@ const HSYS_DI_N2_UNCACHED  = Systems.HamiltonianSystem(H_LINEAR_VAR, DI_BACKEND_
 
 const INTEG = Integrators.SciML()
 
-function test_variable_costate()
+function test_variable_costate_flows()
     Test.@testset "Variable Costate Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
@@ -134,21 +135,21 @@ function test_variable_costate()
         end
 
         Test.@testset "Unit: trait type hierarchy" begin
-            Test.@test Common.SupportsVariableCostate <: Common.AbstractVariableCostateCapability
-            Test.@test Common.NoVariableCostate <: Common.AbstractVariableCostateCapability
-            Test.@test Common.AbstractVariableCostateCapability <: Common.AbstractTrait
+            Test.@test Traits.SupportsVariableCostate <: Traits.AbstractVariableCostateCapability
+            Test.@test Traits.NoVariableCostate <: Traits.AbstractVariableCostateCapability
+            Test.@test Traits.AbstractVariableCostateCapability <: Traits.AbstractTrait
         end
 
         Test.@testset "Unit: variable_costate_trait default" begin
-            Test.@test Common.variable_costate_trait(42) === Common.NoVariableCostate
-            Test.@test Common.variable_costate_trait("anything") === Common.NoVariableCostate
-            Test.@test Common.variable_costate_trait(nothing) === Common.NoVariableCostate
+            Test.@test Traits.variable_costate_trait(42) === Traits.NoVariableCostate
+            Test.@test Traits.variable_costate_trait("anything") === Traits.NoVariableCostate
+            Test.@test Traits.variable_costate_trait(nothing) === Traits.NoVariableCostate
         end
 
         Test.@testset "Unit: ad_trait on flows" begin
             # Default implementation on AbstractFlow returns WithoutAD
-            Test.@test Common.ad_trait("fake_flow") === Common.WithoutAD
-            Test.@test Common.ad_trait(42) === Common.WithoutAD
+            Test.@test Traits.ad_trait("fake_flow") === Traits.WithoutAD
+            Test.@test Traits.ad_trait(42) === Traits.WithoutAD
         end
 
         # ====================================================================
@@ -159,24 +160,24 @@ function test_variable_costate()
             # Fixed HamiltonianSystem -> NoVariableCostate
             h_fixed = Data.Hamiltonian((x, p) -> 0.5*(sum(abs2, x) + sum(abs2, p)); is_autonomous=true, is_variable=false)
             sys_fixed = Systems.HamiltonianSystem(h_fixed, BACKEND_FAKE)
-            Test.@test Common.variable_costate_trait(sys_fixed) === Common.NoVariableCostate
+            Test.@test Traits.variable_costate_trait(sys_fixed) === Traits.NoVariableCostate
 
             # NonFixed HamiltonianSystem -> SupportsVariableCostate
-            Test.@test Common.variable_costate_trait(HSYS_FAKE_N1) === Common.SupportsVariableCostate
-            Test.@test Common.variable_costate_trait(HSYS_FAKE_N2) === Common.SupportsVariableCostate
+            Test.@test Traits.variable_costate_trait(HSYS_FAKE_N1) === Traits.SupportsVariableCostate
+            Test.@test Traits.variable_costate_trait(HSYS_FAKE_N2) === Traits.SupportsVariableCostate
 
             # DI backends also support variable costate
-            Test.@test Common.variable_costate_trait(HSYS_DI_N1_CACHED) === Common.SupportsVariableCostate
-            Test.@test Common.variable_costate_trait(HSYS_DI_N1_UNCACHED) === Common.SupportsVariableCostate
+            Test.@test Traits.variable_costate_trait(HSYS_DI_N1_CACHED) === Traits.SupportsVariableCostate
+            Test.@test Traits.variable_costate_trait(HSYS_DI_N1_UNCACHED) === Traits.SupportsVariableCostate
         end
 
         Test.@testset "Integration: ad_trait on systems" begin
             # HamiltonianSystem always has WithAD
-            Test.@test Common.ad_trait(HSYS_FAKE_N1) === Common.WithAD
-            Test.@test Common.ad_trait(HSYS_FAKE_N2) === Common.WithAD
+            Test.@test Traits.ad_trait(HSYS_FAKE_N1) === Traits.WithAD
+            Test.@test Traits.ad_trait(HSYS_FAKE_N2) === Traits.WithAD
 
             # DI backends also have WithAD
-            Test.@test Common.ad_trait(HSYS_DI_N1_CACHED) === Common.WithAD
+            Test.@test Traits.ad_trait(HSYS_DI_N1_CACHED) === Traits.WithAD
         end
 
         Test.@testset "Integration: FakeADBackend variable_costate flow" begin
@@ -390,4 +391,4 @@ end
 end # module
 
 # CRITICAL: Redefine in outer scope for TestRunner
-test_variable_costate() = TestVariableCostate.test_variable_costate()
+test_variable_costate_flows() = TestVariableCostateFlows.test_variable_costate_flows()

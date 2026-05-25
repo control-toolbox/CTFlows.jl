@@ -4,6 +4,7 @@ import Test
 import CTBase.Exceptions
 import CTFlows.Systems
 import CTFlows.Common
+import CTFlows.Traits
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -18,7 +19,7 @@ Fake system for testing the AbstractSystem contract.
 This minimal implementation provides the required contract methods to test
 routing and default behavior without full system complexity.
 """
-struct FakeSystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
+struct FakeSystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed}
     data::Vector{Float64}
 end
 
@@ -28,7 +29,7 @@ function Systems.rhs(sys::FakeSystem)
 end
 
 # Fake subtypes for hierarchy testing
-struct FakeStateSystem <: Systems.AbstractStateSystem{Common.Autonomous, Common.Fixed}
+struct FakeStateSystem <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
     data::Vector{Float64}
 end
 
@@ -36,7 +37,7 @@ function Systems.rhs(sys::FakeStateSystem)
     return (du, u, p, t) -> du .= sys.data .* u
 end
 
-struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Common.Autonomous, Common.Fixed, Common.WithoutAD}
+struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD}
     data::Vector{Float64}
 end
 
@@ -47,7 +48,7 @@ end
 """
 Minimal system that does not implement the contract (for error testing).
 """
-struct MinimalSystem <: Systems.AbstractSystem{Common.Autonomous, Common.Fixed}
+struct MinimalSystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed}
     state_dim::Int
 end
 
@@ -130,30 +131,30 @@ function test_abstract_system()
             sys2 = MinimalSystem(3)
 
             Test.@testset "has_time_dependence_trait returns true" begin
-                Test.@test Common.has_time_dependence_trait(sys) === true
-                Test.@test Common.has_time_dependence_trait(sys2) === true
+                Test.@test Traits.has_time_dependence_trait(sys) === true
+                Test.@test Traits.has_time_dependence_trait(sys2) === true
             end
 
             Test.@testset "has_variable_dependence_trait returns true" begin
-                Test.@test Common.has_variable_dependence_trait(sys) === true
-                Test.@test Common.has_variable_dependence_trait(sys2) === true
+                Test.@test Traits.has_variable_dependence_trait(sys) === true
+                Test.@test Traits.has_variable_dependence_trait(sys2) === true
             end
 
             Test.@testset "time_dependence extracts trait from type parameter" begin
-                Test.@test Common.time_dependence(sys) === Common.Autonomous
-                Test.@test Common.time_dependence(sys2) === Common.Autonomous
+                Test.@test Traits.time_dependence(sys) === Traits.Autonomous
+                Test.@test Traits.time_dependence(sys2) === Traits.Autonomous
             end
 
             Test.@testset "variable_dependence extracts trait from type parameter" begin
-                Test.@test Common.variable_dependence(sys) === Common.Fixed
-                Test.@test Common.variable_dependence(sys2) === Common.Fixed
+                Test.@test Traits.variable_dependence(sys) === Traits.Fixed
+                Test.@test Traits.variable_dependence(sys2) === Traits.Fixed
             end
 
             Test.@testset "trait methods work for all AbstractSystem subtypes" begin
                 # Verify that the trait methods work for any AbstractSystem subtype
                 for sys_instance in [sys, sys2]
-                    Test.@test Common.has_time_dependence_trait(sys_instance) === true
-                    Test.@test Common.has_variable_dependence_trait(sys_instance) === true
+                    Test.@test Traits.has_time_dependence_trait(sys_instance) === true
+                    Test.@test Traits.has_variable_dependence_trait(sys_instance) === true
                 end
             end
         end

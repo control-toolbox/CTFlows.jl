@@ -85,7 +85,7 @@ where "time grid" is the standard terminology.
 See also: [`CTFlows.Solutions.times`](@ref), [`CTFlows.Solutions.state`](@ref).
 """
 function time_grid(sol::HamiltonianVectorFieldSolution)
-    return times(sol)
+    return Integrators.times(sol)
 end
 
 """

@@ -13,23 +13,23 @@ introduced by scalar-promotion at ODE problem construction time.
 This uses compile-time dispatch on the initial state type to avoid runtime type tests.
 
 # Arguments
-- `::Type{Common.PointTrait}`: The point mode trait type.
-- `::Type{Common.StateTrait}`: The state content trait type.
+- `::Type{Traits.PointTrait}`: The point mode trait type.
+- `::Type{Traits.StateTrait}`: The state content trait type.
 - `initial_state::Number`: The scalar initial state.
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
 
 # Returns
 - `Number`: The unwrapped scalar final state.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Common.PointTrait`](@ref), [`CTFlows.Common.StateTrait`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Traits.StateTrait`](@ref).
 """
 function build_solution(
-    ::Type{Common.PointTrait},
-    ::Type{Common.StateTrait},
+    ::Type{Traits.PointTrait},
+    ::Type{Traits.StateTrait},
     config::Common.AbstractConfig,
     result::Integrators.AbstractIntegrationResult, 
 )
-    return Common.scalarize(final_state(result), Common.initial_state(config))
+    return Common.scalarize(Integrators.final_state(result), Common.initial_state(config))
 end
 
 """
@@ -39,8 +39,8 @@ Default implementation for trajectory configs — wrap the integration result
 in a `VectorFieldSolution` for future extensibility.
 
 # Arguments
-- `::Type{Common.TrajectoryTrait}`: The trajectory mode trait type.
-- `::Type{Common.StateTrait}`: The state content trait type.
+- `::Type{Traits.TrajectoryTrait}`: The trajectory mode trait type.
+- `::Type{Traits.StateTrait}`: The state content trait type.
 - `initial_state`: The initial state.
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
 
@@ -50,8 +50,8 @@ in a `VectorFieldSolution` for future extensibility.
 See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Common.TrajectoryTrait`](@ref), [`CTFlows.Common.StateTrait`](@ref).
 """
 function build_solution(
-    ::Type{Common.TrajectoryTrait},
-    ::Type{Common.StateTrait},
+    ::Type{Traits.TrajectoryTrait},
+    ::Type{Traits.StateTrait},
     config::Common.AbstractConfig,
     result::Integrators.AbstractIntegrationResult, 
 )
@@ -130,8 +130,8 @@ Returns the final state and costate as a tuple `(xf, pf)`, dispatching on the
 type of the initial state to handle scalar, vector, and matrix cases.
 
 # Arguments
-- `::Type{Common.PointTrait}`: The point mode trait type.
-- `::Type{Common.HamiltonianTrait}`: The Hamiltonian content trait type.
+- `::Type{Traits.PointTrait}`: The point mode trait type.
+- `::Type{Traits.HamiltonianTrait}`: The Hamiltonian content trait type.
 - `initial_state`: The initial state (scalar, vector, or matrix).
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
 
@@ -141,11 +141,11 @@ type of the initial state to handle scalar, vector, and matrix cases.
   - `Tuple{AbstractVector, AbstractVector}` for vector inputs
   - `Tuple{AbstractMatrix, AbstractMatrix}` for matrix inputs
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Common.PointTrait`](@ref), [`CTFlows.Common.HamiltonianTrait`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Common.HamiltonianTrait`](@ref).
 """
 function build_solution(
-    ::Type{Common.PointTrait},
-    ::Type{Common.HamiltonianTrait},
+    ::Type{Traits.PointTrait},
+    ::Type{Traits.HamiltonianTrait},
     config::Common.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
     )
@@ -160,8 +160,8 @@ Build a solution for Hamiltonian trajectory configs.
 Wraps the integration result in a `HamiltonianVectorFieldSolution` for future extensibility.
 
 # Arguments
-- `::Type{Common.TrajectoryTrait}`: The trajectory mode trait type.
-- `::Type{Common.HamiltonianTrait}`: The Hamiltonian content trait type.
+- `::Type{Traits.TrajectoryTrait}`: The trajectory mode trait type.
+- `::Type{Traits.HamiltonianTrait}`: The Hamiltonian content trait type.
 - `initial_state`: The initial state.
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
 
@@ -171,8 +171,8 @@ Wraps the integration result in a `HamiltonianVectorFieldSolution` for future ex
 See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Common.TrajectoryTrait`](@ref), [`CTFlows.Common.HamiltonianTrait`](@ref).
 """
 function build_solution(
-    ::Type{Common.TrajectoryTrait},
-    ::Type{Common.HamiltonianTrait},
+    ::Type{Traits.TrajectoryTrait},
+    ::Type{Traits.HamiltonianTrait},
     config::Common.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
     )
@@ -193,8 +193,8 @@ For Hamiltonian systems, `n_p = n_x` always, so the augmented state `[x; p; pv]`
 splits using only the state dimension `n = length(initial_state)`.
 
 # Arguments
-- `::Type{Common.PointTrait}`: The point mode trait type.
-- `::Type{Common.AugmentedHamiltonianTrait}`: The augmented Hamiltonian content trait type.
+- `::Type{Traits.PointTrait}`: The point mode trait type.
+- `::Type{Traits.AugmentedHamiltonianTrait}`: The augmented Hamiltonian content trait type.
 - `initial_state`: The initial state (used to determine state dimension `n`).
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
 
@@ -205,11 +205,11 @@ splits using only the state dimension `n = length(initial_state)`.
 - Uses `_aug_split_solution` helper to split the augmented final state.
 - Assumes `n_p = n_x` invariant for Hamiltonian systems.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Common.PointTrait`](@ref), [`CTFlows.Common.AugmentedHamiltonianTrait`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Common.AugmentedHamiltonianTrait`](@ref).
 """
 function build_solution(
-    ::Type{Common.PointTrait},
-    ::Type{Common.AugmentedHamiltonianTrait},
+    ::Type{Traits.PointTrait},
+    ::Type{Traits.AugmentedHamiltonianTrait},
     config::Common.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
 )

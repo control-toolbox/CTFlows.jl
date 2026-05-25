@@ -46,7 +46,7 @@ struct SciMLFunctionSystem{
     RHS<:Function,
     OOPROHS<:Function,
     FINRHS
-} <: Systems.AbstractStateSystem{Common.NonAutonomous, Common.NonFixed}
+} <: Systems.AbstractStateSystem{Traits.NonAutonomous, Traits.NonFixed}
     f::F
     rhs_fn::RHS
     rhs_oop_fn::OOPROHS

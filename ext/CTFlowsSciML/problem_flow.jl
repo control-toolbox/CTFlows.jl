@@ -44,7 +44,7 @@ sol = flow((0.5, 2.0), [2.0]; variable=3.0, unsafe=false)
 struct SciMLProblemFlow{
     P <: SciMLBase.AbstractODEProblem,
     I <: Integrators.AbstractIntegrator
-} <: AbstractFlow{Common.NonAutonomous, Common.NonFixed}
+} <: AbstractFlow{Traits.NonAutonomous, Traits.NonFixed}
     prob::P
     integrator::I
 end

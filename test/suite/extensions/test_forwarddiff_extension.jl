@@ -169,11 +169,11 @@ function test_forwarddiff_extension()
 
             # Integration with real numbers
             result_real = flow((0.0, 1.0), [1.0])
-            t_real = Solutions.times(result_real)
+            t_real = Integrators.times(result_real)
 
             # Integration with Dual (Jacobian w.r.t. initial condition)
             result_dual = flow((0.0, 1.0), ForwardDiff.Dual{:T}.([1.0], [1.0]))
-            t_dual = ForwardDiff.value.(Solutions.times(result_dual))
+            t_dual = ForwardDiff.value.(Integrators.times(result_dual))
 
             # Grids must be identical with real_norm (default)
             Test.@test t_real == t_dual
