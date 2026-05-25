@@ -35,6 +35,8 @@ import ..Solutions: Solutions
 
 include(joinpath(@__DIR__, "abstract_flow.jl"))
 include(joinpath(@__DIR__, "flow.jl"))
+include(joinpath(@__DIR__, "registry.jl"))
+include(joinpath(@__DIR__, "flow_routing.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 include(joinpath(@__DIR__, "calling.jl"))
 
