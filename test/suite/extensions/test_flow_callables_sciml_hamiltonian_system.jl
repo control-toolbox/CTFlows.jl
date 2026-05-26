@@ -25,8 +25,13 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 struct FakeHarmonicADBackend <: Differentiation.AbstractADBackend end
 
 function Differentiation.hamiltonian_gradient(backend::FakeHarmonicADBackend, h, t, x, p, v, cache)
-    # Harmonic oscillator: H = 0.5*(x² + p²) → ∂H/∂x = x, ∂H/∂p = p
-    return (x, p)
+    # For H_HARMONIC: H = 0.5*(x² + p²) → ∂H/∂x = x, ∂H/∂p = p
+    # For H_SCALAR_ONLY: H = x*x + p*p → ∂H/∂x = 2x, ∂H/∂p = 2p
+    if h === H_SCALAR_ONLY
+        return (2*x, 2*p)
+    else
+        return (x, p)
+    end
 end
 
 function Differentiation.variable_gradient(backend::FakeHarmonicADBackend, h, t, x, p, v, cache)
@@ -48,6 +53,12 @@ const H_HARMONIC = Data.Hamiltonian((x, p) -> 0.5*(sum(abs2, x) + sum(abs2, p));
 const BACKEND    = FakeHarmonicADBackend()
 const HSYS       = Systems.HamiltonianSystem(H_HARMONIC, BACKEND)
 const INTEG      = Integrators.SciML()
+
+# Scalar-only Hamiltonian: H = x*x + p*p (requires scalar x, p)
+# This will fail if x or p are treated as vectors
+const H_SCALAR_ONLY = Data.Hamiltonian((x, p) -> x*x + p*p;
+                                        is_autonomous=true, is_variable=false)
+const HSYS_SCALAR = Systems.HamiltonianSystem(H_SCALAR_ONLY, BACKEND)
 const ATOL       = 1e-5
 
 # ==============================================================================
@@ -195,6 +206,21 @@ function test_flow_callables_sciml_hamiltonian_system()
                 hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), SA[1.0, 0.0], SA[0.0, 1.0])
                 Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+            end
+        end
+
+        # ====================================================================
+        # SCALAR-ONLY TESTS - verify scalar dispatch (x*x, not sum(x²))
+        # ====================================================================
+
+        Test.@testset "Scalar-only Hamiltonian (x*x + p*p)" begin
+            Test.@testset "scalar x0, p0" begin
+                hflow = Flows.build_flow(HSYS_SCALAR, INTEG)
+                # H = x*x + p*p → ẋ = 2p, ṗ = -2x
+                # Solution: x(t) = x0 cos(2t) + p0 sin(2t), p(t) = -x0 sin(2t) + p0 cos(2t)
+                xf, pf = hflow(0.0, 1.0, 0.0, π/4)
+                Test.@test xf ≈ cos(π/2) atol=ATOL  # = 0
+                Test.@test pf ≈ -sin(π/2) atol=ATOL # = -1
             end
         end
 
