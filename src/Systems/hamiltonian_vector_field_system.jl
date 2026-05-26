@@ -194,10 +194,16 @@ function build_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOf
     cx = _make_coerce(x0)
     cp = _make_coerce(p0)
     hvf = sys.hvf
+    is_matrix = x0 isa AbstractMatrix
     return function (u, λ, t)
         x, p = _ham_split(u, N)
         dx, dp = hvf(t, cx(x), cp(p), Common.variable(λ))
-        return vcat(dx, dp)
+        result = vcat(dx, dp)
+        if is_matrix
+            # Reshape vector result back to matrix form
+            return reshape(result, size(u))
+        end
+        return result
     end
 end
 
@@ -207,11 +213,15 @@ function build_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPla
     cp = _make_coerce(p0)
     hvf = sys.hvf
     is_u0_mutable = ismutable(x0)
+    is_matrix = x0 isa AbstractMatrix
     return function (u, λ, t)
         x, p   = _ham_split(u, N)
         dx, dp = similar(x), similar(p)
         hvf(dx, dp, t, cx(x), cp(p), Common.variable(λ))
         result = vcat(dx, dp)
+        if is_matrix
+            result = reshape(result, size(u))
+        end
         if !is_u0_mutable
             @warn "InPlace HamiltonianVectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
             return typeof(u)(result)
