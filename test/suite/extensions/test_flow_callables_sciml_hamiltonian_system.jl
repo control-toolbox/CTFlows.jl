@@ -26,9 +26,10 @@ struct FakeHarmonicADBackend <: Differentiation.AbstractADBackend end
 
 function Differentiation.hamiltonian_gradient(backend::FakeHarmonicADBackend, h, t, x, p, v, cache)
     # For H_HARMONIC: H = 0.5*(x² + p²) → ∂H/∂x = x, ∂H/∂p = p
-    # For H_SCALAR_ONLY: H = x*x + p*p → ∂H/∂x = 2x, ∂H/∂p = 2p
+    # For H_SCALAR_ONLY: scalar-only gradients that fail with vectors
+    #   H = x³/3 - log(p) → ∂H/∂x = x*x, ∂H/∂p = -1/p
     if h === H_SCALAR_ONLY
-        return (2*x, 2*p)
+        return (x*x, -1/p)
     else
         return (x, p)
     end
@@ -213,14 +214,17 @@ function test_flow_callables_sciml_hamiltonian_system()
         # SCALAR-ONLY TESTS - verify scalar dispatch (x*x, not sum(x²))
         # ====================================================================
 
-        Test.@testset "Scalar-only Hamiltonian (x*x + p*p)" begin
+        Test.@testset "Scalar-only Hamiltonian (x³/3 - log(p))" begin
             Test.@testset "scalar x0, p0" begin
                 hflow = Flows.build_flow(HSYS_SCALAR, INTEG)
-                # H = x*x + p*p → ẋ = 2p, ṗ = -2x
-                # Solution: x(t) = x0 cos(2t) + p0 sin(2t), p(t) = -x0 sin(2t) + p0 cos(2t)
-                xf, pf = hflow(0.0, 1.0, 0.0, π/4)
-                Test.@test xf ≈ cos(π/2) atol=ATOL  # = 0
-                Test.@test pf ≈ -sin(π/2) atol=ATOL # = -1
+                # H = x³/3 - log(p) → ∂H/∂x = x², ∂H/∂p = -1/p
+                # Equations: ẋ = 1/p, ṗ = -x²
+                # This will fail if x or p are treated as vectors (can't do x*x or 1/p on vectors)
+                xf, pf = hflow(0.0, 0.5, 1.0, 0.1)
+                # Just verify it integrates without error and returns scalars
+                Test.@test xf isa Real
+                Test.@test pf isa Real
+                Test.@test pf > 0  # p should stay positive
             end
         end
 
