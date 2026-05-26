@@ -404,6 +404,33 @@ function test_vector_field_system()
                 Test.@test isdefined(Systems, :VectorFieldSystem)
             end
         end
+
+        # ====================================================================
+        # UNIT TESTS - Scalar InPlace Guard
+        # ====================================================================
+
+        Test.@testset "Scalar InPlace Guard" begin
+            Test.@testset "InPlace VF + scalar u0 throws ArgumentError" begin
+                vf = Data.VectorField((du, u) -> du .= -u; is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                u0 = 1.0  # scalar
+                Test.@test_throws ArgumentError Systems._check_vf_scalar_inplace(sys, u0)
+            end
+
+            Test.@testset "InPlace VF + vector u0 passes" begin
+                vf = Data.VectorField((du, u) -> du .= -u; is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                u0 = [1.0, 2.0]  # vector
+                Test.@test Systems._check_vf_scalar_inplace(sys, u0) === nothing
+            end
+
+            Test.@testset "OutOfPlace VF + scalar u0 passes" begin
+                vf = Data.VectorField(u -> -u; is_autonomous=true, is_variable=false)
+                sys = Systems.VectorFieldSystem(vf)
+                u0 = 1.0  # scalar
+                Test.@test Systems._check_vf_scalar_inplace(sys, u0) === nothing
+            end
+        end
     end
 end
 

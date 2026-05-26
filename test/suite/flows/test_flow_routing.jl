@@ -118,13 +118,6 @@ function test_flow_routing()
             Test.@test Flows.integrator(flow) isa Integrators.AbstractIntegrator
         end
 
-        Test.@testset "Integration: Flow(h, n) — end-to-end" begin
-            flow = Flows.Flow(_TEST_H, 1)
-            Test.@test flow isa Flows.HamiltonianFlow
-            Test.@test flow isa Flows.AbstractFlow
-            Test.@test Flows.system(flow) isa Systems.AbstractHamiltonianSystem
-            Test.@test Flows.integrator(flow) isa Integrators.AbstractIntegrator
-        end
 
         Test.@testset "Integration: Flow(h; reltol=1e-9)" begin
             flow = Flows.Flow(_TEST_H; reltol=1e-9)

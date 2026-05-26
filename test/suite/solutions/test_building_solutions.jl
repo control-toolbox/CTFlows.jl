@@ -88,8 +88,7 @@ function test_building_solutions()
         Test.@testset "build_solution - HamiltonianPointConfig" begin
             Test.@testset "scalar initial condition returns tuple of scalars" begin
                 sys = Systems.HamiltonianVectorFieldSystem(
-                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false);
-                    state_dimension=1
+                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
                 )
                 result = FakeIntegrationResult([[1.0, 0.5], [0.5, 0.25]])
                 config = Configs.HamiltonianPointConfig(0.0, 1.0, 0.5, 1.0)
@@ -101,8 +100,7 @@ function test_building_solutions()
 
             Test.@testset "vector initial condition returns tuple of vectors" begin
                 sys = Systems.HamiltonianVectorFieldSystem(
-                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false);
-                    state_dimension=2
+                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
                 )
                 result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])
                 config = Configs.HamiltonianPointConfig(0.0, [1.0, 2.0], [0.5, 0.3], 1.0)
@@ -115,8 +113,7 @@ function test_building_solutions()
             Test.@testset "vector initial condition uses correct dimension split" begin
                 # Test the bug fix: should use length(initial_state) not length(initial_condition)
                 sys = Systems.HamiltonianVectorFieldSystem(
-                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false);
-                    state_dimension=3
+                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
                 )
                 # Final state has 6 elements: 3 state + 3 costate
                 result = FakeIntegrationResult([[1.0, 2.0, 3.0, 0.5, 0.6, 0.7], [0.5, 1.0, 1.5, 0.25, 0.3, 0.35]])
@@ -135,8 +132,7 @@ function test_building_solutions()
         Test.@testset "build_solution - HamiltonianTrajectoryConfig" begin
             Test.@testset "returns HamiltonianVectorFieldSolution wrapping result" begin
                 sys = Systems.HamiltonianVectorFieldSystem(
-                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false);
-                    state_dimension=2
+                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
                 )
                 result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])
                 config = Configs.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 2.0], [0.5, 0.3])
@@ -147,8 +143,7 @@ function test_building_solutions()
 
             Test.@testset "HamiltonianVectorFieldSolution contains correct result" begin
                 sys = Systems.HamiltonianVectorFieldSystem(
-                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false);
-                    state_dimension=2
+                    Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
                 )
                 result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])
                 config = Configs.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 2.0], [0.5, 0.3])

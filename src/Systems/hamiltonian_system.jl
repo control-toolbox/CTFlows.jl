@@ -6,23 +6,21 @@
 $(TYPEDEF)
 
 Concrete `AbstractHamiltonianSystem` wrapping a scalar `Hamiltonian` function with an AD backend.
-The state dimension `N` is stored as a type parameter for compile-time validation and performance.
-If `N=nothing`, the dimension is inferred at runtime.
+
+The system does not store pre-computed RHS closures. Instead, closures are built
+lazily by `build_rhs` and `build_oop_rhs` based on the actual initial condition
+types, ensuring correct handling of scalar, vector (including length-1), and matrix
+inputs with consistent output shapes.
 
 # Type Parameters
-- `N`: State dimension (`Int` if known, `nothing` if unknown).
 - `F`: concrete type of the wrapped Hamiltonian function.
 - `TD <: TimeDependence`: `Autonomous` or `NonAutonomous`.
 - `VD <: VariableDependence`: `Fixed` or `NonFixed`.
 - `BACKEND <: AbstractADBackend`: concrete AD backend type.
-- `RHS`: type of the pre-computed in-place right-hand side function.
-- `OOPROHS`: type of the pre-computed out-of-place right-hand side function.
 
 # Fields
 - `h::Hamiltonian{F, TD, VD}`: the underlying scalar Hamiltonian function.
 - `backend::BACKEND`: the AD backend for gradient computation.
-- `rhs::RHS`: the pre-computed in-place right-hand side closure with signature `(du, u, p, t) -> nothing`.
-- `rhs_oop::OOPROHS`: the pre-computed out-of-place right-hand side closure with signature `(u, p, t) -> du`.
 
 # Example
 ```julia-repl
@@ -31,30 +29,24 @@ julia> using CTFlows.Systems, CTFlows.Common, CTFlows.Data
 julia> h = Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); autonomous=true, variable=false)
 Hamiltonian{var"#1", Autonomous, Fixed}
 
-julia> sys = HamiltonianSystem(h, AutoForwardDiff(); state_dimension=3)
+julia> sys = HamiltonianSystem(h, AutoForwardDiff())
 HamiltonianSystem
   time_dependence: Autonomous
   variable_dependence: Fixed
-  state_dimension: 3
   hamiltonian: Hamiltonian{var"#1", Autonomous, Fixed}
   backend: AutoForwardDiff()
 ```
 
-See also: [`CTFlows.Data.Hamiltonian`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), [`CTFlows.Traits.AbstractADTrait`](@ref).
+See also: [`CTFlows.Data.Hamiltonian`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), [`CTFlows.Traits.AbstractADTrait`](@ref), [`CTFlows.Systems.build_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
 """
 struct HamiltonianSystem{
-    N,
     F<:Function,
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
     BACKEND<:Differentiation.AbstractADBackend,
-    RHS<:Function,
-    OOPROHS<:Function,
 } <: AbstractHamiltonianSystem{TD, VD, Traits.WithAD}
     h::Data.Hamiltonian{F, TD, VD}
     backend::BACKEND
-    rhs::RHS
-    rhs_oop::OOPROHS
 end
 
 function hamiltonian(sys::HamiltonianSystem)
@@ -69,20 +61,20 @@ end
 # Constructors
 # =============================================================================
 
-function HamiltonianSystem(h::Data.Hamiltonian{F,TD,VD}, backend::Differentiation.AbstractADBackend;
-                           state_dimension::Union{Int,Nothing}=Common.__state_dimension()) where {F,TD,VD}
-    rhs     = _build_rhs_hs(h, backend, Val(state_dimension))
-    rhs_oop = _build_oop_rhs_hs(h, backend, Val(state_dimension))
-    return HamiltonianSystem{state_dimension, F, TD, VD, typeof(backend),
-                             typeof(rhs), typeof(rhs_oop)}(h, backend, rhs, rhs_oop)
+function HamiltonianSystem(h::Data.Hamiltonian{F,TD,VD}, backend::Differentiation.AbstractADBackend) where {F,TD,VD}
+    return HamiltonianSystem{F, TD, VD, typeof(backend)}(h, backend)
 end
 
 # =============================================================================
 # Internal helpers for augmented split/assign (Vector + Matrix, concrete integers)
 # =============================================================================
 
-_aug_split(u::AbstractVector, n_x::Int, n_v::Int) =
-    (@view(u[1:n_x]), @view(u[n_x+1:2*n_x]), @view(u[end-n_v+1:end]))
+function _aug_split(u::AbstractVector, n_x::Int, n_v::Int)
+    x   = n_x == 1 ? u[1]    : @view(u[1:n_x])
+    p   = n_x == 1 ? u[n_x+1] : @view(u[n_x+1:2*n_x])
+    pv  = @view(u[end-n_v+1:end])
+    return (x, p, pv)
+end
 _aug_split(u::AbstractMatrix, n_x::Int, n_v::Int) =
     (@view(u[1:n_x,:]), @view(u[n_x+1:2*n_x,:]), @view(u[end-n_v+1:end,:]))
 
@@ -92,26 +84,62 @@ _aug_assign!(du::AbstractMatrix, dx, dp, dpv, n_x::Int, n_v::Int) =
     (du[1:n_x,:] .= dx; du[n_x+1:2*n_x,:] .= dp; du[end-n_v+1:end,:] .= dpv)
 
 # =============================================================================
-# Internal helpers for building RHS (in-place)
+# Public lazy RHS builders
 # =============================================================================
 
-function _build_rhs_hs(h, backend, ::Val{N}) where N
+"""
+    build_rhs(sys::HamiltonianSystem, x0, p0) -> f!(du, u, λ, t)
+
+Build an in-place RHS closure for the given initial conditions.
+
+The closure is constructed lazily based on the shapes of `x0` and `p0`,
+ensuring correct handling of scalar, vector, and matrix inputs.
+
+# Arguments
+- `sys::HamiltonianSystem`: The Hamiltonian system.
+- `x0`: Initial state (scalar, vector, or matrix).
+- `p0`: Initial costate (same shape as `x0`).
+
+# Returns
+- `Function`: A closure with signature `(du, u, λ, t) -> nothing`.
+"""
+function build_rhs(sys::HamiltonianSystem, x0, p0)
+    N = _state_dim(x0)
+    cx = _make_coerce(x0)
+    cp = _make_coerce(p0)
+    h, backend = sys.h, sys.backend
     return function (du, u, λ, t)
         x, p   = _ham_split(u, N)
-        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, x, p, Common.variable(λ), Common.cache(λ))
+        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, cx(x), cp(p), Common.variable(λ), Common.cache(λ))
         _ham_assign!(du, ∂p, -∂x, N)
         return nothing
     end
 end
 
-# =============================================================================
-# Internal helpers for building RHS (out-of-place)
-# =============================================================================
+"""
+    build_oop_rhs(sys::HamiltonianSystem, x0, p0) -> f(u, λ, t)
 
-function _build_oop_rhs_hs(h, backend, ::Val{N}) where N
+Build an out-of-place RHS closure for the given initial conditions.
+
+The closure is constructed lazily based on the shapes of `x0` and `p0`,
+ensuring correct handling of scalar, vector, and matrix inputs.
+
+# Arguments
+- `sys::HamiltonianSystem`: The Hamiltonian system.
+- `x0`: Initial state (scalar, vector, or matrix).
+- `p0`: Initial costate (same shape as `x0`).
+
+# Returns
+- `Function`: A closure with signature `(u, λ, t) -> du`.
+"""
+function build_oop_rhs(sys::HamiltonianSystem, x0, p0)
+    N = _state_dim(x0)
+    cx = _make_coerce(x0)
+    cp = _make_coerce(p0)
+    h, backend = sys.h, sys.backend
     return function (u, λ, t)
         x, p   = _ham_split(u, N)
-        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, x, p, Common.variable(λ), Common.cache(λ))
+        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, cx(x), cp(p), Common.variable(λ), Common.cache(λ))
         return vcat(∂p, -∂x)
     end
 end
@@ -150,45 +178,6 @@ function build_rhs_augmented(sys::HamiltonianSystem, n_x::Int, n_v::Int)
     end
 end
 
-# =============================================================================
-# rhs accessor (in-place)
-# =============================================================================
-
-function rhs(sys::HamiltonianSystem)
-    return sys.rhs
-end
-
-# =============================================================================
-# rhs_oop accessor (out-of-place)
-# =============================================================================
-
-function rhs_oop(sys::HamiltonianSystem, is_u0_mutable::Bool=true)
-    return sys.rhs_oop
-end
-
-# =============================================================================
-# state_dimension accessor
-# =============================================================================
-
-function state_dimension(sys::HamiltonianSystem{N}) where N
-    return N
-end
-
-# =============================================================================
-# Validation
-# =============================================================================
-
-function _check_state_dimension(sys::HamiltonianSystem{N}, x0) where N
-    if N !== nothing && length(x0) != N
-        throw(Exceptions.PreconditionError(
-            "state dimension mismatch";
-            reason    = "length(x0) = $(length(x0)) ≠ N = $N",
-            context   = "HamiltonianSystem construction with known dimension",
-            suggestion = "either omit state_dimension or ensure length(x0) matches the specified dimension",
-        ))
-    end
-    return nothing
-end
 
 # =============================================================================
 # Base.show
@@ -198,7 +187,6 @@ function Base.show(io::IO, sys::HamiltonianSystem)
     println(io, "HamiltonianSystem")
     println(io, "  time_dependence: ", Traits.time_dependence(sys))
     println(io, "  variable_dependence: ", Traits.variable_dependence(sys))
-    println(io, "  state_dimension: ", sys.N === nothing ? "unknown" : sys.N)
     println(io, "  hamiltonian: ", sys.h)
     println(io, "  backend: ", sys.backend)
 end
@@ -227,7 +215,7 @@ Return the variable costate capability trait of a variable-dependent Hamiltonian
 See also: [`CTFlows.Traits.AbstractVariableCostateCapability`](@ref), [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Traits.NoVariableCostate`](@ref).
 """
 function Traits.variable_costate_trait(
-    ::HamiltonianSystem{N, F, TD, Traits.NonFixed, B, R, O}
-) where {N, F, TD, B, R, O}
+    ::HamiltonianSystem{F, TD, Traits.NonFixed, B}
+) where {F, TD, B}
     return Traits.SupportsVariableCostate
 end

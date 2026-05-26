@@ -25,8 +25,14 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 struct FakeHarmonicADBackend <: Differentiation.AbstractADBackend end
 
 function Differentiation.hamiltonian_gradient(backend::FakeHarmonicADBackend, h, t, x, p, v, cache)
-    # Harmonic oscillator: H = 0.5*(x² + p²) → ∂H/∂x = x, ∂H/∂p = p
-    return (x, p)
+    # For H_HARMONIC: H = 0.5*(x² + p²) → ∂H/∂x = x, ∂H/∂p = p
+    # For H_SCALAR_ONLY: scalar-only gradients that fail with vectors
+    #   H = x³/3 - log(p) → ∂H/∂x = x*x, ∂H/∂p = -1/p
+    if h === H_SCALAR_ONLY
+        return (x*x, -1/p)
+    else
+        return (x, p)
+    end
 end
 
 function Differentiation.variable_gradient(backend::FakeHarmonicADBackend, h, t, x, p, v, cache)
@@ -46,10 +52,14 @@ end
 const H_HARMONIC = Data.Hamiltonian((x, p) -> 0.5*(sum(abs2, x) + sum(abs2, p));
                                     is_autonomous=true, is_variable=false)
 const BACKEND    = FakeHarmonicADBackend()
-const HSYS_NO_N  = Systems.HamiltonianSystem(H_HARMONIC, BACKEND)
-const HSYS_N1    = Systems.HamiltonianSystem(H_HARMONIC, BACKEND; state_dimension=1)
-const HSYS_N2    = Systems.HamiltonianSystem(H_HARMONIC, BACKEND; state_dimension=2)
+const HSYS       = Systems.HamiltonianSystem(H_HARMONIC, BACKEND)
 const INTEG      = Integrators.SciML()
+
+# Scalar-only Hamiltonian: H = x*x + p*p (requires scalar x, p)
+# This will fail if x or p are treated as vectors
+const H_SCALAR_ONLY = Data.Hamiltonian((x, p) -> x*x + p*p;
+                                        is_autonomous=true, is_variable=false)
+const HSYS_SCALAR = Systems.HamiltonianSystem(H_SCALAR_ONLY, BACKEND)
 const ATOL       = 1e-5
 
 # ==============================================================================
@@ -65,7 +75,7 @@ function test_flow_callables_sciml_hamiltonian_system()
 
         Test.@testset "HamiltonianFlow HamiltonianPointConfig" begin
             Test.@testset "scalar x0, p0" begin
-                hflow = Flows.build_flow(HSYS_N1, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 xf, pf = hflow(0.0, 1.0, 0.0, π/2)
                 Test.@test xf isa Real
                 Test.@test pf isa Real
@@ -74,7 +84,7 @@ function test_flow_callables_sciml_hamiltonian_system()
             end
 
             Test.@testset "vector x0, p0" begin
-                hflow = Flows.build_flow(HSYS_NO_N, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 xf, pf = hflow(0.0, [1.0, 0.0], [0.0, 1.0], π/2)
                 Test.@test xf isa AbstractVector && length(xf) == 2
                 Test.@test pf isa AbstractVector && length(pf) == 2
@@ -82,17 +92,8 @@ function test_flow_callables_sciml_hamiltonian_system()
                 Test.@test pf ≈ [-1.0, 0.0]  atol=ATOL
             end
 
-            Test.@testset "SVector x0, p0 (N=2)" begin
-                hflow = Flows.build_flow(HSYS_N2, INTEG)
-                xf, pf = hflow(0.0, SA[1.0, 0.0], SA[0.0, 1.0], π/2)
-                Test.@test xf isa AbstractVector
-                Test.@test pf isa AbstractVector
-                Test.@test xf ≈ [0.0, 1.0]  atol=ATOL
-                Test.@test pf ≈ [-1.0, 0.0]  atol=ATOL
-            end
-
-            Test.@testset "SVector x0, p0 (N=nothing)" begin
-                hflow = Flows.build_flow(HSYS_NO_N, INTEG)
+            Test.@testset "SVector x0, p0" begin
+                hflow = Flows.build_flow(HSYS, INTEG)
                 xf, pf = hflow(0.0, SA[1.0, 0.0], SA[0.0, 1.0], π/2)
                 Test.@test xf isa AbstractVector
                 Test.@test pf isa AbstractVector
@@ -101,7 +102,7 @@ function test_flow_callables_sciml_hamiltonian_system()
             end
 
             Test.@testset "MVector x0, p0" begin
-                hflow = Flows.build_flow(HSYS_N2, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 xf, pf = hflow(0.0, MVector{2}(1.0, 0.0), MVector{2}(0.0, 1.0), π/2)
                 Test.@test xf isa AbstractVector
                 Test.@test pf isa AbstractVector
@@ -110,7 +111,7 @@ function test_flow_callables_sciml_hamiltonian_system()
             end
 
             Test.@testset "scalar complex x0, p0" begin
-                hflow = Flows.build_flow(HSYS_N1, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 xf, pf = hflow(0.0, 1.0+2.0im, 0.0+0.0im, π/2)
                 Test.@test xf isa Complex
                 Test.@test pf isa Complex
@@ -119,7 +120,7 @@ function test_flow_callables_sciml_hamiltonian_system()
             end
 
             Test.@testset "complex vector x0, p0" begin
-                hflow = Flows.build_flow(HSYS_NO_N, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 x0 = [1.0+2.0im, 0.0+0.0im]
                 p0 = [0.0+0.0im, 1.0+1.0im]
                 xf, pf = hflow(0.0, x0, p0, π/2)
@@ -130,7 +131,7 @@ function test_flow_callables_sciml_hamiltonian_system()
             end
 
             Test.@testset "complex SVector x0, p0" begin
-                hflow = Flows.build_flow(HSYS_N2, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 xf, pf = hflow(0.0, SA[1.0+2.0im, 0.0+0.0im], SA[0.0+0.0im, 1.0+1.0im], π/2)
                 Test.@test xf isa AbstractVector
                 Test.@test pf isa AbstractVector
@@ -139,7 +140,7 @@ function test_flow_callables_sciml_hamiltonian_system()
             end
 
             Test.@testset "matrix x0, p0" begin
-                hflow = Flows.build_flow(HSYS_NO_N, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 X0 = [1.0 2.0; 3.0 4.0]
                 P0 = [0.0 0.0; 1.0 1.0]
                 Xf, Pf = hflow(0.0, X0, P0, π/2)
@@ -152,7 +153,7 @@ function test_flow_callables_sciml_hamiltonian_system()
             end
 
             Test.@testset "complex matrix x0, p0" begin
-                hflow = Flows.build_flow(HSYS_NO_N, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 X0 = [1.0+2.0im  5.0+6.0im; 3.0+4.0im  7.0+8.0im]
                 P0 = [0.0+0.0im  1.0+1.0im; 2.0+2.0im  3.0+3.0im]
                 Xf, Pf = hflow(0.0, X0, P0, π/2)
@@ -163,7 +164,7 @@ function test_flow_callables_sciml_hamiltonian_system()
             end
 
             Test.@testset "ForwardDiff.Dual scalar x0, p0" begin
-                hflow = Flows.build_flow(HSYS_N1, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 x0 = ForwardDiff.Dual(1.0, 1.0)
                 p0 = ForwardDiff.Dual(0.0, 0.0)
                 xf, pf = hflow(0.0, x0, p0, π/2)
@@ -174,7 +175,7 @@ function test_flow_callables_sciml_hamiltonian_system()
             end
 
             Test.@testset "ForwardDiff.Dual vector x0, p0" begin
-                hflow = Flows.build_flow(HSYS_NO_N, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 x0 = [ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)]
                 p0 = [ForwardDiff.Dual(0.0, 0.0), ForwardDiff.Dual(1.0, 0.0)]
                 xf, pf = hflow(0.0, x0, p0, π/2)
@@ -191,21 +192,39 @@ function test_flow_callables_sciml_hamiltonian_system()
 
         Test.@testset "HamiltonianFlow HamiltonianTrajectoryConfig" begin
             Test.@testset "scalar x0, p0" begin
-                hflow = Flows.build_flow(HSYS_N1, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), 1.0, 0.0)
                 Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
             end
 
             Test.@testset "vector x0, p0" begin
-                hflow = Flows.build_flow(HSYS_NO_N, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), [1.0, 0.0], [0.0, 1.0])
                 Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
             end
 
             Test.@testset "SVector x0, p0" begin
-                hflow = Flows.build_flow(HSYS_N2, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), SA[1.0, 0.0], SA[0.0, 1.0])
                 Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+            end
+        end
+
+        # ====================================================================
+        # SCALAR-ONLY TESTS - verify scalar dispatch (x*x, not sum(x²))
+        # ====================================================================
+
+        Test.@testset "Scalar-only Hamiltonian (x³/3 - log(p))" begin
+            Test.@testset "scalar x0, p0" begin
+                hflow = Flows.build_flow(HSYS_SCALAR, INTEG)
+                # H = x³/3 - log(p) → ∂H/∂x = x², ∂H/∂p = -1/p
+                # Equations: ẋ = 1/p, ṗ = -x²
+                # This will fail if x or p are treated as vectors (can't do x*x or 1/p on vectors)
+                xf, pf = hflow(0.0, 0.5, 1.0, 0.1)
+                # Just verify it integrates without error and returns scalars
+                Test.@test xf isa Real
+                Test.@test pf isa Real
+                Test.@test pf > 0  # p should stay positive
             end
         end
 
@@ -215,7 +234,7 @@ function test_flow_callables_sciml_hamiltonian_system()
 
         Test.@testset "build_system pipeline" begin
             Test.@testset "via Systems.build_system" begin
-                sys = Systems.build_system(H_HARMONIC, BACKEND; state_dimension=2)
+                sys = Systems.build_system(H_HARMONIC, BACKEND)
                 flow = Flows.build_flow(sys, INTEG)
                 xf, pf = flow(0.0, [1.0, 0.0], [0.0, 1.0], π/2)
                 Test.@test xf ≈ [0.0, 1.0]  atol=ATOL

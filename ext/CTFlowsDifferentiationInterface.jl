@@ -53,6 +53,14 @@ end
 # ==============================================================================
 # Differentiation.prepare_cache — cache preparation for DifferentiationInterface
 # ==============================================================================
+function preparator(::Type{<:Number})
+    return DI.prepare_derivative
+end
+
+function preparator(::Type{<:AbstractArray})
+    return DI.prepare_gradient
+end
+
 
 """
 $(TYPEDSIGNATURES)
@@ -96,12 +104,12 @@ function Differentiation.prepare_cache(
         h_x(x, t, p, v) = h(t, x, p, v)
         h_p(p, t, x, v) = h(t, x, p, v)
         h_v(v, t, x, p) = h(t, x, p, v)
-        p_x = DI.prepare_gradient(h_x, di_backend, typical_x, DI.Constant(typical_t), DI.Constant(typical_p), DI.Constant(typical_v))
-        p_p = DI.prepare_gradient(h_p, di_backend, typical_p, DI.Constant(typical_t), DI.Constant(typical_x), DI.Constant(typical_v))
+        p_x = preparator(typeof(typical_x))(h_x, di_backend, typical_x, DI.Constant(typical_t), DI.Constant(typical_p), DI.Constant(typical_v))
+        p_p = preparator(typeof(typical_p))(h_p, di_backend, typical_p, DI.Constant(typical_t), DI.Constant(typical_x), DI.Constant(typical_v))
         p_v = if typical_v === nothing
             nothing
         else
-            DI.prepare_gradient(h_v, di_backend, typical_v, DI.Constant(typical_t), DI.Constant(typical_x), DI.Constant(typical_p))
+            preparator(typeof(typical_v))(h_v, di_backend, typical_v, DI.Constant(typical_t), DI.Constant(typical_x), DI.Constant(typical_p))
         end
         return DifferentiationInterfaceCache(p_x, p_p, p_v, h_x, h_p, h_v)
     else
@@ -116,12 +124,12 @@ function update!(cache::DifferentiationInterfaceCache, backend::Differentiation.
     if !do_prepare
         return nothing
     end
-    p_x = DI.prepare_gradient(cache.h_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
-    p_p = DI.prepare_gradient(cache.h_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
+    p_x = preparator(typeof(x))(cache.h_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
+    p_p = preparator(typeof(p))(cache.h_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
     p_v = if v === nothing
         nothing
     else
-        DI.prepare_gradient(cache.h_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
+        preparator(typeof(v))(cache.h_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
     end
     cache.p_x = p_x
     cache.p_p = p_p
@@ -132,6 +140,14 @@ end
 # ==============================================================================
 # Differentiation.hamiltonian_gradient — with/without cache
 # ==============================================================================
+function derivator(::Type{<:Number})
+    return DI.derivative
+end
+
+function derivator(::Type{<:AbstractArray})
+    return DI.gradient
+end
+
 
 """
 $(TYPEDSIGNATURES)
@@ -166,8 +182,9 @@ function Differentiation.hamiltonian_gradient(
     di_backend = CTSolvers.Strategies.options(backend)[:ad_backend]
     h_x(x, t, p, v) = h(t, x, p, v)
     h_p(p, t, x, v) = h(t, x, p, v)
-    grad_x = DI.gradient(h_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
-    grad_p = DI.gradient(h_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
+    # Use derivative for scalars, gradient for arrays
+    grad_x = derivator(typeof(x))(h_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
+    grad_p = derivator(typeof(p))(h_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
     return (grad_x, grad_p)
 end
 
@@ -207,14 +224,15 @@ function Differentiation.hamiltonian_gradient(
 )
     di_backend = CTSolvers.Strategies.options(backend)[:ad_backend]
     try
-        grad_x = DI.gradient(cache.h_x, cache.p_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
-        grad_p = DI.gradient(cache.h_p, cache.p_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
+        # Use derivative for scalars, gradient for arrays
+        grad_x = derivator(typeof(x))(cache.h_x, cache.p_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
+        grad_p = derivator(typeof(p))(cache.h_p, cache.p_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
         return (grad_x, grad_p)
     catch e
         if e isa DI.PreparationMismatchError
             update!(cache, backend, t, x, p, v) # recompute cache
-            grad_x = DI.gradient(cache.h_x, cache.p_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
-            grad_p = DI.gradient(cache.h_p, cache.p_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
+            grad_x = derivator(typeof(x))(cache.h_x, cache.p_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
+            grad_p = derivator(typeof(p))(cache.h_p, cache.p_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
             return (grad_x, grad_p)
         else
             rethrow(e)
@@ -258,7 +276,8 @@ function Differentiation.variable_gradient(
     # For Fixed problems (v === nothing), return nothing without calling DI.gradient
     di_backend = CTSolvers.Strategies.options(backend)[:ad_backend]
     h_v(v, t, x, p) = h(t, x, p, v)
-    grad_v = DI.gradient(h_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
+    # Use derivative for scalars, gradient for arrays
+    grad_v = derivator(typeof(v))(h_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
     return grad_v
 end
 
@@ -297,12 +316,13 @@ function Differentiation.variable_gradient(
 )
     di_backend = CTSolvers.Strategies.options(backend)[:ad_backend]
     try 
-        grad_v = DI.gradient(cache.h_v, cache.p_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
+        # Use derivative for scalars, gradient for arrays
+        grad_v = derivator(typeof(v))(cache.h_v, cache.p_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
         return grad_v
     catch e
         if e isa DI.PreparationMismatchError
             update!(cache, backend, t, x, p, v) # recompute cache
-            grad_v = DI.gradient(cache.h_v, cache.p_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
+            grad_v = derivator(typeof(v))(cache.h_v, cache.p_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
             return grad_v
         else
             rethrow(e)

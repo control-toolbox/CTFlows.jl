@@ -41,8 +41,31 @@ x0, p0 = sol(0.0)        # returns tuple (x(0), p(0))
 
 See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.AbstractHamiltonianVectorFieldSolution`](@ref).
 """
-struct HamiltonianVectorFieldSolution{R<:Integrators.AbstractIntegrationResult} <: AbstractHamiltonianVectorFieldSolution
+struct HamiltonianVectorFieldSolution{X0, R<:Integrators.AbstractIntegrationResult} <: AbstractHamiltonianVectorFieldSolution
+    x0::X0
     result::R
+end
+
+# =============================================================================
+# Internal helper for splitting solutions based on initial state shape
+# =============================================================================
+
+"""
+    _ham_split_solution(u::AbstractVector, x0::Number) = (only(u[1:1]), only(u[2:2]))
+    _ham_split_solution(u::AbstractVector, x0::AbstractVector) = (u[1:n], u[n+1:2n])
+    _ham_split_solution(u::AbstractMatrix, x0::AbstractMatrix) = (u[1:n, :], u[n+1:2n, :])
+
+Split a combined state vector into state and costate components, preserving the shape of x0.
+
+For scalar x0, extracts single elements and coerces them back to scalars.
+For vector/matrix x0, extracts views of the appropriate size.
+"""
+_ham_split_solution(u::AbstractVector, x0::Number) = (only(u[1:1]), only(u[2:2]))
+_ham_split_solution(u::AbstractVector, x0::AbstractVector) = let n = length(x0)
+    (u[1:n], u[n+1:2n])
+end
+_ham_split_solution(u::AbstractMatrix, x0::AbstractMatrix) = let n = size(x0, 1)
+    (u[1:n, :], u[n+1:2n, :])
 end
 
 # =============================================================================
@@ -106,8 +129,7 @@ See also: [`CTFlows.Solutions.evaluate_at`](@ref), [`CTFlows.Solutions.times`](@
 """
 function (sol::HamiltonianVectorFieldSolution)(t::Real)
     u = Integrators.evaluate_at(sol.result, t)
-    n = length(u) ÷ 2
-    return (u[1:n], u[n+1:2n])
+    return _ham_split_solution(u, sol.x0)
 end
 
 """
@@ -187,8 +209,7 @@ See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Sol
 """
 function Integrators.final_state(sol::HamiltonianVectorFieldSolution)
     u = Integrators.final_state(sol.result)
-    n = length(u) ÷ 2
-    return (u[1:n], u[n+1:2n])
+    return _ham_split_solution(u, sol.x0)
 end
 
 """
@@ -219,7 +240,7 @@ function Integrators.merge(segments::AbstractVector{<:HamiltonianVectorFieldSolu
     
     internal_results = [sol.result for sol in segments]
     merged_result = Integrators.merge(internal_results)
-    return HamiltonianVectorFieldSolution(merged_result)
+    return HamiltonianVectorFieldSolution(segments[1].x0, merged_result)
 end
 
 # =============================================================================

@@ -83,16 +83,20 @@ function solve_linear(t, t0, x0, p0, v)
 end
 const H_LINEAR_VAR = Data.Hamiltonian(H_LINEAR; is_autonomous=true, is_variable=true)
 const BACKEND_FAKE = FakeVariableHarmonicADBackend()
-const HSYS_FAKE_N1 = Systems.HamiltonianSystem(H_LINEAR_VAR, BACKEND_FAKE; state_dimension=1)
-const HSYS_FAKE_N2 = Systems.HamiltonianSystem(H_LINEAR_VAR, BACKEND_FAKE; state_dimension=2)
+const HSYS_FAKE = Systems.HamiltonianSystem(H_LINEAR_VAR, BACKEND_FAKE)
 
 # DifferentiationInterface backends
 const DI_BACKEND_CACHED    = Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff(), prepare_cache=true)
 const DI_BACKEND_UNCACHED  = Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff(), prepare_cache=false)
-const HSYS_DI_N1_CACHED    = Systems.HamiltonianSystem(H_LINEAR_VAR, DI_BACKEND_CACHED; state_dimension=1)
-const HSYS_DI_N1_UNCACHED  = Systems.HamiltonianSystem(H_LINEAR_VAR, DI_BACKEND_UNCACHED; state_dimension=1)
-const HSYS_DI_N2_CACHED    = Systems.HamiltonianSystem(H_LINEAR_VAR, DI_BACKEND_CACHED; state_dimension=2)
-const HSYS_DI_N2_UNCACHED  = Systems.HamiltonianSystem(H_LINEAR_VAR, DI_BACKEND_UNCACHED; state_dimension=2)
+const HSYS_DI_CACHED    = Systems.HamiltonianSystem(H_LINEAR_VAR, DI_BACKEND_CACHED)
+const HSYS_DI_UNCACHED  = Systems.HamiltonianSystem(H_LINEAR_VAR, DI_BACKEND_UNCACHED)
+
+# Scalar-only Hamiltonian with variable: H = x³/3 - log(p) + v³/3
+# This will fail if x, p, or v are treated as vectors
+# Gradients: ∂H/∂x = x*x, ∂H/∂p = -1/p, ∂H/∂v = v*v
+H_SCALAR_VAR(x, p, v) = x^3/3 - log(p) + v^3/3
+const H_SCALAR_VAR_H = Data.Hamiltonian(H_SCALAR_VAR; is_autonomous=true, is_variable=true)
+const HSYS_SCALAR_VAR = Systems.HamiltonianSystem(H_SCALAR_VAR_H, DI_BACKEND_CACHED)
 
 const INTEG = Integrators.SciML()
 
@@ -164,21 +168,21 @@ function test_variable_costate_flows()
             Test.@test Traits.variable_costate_trait(sys_fixed) === Traits.NoVariableCostate
 
             # NonFixed HamiltonianSystem -> SupportsVariableCostate
-            Test.@test Traits.variable_costate_trait(HSYS_FAKE_N1) === Traits.SupportsVariableCostate
-            Test.@test Traits.variable_costate_trait(HSYS_FAKE_N2) === Traits.SupportsVariableCostate
+            Test.@test Traits.variable_costate_trait(HSYS_FAKE) === Traits.SupportsVariableCostate
+            Test.@test Traits.variable_costate_trait(HSYS_FAKE) === Traits.SupportsVariableCostate
 
             # DI backends also support variable costate
-            Test.@test Traits.variable_costate_trait(HSYS_DI_N1_CACHED) === Traits.SupportsVariableCostate
-            Test.@test Traits.variable_costate_trait(HSYS_DI_N1_UNCACHED) === Traits.SupportsVariableCostate
+            Test.@test Traits.variable_costate_trait(HSYS_DI_CACHED) === Traits.SupportsVariableCostate
+            Test.@test Traits.variable_costate_trait(HSYS_DI_UNCACHED) === Traits.SupportsVariableCostate
         end
 
         Test.@testset "Integration: ad_trait on systems" begin
             # HamiltonianSystem always has WithAD
-            Test.@test Traits.ad_trait(HSYS_FAKE_N1) === Traits.WithAD
-            Test.@test Traits.ad_trait(HSYS_FAKE_N2) === Traits.WithAD
+            Test.@test Traits.ad_trait(HSYS_FAKE) === Traits.WithAD
+            Test.@test Traits.ad_trait(HSYS_FAKE) === Traits.WithAD
 
             # DI backends also have WithAD
-            Test.@test Traits.ad_trait(HSYS_DI_N1_CACHED) === Traits.WithAD
+            Test.@test Traits.ad_trait(HSYS_DI_CACHED) === Traits.WithAD
         end
 
         Test.@testset "Integration: FakeADBackend variable_costate flow" begin
@@ -187,7 +191,7 @@ function test_variable_costate_flows()
             # Analytical: x(t) = x0 + p0 * (t-t0) / sum(v), p(t) = p0, pv(t) = -sum(p0^2) * (t-t0) / (2 * sum(v)^2)
 
             Test.@testset "scalar with variable_costate=true" begin
-                hflow = Flows.build_flow(HSYS_FAKE_N1, INTEG)
+                hflow = Flows.build_flow(HSYS_FAKE, INTEG)
                 t0, tf = 0.0, 1.0
                 x0, p0 = 1.0, 2.0
                 v = 3.0
@@ -205,7 +209,7 @@ function test_variable_costate_flows()
             end
 
             Test.@testset "scalar with variable_costate=false (default)" begin
-                hflow = Flows.build_flow(HSYS_FAKE_N1, INTEG)
+                hflow = Flows.build_flow(HSYS_FAKE, INTEG)
                 t0, tf = 0.0, 1.0
                 x0, p0 = 1.0, 2.0
                 v = 3.0
@@ -221,7 +225,7 @@ function test_variable_costate_flows()
             end
 
             Test.@testset "vector with variable_costate=true" begin
-                hflow = Flows.build_flow(HSYS_FAKE_N2, INTEG)
+                hflow = Flows.build_flow(HSYS_FAKE, INTEG)
                 t0, tf = 0.0, 1.0
                 x0 = [1.0, 2.0]
                 p0 = [3.0, 4.0]
@@ -240,7 +244,7 @@ function test_variable_costate_flows()
             end
 
             Test.@testset "SVector with variable_costate=true" begin
-                hflow = Flows.build_flow(HSYS_FAKE_N2, INTEG)
+                hflow = Flows.build_flow(HSYS_FAKE, INTEG)
                 t0, tf = 0.0, 1.0
                 x0 = SA[1.0, 2.0]
                 p0 = SA[3.0, 4.0]
@@ -264,7 +268,7 @@ function test_variable_costate_flows()
 
         Test.@testset "Integration: DI variable_costate flow" begin
             Test.@testset "scalar cached with variable_costate=true" begin
-                hflow = Flows.build_flow(HSYS_DI_N1_CACHED, INTEG)
+                hflow = Flows.build_flow(HSYS_DI_CACHED, INTEG)
                 t0, tf = 0.0, 1.0
                 x0, p0 = 1.0, 2.0
                 v = 3.0
@@ -282,7 +286,7 @@ function test_variable_costate_flows()
             end
 
             Test.@testset "scalar uncached with variable_costate=true" begin
-                hflow = Flows.build_flow(HSYS_DI_N1_UNCACHED, INTEG)
+                hflow = Flows.build_flow(HSYS_DI_UNCACHED, INTEG)
                 t0, tf = 0.0, 1.0
                 x0, p0 = 1.0, 2.0
                 v = [3.0] # TODO: should work with a scalar.
@@ -300,7 +304,7 @@ function test_variable_costate_flows()
             end
 
             Test.@testset "vector cached with variable_costate=true" begin
-                hflow = Flows.build_flow(HSYS_DI_N2_CACHED, INTEG)
+                hflow = Flows.build_flow(HSYS_DI_CACHED, INTEG)
                 t0, tf = 0.0, 1.0
                 x0 = [1.0, 2.0]
                 p0 = [3.0, 4.0]
@@ -320,8 +324,8 @@ function test_variable_costate_flows()
 
             Test.@testset "comparison FakeADBackend vs DI" begin
                 # Both should give the same numerical result
-                hflow_fake = Flows.build_flow(HSYS_FAKE_N1, INTEG)
-                hflow_di   = Flows.build_flow(HSYS_DI_N1_CACHED, INTEG)
+                hflow_fake = Flows.build_flow(HSYS_FAKE, INTEG)
+                hflow_di   = Flows.build_flow(HSYS_DI_CACHED, INTEG)
 
                 t0, tf = 0.0, 1.0
                 x0, p0 = 1.0, 2.0
@@ -338,7 +342,7 @@ function test_variable_costate_flows()
 
         Test.@testset "Integration: regression tests" begin
             Test.@testset "variable_costate=false default unchanged" begin
-                hflow = Flows.build_flow(HSYS_FAKE_N1, INTEG)
+                hflow = Flows.build_flow(HSYS_FAKE, INTEG)
                 t0, tf = 0.0, 1.0
                 x0, p0 = 1.0, 2.0
                 v = 3.0
@@ -355,6 +359,27 @@ function test_variable_costate_flows()
         end
 
         # ====================================================================
+        # SCALAR-ONLY TESTS - verify scalar dispatch (x*x + p*p + v*v)
+        # ====================================================================
+
+        Test.@testset "Scalar-only Hamiltonian with variable (x³/3 - log(p) + v³/3)" begin
+            Test.@testset "scalar x0, p0, v with variable_costate=true" begin
+                hflow = Flows.build_flow(HSYS_SCALAR_VAR, INTEG)
+                # H = x³/3 - log(p) + v³/3 → ∂H/∂x = x², ∂H/∂p = -1/p, ∂H/∂v = v²
+                # Equations: ẋ = 1/p, ṗ = -x², ṗv = -v²
+                # This will fail if x, p, or v are treated as vectors (can't do x*x, 1/p, v*v on vectors)
+                t0, tf = 0.0, 0.1
+                x0, p0, v = 0.5, 1.0, 0.5
+                xf, pf, pvf = hflow(t0, x0, p0, tf; variable=v, variable_costate=true)
+                # Just verify it integrates without error and returns scalars
+                Test.@test xf isa Real
+                Test.@test pf isa Real
+                Test.@test pvf isa Real
+                Test.@test pf > 0  # p should stay positive
+            end
+        end
+
+        # ====================================================================
         # ERROR TESTS
         # ====================================================================
 
@@ -366,20 +391,20 @@ function test_variable_costate_flows()
         end
 
         Test.@testset "Error: variable_costate=true without variable on NonFixed" begin
-            hflow = Flows.build_flow(HSYS_FAKE_N1, INTEG)
+            hflow = Flows.build_flow(HSYS_FAKE, INTEG)
             Test.@test_throws Exceptions.PreconditionError hflow(0.0, 1.0, 0.0, 1.0; variable_costate=true)
         end
 
         Test.@testset "Error: HamiltonianVectorFieldSystem with variable_costate" begin
             # HamiltonianVectorFieldSystem has NoVariableCostate (Fixed only)
             hvf = Data.HamiltonianVectorField((x, p) -> (p, -x); is_autonomous=true, is_variable=false)
-            sys_hvf = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=1)
+            sys_hvf = Systems.HamiltonianVectorFieldSystem(hvf)
             hflow = Flows.build_flow(sys_hvf, INTEG)
             Test.@test_throws Exceptions.PreconditionError hflow(0.0, 1.0, 0.0, 1.0; variable_costate=true)
         end
 
         Test.@testset "Error: variable_costate=true with trajectory config" begin
-            hflow = Flows.build_flow(HSYS_FAKE_N1, INTEG)
+            hflow = Flows.build_flow(HSYS_FAKE, INTEG)
             t0, tf = 0.0, 1.0
             x0, p0 = 1.0, 2.0
             v = 3.0

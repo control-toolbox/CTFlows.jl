@@ -80,22 +80,6 @@ __is_inplace() = nothing
 """
 $(TYPEDSIGNATURES)
 
-Default value for state dimension parameter in Hamiltonian system constructors.
-
-Returns `nothing` by default, meaning the state dimension is not specified
-and will be inferred at runtime. When specified as an integer, the dimension
-is stored as a type parameter for compile-time validation and performance.
-
-# Returns
-- `Nothing`: The default value for the `state_dimension` parameter.
-
-See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Systems.build_system`](@ref).
-"""
-__state_dimension() = nothing
-
-"""
-$(TYPEDSIGNATURES)
-
 Default value for variable_costate flag in Hamiltonian flow calls.
 
 Returns `false` by default, meaning the flow does not integrate the augmented

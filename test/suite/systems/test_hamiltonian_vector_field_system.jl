@@ -20,20 +20,14 @@ function test_hamiltonian_vector_field_system()
         # ====================================================================
         
         Test.@testset "Construction" begin
-            # From HamiltonianVectorField without dimension
+            # From HamiltonianVectorField (lazy, no dimension)
             hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
-            sys1 = Systems.HamiltonianVectorFieldSystem(hvf)
-            Test.@test sys1 isa Systems.HamiltonianVectorFieldSystem
-            Test.@test sys1 isa Systems.AbstractHamiltonianSystem
-            Test.@test Systems.state_dimension(sys1) === nothing
-
-            # From HamiltonianVectorField with dimension
-            sys2 = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=3)
-            Test.@test sys2 isa Systems.HamiltonianVectorFieldSystem
-            Test.@test Systems.state_dimension(sys2) == 3
+            sys = Systems.HamiltonianVectorFieldSystem(hvf)
+            Test.@test sys isa Systems.HamiltonianVectorFieldSystem
+            Test.@test sys isa Systems.AbstractHamiltonianSystem
 
             # Hierarchy check: supertype with WithoutAD
-            Test.@test sys1 isa Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD}
+            Test.@test sys isa Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD}
         end
 
         Test.@testset "ad_trait" begin
@@ -51,68 +45,72 @@ function test_hamiltonian_vector_field_system()
         Test.@testset "build_system" begin
             hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
             
-            # Without dimension
-            sys1 = Systems.build_system(hvf)
-            Test.@test sys1 isa Systems.HamiltonianVectorFieldSystem
-            Test.@test Systems.state_dimension(sys1) === nothing
-            
-            # With dimension
-            sys2 = Systems.build_system(hvf; state_dimension=3)
-            Test.@test sys2 isa Systems.HamiltonianVectorFieldSystem
-            Test.@test Systems.state_dimension(sys2) == 3
+            # Build system without state_dimension (lazy inference)
+            sys = Systems.build_system(hvf)
+            Test.@test sys isa Systems.HamiltonianVectorFieldSystem
         end
         
         # ====================================================================
-        # UNIT TESTS - rhs (in-place)
+        # UNIT TESTS - build_rhs (lazy in-place)
         # ====================================================================
-        
-        Test.@testset "rhs" begin
+
+        Test.@testset "build_rhs" begin
             hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
             sys = Systems.HamiltonianVectorFieldSystem(hvf)
-            
-            rhs = Systems.rhs(sys)
+
+            x0 = [1.0, 2.0]
+            p0 = [3.0, 4.0]
+            rhs = Systems.build_rhs(sys, x0, p0)
             Test.@test rhs isa Function
-            
+
             # Test RHS call with vector
             u = [1.0, 2.0, 3.0, 4.0]  # x = [1, 2], p = [3, 4]
             du = zeros(4)
             p = Common.ODEParameters(nothing)
             rhs(du, u, p, 0.0)
-            
+
             # dx = x = [1, 2], dp = -p = [-3, -4]
             Test.@test du[1:2] == [1.0, 2.0]
             Test.@test du[3:4] == [-3.0, -4.0]
 
             # Test RHS call with matrix
+            x0_mat = [1.0 2.0; 3.0 4.0]
+            p0_mat = [5.0 6.0; 7.0 8.0]
+            rhs_mat = Systems.build_rhs(sys, x0_mat, p0_mat)
             u_mat = [1.0 2.0; 3.0 4.0; 5.0 6.0; 7.0 8.0]  # x = [1 2; 3 4], p = [5 6; 7 8]
             du_mat = zeros(4, 2)
-            rhs(du_mat, u_mat, p, 0.0)
+            rhs_mat(du_mat, u_mat, p, 0.0)
             Test.@test du_mat ≈ [1.0 2.0; 3.0 4.0; -5.0 -6.0; -7.0 -8.0]  atol=1e-10
         end
         
         # ====================================================================
-        # UNIT TESTS - rhs_oop (out-of-place)
+        # UNIT TESTS - build_oop_rhs (lazy out-of-place)
         # ====================================================================
-        
-        Test.@testset "rhs_oop" begin
+
+        Test.@testset "build_oop_rhs" begin
             hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
             sys = Systems.HamiltonianVectorFieldSystem(hvf)
-            
-            rhs_oop = Systems.rhs_oop(sys)
+
+            x0 = [1.0, 2.0]
+            p0 = [3.0, 4.0]
+            rhs_oop = Systems.build_oop_rhs(sys, x0, p0)
             Test.@test rhs_oop isa Function
-            
+
             # Test RHS OOP call with vector
             u = [1.0, 2.0, 3.0, 4.0]  # x = [1, 2], p = [3, 4]
             p = Common.ODEParameters(nothing)
             du = rhs_oop(u, p, 0.0)
-            
+
             # dx = x = [1, 2], dp = -p = [-3, -4]
             Test.@test du[1:2] == [1.0, 2.0]
             Test.@test du[3:4] == [-3.0, -4.0]
 
             # Test RHS OOP call with matrix
+            x0_mat = [1.0 2.0; 3.0 4.0]
+            p0_mat = [5.0 6.0; 7.0 8.0]
+            rhs_oop_mat = Systems.build_oop_rhs(sys, x0_mat, p0_mat)
             u_mat = [1.0 2.0; 3.0 4.0; 5.0 6.0; 7.0 8.0]  # x = [1 2; 3 4], p = [5 6; 7 8]
-            du_mat = rhs_oop(u_mat, p, 0.0)
+            du_mat = rhs_oop_mat(u_mat, p, 0.0)
             Test.@test du_mat ≈ [1.0 2.0; 3.0 4.0; -5.0 -6.0; -7.0 -8.0]  atol=1e-10
         end
         
@@ -123,11 +121,12 @@ function test_hamiltonian_vector_field_system()
         Test.@testset "Complex numbers" begin
             hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
             sys = Systems.HamiltonianVectorFieldSystem(hvf)
-            rhs     = Systems.rhs(sys)
-            rhs_oop = Systems.rhs_oop(sys)
             p_param = Common.ODEParameters(nothing)
 
-            Test.@testset "rhs - complex vector" begin
+            Test.@testset "build_rhs - complex vector" begin
+                x0 = [1.0+2.0im]
+                p0 = [3.0+4.0im]
+                rhs = Systems.build_rhs(sys, x0, p0)
                 # x = [1+2im], p = [3+4im]  →  dx = x, dp = -p
                 u  = [1.0+2.0im, 3.0+4.0im]
                 du = zeros(ComplexF64, 2)
@@ -135,13 +134,19 @@ function test_hamiltonian_vector_field_system()
                 Test.@test du ≈ [1.0+2.0im, -3.0-4.0im]  atol=1e-10
             end
 
-            Test.@testset "rhs_oop - complex vector" begin
+            Test.@testset "build_oop_rhs - complex vector" begin
+                x0 = [1.0+2.0im]
+                p0 = [3.0+4.0im]
+                rhs_oop = Systems.build_oop_rhs(sys, x0, p0)
                 u  = [1.0+2.0im, 3.0+4.0im]
                 du = rhs_oop(u, p_param, 0.0)
                 Test.@test du ≈ [1.0+2.0im, -3.0-4.0im]  atol=1e-10
             end
 
-            Test.@testset "rhs - complex matrix" begin
+            Test.@testset "build_rhs - complex matrix" begin
+                x0 = [1.0+2.0im  5.0+6.0im]
+                p0 = [3.0+4.0im  7.0+8.0im]
+                rhs = Systems.build_rhs(sys, x0, p0)
                 # x = [1+2im  5+6im], p = [3+4im  7+8im]
                 u  = [1.0+2.0im  5.0+6.0im; 3.0+4.0im  7.0+8.0im]
                 du = zeros(ComplexF64, 2, 2)
@@ -150,7 +155,10 @@ function test_hamiltonian_vector_field_system()
                 Test.@test du ≈ [1.0+2.0im  5.0+6.0im; -3.0-4.0im  -7.0-8.0im]  atol=1e-10
             end
 
-            Test.@testset "rhs_oop - complex matrix" begin
+            Test.@testset "build_oop_rhs - complex matrix" begin
+                x0 = [1.0+2.0im  5.0+6.0im]
+                p0 = [3.0+4.0im  7.0+8.0im]
+                rhs_oop = Systems.build_oop_rhs(sys, x0, p0)
                 u  = [1.0+2.0im  5.0+6.0im; 3.0+4.0im  7.0+8.0im]
                 du = rhs_oop(u, p_param, 0.0)
                 Test.@test du ≈ [1.0+2.0im  5.0+6.0im; -3.0-4.0im  -7.0-8.0im]  atol=1e-10
@@ -178,9 +186,11 @@ function test_hamiltonian_vector_field_system()
             Test.@test dx_c == SA[1.0+2.0im, 3.0+4.0im]
             Test.@test dp_c == SA[-5.0-6.0im, -7.0-8.0im]
 
-            # Call rhs_oop with SVector and N=2 (type-stable with extension)
-            sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
-            rhs_oop = Systems.rhs_oop(sys)
+            # Call build_oop_rhs with SVector (lazy builder)
+            sys = Systems.HamiltonianVectorFieldSystem(hvf)
+            x0 = SA[1.0, 2.0]
+            p0 = SA[3.0, 4.0]
+            rhs_oop = Systems.build_oop_rhs(sys, x0, p0)
             u = SA[1.0, 2.0, 3.0, 4.0]
             p_param = Common.ODEParameters(nothing)
             du = rhs_oop(u, p_param, 0.0)
@@ -189,7 +199,7 @@ function test_hamiltonian_vector_field_system()
         end
 
         # ====================================================================
-        # UNIT TESTS - SMatrix / SVector _ham_split (all 4 dispatch cases)
+        # UNIT TESTS - SMatrix / SVector _ham_split (only Int dispatch)
         # ====================================================================
 
         Test.@testset "Static _ham_split" begin
@@ -205,24 +215,8 @@ function test_hamiltonian_vector_field_system()
                 Test.@test p isa StaticArrays.SVector
             end
 
-            Test.@testset "SVector + N nothing" begin
-                x, p = Systems._ham_split(u_vec, nothing)
-                Test.@test x == SA[1.0, 2.0]
-                Test.@test p == SA[3.0, 4.0]
-                Test.@test x isa StaticArrays.SVector
-                Test.@test p isa StaticArrays.SVector
-            end
-
             Test.@testset "SMatrix + N known" begin
                 X, P = Systems._ham_split(u_mat, 2)
-                Test.@test X == SA[1.0 5.0; 2.0 6.0]
-                Test.@test P == SA[3.0 7.0; 4.0 8.0]
-                Test.@test X isa StaticArrays.SMatrix
-                Test.@test P isa StaticArrays.SMatrix
-            end
-
-            Test.@testset "SMatrix + N nothing" begin
-                X, P = Systems._ham_split(u_mat, nothing)
                 Test.@test X == SA[1.0 5.0; 2.0 6.0]
                 Test.@test P == SA[3.0 7.0; 4.0 8.0]
                 Test.@test X isa StaticArrays.SMatrix
@@ -241,21 +235,11 @@ function test_hamiltonian_vector_field_system()
             Test.@test x == @view(u_vec[1:2])
             Test.@test pk == @view(u_vec[3:4])
 
-            # Vector + nothing
-            x2, pk2 = Systems._ham_split(u_vec, nothing)
-            Test.@test x2 == @view(u_vec[1:2])
-            Test.@test pk2 == @view(u_vec[3:4])
-
             # Matrix + N known
             u_mat = [1.0 5.0; 2.0 6.0; 3.0 7.0; 4.0 8.0]
             x3, pk3 = Systems._ham_split(u_mat, 2)
             Test.@test x3 == @view(u_mat[1:2, :])
             Test.@test pk3 == @view(u_mat[3:4, :])
-
-            # Matrix + nothing
-            x4, pk4 = Systems._ham_split(u_mat, nothing)
-            Test.@test x4 == @view(u_mat[1:2, :])
-            Test.@test pk4 == @view(u_mat[3:4, :])
         end
 
         # ====================================================================
@@ -278,177 +262,6 @@ function test_hamiltonian_vector_field_system()
             Test.@test du_mat == [1.0 5.0; 2.0 6.0; -3.0 -7.0; -4.0 -8.0]
         end
 
-        # ====================================================================
-        # UNIT TESTS - rhs_oop stored
-        # ====================================================================
-
-        Test.@testset "rhs_oop stored" begin
-            hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
-
-            # With N known
-            sys1 = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
-            Test.@test sys1.rhs_oop isa Function
-            Test.@test Systems.rhs_oop(sys1) === sys1.rhs_oop
-
-            # Without N
-            sys2 = Systems.HamiltonianVectorFieldSystem(hvf)
-            Test.@test sys2.rhs_oop isa Function
-            Test.@test Systems.rhs_oop(sys2) === sys2.rhs_oop
-        end
-
-        # ====================================================================
-        # UNIT TESTS - InPlace HamiltonianVectorField
-        # ====================================================================
-
-        Test.@testset "InPlace HamiltonianVectorField" begin
-            Test.@testset "OOP: rhs_oop_finalize is Nothing" begin
-                hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
-                sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
-                Test.@test sys.rhs_oop_finalize === nothing
-            end
-
-            Test.@testset "IP: rhs_oop_finalize is Function" begin
-                hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
-                sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
-                Test.@test sys.rhs_oop_finalize isa Function
-            end
-
-            Test.@testset "IP: rhs fills du via views (no _ham_assign! needed)" begin
-                hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
-                sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
-                u   = [1.0, 2.0, 3.0, 4.0]
-                du  = zeros(4)
-                p   = Common.ODEParameters(nothing)
-                Systems.rhs(sys)(du, u, p, 0.0)
-                Test.@test du[1:2] ≈ [1.0, 2.0]
-                Test.@test du[3:4] ≈ [-3.0, -4.0]
-            end
-
-            Test.@testset "IP: rhs_oop(sys, true) === sys.rhs_oop" begin
-                hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
-                sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
-                Test.@test Systems.rhs_oop(sys, true) === sys.rhs_oop
-            end
-
-            Test.@testset "IP: rhs_oop(sys, false) === sys.rhs_oop_finalize and warns" begin
-                hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
-                sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
-                f   = Test.@test_logs (:warn, r"InPlace HamiltonianVectorField") Systems.rhs_oop(sys, false)
-                Test.@test f === sys.rhs_oop_finalize
-            end
-
-            Test.@testset "IP: rhs_oop(sys, true) returns mutable Vector" begin
-                hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
-                sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
-                f   = Systems.rhs_oop(sys, true)
-                u   = [1.0, 2.0, 3.0, 4.0]
-                p   = Common.ODEParameters(nothing)
-                du  = f(u, p, 0.0)
-                Test.@test du[1:2] ≈ [1.0, 2.0]
-                Test.@test du[3:4] ≈ [-3.0, -4.0]
-                Test.@test du isa Vector
-            end
-
-            Test.@testset "IP: rhs_oop_finalize returns SVector for SVector u" begin
-                hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
-                sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
-                f   = sys.rhs_oop_finalize
-                u   = SA[1.0, 2.0, 3.0, 4.0]
-                p   = Common.ODEParameters(nothing)
-                du  = f(u, p, 0.0)
-                Test.@test du ≈ SA[1.0, 2.0, -3.0, -4.0]
-                Test.@test du isa StaticArrays.SVector
-            end
-
-            Test.@testset "OOP: rhs_oop(sys, false) still returns sys.rhs_oop" begin
-                hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
-                sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=2)
-                Test.@test Systems.rhs_oop(sys, true)  === sys.rhs_oop
-                Test.@test Systems.rhs_oop(sys, false) === sys.rhs_oop
-            end
-        end
-
-        # ====================================================================
-        # UNIT TESTS - Validation
-        # ====================================================================
-
-        Test.@testset "Validation" begin
-            hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
-
-            # System with known dimension
-            sys = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=3)
-
-            # Correct dimension (vector)
-            Test.@test Systems._check_state_dimension(sys, [1.0, 2.0, 3.0]) == true
-
-            # Correct dimension (matrix - uses size(x0, 1))
-            Test.@test Systems._check_state_dimension(sys, [1.0 2.0; 3.0 4.0; 5.0 6.0]) == true
-
-            # Wrong dimension (vector)
-            Test.@test_throws Exceptions.IncorrectArgument Systems._check_state_dimension(sys, [1.0, 2.0])
-
-            # Wrong dimension (matrix - uses size(x0, 1))
-            Test.@test_throws Exceptions.IncorrectArgument Systems._check_state_dimension(sys, [1.0 2.0; 3.0 4.0])
-
-            # System without known dimension — dispatches to {nothing} method, always true
-            sys_no_dim = Systems.HamiltonianVectorFieldSystem(hvf)
-            Test.@test Systems._check_state_dimension(sys_no_dim, [1.0, 2.0, 3.0]) == true
-            Test.@test Systems._check_state_dimension(sys_no_dim, [1.0 2.0; 3.0 4.0]) == true
-        end
-
-        # ====================================================================
-        # UNIT TESTS - Base.show
-        # ====================================================================
-
-        Test.@testset "Base.show" begin
-            hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
-
-            Test.@testset "Without dimension" begin
-                sys1 = Systems.HamiltonianVectorFieldSystem(hvf)
-                io = IOBuffer()
-                show(io, sys1)
-                str = String(take!(io))
-                Test.@test occursin("HamiltonianVectorFieldSystem", str)
-                Test.@test occursin("state dimension: unknown", str)
-                Test.@test occursin("wraps:", str)
-                Test.@test occursin("autonomous", str)
-                Test.@test occursin("fixed (no variable)", str)
-                Test.@test occursin("out-of-place", str)
-            end
-
-            Test.@testset "With dimension" begin
-                sys2 = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=3)
-                io = IOBuffer()
-                show(io, sys2)
-                str = String(take!(io))
-                Test.@test occursin("HamiltonianVectorFieldSystem", str)
-                Test.@test occursin("state dimension: 3", str)
-                Test.@test occursin("wraps:", str)
-            end
-
-            Test.@testset "text/plain MIME type" begin
-                sys = Systems.HamiltonianVectorFieldSystem(hvf)
-                io = IOBuffer()
-                show(io, MIME("text/plain"), sys)
-                str = String(take!(io))
-                Test.@test occursin("HamiltonianVectorFieldSystem", str)
-                Test.@test occursin("wraps:", str)
-            end
-        end
-        
-        # ====================================================================
-        # UNIT TESTS - Type parameter N
-        # ====================================================================
-        
-        Test.@testset "Type parameter N" begin
-            hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
-            
-            sys_with_n = Systems.HamiltonianVectorFieldSystem(hvf; state_dimension=3)
-            Test.@test Systems.state_dimension(sys_with_n) == 3
-            
-            sys_without_n = Systems.HamiltonianVectorFieldSystem(hvf)
-            Test.@test Systems.state_dimension(sys_without_n) === nothing
-        end
     end
 end
 

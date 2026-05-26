@@ -32,10 +32,6 @@ import ..Configs: Configs
 include(joinpath(@__DIR__, "helpers.jl"))
 include(joinpath(@__DIR__, "abstract_tag.jl"))
 include(joinpath(@__DIR__, "abstract_cache.jl"))
-# Temporarily keeping these for now - will be removed after Configs module is created
-# include(joinpath(@__DIR__, "abstract_trait.jl"))
-# include(joinpath(@__DIR__, "configs.jl"))  # Moved to src/Configs/
-# include(joinpath(@__DIR__, "traits.jl"))
 include(joinpath(@__DIR__, "ode_parameters.jl"))
 include(joinpath(@__DIR__, "default.jl"))
 include(joinpath(@__DIR__, "internal_norm.jl"))
@@ -52,7 +48,7 @@ export AbstractCache
 # export tspan, initial_condition, initial_state, initial_costate, initial_variable_costate, initial_time, final_time
 export NotProvided
 export ODEParameters, variable, cache
-export __is_autonomous, __is_variable, __variable, __unsafe, __is_inplace, __state_dimension, _variable_costate
+export __is_autonomous, __is_variable, __variable, __unsafe, __is_inplace, _variable_costate
 export deepvalue, real_norm, scalarize
 
 end # module Common

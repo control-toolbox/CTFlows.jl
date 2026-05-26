@@ -45,7 +45,6 @@ This constructor builds a complete Hamiltonian flow by:
 
 # Arguments
 - `data::CTFlows.Data.HamiltonianVectorField`: The Hamiltonian vector field defining the system dynamics.
-- `state_dimension::Union{Int, Nothing}`: The state dimension (number of state variables, not including costates). Defaults to `nothing`.
 - `opts...`: Keyword options passed to the integrator's strategy.
 
 # Returns
@@ -53,17 +52,16 @@ This constructor builds a complete Hamiltonian flow by:
 
 # Example
 ```julia
-using CTFlows.Data, CTFlows.Flows, CTFlows.Common
+using CTFlows.Data, CTFlows.Flows
 
-hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); autonomous=true, variable=false)
+hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
 flow = Flows.Flow(hvf; reltol=1e-8)
-flow_with_dim = Flows.Flow(hvf; state_dimension=3, reltol=1e-8)
 ```
 
 See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.build_system`](@ref), [`CTFlows.Integrators.build_integrator`](@ref).
 """
-function Flow(data::Data.HamiltonianVectorField; state_dimension::Union{Int, Nothing}=Common.__state_dimension(), opts...)
-    system = Systems.build_system(data; state_dimension=state_dimension)
+function Flow(data::Data.HamiltonianVectorField; opts...)
+    system = Systems.build_system(data)
     integrator = Integrators.build_integrator(; opts...)
     return build_flow(system, integrator)
 end
@@ -116,57 +114,6 @@ function Flow(h::Data.AbstractHamiltonian; kwargs...)
     routed     = _route_flow_options(kwargs)
     components = _build_flow_components(routed)
     sys        = Systems.build_system(h, components.backend)
-    return build_flow(sys, components.integrator)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-High-level constructor for `HamiltonianFlow` from a scalar Hamiltonian with explicit state dimension.
-
-This constructor builds a complete Hamiltonian flow by:
-1. Routing keyword options to the appropriate strategy families (backend and integrator)
-2. Building a concrete AD backend and integrator from the routed options
-3. Building a `HamiltonianSystem` from the Hamiltonian and backend with explicit state dimension
-4. Combining them into a callable `HamiltonianFlow`
-
-# Arguments
-- `h::CTFlows.Data.AbstractHamiltonian`: The scalar Hamiltonian function.
-- `state_dimension::Int`: The state dimension (number of state variables, not including costates).
-- `kwargs...`: Keyword options passed to the backend and integrator strategies.
-  Options are automatically routed based on their names:
-  - Backend options (e.g., `ad_backend`, `prepare_cache`) → `:di` strategy
-  - Integrator options (e.g., `reltol`, `abstol`, `alg`) → `:sciml` strategy
-
-# Returns
-- `CTFlows.Flows.HamiltonianFlow`: The complete Hamiltonian flow ready for integration.
-
-# Throws
-- [`CTBase.Exceptions.IncorrectArgument`](@extref): If an option is unknown, ambiguous,
-  or routed to the wrong strategy.
-- [`CTBase.Exceptions.ExtensionError`](@extref): If the `CTFlowsSciML` extension is not loaded
-  (required for `:sciml` strategy metadata).
-
-# Example
-```julia
-using CTFlows.Data, CTFlows.Flows
-
-h = Data.Hamiltonian((t, x, p, v) -> 0.5 * (x[1]^2 + p[1]^2); is_autonomous=true, is_variable=false)
-flow = Flows.Flow(h, 1; reltol=1e-8, ad_backend=ADTypes.AutoForwardDiff())
-# flow isa CTFlows.Flows.HamiltonianFlow
-```
-
-# Notes
-- Use this overload when the state dimension cannot be inferred from the Hamiltonian's signature.
-- Requires the `CTFlowsSciML` extension to be loaded for integrator options.
-
-See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.build_system`](@ref),
-[`Flow(h::AbstractHamiltonian; kwargs...)`](@ref), [`_route_flow_options`](@ref)
-"""
-function Flow(h::Data.AbstractHamiltonian, state_dimension::Int; kwargs...)
-    routed     = _route_flow_options(kwargs)
-    components = _build_flow_components(routed)
-    sys        = Systems.build_system(h, components.backend; state_dimension=state_dimension)
     return build_flow(sys, components.integrator)
 end
 
