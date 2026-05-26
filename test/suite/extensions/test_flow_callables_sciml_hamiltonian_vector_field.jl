@@ -23,16 +23,12 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # For HamiltonianFlow: harmonic oscillator  (x' = p, p' = -x)
 # Solution: x(t) = x0 cos(t) + p0 sin(t),  p(t) = -x0 sin(t) + p0 cos(t)
 const HVF_HARMONIC    = Data.HamiltonianVectorField((x, p) -> (p, -x); is_autonomous=true, is_variable=false)
-const HSYS_NO_N = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC)           # N=nothing
-const HSYS_N1  = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC; state_dimension=1)         # N=1 (scalar)
-const HSYS_N2  = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC; state_dimension=2)         # N=2 (for SVector)
+const HSYS = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC)           # lazy (N inferred at build_problem time)
 const ATOL = 1e-5
 
 # InPlace variants (same dynamics, different function signature)
 const HVF_HARMONIC_IP = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= p; dp .= -x); is_autonomous=true, is_variable=false)
-const HSYS_IP_NO_N = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC_IP)
-const HSYS_IP_N1   = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC_IP; state_dimension=1)
-const HSYS_IP_N2   = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC_IP; state_dimension=2)
+const HSYS_IP = Systems.HamiltonianVectorFieldSystem(HVF_HARMONIC_IP)
 
 const INTEG = Integrators.SciML()
 
@@ -49,7 +45,7 @@ function test_flow_callables_sciml_hamiltonian_vector_field()
 
         Test.@testset "HamiltonianFlow HamiltonianPointConfig" begin
             Test.@testset "scalar x0, p0" begin
-                hflow = Flows.build_flow(HSYS_N1, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 xf, pf = hflow(0.0, 1.0, 0.0, π/2)
                 Test.@test xf isa Real
                 Test.@test pf isa Real
@@ -58,7 +54,7 @@ function test_flow_callables_sciml_hamiltonian_vector_field()
             end
 
             Test.@testset "scalar complex x0, p0" begin
-                hflow = Flows.build_flow(HSYS_N1, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 xf, pf = hflow(0.0, 1.0+2.0im, 0.0+0.0im, π/2)
                 Test.@test xf isa Complex
                 Test.@test pf isa Complex
@@ -67,7 +63,7 @@ function test_flow_callables_sciml_hamiltonian_vector_field()
             end
 
             Test.@testset "vector x0, p0" begin
-                hflow = Flows.build_flow(HSYS_NO_N, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 xf, pf = hflow(0.0, [1.0, 0.0], [0.0, 1.0], π/2)
                 Test.@test xf isa AbstractVector && length(xf) == 2
                 Test.@test pf isa AbstractVector && length(pf) == 2
@@ -75,17 +71,8 @@ function test_flow_callables_sciml_hamiltonian_vector_field()
                 Test.@test pf ≈ [-1.0, 0.0]  atol=ATOL
             end
 
-            Test.@testset "SVector x0, p0 (N known)" begin
-                hflow = Flows.build_flow(HSYS_N2, INTEG)
-                xf, pf = hflow(0.0, SA[1.0, 0.0], SA[0.0, 1.0], π/2)
-                Test.@test xf isa AbstractVector
-                Test.@test pf isa AbstractVector
-                Test.@test xf ≈ [0.0, 1.0]  atol=ATOL
-                Test.@test pf ≈ [-1.0, 0.0]  atol=ATOL
-            end
-
-            Test.@testset "SVector x0, p0 (N nothing)" begin
-                hflow = Flows.build_flow(HSYS_NO_N, INTEG)
+            Test.@testset "SVector x0, p0" begin
+                hflow = Flows.build_flow(HSYS, INTEG)
                 xf, pf = hflow(0.0, SA[1.0, 0.0], SA[0.0, 1.0], π/2)
                 Test.@test xf isa AbstractVector
                 Test.@test pf isa AbstractVector
@@ -94,7 +81,7 @@ function test_flow_callables_sciml_hamiltonian_vector_field()
             end
 
             Test.@testset "MVector x0, p0" begin
-                hflow = Flows.build_flow(HSYS_N2, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 xf, pf = hflow(0.0, MVector{2}(1.0, 0.0), MVector{2}(0.0, 1.0), π/2)
                 Test.@test xf isa AbstractVector
                 Test.@test pf isa AbstractVector
@@ -103,7 +90,7 @@ function test_flow_callables_sciml_hamiltonian_vector_field()
             end
 
             Test.@testset "SVector complex x0, p0" begin
-                hflow = Flows.build_flow(HSYS_N2, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 xf, pf = hflow(0.0, SA[1.0+2.0im, 0.0+0.0im], SA[0.0+0.0im, 1.0+1.0im], π/2)
                 Test.@test xf isa AbstractVector
                 Test.@test pf isa AbstractVector
@@ -112,7 +99,7 @@ function test_flow_callables_sciml_hamiltonian_vector_field()
             end
 
             Test.@testset "matrix x0, p0" begin
-                hflow = Flows.build_flow(HSYS_NO_N, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 X0 = [1.0 2.0; 3.0 4.0]
                 P0 = [0.0 0.0; 1.0 1.0]
                 Xf, Pf = hflow(0.0, X0, P0, π/2)
@@ -126,8 +113,8 @@ function test_flow_callables_sciml_hamiltonian_vector_field()
                 Test.@test Pf ≈ -X0  atol=ATOL
             end
 
-            Test.@testset "SMatrix x0, p0 (N known)" begin
-                hflow = Flows.build_flow(HSYS_N2, INTEG)
+            Test.@testset "SMatrix x0, p0" begin
+                hflow = Flows.build_flow(HSYS, INTEG)
                 X0 = SMatrix{2,2}(1.0, 3.0, 2.0, 4.0)  # column-major: [1 2; 3 4]
                 P0 = SMatrix{2,2}(0.0, 1.0, 0.0, 1.0)  # column-major: [0 0; 1 1]
                 Xf, Pf = hflow(0.0, X0, P0, π/2)
@@ -138,20 +125,8 @@ function test_flow_callables_sciml_hamiltonian_vector_field()
                 Test.@test Pf ≈ -X0  atol=ATOL
             end
 
-            Test.@testset "SMatrix x0, p0 (N nothing)" begin
-                hflow = Flows.build_flow(HSYS_NO_N, INTEG)
-                X0 = SMatrix{2,2}(1.0, 3.0, 2.0, 4.0)
-                P0 = SMatrix{2,2}(0.0, 1.0, 0.0, 1.0)
-                Xf, Pf = hflow(0.0, X0, P0, π/2)
-                # vcat(SMatrix, SMatrix) → Matrix, so ODE returns AbstractMatrix
-                Test.@test Xf isa AbstractMatrix
-                Test.@test Pf isa AbstractMatrix
-                Test.@test Xf ≈ P0  atol=ATOL
-                Test.@test Pf ≈ -X0  atol=ATOL
-            end
-
             Test.@testset "complex vector x0, p0" begin
-                hflow = Flows.build_flow(HSYS_NO_N, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 # x' = p, p' = -x  →  at t=π/2: xf = p0, pf = -x0
                 x0 = [1.0+2.0im, 0.0+0.0im]
                 p0 = [0.0+0.0im, 1.0+1.0im]
@@ -163,7 +138,7 @@ function test_flow_callables_sciml_hamiltonian_vector_field()
             end
 
             Test.@testset "complex matrix x0, p0" begin
-                hflow = Flows.build_flow(HSYS_NO_N, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 # x' = p, p' = -x  →  at t=π/2: Xf = P0, Pf = -X0
                 X0 = [1.0+2.0im  5.0+6.0im; 3.0+4.0im  7.0+8.0im]
                 P0 = [0.0+0.0im  1.0+1.0im; 2.0+2.0im  3.0+3.0im]
@@ -175,7 +150,7 @@ function test_flow_callables_sciml_hamiltonian_vector_field()
             end
 
             Test.@testset "ForwardDiff.Dual scalar x0, p0" begin
-                hflow = Flows.build_flow(HSYS_N1, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 x0 = ForwardDiff.Dual(1.0, 1.0)
                 p0 = ForwardDiff.Dual(0.0, 0.0)
                 xf, pf = hflow(0.0, x0, p0, π/2)
@@ -186,7 +161,7 @@ function test_flow_callables_sciml_hamiltonian_vector_field()
             end
 
             Test.@testset "ForwardDiff.Dual vector x0, p0" begin
-                hflow = Flows.build_flow(HSYS_NO_N, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 x0 = [ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)]
                 p0 = [ForwardDiff.Dual(0.0, 0.0), ForwardDiff.Dual(1.0, 0.0)]
                 xf, pf = hflow(0.0, x0, p0, π/2)
@@ -203,25 +178,25 @@ function test_flow_callables_sciml_hamiltonian_vector_field()
 
         Test.@testset "HamiltonianFlow HamiltonianTrajectoryConfig" begin
             Test.@testset "scalar x0, p0" begin
-                hflow = Flows.build_flow(HSYS_N1, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), 1.0, 0.0)
                 Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
             end
 
             Test.@testset "vector x0, p0" begin
-                hflow = Flows.build_flow(HSYS_NO_N, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), [1.0, 0.0], [0.0, 1.0])
                 Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
             end
 
             Test.@testset "SVector x0, p0" begin
-                hflow = Flows.build_flow(HSYS_N2, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), SA[1.0, 0.0], SA[0.0, 1.0])
                 Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
             end
 
             Test.@testset "MVector x0, p0" begin
-                hflow = Flows.build_flow(HSYS_N2, INTEG)
+                hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), MVector{2}(1.0, 0.0), MVector{2}(0.0, 1.0))
                 Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
             end
@@ -233,21 +208,21 @@ function test_flow_callables_sciml_hamiltonian_vector_field()
 
         Test.@testset "InPlace HamiltonianFlow" begin
             Test.@testset "IP HVF + Vector u0 (no warning)" begin
-                hflow = Flows.build_flow(HSYS_IP_N1, INTEG)
+                hflow = Flows.build_flow(HSYS_IP, INTEG)
                 xf, pf = hflow(0.0, 1.0, 0.0, π/2)
                 Test.@test xf ≈ 0.0   atol=ATOL
                 Test.@test pf ≈ -1.0  atol=ATOL
             end
 
             Test.@testset "IP HVF + SVector u0 (warns)" begin
-                hflow = Flows.build_flow(HSYS_IP_N2, INTEG)
+                hflow = Flows.build_flow(HSYS_IP, INTEG)
                 xf, pf = Test.@test_logs (:warn, r"InPlace HamiltonianVectorField") hflow(0.0, SA[1.0, 0.0], SA[0.0, 1.0], π/2)
                 Test.@test xf ≈ [0.0, 1.0]   atol=ATOL
                 Test.@test pf ≈ [-1.0, 0.0]  atol=ATOL
             end
 
             Test.@testset "IP HVF + MVector u0 (no warning)" begin
-                hflow = Flows.build_flow(HSYS_IP_N2, INTEG)
+                hflow = Flows.build_flow(HSYS_IP, INTEG)
                 xf, pf = hflow(0.0, MVector{2}(1.0, 0.0), MVector{2}(0.0, 1.0), π/2)
                 Test.@test xf ≈ [0.0, 1.0]   atol=ATOL
                 Test.@test pf ≈ [-1.0, 0.0]  atol=ATOL
