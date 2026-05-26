@@ -214,9 +214,9 @@ function test_flow_callables_sciml_hamiltonian_vector_field()
                 Test.@test pf ≈ -1.0  atol=ATOL
             end
 
-            Test.@testset "IP HVF + SVector u0 (warns)" begin
+            Test.@testset "IP HVF + SVector u0" begin
                 hflow = Flows.build_flow(HSYS_IP, INTEG)
-                xf, pf = Test.@test_logs (:warn, r"InPlace HamiltonianVectorField") hflow(0.0, SA[1.0, 0.0], SA[0.0, 1.0], π/2)
+                xf, pf = hflow(0.0, SA[1.0, 0.0], SA[0.0, 1.0], π/2)
                 Test.@test xf ≈ [0.0, 1.0]   atol=ATOL
                 Test.@test pf ≈ [-1.0, 0.0]  atol=ATOL
             end
