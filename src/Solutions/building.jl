@@ -125,11 +125,8 @@ function build_solution(
     )
     u = Integrators.final_state(result)
     x0 = Configs.initial_state(config)
-    n = length(x0)
-    return (
-        Common.scalarize(u[1:n], x0),
-        Common.scalarize(u[n+1:2n], x0),
-    )
+    x, p = Solutions._ham_split_solution(u, x0)
+    return (Common.scalarize(x, x0), Common.scalarize(p, x0))
 end
 
 """
