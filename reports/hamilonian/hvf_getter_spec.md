@@ -84,32 +84,65 @@ Le getter produit la **closure appropriée** puis l'enveloppe dans un
 
 ## 3. Trois surcharges du getter
 
-### 3.1 `hamiltonian_vector_field(h::Hamiltonian)` — erreur explicite
+### 3.1 `hamiltonian_vector_field(h::Hamiltonian; backend, inplace)` — entrée directe
 
-Un `Hamiltonian` seul est une fonction scalaire pure. Il ne porte **aucun
-backend AD**, donc il est impossible de calculer `∂H/∂x` et `∂H/∂p`.
+Un `Hamiltonian` seul ne porte pas de backend AD, mais grâce à
+`build_ad_backend()` et `DifferentiationInterface`, on peut en fournir un
+directement au getter via un kwarg.
 
-**Comportement :** lève une `NotImplemented` avec un message guidant
-l'utilisateur vers `HamiltonianSystem`.
+**Signature proposée :**
 
-**Justification :** une erreur explicite et informative est préférable au
-silence ou à un dispatch ambigu. Elle documente aussi implicitement la
-contrainte d'architecture (backend requis).
+```julia
+function hamiltonian_vector_field(
+    h::Data.Hamiltonian{F, TD, VD};
+    backend::Differentiation.AbstractADBackend = Differentiation.build_ad_backend(),
+    inplace::Bool = false
+) where {F, TD, VD}
+```
 
-### 3.2 `hamiltonian_vector_field(sys::HamiltonianSystem; inplace=false)` — cœur du getter
+**Comportement :** construit la closure via `_make_oop_hvf` / `_make_ip_hvf`
+directement depuis `h` et `backend`, sans passer par un `HamiltonianSystem`
+intermédiaire. C'est équivalent à `hamiltonian_vector_field(HamiltonianSystem(h, backend); inplace)`,
+mais sans allouer ni `rhs` ni `rhs_oop` qui ne servent pas ici.
+
+**Valeur par défaut du backend :** `build_ad_backend()` retourne un
+`DifferentiationInterface(; prepare_cache=false)` avec `AutoForwardDiff()`.
+L'utilisateur n'a rien à spécifier dans le cas standard.
+
+**Exemples d'usage :**
+
+```julia
+# Cas le plus simple — backend par défaut (AutoForwardDiff)
+h  = Hamiltonian((x, p) -> 0.5 * sum(p.^2))
+Xh = hamiltonian_vector_field(h)
+
+# Backend explicite
+Xh = hamiltonian_vector_field(h; backend = build_ad_backend(backend = AutoZygote()))
+
+# In-place
+Xh = hamiltonian_vector_field(h; inplace = true)
+```
+
+**Justification de ce choix vs erreur :** exposer un backend par défaut
+fonctionnel est plus ergonomique et cohérent avec le reste de l'API
+(e.g., `HamiltonianSystem` a aussi un backend par défaut implicite dans son
+constructeur). L'erreur n'apporte rien quand un défaut sensé existe.
+
+### 3.2 `hamiltonian_vector_field(sys::HamiltonianSystem; inplace=false)` — surcharge système
 
 C'est ici que le travail est fait.
 
-**Étapes :**
+Délègue simplement à la surcharge sur `Hamiltonian` en passant le backend du système :
 
-1. Extraire `h = sys.h` et `backend = sys.backend`.
-2. Construire la closure via un helper interne `_make_oop_hvf` ou
-   `_make_ip_hvf`, dispatché sur `(TD, VD)`.
-3. À l'intérieur de chaque closure, appeler
-   `Differentiation.hamiltonian_gradient(backend, h, t, x, p, v, nothing)`
-   avec `cache = nothing`.
-4. Envelopper la closure dans `HamiltonianVectorField(wrapped; is_autonomous,
-   is_variable, is_inplace)`.
+```julia
+function hamiltonian_vector_field(sys::HamiltonianSystem{N,F,TD,VD}; inplace=false) where {N,F,TD,VD}
+    return hamiltonian_vector_field(sys.h; backend=sys.backend, inplace)
+end
+```
+
+Toute la logique de construction des closures reste dans la surcharge `Hamiltonian`,
+qui devient le **point d'entrée canonique**. La surcharge `HamiltonianSystem` n'est
+qu'une façade qui extrait le backend et délègue.
 
 **Pourquoi appeler `hamiltonian_gradient` directement plutôt que `rhs_oop` ?**
 
@@ -142,17 +175,31 @@ toujours intégrer via `HamiltonianFlow` qui, lui, gère le cache.
 Le défaut `false` est choisi car l'OOP est naturel pour les appels ponctuels
 et correspond à la représentation mathématique `X_H(t, x, p) = (ẋ, ṗ)`.
 
-### 3.3 `hamiltonian_vector_field(flow::HamiltonianFlow; inplace=false)` — délégation
+**Hiérarchie d'appel finale :**
 
-Délègue simplement à la surcharge sur `HamiltonianSystem` :
+```
+hamiltonian_vector_field(flow)   →   hamiltonian_vector_field(flow.system)
+hamiltonian_vector_field(sys)    →   hamiltonian_vector_field(sys.h; backend=sys.backend, ...)
+hamiltonian_vector_field(h; backend, inplace)   ←   point d'entrée canonique
+        ↓
+_make_oop_hvf / _make_ip_hvf(h, backend, TD, VD)
+        ↓
+HamiltonianVectorField(wrapped; is_autonomous, is_variable, is_inplace)
+```
+
+### 3.4 `hamiltonian_vector_field(flow::HamiltonianFlow; inplace=false)` — délégation
+
+Délègue à la surcharge sur `HamiltonianSystem` :
 
 ```julia
-hamiltonian_vector_field(flow.system; inplace)
+function hamiltonian_vector_field(flow::HamiltonianFlow; inplace=false)
+    return hamiltonian_vector_field(flow.system; inplace)
+end
 ```
 
 **Justification :** le `HamiltonianFlow` n'ajoute rien au calcul de `X_H` ;
-l'intégrateur n'intervient pas. La délégation garde l'implémentation dans
-`Systems`, sans dupliquer de logique dans `Flows`.
+l'intégrateur n'intervient pas. La délégation garde toute la logique dans
+la surcharge `Hamiltonian`, sans dupliquer de code.
 
 ---
 
@@ -201,8 +248,8 @@ buffers en place sans allocation intermédiaire.
 
 | Composant | Fichier suggéré |
 |:----------|:----------------|
-| Erreur sur `Hamiltonian` | `src/data/hamiltonian.jl` ou `src/systems/hamiltonian_system.jl` |
-| `_make_oop_hvf` / `_make_ip_hvf` | `src/systems/hamiltonian_system.jl` (helpers privés) |
+| `hamiltonian_vector_field(::Hamiltonian)` — point d'entrée canonique | `src/data/hamiltonian.jl` ou `src/systems/hamiltonian_system.jl` |
+| `_make_oop_hvf` / `_make_ip_hvf` | même fichier, helpers privés |
 | `hamiltonian_vector_field(::HamiltonianSystem)` | `src/systems/hamiltonian_system.jl` |
 | `hamiltonian_vector_field(::HamiltonianFlow)` | `src/flows/hamiltonian_flow.jl` |
 | Export public | `src/CTFlows.jl` (ou module `Systems` / `Flows`) |
@@ -211,8 +258,13 @@ buffers en place sans allocation intermédiaire.
 
 ## 6. Tests à écrire
 
-### 6.1 Sur `Hamiltonian` seul
-- Vérifier que `hamiltonian_vector_field(h)` lève bien une `NotImplemented`.
+### 6.1 Sur `Hamiltonian` seul avec backend par défaut
+- Vérifier que `hamiltonian_vector_field(h)` fonctionne sans rien spécifier
+  (utilise `build_ad_backend()` → `AutoForwardDiff`).
+- Vérifier que `hamiltonian_vector_field(h; backend=build_ad_backend(backend=AutoZygote()))`
+  utilise bien le backend spécifié.
+- Vérifier que le backend par défaut peut être surchargé globalement si
+  `CTSolvers.Strategies` le permet.
 
 ### 6.2 Sur `HamiltonianSystem` — OOP
 Pour chaque combinaison `(TD, VD)` :
@@ -266,5 +318,6 @@ X_H(x, p) = (∂H/∂p, −∂H/∂x) = (p, 0)
 | `cache = nothing` ? | ✓ Oui | Getter = usage ponctuel hors intégration |
 | Retour OOP = tuple `(ẋ, ṗ)` ? | ✓ Oui | Représentation mathématique naturelle |
 | kwarg `inplace` ? | ✓ Oui, défaut `false` | OOP = cas par défaut ; IP disponible |
-| Erreur sur `Hamiltonian` seul ? | ✓ Oui, `NotImplemented` | Explicit is better than silent failure |
+| **Backend par défaut sur `Hamiltonian`** | `build_ad_backend()` → `AutoForwardDiff`, `prepare_cache=false` | Zéro config pour l'utilisateur |
+| Erreur sur `Hamiltonian` seul ? | ✗ Non — backend par défaut | `build_ad_backend()` rend l'erreur inutile |
 | `v̇` dans le retour ? | ✗ Non (pour l'instant) | Hors scope ; prévoir extension future |
