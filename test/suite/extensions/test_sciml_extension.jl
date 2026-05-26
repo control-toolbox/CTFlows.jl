@@ -435,8 +435,9 @@ function test_sciml_extension()
             Test.@testset "OOP HVF + mutable Vector u0" begin
                 hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
                 sys = Systems.HamiltonianVectorFieldSystem(hvf)
-                u0  = [1.0, 0.5]
-                config = Configs.StatePointConfig(0.0, u0, 1.0)
+                x0  = 1.0
+                p0  = 0.5
+                config = Configs.HamiltonianPointConfig(0.0, x0, p0, 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
@@ -448,8 +449,9 @@ function test_sciml_extension()
             Test.@testset "OOP HVF + SVector u0" begin
                 hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
                 sys = Systems.HamiltonianVectorFieldSystem(hvf)
-                u0  = SA[1.0, 0.5]
-                config = Configs.StatePointConfig(0.0, u0, 1.0)
+                x0  = SA[1.0]
+                p0  = SA[0.5]
+                config = Configs.HamiltonianPointConfig(0.0, x0, p0, 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
@@ -461,8 +463,9 @@ function test_sciml_extension()
             Test.@testset "IP HVF + mutable Vector u0" begin
                 hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
                 sys = Systems.HamiltonianVectorFieldSystem(hvf)
-                u0  = [1.0, 0.5]
-                config = Configs.StatePointConfig(0.0, u0, 1.0)
+                x0  = 1.0
+                p0  = 0.5
+                config = Configs.HamiltonianPointConfig(0.0, x0, p0, 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
@@ -474,8 +477,9 @@ function test_sciml_extension()
             Test.@testset "IP HVF + SVector u0 (warns, uses rhs_oop_finalize)" begin
                 hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
                 sys = Systems.HamiltonianVectorFieldSystem(hvf)
-                u0  = SA[1.0, 0.5]
-                config = Configs.StatePointConfig(0.0, u0, 1.0)
+                x0  = SA[1.0]
+                p0  = SA[0.5]
+                config = Configs.HamiltonianPointConfig(0.0, x0, p0, 1.0)
                 prob = Test.@test_logs (:warn, r"InPlace HamiltonianVectorField") Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
