@@ -32,10 +32,6 @@ import ..Configs: Configs
 include(joinpath(@__DIR__, "helpers.jl"))
 include(joinpath(@__DIR__, "abstract_tag.jl"))
 include(joinpath(@__DIR__, "abstract_cache.jl"))
-# Temporarily keeping these for now - will be removed after Configs module is created
-# include(joinpath(@__DIR__, "abstract_trait.jl"))
-# include(joinpath(@__DIR__, "configs.jl"))  # Moved to src/Configs/
-# include(joinpath(@__DIR__, "traits.jl"))
 include(joinpath(@__DIR__, "ode_parameters.jl"))
 include(joinpath(@__DIR__, "default.jl"))
 include(joinpath(@__DIR__, "internal_norm.jl"))
