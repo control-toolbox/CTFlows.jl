@@ -60,15 +60,17 @@ function test_hamiltonian_system()
         end
 
         # ====================================================================
-        # UNIT TESTS - rhs (in-place)
+        # UNIT TESTS - build_rhs (lazy in-place)
         # ====================================================================
 
-        Test.@testset "rhs" begin
+        Test.@testset "build_rhs" begin
             h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); is_autonomous=true, is_variable=false)
             backend = FakeADBackend()
-            sys = Systems.HamiltonianSystem(h, backend; state_dimension=2)
+            sys = Systems.HamiltonianSystem(h, backend)
 
-            rhs = Systems.rhs(sys)
+            x0 = [1.0, 2.0]
+            p0 = [3.0, 4.0]
+            rhs = Systems.build_rhs(sys, x0, p0)
             Test.@test rhs isa Function
 
             # Test RHS call with vector
@@ -82,22 +84,27 @@ function test_hamiltonian_system()
             Test.@test du[3:4] == [-1.0, -2.0]
 
             # Test RHS call with matrix
+            x0_mat = [1.0 2.0; 3.0 4.0]
+            p0_mat = [5.0 6.0; 7.0 8.0]
+            rhs_mat = Systems.build_rhs(sys, x0_mat, p0_mat)
             u_mat = [1.0 2.0; 3.0 4.0; 5.0 6.0; 7.0 8.0]  # x = [1 2; 3 4], p = [5 6; 7 8]
             du_mat = zeros(4, 2)
-            rhs(du_mat, u_mat, p, 0.0)
+            rhs_mat(du_mat, u_mat, p, 0.0)
             Test.@test du_mat ≈ [5.0 6.0; 7.0 8.0; -1.0 -2.0; -3.0 -4.0] atol=1e-10
         end
 
         # ====================================================================
-        # UNIT TESTS - rhs_oop (out-of-place)
+        # UNIT TESTS - build_oop_rhs (lazy out-of-place)
         # ====================================================================
 
-        Test.@testset "rhs_oop" begin
+        Test.@testset "build_oop_rhs" begin
             h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); is_autonomous=true, is_variable=false)
             backend = FakeADBackend()
-            sys = Systems.HamiltonianSystem(h, backend; state_dimension=2)
+            sys = Systems.HamiltonianSystem(h, backend)
 
-            rhs_oop = Systems.rhs_oop(sys)
+            x0 = [1.0, 2.0]
+            p0 = [3.0, 4.0]
+            rhs_oop = Systems.build_oop_rhs(sys, x0, p0)
             Test.@test rhs_oop isa Function
 
             # Test OOP call with vector
@@ -116,7 +123,7 @@ function test_hamiltonian_system()
         Test.@testset "build_rhs_augmented" begin
             h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2) + 0.5 * v^2; is_autonomous=true, is_variable=false)
             backend = FakeADBackend()
-            sys = Systems.HamiltonianSystem(h, backend; state_dimension=2)
+            sys = Systems.HamiltonianSystem(h, backend)
 
             # Vector case (n_x=2, n_v=1)
             rhs_aug = Systems.build_rhs_augmented(sys, 2, 1)
@@ -206,15 +213,9 @@ function test_hamiltonian_system()
             h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); is_autonomous=true, is_variable=false)
             backend = FakeADBackend()
 
-            # Without state_dimension
-            sys1 = Systems.build_system(h, backend)
-            Test.@test sys1 isa Systems.HamiltonianSystem
-            Test.@test Systems.state_dimension(sys1) === nothing
-
-            # With state_dimension
-            sys2 = Systems.build_system(h, backend; state_dimension=2)
-            Test.@test sys2 isa Systems.HamiltonianSystem
-            Test.@test Systems.state_dimension(sys2) == 2
+            # Build system without state_dimension (lazy inference)
+            sys = Systems.build_system(h, backend)
+            Test.@test sys isa Systems.HamiltonianSystem
         end
 
         # ====================================================================
@@ -225,13 +226,8 @@ function test_hamiltonian_system()
             h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); is_autonomous=true, is_variable=false)
             backend = FakeADBackend()
 
-            sys1 = Systems.HamiltonianSystem(h, backend)
-            Test.@test Test.@inferred Systems.state_dimension(sys1) === nothing
-            Test.@test Test.@inferred Traits.ad_trait(sys1) === Traits.WithAD
-
-            sys2 = Systems.HamiltonianSystem(h, backend; state_dimension=2)
-            Test.@test Test.@inferred Systems.state_dimension(sys2) == 2
-            Test.@test Test.@inferred Traits.ad_trait(sys2) === Traits.WithAD
+            sys = Systems.HamiltonianSystem(h, backend)
+            Test.@test Test.@inferred Traits.ad_trait(sys) === Traits.WithAD
         end
 
         # ====================================================================
