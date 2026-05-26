@@ -480,7 +480,7 @@ function test_sciml_extension()
                 x0  = SA[1.0]
                 p0  = SA[0.5]
                 config = Configs.HamiltonianPointConfig(0.0, x0, p0, 1.0)
-                prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
+                prob = Test.@test_logs (:warn, r"InPlace HamiltonianVectorField") Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 xf = Integrators.final_state(result)

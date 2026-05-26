@@ -207,10 +207,9 @@ function build_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPla
     cp = _make_coerce(p0)
     hvf = sys.hvf
     is_u0_mutable = ismutable(x0)
-    # TODO: Re-enable warning when needed for user guidance
-    # if !is_u0_mutable
-    #     @warn "InPlace HamiltonianVectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
-    # end
+    if !is_u0_mutable
+        @warn "InPlace HamiltonianVectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
+    end
     return function (u, λ, t)
         x, p   = _ham_split(u, N)
         dx, dp = similar(x), similar(p)
