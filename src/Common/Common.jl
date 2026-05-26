@@ -52,7 +52,7 @@ export AbstractCache
 # export tspan, initial_condition, initial_state, initial_costate, initial_variable_costate, initial_time, final_time
 export NotProvided
 export ODEParameters, variable, cache
-export __is_autonomous, __is_variable, __variable, __unsafe, __is_inplace, __state_dimension, _variable_costate
+export __is_autonomous, __is_variable, __variable, __unsafe, __is_inplace, _variable_costate
 export deepvalue, real_norm, scalarize
 
 end # module Common
