@@ -52,9 +52,9 @@ This allows zero-allocation integration with immutable array types like `StaticA
 # Notes
 - The variable parameter is wrapped in `Common.ODEParameters` for uniform access.
 - For Hamiltonian systems, the initial condition concatenates `x0` and `p0`.
-- `SciMLFunctionSystem` now passes through this generic build_problem via cross-adapters.
+- Checks for unsupported combinations (e.g., InPlace VectorField with scalar u0).
 
-See also: [`CTFlows.Systems.rhs`](@ref), [`CTFlows.Systems.rhs_oop`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
+See also: [`CTFlows.Systems.rhs`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
 """
 function Integrators.build_problem(
     integ::SciML, 
@@ -64,6 +64,7 @@ function Integrators.build_problem(
     cache,
     )
     u0 = Configs.initial_condition(config)
+    Systems._check_vf_scalar_inplace(system, u0)  # guard for InPlace VF + scalar
     p = Common.ODEParameters(variable, cache)
     if ismutable(u0)
         f! = Systems.rhs(system)
@@ -71,6 +72,86 @@ function Integrators.build_problem(
     else
         f = Systems.rhs_oop(system, false)  # false = is_u0_mutable
         prob = ODEProblem(f, u0, Configs.tspan(config), p)
+    end
+    return prob
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Build an `ODEProblem` for HamiltonianVectorFieldSystem with Hamiltonian configurations.
+
+Constructs lazy RHS closures based on the actual initial condition shapes.
+
+# Arguments
+- `integ::SciML`: The SciML integrator strategy.
+- `system::Systems.HamiltonianVectorFieldSystem`: The Hamiltonian vector field system.
+- `config::Configs.AbstractHamiltonianConfig`: The Hamiltonian configuration (non-augmented).
+- `variable`: Variable parameter for the system.
+- `cache`: Cache for automatic differentiation.
+
+# Returns
+- `SciMLBase.ODEProblem`: The ODE problem with lazy-built RHS.
+
+See also: [`CTFlows.Systems.build_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
+"""
+function Integrators.build_problem(
+    integ::SciML,
+    system::Systems.HamiltonianVectorFieldSystem,
+    config::Configs.AbstractHamiltonianConfig;
+    variable,
+    cache,
+)
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
+    u0 = Configs.initial_condition(config)
+    λ = Common.ODEParameters(variable, cache)
+    if ismutable(u0)
+        f! = Systems.build_rhs(system, x0, p0)
+        prob = ODEProblem(f!, u0, Configs.tspan(config), λ)
+    else
+        f = Systems.build_oop_rhs(system, x0, p0)
+        prob = ODEProblem(f, u0, Configs.tspan(config), λ)
+    end
+    return prob
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Build an `ODEProblem` for HamiltonianSystem with Hamiltonian configurations.
+
+Constructs lazy RHS closures based on the actual initial condition shapes.
+
+# Arguments
+- `integ::SciML`: The SciML integrator strategy.
+- `system::Systems.HamiltonianSystem`: The Hamiltonian system (AD-based).
+- `config::Configs.AbstractHamiltonianConfig`: The Hamiltonian configuration (non-augmented).
+- `variable`: Variable parameter for the system.
+- `cache`: Cache for automatic differentiation.
+
+# Returns
+- `SciMLBase.ODEProblem`: The ODE problem with lazy-built RHS.
+
+See also: [`CTFlows.Systems.build_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
+"""
+function Integrators.build_problem(
+    integ::SciML,
+    system::Systems.HamiltonianSystem,
+    config::Configs.AbstractHamiltonianConfig;
+    variable,
+    cache,
+)
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
+    u0 = Configs.initial_condition(config)
+    λ = Common.ODEParameters(variable, cache)
+    if ismutable(u0)
+        f! = Systems.build_rhs(system, x0, p0)
+        prob = ODEProblem(f!, u0, Configs.tspan(config), λ)
+    else
+        f = Systems.build_oop_rhs(system, x0, p0)
+        prob = ODEProblem(f, u0, Configs.tspan(config), λ)
     end
     return prob
 end
@@ -108,11 +189,11 @@ function Integrators.build_problem(
     cache,
 )
     u0  = Configs.initial_condition(config)          # vcat(x0, p0, pv0)
-    p   = Common.ODEParameters(variable, cache)
+    λ   = Common.ODEParameters(variable, cache)
     n_x = length(Configs.initial_state(config))
     n_v = length(Configs.initial_variable_costate(config))
     f!  = Systems.build_rhs_augmented(system, n_x, n_v)
-    return ODEProblem(f!, u0, Configs.tspan(config), p)
+    return ODEProblem(f!, u0, Configs.tspan(config), λ)
 end
 
 # =============================================================================

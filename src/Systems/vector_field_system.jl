@@ -59,6 +59,33 @@ function VectorFieldSystem(vf::Data.VectorField{F, TD, VD, Traits.InPlace}) wher
 end
 
 # =============================================================================
+# Guard for unsupported combinations
+# =============================================================================
+
+"""
+    _check_vf_scalar_inplace(sys::VectorFieldSystem{F, TD, VD, Traits.InPlace}, u0::Number)
+
+Raise an error if an in-place vector field is used with a scalar initial condition.
+This combination is unsupported because in-place functions require mutable arrays.
+
+# Arguments
+- `sys::VectorFieldSystem`: The vector field system.
+- `u0`: The initial condition.
+
+# Throws
+- `ArgumentError` if `sys` is in-place and `u0` is a scalar.
+"""
+function _check_vf_scalar_inplace(sys::VectorFieldSystem{F, TD, VD, Traits.InPlace}, u0::Number) where {F, TD, VD}
+    throw(ArgumentError(
+        "InPlace VectorField with scalar u0 is unsupported. " *
+        "Scalar initial conditions require out-of-place vector fields. " *
+        "Consider using an out-of-place VectorField or a vector-valued initial condition."
+    ))
+end
+
+_check_vf_scalar_inplace(::AbstractSystem, ::Any) = nothing
+
+# =============================================================================
 # Internal helpers: RHS builders
 # =============================================================================
 

@@ -62,32 +62,6 @@ end
 # Internal helpers for Hamiltonian solution splitting
 # =============================================================================
 
-"""
-$(TYPEDSIGNATURES)
-
-Split a combined final state `u` into state `x` and costate `p` components.
-
-Dispatches on the type of the initial condition `x0` to handle scalar, vector, and matrix cases.
-
-# Arguments
-- `u`: Combined final state `[x; p]` from integration.
-- `x0::Number`: Scalar initial condition (splits as `(u[1], u[2])`).
-- `x0::AbstractVector`: Vector initial condition (splits by length).
-- `x0::AbstractMatrix`: Matrix initial condition (splits by number of rows).
-
-# Returns
-- `Tuple`: Tuple `(x, p)` with types matching `x0`:
-  - `Tuple{Number, Number}` for scalar inputs
-  - `Tuple{AbstractVector, AbstractVector}` for vector inputs
-  - `Tuple{AbstractMatrix, AbstractMatrix}` for matrix inputs
-
-# Notes
-- Internal helper used by `build_solution` for `HamiltonianPointConfig`.
-- Enables DRY principle by centralizing solution splitting logic.
-"""
-_ham_split_solution(u, ::Number) = (u[1], u[2])
-_ham_split_solution(u, x0::AbstractVector) = (u[1:length(x0)], u[length(x0)+1:end])
-_ham_split_solution(u, x0::AbstractMatrix) = (u[1:size(x0, 1), :], u[size(x0, 1)+1:end, :])
 
 """
 $(TYPEDSIGNATURES)
@@ -149,7 +123,13 @@ function build_solution(
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
     )
-    return _ham_split_solution(Integrators.final_state(result), Configs.initial_state(config))
+    u = Integrators.final_state(result)
+    x0 = Configs.initial_state(config)
+    n = length(x0)
+    return (
+        Common.scalarize(u[1:n], x0),
+        Common.scalarize(u[n+1:2n], x0),
+    )
 end
 
 """
@@ -176,7 +156,8 @@ function build_solution(
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
     )
-    return HamiltonianVectorFieldSolution(result)
+    x0 = Configs.initial_state(config)
+    return HamiltonianVectorFieldSolution(x0, result)
 end
 
 # =============================================================================

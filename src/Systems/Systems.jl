@@ -38,8 +38,8 @@ include(joinpath(@__DIR__, "building.jl"))
 
 export AbstractSystem, AbstractStateSystem, AbstractHamiltonianSystem
 export rhs
-export rhs_oop
-export state_dimension
+export build_rhs
+export build_oop_rhs
 export VectorFieldSystem
 export HamiltonianVectorFieldSystem
 export HamiltonianSystem
