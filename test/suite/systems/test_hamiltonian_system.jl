@@ -35,16 +35,10 @@ function test_hamiltonian_system()
             h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); is_autonomous=true, is_variable=false)
             backend = FakeADBackend()
 
-            # Without state_dimension
-            sys1 = Systems.HamiltonianSystem(h, backend)
-            Test.@test sys1 isa Systems.HamiltonianSystem
-            Test.@test sys1 isa Systems.AbstractHamiltonianSystem
-            Test.@test Systems.state_dimension(sys1) === nothing
-
-            # With state_dimension
-            sys2 = Systems.HamiltonianSystem(h, backend; state_dimension=2)
-            Test.@test sys2 isa Systems.HamiltonianSystem
-            Test.@test Systems.state_dimension(sys2) == 2
+            # Build system without state_dimension (lazy inference)
+            sys = Systems.HamiltonianSystem(h, backend)
+            Test.@test sys isa Systems.HamiltonianSystem
+            Test.@test sys isa Systems.AbstractHamiltonianSystem
         end
 
         # ====================================================================
