@@ -38,13 +38,8 @@ const DI_BACKEND_CACHED    = Differentiation.DifferentiationInterface(; ad_backe
 const DI_BACKEND_UNCACHED  = Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff(), prepare_cache=false)
 
 # Systems for each backend (cached and uncached)
-const HSYS_NO_N_CACHED    = Systems.HamiltonianSystem(H_HARMONIC, DI_BACKEND_CACHED)
-const HSYS_N1_CACHED      = Systems.HamiltonianSystem(H_HARMONIC, DI_BACKEND_CACHED; state_dimension=1)
-const HSYS_N2_CACHED      = Systems.HamiltonianSystem(H_HARMONIC, DI_BACKEND_CACHED; state_dimension=2)
-
-const HSYS_NO_N_UNCACHED  = Systems.HamiltonianSystem(H_HARMONIC, DI_BACKEND_UNCACHED)
-const HSYS_N1_UNCACHED    = Systems.HamiltonianSystem(H_HARMONIC, DI_BACKEND_UNCACHED; state_dimension=1)
-const HSYS_N2_UNCACHED    = Systems.HamiltonianSystem(H_HARMONIC, DI_BACKEND_UNCACHED; state_dimension=2)
+const HSYS_CACHED    = Systems.HamiltonianSystem(H_HARMONIC, DI_BACKEND_CACHED)
+const HSYS_UNCACHED  = Systems.HamiltonianSystem(H_HARMONIC, DI_BACKEND_UNCACHED)
 
 const INTEG = Integrators.SciML()
 const ATOL  = 1e-5
@@ -63,7 +58,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
         Test.@testset "Cached backend (prepare_cache=true)" begin
             Test.@testset "HamiltonianFlow HamiltonianPointConfig" begin
                 Test.@testset "scalar x0, p0" begin
-                    hflow = Flows.build_flow(HSYS_N1_CACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_CACHED, INTEG)
                     xf, pf = hflow(0.0, 1.0, 0.0, π/2)
                     Test.@test xf isa Real
                     Test.@test pf isa Real
@@ -72,7 +67,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 end
 
                 Test.@testset "vector x0, p0" begin
-                    hflow = Flows.build_flow(HSYS_NO_N_CACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_CACHED, INTEG)
                     xf, pf = hflow(0.0, [1.0, 0.0], [0.0, 1.0], π/2)
                     Test.@test xf isa AbstractVector && length(xf) == 2
                     Test.@test pf isa AbstractVector && length(pf) == 2
@@ -81,7 +76,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 end
 
                 Test.@testset "SVector x0, p0 (N=2)" begin
-                    hflow = Flows.build_flow(HSYS_N2_CACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_CACHED, INTEG)
                     xf, pf = hflow(0.0, SA[1.0, 0.0], SA[0.0, 1.0], π/2)
                     Test.@test xf isa AbstractVector
                     Test.@test pf isa AbstractVector
@@ -90,7 +85,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 end
 
                 Test.@testset "SVector x0, p0 (N=nothing)" begin
-                    hflow = Flows.build_flow(HSYS_NO_N_CACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_CACHED, INTEG)
                     xf, pf = hflow(0.0, SA[1.0, 0.0], SA[0.0, 1.0], π/2)
                     Test.@test xf isa AbstractVector
                     Test.@test pf isa AbstractVector
@@ -99,7 +94,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 end
 
                 Test.@testset "MVector x0, p0" begin
-                    hflow = Flows.build_flow(HSYS_N2_CACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_CACHED, INTEG)
                     xf, pf = hflow(0.0, MVector{2}(1.0, 0.0), MVector{2}(0.0, 1.0), π/2)
                     Test.@test xf isa AbstractVector
                     Test.@test pf isa AbstractVector
@@ -108,7 +103,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 end
 
                 # Test.@testset "scalar complex x0, p0" begin
-                #     hflow = Flows.build_flow(HSYS_N1_CACHED, INTEG)
+                #     hflow = Flows.build_flow(HSYS_CACHED, INTEG)
                 #     xf, pf = hflow(0.0, 1.0+2.0im, 0.0+0.0im, π/2)
                 #     Test.@test xf isa Complex
                 #     Test.@test pf isa Complex
@@ -117,7 +112,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 # end
 
                 # Test.@testset "complex vector x0, p0" begin
-                #     hflow = Flows.build_flow(HSYS_NO_N_CACHED, INTEG)
+                #     hflow = Flows.build_flow(HSYS_CACHED, INTEG)
                 #     x0 = [1.0+2.0im, 0.0+0.0im]
                 #     p0 = [0.0+0.0im, 1.0+1.0im]
                 #     xf, pf = hflow(0.0, x0, p0, π/2)
@@ -128,7 +123,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 # end
 
                 # Test.@testset "complex SVector x0, p0" begin
-                #     hflow = Flows.build_flow(HSYS_N2_CACHED, INTEG)
+                #     hflow = Flows.build_flow(HSYS_CACHED, INTEG)
                 #     xf, pf = hflow(0.0, SA[1.0+2.0im, 0.0+0.0im], SA[0.0+0.0im, 1.0+1.0im], π/2)
                 #     Test.@test xf isa AbstractVector
                 #     Test.@test pf isa AbstractVector
@@ -137,7 +132,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 # end
 
                 Test.@testset "matrix x0, p0" begin
-                    hflow = Flows.build_flow(HSYS_NO_N_CACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_CACHED, INTEG)
                     X0 = [1.0 2.0; 3.0 4.0]
                     P0 = [0.0 0.0; 1.0 1.0]
                     Xf, Pf = hflow(0.0, X0, P0, π/2)
@@ -150,7 +145,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 end
 
                 # Test.@testset "complex matrix x0, p0" begin
-                #     hflow = Flows.build_flow(HSYS_NO_N_CACHED, INTEG)
+                #     hflow = Flows.build_flow(HSYS_CACHED, INTEG)
                 #     X0 = [1.0+2.0im  5.0+6.0im; 3.0+4.0im  7.0+8.0im]
                 #     P0 = [0.0+0.0im  1.0+1.0im; 2.0+2.0im  3.0+3.0im]
                 #     Xf, Pf = hflow(0.0, X0, P0, π/2)
@@ -161,7 +156,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 # end
 
                 # Test.@testset "ForwardDiff.Dual scalar x0, p0" begin
-                #     hflow = Flows.build_flow(HSYS_N1_CACHED, INTEG)
+                #     hflow = Flows.build_flow(HSYS_CACHED, INTEG)
                 #     x0 = ForwardDiff.Dual(1.0, 1.0)
                 #     p0 = ForwardDiff.Dual(0.0, 0.0)
                 #     xf, pf = hflow(0.0, x0, p0, π/2)
@@ -172,7 +167,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 # end
 
                 # Test.@testset "ForwardDiff.Dual vector x0, p0" begin
-                #     hflow = Flows.build_flow(HSYS_NO_N_CACHED, INTEG)
+                #     hflow = Flows.build_flow(HSYS_CACHED, INTEG)
                 #     x0 = [ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)]
                 #     p0 = [ForwardDiff.Dual(0.0, 0.0), ForwardDiff.Dual(1.0, 0.0)]
                 #     xf, pf = hflow(0.0, x0, p0, π/2)
@@ -185,19 +180,19 @@ function test_flow_callables_sciml_hamiltonian_system_di()
 
             Test.@testset "HamiltonianFlow HamiltonianTrajectoryConfig" begin
                 Test.@testset "scalar x0, p0" begin
-                    hflow = Flows.build_flow(HSYS_N1_CACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_CACHED, INTEG)
                     sol = hflow((0.0, π/2), 1.0, 0.0)
                     Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
                 end
 
                 Test.@testset "vector x0, p0" begin
-                    hflow = Flows.build_flow(HSYS_NO_N_CACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_CACHED, INTEG)
                     sol = hflow((0.0, π/2), [1.0, 0.0], [0.0, 1.0])
                     Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
                 end
 
                 Test.@testset "SVector x0, p0" begin
-                    hflow = Flows.build_flow(HSYS_N2_CACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_CACHED, INTEG)
                     sol = hflow((0.0, π/2), SA[1.0, 0.0], SA[0.0, 1.0])
                     Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
                 end
@@ -205,7 +200,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
 
             Test.@testset "build_system pipeline" begin
                 Test.@testset "via Systems.build_system" begin
-                    sys = Systems.build_system(H_HARMONIC, DI_BACKEND_CACHED; state_dimension=2)
+                    sys = Systems.build_system(H_HARMONIC, DI_BACKEND_CACHED)
                     flow = Flows.build_flow(sys, INTEG)
                     xf, pf = flow(0.0, [1.0, 0.0], [0.0, 1.0], π/2)
                     Test.@test xf ≈ [0.0, 1.0]  atol=ATOL
@@ -221,7 +216,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
         Test.@testset "Uncached backend (prepare_cache=false)" begin
             Test.@testset "HamiltonianFlow HamiltonianPointConfig" begin
                 Test.@testset "scalar x0, p0" begin
-                    hflow = Flows.build_flow(HSYS_N1_UNCACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_UNCACHED, INTEG)
                     xf, pf = hflow(0.0, 1.0, 0.0, π/2)
                     Test.@test xf isa Real
                     Test.@test pf isa Real
@@ -230,7 +225,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 end
 
                 Test.@testset "vector x0, p0" begin
-                    hflow = Flows.build_flow(HSYS_NO_N_UNCACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_UNCACHED, INTEG)
                     xf, pf = hflow(0.0, [1.0, 0.0], [0.0, 1.0], π/2)
                     Test.@test xf isa AbstractVector && length(xf) == 2
                     Test.@test pf isa AbstractVector && length(pf) == 2
@@ -239,7 +234,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 end
 
                 Test.@testset "SVector x0, p0 (N=2)" begin
-                    hflow = Flows.build_flow(HSYS_N2_UNCACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_UNCACHED, INTEG)
                     xf, pf = hflow(0.0, SA[1.0, 0.0], SA[0.0, 1.0], π/2)
                     Test.@test xf isa AbstractVector
                     Test.@test pf isa AbstractVector
@@ -248,7 +243,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 end
 
                 Test.@testset "SVector x0, p0 (N=nothing)" begin
-                    hflow = Flows.build_flow(HSYS_NO_N_UNCACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_UNCACHED, INTEG)
                     xf, pf = hflow(0.0, SA[1.0, 0.0], SA[0.0, 1.0], π/2)
                     Test.@test xf isa AbstractVector
                     Test.@test pf isa AbstractVector
@@ -257,7 +252,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 end
 
                 Test.@testset "MVector x0, p0" begin
-                    hflow = Flows.build_flow(HSYS_N2_UNCACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_UNCACHED, INTEG)
                     xf, pf = hflow(0.0, MVector{2}(1.0, 0.0), MVector{2}(0.0, 1.0), π/2)
                     Test.@test xf isa AbstractVector
                     Test.@test pf isa AbstractVector
@@ -266,7 +261,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 end
 
                 # Test.@testset "scalar complex x0, p0" begin
-                #     hflow = Flows.build_flow(HSYS_N1_UNCACHED, INTEG)
+                #     hflow = Flows.build_flow(HSYS_UNCACHED, INTEG)
                 #     xf, pf = hflow(0.0, 1.0+2.0im, 0.0+0.0im, π/2)
                 #     Test.@test xf isa Complex
                 #     Test.@test pf isa Complex
@@ -275,7 +270,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 # end
 
                 # Test.@testset "complex vector x0, p0" begin
-                #     hflow = Flows.build_flow(HSYS_NO_N_UNCACHED, INTEG)
+                #     hflow = Flows.build_flow(HSYS_UNCACHED, INTEG)
                 #     x0 = [1.0+2.0im, 0.0+0.0im]
                 #     p0 = [0.0+0.0im, 1.0+1.0im]
                 #     xf, pf = hflow(0.0, x0, p0, π/2)
@@ -286,7 +281,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 # end
 
                 # Test.@testset "complex SVector x0, p0" begin
-                #     hflow = Flows.build_flow(HSYS_N2_UNCACHED, INTEG)
+                #     hflow = Flows.build_flow(HSYS_UNCACHED, INTEG)
                 #     xf, pf = hflow(0.0, SA[1.0+2.0im, 0.0+0.0im], SA[0.0+0.0im, 1.0+1.0im], π/2)
                 #     Test.@test xf isa AbstractVector
                 #     Test.@test pf isa AbstractVector
@@ -295,7 +290,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 # end
 
                 Test.@testset "matrix x0, p0" begin
-                    hflow = Flows.build_flow(HSYS_NO_N_UNCACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_UNCACHED, INTEG)
                     X0 = [1.0 2.0; 3.0 4.0]
                     P0 = [0.0 0.0; 1.0 1.0]
                     Xf, Pf = hflow(0.0, X0, P0, π/2)
@@ -308,7 +303,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 end
 
                 # Test.@testset "complex matrix x0, p0" begin
-                #     hflow = Flows.build_flow(HSYS_NO_N_UNCACHED, INTEG)
+                #     hflow = Flows.build_flow(HSYS_UNCACHED, INTEG)
                 #     X0 = [1.0+2.0im  5.0+6.0im; 3.0+4.0im  7.0+8.0im]
                 #     P0 = [0.0+0.0im  1.0+1.0im; 2.0+2.0im  3.0+3.0im]
                 #     Xf, Pf = hflow(0.0, X0, P0, π/2)
@@ -319,7 +314,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 # end
 
                 # Test.@testset "ForwardDiff.Dual scalar x0, p0" begin
-                #     hflow = Flows.build_flow(HSYS_N1_UNCACHED, INTEG)
+                #     hflow = Flows.build_flow(HSYS_UNCACHED, INTEG)
                 #     x0 = ForwardDiff.Dual(1.0, 1.0)
                 #     p0 = ForwardDiff.Dual(0.0, 0.0)
                 #     xf, pf = hflow(0.0, x0, p0, π/2)
@@ -330,7 +325,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
                 # end
 
                 # Test.@testset "ForwardDiff.Dual vector x0, p0" begin
-                #     hflow = Flows.build_flow(HSYS_NO_N_UNCACHED, INTEG)
+                #     hflow = Flows.build_flow(HSYS_UNCACHED, INTEG)
                 #     x0 = [ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)]
                 #     p0 = [ForwardDiff.Dual(0.0, 0.0), ForwardDiff.Dual(1.0, 0.0)]
                 #     xf, pf = hflow(0.0, x0, p0, π/2)
@@ -343,19 +338,19 @@ function test_flow_callables_sciml_hamiltonian_system_di()
 
             Test.@testset "HamiltonianFlow HamiltonianTrajectoryConfig" begin
                 Test.@testset "scalar x0, p0" begin
-                    hflow = Flows.build_flow(HSYS_N1_UNCACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_UNCACHED, INTEG)
                     sol = hflow((0.0, π/2), 1.0, 0.0)
                     Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
                 end
 
                 Test.@testset "vector x0, p0" begin
-                    hflow = Flows.build_flow(HSYS_NO_N_UNCACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_UNCACHED, INTEG)
                     sol = hflow((0.0, π/2), [1.0, 0.0], [0.0, 1.0])
                     Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
                 end
 
                 Test.@testset "SVector x0, p0" begin
-                    hflow = Flows.build_flow(HSYS_N2_UNCACHED, INTEG)
+                    hflow = Flows.build_flow(HSYS_UNCACHED, INTEG)
                     sol = hflow((0.0, π/2), SA[1.0, 0.0], SA[0.0, 1.0])
                     Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
                 end
@@ -363,7 +358,7 @@ function test_flow_callables_sciml_hamiltonian_system_di()
 
             Test.@testset "build_system pipeline" begin
                 Test.@testset "via Systems.build_system" begin
-                    sys = Systems.build_system(H_HARMONIC, DI_BACKEND_UNCACHED; state_dimension=2)
+                    sys = Systems.build_system(H_HARMONIC, DI_BACKEND_UNCACHED)
                     flow = Flows.build_flow(sys, INTEG)
                     xf, pf = flow(0.0, [1.0, 0.0], [0.0, 1.0], π/2)
                     Test.@test xf ≈ [0.0, 1.0]  atol=ATOL
