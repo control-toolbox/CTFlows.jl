@@ -20,9 +20,8 @@ using CTFlows
 using CTFlowsStaticArrays  # Loads this extension
 
 # Now HamiltonianFlow works efficiently with SVector
-hvf = HamiltonianVectorField((x, p) -> (p, -x); autonomous=true, variable=false)
-sys = HamiltonianVectorFieldSystem(hvf; state_dimension=2)  # N=2 known
-flow = build_flow(sys, SciML())
+hvf = HamiltonianVectorField((x, p) -> (p, -x); is_autonomous=true, is_variable=false)
+flow = Flow(hvf; reltol=1e-8)
 xf, pf = flow(0.0, SA[1.0, 0.0], SA[0.0, 1.0], π/2)
 
 # And with SMatrix for matrix initial conditions
@@ -61,19 +60,12 @@ function _ham_split(u::SVector{NN, T}, N::Int) where {NN, T}
     return (x, pk)
 end
 
-function _ham_split(u::SVector{NN, T}, ::Nothing) where {NN, T}
-    N = NN ÷ 2  # Compile-time: NN is a type parameter
-    x  = SVector{N, T}(ntuple(i -> u[i],   Val(N)))
-    pk = SVector{N, T}(ntuple(i -> u[N+i], Val(N)))
-    return (x, pk)
-end
-
 """
 Type-stable split of a `SMatrix` into state and costate components.
 
 # Arguments
 - `u::SMatrix{NN,M,T}`: Combined state matrix stacked vertically `[X; P]`.
-- `N::Int` or `::Nothing`: Known state dimension, or `nothing` to infer it as `NN ÷ 2`.
+- `N::Int`: Known state dimension.
 
 # Returns
 - `Tuple{SMatrix{N,M,T}, SMatrix{N,M,T}}`: Tuple of `(X, P)` as `SMatrix`s.
@@ -87,13 +79,6 @@ Type-stable split of a `SMatrix` into state and costate components.
 """
 function _ham_split(u::SMatrix{NN, M, T}, N::Int) where {NN, M, T}
     # Enumerate result elements in column-major order via single index k
-    X = SMatrix{N, M, T}(ntuple(k -> u[(k-1) % N + 1,     (k-1) ÷ N + 1], Val(N*M)))
-    P = SMatrix{N, M, T}(ntuple(k -> u[N + (k-1) % N + 1, (k-1) ÷ N + 1], Val(N*M)))
-    return (X, P)
-end
-
-function _ham_split(u::SMatrix{NN, M, T}, ::Nothing) where {NN, M, T}
-    N = NN ÷ 2  # Compile-time: NN is a type parameter
     X = SMatrix{N, M, T}(ntuple(k -> u[(k-1) % N + 1,     (k-1) ÷ N + 1], Val(N*M)))
     P = SMatrix{N, M, T}(ntuple(k -> u[N + (k-1) % N + 1, (k-1) ÷ N + 1], Val(N*M)))
     return (X, P)
