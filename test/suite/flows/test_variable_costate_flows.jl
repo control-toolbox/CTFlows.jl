@@ -297,7 +297,7 @@ function test_variable_costate_flows()
             end
 
             Test.@testset "vector cached with variable_costate=true" begin
-                hflow = Flows.build_flow(HSYS_DI_N2_CACHED, INTEG)
+                hflow = Flows.build_flow(HSYS_DI_CACHED, INTEG)
                 t0, tf = 0.0, 1.0
                 x0 = [1.0, 2.0]
                 p0 = [3.0, 4.0]

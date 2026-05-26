@@ -69,8 +69,12 @@ end
 # Internal helpers for augmented split/assign (Vector + Matrix, concrete integers)
 # =============================================================================
 
-_aug_split(u::AbstractVector, n_x::Int, n_v::Int) =
-    (@view(u[1:n_x]), @view(u[n_x+1:2*n_x]), @view(u[end-n_v+1:end]))
+function _aug_split(u::AbstractVector, n_x::Int, n_v::Int)
+    x   = n_x == 1 ? u[1]    : @view(u[1:n_x])
+    p   = n_x == 1 ? u[n_x+1] : @view(u[n_x+1:2*n_x])
+    pv  = @view(u[end-n_v+1:end])
+    return (x, p, pv)
+end
 _aug_split(u::AbstractMatrix, n_x::Int, n_v::Int) =
     (@view(u[1:n_x,:]), @view(u[n_x+1:2*n_x,:]), @view(u[end-n_v+1:end,:]))
 
