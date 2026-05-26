@@ -172,7 +172,8 @@ function test_plots_extension()
                         [3.0, 7.0],
                     ],
                 )
-                sol = Solutions.HamiltonianVectorFieldSolution(fake_result)
+                x0 = 1.0  # initial state
+                sol = Solutions.HamiltonianVectorFieldSolution(x0, fake_result)
 
                 ts, states, costates = CTFlowsPlots._ham_sol_to_arrays(sol)
                 Test.@test ts == [0.0, 1.0]
@@ -190,7 +191,8 @@ function test_plots_extension()
                         [3.0, 4.0, 7.0, 8.0],
                     ],
                 )
-                sol = Solutions.HamiltonianVectorFieldSolution(fake_result)
+                x0 = [1.0, 2.0]  # initial state
+                sol = Solutions.HamiltonianVectorFieldSolution(x0, fake_result)
 
                 ts, states, costates = CTFlowsPlots._ham_sol_to_arrays(sol)
                 Test.@test ts == [0.0, 1.0]
@@ -215,7 +217,8 @@ function test_plots_extension()
                         [0.25, 0.5],
                     ],
                 )
-                sol = Solutions.HamiltonianVectorFieldSolution(fake_result)
+                x0 = 1.0  # initial state
+                sol = Solutions.HamiltonianVectorFieldSolution(x0, fake_result)
 
                 Test.@test_nowarn Plots.plot(sol, legend=false)
             end
@@ -229,7 +232,8 @@ function test_plots_extension()
                         [0.25, 0.5],
                     ],
                 )
-                sol = Solutions.HamiltonianVectorFieldSolution(fake_result)
+                x0 = 1.0  # initial state
+                sol = Solutions.HamiltonianVectorFieldSolution(x0, fake_result)
 
                 p = Plots.plot([1, 2, 3])
                 Test.@test_nowarn Plots.plot!(p, sol)
@@ -244,7 +248,8 @@ function test_plots_extension()
                         [0.25, 0.5],
                     ],
                 )
-                sol = Solutions.HamiltonianVectorFieldSolution(fake_result)
+                x0 = 1.0  # initial state
+                sol = Solutions.HamiltonianVectorFieldSolution(x0, fake_result)
 
                 p = Plots.plot([1, 2, 3])
                 Test.@test_nowarn Plots.plot!(p, sol)
