@@ -204,7 +204,7 @@ function test_flow_callables_sciml_hamiltonian_system()
 
         Test.@testset "build_system pipeline" begin
             Test.@testset "via Systems.build_system" begin
-                sys = Systems.build_system(H_HARMONIC, BACKEND; state_dimension=2)
+                sys = Systems.build_system(H_HARMONIC, BACKEND)
                 flow = Flows.build_flow(sys, INTEG)
                 xf, pf = flow(0.0, [1.0, 0.0], [0.0, 1.0], π/2)
                 Test.@test xf ≈ [0.0, 1.0]  atol=ATOL
