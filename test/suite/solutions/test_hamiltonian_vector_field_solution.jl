@@ -63,7 +63,8 @@ function test_hamiltonian_vector_field_solution()
         
         Test.@testset "Construction" begin
             result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
-            sol = Solutions.HamiltonianVectorFieldSolution(result)
+            x0 = [1.0, 2.0]  # initial state
+            sol = Solutions.HamiltonianVectorFieldSolution(x0, result)
             Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
             Test.@test sol isa Solutions.AbstractHamiltonianVectorFieldSolution
         end
@@ -74,16 +75,17 @@ function test_hamiltonian_vector_field_solution()
         
         Test.@testset "sol(t) returns tuple" begin
             result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
-            sol = Solutions.HamiltonianVectorFieldSolution(result)
-            
+            x0 = [1.0, 2.0]  # initial state
+            sol = Solutions.HamiltonianVectorFieldSolution(x0, result)
+
             x, p = sol(0.0)
             Test.@test x == [1.0, 2.0]
             Test.@test p == [3.0, 4.0]
-            
+
             x, p = sol(0.5)
             Test.@test x == [1.5, 2.5]
             Test.@test p == [3.5, 4.5]
-            
+
             x, p = sol(1.0)
             Test.@test x == [2.0, 3.0]
             Test.@test p == [4.0, 5.0]
@@ -95,12 +97,13 @@ function test_hamiltonian_vector_field_solution()
         
         Test.@testset "state and costate accessors" begin
             result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
-            sol = Solutions.HamiltonianVectorFieldSolution(result)
-            
+            x0 = [1.0, 2.0]  # initial state
+            sol = Solutions.HamiltonianVectorFieldSolution(x0, result)
+
             x_func = Solutions.state(sol)
             Test.@test x_func isa Function
             Test.@test x_func(0.0) == [1.0, 2.0]
-            
+
             p_func = Solutions.costate(sol)
             Test.@test p_func isa Function
             Test.@test p_func(0.0) == [3.0, 4.0]
@@ -112,8 +115,9 @@ function test_hamiltonian_vector_field_solution()
         
         Test.@testset "final_state" begin
             result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
-            sol = Solutions.HamiltonianVectorFieldSolution(result)
-            
+            x0 = [1.0, 2.0]  # initial state
+            sol = Solutions.HamiltonianVectorFieldSolution(x0, result)
+
             x, p = Integrators.final_state(sol)
             Test.@test x == [1.0, 2.0]
             Test.@test p == [3.0, 4.0]
@@ -125,8 +129,9 @@ function test_hamiltonian_vector_field_solution()
         
         Test.@testset "time_grid" begin
             result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
-            sol = Solutions.HamiltonianVectorFieldSolution(result)
-            
+            x0 = [1.0, 2.0]  # initial state
+            sol = Solutions.HamiltonianVectorFieldSolution(x0, result)
+
             tg = Solutions.time_grid(sol)
             Test.@test tg == [0.0, 0.5, 1.0]
         end
@@ -138,8 +143,9 @@ function test_hamiltonian_vector_field_solution()
         Test.@testset "Integrators.merge" begin
             Test.@testset "merge single segment" begin
                 result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
-                sol = Solutions.HamiltonianVectorFieldSolution(result)
-                
+                x0 = [1.0, 2.0]  # initial state
+                sol = Solutions.HamiltonianVectorFieldSolution(x0, result)
+
                 merged = Integrators.merge([sol])
                 Test.@test merged isa Solutions.HamiltonianVectorFieldSolution
             end
@@ -147,9 +153,10 @@ function test_hamiltonian_vector_field_solution()
             Test.@testset "merge multiple segments" begin
                 result1 = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5]])
                 result2 = FakeHamiltonianResult([1.5, 2.5, 3.5, 4.5], [0.5, 1.0], [[2, 3, 4, 5], [2.5, 3.5, 4.5, 5.5]])
-                sol1 = Solutions.HamiltonianVectorFieldSolution(result1)
-                sol2 = Solutions.HamiltonianVectorFieldSolution(result2)
-                
+                x0 = [1.0, 2.0]  # initial state
+                sol1 = Solutions.HamiltonianVectorFieldSolution(x0, result1)
+                sol2 = Solutions.HamiltonianVectorFieldSolution(x0, result2)
+
                 merged = Integrators.merge([sol1, sol2])
                 Test.@test merged isa Solutions.HamiltonianVectorFieldSolution
             end
@@ -166,8 +173,9 @@ function test_hamiltonian_vector_field_solution()
         Test.@testset "Base.show" begin
             Test.@testset "text/plain format" begin
                 result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
-                sol = Solutions.HamiltonianVectorFieldSolution(result)
-                
+                x0 = [1.0, 2.0]  # initial state
+                sol = Solutions.HamiltonianVectorFieldSolution(x0, result)
+
                 io = IOBuffer()
                 show(io, MIME("text/plain"), sol)
                 output = String(take!(io))
@@ -176,8 +184,9 @@ function test_hamiltonian_vector_field_solution()
             
             Test.@testset "compact format" begin
                 result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
-                sol = Solutions.HamiltonianVectorFieldSolution(result)
-                
+                x0 = [1.0, 2.0]  # initial state
+                sol = Solutions.HamiltonianVectorFieldSolution(x0, result)
+
                 io = IOBuffer()
                 show(io, sol)
                 output = String(take!(io))
@@ -186,8 +195,9 @@ function test_hamiltonian_vector_field_solution()
             
             Test.@testset "show handles empty times gracefully" begin
                 result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], Float64[], Vector{Vector{Float64}}[])
-                sol = Solutions.HamiltonianVectorFieldSolution(result)
-                
+                x0 = [1.0, 2.0]  # initial state
+                sol = Solutions.HamiltonianVectorFieldSolution(x0, result)
+
                 io = IOBuffer()
                 show(io, MIME("text/plain"), sol)
                 output = String(take!(io))

@@ -154,15 +154,15 @@ function test_hamiltonian_vf_solution_shapes()
         end
 
         # ====================================================================
-        # SHAPE TESTS - final_state
+        # SHAPE TESTS - final time evaluation
         # ====================================================================
 
-        Test.@testset "final_state shape preservation" begin
+        Test.@testset "final time evaluation shape preservation" begin
             Test.@testset "scalar x0, p0 → scalar output" begin
                 hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), 1.0, 0.0)
                 
-                x, p = Solutions.final_state(sol)
+                x, p = sol(π/2)
                 Test.@test x isa Real
                 Test.@test p isa Real
                 Test.@test x ≈ 0.0  atol=ATOL
@@ -173,7 +173,7 @@ function test_hamiltonian_vf_solution_shapes()
                 hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), [1.0, 0.0], [0.0, 1.0])
                 
-                x, p = Solutions.final_state(sol)
+                x, p = sol(π/2)
                 Test.@test x isa AbstractVector && length(x) == 2
                 Test.@test p isa AbstractVector && length(p) == 2
                 Test.@test x ≈ [0.0, 1.0]  atol=ATOL
@@ -186,7 +186,7 @@ function test_hamiltonian_vf_solution_shapes()
                 P0 = [0.0 0.0; 1.0 1.0]
                 sol = hflow((0.0, π/2), X0, P0)
                 
-                X, P = Solutions.final_state(sol)
+                X, P = sol(π/2)
                 Test.@test X isa AbstractMatrix
                 Test.@test P isa AbstractMatrix
                 Test.@test size(X) == (2, 2)
