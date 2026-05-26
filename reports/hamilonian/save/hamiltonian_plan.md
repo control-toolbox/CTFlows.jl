@@ -2,23 +2,29 @@
 
 ## Context
 
-CTFlows.jl currently supports two entry points for constructing Hamiltonian flows:
+CTFlows.jl (`develop` branch) currently supports two entry points for constructing Hamiltonian flows:
 
 - `HamiltonianVectorField` — the user provides the vector field `(ẋ, ṗ) = F(t, x, p[, v])` directly.
-- `HamiltonianSystem` — wraps a `HamiltonianVectorField` and pre-builds in-place and out-of-place RHS closures.
-- `HamiltonianFlow` — wraps a `HamiltonianSystem` and an `AbstractIntegrator`.
+- `HamiltonianVectorFieldSystem` — wraps a `HamiltonianVectorField` and pre-builds in-place and out-of-place RHS closures.
+- `HamiltonianFlow` — wraps a `HamiltonianVectorFieldSystem` and an `AbstractIntegrator`.
 
-The existing architecture is well-structured around three orthogonal traits (`TimeDependence`, `VariableDependence`, `AbstractMutabilityTrait`), a strategy pattern for integrators (`AbstractIntegrator <: CTSolvers.Strategies.AbstractStrategy`), and a clear module dependency graph (`Common → Data → Systems → Flows → Solutions → ext`).
+The naming convention in `develop` is already consistent:
 
-However, there is no way today to provide a **scalar Hamiltonian function** `H(t, x, p[, v]) → ℝ` and have the vector field derived automatically via automatic differentiation. The user must compute `∂H/∂p` and `∂H/∂x` manually.
+| `Data` | `Systems` |
+|---|---|
+| `VectorField` | `VectorFieldSystem` |
+| `HamiltonianVectorField` | `HamiltonianVectorFieldSystem` |
+| `Hamiltonian` *(new)* | `HamiltonianSystem` *(new)* |
+
+There is no way today to provide a **scalar Hamiltonian function** `H(t, x, p[, v]) → ℝ` and have the vector field derived automatically via automatic differentiation. The user must compute `∂H/∂p` and `∂H/∂x` manually.
 
 ## Objectives
 
 1. Add a `Hamiltonian` scalar type in `Data`, parallel to `HamiltonianVectorField`.
 2. Add a `Differentiation` module with an `AbstractADBackend` strategy and its contract.
 3. Add an `AbstractADTrait` in `Common` to encode whether a system carries an AD backend.
-4. Add a second concrete Hamiltonian system type (`HamiltonianCachedSystem`) built from a `Hamiltonian` + backend, with RHS closures that use the AD backend and a runtime cache passed through `ODEParameters`.
-5. Keep `HamiltonianFlow` structurally unchanged; route the cache preparation via a `_prepare_cache` internal function that dispatches on the AD trait.
+4. Add `HamiltonianSystem` built from a `Hamiltonian` + backend, with RHS closures that use the AD backend and a runtime cache passed through `ODEParameters`.
+5. Keep `HamiltonianFlow` structurally unchanged; route cache preparation via a `prepare_cache` function using three-layer trait dispatch (`ad_trait`).
 6. Support `augment=true` on point calls for `NonFixed` Hamiltonian flows, computing the variable costate `pv(tf) = -∫ ∂H/∂v dt` without zero dynamics.
 7. Provide a high-level `Flow(h::Hamiltonian; ...)` constructor.
 
@@ -31,14 +37,13 @@ Data  (Hamiltonian, HamiltonianVectorField, VectorField)
     ↓
 Differentiation  (AbstractADBackend <: CTSolvers strategy, stubs)
     ↓
-Systems  (HamiltonianSystem [WithoutAD], HamiltonianCachedSystem [WithAD])
+Systems  (HamiltonianVectorFieldSystem [WithoutAD], HamiltonianSystem [WithAD])
     ↓
-Flows  (HamiltonianFlow, _prepare_cache dispatch, augment=true)
+Flows  (HamiltonianFlow, prepare_cache trait dispatch, augment=true)
     ↓
 Solutions
     ↓
 ext/CTFlowsDifferentiationInterface  (concrete cache, gradient implementations)
-ext/CTFlowsForwardDiff               (default backend resolution)
 ```
 
 ---
@@ -61,7 +66,13 @@ Add `AbstractCache` as a common abstract type (parallel to `AbstractTag`, `Abstr
 abstract type AbstractCache end
 ```
 
-Export: `AbstractADTrait`, `WithAD`, `WithoutAD`, `AbstractCache`.
+Add a new content trait for augmented integration (used by `AugmentedHamiltonianPointConfig` — see Step 24a):
+
+```julia
+struct AugmentedHamiltonianTrait <: ContentTrait end
+```
+
+Export: `AbstractADTrait`, `WithAD`, `WithoutAD`, `AbstractCache`, `AugmentedHamiltonianTrait`.
 
 ### Step 2 — `src/Common/ode_parameters.jl` (modified)
 
@@ -74,14 +85,23 @@ struct ODEParameters{V, C<:Union{AbstractCache, Nothing}}
 end
 ```
 
-Add a convenience constructor `ODEParameters(variable) = ODEParameters(variable, nothing)` to keep existing call sites unchanged.
+Add a convenience constructor `ODEParameters(variable) = ODEParameters(variable, nothing)` to keep all existing call sites unchanged.
+
+Add a getter for the cache:
+
+```julia
+function cache(p::ODEParameters)
+    return p.cache
+end
+```
 
 ### Step 3 — Test Checkpoint: Common traits and ODEParameters
 
-- `@testset "Unit: WithAD / WithoutAD construction"` — trait values exist and are subtypes of `AbstractADTrait`
+- `@testset "Unit: WithAD / WithoutAD construction"` — subtypes of `AbstractADTrait`
 - `@testset "Unit: AbstractCache abstract type"` — cannot be instantiated
 - `@testset "Unit: ODEParameters with cache"` — both constructors work, cache field accessible
 - `@testset "Unit: ODEParameters backward compat"` — single-arg constructor gives `cache=nothing`
+- `@testset "Unit: AugmentedHamiltonianTrait construction"` — subtype of `ContentTrait`
 - `@testset "Exports"` — all new names exported from `Common`
 
 ---
@@ -104,10 +124,9 @@ end
 ```
 
 - Out-of-place only (a scalar return has no meaningful in-place form).
-- Trait accessors `time_dependence`, `variable_dependence` implemented at abstract level.
-- Internal helper `_oop_arity_h` for each trait combination (2, 3, 3, 4).
-- Internal helper `_detect_td_vd_h` with `PreconditionError` for multiple methods, `IncorrectArgument` for invalid arity.
-- Constructor `Hamiltonian(f; is_autonomous, is_variable)` with auto-detection.
+- Trait accessors `time_dependence`, `variable_dependence` implemented at the abstract level.
+- Constructor `Hamiltonian(f; is_autonomous, is_variable)` with Bool flags and defaults (no auto-detection).
+  - Defaults from `Common.__is_autonomous()` and `Common.__is_variable()`.
 - Natural call signatures: 4 combinations (Autonomous/NonAutonomous × Fixed/NonFixed).
 - Uniform call signature `(t, x, p, v)` forwarding to the natural signature.
 - `Base.show`.
@@ -120,11 +139,9 @@ end
 ### Step 6 — Test Checkpoint: `Data.Hamiltonian`
 
 - `@testset "Unit: Construction with all trait combinations"`
-- `@testset "Unit: Auto-detection of traits from arity"`
 - `@testset "Unit: Natural call signatures"` — all 4 combinations
-- `@testset "Unit: Uniform call signature"` — (t, x, p, v) forwarding
-- `@testset "Error: Multiple methods"` — `PreconditionError`
-- `@testset "Error: Invalid arity"` — `IncorrectArgument`
+- `@testset "Unit: Uniform call signature (t, x, p, v)"` — all 4 combinations
+- `@testset "Unit: Type stability"` — uniform call type stability
 - `@testset "Exports"` — `AbstractHamiltonian`, `Hamiltonian` exported from `Data`
 
 ---
@@ -142,26 +159,27 @@ abstract type AbstractADBackend <: CTSolvers.Strategies.AbstractStrategy end
 The contract is defined by three stubs (all throw `NotImplemented`):
 
 ```julia
-# Returns (∂H/∂x, ∂H/∂p) — raw partial derivatives, not negated
-# Negation (ṗ = -∂H/∂x) is the RHS's responsibility, not the backend's
+# Returns (∂H/∂x, ∂H/∂p) — raw partial derivatives, not negated.
+# The negation (ṗ = -∂H/∂x) is the RHS's responsibility, not the backend's.
 function hamiltonian_gradient(backend::AbstractADBackend, h, t, x, p, v, cache=nothing)
     throw(NotImplemented(...))
 end
 
-# Returns ∂H/∂v — raw partial derivative, not negated
+# Returns ∂H/∂v — raw partial derivative, not negated.
 function variable_gradient(backend::AbstractADBackend, h, t, x, p, v, cache=nothing)
     throw(NotImplemented(...))
 end
 
-# Returns a concrete AbstractCache from typical values
+# Returns a concrete AbstractCache built from typical values.
 function prepare_cache(backend::AbstractADBackend, h, typical_x, typical_p, typical_v)
     throw(NotImplemented(...))
 end
 ```
 
-Notes on the contract design:
-- `cache` defaults to `nothing` so that calls without a prepared cache still work (simpler paths, or backends that do not support preparation).
-- Gradients are returned **non-negated**; the RHS closures apply signs.
+Design notes:
+
+- `cache` defaults to `nothing` so calls without a prepared cache still work.
+- Gradients are returned **non-negated**; the RHS closures apply the signs.
 - `prepare_cache` returns a `Common.AbstractCache` subtype; the concrete type is extension-specific.
 
 ### Step 8 — `src/Differentiation/differentiation_interface.jl` (new file)
@@ -175,6 +193,16 @@ end
 ```
 
 Implements `CTSolvers.Strategies.id`, `description`, `metadata` for the strategy contract.
+`ADTypes` is a hard dependency (`[deps]`), so `AutoForwardDiff` is always available.
+The `:backend` option definition uses `AutoForwardDiff()` directly as the default:
+
+```julia
+default = AutoForwardDiff()   # ADTypes.jl — always available (hard dep)
+```
+
+No tag/stub pattern needed — unlike `SciML` where the default algorithm (`Tsit5()`) comes
+from a substantial optional package, `AutoForwardDiff()` is a zero-cost type from the
+lightweight `ADTypes.jl` hard dep.
 
 ### Step 9 — `src/Differentiation/building.jl` (new file)
 
@@ -190,7 +218,10 @@ Parallel to `Integrators.build_integrator`.
 
 Module manifest: imports, includes in order, exports.
 
-Exports: `AbstractADBackend`, `DifferentiationInterface`, `build_ad_backend`, `hamiltonian_gradient`, `variable_gradient`, `prepare_cache`.
+External imports include `using ADTypes: ADTypes` (hard dep — provides `AutoForwardDiff`).
+
+Exports: `AbstractADBackend`, `DifferentiationInterface`, `build_ad_backend`,
+`hamiltonian_gradient`, `variable_gradient`, `prepare_cache`.
 
 ### Step 11 — `src/CTFlows.jl` (modified)
 
@@ -198,7 +229,7 @@ Add `include("Differentiation/Differentiation.jl")` and `using .Differentiation`
 
 ### Step 12 — Test Checkpoint: `Differentiation` module
 
-- `@testset "Unit: DifferentiationInterface construction"`
+- `@testset "Unit: DifferentiationInterface construction"` — `DifferentiationInterface()` works; default `:backend` is `AutoForwardDiff()`
 - `@testset "Unit: CTSolvers.Strategies contract"` — `id`, `description`, `metadata`
 - `@testset "Unit: build_ad_backend"`
 - `@testset "Error: hamiltonian_gradient stub throws NotImplemented"`
@@ -208,7 +239,7 @@ Add `include("Differentiation/Differentiation.jl")` and `using .Differentiation`
 
 ---
 
-## Phase 4 — `HamiltonianCachedSystem` in `Systems`
+## Phase 4 — `HamiltonianSystem` in `Systems`
 
 ### Step 13 — `src/Systems/abstract_system.jl` (modified)
 
@@ -228,86 +259,94 @@ Add trait accessor:
 Common.ad_trait(::AbstractHamiltonianSystem{TD, VD, AT}) where {TD, VD, AT} = AT
 ```
 
-Update `HamiltonianSystem` parent type to `AbstractHamiltonianSystem{TD, VD, WithoutAD}`.
+Update `HamiltonianVectorFieldSystem` parent type to `AbstractHamiltonianSystem{TD, VD, WithoutAD}`.
 
-### Step 14 — `src/Systems/scalar_hamiltonian_system.jl` (new file)
+### Step 14 — `src/Systems/hamiltonian_system.jl` (new file)
 
-The name `ScalarHamiltonianSystem` reflects the mathematical origin (a scalar function `H → ℝ`) rather than an implementation detail. This pairs cleanly with the existing `HamiltonianSystem` (from HVF) and `Data.Hamiltonian` (scalar) vs `Data.HamiltonianVectorField`.
+`HamiltonianSystem` is the new type built from a scalar `Hamiltonian` and an AD backend.
+It carries `WithAD` and pre-builds RHS closures that read `cache(λ)` at each ODE step.
 
 ```julia
-struct ScalarHamiltonianSystem{
+struct HamiltonianSystem{
     N,
-    F <: Function,
-    TD <: Common.TimeDependence,
-    VD <: Common.VariableDependence,
+    F       <: Function,
+    TD      <: Common.TimeDependence,
+    VD      <: Common.VariableDependence,
     BACKEND <: Differentiation.AbstractADBackend,
-    RHS <: Function,
+    RHS     <: Function,
     OOPROHS <: Function,
-    AUGRHS  # Function or Nothing
 } <: AbstractHamiltonianSystem{TD, VD, WithAD}
     h::Data.Hamiltonian{F, TD, VD}
     backend::BACKEND
     rhs::RHS
     rhs_oop::OOPROHS
-    rhs_augmented::AUGRHS   # Nothing when VD = Fixed
 end
 ```
 
-**RHS construction** — the RHS closures capture `h` and `backend`, and read `λ.cache` at each ODE step:
+**RHS construction** — captures `h` and `backend`; reads `cache(λ)` at each step:
 
 ```julia
-function _build_rhs_cached(h, backend, ::Val{N}) where N
+function _build_rhs(h, backend, ::Val{N}) where N
     return function (du, u, λ, t)
-        x, p  = _ham_split(u, N)
-        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, x, p, λ.variable, λ.cache)
-        _ham_assign!(du, ∂p, -∂x, N)  # ẋ = ∂H/∂p, ṗ = -∂H/∂x
+        x, p   = _ham_split(u, N)
+        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, x, p, variable(λ), cache(λ))
+        _ham_assign!(du, ∂p, -∂x, N)   # ẋ = ∂H/∂p,  ṗ = -∂H/∂x
         return nothing
     end
 end
 ```
 
-**Augmented RHS** — built only when `VD = NonFixed`:
+**Augmented RHS** — built lazily (not stored in the struct) using concrete dimensions
+provided at integration time. This avoids the unresolvable split when `N = nothing`:
 
 ```julia
-function _build_rhs_augmented(h, backend, ::Val{N}) where N
+function build_rhs_augmented(sys::HamiltonianSystem, n_x::Int, n_v::Int)
+    h, backend = sys.h, sys.backend
     return function (du, u, λ, t)
-        x, p, pv = _aug_split(u, N)
-        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, x, p, λ.variable, λ.cache)
-        ∂v     = Differentiation.variable_gradient(backend, h, t, x, p, λ.variable, λ.cache)
-        _aug_assign!(du, ∂p, -∂x, -∂v, N)  # ṗv = -∂H/∂v
+        x  = u[1:n_x]
+        p  = u[n_x+1:2*n_x]
+        pv = u[end-n_v+1:end]
+        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, x, p, variable(λ), cache(λ))
+        ∂v      = Differentiation.variable_gradient(backend, h, t, x, p, variable(λ), cache(λ))
+        du[1:n_x]              .= ∂p          # ẋ = ∂H/∂p
+        du[n_x+1:2*n_x]        .= .-∂x        # ṗ = -∂H/∂x
+        du[end-n_v+1:end]      .= .-∂v        # ṗv = -∂H/∂v
         return nothing
     end
 end
 ```
 
-Accessors `rhs`, `rhs_oop`, `rhs_augmented`, `state_dimension` follow the same pattern as `HamiltonianSystem`.
+`n_x` and `n_v` are closed over as concrete integers, so the split is always exact
+regardless of whether `N` is `nothing` or a static value.
 
-Constructors: with and without known dimension `state_dimension`.
+Accessors `rhs`, `rhs_oop`, `state_dimension` follow the same pattern as
+`HamiltonianVectorFieldSystem`. `build_rhs_augmented(sys, n_x, n_v)` is the new entry point
+for augmented integration — called from `build_problem` (Step 22), not from constructors.
 
 ### Step 15 — `src/Systems/building.jl` (modified)
 
-Add factory functions for `ScalarHamiltonianSystem`:
+Add factory functions for `HamiltonianSystem`:
 
 ```julia
 function build_system(h::Data.AbstractHamiltonian, backend::Differentiation.AbstractADBackend)
-    return ScalarHamiltonianSystem(h, backend)
+    return HamiltonianSystem(h, backend)
 end
 
 function build_system(h::Data.AbstractHamiltonian, state_dimension::Int, backend::Differentiation.AbstractADBackend)
-    return ScalarHamiltonianSystem(h, backend, state_dimension)
+    return HamiltonianSystem(h, backend, state_dimension)
 end
 ```
 
 ### Step 16 — `src/Systems/Systems.jl` (modified)
 
-Add `include("scalar_hamiltonian_system.jl")`.
+Add `include("hamiltonian_system.jl")`. Export `HamiltonianSystem`.
 
-### Step 17 — Test Checkpoint: `ScalarHamiltonianSystem`
+### Step 17 — Test Checkpoint: `HamiltonianSystem`
 
 - `@testset "Unit: Construction with/without state_dimension"`
 - `@testset "Unit: ad_trait returns WithAD"`
-- `@testset "Unit: rhs_augmented is Nothing for Fixed"`
-- `@testset "Unit: rhs_augmented is a Function for NonFixed"`
+- `@testset "Unit: build_rhs_augmented returns correct closure"` — dimensions `n_x`, `n_v` respected
+- `@testset "Unit: build_rhs_augmented raises on Fixed system"` — contract error
 - `@testset "Unit: build_system factory functions"`
 - `@testset "Type Stability"` — `@inferred` on constructors
 
@@ -317,7 +356,7 @@ Add `include("scalar_hamiltonian_system.jl")`.
 
 ### Step 18 — `ext/CTFlowsDifferentiationInterface.jl` (new file)
 
-Define concrete cache type:
+Define the concrete cache type:
 
 ```julia
 struct DifferentiationInterfaceCache{PX, PP, PV} <: Common.AbstractCache
@@ -327,7 +366,7 @@ struct DifferentiationInterfaceCache{PX, PP, PV} <: Common.AbstractCache
 end
 ```
 
-Implement `prepare_cache` using `DifferentiationInterface.prepare_gradient` with `Constant` contexts:
+Implement `prepare_cache` using `DI.prepare_gradient` with `Constant` contexts:
 
 ```julia
 function Differentiation.prepare_cache(
@@ -335,44 +374,71 @@ function Differentiation.prepare_cache(
     h::Data.AbstractHamiltonian,
     typical_x, typical_p, typical_v
 )
-    di_backend = backend.options[:backend]  # e.g. AutoForwardDiff()
+    di_backend = CTSolvers.Strategies.options(backend)[:backend]   # e.g. AutoForwardDiff()
     typical_t  = zero(eltype(typical_x))
     prep_x = DI.prepare_gradient(h_x, di_backend, typical_x,
                  Constant(typical_p), Constant(typical_v), Constant(typical_t))
     prep_p = DI.prepare_gradient(h_p, di_backend, typical_p,
                  Constant(typical_x), Constant(typical_v), Constant(typical_t))
-    prep_v = if typical_v !== nothing
+    prep_v = typical_v !== nothing ?
         DI.prepare_gradient(h_v, di_backend, typical_v,
-                 Constant(typical_x), Constant(typical_p), Constant(typical_t))
-    else
-        nothing
-    end
+            Constant(typical_x), Constant(typical_p), Constant(typical_t)) : nothing
     return DifferentiationInterfaceCache(prep_x, prep_p, prep_v)
 end
 ```
 
-Implement `hamiltonian_gradient` and `variable_gradient` using the prepared plans when cache is available, falling back to plain `DI.gradient` otherwise.
+Implement `hamiltonian_gradient` and `variable_gradient` using the prepared plans when
+a cache is available, falling back to plain `DI.gradient` otherwise.
 
-> **Note — `build_hamiltonian_vector_field` not included.** Converting a `Hamiltonian` to a `HamiltonianVectorField` via AD is a natural future utility but is not needed in this plan: the main path goes directly `Hamiltonian + backend → ScalarHamiltonianSystem`. This function can be added later in `Differentiation` as a public utility if a concrete use case arises (e.g. inspection, interoperability with other libraries).
+> **Note — `build_hamiltonian_vector_field` not included.** Converting a `Hamiltonian`
+> to a `HamiltonianVectorField` via AD is a natural future utility but is not on the
+> critical path of this plan. It can be added later in `Differentiation` as a public
+> utility if a concrete use case arises (e.g. inspection, interoperability).
 
-### Step 19 — `ext/CTFlowsForwardDiff.jl` (modified)
+### Step 19 — `Project.toml` (modified)
 
-Add default backend resolution — when ForwardDiff is loaded, the default AD backend is `AutoForwardDiff()`:
+`ADTypes.jl` is added as a **hard dependency** (`[deps]`) — it is ultra-lightweight
+(type definitions only, no computation) and ensures `AutoForwardDiff` is always
+available in core without any extension.
 
-```julia
-function Differentiation.__default_ad_backend()
-    return AutoForwardDiff()
-end
+`DifferentiationInterface.jl` is added as a **weak dependency** (`[weakdeps]`) to
+trigger the `CTFlowsDifferentiationInterface` extension (gradient computation).
+
+```toml
+[deps]
+# add:
+ADTypes = "<uuid>"
+
+[weakdeps]
+# add:
+DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
+
+[extensions]
+# add:
+CTFlowsDifferentiationInterface = ["DifferentiationInterface"]
+
+[compat]
+# add:
+ADTypes = "1"
+DifferentiationInterface = "1"
+
+[extras]
+# add:
+DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
+
+[targets]
+# add to test list:
+"DifferentiationInterface"
 ```
 
-Parallel to `CTFlowsOrdinaryDiffEqTsit5` providing the default integrator algorithm.
+`CTFlowsForwardDiff.jl` is **not modified** in this feature.
 
 ### Step 20 — Test Checkpoint: Extension
 
 - `@testset "Unit: DifferentiationInterfaceCache construction"`
 - `@testset "Integration: prepare_cache with AutoForwardDiff()"` — correct preps
 - `@testset "Integration: hamiltonian_gradient without cache"` — numerical verification
-- `@testset "Integration: hamiltonian_gradient with cache"` — same result, faster path
+- `@testset "Integration: hamiltonian_gradient with cache"` — same result, optimised path
 - `@testset "Integration: variable_gradient"` — numerical verification
 - `@testset "Integration: default backend via CTFlowsForwardDiff"`
 
@@ -382,29 +448,41 @@ Parallel to `CTFlowsOrdinaryDiffEqTsit5` providing the default integrator algori
 
 ### Step 21 — `src/Flows/calling.jl` (modified)
 
-Add the internal `_prepare_cache` function that dispatches on the AD trait:
+Add `prepare_cache` using a three-layer trait-dispatch pattern:
 
 ```julia
-# WithoutAD: no preparation, returns nothing
-function _prepare_cache(
-    sys::Systems.AbstractHamiltonianSystem{TD, VD, Common.WithoutAD},
-    config;
-    variable
-) where {TD, VD}
+# Front-end: extract trait, delegate
+function prepare_cache(
+    sys::Systems.AbstractHamiltonianSystem,
+    config::Common.AbstractConfig; variable
+)
+    return prepare_cache(Common.ad_trait(sys), sys, config; variable=variable)
+end
+
+# WithoutAD: no preparation needed
+function prepare_cache(
+    ::Type{Common.WithoutAD},
+    sys::Systems.AbstractHamiltonianSystem,
+    config::Common.AbstractConfig; variable
+)
     return nothing
 end
 
-# WithAD: extract typical x0, p0 from config and delegate to backend
-function _prepare_cache(
-    sys::Systems.HamiltonianCachedSystem{N},
-    config;
-    variable
-) where N
-    u0     = Common.initial_condition(config)
-    x0, p0 = Systems._ham_split(u0, N === nothing ? length(u0) ÷ 2 : N)
+# WithAD: extract x0, p0 via getters and delegate to the backend
+function prepare_cache(
+    ::Type{Common.WithAD},
+    sys::Systems.HamiltonianSystem,
+    config::Common.AbstractConfig; variable
+)
+    x0 = Common.initial_state(config)
+    p0 = Common.initial_costate(config)
     return Differentiation.prepare_cache(sys.backend, sys.h, x0, p0, variable)
 end
 ```
+
+`config` is typed as `AbstractConfig` (not restricted to `AbstractHamiltonianConfig`) so that
+the same `prepare_cache` works when `call` is invoked with an `AugmentedHamiltonianPointConfig`
+(which defines `initial_state` and `initial_costate` via its own getters — see Step 24a).
 
 Unified `call` for all `HamiltonianFlow`s — a single implementation, no duplication:
 
@@ -412,7 +490,7 @@ Unified `call` for all `HamiltonianFlow`s — a single implementation, no duplic
 function call(flow::Flows.HamiltonianFlow, config::Common.AbstractConfig; variable, unsafe)
     sys    = system(flow)
     int    = integrator(flow)
-    cache  = _prepare_cache(sys, config; variable=variable)
+    cache  = prepare_cache(sys, config; variable=variable)
     prob   = Integrators.build_problem(int, sys, config; variable=variable, cache=cache)
     opts   = Integrators.build_options(int, config)
     result = Integrators.solve_problem(int, prob, opts; unsafe=unsafe)
@@ -420,9 +498,9 @@ function call(flow::Flows.HamiltonianFlow, config::Common.AbstractConfig; variab
 end
 ```
 
-### Step 22 — `ext/CTFlowsSciML.jl` (modified)
+### Step 22 — `ext/CTFlowsSciML/build_and_solve.jl` (modified)
 
-`build_problem` accepts an optional `cache` keyword and passes it through `ODEParameters`:
+The existing `build_problem` overload gains a `cache=nothing` keyword:
 
 ```julia
 function Integrators.build_problem(integ::SciML, sys, config; variable, cache=nothing)
@@ -439,20 +517,85 @@ function Integrators.build_problem(integ::SciML, sys, config; variable, cache=no
 end
 ```
 
+A new overload dispatching on `AugmentedHamiltonianPointConfig` builds the augmented RHS
+**lazily** using concrete dimensions from the config, which solves the split ambiguity when
+`N = nothing`:
+
+```julia
+function Integrators.build_problem(
+    integ::SciML,
+    sys::Systems.HamiltonianSystem,
+    config::Common.AugmentedHamiltonianPointConfig;
+    variable, cache=nothing
+)
+    u0  = Common.initial_condition(config)              # vcat(x0, p0, pv0)
+    p   = Common.ODEParameters(variable, cache)
+    n_x = length(Common.initial_state(config))          # concrete at call time
+    n_v = length(Common.initial_variable_costate(config))
+    f!  = Systems.build_rhs_augmented(sys, n_x, n_v)   # lazy — closes over n_x, n_v
+    return ODEProblem(f!, u0, Common.tspan(config), p)
+end
+```
+
+Corresponding stub in `src/Integrators/abstract_integrator.jl` (throws `NotImplemented`).
+
 ### Step 23 — Test Checkpoint: Cache in call pipeline
 
-- `@testset "Integration: HamiltonianSystem (WithoutAD) — cache is nothing"`
-- `@testset "Integration: HamiltonianCachedSystem (WithAD) — cache prepared and used"`
+- `@testset "Integration: HamiltonianVectorFieldSystem (WithoutAD) — cache is nothing"`
+- `@testset "Integration: HamiltonianSystem (WithAD) — cache prepared and used"`
 - `@testset "Integration: p.cache accessible in RHS during solve"`
-- `@testset "Regression: existing HamiltonianVectorField path unchanged"`
+- `@testset "Regression: existing HamiltonianVectorFieldSystem path unchanged"`
 
 ---
 
 ## Phase 7 — `augment=true` Support
 
+### Step 24a — `src/Common/configs.jl` (modified)
+
+Add a dedicated config type for augmented Hamiltonian integration. Using a proper config
+avoids any `augmented=true` boolean on `build_problem` and lets the entire existing
+`call` pipeline work unchanged via dispatch.
+
+**New config struct:**
+
+```julia
+struct AugmentedHamiltonianPointConfig{T0<:Real, X0, P0, PV0, TF<:Real} <:
+    AbstractConfigWithMaC{X0, PointTrait, AugmentedHamiltonianTrait}
+    t0::T0
+    x0::X0
+    p0::P0
+    pv0::PV0   # initial variable costate (zeros at start)
+    tf::TF
+end
+```
+
+`tspan` is inherited from `AbstractPointConfig` (`(c.t0, c.tf)`).
+
+**Getters** (add to `configs.jl`):
+
+```julia
+function initial_condition(c::AugmentedHamiltonianPointConfig)
+    return vcat(c.x0, c.p0, c.pv0)   # feeds build_problem directly
+end
+
+function initial_state(c::AugmentedHamiltonianPointConfig)
+    return c.x0
+end
+
+function initial_costate(c::AugmentedHamiltonianPointConfig)
+    return c.p0   # enables prepare_cache (WithAD) to work unchanged
+end
+
+function initial_variable_costate(c::AugmentedHamiltonianPointConfig)
+    return c.pv0
+end
+```
+
+Export: `AugmentedHamiltonianPointConfig`, `initial_variable_costate`.
+
 ### Step 24 — `src/Flows/calling.jl` (modified)
 
-Add callable method on `HamiltonianFlow` with `augment` keyword:
+Add `augment` keyword to the `HamiltonianFlow` callable:
 
 ```julia
 function (f::HamiltonianFlow)(
@@ -461,83 +604,117 @@ function (f::HamiltonianFlow)(
     unsafe    = Common.__unsafe(),
     augment::Bool = false,
 )
-    if augment
-        return call_augmented(f, Common.HamiltonianPointConfig(t0, x0, p0, tf);
-                              variable=variable, unsafe=unsafe)
-    else
-        return call(f, Common.HamiltonianPointConfig(t0, x0, p0, tf);
-                    variable=variable, unsafe=unsafe)
-    end
+    config = Common.HamiltonianPointConfig(t0, x0, p0, tf)
+    augment && return call_augmented(f, config; variable=variable, unsafe=unsafe)
+    return call(f, config; variable=variable, unsafe=unsafe)
 end
 ```
 
-Implement `call_augmented` — only valid for `HamiltonianCachedSystem` with `NonFixed`:
+Implement `call_augmented` using trait dispatch — a front-end extracts both
+`ad_trait` and `variable_dependence`, then delegates:
 
 ```julia
+# Front-end: extract both traits, delegate
 function call_augmented(
-    flow::HamiltonianFlow{TD, NonFixed, S},
-    config::Common.HamiltonianPointConfig;
-    variable, unsafe
-) where {TD, S<:Systems.HamiltonianCachedSystem}
-    sys   = system(flow)
-    int   = integrator(flow)
-    cache = _prepare_cache(sys, config; variable=variable)
+    flow::HamiltonianFlow,
+    config::Common.HamiltonianPointConfig; variable, unsafe
+)
+    sys = system(flow)
+    return call_augmented(
+        Common.ad_trait(sys),
+        Common.variable_dependence(sys),
+        flow, config; variable=variable, unsafe=unsafe
+    )
+end
 
-    # Augmented initial condition: [x0; p0; zeros(size(variable))]
-    x0, p0 = config.x0, config.p0
-    pv0    = zero_pv(variable)
-    u0_aug = vcat(x0, p0, pv0)
+# WithoutAD — any VD: clear message
+function call_augmented(
+    ::Type{Common.WithoutAD}, ::Type{<:Common.VariableDependence},
+    flow::HamiltonianFlow, config::Common.HamiltonianPointConfig; variable, unsafe
+)
+    throw(IncorrectArgument(
+        "augment=true is not supported on this flow";
+        reason     = "The flow was built from a HamiltonianVectorField, not a scalar Hamiltonian",
+        suggestion = "Use Flow(h::Hamiltonian; ...) with is_variable=true to enable augmented integration",
+        context    = "HamiltonianFlow call with augment=true",
+    ))
+end
 
-    # Build augmented config and problem
-    config_aug = Common.HamiltonianPointConfig(config.t0, u0_aug, config.tf)
-    prob = Integrators.build_problem(int, sys, config_aug;
-                                     variable=variable, cache=cache, augmented=true)
-    opts   = Integrators.build_options(int, config)
-    result = Integrators.solve_problem(int, prob, opts; unsafe=unsafe)
+# Any AT — Fixed: clear message
+function call_augmented(
+    ::Type{<:Common.WithAD}, ::Type{Common.Fixed},
+    flow::HamiltonianFlow, config::Common.HamiltonianPointConfig; variable, unsafe
+)
+    throw(IncorrectArgument(
+        "augment=true requires a variable-dependent Hamiltonian";
+        reason     = "The system has Fixed variable dependence — there is no v to differentiate against",
+        suggestion = "Define your Hamiltonian with is_variable=true and pass variable= at call time",
+        context    = "HamiltonianFlow call with augment=true",
+    ))
+end
 
-    return Solutions.build_augmented_solution(result, sys, config)
+# WithAD + NonFixed: valid path
+function call_augmented(
+    ::Type{Common.WithAD}, ::Type{Common.NonFixed},
+    flow::HamiltonianFlow, config::Common.HamiltonianPointConfig; variable, unsafe
+)
+    sys    = system(flow)
+    x0     = Common.initial_state(config)
+    pv0    = zeros(eltype(x0), length(variable))
+    config_aug = Common.AugmentedHamiltonianPointConfig(
+        config.t0, x0, Common.initial_costate(config), pv0, config.tf
+    )
+    return call(flow, config_aug; variable=variable, unsafe=unsafe)
 end
 ```
 
-For invalid combinations, throw `IncorrectArgument` at call time with an explicit, actionable message:
+**Key simplification**: `call(flow, config_aug; ...)` reuses the existing pipeline unchanged:
 
-```julia
-# WithoutAD flow
-throw(IncorrectArgument(
-    "augment=true is not supported on this flow";
-    reason  = "The flow was built from a HamiltonianVectorField, not a scalar Hamiltonian",
-    suggestion = "Use Flow(h::Hamiltonian; ...) with a NonFixed variable dependence to enable augmented integration",
-    context = "HamiltonianFlow call with augment=true",
-))
-
-# Fixed system
-throw(IncorrectArgument(
-    "augment=true requires a variable-dependent Hamiltonian";
-    reason  = "The system has Fixed variable dependence — there is no variable v to differentiate against",
-    suggestion = "Define your Hamiltonian with is_variable=true and pass variable= at call time",
-    context = "HamiltonianFlow call with augment=true",
-))
-```
+- `prepare_cache` uses `initial_state`/`initial_costate` on `AugmentedHamiltonianPointConfig` ✓
+- `build_problem` dispatches on `AugmentedHamiltonianPointConfig` → calls `build_rhs_augmented(sys, n_x, n_v)` ✓
+- `build_solution` dispatches on `AugmentedHamiltonianTrait` → returns `(xf, pf, pvf)` ✓
 
 ### Step 25 — `src/Solutions/building.jl` (modified)
 
-Add `build_augmented_solution` that splits the final state `[xf; pf; pvf]`:
+Add an internal split helper and a `build_solution` overload dispatching on
+`AugmentedHamiltonianTrait`. Correct splitting uses `length(x0)` and `length(pv0)`
+from the config getters — no dimension arithmetic that would break when `n_x ≠ n_v`.
+
+**Split helper** (parallel to `_ham_split_solution`):
 
 ```julia
-function build_augmented_solution(result, sys::ScalarHamiltonianSystem{N}, config) where N
-    uf = Solutions.final_state(result)
-    n  = N === nothing ? length(uf) ÷ 3 : N
-    xf  = uf[1:n]
-    pf  = uf[n+1:2n]
-    pvf = uf[2n+1:end]
-    return (xf, pf, pvf)
+_aug_split_solution(u, x0::AbstractVector, pv0::AbstractVector) = (
+    u[1:length(x0)],
+    u[length(x0)+1:end-length(pv0)],
+    u[end-length(pv0)+1:end],
+)
+```
+
+**New `build_solution` overload** (dispatches via `AugmentedHamiltonianTrait`):
+
+```julia
+function build_solution(
+    result::Integrators.AbstractIntegrationResult,
+    sys::Systems.AbstractHamiltonianSystem,
+    config::Common.AbstractPointConfig{X0, Common.AugmentedHamiltonianTrait}
+) where {X0}
+    u = Integrators.final_state(result)
+    return _aug_split_solution(
+        u,
+        Common.initial_state(config),
+        Common.initial_variable_costate(config),
+    )
 end
 ```
 
+Returns `(xf, pf, pvf)`. `build_augmented_solution` from the original draft is **dropped**.
+
 ### Step 26 — Test Checkpoint: `augment=true`
 
-- `@testset "Error: augment=true on WithoutAD flow"` — `IncorrectArgument`
-- `@testset "Error: augment=true on Fixed system"` — `IncorrectArgument`
+- `@testset "Unit: AugmentedHamiltonianPointConfig construction"` — fields, `initial_condition`, getters
+- `@testset "Unit: prepare_cache on AugmentedHamiltonianPointConfig"` — same result as on `HamiltonianPointConfig`
+- `@testset "Error: augment=true on WithoutAD flow"` — `IncorrectArgument` with message
+- `@testset "Error: augment=true on Fixed system"` — `IncorrectArgument` with message
 - `@testset "Integration: augment=true returns (xf, pf, pvf)"`
 - `@testset "Integration: pvf = -∫ ∂H/∂v dt"` — numerical verification against finite differences
 - `@testset "Regression: augment=false unchanged"`
@@ -546,25 +723,28 @@ end
 
 ## Phase 8 — High-Level `Flow(h::Hamiltonian; ...)` Constructor
 
+>[!NOTE]
+> Deprecated: this phase is replaced by "Phase 8 (révisée) — Routage des options vers `:di` et `:sciml` dans `Flow(h::Hamiltonian; ...)`"
+
 ### Step 27 — `src/Flows/building.jl` (modified)
 
 ```julia
 function Flow(h::Data.AbstractHamiltonian; ad_backend=nothing, opts...)
     backend = _resolve_ad_backend(ad_backend)
-    system  = Systems.build_system(h, backend)
+    sys     = Systems.build_system(h, backend)
     integ   = Integrators.build_integrator(; opts...)
-    return build_flow(system, integ)
+    return build_flow(sys, integ)
 end
 
 function Flow(h::Data.AbstractHamiltonian, state_dimension::Int; ad_backend=nothing, opts...)
     backend = _resolve_ad_backend(ad_backend)
-    system  = Systems.build_system(h, state_dimension, backend)
+    sys     = Systems.build_system(h, state_dimension, backend)
     integ   = Integrators.build_integrator(; opts...)
-    return build_flow(system, integ)
+    return build_flow(sys, integ)
 end
 ```
 
-`_resolve_ad_backend` falls back to the default backend registered by `CTFlowsForwardDiff` when no backend is specified:
+`_resolve_ad_backend` falls back to the default registered by `CTFlowsForwardDiff`:
 
 ```julia
 function _resolve_ad_backend(ad_backend)
@@ -572,7 +752,7 @@ function _resolve_ad_backend(ad_backend)
     default = Differentiation.__default_ad_backend()
     default === missing && throw(IncorrectArgument(
         "No AD backend available";
-        suggestion = "Load ForwardDiff (or another supported backend) before calling Flow(h).",
+        suggestion = "Load ForwardDiff (or another supported backend) before calling Flow(h::Hamiltonian).",
     ))
     return Differentiation.build_ad_backend(; backend=default)
 end
@@ -601,11 +781,12 @@ Write docstrings for all new and modified public-facing items:
 - `src/Differentiation/abstract_ad_backend.jl` — `AbstractADBackend`, all three stubs
 - `src/Differentiation/differentiation_interface.jl` — `DifferentiationInterface` strategy
 - `src/Differentiation/building.jl` — `build_ad_backend`
-- `src/Systems/scalar_hamiltonian_system.jl` — `HamiltonianCachedSystem`, all constructors and accessors
+- `src/Systems/hamiltonian_system.jl` — `HamiltonianSystem`, constructors, accessors
 - `src/Systems/building.jl` — new `build_system` overloads
-- `src/Flows/calling.jl` — `_prepare_cache`, `call_augmented`, `augment` parameter
+- `src/Common/configs.jl` — `AugmentedHamiltonianPointConfig`, `initial_variable_costate`
+- `src/Flows/calling.jl` — `prepare_cache`, `call_augmented`, `augment` parameter
 - `src/Flows/building.jl` — `Flow(h::AbstractHamiltonian; ...)`
-- `src/Solutions/building.jl` — `build_augmented_solution`
+- `src/Solutions/building.jl` — `_aug_split_solution`, `build_solution` augmented overload
 - `ext/CTFlowsDifferentiationInterface.jl` — `DifferentiationInterfaceCache`, implementations
 
 ### Step 30 — Final Test Run
@@ -619,36 +800,218 @@ Expected: all suites pass, zero failures, zero errors.
 
 ---
 
-## Files Summary
+# Phase 8 (révisée) — Routage des options vers `:di` et `:sciml` dans `Flow(h::Hamiltonian; ...)`
 
-### New
-- `src/Data/hamiltonian.jl`
-- `src/Differentiation/Differentiation.jl`
-- `src/Differentiation/abstract_ad_backend.jl`
-- `src/Differentiation/differentiation_interface.jl`
-- `src/Differentiation/building.jl`
-- `src/Systems/hamiltonian_cached_system.jl`
-- `ext/CTFlowsDifferentiationInterface.jl`
-- `test/suite/data/test_hamiltonian.jl`
-- `test/suite/differentiation/test_ad_backend.jl`
-- `test/suite/systems/test_scalar_hamiltonian_system.jl`
-- `test/suite/flows/test_cache_pipeline.jl`
-- `test/suite/flows/test_hamiltonian_augmented.jl`
-- `test/suite/flows/test_flow_from_hamiltonian.jl`
+## Vue d'ensemble
 
-### Modified
-- `src/Common/abstract_trait.jl` — `AbstractADTrait`, `WithAD`, `WithoutAD`, `AbstractCache`
-- `src/Common/ode_parameters.jl` — `cache` field in `ODEParameters`
-- `src/Data/Data.jl` — include and export `Hamiltonian`
-- `src/CTFlows.jl` — add `Differentiation` module
-- `src/Systems/abstract_system.jl` — `AT` parameter on `AbstractHamiltonianSystem`
-- `src/Systems/building.jl` — `build_system` overloads for `Hamiltonian`
-- `src/Systems/Systems.jl` — include `hamiltonian_cached_system.jl`
-- `src/Flows/calling.jl` — `_prepare_cache`, unified `call`, `call_augmented`
-- `src/Flows/building.jl` — `Flow(h::AbstractHamiltonian; ...)`
-- `src/Solutions/building.jl` — `build_augmented_solution`
-- `ext/CTFlowsSciML.jl` — `cache` keyword in `build_problem`
-- `ext/CTFlowsForwardDiff.jl` — `__default_ad_backend` registration
+L'objectif est de remplacer `ad_backend=nothing` par un mécanisme flat-kwargs identique à ce que fait `solve_descriptive` dans OptimalControl.jl. La description complète est fixe : `(:di, :sciml)`. Il n'y a pas d'options d'action — seules existent les options de stratégie.
 
-### Deleted
-None.
+La chaîne d'appel sera :
+
+```
+Flow(h; kwargs...)
+  └─ _flow_families()                     # (backend, integrator) → types abstraits
+  └─ _route_flow_options(kwargs)          # route_all_options avec action_defs=[]
+  └─ _build_flow_components(h, routed)    # build_strategy_from_resolved ×2
+  └─ build_flow(sys, integ)               # inchangé
+```
+
+---
+
+## Step 27a — Registre CTFlows `src/Flows/registry.jl` (nouveau fichier)
+
+CTFlows a besoin d'un `StrategyRegistry` propre à son périmètre, exactement comme OptimalControl.jl. Ce fichier est le **seul endroit** où les deux familles sont inscrites ensemble.
+
+```julia
+# src/Flows/registry.jl
+
+"""
+Default strategy registry for CTFlows.
+Maps AbstractADBackend and AbstractIntegrator to their concrete implementations.
+"""
+const _FLOW_REGISTRY = CTSolvers.Strategies.create_registry(
+    Differentiation.AbstractADBackend => (Differentiation.DifferentiationInterface,),
+    Integrators.AbstractIntegrator    => (Integrators.SciML,),
+)
+
+function flow_registry()
+    return _FLOW_REGISTRY
+end
+```
+
+Note : le registre est déclaré comme constante de module (pattern identique à OptimalControl.jl). Il est exposé via `flow_registry()` pour faciliter les tests et une éventuelle extension future (registre injecté).
+
+---
+
+## Step 27b — Helpers de routage `src/Flows/flow_routing.jl` (nouveau fichier)
+
+Ce fichier est l'analogue direct de `descriptive_routing.jl` dans OptimalControl.jl, simplifié car il n'y a aucune option d'action.
+
+```julia
+# src/Flows/flow_routing.jl
+
+# ---------------------------------------------------------------------------
+# F1 — Familles
+# ---------------------------------------------------------------------------
+
+"""
+Return the strategy families for Flow option routing.
+  :backend    → AbstractADBackend     (strategy id: :di)
+  :integrator → AbstractIntegrator    (strategy id: :sciml)
+"""
+function _flow_families()
+    return (
+        backend    = Differentiation.AbstractADBackend,
+        integrator = Integrators.AbstractIntegrator,
+    )
+end
+
+# La description complète est fixe pour Flow(h::Hamiltonian; ...)
+const _FLOW_DESCRIPTION = (:di, :sciml)
+
+# ---------------------------------------------------------------------------
+# F2 — Routage des options
+# ---------------------------------------------------------------------------
+
+"""
+Route all kwargs to :backend or :integrator families.
+No action options — action_defs is empty.
+"""
+function _route_flow_options(kwargs)
+    return CTSolvers.Orchestration.route_all_options(
+        _FLOW_DESCRIPTION,
+        _flow_families(),
+        CTSolvers.Options.OptionDefinition[],   # pas d'options d'action
+        (; kwargs...),
+        flow_registry();
+        source_mode = :description,
+    )
+end
+
+# ---------------------------------------------------------------------------
+# F3 — Construction des composants
+# ---------------------------------------------------------------------------
+
+"""
+Build backend + integrator from routed options.
+Returns (backend::AbstractADBackend, integrator::AbstractIntegrator).
+"""
+function _build_flow_components(routed)
+    families = _flow_families()
+    resolved = CTSolvers.Orchestration.resolve_method(
+        _FLOW_DESCRIPTION, families, flow_registry()
+    )
+    backend = CTSolvers.Orchestration.build_strategy_from_resolved(
+        resolved, :backend, families, flow_registry();
+        routed.strategies.backend...
+    )
+    integrator = CTSolvers.Orchestration.build_strategy_from_resolved(
+        resolved, :integrator, families, flow_registry();
+        routed.strategies.integrator...
+    )
+    return (backend = backend, integrator = integrator)
+end
+```
+
+Points importants :
+
+- `action_defs = []` — aucune option d'action, tout passe dans les stratégies.
+- `source_mode = :description` — messages d'erreur orientés utilisateur.
+- `_FLOW_DESCRIPTION` est une constante : la description est toujours `(:di, :sciml)`, il n'y a pas à la compléter dynamiquement.
+- On évite un double appel à `resolve_method` en factorisant dans `_build_flow_components`.
+
+---
+
+## Step 27c — `src/Flows/building.jl` (modifié)
+
+Le constructeur `Flow(h::Hamiltonian; ...)` devient :
+
+```julia
+function Flow(h::Data.AbstractHamiltonian; kwargs...)
+    routed     = _route_flow_options(kwargs)
+    components = _build_flow_components(routed)
+    sys        = Systems.build_system(h, components.backend)
+    return build_flow(sys, components.integrator)
+end
+
+function Flow(h::Data.AbstractHamiltonian, state_dimension::Int; kwargs...)
+    routed     = _route_flow_options(kwargs)
+    components = _build_flow_components(routed)
+    sys        = Systems.build_system(h, state_dimension, components.backend)
+    return build_flow(sys, components.integrator)
+end
+```
+
+Il n'y a plus de `_resolve_ad_backend` ni de `ad_backend=nothing`. Le backend par défaut est déclaré dans `Differentiation.DifferentiationInterface` via son `OptionDefinition` (`:backend` → `AutoForwardDiff()` par défaut). Si `DifferentiationInterface.jl` n'est pas chargé, le stub `hamiltonian_gradient` lancera `NotImplemented` au moment de l'appel, pas à la construction — ce comportement est cohérent avec le pattern extension/weakdep.
+
+---
+
+## Step 27d — `src/Flows/Flows.jl` (modifié)
+
+Ajouter les deux nouveaux includes (dans l'ordre, après les imports de `Differentiation` et `Integrators`) :
+
+```julia
+include("registry.jl")
+include("flow_routing.jl")
+```
+
+---
+
+## Step 28 — Test Checkpoint : routage des options
+
+Fichier : `test/suite/flows/test_flow_routing.jl`
+
+| Testset | Ce qui est vérifié |
+|---|---|
+| `"Unit: _flow_families"` | Renvoie un `NamedTuple` avec les deux clés et les bons types abstraits |
+| `"Unit: _FLOW_DESCRIPTION"` | Vaut `(:di, :sciml)` |
+| `"Unit: flow_registry"` | Les deux familles sont inscrites avec les bons types concrets |
+| `"Unit: _route_flow_options — empty kwargs"` | `routed.strategies.backend` et `.integrator` vides, pas d'erreur |
+| `"Unit: _route_flow_options — integrator option"` | Ex. `abstol=1e-10` routé vers `:integrator` |
+| `"Unit: _route_flow_options — backend option"` | Ex. `backend=AutoForwardDiff()` routé vers `:backend` |
+| `"Unit: _route_flow_options — unknown option"` | `IncorrectArgument` avec suggestion |
+| `"Unit: _route_flow_options — disambiguation"` | `route_to(di=..., sciml=...)` accepté si option ambiguë |
+| `"Unit: _build_flow_components — defaults"` | Renvoie `DifferentiationInterface` + `SciML` avec options par défaut |
+| `"Unit: _build_flow_components — with options"` | Les options sont bien passées aux constructeurs |
+| `"Integration: Flow(h) — end-to-end"` | Flot créé, callable, résultat correct |
+| `"Integration: Flow(h, n) — end-to-end"` | Idem avec `state_dimension` |
+| `"Integration: Flow(h; reltol=1e-9)"` | Option SciML passée, vérifiable via `options(integrator(sys))` |
+| `"Regression: no ad_backend kwarg needed"` | `Flow(h)` fonctionne sans aucun kwarg |
+
+---
+
+## Fichiers impactés (delta vs plan initial)
+
+| Fichier | Statut | Changement |
+|---|---|---|
+| `src/Flows/registry.jl` | **nouveau** | Registre CTFlows |
+| `src/Flows/flow_routing.jl` | **nouveau** | `_flow_families`, `_route_flow_options`, `_build_flow_components` |
+| `src/Flows/building.jl` | **modifié** | Supprime `_resolve_ad_backend`/`ad_backend=nothing`, délègue au routeur |
+| `src/Flows/Flows.jl` | **modifié** | Ajoute les deux `include` |
+| `test/suite/flows/test_flow_from_hamiltonian.jl` | **modifié** | Remplace les testsets Step 28 du plan initial par ceux ci-dessus |
+
+`_resolve_ad_backend` et `Differentiation.__default_ad_backend()` du plan initial sont **supprimés** — la valeur par défaut est portée par le `OptionDefinition` de `DifferentiationInterface`, pas par une variable globale dans `Differentiation`.
+
+---
+
+## Note sur les dépendances
+
+`CTSolvers.Orchestration` doit être importé dans `Flows.jl` (il l'est peut-être déjà via `Integrators` qui utilise `CTSolvers.Strategies`). Si ce n'est pas le cas, ajouter `using CTSolvers: CTSolvers` dans `Flows.jl` et qualifier `CTSolvers.Orchestration.route_all_options` explicitement, exactement comme le fait OptimalControl.jl.
+
+## Ressources
+
+### Documentation CTSolvers
+
+- <https://control-toolbox.org/CTSolvers.jl/stable/guides/orchestration_and_routing.html>
+- <https://control-toolbox.org/CTSolvers.jl/stable/api/orchestration_public.html#CTSolvers.Orchestration.route_all_options>
+- <https://control-toolbox.org/CTSolvers.jl/stable/api/orchestration_public.html#resolve_method>
+- <https://control-toolbox.org/CTSolvers.jl/stable/api/orchestration_public.html#build_strategy_from_resolved>
+
+### Code source OptimalControl.jl (référence d'implémentation)
+
+- <https://github.com/control-toolbox/OptimalControl.jl/blob/main/src/solve/descriptive.jl>
+- <https://github.com/control-toolbox/OptimalControl.jl/blob/main/src/helpers/descriptive_routing.jl>
+
+### Dépôt cible
+
+- <https://github.com/control-toolbox/CTFlows.jl/tree/develop>
