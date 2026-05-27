@@ -23,6 +23,7 @@ This document defines how to produce a complete, actionable implementation plan 
 5. **Docstrings are last** — no docstring is written during implementation steps. A single dedicated step at the very end of the plan writes all docstrings at once, when the code is stable.
 6. **No silent assumptions** — any architectural decision made during planning must be stated explicitly in the plan (load-order changes, new exports, removed symbols, etc.).
 7. **Rules are cited at the point of use** — every step that triggers a rule from `.windsurf/rules/` must name that rule explicitly so the implementer knows which standard to follow.
+8. **Never commit without user instruction** — at the end of each phase, do not commit or push changes. Wait for explicit user instruction before committing, to preserve the visual diff in Windsurf.
 
 ## CTFlows Project Configuration
 
