@@ -77,7 +77,7 @@ function CTSolvers.Strategies.metadata(::Type{<:DifferentiationInterface})
         CTSolvers.Strategies.OptionDefinition(;
             name = :ad_backend,
             type = ADTypes.AbstractADType,
-            default = ADTypes.AutoForwardDiff(),  # ADTypes.jl — always available (hard dep)
+            default = __ad_backend(),
             description = "DifferentiationInterface.jl backend (e.g. AutoForwardDiff()).",
             aliases=(:backend, :ad),
         ),
@@ -93,20 +93,20 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Extract the AD backend type from a `DifferentiationInterface` strategy.
+Extract the AD backend from a `DifferentiationInterface` strategy.
 
 # Arguments
 - `backend::DifferentiationInterface`: The AD backend.
 
 # Returns
-- `ADTypes.AbstractADType`: The concrete AD backend type from the `:ad_backend` option.
+- `ADTypes.AbstractADType`: The concrete AD backend from the `:ad_backend` option.
 
 # Notes
  - This extracts the `:ad_backend` option from the strategy's options.
  - Used by the `hamiltonian_vector_field` getter to delegate to the AD-backed getter.
 
-See also: [`CTFlows.Differentiation.ad_backend_type`](@ref),
+See also: [`CTFlows.Differentiation.ad_backend`](@ref),
 [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 """
-ad_backend_type(backend::DifferentiationInterface) =
+ad_backend(backend::DifferentiationInterface) =
     CTSolvers.Strategies.options(backend)[:ad_backend]
