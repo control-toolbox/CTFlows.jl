@@ -25,7 +25,7 @@ import ..Configs: Configs
 import ..Traits: Traits
 import ..Data: Data
 import ..Differentiation: Differentiation
-import ..Systems: Systems
+import ..Systems: Systems, hamiltonian_vector_field
 import ..Integrators: Integrators
 import ..Solutions: Solutions
 
@@ -49,5 +49,6 @@ export system, integrator
 export call
 export build_flow
 export prepare_cache
+export hamiltonian_vector_field
 
 end # module Flows

@@ -31,6 +31,7 @@ include(joinpath(@__DIR__, "vector_field_system.jl"))
 include(joinpath(@__DIR__, "hamiltonian_vector_field_system.jl"))
 include(joinpath(@__DIR__, "hamiltonian_system.jl"))
 include(joinpath(@__DIR__, "building.jl"))
+include(joinpath(@__DIR__, "hamiltonian_getter.jl"))
 
 # ==============================================================================
 # Module exports
@@ -40,6 +41,7 @@ export AbstractSystem, AbstractStateSystem, AbstractHamiltonianSystem
 export rhs
 export build_rhs
 export build_oop_rhs
+export hamiltonian_vector_field
 export VectorFieldSystem
 export HamiltonianVectorFieldSystem
 export HamiltonianSystem

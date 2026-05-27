@@ -1,6 +1,6 @@
 # CTFlows.jl — Agent Navigation Guide
 
-Quick-reference for Cascade: project architecture, available skills, and active rules.
+Quick-reference for Cascade: project architecture and available workflows.
 
 ---
 
@@ -38,9 +38,9 @@ docs/                   # Documenter.jl site (auto-generated API via CTBase)
 
 ---
 
-## Windsurf Rules (always active)
+## Windsurf Workflows (always active)
 
-| Rule | Trigger | Purpose |
+| Workflow | Trigger | Purpose |
 |---|---|---|
 | `architecture.md` | — | Introducing new types, restructuring modules, reviewing SOLID/patterns |
 | `docstrings.md` | — | Writing or reviewing Julia docstrings |
@@ -53,7 +53,7 @@ docs/                   # Documenter.jl site (auto-generated API via CTBase)
 | `testing-execution.md` | `model_decision` | How to run tests (commands, `tee` capture, `jtest` alias) |
 | `type-stability.md` | — | New structs, parametric types, `@inferred` test design |
 
-Rules live in `.windsurf/rules/`.
+Workflows live in `.windsurf/workflows/`.
 
 ---
 

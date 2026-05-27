@@ -6,7 +6,7 @@ trigger: model_decision
 
 ## 🤖 **Agent Directive**
 
-**When applying this rule, explicitly state**: "📋 **Applying Plan Rule**: [specific planning principle being applied]"
+**When applying this workflow, explicitly state**: "📋 **Applying Plan Workflow**: [specific planning principle being applied]"
 
 This ensures transparency about which planning standard is being used and why.
 
@@ -22,7 +22,7 @@ This document defines how to produce a complete, actionable implementation plan 
 4. **Interleaved test checkpoints** — instead of a massive test phase at the end, plans must include regular test checkpoints after logical groups of implementation steps. This provides validation before moving to the next phase.
 5. **Docstrings are last** — no docstring is written during implementation steps. A single dedicated step at the very end of the plan writes all docstrings at once, when the code is stable.
 6. **No silent assumptions** — any architectural decision made during planning must be stated explicitly in the plan (load-order changes, new exports, removed symbols, etc.).
-7. **Rules are cited at the point of use** — every step that triggers a rule from `.windsurf/rules/` must name that rule explicitly so the implementer knows which standard to follow.
+7. **Workflows are cited at the point of use** — every step that triggers a workflow from `.windsurf/workflows/` must name that workflow explicitly so the implementer knows which standard to follow.
 8. **Never commit without user instruction** — at the end of each phase, do not commit or push changes. Wait for explicit user instruction before committing, to preserve the visual diff in Windsurf.
 
 ## CTFlows Project Configuration
@@ -74,21 +74,21 @@ Solutions
 | Flows | `suite/flows/` |
 | Solutions | `suite/solutions/` |
 
-## Rules Reference
+## Workflows Reference
 
-The following rules from `.windsurf/rules/` govern implementation. The plan must mention each rule **at the step where it applies**, not just once globally.
+The following workflows from `.windsurf/workflows/` govern implementation. The plan must mention each workflow **at the step where it applies**, not just once globally.
 
-| Rule | Scope | Typical trigger in a plan |
+| Workflow | Scope | Typical trigger in a plan |
 | --- | --- | --- |
 | `architecture` | SOLID principles, patterns, module organisation | Any step that introduces a new type, new dependency, or restructures a module |
-| `modules` (rule) | Submodule manifests, import style, qualification, export declarations | Any step touching a `<Name>.jl` manifest, import list, or `export` block |
-| `exceptions` (rule) | Structured exceptions: `IncorrectArgument`, `PreconditionError`, `NotImplemented`, `ParsingError`, `AmbiguousDescription`, `ExtensionError`, `SolverFailure` | Any step adding a stub, a contract method, or an error path |
-| `testing-creation` (rule) | Test structure, fake types at top-level, unit/integration/contract/error separation | Every test step |
-| `testing-execution` (rule) | Running tests, coverage reports | The verification step |
-| `type-stability` (rule) | `@inferred`, parametric types, avoiding `Any` | Steps introducing new structs or performance-critical functions |
-| `performance` (rule) | Profiling, benchmarking, allocation reduction | Steps on hot paths or after type-stability work |
-| `docstrings` (rule) | Docstring templates, `$(TYPEDEF)`, `$(TYPEDSIGNATURES)`, cross-references | The dedicated docstring step only |
-| `documentation` (rule) | `docs/` organisation, `make.jl`, API reference generation | If the plan includes a documentation update step |
+| `modules` (workflow) | Submodule manifests, import style, qualification, export declarations | Any step touching a `<Name>.jl` manifest, import list, or `export` block |
+| `exceptions` (workflow) | Structured exceptions: `IncorrectArgument`, `PreconditionError`, `NotImplemented`, `ParsingError`, `AmbiguousDescription`, `ExtensionError`, `SolverFailure` | Any step adding a stub, a contract method, or an error path |
+| `testing-creation` (workflow) | Test structure, fake types at top-level, unit/integration/contract/error separation | Every test step |
+| `testing-execution` (workflow) | Running tests, coverage reports | The verification step |
+| `type-stability` (workflow) | `@inferred`, parametric types, avoiding `Any` | Steps introducing new structs or performance-critical functions |
+| `performance` (workflow) | Profiling, benchmarking, allocation reduction | Steps on hot paths or after type-stability work |
+| `docstrings` (workflow) | Docstring templates, `$(TYPEDEF)`, `$(TYPEDSIGNATURES)`, cross-references | The dedicated docstring step only |
+| `documentation` (workflow) | `docs/` organisation, `make.jl`, API reference generation | If the plan includes a documentation update step |
 
 ## Plan Structure
 
@@ -144,10 +144,10 @@ Number every step starting from 1. Each step must follow this template:
 ```markdown
 ### Step N — `path/to/file.jl` [(new file) | (modified)]
 
-> 📐 Follow `architecture` rule — [specific principle, e.g. "new abstract type follows the contract pattern"]
-> 🏗️ Follow `modules` rule — [specific rule, e.g. "add export at manifest end; use `using ..Sibling` for imports"]
-> ⚠️ Follow `exceptions` rule — [if stubs or error paths are added, e.g. "use `NotImplemented` with `required_method` and `suggestion` fields"]
-> 🔬 Follow `type-stability` rule — [if new parametric types or performance-critical functions are introduced]
+> 📐 Follow `architecture` workflow — [specific principle, e.g. "new abstract type follows the contract pattern"]
+> 🏗️ Follow `modules` workflow — [specific workflow, e.g. "add export at manifest end; use `using ..Sibling` for imports"]
+> ⚠️ Follow `exceptions` workflow — [if stubs or error paths are added, e.g. "use `NotImplemented` with `required_method` and `suggestion` fields"]
+> 🔬 Follow `type-stability` workflow — [if new parametric types or performance-critical functions are introduced]
 
 - <Bullet describing the first change in this file, naming exact symbols>
 - <Bullet describing the second change>
@@ -176,9 +176,9 @@ After a logical group of implementation steps, add a dedicated test checkpoint. 
 ```markdown
 ### Step N — Test Checkpoint: <Subsystem/Phase>
 
-> 🧪 Follow `testing-creation` rule — [specific rule, e.g. "define all fake structs at module top-level; separate unit/integration/contract/error testsets"]
-> 🔬 Follow `type-stability` rule — [if type-stability tests are needed for new symbols]
-> ▶️ Follow `testing-execution` rule — run targeted tests for this phase.
+> 🧪 Follow `testing-creation` workflow — [specific workflow, e.g. "define all fake structs at module top-level; separate unit/integration/contract/error testsets"]
+> 🔬 Follow `type-stability` workflow — [if type-stability tests are needed for new symbols]
+> ▶️ Follow `testing-execution` workflow — run targeted tests for this phase.
 
 - Define `struct Fake<X> <: <AbstractType>` at module top-level in `test/suite/<subdir>/test_<name>.jl` (never inside test functions).
 - Implement the required contract methods on the fake.
@@ -208,7 +208,7 @@ The final step (or final steps if large) writes all docstrings at once:
 ```markdown
 ### Step N — Docstrings
 
-> 📚 Follow `docstrings` rule — use templates with `$(TYPEDEF)` and `$(TYPEDSIGNATURES)`, include required sections, use CTFlows-qualified references.
+> 📚 Follow `docstrings` workflow — use templates with `$(TYPEDEF)` and `$(TYPEDSIGNATURES)`, include required sections, use CTFlows-qualified references.
 
 - Add docstrings to all newly added public symbols in this phase.
 - Replace `# TODO: docstring` comments with proper docstrings.
@@ -223,7 +223,7 @@ The final step runs the full test suite and checks coverage:
 ```markdown
 ### Step N — Verification
 
-> ▶️ Follow `testing-execution` rule — run full test suite with coverage.
+> ▶️ Follow `testing-execution` workflow — run full test suite with coverage.
 
 - Run full test suite:
   \`\`\`bash
@@ -290,7 +290,7 @@ Before finalizing a plan, verify:
 - [ ] Dependency graph shows the new relationships
 - [ ] Branch step uses `develop` as base
 - [ ] Implementation steps are numbered starting from 1
-- [ ] Each step cites relevant rules at the point of use
+- [ ] Each step cites relevant workflows at the point of use
 - [ ] Steps respect the module DAG ordering
 - [ ] Test checkpoints are interleaved (not just one at the end)
 - [ ] Fake types are defined at module top-level in test steps
@@ -300,10 +300,10 @@ Before finalizing a plan, verify:
 - [ ] No docstrings are written during implementation steps
 - [ ] CTFlows-specific paths and names are used throughout
 
-## Related Rules
+## Related Workflows
 
-- `.windsurf/rules/architecture.md` - Architecture and design principles
-- `.windsurf/rules/modules.md` - Submodule conventions
-- `.windsurf/rules/exceptions.md` - Exception handling standards
-- `.windsurf/rules/docstrings.md` - Documentation standards
-- `.windsurf/rules/testing-execution.md` - Test execution standards
+- `.windsurf/workflows/architecture.md` - Architecture and design principles
+- `.windsurf/workflows/modules.md` - Submodule conventions
+- `.windsurf/workflows/exceptions.md` - Exception handling standards
+- `.windsurf/workflows/docstrings.md` - Documentation standards
+- `.windsurf/workflows/testing-execution.md` - Test execution standards
