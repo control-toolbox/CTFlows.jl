@@ -148,3 +148,35 @@ function prepare_cache(backend::AbstractADBackend, h, typical_t, typical_x, typi
         context = "AD backend contract"
     ))
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the AD backend type from a backend strategy.
+
+# Arguments
+- `backend::AbstractADBackend`: The AD backend.
+
+# Returns
+- `ADTypes.AbstractADType`: The concrete AD backend type (e.g., `AutoForwardDiff()`).
+
+# Throws
+- `CTBase.Exceptions.NotImplemented`: If the concrete backend does not implement
+  this method.
+
+# Notes
+ - This method is used by the `hamiltonian_vector_field` getter to extract the
+   AD backend type from a `HamiltonianSystem`'s backend.
+ - For `DifferentiationInterface`, this extracts the `:ad_backend` option.
+
+See also: [`CTFlows.Differentiation.DifferentiationInterface`](@ref),
+[`CTFlows.Systems.hamiltonian_vector_field`](@ref).
+"""
+function ad_backend_type(backend::AbstractADBackend)
+    throw(Exceptions.NotImplemented(
+        "ad_backend_type not implemented for $(typeof(backend))";
+        required_method = "ad_backend_type(backend::$(typeof(backend)))",
+        suggestion = "Implement ad_backend_type for $(typeof(backend))",
+        context = "AD backend contract",
+    ))
+end
