@@ -239,3 +239,47 @@ See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Flows.system`](@ref
 function integrator(f::HamiltonianFlow{TD, VD, S, I})::I where {TD, VD, S, I}
     return f.integrator
 end
+
+# ==============================================================================
+# hamiltonian_vector_field getter — Flow-level delegation
+# ==============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Get the Hamiltonian vector field from a HamiltonianFlow with AD-backed system.
+
+# Arguments
+- `flow::HamiltonianFlow`: The Hamiltonian flow.
+- `inplace`: Whether to return in-place closure (default: `__hvf_inplace()` = `false`).
+
+# Returns
+- `Data.HamiltonianVectorField`: The Hamiltonian vector field delegated from the system.
+
+# TODO: docstring
+"""
+function Systems.hamiltonian_vector_field(
+    flow::HamiltonianFlow{TD, VD, <:Systems.HamiltonianSystem};
+    inplace::Bool = Common.__hvf_inplace(),
+) where {TD, VD}
+    return Systems.hamiltonian_vector_field(flow.system; inplace=inplace)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Get the Hamiltonian vector field from a HamiltonianFlow with HVF-backed system.
+
+# Arguments
+- `flow::HamiltonianFlow`: The Hamiltonian flow.
+
+# Returns
+- `Data.HamiltonianVectorField`: The stored Hamiltonian vector field from the system.
+
+# TODO: docstring
+"""
+function Systems.hamiltonian_vector_field(
+    flow::HamiltonianFlow{TD, VD, <:Systems.HamiltonianVectorFieldSystem},
+) where {TD, VD}
+    return Systems.hamiltonian_vector_field(flow.system)
+end
