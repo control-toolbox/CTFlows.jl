@@ -175,6 +175,11 @@ function test_forwarddiff_extension()
             result_dual = flow((0.0, 1.0), ForwardDiff.Dual{:T}.([1.0], [1.0]))
             t_dual = ForwardDiff.value.(Integrators.times(result_dual))
 
+            # Real part of dual solution must match real solution
+            x_real = Integrators.final_state(result_real)
+            x_dual = ForwardDiff.value.(Integrators.final_state(result_dual))
+            Test.@test x_real == x_dual
+
             # Grids must be identical with real_norm (default)
             Test.@test t_real == t_dual
         end
