@@ -22,7 +22,7 @@ This document defines how to produce a complete, actionable implementation plan 
 4. **Interleaved test checkpoints** — instead of a massive test phase at the end, plans must include regular test checkpoints after logical groups of implementation steps. This provides validation before moving to the next phase.
 5. **Docstrings are last** — no docstring is written during implementation steps. A single dedicated step at the very end of the plan writes all docstrings at once, when the code is stable.
 6. **No silent assumptions** — any architectural decision made during planning must be stated explicitly in the plan (load-order changes, new exports, removed symbols, etc.).
-7. **Rules are cited at the point of use** — every step that triggers a rule from `.windsurf/rules/` must name that rule explicitly so the implementer knows which standard to follow.
+7. **Rules are cited at the point of use** — every step that triggers a rule from `.windsurf/workflows/` must name that rule explicitly so the implementer knows which standard to follow.
 8. **Never commit without user instruction** — at the end of each phase, do not commit or push changes. Wait for explicit user instruction before committing, to preserve the visual diff in Windsurf.
 
 ## CTFlows Project Configuration
@@ -76,7 +76,7 @@ Solutions
 
 ## Rules Reference
 
-The following rules from `.windsurf/rules/` govern implementation. The plan must mention each rule **at the step where it applies**, not just once globally.
+The following workflows from `.windsurf/workflows/` govern implementation. The plan must mention each rule **at the step where it applies**, not just once globally.
 
 | Rule | Scope | Typical trigger in a plan |
 | --- | --- | --- |
@@ -290,7 +290,7 @@ Before finalizing a plan, verify:
 - [ ] Dependency graph shows the new relationships
 - [ ] Branch step uses `develop` as base
 - [ ] Implementation steps are numbered starting from 1
-- [ ] Each step cites relevant rules at the point of use
+- [ ] Each step cites relevant workflows at the point of use
 - [ ] Steps respect the module DAG ordering
 - [ ] Test checkpoints are interleaved (not just one at the end)
 - [ ] Fake types are defined at module top-level in test steps
@@ -302,8 +302,8 @@ Before finalizing a plan, verify:
 
 ## Related Rules
 
-- `.windsurf/rules/architecture.md` - Architecture and design principles
-- `.windsurf/rules/modules.md` - Submodule conventions
-- `.windsurf/rules/exceptions.md` - Exception handling standards
-- `.windsurf/rules/docstrings.md` - Documentation standards
-- `.windsurf/rules/testing-execution.md` - Test execution standards
+- `.windsurf/workflows/architecture.md` - Architecture and design principles
+- `.windsurf/workflows/modules.md` - Submodule conventions
+- `.windsurf/workflows/exceptions.md` - Exception handling standards
+- `.windsurf/workflows/docstrings.md` - Documentation standards
+- `.windsurf/workflows/testing-execution.md` - Test execution standards
