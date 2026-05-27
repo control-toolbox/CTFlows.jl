@@ -222,21 +222,32 @@ Hamiltonian system with variable parameters, writing the result in-place. The si
 - `::Type{Traits.NonFixed}`: Type parameter indicating non-fixed variable dependence.
 
 # Returns
-- `Function`: A closure `(dx, dp, x, p, v) -> nothing` that fills the output arrays in-place.
+- `Function`: A closure `(dx, dp, x, p, v; dpv=nothing, variable_costate=false) -> nothing` that fills the output arrays in-place.
 
 # Notes
 - This is an internal factory function used by [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 - The closure uses automatic differentiation via the provided backend to compute gradients.
 - Output arrays `dx` and `dp` must be pre-allocated with the correct dimensions.
-- Variable costate computation is not yet implemented for in-place closures.
+- When `variable_costate=true`, `dpv` must be a pre-allocated mutable array matching the shape of `v`; it is filled with `-∂H/∂v`.
 
-See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differentiation.hamiltonian_gradient`](@ref)
+# Throws
+- `Exceptions.PreconditionError`: When `variable_costate=true && dpv === nothing`.
+
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differentiation.hamiltonian_gradient`](@ref), [`CTFlows.Differentiation.variable_gradient`](@ref)
 """
 function _make_ip_hvf(h, backend, ::Type{Traits.Autonomous}, ::Type{Traits.NonFixed})
-    return (dx, dp, x, p, v) -> begin
+    return (dx, dp, x, p, v; dpv=nothing, variable_costate::Bool=false) -> begin
         ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, nothing, x, p, v, nothing)
         dx .= ∂p
         dp .= .-∂x
+        if variable_costate
+            dpv === nothing && throw(Exceptions.PreconditionError(
+                "dpv buffer must be provided when variable_costate=true";
+                context = "hamiltonian_vector_field IP Autonomous/NonFixed",
+            ))
+            ∂v = Differentiation.variable_gradient(backend, h, nothing, x, p, v, nothing)
+            dpv .= .-∂v
+        end
         return nothing
     end
 end
@@ -257,21 +268,32 @@ Hamiltonian system with variable parameters, writing the result in-place. The si
 - `::Type{Traits.NonFixed}`: Type parameter indicating non-fixed variable dependence.
 
 # Returns
-- `Function`: A closure `(dx, dp, t, x, p, v) -> nothing` that fills the output arrays in-place.
+- `Function`: A closure `(dx, dp, t, x, p, v; dpv=nothing, variable_costate=false) -> nothing` that fills the output arrays in-place.
 
 # Notes
 - This is an internal factory function used by [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 - The closure uses automatic differentiation via the provided backend to compute gradients.
 - Output arrays `dx` and `dp` must be pre-allocated with the correct dimensions.
-- Variable costate computation is not yet implemented for in-place closures.
+- When `variable_costate=true`, `dpv` must be a pre-allocated mutable array matching the shape of `v`; it is filled with `-∂H/∂v`.
 
-See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differentiation.hamiltonian_gradient`](@ref)
+# Throws
+- `Exceptions.PreconditionError`: When `variable_costate=true && dpv === nothing`.
+
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differentiation.hamiltonian_gradient`](@ref), [`CTFlows.Differentiation.variable_gradient`](@ref)
 """
 function _make_ip_hvf(h, backend, ::Type{Traits.NonAutonomous}, ::Type{Traits.NonFixed})
-    return (dx, dp, t, x, p, v) -> begin
+    return (dx, dp, t, x, p, v; dpv=nothing, variable_costate::Bool=false) -> begin
         ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, x, p, v, nothing)
         dx .= ∂p
         dp .= .-∂x
+        if variable_costate
+            dpv === nothing && throw(Exceptions.PreconditionError(
+                "dpv buffer must be provided when variable_costate=true";
+                context = "hamiltonian_vector_field IP NonAutonomous/NonFixed",
+            ))
+            ∂v = Differentiation.variable_gradient(backend, h, t, x, p, v, nothing)
+            dpv .= .-∂v
+        end
         return nothing
     end
 end

@@ -348,6 +348,35 @@ function test_hamiltonian_vector_field()
                 Test.@test occursin("fixed (no variable)", str)
             end
         end
+
+        # ====================================================================
+        # UNIT TESTS - variable_costate kwarg on user-built HVF
+        # ====================================================================
+
+        Test.@testset "variable_costate kwarg on user-built HVF" begin
+            Test.@testset "OOP NonFixed: variable_costate=true on user-built HVF throws PreconditionError" begin
+                f = (x, p, v) -> (p, -x)   # no variable_costate kwarg
+                hvf = Data.HamiltonianVectorField(f; is_autonomous=true, is_variable=true)
+                x = [1.0]; p = [0.5]; v = [0.1]
+                Test.@test_throws Exception hvf(x, p, v; variable_costate=true)
+            end
+
+            Test.@testset "IP NonFixed: variable_costate=true on user-built HVF throws PreconditionError" begin
+                f = (dx, dp, x, p, v) -> (dx .= p; dp .= .-x; nothing)
+                hvf = Data.HamiltonianVectorField(f; is_autonomous=true, is_variable=true, is_inplace=true)
+                x = [1.0]; p = [0.5]; v = [0.1]
+                dx = similar(x); dp = similar(p)
+                Test.@test_throws Exception hvf(dx, dp, x, p, v; variable_costate=true)
+            end
+
+            Test.@testset "OOP NonFixed: variable_costate=false (default) on user-built HVF works" begin
+                f = (x, p, v) -> (p, -x)
+                hvf = Data.HamiltonianVectorField(f; is_autonomous=true, is_variable=true)
+                x = [1.0]; p = [0.5]; v = [0.1]
+                result = hvf(x, p, v)
+                Test.@test result == (p, -x)
+            end
+        end
     end
 end
 

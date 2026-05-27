@@ -196,14 +196,52 @@ end
 # OutOfPlace signatures (existing)
 (H::HamiltonianVectorField{<:Function, Traits.Autonomous, Traits.Fixed, Traits.OutOfPlace})(x, p) = H.f(x, p)
 (H::HamiltonianVectorField{<:Function, Traits.NonAutonomous, Traits.Fixed, Traits.OutOfPlace})(t, x, p) = H.f(t, x, p)
-(H::HamiltonianVectorField{<:Function, Traits.Autonomous, Traits.NonFixed, Traits.OutOfPlace})(x, p, v) = H.f(x, p, v)
-(H::HamiltonianVectorField{<:Function, Traits.NonAutonomous, Traits.NonFixed, Traits.OutOfPlace})(t, x, p, v) = H.f(t, x, p, v)
+function (H::HamiltonianVectorField{<:Function, Traits.Autonomous, Traits.NonFixed, Traits.OutOfPlace})(x, p, v; variable_costate::Bool=false)
+    variable_costate || return H.f(x, p, v)
+    hasmethod(H.f, Tuple{typeof(x), typeof(p), typeof(v)}, (:variable_costate,)) ||
+        throw(Exceptions.PreconditionError(
+            "variable_costate=true is not supported by this HamiltonianVectorField's inner function";
+            suggestion = "Use hamiltonian_vector_field(h; ...) to obtain a HVF that supports variable_costate",
+            context = "HamiltonianVectorField Autonomous/NonFixed call",
+        ))
+    return H.f(x, p, v; variable_costate=true)
+end
+
+function (H::HamiltonianVectorField{<:Function, Traits.NonAutonomous, Traits.NonFixed, Traits.OutOfPlace})(t, x, p, v; variable_costate::Bool=false)
+    variable_costate || return H.f(t, x, p, v)
+    hasmethod(H.f, Tuple{typeof(t), typeof(x), typeof(p), typeof(v)}, (:variable_costate,)) ||
+        throw(Exceptions.PreconditionError(
+            "variable_costate=true is not supported by this HamiltonianVectorField's inner function";
+            suggestion = "Use hamiltonian_vector_field(h; ...) to obtain a HVF that supports variable_costate",
+            context = "HamiltonianVectorField NonAutonomous/NonFixed call",
+        ))
+    return H.f(t, x, p, v; variable_costate=true)
+end
 
 # InPlace signatures (new)
 (H::HamiltonianVectorField{<:Function, Traits.Autonomous, Traits.Fixed, Traits.InPlace})(dx, dp, x, p) = H.f(dx, dp, x, p)
 (H::HamiltonianVectorField{<:Function, Traits.NonAutonomous, Traits.Fixed, Traits.InPlace})(dx, dp, t, x, p) = H.f(dx, dp, t, x, p)
-(H::HamiltonianVectorField{<:Function, Traits.Autonomous, Traits.NonFixed, Traits.InPlace})(dx, dp, x, p, v) = H.f(dx, dp, x, p, v)
-(H::HamiltonianVectorField{<:Function, Traits.NonAutonomous, Traits.NonFixed, Traits.InPlace})(dx, dp, t, x, p, v) = H.f(dx, dp, t, x, p, v)
+function (H::HamiltonianVectorField{<:Function, Traits.Autonomous, Traits.NonFixed, Traits.InPlace})(dx, dp, x, p, v; dpv=nothing, variable_costate::Bool=false)
+    variable_costate || return H.f(dx, dp, x, p, v)
+    hasmethod(H.f, Tuple{typeof(dx), typeof(dp), typeof(x), typeof(p), typeof(v)}, (:variable_costate,)) ||
+        throw(Exceptions.PreconditionError(
+            "variable_costate=true is not supported by this HamiltonianVectorField's inner function";
+            suggestion = "Use hamiltonian_vector_field(h; inplace=true) to obtain a HVF that supports variable_costate",
+            context = "HamiltonianVectorField IP Autonomous/NonFixed call",
+        ))
+    return H.f(dx, dp, x, p, v; dpv=dpv, variable_costate=true)
+end
+
+function (H::HamiltonianVectorField{<:Function, Traits.NonAutonomous, Traits.NonFixed, Traits.InPlace})(dx, dp, t, x, p, v; dpv=nothing, variable_costate::Bool=false)
+    variable_costate || return H.f(dx, dp, t, x, p, v)
+    hasmethod(H.f, Tuple{typeof(dx), typeof(dp), typeof(t), typeof(x), typeof(p), typeof(v)}, (:variable_costate,)) ||
+        throw(Exceptions.PreconditionError(
+            "variable_costate=true is not supported by this HamiltonianVectorField's inner function";
+            suggestion = "Use hamiltonian_vector_field(h; inplace=true) to obtain a HVF that supports variable_costate",
+            context = "HamiltonianVectorField IP NonAutonomous/NonFixed call",
+        ))
+    return H.f(dx, dp, t, x, p, v; dpv=dpv, variable_costate=true)
+end
 
 # =============================================================================
 # Uniform (t, x, p, v) call - used by HamiltonianVectorFieldSystem.rhs

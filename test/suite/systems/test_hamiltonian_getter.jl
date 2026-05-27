@@ -414,6 +414,102 @@ function test_hamiltonian_getter()
         end
 
         # ====================================================================
+        # IP variable_costate tests
+        # ====================================================================
+
+        Test.@testset "Real test: IP Autonomous/NonFixed with variable_costate=true" begin
+            h = Data.Hamiltonian((x, p, v) -> 0.5 * sum(x.^2) + 0.5 * sum(p.^2) + sum(v); is_autonomous=true, is_variable=true)
+            backend = Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff())
+            hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend, inplace=true)
+            x = [1.0, 2.0]; p = [0.5, 1.5]; v = [0.1, 0.2]
+            dx = similar(x); dp = similar(p); dpv = similar(v)
+            hvf.f(dx, dp, x, p, v; dpv=dpv, variable_costate=true)
+            Test.@test dx  ≈ p
+            Test.@test dp  ≈ -x
+            Test.@test dpv ≈ -ones(length(v))
+        end
+
+        Test.@testset "Real test: IP NonAutonomous/NonFixed with variable_costate=true" begin
+            h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + 0.5 * sum(p.^2) + sum(v); is_autonomous=false, is_variable=true)
+            backend = Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff())
+            hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend, inplace=true)
+            t = 1.0; x = [1.0, 2.0]; p = [0.5, 1.5]; v = [0.1, 0.2]
+            dx = similar(x); dp = similar(p); dpv = similar(v)
+            hvf.f(dx, dp, t, x, p, v; dpv=dpv, variable_costate=true)
+            Test.@test dx  ≈ p
+            Test.@test dp  ≈ -x
+            Test.@test dpv ≈ -ones(length(v))
+        end
+
+        Test.@testset "IP variable_costate=false (default) works without dpv" begin
+            h = Data.Hamiltonian((x, p, v) -> 0.5 * sum(x.^2) + 0.5 * sum(p.^2) + sum(v); is_autonomous=true, is_variable=true)
+            backend = Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff())
+            hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend, inplace=true)
+            x = [1.0, 2.0]; p = [0.5, 1.5]; v = [0.1, 0.2]
+            dx = similar(x); dp = similar(p)
+            result = hvf.f(dx, dp, x, p, v)
+            Test.@test result === nothing
+            Test.@test dx ≈ p
+            Test.@test dp ≈ -x
+        end
+
+        Test.@testset "IP variable_costate=true without dpv throws PreconditionError" begin
+            h = Data.Hamiltonian((x, p, v) -> 0.5 * sum(x.^2) + 0.5 * sum(p.^2) + sum(v); is_autonomous=true, is_variable=true)
+            backend = Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff())
+            hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend, inplace=true)
+            x = [1.0, 2.0]; p = [0.5, 1.5]; v = [0.1, 0.2]
+            dx = similar(x); dp = similar(p)
+            Test.@test_throws Exception hvf.f(dx, dp, x, p, v; variable_costate=true)
+        end
+
+        # ====================================================================
+        # hasmethod detection tests
+        # ====================================================================
+
+        Test.@testset "hasmethod: OOP NonFixed HVF accepts variable_costate kwarg" begin
+            h = Data.Hamiltonian((x, p, v) -> 0.5 * sum(x.^2) + 0.5 * sum(p.^2) + sum(v); is_autonomous=true, is_variable=true)
+            hvf = Systems.hamiltonian_vector_field(h)
+            x = [1.0]; p = [0.5]; v = [0.1]
+            Test.@test hasmethod(hvf.f, Tuple{typeof(x), typeof(p), typeof(v)}, (:variable_costate,))
+        end
+
+        Test.@testset "hasmethod: OOP Fixed HVF does NOT accept variable_costate kwarg" begin
+            h = Data.Hamiltonian((x, p) -> 0.5 * sum(x.^2) + 0.5 * sum(p.^2); is_autonomous=true, is_variable=false)
+            hvf = Systems.hamiltonian_vector_field(h)
+            x = [1.0]; p = [0.5]
+            Test.@test !hasmethod(hvf.f, Tuple{typeof(x), typeof(p)}, (:variable_costate,))
+        end
+
+        Test.@testset "hasmethod: IP NonFixed HVF accepts dpv and variable_costate kwargs" begin
+            h = Data.Hamiltonian((x, p, v) -> 0.5 * sum(x.^2) + 0.5 * sum(p.^2) + sum(v); is_autonomous=true, is_variable=true)
+            hvf = Systems.hamiltonian_vector_field(h; inplace=true)
+            x = [1.0]; p = [0.5]; v = [0.1]
+            dx = similar(x); dp = similar(p)
+            Test.@test hasmethod(
+                hvf.f,
+                Tuple{typeof(dx), typeof(dp), typeof(x), typeof(p), typeof(v)},
+                (:dpv, :variable_costate),
+            )
+        end
+
+        # ====================================================================
+        # OOP variable_costate=false is explicit default
+        # ====================================================================
+
+        Test.@testset "OOP variable_costate=false is default — returns 2-tuple" begin
+            h = Data.Hamiltonian((x, p, v) -> 0.5 * sum(x.^2) + 0.5 * sum(p.^2) + sum(v); is_autonomous=true, is_variable=true)
+            backend = Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff())
+            hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend)
+            x = [1.0, 2.0]; p = [0.5, 1.5]; v = [0.1, 0.2]
+            result_default = hvf.f(x, p, v)
+            result_false   = hvf.f(x, p, v; variable_costate=false)
+            Test.@test length(result_default) == 2
+            Test.@test length(result_false)   == 2
+            Test.@test result_default[1] ≈ result_false[1]
+            Test.@test result_default[2] ≈ result_false[2]
+        end
+
+        # ====================================================================
         # EXPORTS
         # ====================================================================
 
