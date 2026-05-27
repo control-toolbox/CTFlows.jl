@@ -247,16 +247,25 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Get the Hamiltonian vector field from a HamiltonianFlow with AD-backed system.
+Get the Hamiltonian vector field from a HamiltonianFlow with an AD-backed system.
+
+This function delegates to the system-level getter, extracting the Hamiltonian vector field
+from the `HamiltonianSystem` contained in the flow. The delegation preserves the `inplace`
+parameter to control whether the returned closure writes results in-place.
 
 # Arguments
-- `flow::HamiltonianFlow`: The Hamiltonian flow.
-- `inplace`: Whether to return in-place closure (default: `__hvf_inplace()` = `false`).
+- `flow::HamiltonianFlow{TD, VD, <:Systems.HamiltonianSystem}`: The Hamiltonian flow containing a `HamiltonianSystem`.
+- `inplace::Bool`: Whether to return an in-place closure (default: `Common.__hvf_inplace()` = `false`).
 
 # Returns
-- `Data.HamiltonianVectorField`: The Hamiltonian vector field delegated from the system.
+- `Data.HamiltonianVectorField`: The Hamiltonian vector field delegated from the flow's system.
 
-# TODO: docstring
+# Notes
+- This overload is for flows whose system is a `HamiltonianSystem` (AD-backed).
+- Delegates to [`CTFlows.Systems.hamiltonian_vector_field(sys::HamiltonianSystem; ...)`](@ref).
+- The returned vector field has traits matching the flow's time and variable dependence.
+
+See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref)
 """
 function Systems.hamiltonian_vector_field(
     flow::HamiltonianFlow{TD, VD, <:Systems.HamiltonianSystem};
@@ -268,15 +277,24 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Get the Hamiltonian vector field from a HamiltonianFlow with HVF-backed system.
+Get the Hamiltonian vector field from a HamiltonianFlow with an HVF-backed system.
+
+This function delegates to the system-level getter, returning the pre-stored Hamiltonian vector field
+from the `HamiltonianVectorFieldSystem` contained in the flow. No computation is performed since
+the vector field is already constructed.
 
 # Arguments
-- `flow::HamiltonianFlow`: The Hamiltonian flow.
+- `flow::HamiltonianFlow{TD, VD, <:Systems.HamiltonianVectorFieldSystem}`: The Hamiltonian flow containing a `HamiltonianVectorFieldSystem`.
 
 # Returns
-- `Data.HamiltonianVectorField`: The stored Hamiltonian vector field from the system.
+- `Data.HamiltonianVectorField`: The stored Hamiltonian vector field from the flow's system (identical to `flow.system.hvf`).
 
-# TODO: docstring
+# Notes
+- This overload is for flows whose system is a `HamiltonianVectorFieldSystem` (HVF-backed).
+- Delegates to [`CTFlows.Systems.hamiltonian_vector_field(sys::HamiltonianVectorFieldSystem)`](@ref).
+- The returned vector field is identical to the one stored in the system (same object reference).
+
+See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref)
 """
 function Systems.hamiltonian_vector_field(
     flow::HamiltonianFlow{TD, VD, <:Systems.HamiltonianVectorFieldSystem},
