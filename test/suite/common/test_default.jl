@@ -38,6 +38,10 @@ function test_default()
                 Test.@test Common.__is_inplace() === nothing
             end
 
+            Test.@testset "__hvf_inplace returns false" begin
+                Test.@test Common.__hvf_inplace() === false
+            end
+
             Test.@testset "_variable_costate returns false" begin
                 Test.@test Common._variable_costate() === false
             end
