@@ -262,6 +262,85 @@ function test_hamiltonian_vector_field_system()
             Test.@test du_mat == [1.0 5.0; 2.0 6.0; -3.0 -7.0; -4.0 -8.0]
         end
 
+        # ====================================================================
+        # UNIT TESTS - variable_costate_trait
+        # ====================================================================
+
+        Test.@testset "variable_costate_trait" begin
+            # Fixed HVFSystem -> NoVariableCostate
+            hvf_fixed = Data.HamiltonianVectorField((x, p) -> (p, -x); is_autonomous=true, is_variable=false)
+            sys_fixed = Systems.HamiltonianVectorFieldSystem(hvf_fixed)
+            Test.@test Traits.variable_costate_trait(sys_fixed) === Traits.NoVariableCostate
+
+            # NonFixed HVFSystem -> SupportsVariableCostate
+            hvf_nonfixed = Data.HamiltonianVectorField((x, p, v) -> (p ./ sum(v), -x); is_autonomous=true, is_variable=true)
+            sys_nonfixed = Systems.HamiltonianVectorFieldSystem(hvf_nonfixed)
+            Test.@test Traits.variable_costate_trait(sys_nonfixed) === Traits.SupportsVariableCostate
+        end
+
+        # ====================================================================
+        # UNIT TESTS - _aug_split and _aug_assign! (augmented)
+        # ====================================================================
+
+        Test.@testset "_aug_split" begin
+            # Vector with n_x=2, n_v=1
+            u_vec = [1.0, 2.0, 3.0, 4.0, 5.0]  # x=[1,2], p=[3,4], pv=[5]
+            x, p, pv = Systems._aug_split(u_vec, 2, 1)
+            Test.@test x == @view(u_vec[1:2])
+            Test.@test p == @view(u_vec[3:4])
+            Test.@test pv == @view(u_vec[5:5])
+
+            # Matrix with n_x=2, n_v=1
+            u_mat = [1.0 6.0; 2.0 7.0; 3.0 8.0; 4.0 9.0; 5.0 10.0]  # x=rows1-2, p=rows3-4, pv=row5
+            x_m, p_m, pv_m = Systems._aug_split(u_mat, 2, 1)
+            Test.@test x_m == @view(u_mat[1:2, :])
+            Test.@test p_m == @view(u_mat[3:4, :])
+            Test.@test pv_m == @view(u_mat[5:5, :])
+        end
+
+        Test.@testset "_aug_assign!" begin
+            # Vector with n_x=2, n_v=1
+            du_vec = zeros(5)
+            dx = [1.0, 2.0]
+            dp = [-3.0, -4.0]
+            dpv = [5.0]
+            Systems._aug_assign!(du_vec, dx, dp, dpv, 2, 1)
+            Test.@test du_vec == [1.0, 2.0, -3.0, -4.0, 5.0]
+
+            # Matrix with n_x=2, n_v=1
+            du_mat = zeros(5, 2)
+            dx_mat = [1.0 6.0; 2.0 7.0]
+            dp_mat = [-3.0 -8.0; -4.0 -9.0]
+            dpv_mat = [5.0 10.0]
+            Systems._aug_assign!(du_mat, dx_mat, dp_mat, dpv_mat, 2, 1)
+            Test.@test du_mat == [1.0 6.0; 2.0 7.0; -3.0 -8.0; -4.0 -9.0; 5.0 10.0]
+        end
+
+        # ====================================================================
+        # UNIT TESTS - build_rhs_augmented (just verify it builds without error)
+        # ====================================================================
+
+        Test.@testset "build_rhs_augmented" begin
+            # Simple test: just verify the function builds and can be called
+            # without error. Full integration testing is done in test_variable_costate_flows.jl
+            hvf = Data.HamiltonianVectorField((t, x, p, v) -> (p, -x); is_autonomous=true, is_variable=true)
+            sys = Systems.HamiltonianVectorFieldSystem(hvf)
+
+            Test.@testset "OOP builds" begin
+                n_x, n_v = 2, 1
+                rhs_aug = Systems.build_rhs_augmented(sys, n_x, n_v)
+                Test.@test rhs_aug isa Function
+            end
+
+            Test.@testset "IP builds" begin
+                hvf_ip = Data.HamiltonianVectorField((dx, dp, t, x, p, v; dpv=nothing, variable_costate::Bool=false) -> nothing; is_autonomous=true, is_variable=true, is_inplace=true)
+                sys_ip = Systems.HamiltonianVectorFieldSystem(hvf_ip)
+                n_x, n_v = 2, 1
+                rhs_aug_ip = Systems.build_rhs_augmented(sys_ip, n_x, n_v)
+                Test.@test rhs_aug_ip isa Function
+            end
+        end
+
     end
 end
 

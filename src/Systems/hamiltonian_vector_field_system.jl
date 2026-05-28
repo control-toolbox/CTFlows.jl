@@ -128,6 +128,26 @@ _ham_assign!(du::AbstractVector, dx, dp, N::Int) = (du[1:N] .= dx; du[N+1:2N] .=
 _ham_assign!(du::AbstractMatrix, dx, dp, N::Int) = (du[1:N, :] .= dx; du[N+1:2N, :] .= dp)
 
 # =============================================================================
+# Internal helpers for augmented split/assign (Vector + Matrix, concrete integers)
+# =============================================================================
+
+# TODO: docstring
+function _aug_split(u::AbstractVector, n_x::Int, n_v::Int)
+    x   = n_x == 1 ? u[1]    : @view(u[1:n_x])
+    p   = n_x == 1 ? u[n_x+1] : @view(u[n_x+1:2*n_x])
+    pv  = @view(u[end-n_v+1:end])
+    return (x, p, pv)
+end
+_aug_split(u::AbstractMatrix, n_x::Int, n_v::Int) =
+    (@view(u[1:n_x,:]), @view(u[n_x+1:2*n_x,:]), @view(u[end-n_v+1:end,:]))
+
+# TODO: docstring
+_aug_assign!(du::AbstractVector, dx, dp, dpv, n_x::Int, n_v::Int) =
+    (du[1:n_x] .= dx; du[n_x+1:2*n_x] .= dp; du[end-n_v+1:end] .= dpv)
+_aug_assign!(du::AbstractMatrix, dx, dp, dpv, n_x::Int, n_v::Int) =
+    (du[1:n_x,:] .= dx; du[n_x+1:2*n_x,:] .= dp; du[end-n_v+1:end,:] .= dpv)
+
+# =============================================================================
 # Public lazy RHS builders
 # =============================================================================
 
@@ -222,6 +242,52 @@ function build_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPla
     end
 end
 
+# =============================================================================
+# Augmented RHS builder for variable costate integration
+# =============================================================================
+
+# TODO: docstring
+function build_rhs_augmented(
+    sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace},
+    n_x::Int, n_v::Int,
+) where {F, TD, VD}
+    hvf = sys.hvf
+    return function (du, u, λ, t)
+        v = Common.variable(λ)
+        x, p, _ = _aug_split(u, n_x, n_v)
+        dx, dp, dpv = hvf(t, x, p, v; variable_costate=true)
+        _aug_assign!(du, dx, dp, dpv, n_x, n_v)
+        return nothing
+    end
+end
+
+# TODO: docstring
+function build_rhs_augmented(
+    sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace},
+    n_x::Int, n_v::Int,
+) where {F, TD, VD}
+    hvf = sys.hvf
+    return function (du, u, λ, t)
+        v = Common.variable(λ)
+        x, p, _ = _aug_split(u, n_x, n_v)
+        dx, dp, _ = _aug_split(du, n_x, n_v)
+        dpv = similar(u[end-n_v+1:end])
+        hvf(dx, dp, t, x, p, v; dpv=dpv, variable_costate=true)
+        du[end-n_v+1:end] .= dpv
+        return nothing
+    end
+end
+
+# =============================================================================
+# Trait: variable_costate
+# =============================================================================
+
+# TODO: docstring
+function Traits.variable_costate_trait(
+    ::HamiltonianVectorFieldSystem{F, TD, Traits.NonFixed, MD}
+) where {F, TD, MD}
+    return Traits.SupportsVariableCostate
+end
 
 # =============================================================================
 # Base.show
