@@ -1,6 +1,6 @@
 # CTFlows — exemples pratiques de construction et d'appel des flots
 
-Version : CTFlows v0.9.1-beta
+Version : CTFlows v0.9.2-beta
 
 Ce guide montre comment créer des flots depuis des données (`VectorField`, `HamiltonianVectorField`) ou depuis des objets SciML (`ODEFunction`, `ODEProblem`), et comment les appeler.
 
