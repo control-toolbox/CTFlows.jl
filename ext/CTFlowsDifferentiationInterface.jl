@@ -117,8 +117,10 @@ function Differentiation.prepare_cache(
     end
 end
 
-function update!(cache::DifferentiationInterfaceCache, backend::Differentiation.DifferentiationInterface, t, x, p, v)
+function Differentiation.update!(cache::DifferentiationInterfaceCache, backend::Differentiation.DifferentiationInterface, t, x, p, v)
     opts = CTSolvers.Strategies.options(backend)
+    on_update = opts[:on_update]
+    isnothing(on_update) || on_update(cache, t, x, p, v)
     di_backend = opts[:ad_backend]
     do_prepare = opts[:prepare_cache]
     if !do_prepare
@@ -229,7 +231,7 @@ function Differentiation.hamiltonian_gradient(
         return (grad_x, grad_p)
     catch e
         if e isa DI.PreparationMismatchError
-            update!(cache, backend, t, x, p, v) # recompute cache
+            Differentiation.update!(cache, backend, t, x, p, v) # recompute cache
             grad_x = derivator(typeof(x))(cache.h_x, cache.p_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
             grad_p = derivator(typeof(p))(cache.h_p, cache.p_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
             return (grad_x, grad_p)
@@ -320,7 +322,7 @@ function Differentiation.variable_gradient(
         return grad_v
     catch e
         if e isa DI.PreparationMismatchError
-            update!(cache, backend, t, x, p, v) # recompute cache
+            Differentiation.update!(cache, backend, t, x, p, v) # recompute cache
             grad_v = derivator(typeof(v))(cache.h_v, cache.p_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
             return grad_v
         else
@@ -328,5 +330,73 @@ function Differentiation.variable_gradient(
         end
     end
 end
+
+# =============================================================================
+# Base.show
+# =============================================================================
+
+"""
+    Base.show(io::IO, cache::DifferentiationInterfaceCache)
+
+Display a compact representation of a DifferentiationInterfaceCache.
+
+Shows the preparation status for each gradient plan and the update count.
+
+# Arguments
+- `io::IO`: The IO stream.
+- `cache::DifferentiationInterfaceCache`: The cache to display.
+
+# Output
+Displays three lines:
+- Header with type name
+- Preparation status for ∂H/∂x
+- Preparation status for ∂H/∂p
+- Preparation status for ∂H/∂v (or "not prepared" for Fixed problems)
+
+# Example
+```julia-repl
+julia> cache
+DifferentiationInterfaceCache
+  ∂H/∂x: prepared
+  ∂H/∂p: prepared
+  ∂H/∂v: prepared
+```
+"""
+function Base.show(io::IO, cache::DifferentiationInterfaceCache)
+    println(io, "DifferentiationInterfaceCache")
+    println(io, "  ∂H/∂x: ", _prep_status(cache.p_x))
+    println(io, "  ∂H/∂p: ", _prep_status(cache.p_p))
+    print(io, "  ∂H/∂v: ", _prep_status(cache.p_v))
+end
+
+"""
+    Base.show(io::IO, ::MIME"text/plain", cache::DifferentiationInterfaceCache)
+
+Display a DifferentiationInterfaceCache in the REPL with the same format as `Base.show(io, cache)`.
+
+# Arguments
+- `io::IO`: The IO stream.
+- `::MIME"text/plain"`: The MIME type.
+- `cache::DifferentiationInterfaceCache`: The cache to display.
+
+See also: [`Base.show(io::IO, cache::DifferentiationInterfaceCache)`](@ref).
+"""
+function Base.show(io::IO, ::MIME"text/plain", cache::DifferentiationInterfaceCache)
+    show(io, cache)
+end
+
+"""
+    _prep_status(prep)
+
+Return a string describing the preparation status of a gradient plan.
+
+# Arguments
+- `prep`: The prepared plan (or `Nothing`).
+
+# Returns
+- `"prepared"` if the plan is not `Nothing`.
+- `"not prepared"` if the plan is `Nothing`.
+"""
+_prep_status(prep) = prep === nothing ? "not prepared" : "prepared"
 
 end # module

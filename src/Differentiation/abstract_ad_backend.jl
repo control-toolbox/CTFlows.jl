@@ -198,13 +198,13 @@ Update a prepared cache when the input types or dimensions change.
 - `nothing`
 
 # Throws
-- `CTBase.Exceptions.NotImplemented`: If the concrete backend does not implement
+- [`CTBase.Exceptions.NotImplemented`](@extref): If the concrete backend does not implement
   this method.
 
 # Notes
- - This method is called when a `PreparationMismatchError` occurs during gradient
-   computation, indicating that the prepared cache no longer matches the current
-   input types or dimensions.
+ - This method is called when a `PreparationMismatchError` (from DifferentiationInterface.jl)
+   occurs during gradient computation, indicating that the prepared cache no longer matches
+   the current input types or dimensions.
  - Concrete backends with cache preparation (e.g., `DifferentiationInterface`)
    should re-prepare the cache with the new input characteristics.
  - Backends without cache preparation can provide a no-op implementation.

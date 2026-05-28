@@ -159,6 +159,50 @@ function test_differentiation_interface_extension()
             Test.@test length(grad_v) == length(v)
             Test.@test grad_v ≈ v atol=1e-8
         end
+
+        # ====================================================================
+        # Integration Tests - on_update callback
+        # ====================================================================
+
+        Test.@testset "Integration: on_update callback with type mismatch" begin
+            # Test that on_update is called when cache type mismatches input type
+            count = Ref(0)
+            backend = Differentiation.DifferentiationInterface(
+                ad_backend=ADTypes.AutoForwardDiff(),
+                prepare_cache=true,
+                on_update=(c, t, x, p, v) -> (count[] += 1)
+            )
+
+            # Prepare cache with Int types
+            cache = Differentiation.prepare_cache(backend, FAKE_HAMILTONIAN_NONFIXED, Int(0), Int(1), Int(1), Int(1))
+            Test.@test cache !== nothing
+
+            # Call with Float types (should trigger update!)
+            grad_x, grad_p = Differentiation.hamiltonian_gradient(backend, FAKE_HAMILTONIAN_NONFIXED, 0.0, 1.0, 1.0, 1.0, cache)
+            Test.@test grad_x ≈ 1.0 atol=1e-8
+            Test.@test grad_p ≈ 1.0 atol=1e-8
+            Test.@test count[] == 1  # on_update should be called once
+        end
+
+        Test.@testset "Integration: on_update callback with matching types" begin
+            # Test that on_update is NOT called when types match
+            count = Ref(0)
+            backend = Differentiation.DifferentiationInterface(
+                ad_backend=ADTypes.AutoForwardDiff(),
+                prepare_cache=true,
+                on_update=(c, t, x, p, v) -> (count[] += 1)
+            )
+
+            # Prepare cache with Float types
+            cache = Differentiation.prepare_cache(backend, FAKE_HAMILTONIAN_NONFIXED, 0.0, 1.0, 1.0, 1.0)
+            Test.@test cache !== nothing
+
+            # Call with same Float types (should NOT trigger update!)
+            grad_x, grad_p = Differentiation.hamiltonian_gradient(backend, FAKE_HAMILTONIAN_NONFIXED, 0.0, 1.0, 1.0, 1.0, cache)
+            Test.@test grad_x ≈ 1.0 atol=1e-8
+            Test.@test grad_p ≈ 1.0 atol=1e-8
+            Test.@test count[] == 0  # on_update should NOT be called
+        end
     end
 end
 

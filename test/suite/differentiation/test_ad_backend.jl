@@ -132,6 +132,23 @@ function test_ad_backend()
             end
         end
 
+        Test.@testset "Error: update! stub throws NotImplemented" begin
+            backend = FakeADBackend()
+            cache = nothing
+            t = 0.0
+            x = [1.0, 2.0]
+            p = [3.0, 4.0]
+            v = 5.0
+
+            try
+                Differentiation.update!(cache, backend, t, x, p, v)
+                Test.@test false  # Should not reach here
+            catch err
+                Test.@test err isa Exceptions.NotImplemented
+                Test.@test occursin("update!", err.required_method)
+            end
+        end
+
     end
 end
 

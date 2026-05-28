@@ -87,6 +87,12 @@ function CTSolvers.Strategies.metadata(::Type{<:DifferentiationInterface})
             default = false,
             description = "If true, call DI.prepare_gradient once at cache-preparation time and reuse the plan. If false, call plain DI.gradient at every integration step (no preallocation).",
         ),
+        CTSolvers.Strategies.OptionDefinition(;
+            name = :on_update,
+            type = Union{Nothing, Function},
+            default = nothing,
+            description = "Optional callback invoked whenever update! re-prepares the cache after a type or dimension mismatch. Signature: on_update(cache, t, x, p, v) -> nothing. Useful for testing and instrumentation.",
+        ),
     )
 end
 
