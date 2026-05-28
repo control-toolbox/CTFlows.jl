@@ -16,9 +16,9 @@ import CTFlows: CTFlows, Flow, *
 using OrdinaryDiffEq
 using Plots
 
-t0=0
-tf=1
-x0=[0, 1]
+t0 = 0
+tf = 1
+x0 = [0, 1]
 l = 1/9
 @def ocp begin
     t ∈ [t0, tf], time
