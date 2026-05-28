@@ -261,7 +261,7 @@ Le tableau suivant résume ce qui est supporté pour chaque constructeur selon l
 | ForwardDiff Dual (état) | ✓ | ✓ | ⚠ (c) | ✓ |
 | `SVector` (StaticArrays) | ✓ OOP / ⚠ IP | ✓ OOP / ⚠ IP | ✓ OOP | ✓ |
 | `SMatrix` (StaticArrays) | ✓ OOP | ✓ OOP | ⚠ (d) | ✓ OOP |
-| Coétat de v (`variable_costate=true`) | ✗ | ✗ (f) | ✓ (e) | ✗ |
+| Coétat de v (`variable_costate=true`) | ✗ | ✓ (f) | ✓ (e) | ✗ |
 
 **Légende :**
 
@@ -270,7 +270,7 @@ Le tableau suivant résume ce qui est supporté pour chaque constructeur selon l
 - **(c)** Testé avec un backend AD custom. Avec `AutoForwardDiff()`, l'état dual crée du ForwardDiff imbriqué (dual-dans-dual) — théoriquement fonctionnel avec `prepare_cache=false` (tags distincts), mais non validé (tests commentés dans `test_flow_callables_sciml_hamiltonian_system_di.jl`). Peut avoir des problèmes avec `prepare_cache=true`.
 - **(d)** Non testé pour `Flow(H)`. L'extension `CTFlowsStaticArrays` fournit `_ham_split` pour `SMatrix`, et ForwardDiff devrait calculer le gradient sur `SMatrix` — mais non validé. Testé uniquement pour `Flow(HVF)` (où `vcat(SMatrix, SMatrix)` → `Matrix` pendant l'intégration ODE).
 - **(e)** Uniquement pour `Flow(H)` avec `is_variable=true`. Appel point uniquement (pas trajectoire) : `flow(t0, x0, p0, tf; variable=v, variable_costate=true)` retourne `(xf, pf, pvf)` où `pvf` est la solution de `ṗv = -∂H/∂v`. Voir `src/Flows/calling.jl`.
-- **(f)** `HamiltonianVectorField` accepte `variable_costate=true` dans ses signatures d'appel pour les cas `NonFixed` (voir `src/Data/hamiltonian_vector_field.jl`), mais `HamiltonianVectorFieldSystem` n'implémente pas `variable_costate_trait` → retourne `NoVariableCostate` par défaut. Le dispatch dans `calling.jl` lève donc une erreur. Le support est donc limité au niveau du constructeur `Flow(H)`.
+- **(f)** Supporté pour `Flow(HVF)` avec `is_variable=true` (depuis la correction du trait `variable_costate_trait` pour `HamiltonianVectorFieldSystem`). Appel point uniquement : `flow(t0, x0, p0, tf; variable=v, variable_costate=true)` retourne `(xf, pf, pvf)`. Le HVF interne doit supporter le kwarg `variable_costate` (fourni automatiquement si créé via `Systems.hamiltonian_vector_field(h; ...)`). Voir `src/Systems/hamiltonian_vector_field_system.jl`.
 
 **StaticArrays** : nécessite `using StaticArrays` (charge `CTFlowsStaticArrays` qui fournit `_ham_split` type-stable pour `SVector` et `SMatrix`). ⚠ IP = avertissement émis si la fonction est in-place avec un état immutable (`SVector`) ; utiliser `MVector` (mutable) pour éviter l'avertissement avec les flows in-place.
 

@@ -196,6 +196,22 @@ function Integrators.build_problem(
     return ODEProblem(f!, u0, Configs.tspan(config), λ)
 end
 
+# TODO: docstring
+function Integrators.build_problem(
+    integ::SciML,
+    system::Systems.HamiltonianVectorFieldSystem,
+    config::Configs.AbstractAugmentedHamiltonianConfig;
+    variable,
+    cache,
+)
+    u0  = Configs.initial_condition(config)          # vcat(x0, p0, pv0)
+    λ   = Common.ODEParameters(variable, cache)
+    n_x = length(Configs.initial_state(config))
+    n_v = length(Configs.initial_variable_costate(config))
+    f!  = Systems.build_rhs_augmented(system, n_x, n_v)
+    return ODEProblem(f!, u0, Configs.tspan(config), λ)
+end
+
 # =============================================================================
 # SciML solve — actual implementation (generic)
 # =============================================================================
