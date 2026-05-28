@@ -148,7 +148,6 @@ function derivator(::Type{<:AbstractArray})
     return DI.gradient
 end
 
-
 """
 $(TYPEDSIGNATURES)
 

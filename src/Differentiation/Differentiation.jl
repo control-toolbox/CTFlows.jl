@@ -8,10 +8,11 @@ for computing gradients of scalar Hamiltonian functions.
 
 ## Architecture
 
-The module defines an abstract contract `AbstractADBackend` with three methods:
+The module defines an abstract contract `AbstractADBackend` with four methods:
 - `hamiltonian_gradient(backend, h, t, x, p, v, cache)` → (∂H/∂x, ∂H/∂p)
 - `variable_gradient(backend, h, t, x, p, v, cache)` → ∂H/∂v
 - `prepare_cache(backend, h, typical_t, typical_x, typical_p, typical_v)` → AbstractCache
+- `update!(cache, backend, t, x, p, v)` → nothing (re-prepare cache on type/dimension mismatch)
 
 The concrete strategy `DifferentiationInterface` wraps DifferentiationInterface.jl backends
 (e.g., `AutoForwardDiff()`) and stores them in its `:ad_backend` option.

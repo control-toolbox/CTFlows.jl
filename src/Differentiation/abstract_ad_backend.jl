@@ -180,3 +180,44 @@ function ad_backend(backend::AbstractADBackend)
         context = "AD backend contract",
     ))
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Update a prepared cache when the input types or dimensions change.
+
+# Arguments
+- `cache::AbstractCache`: The cache to update (extension-specific type).
+- `backend::AbstractADBackend`: The AD backend.
+- `t`: Time (scalar).
+- `x`: State vector.
+- `p`: Costate vector.
+- `v`: Variable (scalar or `nothing` for Fixed problems).
+
+# Returns
+- `nothing`
+
+# Throws
+- `CTBase.Exceptions.NotImplemented`: If the concrete backend does not implement
+  this method.
+
+# Notes
+ - This method is called when a `PreparationMismatchError` occurs during gradient
+   computation, indicating that the prepared cache no longer matches the current
+   input types or dimensions.
+ - Concrete backends with cache preparation (e.g., `DifferentiationInterface`)
+   should re-prepare the cache with the new input characteristics.
+ - Backends without cache preparation can provide a no-op implementation.
+
+See also: [`CTFlows.Differentiation.prepare_cache`](@ref),
+[`CTFlows.Differentiation.hamiltonian_gradient`](@ref),
+[`CTFlows.Differentiation.variable_gradient`](@ref).
+"""
+function update!(cache, backend::AbstractADBackend, t, x, p, v)
+    throw(Exceptions.NotImplemented(
+        "update! not implemented for $(typeof(backend))",
+        required_method = "update!(cache, backend::$(typeof(backend)), t, x, p, v)",
+        suggestion = "Implement update! for $(typeof(backend)) or provide a no-op if cache preparation is not used",
+        context = "AD backend contract",
+    ))
+end
