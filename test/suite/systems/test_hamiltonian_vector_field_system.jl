@@ -323,7 +323,8 @@ function test_hamiltonian_vector_field_system()
         Test.@testset "build_rhs_augmented" begin
             # Simple test: just verify the function builds and can be called
             # without error. Full integration testing is done in test_variable_costate_flows.jl
-            hvf = Data.HamiltonianVectorField((t, x, p, v) -> (p, -x); is_autonomous=true, is_variable=true)
+            # OOP: signature is (x, p, v) for autonomous, (t, x, p, v) for non-autonomous
+            hvf = Data.HamiltonianVectorField((x, p, v) -> (p, -x); is_autonomous=true, is_variable=true)
             sys = Systems.HamiltonianVectorFieldSystem(hvf)
 
             Test.@testset "OOP builds" begin
@@ -333,7 +334,8 @@ function test_hamiltonian_vector_field_system()
             end
 
             Test.@testset "IP builds" begin
-                hvf_ip = Data.HamiltonianVectorField((dx, dp, t, x, p, v; dpv=nothing, variable_costate::Bool=false) -> nothing; is_autonomous=true, is_variable=true, is_inplace=true)
+                # IP: signature is (dx, dp, x, p, v) for autonomous, (dx, dp, t, x, p, v) for non-autonomous
+                hvf_ip = Data.HamiltonianVectorField((dx, dp, x, p, v; dpv=nothing, variable_costate::Bool=false) -> nothing; is_autonomous=true, is_variable=true, is_inplace=true)
                 sys_ip = Systems.HamiltonianVectorFieldSystem(hvf_ip)
                 n_x, n_v = 2, 1
                 rhs_aug_ip = Systems.build_rhs_augmented(sys_ip, n_x, n_v)
