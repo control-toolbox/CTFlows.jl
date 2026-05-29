@@ -27,6 +27,7 @@ import ..Differentiation: Differentiation
 # ==============================================================================
 
 include(joinpath(@__DIR__, "abstract_system.jl"))
+include(joinpath(@__DIR__, "rhs_functors.jl"))
 include(joinpath(@__DIR__, "vector_field_system.jl"))
 include(joinpath(@__DIR__, "hamiltonian_vector_field_system.jl"))
 include(joinpath(@__DIR__, "hamiltonian_system.jl"))
@@ -38,6 +39,7 @@ include(joinpath(@__DIR__, "hamiltonian_getter.jl"))
 # ==============================================================================
 
 export AbstractSystem, AbstractStateSystem, AbstractHamiltonianSystem
+export AbstractRHS, AbstractIPRHS, AbstractOoPRHS
 export rhs
 export build_rhs
 export build_oop_rhs

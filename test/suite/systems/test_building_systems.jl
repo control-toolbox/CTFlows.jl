@@ -66,7 +66,7 @@ function test_building_systems()
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.build_system(vf)
                 rhs = Systems.rhs(sys)
-                Test.@test rhs isa Function
+                Test.@test rhs isa Systems.AbstractRHS
             end
 
             Test.@testset "built system rhs computes correctly" begin
