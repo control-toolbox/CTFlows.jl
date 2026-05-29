@@ -422,14 +422,14 @@ function test_vector_field()
                 # Define an out-of-place function but force InPlace
                 f(x) = -x
                 vf = Data.VectorField(f; is_inplace=true)
-                Test.@test Traits.mutability_trait(vf) === Traits.InPlace
+                Test.@test Traits.mutability(vf) === Traits.InPlace
             end
 
             Test.@testset "is_inplace=false creates OutOfPlace VectorField" begin
                 # Define an in-place function but force OutOfPlace
                 f(x) = -x
                 vf = Data.VectorField(f; is_inplace=false)
-                Test.@test Traits.mutability_trait(vf) === Traits.OutOfPlace
+                Test.@test Traits.mutability(vf) === Traits.OutOfPlace
             end
         end
 
@@ -444,7 +444,7 @@ function test_vector_field()
 
             Test.@testset "No error when is_inplace is explicitly specified" begin
                 vf = Data.VectorField(_multi_method_f; is_inplace=false)
-                Test.@test Traits.mutability_trait(vf) === Traits.OutOfPlace
+                Test.@test Traits.mutability(vf) === Traits.OutOfPlace
             end
         end
 

@@ -42,7 +42,7 @@ function test_hamiltonian_getter_flows()
                 hvf = Systems.hamiltonian_vector_field(flow; inplace=false)
                 Test.@test Traits.time_dependence(hvf) == Traits.Autonomous
                 Test.@test Traits.variable_dependence(hvf) == Traits.Fixed
-                Test.@test Traits.mutability_trait(hvf) == Traits.OutOfPlace
+                Test.@test Traits.mutability(hvf) == Traits.OutOfPlace
             end
 
             Test.@testset "InPlace preserves mutability trait" begin
@@ -54,8 +54,8 @@ function test_hamiltonian_getter_flows()
                 
                 hvf_ip = Systems.hamiltonian_vector_field(flow; inplace=true)
                 hvf_oop = Systems.hamiltonian_vector_field(flow; inplace=false)
-                Test.@test Traits.mutability_trait(hvf_ip) == Traits.InPlace
-                Test.@test Traits.mutability_trait(hvf_oop) == Traits.OutOfPlace
+                Test.@test Traits.mutability(hvf_ip) == Traits.InPlace
+                Test.@test Traits.mutability(hvf_oop) == Traits.OutOfPlace
             end
         end
 
@@ -97,7 +97,7 @@ function test_hamiltonian_getter_flows()
                 
                 # IP via Systems
                 hvf_ip = Systems.hamiltonian_vector_field(flow; inplace=true)
-                Test.@test Traits.mutability_trait(hvf_ip) == Traits.InPlace
+                Test.@test Traits.mutability(hvf_ip) == Traits.InPlace
                 dx = similar(x)
                 dp = similar(p)
                 result_ip = hvf_ip.f(dx, dp, x, p)

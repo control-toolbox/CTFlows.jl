@@ -91,13 +91,13 @@ for better error messages.
 # Throws
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): Always, indicating the object does not have the trait.
 
-See also: [`CTFlows.Traits.AbstractMutabilityTrait`](@ref), [`CTFlows.Traits.mutability_trait`](@ref).
+See also: [`CTFlows.Traits.AbstractMutabilityTrait`](@ref), [`CTFlows.Traits.mutability`](@ref).
 """
 function has_mutability_trait(obj::Any)
     source_method = _caller_function_name()
     throw(Exceptions.IncorrectArgument(
         "Cannot call $(source_method) on object of type $(typeof(obj)): no mutability trait";
-        suggestion = "Implement has_mutability_trait(obj::$(typeof(obj))) = true and mutability_trait(obj::$(typeof(obj))) to enable mutability trait support.",
+        suggestion = "Implement has_mutability_trait(obj::$(typeof(obj))) = true and mutability(obj::$(typeof(obj))) to enable mutability trait support.",
         context = "Mutability trait not available",
     ))
 end
@@ -108,7 +108,7 @@ $(TYPEDSIGNATURES)
 Return the mutability trait value for the object.
 
 This fallback method throws an error indicating the method is not implemented.
-Concrete types that have the trait should implement `mutability_trait(obj::MyType)`
+Concrete types that have the trait should implement `mutability(obj::MyType)`
 to return the specific trait value (`InPlace` or `OutOfPlace`).
 
 # Arguments
@@ -119,12 +119,12 @@ to return the specific trait value (`InPlace` or `OutOfPlace`).
 
 See also: [`CTFlows.Traits.AbstractMutabilityTrait`](@ref), [`CTFlows.Traits.has_mutability_trait`](@ref).
 """
-function mutability_trait(obj::Any)
+function mutability(obj::Any)
     has_mutability_trait(obj)
     throw(Exceptions.NotImplemented(
-        "mutability_trait not implemented for $(typeof(obj))";
-        required_method = "mutability_trait(obj::$(typeof(obj)))",
-        suggestion = "Implement mutability_trait for your concrete object type to return the specific mutability trait (InPlace or OutOfPlace).",
+        "mutability not implemented for $(typeof(obj))";
+        required_method = "mutability(obj::$(typeof(obj)))",
+        suggestion = "Implement mutability for your concrete object type to return the specific mutability trait (InPlace or OutOfPlace).",
         context = "Mutability trait - required method implementation",
     ))
 end
@@ -135,7 +135,7 @@ $(TYPEDSIGNATURES)
 Return true if the object uses in-place function evaluation.
 
 Checks that the object has the mutability trait, then returns true
-if `mutability_trait(obj)` is `InPlace`.
+if `mutability(obj)` is `InPlace`.
 
 # Arguments
 - `obj::Any`: The object to check.
@@ -145,13 +145,13 @@ if `mutability_trait(obj)` is `InPlace`.
 
 # Throws
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): If the object does not support mutability queries.
-- [`CTBase.Exceptions.NotImplemented`](@extref): If `mutability_trait` is not implemented for the object type.
+- [`CTBase.Exceptions.NotImplemented`](@extref): If `mutability` is not implemented for the object type.
 
-See also: [`CTFlows.Traits.AbstractMutabilityTrait`](@ref), [`CTFlows.Traits.mutability_trait`](@ref).
+See also: [`CTFlows.Traits.AbstractMutabilityTrait`](@ref), [`CTFlows.Traits.mutability`](@ref).
 """
 function is_inplace(obj::Any)
     has_mutability_trait(obj)
-    return mutability_trait(obj) === InPlace
+    return mutability(obj) === InPlace
 end
 
 """
@@ -160,7 +160,7 @@ $(TYPEDSIGNATURES)
 Return true if the object uses out-of-place function evaluation.
 
 Checks that the object has the mutability trait, then returns true
-if `mutability_trait(obj)` is `OutOfPlace`.
+if `mutability(obj)` is `OutOfPlace`.
 
 # Arguments
 - `obj::Any`: The object to check.
@@ -170,11 +170,11 @@ if `mutability_trait(obj)` is `OutOfPlace`.
 
 # Throws
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): If the object does not support mutability queries.
-- [`CTBase.Exceptions.NotImplemented`](@extref): If `mutability_trait` is not implemented for the object type.
+- [`CTBase.Exceptions.NotImplemented`](@extref): If `mutability` is not implemented for the object type.
 
-See also: [`CTFlows.Traits.AbstractMutabilityTrait`](@ref), [`CTFlows.Traits.mutability_trait`](@ref).
+See also: [`CTFlows.Traits.AbstractMutabilityTrait`](@ref), [`CTFlows.Traits.mutability`](@ref).
 """
 function is_outofplace(obj::Any)
     has_mutability_trait(obj)
-    return mutability_trait(obj) === OutOfPlace
+    return mutability(obj) === OutOfPlace
 end

@@ -43,7 +43,7 @@ export SupportsVariableCostate, NoVariableCostate
 export VariableDependence, Fixed, NonFixed
 export ad_trait, variable_costate_trait
 export is_inplace, is_outofplace
-export has_time_dependence_trait, time_dependence, has_mutability_trait, mutability_trait
+export has_time_dependence_trait, time_dependence, has_mutability_trait, mutability
 export has_variable_dependence_trait, variable_dependence
 
 end # module Traits

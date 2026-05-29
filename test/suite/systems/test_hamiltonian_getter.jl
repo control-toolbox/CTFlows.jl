@@ -298,7 +298,7 @@ function test_hamiltonian_getter()
             hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend, inplace=false)
             Test.@test Traits.time_dependence(hvf) == Traits.Autonomous
             Test.@test Traits.variable_dependence(hvf) == Traits.Fixed
-            Test.@test Traits.mutability_trait(hvf) == Traits.OutOfPlace
+            Test.@test Traits.mutability(hvf) == Traits.OutOfPlace
         end
 
         Test.@testset "Traits: OOP NonAutonomous/Fixed" begin
@@ -307,7 +307,7 @@ function test_hamiltonian_getter()
             hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend, inplace=false)
             Test.@test Traits.time_dependence(hvf) == Traits.NonAutonomous
             Test.@test Traits.variable_dependence(hvf) == Traits.Fixed
-            Test.@test Traits.mutability_trait(hvf) == Traits.OutOfPlace
+            Test.@test Traits.mutability(hvf) == Traits.OutOfPlace
         end
 
         Test.@testset "Traits: OOP Autonomous/NonFixed" begin
@@ -316,7 +316,7 @@ function test_hamiltonian_getter()
             hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend, inplace=false)
             Test.@test Traits.time_dependence(hvf) == Traits.Autonomous
             Test.@test Traits.variable_dependence(hvf) == Traits.NonFixed
-            Test.@test Traits.mutability_trait(hvf) == Traits.OutOfPlace
+            Test.@test Traits.mutability(hvf) == Traits.OutOfPlace
         end
 
         Test.@testset "Traits: OOP NonAutonomous/NonFixed" begin
@@ -325,7 +325,7 @@ function test_hamiltonian_getter()
             hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend, inplace=false)
             Test.@test Traits.time_dependence(hvf) == Traits.NonAutonomous
             Test.@test Traits.variable_dependence(hvf) == Traits.NonFixed
-            Test.@test Traits.mutability_trait(hvf) == Traits.OutOfPlace
+            Test.@test Traits.mutability(hvf) == Traits.OutOfPlace
         end
 
         Test.@testset "Traits: IP Autonomous/Fixed" begin
@@ -334,7 +334,7 @@ function test_hamiltonian_getter()
             hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend, inplace=true)
             Test.@test Traits.time_dependence(hvf) == Traits.Autonomous
             Test.@test Traits.variable_dependence(hvf) == Traits.Fixed
-            Test.@test Traits.mutability_trait(hvf) == Traits.InPlace
+            Test.@test Traits.mutability(hvf) == Traits.InPlace
         end
 
         Test.@testset "Traits: IP NonAutonomous/Fixed" begin
@@ -343,7 +343,7 @@ function test_hamiltonian_getter()
             hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend, inplace=true)
             Test.@test Traits.time_dependence(hvf) == Traits.NonAutonomous
             Test.@test Traits.variable_dependence(hvf) == Traits.Fixed
-            Test.@test Traits.mutability_trait(hvf) == Traits.InPlace
+            Test.@test Traits.mutability(hvf) == Traits.InPlace
         end
 
         Test.@testset "Traits: IP Autonomous/NonFixed" begin
@@ -352,7 +352,7 @@ function test_hamiltonian_getter()
             hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend, inplace=true)
             Test.@test Traits.time_dependence(hvf) == Traits.Autonomous
             Test.@test Traits.variable_dependence(hvf) == Traits.NonFixed
-            Test.@test Traits.mutability_trait(hvf) == Traits.InPlace
+            Test.@test Traits.mutability(hvf) == Traits.InPlace
         end
 
         Test.@testset "Traits: IP NonAutonomous/NonFixed" begin
@@ -361,7 +361,7 @@ function test_hamiltonian_getter()
             hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend, inplace=true)
             Test.@test Traits.time_dependence(hvf) == Traits.NonAutonomous
             Test.@test Traits.variable_dependence(hvf) == Traits.NonFixed
-            Test.@test Traits.mutability_trait(hvf) == Traits.InPlace
+            Test.@test Traits.mutability(hvf) == Traits.InPlace
         end
 
         # ====================================================================
@@ -401,7 +401,7 @@ function test_hamiltonian_getter()
             sys = Systems.HamiltonianSystem(h, backend)
             hvf = Systems.hamiltonian_vector_field(sys; inplace=true)
             Test.@test hvf isa Data.HamiltonianVectorField
-            Test.@test Traits.mutability_trait(hvf) == Traits.InPlace
+            Test.@test Traits.mutability(hvf) == Traits.InPlace
         end
 
         # ====================================================================

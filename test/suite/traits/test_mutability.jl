@@ -17,7 +17,7 @@ Fake type for testing mutability trait pattern with InPlace.
 struct FakeInPlace end
 
 Traits.has_mutability_trait(::FakeInPlace) = true
-Traits.mutability_trait(::FakeInPlace) = Traits.InPlace
+Traits.mutability(::FakeInPlace) = Traits.InPlace
 
 """
 Fake type for testing mutability trait pattern with OutOfPlace.
@@ -25,7 +25,7 @@ Fake type for testing mutability trait pattern with OutOfPlace.
 struct FakeOutOfPlace end
 
 Traits.has_mutability_trait(::FakeOutOfPlace) = true
-Traits.mutability_trait(::FakeOutOfPlace) = Traits.OutOfPlace
+Traits.mutability(::FakeOutOfPlace) = Traits.OutOfPlace
 
 """
 Fake type for testing mutability trait without the trait.
@@ -120,9 +120,9 @@ function test_mutability()
                 Test.@test_throws Exceptions.IncorrectArgument Traits.has_mutability_trait(obj)
             end
 
-            Test.@testset "mutability_trait throws IncorrectArgument" begin
+            Test.@testset "mutability throws IncorrectArgument" begin
                 obj = "not a trait object"
-                Test.@test_throws Exceptions.IncorrectArgument Traits.mutability_trait(obj)
+                Test.@test_throws Exceptions.IncorrectArgument Traits.mutability(obj)
             end
         end
 
@@ -134,7 +134,7 @@ function test_mutability()
             Test.@testset "FakeInPlace trait implementation" begin
                 obj = FakeInPlace()
                 Test.@test Traits.has_mutability_trait(obj) === true
-                Test.@test Traits.mutability_trait(obj) === Traits.InPlace
+                Test.@test Traits.mutability(obj) === Traits.InPlace
                 Test.@test Traits.is_inplace(obj) === true
                 Test.@test Traits.is_outofplace(obj) === false
             end
@@ -142,7 +142,7 @@ function test_mutability()
             Test.@testset "FakeOutOfPlace trait implementation" begin
                 obj = FakeOutOfPlace()
                 Test.@test Traits.has_mutability_trait(obj) === true
-                Test.@test Traits.mutability_trait(obj) === Traits.OutOfPlace
+                Test.@test Traits.mutability(obj) === Traits.OutOfPlace
                 Test.@test Traits.is_inplace(obj) === false
                 Test.@test Traits.is_outofplace(obj) === true
             end
@@ -150,7 +150,7 @@ function test_mutability()
             Test.@testset "FakeNoMutability throws errors" begin
                 obj = FakeNoMutability()
                 Test.@test_throws Exceptions.IncorrectArgument Traits.is_inplace(obj)
-                Test.@test_throws Exceptions.IncorrectArgument Traits.mutability_trait(obj)
+                Test.@test_throws Exceptions.IncorrectArgument Traits.mutability(obj)
             end
         end
 
@@ -166,7 +166,7 @@ function test_mutability()
             end
 
             Test.@testset "Exported mutability trait functions" begin
-                for sym in (:has_mutability_trait, :mutability_trait, :is_inplace, :is_outofplace)
+                for sym in (:has_mutability_trait, :mutability, :is_inplace, :is_outofplace)
                     Test.@test isdefined(Traits, sym)
                 end
             end

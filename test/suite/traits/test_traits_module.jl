@@ -49,7 +49,7 @@ function test_traits_module()
             Test.@testset "Exported trait functions" begin
                 for sym in (:ad_trait, :variable_costate_trait, :is_inplace, :is_outofplace,
                            :has_time_dependence_trait, :time_dependence, :has_mutability_trait,
-                           :mutability_trait, :has_variable_dependence_trait, :variable_dependence)
+                           :mutability, :has_variable_dependence_trait, :variable_dependence)
                     Test.@test isdefined(Traits, sym)
                 end
             end

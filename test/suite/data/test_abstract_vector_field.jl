@@ -76,11 +76,11 @@ function test_abstract_vector_field()
                 Test.@test Traits.variable_dependence(fake_nonfixed) === Traits.NonFixed
             end
 
-            Test.@testset "mutability_trait returns correct trait" begin
+            Test.@testset "mutability returns correct trait" begin
                 fake_oop = FakeVectorField{Traits.Autonomous, Traits.Fixed, Traits.OutOfPlace}()
                 fake_ip = FakeVectorField{Traits.Autonomous, Traits.Fixed, Traits.InPlace}()
-                Test.@test Traits.mutability_trait(fake_oop) === Traits.OutOfPlace
-                Test.@test Traits.mutability_trait(fake_ip) === Traits.InPlace
+                Test.@test Traits.mutability(fake_oop) === Traits.OutOfPlace
+                Test.@test Traits.mutability(fake_ip) === Traits.InPlace
             end
 
             Test.@testset "explicit dispatch on AbstractVectorField methods" begin
@@ -117,7 +117,7 @@ function test_abstract_vector_field()
                 ) === Traits.NonFixed
 
                 Test.@test invoke(
-                    Traits.mutability_trait,
+                    Traits.mutability,
                     Tuple{Data.AbstractVectorField{Traits.NonAutonomous, Traits.NonFixed, Traits.InPlace}},
                     fake,
                 ) === Traits.InPlace

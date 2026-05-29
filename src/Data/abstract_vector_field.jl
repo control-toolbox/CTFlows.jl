@@ -30,10 +30,10 @@ end
 vf = MyVectorField(x -> -x, Traits.Autonomous, Traits.Fixed, Traits.OutOfPlace)
 Traits.time_dependence(vf)  # Returns Autonomous
 Traits.variable_dependence(vf)  # Returns Fixed
-Traits.mutability_trait(vf)  # Returns OutOfPlace
+Traits.mutability(vf)  # Returns OutOfPlace
 \`\`\`
 
-See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Data.HamiltonianVectorField`](@ref), [`CTFlows.Traits.time_dependence`](@ref), [`CTFlows.Traits.variable_dependence`](@ref), [`CTFlows.Traits.mutability_trait`](@ref).
+See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Data.HamiltonianVectorField`](@ref), [`CTFlows.Traits.time_dependence`](@ref), [`CTFlows.Traits.variable_dependence`](@ref), [`CTFlows.Traits.mutability`](@ref).
 """
 abstract type AbstractVectorField{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, MD<:Traits.AbstractMutabilityTrait} end
 
@@ -77,7 +77,7 @@ Indicate that `AbstractVectorField` has the mutability trait.
 This implementation declares that all vector fields support mutability queries.
 Concrete `AbstractVectorField` instances have their mutability encoded in the type parameter `MD`.
 
-See also: [`CTFlows.Traits.mutability_trait`](@ref), [`CTFlows.Data.AbstractVectorField`](@ref).
+See also: [`CTFlows.Traits.mutability`](@ref), [`CTFlows.Data.AbstractVectorField`](@ref).
 """
 function Traits.has_mutability_trait(::AbstractVectorField)
     return true
@@ -149,14 +149,14 @@ using CTFlows.Data
 using CTFlows.Common
 
 vf = Data.VectorField((dx, x) -> (dx .= -x; nothing))
-Traits.mutability_trait(vf)  # Returns InPlace
+Traits.mutability(vf)  # Returns InPlace
 
 vf2 = Data.VectorField(x -> -x)
-Traits.mutability_trait(vf2)  # Returns OutOfPlace
+Traits.mutability(vf2)  # Returns OutOfPlace
 \`\`\`
 
 See also: [`CTFlows.Traits.has_mutability_trait`](@ref), [`CTFlows.Traits.is_inplace`](@ref).
 """
-function Traits.mutability_trait(vf::AbstractVectorField{<:Traits.TimeDependence, <:Traits.VariableDependence, MD}) where {MD <: Traits.AbstractMutabilityTrait}
+function Traits.mutability(vf::AbstractVectorField{<:Traits.TimeDependence, <:Traits.VariableDependence, MD}) where {MD <: Traits.AbstractMutabilityTrait}
     return MD
 end

@@ -144,14 +144,14 @@ function test_hamiltonian_vector_field()
                 # Define an out-of-place function but force InPlace
                 f(x, p) = (x, -p)
                 hvf = Data.HamiltonianVectorField(f; is_inplace=true)
-                Test.@test Traits.mutability_trait(hvf) === Traits.InPlace
+                Test.@test Traits.mutability(hvf) === Traits.InPlace
             end
 
             Test.@testset "is_inplace=false creates OutOfPlace HamiltonianVectorField" begin
                 # Define an in-place function but force OutOfPlace
                 f(x, p) = (x, -p)
                 hvf = Data.HamiltonianVectorField(f; is_inplace=false)
-                Test.@test Traits.mutability_trait(hvf) === Traits.OutOfPlace
+                Test.@test Traits.mutability(hvf) === Traits.OutOfPlace
             end
         end
 
@@ -166,7 +166,7 @@ function test_hamiltonian_vector_field()
 
             Test.@testset "No error when is_inplace is explicitly specified" begin
                 hvf = Data.HamiltonianVectorField(_multi_method_hvf; is_inplace=false)
-                Test.@test Traits.mutability_trait(hvf) === Traits.OutOfPlace
+                Test.@test Traits.mutability(hvf) === Traits.OutOfPlace
             end
         end
 
