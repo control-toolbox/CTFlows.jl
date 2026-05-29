@@ -33,7 +33,7 @@ VectorFieldSystem
 
 See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Traits.TimeDependence`](@ref), [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
 """
-struct VectorFieldSystem{F<:Function, TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, MD<:Traits.AbstractMutabilityTrait, RHS<:Function, OOPROHS<:Function, FINRHS} <: AbstractStateSystem{TD, VD}
+struct VectorFieldSystem{F<:Function, TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, MD<:Traits.AbstractMutabilityTrait, RHS<:AbstractIPRHS, OOPROHS<:AbstractOoPRHS, FINRHS} <: AbstractStateSystem{TD, VD}
     vf::Data.VectorField{F, TD, VD, MD}
     rhs::RHS
     rhs_oop::OOPROHS
@@ -45,16 +45,16 @@ end
 # =============================================================================
 
 function VectorFieldSystem(vf::Data.VectorField{F, TD, VD, Traits.OutOfPlace}) where {F, TD, VD}
-    rhs              = _build_rhs_vf_oop(Traits.OutOfPlace, vf)
-    rhs_oop          = _build_oop_rhs_vf_oop(Traits.OutOfPlace, vf)
+    rhs              = IPVFOoPRHS(vf)
+    rhs_oop          = OoPVFOoPRHS(vf)
     rhs_oop_finalize = nothing
     return VectorFieldSystem{F, TD, VD, Traits.OutOfPlace, typeof(rhs), typeof(rhs_oop), Nothing}(vf, rhs, rhs_oop, rhs_oop_finalize)
 end
 
 function VectorFieldSystem(vf::Data.VectorField{F, TD, VD, Traits.InPlace}) where {F, TD, VD}
-    rhs              = _build_rhs_vf_ip(Traits.InPlace, vf)
-    rhs_oop          = _build_oop_rhs_vf_ip(Traits.InPlace, vf)
-    rhs_oop_finalize = _build_finalize_rhs_vf_ip(Traits.InPlace, vf)
+    rhs              = IPVFIpRHS(vf)
+    rhs_oop          = OoPVFIpRHS(vf)
+    rhs_oop_finalize = OoPVFIpFinalizeRHS(vf)
     return VectorFieldSystem{F, TD, VD, Traits.InPlace, typeof(rhs), typeof(rhs_oop), typeof(rhs_oop_finalize)}(vf, rhs, rhs_oop, rhs_oop_finalize)
 end
 
@@ -85,112 +85,6 @@ end
 
 _check_vf_scalar_inplace(::AbstractSystem, ::Any) = nothing
 
-# =============================================================================
-# Internal helpers: RHS builders
-# =============================================================================
-
-"""
-$(TYPEDSIGNATURES)
-
-Build the in-place RHS closure for an out-of-place vector field.
-
-For out-of-place vector fields, the RHS uses the broadcasting assignment to copy
-the result into the destination array.
-
-# Arguments
-- `::Type{OutOfPlace}`: The out-of-place mutability trait.
-- `vf::Data.VectorField`: The vector field data structure.
-
-# Returns
-- `Function`: A closure with signature `(du, u, λ, t) -> nothing`.
-"""
-function _build_rhs_vf_oop(::Type{Traits.OutOfPlace}, vf::Data.VectorField)
-    return (du, u, λ, t) -> (du .= vf(t, u, Common.variable(λ)); nothing)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Build the in-place RHS closure for an in-place vector field.
-
-For in-place vector fields, the RHS calls the vector field directly with the
-destination array as the first argument.
-
-# Arguments
-- `::Type{InPlace}`: The in-place mutability trait.
-- `vf::Data.VectorField`: The vector field data structure.
-
-# Returns
-- `Function`: A closure with signature `(du, u, λ, t) -> nothing`.
-"""
-function _build_rhs_vf_ip(::Type{Traits.InPlace}, vf::Data.VectorField)
-    return (du, u, λ, t) -> (vf(du, t, u, Common.variable(λ)); nothing)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Build the out-of-place RHS closure for an out-of-place vector field.
-
-For out-of-place vector fields, the RHS directly calls the vector field.
-
-# Arguments
-- `::Type{OutOfPlace}`: The out-of-place mutability trait.
-- `vf::Data.VectorField`: The vector field data structure.
-
-# Returns
-- `Function`: A closure with signature `(u, λ, t) -> du`.
-"""
-function _build_oop_rhs_vf_oop(::Type{Traits.OutOfPlace}, vf::Data.VectorField)
-    return (u, λ, t) -> vf(t, u, Common.variable(λ))
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Build the out-of-place RHS closure for an in-place vector field.
-
-For in-place vector fields, the RHS allocates a new array and calls the vector
-field with it as the destination.
-
-# Arguments
-- `::Type{InPlace}`: The in-place mutability trait.
-- `vf::Data.VectorField`: The vector field data structure.
-
-# Returns
-- `Function`: A closure with signature `(u, λ, t) -> du`.
-"""
-function _build_oop_rhs_vf_ip(::Type{Traits.InPlace}, vf::Data.VectorField)
-    return function (u, λ, t)
-        dx = similar(u)
-        vf(dx, t, u, Common.variable(λ))
-        return dx
-    end
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Build the finalize RHS closure for an in-place vector field with immutable u0.
-
-This is used when the initial condition is immutable (e.g., SVector), requiring
-a conversion to the appropriate type after the in-place computation.
-
-# Arguments
-- `::Type{InPlace}`: The in-place mutability trait.
-- `vf::Data.VectorField`: The vector field data structure.
-
-# Returns
-- `Function`: A closure with signature `(u, λ, t) -> du` that returns the result
-  converted to the same type as `u`.
-"""
-function _build_finalize_rhs_vf_ip(::Type{Traits.InPlace}, vf::Data.VectorField)
-    return function (u, λ, t)
-        dx = similar(u)
-        vf(dx, t, u, Common.variable(λ))
-        return typeof(u)(dx)
-    end
-end
 
 """
 $(TYPEDSIGNATURES)
@@ -307,7 +201,8 @@ See also: [`CTFlows.Systems.VectorFieldSystem`](@ref).
 function Base.show(io::IO, sys::VectorFieldSystem{F, TD, VD, MD, RHS, OOPROHS, FINRHS}) where {F, TD, VD, MD, RHS, OOPROHS, FINRHS}
     println(io, "VectorFieldSystem")
     wraps = "VectorField: $(Data._td_label(TD)), $(Data._vd_label(VD)), $(Data._md_label(MD))"
-    print(io, "  wraps: ", wraps)
+    println(io, "  wraps: ", wraps)
+    print(io, "  rhs:   ", nameof(typeof(sys.rhs)), " (", _rhs_conversion_label(sys.rhs), ")")
 end
 
 """

@@ -78,7 +78,7 @@ function test_vector_field_system()
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 rhs = Systems.rhs(sys)
-                Test.@test rhs isa Function
+                Test.@test rhs isa Systems.AbstractRHS
             end
 
             Test.@testset "rhs function has correct signature (du, u, p, t)" begin
@@ -124,7 +124,7 @@ function test_vector_field_system()
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 rhs_oop = Systems.rhs_oop(sys)
-                Test.@test rhs_oop isa Function
+                Test.@test rhs_oop isa Systems.AbstractRHS
             end
 
             Test.@testset "rhs_oop function has correct signature (u, p, t)" begin
@@ -141,7 +141,7 @@ function test_vector_field_system()
             Test.@testset "rhs_oop stored" begin
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                Test.@test sys.rhs_oop isa Function
+                Test.@test sys.rhs_oop isa Systems.AbstractRHS
                 Test.@test Systems.rhs_oop(sys) === sys.rhs_oop
             end
 
@@ -245,7 +245,7 @@ function test_vector_field_system()
             Test.@testset "IP: rhs_oop_finalize is Function" begin
                 vf  = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                Test.@test sys.rhs_oop_finalize isa Function
+                Test.@test sys.rhs_oop_finalize isa Systems.AbstractRHS
             end
 
             Test.@testset "IP: rhs fills du via in-place call" begin

@@ -66,7 +66,7 @@ function test_systems_module()
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 rhs = Systems.rhs(sys)
-                Test.@test isa(rhs, Function)
+                Test.@test rhs isa Systems.AbstractRHS
 
                 du = zeros(2)
                 u = [1.0, 2.0]
