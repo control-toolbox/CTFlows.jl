@@ -39,6 +39,7 @@ using SciMLBase: SciMLBase, ODEProblem
 
 include("real_norm.jl")
 include("strategies.jl")
+include("sciml_rhs_functors.jl")
 include("sciml_function_system.jl")
 include("integration_result.jl")
 include("build_and_solve.jl")

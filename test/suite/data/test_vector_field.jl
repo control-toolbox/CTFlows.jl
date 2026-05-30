@@ -174,6 +174,66 @@ function test_vector_field()
         end
 
         # ====================================================================
+        # UNIT TESTS - Uniform Call Signature (t, x, v)
+        # ====================================================================
+
+        Test.@testset "Uniform Call Signature" begin
+            Test.@testset "Autonomous Fixed ignores t and v" begin
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                
+                Test.@testset "scalar" begin
+                    Test.@test vf(0.0, 3.0, 0.0) == -3.0
+                end
+                
+                Test.@testset "vector" begin
+                    Test.@test vf(0.0, [1.0, 2.0], 0.0) == [-1.0, -2.0]
+                end
+                
+                Test.@testset "matrix" begin
+                    x0 = [1.0 2.0; 3.0 4.0]
+                    result = vf(0.0, x0, 0.0)
+                    Test.@test result == -x0
+                end
+            end
+
+            Test.@testset "NonAutonomous Fixed uses t, ignores v" begin
+                vf = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
+                
+                Test.@testset "scalar" begin
+                    Test.@test vf(2.0, 3.0, 0.0) == 6.0
+                end
+                
+                Test.@testset "vector" begin
+                    Test.@test vf(2.0, [1.0, 2.0], 0.0) == [2.0, 4.0]
+                end
+                
+                Test.@testset "matrix" begin
+                    x0 = [1.0 2.0; 3.0 4.0]
+                    result = vf(2.0, x0, 0.0)
+                    Test.@test result == 2 .* x0
+                end
+            end
+
+            Test.@testset "Autonomous NonFixed ignores t, uses v" begin
+                vf = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
+                
+                Test.@testset "scalar" begin
+                    Test.@test vf(0.0, 3.0, 0.5) == 3.5
+                end
+                
+                Test.@testset "vector" begin
+                    Test.@test vf(0.0, [1.0, 2.0], 0.5) == [1.5, 2.5]
+                end
+                
+                Test.@testset "matrix" begin
+                    x0 = [1.0 2.0; 3.0 4.0]
+                    result = vf(0.0, x0, 0.5)
+                    Test.@test result == x0 .+ 0.5
+                end
+            end
+        end
+
+        # ====================================================================
         # UNIT TESTS - InPlace Call Signatures
         # ====================================================================
 
@@ -249,6 +309,39 @@ function test_vector_field()
             end
         end
 
+        # ====================================================================
+        # UNIT TESTS - Uniform InPlace Call Signature
+        # ====================================================================
+
+        Test.@testset "Uniform InPlace Signature" begin
+            Test.@testset "Autonomous Fixed InPlace uniform" begin
+                f(dx, x) = dx .= -x
+                vf = Data.VectorField(f; is_autonomous=true, is_variable=false, is_inplace=true)
+                
+                dx = [0.0, 0.0]
+                vf(dx, 0.0, [1.0, 2.0], 0.0)
+                Test.@test dx == [-1.0, -2.0]
+            end
+
+            Test.@testset "NonAutonomous Fixed InPlace uniform" begin
+                f(dx, t, x) = dx .= t .* x
+                vf = Data.VectorField(f; is_autonomous=false, is_variable=false, is_inplace=true)
+                
+                dx = [0.0, 0.0]
+                vf(dx, 2.0, [1.0, 2.0], 0.0)
+                Test.@test dx == [2.0, 4.0]
+            end
+
+            Test.@testset "Autonomous NonFixed InPlace uniform" begin
+                f(dx, x, v) = dx .= x .+ v
+                vf = Data.VectorField(f; is_autonomous=true, is_variable=true, is_inplace=true)
+                
+                dx = [0.0, 0.0]
+                vf(dx, 0.0, [1.0, 2.0], 0.5)
+                Test.@test dx == [1.5, 2.5]
+            end
+        end
+
         Test.@testset "Common Trait Predicates" begin
             vf_aut = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
             vf_nonaut = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
@@ -286,6 +379,7 @@ function test_vector_field()
                 Test.@test occursin("fixed (no variable)", str)
                 Test.@test occursin("out-of-place", str)
                 Test.@test occursin("natural call", str)
+                Test.@test occursin("uniform call", str)
             end
 
             Test.@testset "Base.show (text/plain)" begin

@@ -81,6 +81,33 @@ function test_hamiltonian_vector_field()
         end
         
         # ====================================================================
+        # UNIT TESTS - Uniform signature
+        # ====================================================================
+        
+        Test.@testset "Uniform Signature" begin
+            # All combinations should work with (t, x, p, v)
+            hvf_autonomous_fixed = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+            dx, dp = hvf_autonomous_fixed(0.0, [1.0, 2.0], [3.0, 4.0], nothing)
+            Test.@test dx == [1.0, 2.0]
+            Test.@test dp == [-3.0, -4.0]
+            
+            hvf_nonautonomous_fixed = Data.HamiltonianVectorField((t, x, p) -> (t .* x, -p); is_autonomous=false, is_variable=false)
+            dx, dp = hvf_nonautonomous_fixed(2.0, [1.0, 2.0], [3.0, 4.0], nothing)
+            Test.@test dx == [2.0, 4.0]
+            Test.@test dp == [-3.0, -4.0]
+            
+            hvf_autonomous_nonfixed = Data.HamiltonianVectorField((x, p, v) -> (x .* v, -p); is_autonomous=true, is_variable=true)
+            dx, dp = hvf_autonomous_nonfixed(0.0, [1.0, 2.0], [3.0, 4.0], 2.0)
+            Test.@test dx == [2.0, 4.0]
+            Test.@test dp == [-3.0, -4.0]
+            
+            # Test variable_costate kwarg for NonFixed
+            dx, dp = hvf_autonomous_nonfixed(0.0, [1.0, 2.0], [3.0, 4.0], 2.0; variable_costate=false)
+            Test.@test dx == [2.0, 4.0]
+            Test.@test dp == [-3.0, -4.0]
+        end
+        
+        # ====================================================================
         # UNIT TESTS - Trait accessors
         # ====================================================================
         
@@ -260,6 +287,52 @@ function test_hamiltonian_vector_field()
                     Test.@test dx == [2.5, 4.5]
                     Test.@test dp == [1.5, 2.5]
                 end
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Uniform InPlace Call Signature
+        # ====================================================================
+
+        Test.@testset "Uniform InPlace Signature" begin
+            Test.@testset "Autonomous Fixed InPlace uniform" begin
+                f(dx, dp, x, p) = (dx .= -x; dp .= -p)
+                hvf = Data.HamiltonianVectorField(f; is_autonomous=true, is_variable=false, is_inplace=true)
+                
+                dx = [0.0, 0.0]
+                dp = [0.0, 0.0]
+                hvf(dx, dp, 0.0, [1.0, 2.0], [0.5, 1.0], 0.0)
+                Test.@test dx == [-1.0, -2.0]
+                Test.@test dp == [-0.5, -1.0]
+            end
+
+            Test.@testset "NonAutonomous Fixed InPlace uniform" begin
+                f(dx, dp, t, x, p) = (dx .= t .* x; dp .= t .* p)
+                hvf = Data.HamiltonianVectorField(f; is_autonomous=false, is_variable=false, is_inplace=true)
+                
+                dx = [0.0, 0.0]
+                dp = [0.0, 0.0]
+                hvf(dx, dp, 2.0, [1.0, 2.0], [0.5, 1.0], 0.0)
+                Test.@test dx == [2.0, 4.0]
+                Test.@test dp == [1.0, 2.0]
+            end
+
+            Test.@testset "Autonomous NonFixed InPlace uniform" begin
+                f(dx, dp, x, p, v) = (dx .= x .+ v; dp .= p .+ v)
+                hvf = Data.HamiltonianVectorField(f; is_autonomous=true, is_variable=true, is_inplace=true)
+                
+                dx = [0.0, 0.0]
+                dp = [0.0, 0.0]
+                hvf(dx, dp, 0.0, [1.0, 2.0], [0.5, 1.0], 0.5)
+                Test.@test dx == [1.5, 2.5]
+                Test.@test dp == [1.0, 1.5]
+                
+                # Test variable_costate kwarg
+                dx = [0.0, 0.0]
+                dp = [0.0, 0.0]
+                hvf(dx, dp, 0.0, [1.0, 2.0], [0.5, 1.0], 0.5; variable_costate=false)
+                Test.@test dx == [1.5, 2.5]
+                Test.@test dp == [1.0, 1.5]
             end
         end
 

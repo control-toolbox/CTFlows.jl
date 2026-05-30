@@ -203,6 +203,22 @@ end
 (F::VectorField{<:Function, Traits.NonAutonomous, Traits.NonFixed, Traits.InPlace})(dx, t, x, v) = F.f(dx, t, x, v)
 
 # =============================================================================
+# Uniform (t, x, v) call - used by VectorFieldSystem.rhs
+# Every combination forwards to its natural call, ignoring unused args.
+# (NonAutonomous, NonFixed) is already covered by the natural signature above.
+# =============================================================================
+
+# OutOfPlace uniform signatures (existing)
+(F::VectorField{<:Function, Traits.Autonomous, Traits.Fixed, Traits.OutOfPlace})(t, x, v) = F.f(x)
+(F::VectorField{<:Function, Traits.NonAutonomous, Traits.Fixed, Traits.OutOfPlace})(t, x, v) = F.f(t, x)
+(F::VectorField{<:Function, Traits.Autonomous, Traits.NonFixed, Traits.OutOfPlace})(t, x, v) = F.f(x, v)
+
+# InPlace uniform signatures (new)
+(F::VectorField{<:Function, Traits.Autonomous, Traits.Fixed, Traits.InPlace})(dx, t, x, v) = F.f(dx, x)
+(F::VectorField{<:Function, Traits.NonAutonomous, Traits.Fixed, Traits.InPlace})(dx, t, x, v) = F.f(dx, t, x)
+(F::VectorField{<:Function, Traits.Autonomous, Traits.NonFixed, Traits.InPlace})(dx, t, x, v) = F.f(dx, x, v)
+
+# =============================================================================
 # Base.show
 # =============================================================================
 

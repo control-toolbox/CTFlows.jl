@@ -165,32 +165,14 @@ ensuring correct handling of scalar, vector, and matrix inputs.
 - `p0`: Initial costate (same shape as `x0`).
 
 # Returns
-- `Function`: A closure with signature `(du, u, λ, t) -> nothing`.
+- `AbstractIPHVFRHS`: A functor with signature `(du, u, λ, t) -> nothing`.
 """
 function build_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, x0, p0) where {F, TD, VD}
-    N = _state_dim(x0)
-    cx = _make_coerce(x0)
-    cp = _make_coerce(p0)
-    hvf = sys.hvf
-    return function (du, u, λ, t)
-        x, p = _ham_split(u, N)
-        dx, dp = hvf(t, cx(x), cp(p), Common.variable(λ))
-        _ham_assign!(du, dx, dp, N)
-        return nothing
-    end
+    return IPHVFOoPRHS(sys.hvf, _state_dim(x0), _make_coerce(x0), _make_coerce(p0))
 end
 
 function build_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, x0, p0) where {F, TD, VD}
-    N = _state_dim(x0)
-    cx = _make_coerce(x0)
-    cp = _make_coerce(p0)
-    hvf = sys.hvf
-    return function (du, u, λ, t)
-        x, p   = _ham_split(u,  N)
-        dx, dp = _ham_split(du, N)
-        hvf(dx, dp, t, cx(x), cp(p), Common.variable(λ))
-        return nothing
-    end
+    return IPHVFIpRHS(sys.hvf, _state_dim(x0), _make_coerce(x0), _make_coerce(p0))
 end
 
 """
@@ -207,39 +189,18 @@ ensuring correct handling of scalar, vector, and matrix inputs.
 - `p0`: Initial costate (same shape as `x0`).
 
 # Returns
-- `Function`: A closure with signature `(u, λ, t) -> du`.
+- `AbstractOoPHVFRHS`: A functor with signature `(u, λ, t) -> du`.
 """
 function build_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, x0, p0) where {F, TD, VD}
-    N = _state_dim(x0)
-    cx = _make_coerce(x0)
-    cp = _make_coerce(p0)
-    hvf = sys.hvf
-    return function (u, λ, t)
-        x, p = _ham_split(u, N)
-        dx, dp = hvf(t, cx(x), cp(p), Common.variable(λ))
-        return vcat(dx, dp)
-    end
+    return OoPHVFOoPRHS(sys.hvf, _state_dim(x0), _make_coerce(x0), _make_coerce(p0))
 end
 
 function build_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, x0, p0) where {F, TD, VD}
-    N = _state_dim(x0)
-    cx = _make_coerce(x0)
-    cp = _make_coerce(p0)
-    hvf = sys.hvf
-    is_u0_mutable = ismutable(x0)
-    if !is_u0_mutable
+    if !ismutable(x0)
         @warn "InPlace HamiltonianVectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
+        return OoPHVFIpFinalizeRHS(sys.hvf, _state_dim(x0), _make_coerce(x0), _make_coerce(p0))
     end
-    return function (u, λ, t)
-        x, p   = _ham_split(u, N)
-        dx, dp = similar(x), similar(p)
-        hvf(dx, dp, t, cx(x), cp(p), Common.variable(λ))
-        result = vcat(dx, dp)
-        if !is_u0_mutable
-            return typeof(u)(result)
-        end
-        return result
-    end
+    return OoPHVFIpRHS(sys.hvf, _state_dim(x0), _make_coerce(x0), _make_coerce(p0))
 end
 
 # =============================================================================
@@ -251,14 +212,7 @@ function build_rhs_augmented(
     sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace},
     n_x::Int, n_v::Int,
 ) where {F, TD, VD}
-    hvf = sys.hvf
-    return function (du, u, λ, t)
-        v = Common.variable(λ)
-        x, p, _ = _aug_split(u, n_x, n_v)
-        dx, dp, dpv = hvf(t, x, p, v; variable_costate=true)
-        _aug_assign!(du, dx, dp, dpv, n_x, n_v)
-        return nothing
-    end
+    return IPHVFOoPAugRHS(sys.hvf, n_x, n_v)
 end
 
 # TODO: docstring
@@ -266,16 +220,7 @@ function build_rhs_augmented(
     sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace},
     n_x::Int, n_v::Int,
 ) where {F, TD, VD}
-    hvf = sys.hvf
-    return function (du, u, λ, t)
-        v = Common.variable(λ)
-        x, p, _ = _aug_split(u, n_x, n_v)
-        dx, dp, _ = _aug_split(du, n_x, n_v)
-        dpv = similar(u[end-n_v+1:end])
-        hvf(dx, dp, t, x, p, v; dpv=dpv, variable_costate=true)
-        du[end-n_v+1:end] .= dpv
-        return nothing
-    end
+    return IPHVFIpAugRHS(sys.hvf, n_x, n_v)
 end
 
 # =============================================================================

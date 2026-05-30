@@ -244,6 +244,25 @@ function (H::HamiltonianVectorField{<:Function, Traits.NonAutonomous, Traits.Non
 end
 
 # =============================================================================
+# Uniform (t, x, p, v) call - used by HamiltonianVectorFieldSystem.rhs
+# Every combination forwards to its natural call, ignoring unused args.
+# (NonAutonomous, NonFixed) is already covered by the natural signature above.
+# =============================================================================
+
+# OutOfPlace uniform signatures
+(H::HamiltonianVectorField{<:Function, Traits.Autonomous, Traits.Fixed, Traits.OutOfPlace})(_, x, p, _) = H.f(x, p)
+(H::HamiltonianVectorField{<:Function, Traits.NonAutonomous, Traits.Fixed, Traits.OutOfPlace})(t, x, p, _) = H.f(t, x, p)
+(H::HamiltonianVectorField{<:Function, Traits.Autonomous, Traits.NonFixed, Traits.OutOfPlace})(_, x, p, v; variable_costate::Bool=false) = H.f(x, p, v; variable_costate=variable_costate)
+(H::HamiltonianVectorField{<:Function, Traits.NonAutonomous, Traits.NonFixed, Traits.OutOfPlace})(t, x, p, v; variable_costate::Bool=false) = H.f(t, x, p, v; variable_costate=variable_costate)
+
+# InPlace uniform signatures
+(H::HamiltonianVectorField{<:Function, Traits.Autonomous, Traits.Fixed, Traits.InPlace})(dx, dp, _, x, p, _) = H.f(dx, dp, x, p)
+(H::HamiltonianVectorField{<:Function, Traits.NonAutonomous, Traits.Fixed, Traits.InPlace})(dx, dp, t, x, p, _) = H.f(dx, dp, t, x, p)
+(H::HamiltonianVectorField{<:Function, Traits.Autonomous, Traits.NonFixed, Traits.InPlace})(dx, dp, _, x, p, v; variable_costate::Bool=false, dpv=nothing) = H.f(dx, dp, x, p, v; dpv=dpv, variable_costate=variable_costate)
+(H::HamiltonianVectorField{<:Function, Traits.NonAutonomous, Traits.NonFixed, Traits.InPlace})(dx, dp, t, x, p, v; variable_costate::Bool=false, dpv=nothing) = H.f(dx, dp, t, x, p, v; dpv=dpv, variable_costate=variable_costate)
+
+
+# =============================================================================
 # Base.show
 # =============================================================================
 

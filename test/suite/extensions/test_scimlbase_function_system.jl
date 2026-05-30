@@ -73,11 +73,12 @@ function test_scimlbase_function_system()
         # ====================================================================
 
         Test.@testset "rhs Dispatch" begin
-            Test.@testset "in-place returns pre-computed closure" begin
+            Test.@testset "in-place returns pre-computed functor" begin
                 f = ODEFunction((du, u, p, t) -> du .= -u)
                 sys = CTFlowsSciML.SciMLFunctionSystem(f)
                 rhs_fn = Systems.rhs(sys)
                 Test.@test rhs_fn !== f  # Not the raw function, but a wrapper
+                Test.@test rhs_fn isa Systems.AbstractIPRHS
                 # Test that the wrapper works
                 du = zeros(2)
                 u = [1.0, 2.0]
@@ -86,11 +87,12 @@ function test_scimlbase_function_system()
                 Test.@test du ≈ [-1.0, -2.0]
             end
 
-            Test.@testset "out-of-place returns pre-computed closure" begin
+            Test.@testset "out-of-place returns pre-computed functor" begin
                 f = ODEFunction{false}((u, p, t) -> -u)
                 sys = CTFlowsSciML.SciMLFunctionSystem(f)
                 rhs_oop_fn = Systems.rhs_oop(sys)
                 Test.@test rhs_oop_fn !== f  # Not the raw function, but a wrapper
+                Test.@test rhs_oop_fn isa Systems.AbstractOoPRHS
                 # Test that the wrapper works
                 u = [1.0, 2.0]
                 p = Common.ODEParameters(2.0)
@@ -102,6 +104,7 @@ function test_scimlbase_function_system()
                 f = ODEFunction{false}((u, p, t) -> -u)
                 sys = CTFlowsSciML.SciMLFunctionSystem(f)
                 rhs_fn = Systems.rhs(sys)
+                Test.@test rhs_fn isa Systems.AbstractIPRHS
                 # Should return a wrapper that makes the oop function iip
                 du = zeros(2)
                 u = [1.0, 2.0]
@@ -114,6 +117,7 @@ function test_scimlbase_function_system()
                 f = ODEFunction((du, u, p, t) -> du .= -u)
                 sys = CTFlowsSciML.SciMLFunctionSystem(f)
                 rhs_oop_fn = Systems.rhs_oop(sys)
+                Test.@test rhs_oop_fn isa Systems.AbstractOoPRHS
                 # Should return a wrapper that allocates a buffer
                 u = [1.0, 2.0]
                 p = Common.ODEParameters(2.0)

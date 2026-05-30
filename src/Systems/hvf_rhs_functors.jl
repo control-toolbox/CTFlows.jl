@@ -61,27 +61,18 @@ struct IPHVFOoPRHS{F,TD,VD,CX,CP} <: AbstractIPHVFRHS
     cp::CP
 end
 
-function (f::IPHVFOoPRHS{F,Traits.Autonomous,Traits.Fixed,CX,CP})(du, u, λ, t) where {F,CX,CP}
+function (f::IPHVFOoPRHS{F,TD,Traits.Fixed,CX,CP})(du, u, λ, t) where {F,TD,CX,CP}
     x, p = _ham_split(u, f.N)
-    dx, dp = f.hvf(f.cx(x), f.cp(p))
-    _ham_assign!(du, dx, dp, f.N); return nothing
+    dx, dp = f.hvf(t, f.cx(x), f.cp(p), Common.variable(λ))
+    _ham_assign!(du, dx, dp, f.N)
+    return nothing
 end
-function (f::IPHVFOoPRHS{F,Traits.Autonomous,Traits.NonFixed,CX,CP})(du, u, λ, t) where {F,CX,CP}
-    v = Common.variable(λ)
+
+function (f::IPHVFOoPRHS{F,TD,Traits.NonFixed,CX,CP})(du, u, λ, t) where {F,TD,CX,CP}
     x, p = _ham_split(u, f.N)
-    dx, dp = f.hvf(f.cx(x), f.cp(p), v)
-    _ham_assign!(du, dx, dp, f.N); return nothing
-end
-function (f::IPHVFOoPRHS{F,Traits.NonAutonomous,Traits.Fixed,CX,CP})(du, u, λ, t) where {F,CX,CP}
-    x, p = _ham_split(u, f.N)
-    dx, dp = f.hvf(t, f.cx(x), f.cp(p))
-    _ham_assign!(du, dx, dp, f.N); return nothing
-end
-function (f::IPHVFOoPRHS{F,Traits.NonAutonomous,Traits.NonFixed,CX,CP})(du, u, λ, t) where {F,CX,CP}
-    v = Common.variable(λ)
-    x, p = _ham_split(u, f.N)
-    dx, dp = f.hvf(t, f.cx(x), f.cp(p), v)
-    _ham_assign!(du, dx, dp, f.N); return nothing
+    dx, dp = f.hvf(t, f.cx(x), f.cp(p), Common.variable(λ); variable_costate=false)
+    _ham_assign!(du, dx, dp, f.N)
+    return nothing
 end
 
 """
@@ -108,27 +99,18 @@ struct IPHVFIpRHS{F,TD,VD,CX,CP} <: AbstractIPHVFRHS
     cp::CP
 end
 
-function (f::IPHVFIpRHS{F,Traits.Autonomous,Traits.Fixed,CX,CP})(du, u, λ, t) where {F,CX,CP}
+function (f::IPHVFIpRHS{F,TD,Traits.Fixed,CX,CP})(du, u, λ, t) where {F,TD,CX,CP}
     x, p   = _ham_split(u,  f.N)
     dx, dp = _ham_split(du, f.N)
-    f.hvf(dx, dp, f.cx(x), f.cp(p)); return nothing
+    f.hvf(dx, dp, t, f.cx(x), f.cp(p), Common.variable(λ))
+    return nothing
 end
-function (f::IPHVFIpRHS{F,Traits.Autonomous,Traits.NonFixed,CX,CP})(du, u, λ, t) where {F,CX,CP}
-    v = Common.variable(λ)
+
+function (f::IPHVFIpRHS{F,TD,Traits.NonFixed,CX,CP})(du, u, λ, t) where {F,TD,CX,CP}
     x, p   = _ham_split(u,  f.N)
     dx, dp = _ham_split(du, f.N)
-    f.hvf(dx, dp, f.cx(x), f.cp(p), v); return nothing
-end
-function (f::IPHVFIpRHS{F,Traits.NonAutonomous,Traits.Fixed,CX,CP})(du, u, λ, t) where {F,CX,CP}
-    x, p   = _ham_split(u,  f.N)
-    dx, dp = _ham_split(du, f.N)
-    f.hvf(dx, dp, t, f.cx(x), f.cp(p)); return nothing
-end
-function (f::IPHVFIpRHS{F,Traits.NonAutonomous,Traits.NonFixed,CX,CP})(du, u, λ, t) where {F,CX,CP}
-    v = Common.variable(λ)
-    x, p   = _ham_split(u,  f.N)
-    dx, dp = _ham_split(du, f.N)
-    f.hvf(dx, dp, t, f.cx(x), f.cp(p), v); return nothing
+    f.hvf(dx, dp, t, f.cx(x), f.cp(p), Common.variable(λ); variable_costate=false)
+    return nothing
 end
 
 """
@@ -155,26 +137,15 @@ struct OoPHVFOoPRHS{F,TD,VD,CX,CP} <: AbstractOoPHVFRHS
     cp::CP
 end
 
-function (f::OoPHVFOoPRHS{F,Traits.Autonomous,Traits.Fixed,CX,CP})(u, λ, t) where {F,CX,CP}
+function (f::OoPHVFOoPRHS{F,TD,Traits.Fixed,CX,CP})(u, λ, t) where {F,TD,CX,CP}
     x, p = _ham_split(u, f.N)
-    dx, dp = f.hvf(f.cx(x), f.cp(p))
+    dx, dp = f.hvf(t, f.cx(x), f.cp(p), Common.variable(λ))
     return vcat(dx, dp)
 end
-function (f::OoPHVFOoPRHS{F,Traits.Autonomous,Traits.NonFixed,CX,CP})(u, λ, t) where {F,CX,CP}
-    v = Common.variable(λ)
+
+function (f::OoPHVFOoPRHS{F,TD,Traits.NonFixed,CX,CP})(u, λ, t) where {F,TD,CX,CP}
     x, p = _ham_split(u, f.N)
-    dx, dp = f.hvf(f.cx(x), f.cp(p), v)
-    return vcat(dx, dp)
-end
-function (f::OoPHVFOoPRHS{F,Traits.NonAutonomous,Traits.Fixed,CX,CP})(u, λ, t) where {F,CX,CP}
-    x, p = _ham_split(u, f.N)
-    dx, dp = f.hvf(t, f.cx(x), f.cp(p))
-    return vcat(dx, dp)
-end
-function (f::OoPHVFOoPRHS{F,Traits.NonAutonomous,Traits.NonFixed,CX,CP})(u, λ, t) where {F,CX,CP}
-    v = Common.variable(λ)
-    x, p = _ham_split(u, f.N)
-    dx, dp = f.hvf(t, f.cx(x), f.cp(p), v)
+    dx, dp = f.hvf(t, f.cx(x), f.cp(p), Common.variable(λ); variable_costate=false)
     return vcat(dx, dp)
 end
 
@@ -202,30 +173,17 @@ struct OoPHVFIpRHS{F,TD,VD,CX,CP} <: AbstractOoPHVFRHS
     cp::CP
 end
 
-function (f::OoPHVFIpRHS{F,Traits.Autonomous,Traits.Fixed,CX,CP})(u, λ, t) where {F,CX,CP}
+function (f::OoPHVFIpRHS{F,TD,Traits.Fixed,CX,CP})(u, λ, t) where {F,TD,CX,CP}
     x, p = _ham_split(u, f.N)
     dx, dp = similar(x), similar(p)
-    f.hvf(dx, dp, f.cx(x), f.cp(p))
+    f.hvf(dx, dp, t, f.cx(x), f.cp(p), Common.variable(λ))
     return vcat(dx, dp)
 end
-function (f::OoPHVFIpRHS{F,Traits.Autonomous,Traits.NonFixed,CX,CP})(u, λ, t) where {F,CX,CP}
-    v = Common.variable(λ)
+
+function (f::OoPHVFIpRHS{F,TD,Traits.NonFixed,CX,CP})(u, λ, t) where {F,TD,CX,CP}
     x, p = _ham_split(u, f.N)
     dx, dp = similar(x), similar(p)
-    f.hvf(dx, dp, f.cx(x), f.cp(p), v)
-    return vcat(dx, dp)
-end
-function (f::OoPHVFIpRHS{F,Traits.NonAutonomous,Traits.Fixed,CX,CP})(u, λ, t) where {F,CX,CP}
-    x, p = _ham_split(u, f.N)
-    dx, dp = similar(x), similar(p)
-    f.hvf(dx, dp, t, f.cx(x), f.cp(p))
-    return vcat(dx, dp)
-end
-function (f::OoPHVFIpRHS{F,Traits.NonAutonomous,Traits.NonFixed,CX,CP})(u, λ, t) where {F,CX,CP}
-    v = Common.variable(λ)
-    x, p = _ham_split(u, f.N)
-    dx, dp = similar(x), similar(p)
-    f.hvf(dx, dp, t, f.cx(x), f.cp(p), v)
+    f.hvf(dx, dp, t, f.cx(x), f.cp(p), Common.variable(λ); variable_costate=false)
     return vcat(dx, dp)
 end
 
@@ -253,30 +211,17 @@ struct OoPHVFIpFinalizeRHS{F,TD,VD,CX,CP} <: AbstractOoPHVFRHS
     cp::CP
 end
 
-function (f::OoPHVFIpFinalizeRHS{F,Traits.Autonomous,Traits.Fixed,CX,CP})(u, λ, t) where {F,CX,CP}
+function (f::OoPHVFIpFinalizeRHS{F,TD,Traits.Fixed,CX,CP})(u, λ, t) where {F,TD,CX,CP}
     x, p = _ham_split(u, f.N)
     dx, dp = similar(x), similar(p)
-    f.hvf(dx, dp, f.cx(x), f.cp(p))
+    f.hvf(dx, dp, t, f.cx(x), f.cp(p), Common.variable(λ))
     return typeof(u)(vcat(dx, dp))
 end
-function (f::OoPHVFIpFinalizeRHS{F,Traits.Autonomous,Traits.NonFixed,CX,CP})(u, λ, t) where {F,CX,CP}
-    v = Common.variable(λ)
+
+function (f::OoPHVFIpFinalizeRHS{F,TD,Traits.NonFixed,CX,CP})(u, λ, t) where {F,TD,CX,CP}
     x, p = _ham_split(u, f.N)
     dx, dp = similar(x), similar(p)
-    f.hvf(dx, dp, f.cx(x), f.cp(p), v)
-    return typeof(u)(vcat(dx, dp))
-end
-function (f::OoPHVFIpFinalizeRHS{F,Traits.NonAutonomous,Traits.Fixed,CX,CP})(u, λ, t) where {F,CX,CP}
-    x, p = _ham_split(u, f.N)
-    dx, dp = similar(x), similar(p)
-    f.hvf(dx, dp, t, f.cx(x), f.cp(p))
-    return typeof(u)(vcat(dx, dp))
-end
-function (f::OoPHVFIpFinalizeRHS{F,Traits.NonAutonomous,Traits.NonFixed,CX,CP})(u, λ, t) where {F,CX,CP}
-    v = Common.variable(λ)
-    x, p = _ham_split(u, f.N)
-    dx, dp = similar(x), similar(p)
-    f.hvf(dx, dp, t, f.cx(x), f.cp(p), v)
+    f.hvf(dx, dp, t, f.cx(x), f.cp(p), Common.variable(λ); variable_costate=false)
     return typeof(u)(vcat(dx, dp))
 end
 

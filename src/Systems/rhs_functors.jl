@@ -59,17 +59,9 @@ struct IPVFOoPRHS{F,TD,VD} <: AbstractIPRHS
     vf::Data.VectorField{F,TD,VD,Traits.OutOfPlace}
 end
 
-function (f::IPVFOoPRHS{F,Traits.Autonomous,Traits.Fixed})(du, u, λ, t) where {F}
-    du .= f.vf(u); nothing
-end
-function (f::IPVFOoPRHS{F,Traits.Autonomous,Traits.NonFixed})(du, u, λ, t) where {F}
-    du .= f.vf(u, Common.variable(λ)); nothing
-end
-function (f::IPVFOoPRHS{F,Traits.NonAutonomous,Traits.Fixed})(du, u, λ, t) where {F}
-    du .= f.vf(t, u); nothing
-end
-function (f::IPVFOoPRHS{F,Traits.NonAutonomous,Traits.NonFixed})(du, u, λ, t) where {F}
-    du .= f.vf(t, u, Common.variable(λ)); nothing
+function (f::IPVFOoPRHS)(du, u, λ, t)
+    du .= f.vf(t, u, Common.variable(λ))
+    nothing
 end
 
 """
@@ -90,17 +82,9 @@ struct IPVFIpRHS{F,TD,VD} <: AbstractIPRHS
     vf::Data.VectorField{F,TD,VD,Traits.InPlace}
 end
 
-function (f::IPVFIpRHS{F,Traits.Autonomous,Traits.Fixed})(du, u, λ, t) where {F}
-    f.vf(du, u); nothing
-end
-function (f::IPVFIpRHS{F,Traits.Autonomous,Traits.NonFixed})(du, u, λ, t) where {F}
-    f.vf(du, u, Common.variable(λ)); nothing
-end
-function (f::IPVFIpRHS{F,Traits.NonAutonomous,Traits.Fixed})(du, u, λ, t) where {F}
-    f.vf(du, t, u); nothing
-end
-function (f::IPVFIpRHS{F,Traits.NonAutonomous,Traits.NonFixed})(du, u, λ, t) where {F}
-    f.vf(du, t, u, Common.variable(λ)); nothing
+function (f::IPVFIpRHS)(du, u, λ, t)
+    f.vf(du, t, u, Common.variable(λ))
+    nothing
 end
 
 """
@@ -121,16 +105,7 @@ struct OoPVFOoPRHS{F,TD,VD} <: AbstractOoPRHS
     vf::Data.VectorField{F,TD,VD,Traits.OutOfPlace}
 end
 
-function (f::OoPVFOoPRHS{F,Traits.Autonomous,Traits.Fixed})(u, λ, t) where {F}
-    f.vf(u)
-end
-function (f::OoPVFOoPRHS{F,Traits.Autonomous,Traits.NonFixed})(u, λ, t) where {F}
-    f.vf(u, Common.variable(λ))
-end
-function (f::OoPVFOoPRHS{F,Traits.NonAutonomous,Traits.Fixed})(u, λ, t) where {F}
-    f.vf(t, u)
-end
-function (f::OoPVFOoPRHS{F,Traits.NonAutonomous,Traits.NonFixed})(u, λ, t) where {F}
+function (f::OoPVFOoPRHS)(u, λ, t)
     f.vf(t, u, Common.variable(λ))
 end
 
@@ -152,22 +127,7 @@ struct OoPVFIpRHS{F,TD,VD} <: AbstractOoPRHS
     vf::Data.VectorField{F,TD,VD,Traits.InPlace}
 end
 
-function (f::OoPVFIpRHS{F,Traits.Autonomous,Traits.Fixed})(u, λ, t) where {F}
-    dx = similar(u)
-    f.vf(dx, u)
-    dx
-end
-function (f::OoPVFIpRHS{F,Traits.Autonomous,Traits.NonFixed})(u, λ, t) where {F}
-    dx = similar(u)
-    f.vf(dx, u, Common.variable(λ))
-    dx
-end
-function (f::OoPVFIpRHS{F,Traits.NonAutonomous,Traits.Fixed})(u, λ, t) where {F}
-    dx = similar(u)
-    f.vf(dx, t, u)
-    dx
-end
-function (f::OoPVFIpRHS{F,Traits.NonAutonomous,Traits.NonFixed})(u, λ, t) where {F}
+function (f::OoPVFIpRHS)(u, λ, t)
     dx = similar(u)
     f.vf(dx, t, u, Common.variable(λ))
     dx
@@ -191,22 +151,7 @@ struct OoPVFIpFinalizeRHS{F,TD,VD} <: AbstractOoPRHS
     vf::Data.VectorField{F,TD,VD,Traits.InPlace}
 end
 
-function (f::OoPVFIpFinalizeRHS{F,Traits.Autonomous,Traits.Fixed})(u, λ, t) where {F}
-    dx = similar(u)
-    f.vf(dx, u)
-    typeof(u)(dx)
-end
-function (f::OoPVFIpFinalizeRHS{F,Traits.Autonomous,Traits.NonFixed})(u, λ, t) where {F}
-    dx = similar(u)
-    f.vf(dx, u, Common.variable(λ))
-    typeof(u)(dx)
-end
-function (f::OoPVFIpFinalizeRHS{F,Traits.NonAutonomous,Traits.Fixed})(u, λ, t) where {F}
-    dx = similar(u)
-    f.vf(dx, t, u)
-    typeof(u)(dx)
-end
-function (f::OoPVFIpFinalizeRHS{F,Traits.NonAutonomous,Traits.NonFixed})(u, λ, t) where {F}
+function (f::OoPVFIpFinalizeRHS)(u, λ, t)
     dx = similar(u)
     f.vf(dx, t, u, Common.variable(λ))
     typeof(u)(dx)
