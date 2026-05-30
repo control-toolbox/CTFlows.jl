@@ -244,23 +244,6 @@ function (H::HamiltonianVectorField{<:Function, Traits.NonAutonomous, Traits.Non
 end
 
 # =============================================================================
-# Uniform (t, x, p, v) call - used by HamiltonianVectorFieldSystem.rhs
-# Every combination forwards to its natural call, ignoring unused args.
-# (NonAutonomous, NonFixed) is already covered by the natural signature above.
-# =============================================================================
-
-# OutOfPlace uniform signatures (existing)
-(H::HamiltonianVectorField{<:Function, Traits.Autonomous, Traits.Fixed, Traits.OutOfPlace})(_, x, p, _) = H.f(x, p)
-(H::HamiltonianVectorField{<:Function, Traits.NonAutonomous, Traits.Fixed, Traits.OutOfPlace})(t, x, p, _) = H.f(t, x, p)
-(H::HamiltonianVectorField{<:Function, Traits.Autonomous, Traits.NonFixed, Traits.OutOfPlace})(_, x, p, v) = H.f(x, p, v)
-
-# InPlace uniform signatures (new)
-(H::HamiltonianVectorField{<:Function, Traits.Autonomous, Traits.Fixed, Traits.InPlace})(dx, dp, _, x, p, _) = H.f(dx, dp, x, p)
-(H::HamiltonianVectorField{<:Function, Traits.NonAutonomous, Traits.Fixed, Traits.InPlace})(dx, dp, t, x, p, _) = H.f(dx, dp, t, x, p)
-(H::HamiltonianVectorField{<:Function, Traits.Autonomous, Traits.NonFixed, Traits.InPlace})(dx, dp, _, x, p, v) = H.f(dx, dp, x, p, v)
-
-
-# =============================================================================
 # Base.show
 # =============================================================================
 

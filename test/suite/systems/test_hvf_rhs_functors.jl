@@ -18,6 +18,18 @@ const FakeHVF = (x, p) -> (x, -p)
 const FakeHVFOoP = (x, p) -> (x, -p)
 const FakeHVFIP = (dx, dp, x, p) -> (dx .= x; dp .= -p)
 
+# NonAutonomous/Fixed
+const FakeHVFNA   = (t, x, p)         -> (x, -p)
+const FakeHVFNAIP = (dx, dp, t, x, p) -> (dx .= x; dp .= -p; nothing)
+
+# Autonomous/NonFixed (non-augmented)
+const FakeHVFNF   = (x, p, v)           -> (p, -x)
+const FakeHVFNFIP = (dx, dp, x, p, v)   -> (dx .= p; dp .= -x; nothing)
+
+# NonAutonomous/NonFixed (non-augmented)
+const FakeHVFNANF   = (t, x, p, v)           -> (p, -x)
+const FakeHVFNANFIP = (dx, dp, t, x, p, v)   -> (dx .= p; dp .= -x; nothing)
+
 # OoP augmentée : doit accepter variable_costate
 const FakeHVFAug = (x, p, v; variable_costate::Bool=false) -> (p, -x, zeros(1))
 
@@ -74,6 +86,7 @@ function test_hvf_rhs_functors()
         # =============================================================================
 
         Test.@testset "IPHVFOoPRHS — call" begin
+            # Autonomous/Fixed
             hvf = Data.HamiltonianVectorField(FakeHVFOoP; is_autonomous=true, is_variable=false)
             r = Systems.IPHVFOoPRHS(hvf, 2, identity, identity)
 
@@ -85,6 +98,35 @@ function test_hvf_rhs_functors()
             r(du, u, λ, t)
             Test.@test du[1:2] == [1.0, 2.0]
             Test.@test du[3:4] == [-3.0, -4.0]
+
+            # NonAutonomous/Fixed
+            hvf_na = Data.HamiltonianVectorField(FakeHVFNA; is_autonomous=false, is_variable=false)
+            r_na = Systems.IPHVFOoPRHS(hvf_na, 2, identity, identity)
+
+            du = zeros(4)
+            r_na(du, u, λ, t)
+            Test.@test du[1:2] == [1.0, 2.0]
+            Test.@test du[3:4] == [-3.0, -4.0]
+
+            # Autonomous/NonFixed
+            v_val = 1.5
+            λ_v = Common.ODEParameters(v_val)
+            hvf_nf = Data.HamiltonianVectorField(FakeHVFNF; is_autonomous=true, is_variable=true)
+            r_nf = Systems.IPHVFOoPRHS(hvf_nf, 2, identity, identity)
+
+            du = zeros(4)
+            r_nf(du, u, λ_v, t)
+            Test.@test du[1:2] == [3.0, 4.0]
+            Test.@test du[3:4] == [-1.0, -2.0]
+
+            # NonAutonomous/NonFixed
+            hvf_naf = Data.HamiltonianVectorField(FakeHVFNANF; is_autonomous=false, is_variable=true)
+            r_naf = Systems.IPHVFOoPRHS(hvf_naf, 2, identity, identity)
+
+            du = zeros(4)
+            r_naf(du, u, λ_v, t)
+            Test.@test du[1:2] == [3.0, 4.0]
+            Test.@test du[3:4] == [-1.0, -2.0]
         end
 
         # =============================================================================
@@ -92,6 +134,7 @@ function test_hvf_rhs_functors()
         # =============================================================================
 
         Test.@testset "IPHVFIpRHS — call" begin
+            # Autonomous/Fixed
             hvf = Data.HamiltonianVectorField(FakeHVFIP; is_autonomous=true, is_variable=false, is_inplace=true)
             r = Systems.IPHVFIpRHS(hvf, 2, identity, identity)
 
@@ -103,6 +146,35 @@ function test_hvf_rhs_functors()
             r(du, u, λ, t)
             Test.@test du[1:2] == [1.0, 2.0]
             Test.@test du[3:4] == [-3.0, -4.0]
+
+            # NonAutonomous/Fixed
+            hvf_na = Data.HamiltonianVectorField(FakeHVFNAIP; is_autonomous=false, is_variable=false, is_inplace=true)
+            r_na = Systems.IPHVFIpRHS(hvf_na, 2, identity, identity)
+
+            du = zeros(4)
+            r_na(du, u, λ, t)
+            Test.@test du[1:2] == [1.0, 2.0]
+            Test.@test du[3:4] == [-3.0, -4.0]
+
+            # Autonomous/NonFixed
+            v_val = 1.5
+            λ_v = Common.ODEParameters(v_val)
+            hvf_nf = Data.HamiltonianVectorField(FakeHVFNFIP; is_autonomous=true, is_variable=true, is_inplace=true)
+            r_nf = Systems.IPHVFIpRHS(hvf_nf, 2, identity, identity)
+
+            du = zeros(4)
+            r_nf(du, u, λ_v, t)
+            Test.@test du[1:2] == [3.0, 4.0]
+            Test.@test du[3:4] == [-1.0, -2.0]
+
+            # NonAutonomous/NonFixed
+            hvf_naf = Data.HamiltonianVectorField(FakeHVFNANFIP; is_autonomous=false, is_variable=true, is_inplace=true)
+            r_naf = Systems.IPHVFIpRHS(hvf_naf, 2, identity, identity)
+
+            du = zeros(4)
+            r_naf(du, u, λ_v, t)
+            Test.@test du[1:2] == [3.0, 4.0]
+            Test.@test du[3:4] == [-1.0, -2.0]
         end
 
         # =============================================================================
@@ -110,6 +182,7 @@ function test_hvf_rhs_functors()
         # =============================================================================
 
         Test.@testset "OoPHVFOoPRHS — call" begin
+            # Autonomous/Fixed
             hvf = Data.HamiltonianVectorField(FakeHVFOoP; is_autonomous=true, is_variable=false)
             r = Systems.OoPHVFOoPRHS(hvf, 2, identity, identity)
 
@@ -120,6 +193,32 @@ function test_hvf_rhs_functors()
             result = r(u, λ, t)
             Test.@test result[1:2] == [1.0, 2.0]
             Test.@test result[3:4] == [-3.0, -4.0]
+
+            # NonAutonomous/Fixed
+            hvf_na = Data.HamiltonianVectorField(FakeHVFNA; is_autonomous=false, is_variable=false)
+            r_na = Systems.OoPHVFOoPRHS(hvf_na, 2, identity, identity)
+
+            result = r_na(u, λ, t)
+            Test.@test result[1:2] == [1.0, 2.0]
+            Test.@test result[3:4] == [-3.0, -4.0]
+
+            # Autonomous/NonFixed
+            v_val = 1.5
+            λ_v = Common.ODEParameters(v_val)
+            hvf_nf = Data.HamiltonianVectorField(FakeHVFNF; is_autonomous=true, is_variable=true)
+            r_nf = Systems.OoPHVFOoPRHS(hvf_nf, 2, identity, identity)
+
+            result = r_nf(u, λ_v, t)
+            Test.@test result[1:2] == [3.0, 4.0]
+            Test.@test result[3:4] == [-1.0, -2.0]
+
+            # NonAutonomous/NonFixed
+            hvf_naf = Data.HamiltonianVectorField(FakeHVFNANF; is_autonomous=false, is_variable=true)
+            r_naf = Systems.OoPHVFOoPRHS(hvf_naf, 2, identity, identity)
+
+            result = r_naf(u, λ_v, t)
+            Test.@test result[1:2] == [3.0, 4.0]
+            Test.@test result[3:4] == [-1.0, -2.0]
         end
 
         # =============================================================================
@@ -127,6 +226,7 @@ function test_hvf_rhs_functors()
         # =============================================================================
 
         Test.@testset "OoPHVFIpRHS — call" begin
+            # Autonomous/Fixed
             hvf = Data.HamiltonianVectorField(FakeHVFIP; is_autonomous=true, is_variable=false, is_inplace=true)
             r = Systems.OoPHVFIpRHS(hvf, 2, identity, identity)
 
@@ -137,6 +237,32 @@ function test_hvf_rhs_functors()
             result = r(u, λ, t)
             Test.@test result[1:2] == [1.0, 2.0]
             Test.@test result[3:4] == [-3.0, -4.0]
+
+            # NonAutonomous/Fixed
+            hvf_na = Data.HamiltonianVectorField(FakeHVFNAIP; is_autonomous=false, is_variable=false, is_inplace=true)
+            r_na = Systems.OoPHVFIpRHS(hvf_na, 2, identity, identity)
+
+            result = r_na(u, λ, t)
+            Test.@test result[1:2] == [1.0, 2.0]
+            Test.@test result[3:4] == [-3.0, -4.0]
+
+            # Autonomous/NonFixed
+            v_val = 1.5
+            λ_v = Common.ODEParameters(v_val)
+            hvf_nf = Data.HamiltonianVectorField(FakeHVFNFIP; is_autonomous=true, is_variable=true, is_inplace=true)
+            r_nf = Systems.OoPHVFIpRHS(hvf_nf, 2, identity, identity)
+
+            result = r_nf(u, λ_v, t)
+            Test.@test result[1:2] == [3.0, 4.0]
+            Test.@test result[3:4] == [-1.0, -2.0]
+
+            # NonAutonomous/NonFixed
+            hvf_naf = Data.HamiltonianVectorField(FakeHVFNANFIP; is_autonomous=false, is_variable=true, is_inplace=true)
+            r_naf = Systems.OoPHVFIpRHS(hvf_naf, 2, identity, identity)
+
+            result = r_naf(u, λ_v, t)
+            Test.@test result[1:2] == [3.0, 4.0]
+            Test.@test result[3:4] == [-1.0, -2.0]
         end
 
         # =============================================================================
@@ -144,6 +270,7 @@ function test_hvf_rhs_functors()
         # =============================================================================
 
         Test.@testset "OoPHVFIpFinalizeRHS — call SVector" begin
+            # Autonomous/Fixed
             hvf = Data.HamiltonianVectorField(FakeHVFIP; is_autonomous=true, is_variable=false, is_inplace=true)
             r = Systems.OoPHVFIpFinalizeRHS(hvf, 2, identity, identity)
 
@@ -155,6 +282,35 @@ function test_hvf_rhs_functors()
             Test.@test result isa SVector
             Test.@test result[1:2] == SA[1.0, 2.0]
             Test.@test result[3:4] == SA[-3.0, -4.0]
+
+            # NonAutonomous/Fixed
+            hvf_na = Data.HamiltonianVectorField(FakeHVFNAIP; is_autonomous=false, is_variable=false, is_inplace=true)
+            r_na = Systems.OoPHVFIpFinalizeRHS(hvf_na, 2, identity, identity)
+
+            result = r_na(u, λ, t)
+            Test.@test result isa SVector
+            Test.@test result[1:2] == SA[1.0, 2.0]
+            Test.@test result[3:4] == SA[-3.0, -4.0]
+
+            # Autonomous/NonFixed
+            v_val = 1.5
+            λ_v = Common.ODEParameters(v_val)
+            hvf_nf = Data.HamiltonianVectorField(FakeHVFNFIP; is_autonomous=true, is_variable=true, is_inplace=true)
+            r_nf = Systems.OoPHVFIpFinalizeRHS(hvf_nf, 2, identity, identity)
+
+            result = r_nf(u, λ_v, t)
+            Test.@test result isa SVector
+            Test.@test result[1:2] == SA[3.0, 4.0]
+            Test.@test result[3:4] == SA[-1.0, -2.0]
+
+            # NonAutonomous/NonFixed
+            hvf_naf = Data.HamiltonianVectorField(FakeHVFNANFIP; is_autonomous=false, is_variable=true, is_inplace=true)
+            r_naf = Systems.OoPHVFIpFinalizeRHS(hvf_naf, 2, identity, identity)
+
+            result = r_naf(u, λ_v, t)
+            Test.@test result isa SVector
+            Test.@test result[1:2] == SA[3.0, 4.0]
+            Test.@test result[3:4] == SA[-1.0, -2.0]
         end
 
         # =============================================================================

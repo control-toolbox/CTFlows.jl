@@ -124,16 +124,6 @@ end
 (H::Hamiltonian{<:Function, Traits.NonAutonomous, Traits.NonFixed})(t, x, p, v) = H.f(t, x, p, v)
 
 # =============================================================================
-# Uniform (t, x, p, v) call - used by future HamiltonianSystem.rhs
-# Every combination forwards to its natural call, ignoring unused args.
-# (NonAutonomous, NonFixed) is already covered by the natural signature above.
-# =============================================================================
-
-(H::Hamiltonian{<:Function, Traits.Autonomous, Traits.Fixed})(_, x, p, _) = H.f(x, p)
-(H::Hamiltonian{<:Function, Traits.NonAutonomous, Traits.Fixed})(t, x, p, _) = H.f(t, x, p)
-(H::Hamiltonian{<:Function, Traits.Autonomous, Traits.NonFixed})(_, x, p, v) = H.f(x, p, v)
-
-# =============================================================================
 # Base.show
 # =============================================================================
 
