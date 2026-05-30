@@ -29,7 +29,7 @@ function build_solution(
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult, 
 )
-    return Common.scalarize(Integrators.final_state(result), Configs.initial_state(config))
+    return Common.make_coerce(Configs.initial_state(config))(Integrators.final_state(result))
 end
 
 """
@@ -85,9 +85,9 @@ For Hamiltonian systems, `n_p = n_x` always, so the augmented state is `[x; p; p
 function _aug_split_solution(u, x0, pv0)
     n = length(x0)
     return (
-        Common.scalarize(u[1:n], x0), 
-        Common.scalarize(u[n+1:2n], x0), 
-        Common.scalarize(u[2n+1:end], pv0),
+        Common.make_coerce(x0)(u[1:n]),
+        Common.make_coerce(x0)(u[n+1:2n]),
+        Common.make_coerce(pv0)(u[2n+1:end]),
     )
 end
 
@@ -126,7 +126,7 @@ function build_solution(
     u = Integrators.final_state(result)
     x0 = Configs.initial_state(config)
     x, p = Solutions._ham_split_solution(u, x0)
-    return (Common.scalarize(x, x0), Common.scalarize(p, x0))
+    return (Common.make_coerce(x0)(x), Common.make_coerce(x0)(p))
 end
 
 """

@@ -65,17 +65,6 @@ _state_dim(::Number) = 1
 _state_dim(x::AbstractVector) = length(x)
 _state_dim(x::AbstractMatrix) = size(x, 1)
 
-"""
-    _make_coerce(::Number) = only
-    _make_coerce(::AbstractVector) = identity
-    _make_coerce(::AbstractMatrix) = identity
-
-Return a coercion function for the given shape. For scalars, `only` extracts
-a single element from a 1-element vector. For arrays, `identity` is a no-op.
-"""
-_make_coerce(::Number) = only
-_make_coerce(::AbstractVector) = identity
-_make_coerce(::AbstractMatrix) = identity
 
 # =============================================================================
 # Internal helpers for split/assign (dispatch on array type)
@@ -168,11 +157,11 @@ ensuring correct handling of scalar, vector, and matrix inputs.
 - `AbstractIPHVFRHS`: A functor with signature `(du, u, λ, t) -> nothing`.
 """
 function build_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, x0, p0) where {F, TD, VD}
-    return IPHVFOoPRHS(sys.hvf, _state_dim(x0), _make_coerce(x0), _make_coerce(p0))
+    return IPHVFOoPRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
 end
 
 function build_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, x0, p0) where {F, TD, VD}
-    return IPHVFIpRHS(sys.hvf, _state_dim(x0), _make_coerce(x0), _make_coerce(p0))
+    return IPHVFIpRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
 end
 
 """
@@ -192,15 +181,15 @@ ensuring correct handling of scalar, vector, and matrix inputs.
 - `AbstractOoPHVFRHS`: A functor with signature `(u, λ, t) -> du`.
 """
 function build_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, x0, p0) where {F, TD, VD}
-    return OoPHVFOoPRHS(sys.hvf, _state_dim(x0), _make_coerce(x0), _make_coerce(p0))
+    return OoPHVFOoPRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
 end
 
 function build_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, x0, p0) where {F, TD, VD}
     if !ismutable(x0)
         @warn "InPlace HamiltonianVectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
-        return OoPHVFIpFinalizeRHS(sys.hvf, _state_dim(x0), _make_coerce(x0), _make_coerce(p0))
+        return OoPHVFIpFinalizeRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
     end
-    return OoPHVFIpRHS(sys.hvf, _state_dim(x0), _make_coerce(x0), _make_coerce(p0))
+    return OoPHVFIpRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
 end
 
 # =============================================================================

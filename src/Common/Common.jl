@@ -14,6 +14,7 @@ module Common
 # External package imports
 # ==============================================================================
 
+import Base: only
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
 import CTModels.OCP
@@ -49,6 +50,6 @@ export AbstractCache
 export NotProvided
 export ODEParameters, variable, cache
 export __is_autonomous, __is_variable, __variable, __unsafe, __is_inplace, __hvf_inplace, _variable_costate
-export deepvalue, real_norm, scalarize
+export deepvalue, real_norm, make_coerce
 
 end # module Common

@@ -554,7 +554,7 @@ function call_variable_costate(
     t0  = Configs.initial_time(config) 
     x0  = Configs.initial_state(config)
     p0  = Configs.initial_costate(config)
-    pv0 = Common.scalarize(zeros(eltype(x0), length(variable)), variable)
+    pv0 = Common.make_coerce(variable)(zeros(eltype(x0), length(variable)))
     tf  = Configs.final_time(config)
     config_aug = Configs.AugmentedHamiltonianPointConfig(t0, x0, p0, pv0, tf)
     return call(flow, config_aug; variable=variable, unsafe=unsafe)
