@@ -69,39 +69,13 @@ function test_hamiltonian()
         end
 
         # ====================================================================
-        # UNIT TESTS - Uniform call signature
-        # ====================================================================
-
-        Test.@testset "Unit: Uniform call signature (t, x, p, v)" begin
-            # Autonomous Fixed - ignores t and v
-            h1 = Data.Hamiltonian((x, p) -> x .+ p; is_autonomous=true, is_variable=false)
-            result = h1(0.0, [1.0, 2.0], [3.0, 4.0], nothing)
-            Test.@test result == [4.0, 6.0]
-
-            # NonAutonomous Fixed - ignores v
-            h2 = Data.Hamiltonian((t, x, p) -> x .+ p; is_autonomous=false, is_variable=false)
-            result = h2(2.0, [1.0, 2.0], [3.0, 4.0], nothing)
-            Test.@test result == [4.0, 6.0]
-
-            # Autonomous NonFixed - ignores t
-            h3 = Data.Hamiltonian((x, p, v) -> x .+ p .+ v; is_autonomous=true, is_variable=true)
-            result = h3(0.0, [1.0, 2.0], [3.0, 4.0], 2.0)
-            Test.@test result == [6.0, 8.0]
-
-            # NonAutonomous NonFixed - uses all
-            h4 = Data.Hamiltonian((t, x, p, v) -> x .+ p .+ v; is_autonomous=false, is_variable=true)
-            result = h4(2.0, [1.0, 2.0], [3.0, 4.0], 2.0)
-            Test.@test result == [6.0, 8.0]
-        end
-
-        # ====================================================================
         # UNIT TESTS - Type stability
         # ====================================================================
 
         Test.@testset "Unit: Type stability" begin
-            # Uniform call type stability
+            # Natural call type stability
             h = Data.Hamiltonian((x, p) -> x .+ p; is_autonomous=true, is_variable=false)
-            Test.@test Test.@inferred(h(0.0, [1.0, 2.0], [3.0, 4.0], nothing)) == [4.0, 6.0]
+            Test.@test Test.@inferred(h([1.0, 2.0], [3.0, 4.0])) == [4.0, 6.0]
         end
 
         # ====================================================================
