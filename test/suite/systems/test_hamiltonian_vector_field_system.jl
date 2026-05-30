@@ -61,7 +61,7 @@ function test_hamiltonian_vector_field_system()
             x0 = [1.0, 2.0]
             p0 = [3.0, 4.0]
             rhs = Systems.build_rhs(sys, x0, p0)
-            Test.@test rhs isa Function
+            Test.@test rhs isa Systems.AbstractIPHVFRHS
 
             # Test RHS call with vector
             u = [1.0, 2.0, 3.0, 4.0]  # x = [1, 2], p = [3, 4]
@@ -94,7 +94,7 @@ function test_hamiltonian_vector_field_system()
             x0 = [1.0, 2.0]
             p0 = [3.0, 4.0]
             rhs_oop = Systems.build_oop_rhs(sys, x0, p0)
-            Test.@test rhs_oop isa Function
+            Test.@test rhs_oop isa Systems.AbstractOoPHVFRHS
 
             # Test RHS OOP call with vector
             u = [1.0, 2.0, 3.0, 4.0]  # x = [1, 2], p = [3, 4]
@@ -330,7 +330,7 @@ function test_hamiltonian_vector_field_system()
             Test.@testset "OOP builds" begin
                 n_x, n_v = 2, 1
                 rhs_aug = Systems.build_rhs_augmented(sys, n_x, n_v)
-                Test.@test rhs_aug isa Function
+                Test.@test rhs_aug isa Systems.AbstractIPHVFRHS
             end
 
             Test.@testset "IP builds" begin
@@ -339,7 +339,7 @@ function test_hamiltonian_vector_field_system()
                 sys_ip = Systems.HamiltonianVectorFieldSystem(hvf_ip)
                 n_x, n_v = 2, 1
                 rhs_aug_ip = Systems.build_rhs_augmented(sys_ip, n_x, n_v)
-                Test.@test rhs_aug_ip isa Function
+                Test.@test rhs_aug_ip isa Systems.AbstractIPHVFRHS
             end
         end
 

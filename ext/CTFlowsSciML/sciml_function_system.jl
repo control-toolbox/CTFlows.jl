@@ -21,9 +21,9 @@ which dispatches based on `u0` mutability.
 
 # Type Parameters
 - `F <: SciMLBase.AbstractODEFunction`: The wrapped ODE function.
-- `RHS<:Function`: Pre-computed in-place RHS closure.
-- `OOPROHS<:Function`: Pre-computed out-of-place RHS closure.
-- `FINRHS`: Finalize closure for in-place functions with immutable `u0`, or `Nothing`.
+- `RHS<:Systems.AbstractIPRHS`: Pre-computed in-place RHS functor.
+- `OOPROHS<:Systems.AbstractOoPRHS`: Pre-computed out-of-place RHS functor.
+- `FINRHS`: Finalize functor for in-place functions with immutable `u0`, or `Nothing`.
 
 # Fields
 - `f::F`: The wrapped SciML ODE function.
@@ -43,8 +43,8 @@ sys = SciMLFunctionSystem(f)
 """
 struct SciMLFunctionSystem{
     F <: SciMLBase.AbstractODEFunction,
-    RHS<:Function,
-    OOPROHS<:Function,
+    RHS<:Systems.AbstractIPRHS,
+    OOPROHS<:Systems.AbstractOoPRHS,
     FINRHS
 } <: Systems.AbstractStateSystem{Traits.NonAutonomous, Traits.NonFixed}
     f::F
@@ -58,40 +58,19 @@ end
 # =============================================================================
 
 function SciMLFunctionSystem(f::SciMLBase.AbstractODEFunction{true})
-    # In-place function: f!(du, u, p, t)
-    rhs_fn = (du, u, λ, t) -> (f(du, u, Common.variable(λ), t); nothing)
-    
-    # Out-of-place wrapper: allocates buffer
-    rhs_oop_fn = (u, λ, t) -> begin
-        dx = similar(u)
-        f(dx, u, Common.variable(λ), t)
-        return dx
-    end
-    
-    # Out-of-place finalize for immutable u0
-    rhs_oop_finalize_fn = (u, λ, t) -> begin
-        dx = similar(u)
-        f(dx, u, Common.variable(λ), t)
-        return typeof(u)(dx)
-    end
-    
+    rhs_fn              = IPSciMLIpRHS(f)
+    rhs_oop_fn          = OoPSciMLIpRHS(f)
+    rhs_oop_finalize_fn = OoPSciMLIpFinalizeRHS(f)
     return SciMLFunctionSystem{typeof(f), typeof(rhs_fn), typeof(rhs_oop_fn), typeof(rhs_oop_finalize_fn)}(
         f, rhs_fn, rhs_oop_fn, rhs_oop_finalize_fn
     )
 end
 
 function SciMLFunctionSystem(f::SciMLBase.AbstractODEFunction{false})
-    # Out-of-place function: f(u, p, t) -> du
-    rhs_fn = (du, u, λ, t) -> (du .= f(u, Common.variable(λ), t); nothing)
-    
-    # Out-of-place direct
-    rhs_oop_fn = (u, λ, t) -> f(u, Common.variable(λ), t)
-    
-    # No finalize needed for out-of-place
-    rhs_oop_finalize_fn = nothing
-    
+    rhs_fn     = IPSciMLOoPRHS(f)
+    rhs_oop_fn = OoPSciMLOoPRHS(f)
     return SciMLFunctionSystem{typeof(f), typeof(rhs_fn), typeof(rhs_oop_fn), Nothing}(
-        f, rhs_fn, rhs_oop_fn, rhs_oop_finalize_fn
+        f, rhs_fn, rhs_oop_fn, nothing
     )
 end
 
@@ -112,7 +91,7 @@ Returns the pre-computed in-place closure stored in the system, which has signat
 - `sys::SciMLFunctionSystem`: The system for which to return the RHS function.
 
 # Returns
-- `Function`: The pre-computed closure with signature `(du, u, λ, t)`.
+- `Systems.AbstractIPRHS`: The pre-computed functor with signature `(du, u, λ, t)`.
 
 See also: [`SciMLFunctionSystem`](@ref), [`Systems.rhs_oop`](@ref).
 """
@@ -132,7 +111,7 @@ always the correct callable regardless of u0 mutability.
 - `::Bool`: Ignored. Accepted for API uniformity.
 
 # Returns
-- `Function`: The pre-computed closure with signature `(u, λ, t)`.
+- `Systems.AbstractOoPRHS`: The pre-computed functor with signature `(u, λ, t)`.
 
 See also: [`SciMLFunctionSystem`](@ref), [`Systems.rhs`](@ref).
 """
@@ -159,7 +138,7 @@ condition `u0` is mutable:
 - `is_mutable::Bool`: `true` if u0 is mutable, `false` if immutable. Defaults to `true`.
 
 # Returns
-- `Function`: The appropriate closure with signature `(u, λ, t)`.
+- `Systems.AbstractOoPRHS`: The appropriate functor with signature `(u, λ, t)`.
 
 # Notes
 - Prefer out-of-place SciML functions when u0 is immutable (e.g. `StaticArrays.SVector`)
@@ -193,8 +172,8 @@ See also: [`SciMLFunctionSystem`](@ref).
 function Base.show(io::IO, sys::SciMLFunctionSystem{F}) where F
     println(io, "SciMLFunctionSystem")
     iip = SciMLBase.isinplace(sys.f)
-    mut = iip ? "in-place" : "out-of-place"
-    print(io, "  wraps: ODEFunction: non-autonomous, variable, ", mut)
+    println(io, "  wraps: ODEFunction: non-autonomous, variable, ", iip ? "in-place" : "out-of-place")
+    print(io,   "  rhs:   ", nameof(typeof(sys.rhs_fn)), " (", _rhs_sciml_label(sys.rhs_fn), ")")
 end
 
 """

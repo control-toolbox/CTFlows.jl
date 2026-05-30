@@ -25,6 +25,14 @@ This document defines how to produce a complete, actionable implementation plan 
 7. **Workflows are cited at the point of use** — every step that triggers a workflow from `.windsurf/workflows/` must name that workflow explicitly so the implementer knows which standard to follow.
 8. **Never commit without user instruction** — at the end of each phase, do not commit or push changes. Wait for explicit user instruction before committing, to preserve the visual diff in Windsurf.
 
+---
+
+## ⚠️ Commit Rule
+
+**Never commit without informing the user beforehand.**
+
+---
+
 ## CTFlows Project Configuration
 
 ### Package
