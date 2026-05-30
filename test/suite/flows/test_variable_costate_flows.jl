@@ -73,7 +73,7 @@ end
 # Analytical solution: x(t) = x0 + p0 * (t-t0) / sum(v), p(t) = p0, pv(t) = pv0 - sum(p0^2) * (t-t0) / (2 * sum(v)^2)
 H_LINEAR(x, p, v) = sum(abs2, p) / (2 * sum(v))
 function solve_linear(t, t0, x0, p0, v)
-    pv0 = Common.scalarize(zeros(length(v)), v)
+    pv0 = Common.make_coerce(v)(zeros(length(v)))
     dt  = t - t0
     sv  = sum(v)
     x   = x0 .+ p0 .* (dt / sv)

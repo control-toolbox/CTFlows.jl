@@ -87,8 +87,8 @@ ensuring correct handling of scalar, vector, and matrix inputs.
 """
 function build_rhs(sys::HamiltonianSystem, x0, p0)
     N = _state_dim(x0)
-    cx = _make_coerce(x0)
-    cp = _make_coerce(p0)
+    cx = Common.make_coerce(x0)
+    cp = Common.make_coerce(p0)
     h, backend = sys.h, sys.backend
     return function (du, u, λ, t)
         x, p   = _ham_split(u, N)
@@ -116,8 +116,8 @@ ensuring correct handling of scalar, vector, and matrix inputs.
 """
 function build_oop_rhs(sys::HamiltonianSystem, x0, p0)
     N = _state_dim(x0)
-    cx = _make_coerce(x0)
-    cp = _make_coerce(p0)
+    cx = Common.make_coerce(x0)
+    cp = Common.make_coerce(p0)
     h, backend = sys.h, sys.backend
     return function (u, λ, t)
         x, p   = _ham_split(u, N)
