@@ -61,14 +61,7 @@ struct IPHVFOoPRHS{F,TD,VD,CX,CP} <: AbstractIPHVFRHS
     cp::CP
 end
 
-function (f::IPHVFOoPRHS{F,TD,Traits.Fixed,CX,CP})(du, u, λ, t) where {F,TD,CX,CP}
-    x, p = _ham_split(u, f.N)
-    dx, dp = f.hvf(t, f.cx(x), f.cp(p), Common.variable(λ))
-    _ham_assign!(du, dx, dp, f.N)
-    return nothing
-end
-
-function (f::IPHVFOoPRHS{F,TD,Traits.NonFixed,CX,CP})(du, u, λ, t) where {F,TD,CX,CP}
+function (f::IPHVFOoPRHS{F,TD,VD,CX,CP})(du, u, λ, t) where {F,TD,VD,CX,CP}
     x, p = _ham_split(u, f.N)
     dx, dp = f.hvf(t, f.cx(x), f.cp(p), Common.variable(λ); variable_costate=false)
     _ham_assign!(du, dx, dp, f.N)
@@ -99,14 +92,7 @@ struct IPHVFIpRHS{F,TD,VD,CX,CP} <: AbstractIPHVFRHS
     cp::CP
 end
 
-function (f::IPHVFIpRHS{F,TD,Traits.Fixed,CX,CP})(du, u, λ, t) where {F,TD,CX,CP}
-    x, p   = _ham_split(u,  f.N)
-    dx, dp = _ham_split(du, f.N)
-    f.hvf(dx, dp, t, f.cx(x), f.cp(p), Common.variable(λ))
-    return nothing
-end
-
-function (f::IPHVFIpRHS{F,TD,Traits.NonFixed,CX,CP})(du, u, λ, t) where {F,TD,CX,CP}
+function (f::IPHVFIpRHS{F,TD,VD,CX,CP})(du, u, λ, t) where {F,TD,VD,CX,CP}
     x, p   = _ham_split(u,  f.N)
     dx, dp = _ham_split(du, f.N)
     f.hvf(dx, dp, t, f.cx(x), f.cp(p), Common.variable(λ); variable_costate=false)
@@ -137,13 +123,7 @@ struct OoPHVFOoPRHS{F,TD,VD,CX,CP} <: AbstractOoPHVFRHS
     cp::CP
 end
 
-function (f::OoPHVFOoPRHS{F,TD,Traits.Fixed,CX,CP})(u, λ, t) where {F,TD,CX,CP}
-    x, p = _ham_split(u, f.N)
-    dx, dp = f.hvf(t, f.cx(x), f.cp(p), Common.variable(λ))
-    return vcat(dx, dp)
-end
-
-function (f::OoPHVFOoPRHS{F,TD,Traits.NonFixed,CX,CP})(u, λ, t) where {F,TD,CX,CP}
+function (f::OoPHVFOoPRHS{F,TD,VD,CX,CP})(u, λ, t) where {F,TD,VD,CX,CP}
     x, p = _ham_split(u, f.N)
     dx, dp = f.hvf(t, f.cx(x), f.cp(p), Common.variable(λ); variable_costate=false)
     return vcat(dx, dp)
@@ -173,14 +153,7 @@ struct OoPHVFIpRHS{F,TD,VD,CX,CP} <: AbstractOoPHVFRHS
     cp::CP
 end
 
-function (f::OoPHVFIpRHS{F,TD,Traits.Fixed,CX,CP})(u, λ, t) where {F,TD,CX,CP}
-    x, p = _ham_split(u, f.N)
-    dx, dp = similar(x), similar(p)
-    f.hvf(dx, dp, t, f.cx(x), f.cp(p), Common.variable(λ))
-    return vcat(dx, dp)
-end
-
-function (f::OoPHVFIpRHS{F,TD,Traits.NonFixed,CX,CP})(u, λ, t) where {F,TD,CX,CP}
+function (f::OoPHVFIpRHS{F,TD,VD,CX,CP})(u, λ, t) where {F,TD,VD,CX,CP}
     x, p = _ham_split(u, f.N)
     dx, dp = similar(x), similar(p)
     f.hvf(dx, dp, t, f.cx(x), f.cp(p), Common.variable(λ); variable_costate=false)
@@ -211,14 +184,7 @@ struct OoPHVFIpFinalizeRHS{F,TD,VD,CX,CP} <: AbstractOoPHVFRHS
     cp::CP
 end
 
-function (f::OoPHVFIpFinalizeRHS{F,TD,Traits.Fixed,CX,CP})(u, λ, t) where {F,TD,CX,CP}
-    x, p = _ham_split(u, f.N)
-    dx, dp = similar(x), similar(p)
-    f.hvf(dx, dp, t, f.cx(x), f.cp(p), Common.variable(λ))
-    return typeof(u)(vcat(dx, dp))
-end
-
-function (f::OoPHVFIpFinalizeRHS{F,TD,Traits.NonFixed,CX,CP})(u, λ, t) where {F,TD,CX,CP}
+function (f::OoPHVFIpFinalizeRHS{F,TD,VD,CX,CP})(u, λ, t) where {F,TD,VD,CX,CP}
     x, p = _ham_split(u, f.N)
     dx, dp = similar(x), similar(p)
     f.hvf(dx, dp, t, f.cx(x), f.cp(p), Common.variable(λ); variable_costate=false)
@@ -251,17 +217,7 @@ struct IPHVFOoPAugRHS{F,TD,VD} <: AbstractIPHVFRHS
     n_v::Int
 end
 
-# Autonomous : signature naturelle sans t
-function (f::IPHVFOoPAugRHS{F,Traits.Autonomous,VD})(du, u, λ, t) where {F,VD}
-    v = Common.variable(λ)
-    x, p, _ = _aug_split(u, f.n_x, f.n_v)
-    dx, dp, dpv = f.hvf(x, p, v; variable_costate=true)
-    _aug_assign!(du, dx, dp, dpv, f.n_x, f.n_v)
-    return nothing
-end
-
-# NonAutonomous : signature naturelle avec t
-function (f::IPHVFOoPAugRHS{F,Traits.NonAutonomous,VD})(du, u, λ, t) where {F,VD}
+function (f::IPHVFOoPAugRHS{F,TD,VD})(du, u, λ, t) where {F,TD,VD}
     v = Common.variable(λ)
     x, p, _ = _aug_split(u, f.n_x, f.n_v)
     dx, dp, dpv = f.hvf(t, x, p, v; variable_costate=true)
@@ -291,19 +247,7 @@ struct IPHVFIpAugRHS{F,TD,VD} <: AbstractIPHVFRHS
     n_v::Int
 end
 
-# Autonomous : signature naturelle sans t
-function (f::IPHVFIpAugRHS{F,Traits.Autonomous,VD})(du, u, λ, t) where {F,VD}
-    v = Common.variable(λ)
-    x, p, _ = _aug_split(u,  f.n_x, f.n_v)
-    dx, dp, _ = _aug_split(du, f.n_x, f.n_v)
-    dpv = similar(u[end-f.n_v+1:end])
-    f.hvf(dx, dp, x, p, v; dpv=dpv, variable_costate=true)
-    du[end-f.n_v+1:end] .= dpv
-    return nothing
-end
-
-# NonAutonomous : signature naturelle avec t
-function (f::IPHVFIpAugRHS{F,Traits.NonAutonomous,VD})(du, u, λ, t) where {F,VD}
+function (f::IPHVFIpAugRHS{F,TD,VD})(du, u, λ, t) where {F,TD,VD}
     v = Common.variable(λ)
     x, p, _ = _aug_split(u,  f.n_x, f.n_v)
     dx, dp, _ = _aug_split(du, f.n_x, f.n_v)
