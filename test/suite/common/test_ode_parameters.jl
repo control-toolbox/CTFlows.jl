@@ -7,12 +7,6 @@ const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
 
 # ==============================================================================
-# Fake type for cache testing
-# ==============================================================================
-
-struct FakeCache <: Common.AbstractCache end
-
-# ==============================================================================
 # Test function
 # ==============================================================================
 
@@ -81,38 +75,6 @@ function test_ode_parameters()
             Test.@testset "infers Vector{Float64} type" begin
                 params = Common.ODEParameters([1.0, 2.0])
                 Test.@test params isa Common.ODEParameters{Vector{Float64}}
-            end
-
-            # ====================================================================
-            # UNIT TESTS - Cache field
-            # ====================================================================
-
-            Test.@testset "Cache field" begin
-
-                Test.@testset "Backward compat: 1-arg constructor gives cache=nothing" begin
-                    params = Common.ODEParameters(nothing)
-                    Test.@test Common.cache(params) === nothing
-                end
-
-                Test.@testset "2-arg constructor with cache" begin
-                    fake = FakeCache()
-                    params = Common.ODEParameters(0.5, fake)
-                    Test.@test Common.cache(params) isa FakeCache
-                    Test.@test Common.cache(params) === fake
-                end
-
-                Test.@testset "Type parameters with cache" begin
-                    params = Common.ODEParameters(nothing)
-                    Test.@test params isa Common.ODEParameters{Nothing, Nothing}
-                    fake = FakeCache()
-                    params2 = Common.ODEParameters(0.5, fake)
-                    Test.@test params2 isa Common.ODEParameters{Float64, FakeCache}
-                end
-
-                Test.@testset "Type stability: cache accessor" begin
-                    params = Common.ODEParameters(nothing)
-                    Test.@test Test.@inferred Common.cache(params) === nothing
-                end
             end
         end
     end

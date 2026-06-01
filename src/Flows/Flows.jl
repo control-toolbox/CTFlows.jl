@@ -48,7 +48,6 @@ export AbstractFlow, AbstractStateFlow, AbstractHamiltonianFlow, Flow, StateFlow
 export system, integrator
 export call
 export build_flow
-export prepare_cache
 export hamiltonian_vector_field
 
 end # module Flows

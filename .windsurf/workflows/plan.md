@@ -137,6 +137,14 @@ Always start with:
 ```markdown
 ### Step 0 — Branch
 
+Use MCP git commands when available:
+- `mcp1_git_checkout` to switch to `develop`
+- Pull latest changes (bash: `git pull`)
+- `mcp1_git_create_branch` to create the new branch from `develop`
+- `mcp1_git_checkout` to switch to the new branch
+
+Fallback to bash commands if MCP is unavailable:
+
 \`\`\`bash
 git checkout develop && git pull
 git checkout -b <branch-name>

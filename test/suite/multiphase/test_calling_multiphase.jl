@@ -77,25 +77,25 @@ Strategies.options(integ::MockIntegrator) = Options.StrategyOptions()
 # Mock Integrator Interface Implementation
 # ==============================================================================
 
-function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Configs.StatePointConfig; variable, cache)
+function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Configs.StatePointConfig; variable)
     x0 = Configs.initial_state(config)
     tspan = Configs.tspan(config)
     return MockODEProblem(x0, tspan)
 end
 
-function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Configs.StateTrajectoryConfig; variable, cache)
+function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Configs.StateTrajectoryConfig; variable)
     x0 = Configs.initial_state(config)
     tspan = Configs.tspan(config)
     return MockODEProblem(x0, tspan)
 end
 
-function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Configs.HamiltonianPointConfig; variable, cache)
+function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Configs.HamiltonianPointConfig; variable)
     x0, p0 = Configs.initial_state(config), Configs.initial_costate(config)
     tspan = Configs.tspan(config)
     return MockODEProblem(vcat(x0, p0), tspan)
 end
 
-function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Configs.HamiltonianTrajectoryConfig; variable, cache)
+function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Configs.HamiltonianTrajectoryConfig; variable)
     x0, p0 = Configs.initial_state(config), Configs.initial_costate(config)
     tspan = Configs.tspan(config)
     return MockODEProblem(vcat(x0, p0), tspan)

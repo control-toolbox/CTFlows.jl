@@ -24,6 +24,11 @@ function Differentiation.variable_gradient(backend::FakeADBackend, h, t, x, p, v
     return v === nothing ? 0.0 : v
 end
 
+function Differentiation.prepare_cache(backend::FakeADBackend, h, t, x, p, v)
+    # Fake cache: just return nothing (no actual preparation)
+    return nothing
+end
+
 function test_hamiltonian_system()
     Test.@testset "Hamiltonian System Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
 
@@ -64,8 +69,8 @@ function test_hamiltonian_system()
 
             x0 = [1.0, 2.0]
             p0 = [3.0, 4.0]
-            rhs = Systems.build_rhs(sys, x0, p0)
-            Test.@test rhs isa Function
+            rhs = Systems.build_rhs(sys, x0, p0, 0.0, nothing)
+            Test.@test rhs isa Systems.HamIpRHS
 
             # Test RHS call with vector
             u = [1.0, 2.0, 3.0, 4.0]  # x = [1, 2], p = [3, 4]
@@ -80,7 +85,7 @@ function test_hamiltonian_system()
             # Test RHS call with matrix
             x0_mat = [1.0 2.0; 3.0 4.0]
             p0_mat = [5.0 6.0; 7.0 8.0]
-            rhs_mat = Systems.build_rhs(sys, x0_mat, p0_mat)
+            rhs_mat = Systems.build_rhs(sys, x0_mat, p0_mat, 0.0, nothing)
             u_mat = [1.0 2.0; 3.0 4.0; 5.0 6.0; 7.0 8.0]  # x = [1 2; 3 4], p = [5 6; 7 8]
             du_mat = zeros(4, 2)
             rhs_mat(du_mat, u_mat, p, 0.0)
@@ -98,8 +103,8 @@ function test_hamiltonian_system()
 
             x0 = [1.0, 2.0]
             p0 = [3.0, 4.0]
-            rhs_oop = Systems.build_oop_rhs(sys, x0, p0)
-            Test.@test rhs_oop isa Function
+            rhs_oop = Systems.build_oop_rhs(sys, x0, p0, 0.0, nothing)
+            Test.@test rhs_oop isa Systems.HamOoPRHS
 
             # Test OOP call with vector
             u = [1.0, 2.0, 3.0, 4.0]  # x = [1, 2], p = [3, 4]
@@ -119,13 +124,17 @@ function test_hamiltonian_system()
             backend = FakeADBackend()
             sys = Systems.HamiltonianSystem(h, backend)
 
+            x0 = [1.0, 2.0]
+            p0 = [3.0, 4.0]
+            variable = 0.5
+
             # Vector case (n_x=2, n_v=1)
-            rhs_aug = Systems.build_rhs_augmented(sys, 2, 1)
-            Test.@test rhs_aug isa Function
+            rhs_aug = Systems.build_rhs_augmented(sys, 2, 1, x0, p0, 0.0, variable)
+            Test.@test rhs_aug isa Systems.HamIpAugRHS
 
             u = [1.0, 2.0, 3.0, 4.0, 0.5]  # x = [1, 2], p = [3, 4], pv = [0.5]
             du = zeros(5)
-            p = Common.ODEParameters(0.5)  # variable is 0.5 (matches pv in u)
+            p = Common.ODEParameters(variable)
             rhs_aug(du, u, p, 0.0)
 
             # ∂H/∂x = x = [1, 2], ∂H/∂p = p = [3, 4], ∂H/∂v = v = 0.5
@@ -135,23 +144,35 @@ function test_hamiltonian_system()
             Test.@test du[5] == -0.5
 
             # Matrix compatible case (10×3, v matrice 1×3)
+            x0_mat = [1.0 2.0 3.0; 4.0 5.0 6.0]
+            p0_mat = [7.0 8.0 9.0; 10.0 11.0 12.0]
+            variable_mat = [0.5 0.6 0.7]
+            rhs_aug_mat = Systems.build_rhs_augmented(sys, 2, 1, x0_mat, p0_mat, 0.0, variable_mat)
             u_mat = [1.0 2.0 3.0; 4.0 5.0 6.0; 7.0 8.0 9.0; 10.0 11.0 12.0; 0.5 0.6 0.7]
             du_mat = zeros(5, 3)
-            p_mat = Common.ODEParameters([0.5 0.6 0.7])  # v as matrix with 3 columns
-            rhs_aug(du_mat, u_mat, p_mat, 0.0)
+            p_mat = Common.ODEParameters(variable_mat)
+            rhs_aug_mat(du_mat, u_mat, p_mat, 0.0)
             Test.@test size(du_mat, 2) == 3  # no error, compatible
 
             # Matrix incompatible case (10×3, v matrice 1×2) → PreconditionError
+            x0_mat2 = [1.0 2.0; 4.0 5.0]
+            p0_mat2 = [7.0 8.0; 10.0 11.0]
+            variable_mat2 = [0.5 0.6 0.7]
+            rhs_aug_mat2 = Systems.build_rhs_augmented(sys, 2, 1, x0_mat2, p0_mat2, 0.0, variable_mat2)
             u_mat2 = [1.0 2.0; 4.0 5.0; 7.0 8.0; 10.0 11.0; 0.5 0.6]
             du_mat2 = zeros(5, 2)
-            p_mat2 = Common.ODEParameters([0.5 0.6 0.7])  # v has 3 columns, u has 2
-            Test.@test_throws Exceptions.PreconditionError rhs_aug(du_mat2, u_mat2, p_mat2, 0.0)
+            p_mat2 = Common.ODEParameters(variable_mat2)
+            Test.@test_throws Exceptions.PreconditionError rhs_aug_mat2(du_mat2, u_mat2, p_mat2, 0.0)
 
             # u Matrix, v Vector (no-op check)
+            x0_mat3 = [1.0 2.0; 4.0 5.0]
+            p0_mat3 = [7.0 8.0; 10.0 11.0]
+            variable_vec = 0.5
+            rhs_aug_mat3 = Systems.build_rhs_augmented(sys, 2, 1, x0_mat3, p0_mat3, 0.0, variable_vec)
             u_mat3 = [1.0 2.0; 4.0 5.0; 7.0 8.0; 10.0 11.0; 0.5 0.6]
             du_mat3 = zeros(5, 2)
-            p_vec = Common.ODEParameters(0.5)  # v as scalar (not a matrix)
-            rhs_aug(du_mat3, u_mat3, p_vec, 0.0)  # no error, no-op check
+            p_vec = Common.ODEParameters(variable_vec)
+            rhs_aug_mat3(du_mat3, u_mat3, p_vec, 0.0)  # no error, no-op check
         end
 
         # ====================================================================

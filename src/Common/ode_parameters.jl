@@ -5,98 +5,46 @@ Wrapper type for parameters passed through SciML's `p` slot.
 
 This type formalizes the contract for what transits in the ODE problem's
 parameter slot. For CTFlows, the primary content is the variable parameter
-for `NonFixed` systems (or `nothing` for `Fixed` systems). For systems with
-automatic differentiation support, the cache field stores pre-allocated buffers
-and prepared differentiation plans.
+for `NonFixed` systems (or `nothing` for `Fixed` systems).
 
 The wrapper makes the contract explicit and extensible — additional fields
 can be added later (callbacks, extra data) without breaking existing code.
 
 # Fields
 - `variable::V`: The variable parameter (or `nothing` for `Fixed` systems).
-- `cache::C`: The AD cache (or `nothing` for systems without AD support).
 
 # Constructor Validation
 
 - `V` can be `Nothing` (for `Fixed` systems) or any concrete type (for `NonFixed`).
-- `C` can be `Nothing` (for systems without AD) or a concrete `AbstractCache` subtype.
 - No validation is performed at construction — the system's `VariableDependence`
-  and `ADTrait` determine whether `variable` and `cache` should be used.
+  determines whether `variable` should be used.
 
 # Example
 \`\`\`julia
 using CTFlows.Common
 
-# Fixed system: variable is nothing, cache is nothing
+# Fixed system: variable is nothing
 params_fixed = ODEParameters(nothing)
 
-# NonFixed system: variable is a value, cache is nothing
+# NonFixed system: variable is a value
 params_nonfixed = ODEParameters(0.5)
 
-# WithAD system: variable is a value, cache is a concrete cache
-cache = MyCache()
-params_with_ad = ODEParameters(0.5, cache)
+# NonFixed system: variable is a vector
+params_vector = ODEParameters([1.0, 2.0])
 \`\`\`
 
 # Notes
 - This type is used exclusively by the SciML extension to wrap the variable
   before passing it to `ODEProblem`.
-- The RHS closure reads `variable(p)` to access the actual variable value.
-- The RHS closure reads `cache(p)` to access the prepared AD cache.
-- A single-argument constructor `ODEParameters(variable)` defaults `cache` to `nothing`
-  for backward compatibility.
+- The RHS functor reads `variable(p)` to access the actual variable value.
 
-See also: [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Traits.Fixed`](@ref), [`CTFlows.Traits.NonFixed`](@ref),
-[`CTFlows.Common.AbstractCache`](@ref), [`CTFlows.Traits.AbstractADTrait`](@ref).
+See also: [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Traits.Fixed`](@ref), [`CTFlows.Traits.NonFixed`](@ref).
 """
-struct ODEParameters{V, C<:Union{AbstractCache, Nothing}}
+# TODO: docstring
+struct ODEParameters{V}
     variable::V
-    cache::C
 end
 
-# Backward compatibility constructor for single-argument calls
-function ODEParameters(variable)
-    return ODEParameters(variable, nothing)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Accessor for the cache field of `ODEParameters`.
-
-Returns the AD cache stored in the `ODEParameters` wrapper.
-For systems without AD support, this is `nothing`. For systems with AD support,
-this is a concrete `AbstractCache` subtype containing pre-allocated buffers and
-prepared differentiation plans.
-
-# Arguments
-- `p::ODEParameters`: The ODEParameters instance.
-
-# Returns
-- The cache value (or `nothing` for systems without AD).
-
-# Example
-\`\`\`julia-repl
-julia> using CTFlows.Common
-
-julia> params_fixed = ODEParameters(nothing)
-ODEParameters{Nothing, Nothing}(nothing, nothing)
-
-julia> cache(params_fixed)
-nothing
-
-julia> params_with_ad = ODEParameters(0.5, MyCache())
-ODEParameters{Float64, MyCache}(0.5, MyCache())
-
-julia> cache(params_with_ad)
-MyCache()
-\`\`\`
-
-See also: [`CTFlows.Common.ODEParameters`](@ref), [`CTFlows.Common.AbstractCache`](@ref).
-"""
-function cache(p::ODEParameters)
-    return p.cache
-end
 
 """
 $(TYPEDSIGNATURES)

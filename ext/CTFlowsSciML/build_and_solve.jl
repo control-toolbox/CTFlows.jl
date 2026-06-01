@@ -61,11 +61,10 @@ function Integrators.build_problem(
     system::Systems.AbstractSystem, 
     config::Configs.AbstractConfig; 
     variable,
-    cache,
     )
     u0 = Configs.initial_condition(config)
     Systems._check_vf_scalar_inplace(system, u0)  # guard for InPlace VF + scalar
-    p = Common.ODEParameters(variable, cache)
+    p = Common.ODEParameters(variable)
     if ismutable(u0)
         f! = Systems.rhs(system)
         prob = ODEProblem(f!, u0, Configs.tspan(config), p)
@@ -100,12 +99,11 @@ function Integrators.build_problem(
     system::Systems.HamiltonianVectorFieldSystem,
     config::Configs.AbstractHamiltonianConfig;
     variable,
-    cache,
 )
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
     u0 = Configs.initial_condition(config)
-    λ = Common.ODEParameters(variable, cache)
+    λ = Common.ODEParameters(variable)
     if ismutable(u0)
         f! = Systems.build_rhs(system, x0, p0)
         prob = ODEProblem(f!, u0, Configs.tspan(config), λ)
@@ -140,17 +138,17 @@ function Integrators.build_problem(
     system::Systems.HamiltonianSystem,
     config::Configs.AbstractHamiltonianConfig;
     variable,
-    cache,
 )
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
+    t0 = Configs.initial_time(config)
     u0 = Configs.initial_condition(config)
-    λ = Common.ODEParameters(variable, cache)
+    λ = Common.ODEParameters(variable)
     if ismutable(u0)
-        f! = Systems.build_rhs(system, x0, p0)
+        f! = Systems.build_rhs(system, x0, p0, t0, variable)
         prob = ODEProblem(f!, u0, Configs.tspan(config), λ)
     else
-        f = Systems.build_oop_rhs(system, x0, p0)
+        f = Systems.build_oop_rhs(system, x0, p0, t0, variable)
         prob = ODEProblem(f, u0, Configs.tspan(config), λ)
     end
     return prob
@@ -186,13 +184,15 @@ function Integrators.build_problem(
     system::Systems.HamiltonianSystem,
     config::Configs.AbstractAugmentedHamiltonianConfig;
     variable,
-    cache,
 )
+    x0  = Configs.initial_state(config)
+    p0  = Configs.initial_costate(config)
+    t0  = Configs.initial_time(config)
     u0  = Configs.initial_condition(config)          # vcat(x0, p0, pv0)
-    λ   = Common.ODEParameters(variable, cache)
-    n_x = length(Configs.initial_state(config))
+    λ   = Common.ODEParameters(variable)
+    n_x = length(x0)
     n_v = length(Configs.initial_variable_costate(config))
-    f!  = Systems.build_rhs_augmented(system, n_x, n_v)
+    f!  = Systems.build_rhs_augmented(system, n_x, n_v, x0, p0, t0, variable)
     return ODEProblem(f!, u0, Configs.tspan(config), λ)
 end
 
@@ -202,10 +202,9 @@ function Integrators.build_problem(
     system::Systems.HamiltonianVectorFieldSystem,
     config::Configs.AbstractAugmentedHamiltonianConfig;
     variable,
-    cache,
 )
     u0  = Configs.initial_condition(config)          # vcat(x0, p0, pv0)
-    λ   = Common.ODEParameters(variable, cache)
+    λ   = Common.ODEParameters(variable)
     n_x = length(Configs.initial_state(config))
     n_v = length(Configs.initial_variable_costate(config))
     f!  = Systems.build_rhs_augmented(system, n_x, n_v)
