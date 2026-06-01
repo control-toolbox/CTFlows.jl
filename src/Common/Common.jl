@@ -48,7 +48,7 @@ export AbstractCache
 # export StatePointConfig, StateTrajectoryConfig, HamiltonianPointConfig, HamiltonianTrajectoryConfig, AugmentedHamiltonianPointConfig
 # export tspan, initial_condition, initial_state, initial_costate, initial_variable_costate, initial_time, final_time
 export NotProvided
-export ODEParameters, variable, cache
+export ODEParameters, variable
 export __is_autonomous, __is_variable, __variable, __unsafe, __is_inplace, __hvf_inplace, _variable_costate
 export deepvalue, real_norm, make_coerce
 

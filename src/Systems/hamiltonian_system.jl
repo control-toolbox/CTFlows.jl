@@ -70,96 +70,116 @@ end
 # =============================================================================
 
 """
-    build_rhs(sys::HamiltonianSystem, x0, p0) -> f!(du, u, λ, t)
+$(TYPEDSIGNATURES)
 
-Build an in-place RHS closure for the given initial conditions.
+Build an in-place RHS functor for a Hamiltonian system.
 
-The closure is constructed lazily based on the shapes of `x0` and `p0`,
-ensuring correct handling of scalar, vector, and matrix inputs.
+This function creates a `HamIpRHS` functor that computes the Hamiltonian gradient
+in-place, following the canonical Hamiltonian equations. The functor is lazily
+constructed based on the initial condition types to ensure correct handling of
+scalar, vector, and matrix inputs.
 
 # Arguments
 - `sys::HamiltonianSystem`: The Hamiltonian system.
-- `x0`: Initial state (scalar, vector, or matrix).
-- `p0`: Initial costate (same shape as `x0`).
+- `x0`: Initial state (used to infer state dimension and conversion).
+- `p0`: Initial costate (used to infer conversion).
+- `t0`: Initial time (for cache preparation in non-autonomous systems).
+- `variable`: Variable value (for cache preparation in non-fixed systems).
 
 # Returns
-- `Function`: A closure with signature `(du, u, λ, t) -> nothing`.
+- `HamIpRHS`: An in-place RHS functor with embedded AD cache.
+
+# Notes
+- The AD cache is prepared using the backend's `prepare_cache` method.
+- The cache is embedded in the functor for better composability.
+- This function is called by the SciML extension when building ODE problems.
+
+See also: [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
 """
-function build_rhs(sys::HamiltonianSystem, x0, p0)
+function build_rhs(sys::HamiltonianSystem, x0, p0, t0, variable)
     N = _state_dim(x0)
     cx = Common.make_coerce(x0)
     cp = Common.make_coerce(p0)
     h, backend = sys.h, sys.backend
-    return function (du, u, λ, t)
-        x, p   = _ham_split(u, N)
-        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, cx(x), cp(p), Common.variable(λ), Common.cache(λ))
-        _ham_assign!(du, ∂p, -∂x, N)
-        return nothing
-    end
+    cache = Differentiation.prepare_cache(backend, h, t0, cx(x0), cp(p0), variable)
+    return HamIpRHS(h, backend, N, cx, cp, cache)
 end
 
 """
-    build_oop_rhs(sys::HamiltonianSystem, x0, p0) -> f(u, λ, t)
+$(TYPEDSIGNATURES)
 
-Build an out-of-place RHS closure for the given initial conditions.
+Build an out-of-place RHS functor for a Hamiltonian system.
 
-The closure is constructed lazily based on the shapes of `x0` and `p0`,
-ensuring correct handling of scalar, vector, and matrix inputs.
+This function creates a `HamOoPRHS` functor that computes the Hamiltonian gradient
+out-of-place, following the canonical Hamiltonian equations. The functor is lazily
+constructed based on the initial condition types to ensure correct handling of
+scalar, vector, and matrix inputs.
 
 # Arguments
 - `sys::HamiltonianSystem`: The Hamiltonian system.
-- `x0`: Initial state (scalar, vector, or matrix).
-- `p0`: Initial costate (same shape as `x0`).
+- `x0`: Initial state (used to infer state dimension and conversion).
+- `p0`: Initial costate (used to infer conversion).
+- `t0`: Initial time (for cache preparation in non-autonomous systems).
+- `variable`: Variable value (for cache preparation in non-fixed systems).
 
 # Returns
-- `Function`: A closure with signature `(u, λ, t) -> du`.
+- `HamOoPRHS`: An out-of-place RHS functor with embedded AD cache.
+
+# Notes
+- The AD cache is prepared using the backend's `prepare_cache` method.
+- The cache is embedded in the functor for better composability.
+- This function is called by the SciML extension when building ODE problems.
+
+See also: [`CTFlows.Systems.HamOoPRHS`](@ref), [`CTFlows.Systems.build_rhs`](@ref).
 """
-function build_oop_rhs(sys::HamiltonianSystem, x0, p0)
+function build_oop_rhs(sys::HamiltonianSystem, x0, p0, t0, variable)
     N = _state_dim(x0)
     cx = Common.make_coerce(x0)
     cp = Common.make_coerce(p0)
     h, backend = sys.h, sys.backend
-    return function (u, λ, t)
-        x, p   = _ham_split(u, N)
-        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, cx(x), cp(p), Common.variable(λ), Common.cache(λ))
-        return vcat(∂p, -∂x)
-    end
+    cache = Differentiation.prepare_cache(backend, h, t0, cx(x0), cp(p0), variable)
+    return HamOoPRHS(h, backend, N, cx, cp, cache)
 end
-
-# =============================================================================
-# Batch compatibility check for augmented RHS
-# =============================================================================
-
-function _check_aug_batch_compat(u::AbstractMatrix, v::AbstractMatrix)
-    if size(u, 2) != size(v, 2)
-        throw(Exceptions.PreconditionError(
-            "batch size mismatch in augmented Hamiltonian RHS";
-            reason    = "size(u, 2) = $(size(u, 2)) ≠ size(v, 2) = $(size(v, 2))",
-            context   = "build_rhs_augmented — matrix batch mode",
-            suggestion = "variable v must have the same number of columns as the state u",
-        ))
-    end
-    return nothing
-end
-_check_aug_batch_compat(u, v) = nothing   # no-op for non-matrix cases
 
 # =============================================================================
 # build_rhs_augmented — lazy, closes over concrete n_x and n_v
 # =============================================================================
 
-function build_rhs_augmented(sys::HamiltonianSystem, n_x::Int, n_v::Int)
-    h, backend = sys.h, sys.backend
-    return function (du, u, λ, t)
-        v = Common.variable(λ)
-        _check_aug_batch_compat(u, v)             # no-op if not matrix or matrix compatible
-        x, p, _ = _aug_split(u, n_x, n_v)
-        ∂x, ∂p   = Differentiation.hamiltonian_gradient(backend, h, t, x, p, v, Common.cache(λ))
-        ∂pv      = Differentiation.variable_gradient(backend, h, t, x, p, v, Common.cache(λ))
-        _aug_assign!(du, ∂p, -∂x, -∂pv, n_x, n_v)
-        return nothing
-    end
-end
+"""
+$(TYPEDSIGNATURES)
 
+Build an augmented in-place RHS functor for a Hamiltonian system.
+
+This function creates a `HamIpAugRHS` functor that computes the augmented Hamiltonian
+equations including variable costate evolution, used in sensitivity analysis and
+optimal control. The state vector is augmented as `[x; p; v]` where `v` is the
+variable costate.
+
+# Arguments
+- `sys::HamiltonianSystem`: The Hamiltonian system.
+- `n_x::Int`: State dimension (number of state variables).
+- `n_v::Int`: Variable dimension.
+- `x0`: Initial state (for cache preparation).
+- `p0`: Initial costate (for cache preparation).
+- `t0`: Initial time (for cache preparation in non-autonomous systems).
+- `variable`: Variable value (for cache preparation in non-fixed systems).
+
+# Returns
+- `HamIpAugRHS`: An augmented in-place RHS functor with embedded AD cache.
+
+# Notes
+- The AD cache is prepared using the backend's `prepare_cache` method.
+- The cache is embedded in the functor for better composability.
+- Supports batch mode with matrix inputs (checks batch size compatibility).
+- This function is used for variable costate integration in sensitivity analysis.
+
+See also: [`CTFlows.Systems.HamIpAugRHS`](@ref), [`CTFlows.Systems.build_rhs`](@ref).
+"""
+function build_rhs_augmented(sys::HamiltonianSystem, n_x::Int, n_v::Int, x0, p0, t0, variable)
+    h, backend = sys.h, sys.backend
+    cache = Differentiation.prepare_cache(backend, h, t0, x0, p0, variable)
+    return HamIpAugRHS(h, backend, n_x, n_v, cache)
+end
 
 # =============================================================================
 # Base.show

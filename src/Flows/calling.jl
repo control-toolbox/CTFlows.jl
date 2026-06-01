@@ -241,11 +241,8 @@ function core_call(flow::Flows.AbstractFlow, config::Configs.AbstractConfig; var
     sys = system(flow)
     int = integrator(flow)
 
-    # prepare cache for Hamiltonian systems (returns nothing for WithoutAD)
-    cache = prepare_cache(sys, config; variable=variable)
-
     # build ode problem
-    prob = Integrators.build_problem(int, sys, config; variable=variable, cache=cache)
+    prob = Integrators.build_problem(int, sys, config; variable=variable)
 
     # build config-specific options
     opts = Integrators.build_options(int, config)
@@ -355,115 +352,8 @@ function call(::Type{Traits.Fixed}, ::Type{VT}, flow, config; unsafe, variable) 
 end
 
 # ==============================================================================
-# prepare_cache — cache preparation for Hamiltonian systems
-# ==============================================================================
-
-function prepare_cache(
-    sys::Systems.AbstractSystem,
-    config::Configs.AbstractConfig; variable
-)
-    return nothing
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Prepare an AD cache for a Hamiltonian system based on its AD trait.
-
-This is the front-end entry point that delegates to trait-specific implementations.
-
-# Arguments
-- `sys::Systems.AbstractHamiltonianSystem`: The Hamiltonian system.
-- `config::Configs.AbstractConfig`: The integration configuration (provides typical x0, p0).
-- `variable`: The variable parameter value (for type inference in cache preparation).
-
-# Returns
-- `nothing` for `WithoutAD` systems (no cache needed).
-- The backend-specific cache for `WithAD` systems (e.g., `DifferentiationInterfaceCache`).
-
-# Trait Dispatch
-- `WithoutAD` → returns `nothing` (system carries HVF directly).
-- `WithAD` → delegates to backend's `prepare_cache` with typical x0, p0.
-
-# Config Type
-The `config` argument is typed as `AbstractConfig` (not restricted to `HamiltonianConfig`)
-to support augmented configs like `AugmentedHamiltonianPointConfig`, which define
-`initial_state` and `initial_costate` via their own getters.
-
-# See also
-- [`CTFlows.Differentiation.prepare_cache`](@ref)
-- [`CTFlows.Flows.call`](@ref)
-"""
-function prepare_cache(
-    sys::Systems.AbstractHamiltonianSystem,
-    config::Configs.AbstractConfig; variable
-)
-    return prepare_cache(Traits.ad_trait(sys), sys, config; variable=variable)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Cache preparation for systems without AD (`WithoutAD` trait).
-
-Returns `nothing` since these systems carry a pre-computed Hamiltonian vector field
-and do not require automatic differentiation.
-
-# Arguments
-- `::Type{Traits.WithoutAD}`: The `WithoutAD` trait (dispatch tag).
-- `sys::Systems.AbstractHamiltonianSystem`: The Hamiltonian system.
-- `config::Configs.AbstractConfig`: The integration configuration (unused).
-- `variable`: The variable parameter value (unused).
-
-# Returns
-- `nothing`
-
-# See also
-- [`CTFlows.Flows.prepare_cache`](@ref)
-"""
-function prepare_cache(
-    ::Type{Traits.WithoutAD},
-    sys::Systems.AbstractHamiltonianSystem,
-    config::Configs.AbstractConfig; variable
-)
-    return nothing
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Cache preparation for systems with AD (`WithAD` trait).
-
-Extracts typical initial state and costate from the config and delegates to the
-backend's `prepare_cache` method to prepare gradient plans.
-
-# Arguments
-- `::Type{Traits.WithAD}`: The `WithAD` trait (dispatch tag).
-- `sys::Systems.HamiltonianSystem`: The Hamiltonian system (carries `backend` and `h`).
-- `config::Configs.AbstractConfig`: The integration configuration (provides x0, p0).
-- `variable`: The variable parameter value (passed to backend for type inference).
-
-# Returns
-- Backend-specific cache (e.g., `DifferentiationInterfaceCache` from the extension).
-
-# See also
-- [`CTFlows.Differentiation.prepare_cache`](@ref)
-- [`CTFlows.Flows.prepare_cache`](@ref)
-"""
-function prepare_cache(
-    ::Type{Traits.WithAD},
-    sys::Systems.AbstractHamiltonianSystem,
-    config::Configs.AbstractConfig; variable
-)
-    t0 = Configs.initial_time(config)
-    x0 = Configs.initial_state(config)
-    p0 = Configs.initial_costate(config)
-    return Differentiation.prepare_cache(Systems.backend(sys), Systems.hamiltonian(sys), t0, x0, p0, variable)
-end
-
-# =============================================================================
 # call_variable_costate — augmented Hamiltonian integration
-# =============================================================================
+# ==============================================================================
 
 """
 $(TYPEDSIGNATURES)

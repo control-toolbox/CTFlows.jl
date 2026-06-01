@@ -86,9 +86,9 @@ function FakeIntegratorForCalling()
 end
 
 # Implement named functions instead of callables
-function Integrators.build_problem(integ::FakeIntegratorForCalling, system::Systems.AbstractSystem, config::Configs.AbstractConfig; variable=nothing, cache=nothing)
+function Integrators.build_problem(integ::FakeIntegratorForCalling, system::Systems.AbstractSystem, config::Configs.AbstractConfig; variable=nothing)
     integ.build_problem_called = true
-    p = Common.ODEParameters(variable, cache)
+    p = Common.ODEParameters(variable)
     integ.problem_result = :fake_ode_problem
     return integ.problem_result
 end
