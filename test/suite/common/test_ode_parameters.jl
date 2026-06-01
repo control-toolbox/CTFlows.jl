@@ -7,12 +7,6 @@ const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
 
 # ==============================================================================
-# Fake type for cache testing
-# ==============================================================================
-
-struct FakeCache <: Common.AbstractCache end
-
-# ==============================================================================
 # Test function
 # ==============================================================================
 

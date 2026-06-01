@@ -1,6 +1,7 @@
 module TestHamRHSFunctors
 
 import Test
+import CTBase.Exceptions
 import CTFlows.Common: Common
 import CTFlows.Data: Data
 import CTFlows.Systems: Systems
@@ -15,6 +16,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # =============================================================================
 
 const FakeHamiltonian = Data.Hamiltonian((x, p) -> 0.5 * (x[1]^2 + x[2]^2) + 0.5 * (p[1]^2 + p[2]^2); is_autonomous=true, is_variable=false)
+const FakeHamiltonianNF = Data.Hamiltonian((x, p, v) -> 0.5 * (x[1]^2 + x[2]^2) + 0.5 * (p[1]^2 + p[2]^2) + 0.5 * v^2; is_autonomous=true, is_variable=true)
 
 struct FakeADBackend <: Differentiation.AbstractADBackend end
 
@@ -54,6 +56,11 @@ function test_ham_rhs_functors()
             Test.@test oop_rhs isa Systems.AbstractRHS{Traits.OutOfPlace}
             Test.@test aug_rhs isa Systems.AbstractIPHamRHS
             Test.@test aug_rhs isa Systems.AbstractRHS{Traits.InPlace}
+
+            # Cache embedding: verify cache field stores the passed value
+            Test.@test ip_rhs.cache === nothing
+            Test.@test oop_rhs.cache === nothing
+            Test.@test aug_rhs.cache === nothing
         end
 
         # =============================================================================
@@ -77,6 +84,23 @@ function test_ham_rhs_functors()
             Test.@test du[3:4] == [-1.0, -2.0]
         end
 
+        Test.@testset "HamIpRHS — NonFixed call" begin
+            backend = FakeADBackend()
+            h = FakeHamiltonianNF
+            rhs = Systems.HamIpRHS(h, backend, 2, identity, identity, nothing)
+
+            du = zeros(4)
+            u = [1.0, 2.0, 3.0, 4.0]
+            λ = Common.ODEParameters(0.5)
+            t = 0.0
+
+            rhs(du, u, λ, t)
+            # ∂H/∂x = x = [1.0, 2.0], ∂H/∂p = p = [3.0, 4.0] (v doesn't affect these gradients)
+            # du = [∂p, -∂x] = [3.0, 4.0, -1.0, -2.0]
+            Test.@test du[1:2] == [3.0, 4.0]
+            Test.@test du[3:4] == [-1.0, -2.0]
+        end
+
         # =============================================================================
         # Test HamOoPRHS
         # =============================================================================
@@ -92,6 +116,22 @@ function test_ham_rhs_functors()
 
             result = rhs(u, λ, t)
             # ∂H/∂x = x = [1.0, 2.0], ∂H/∂p = p = [3.0, 4.0]
+            # result = [∂p, -∂x] = [3.0, 4.0, -1.0, -2.0]
+            Test.@test result[1:2] == [3.0, 4.0]
+            Test.@test result[3:4] == [-1.0, -2.0]
+        end
+
+        Test.@testset "HamOoPRHS — NonFixed call" begin
+            backend = FakeADBackend()
+            h = FakeHamiltonianNF
+            rhs = Systems.HamOoPRHS(h, backend, 2, identity, identity, nothing)
+
+            u = [1.0, 2.0, 3.0, 4.0]
+            λ = Common.ODEParameters(0.5)
+            t = 0.0
+
+            result = rhs(u, λ, t)
+            # ∂H/∂x = x = [1.0, 2.0], ∂H/∂p = p = [3.0, 4.0] (v doesn't affect these gradients)
             # result = [∂p, -∂x] = [3.0, 4.0, -1.0, -2.0]
             Test.@test result[1:2] == [3.0, 4.0]
             Test.@test result[3:4] == [-1.0, -2.0]
@@ -122,9 +162,24 @@ function test_ham_rhs_functors()
         end
 
         Test.@testset "HamIpAugRHS — batch compatibility check" begin
-            # Note: Batch compatibility is tested in integration tests with real backends
-            # The private _check_aug_batch_compat function is not exported for direct testing
-            Test.@test true
+            # Compatible matrices
+            u = [1.0 2.0; 3.0 4.0]
+            v = [0.5 0.6]
+            Test.@test Systems._check_aug_batch_compat(u, v) === nothing
+
+            # Incompatible matrices
+            u2 = [1.0 2.0; 3.0 4.0]
+            v2 = [0.5 0.6 0.7]
+            Test.@test_throws Exceptions.PreconditionError Systems._check_aug_batch_compat(u2, v2)
+
+            # Non-matrix cases (no-op)
+            u3 = [1.0, 2.0, 3.0]
+            v3 = [0.5]
+            Test.@test Systems._check_aug_batch_compat(u3, v3) === nothing
+
+            u4 = [1.0 2.0; 3.0 4.0]
+            v4 = 0.5
+            Test.@test Systems._check_aug_batch_compat(u4, v4) === nothing
         end
 
         # =============================================================================
