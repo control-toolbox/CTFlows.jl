@@ -201,7 +201,7 @@ function test_sciml_extension()
                 integ = Integrators.SciML()
 
                 # Build ODE problem
-                prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
 
                 Test.@test prob isa SciMLBase.AbstractODEProblem
                 Test.@test prob.p isa Common.ODEParameters
@@ -218,7 +218,7 @@ function test_sciml_extension()
                 integ = Integrators.SciML()
 
                 # Build ODE problem with variable
-                prob = Integrators.build_problem(integ, sys, config; variable=0.5, cache=nothing)
+                prob = Integrators.build_problem(integ, sys, config; variable=0.5, )
 
                 Test.@test prob isa SciMLBase.AbstractODEProblem
                 Test.@test prob.p isa Common.ODEParameters
@@ -240,7 +240,7 @@ function test_sciml_extension()
             integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
             # Build ODE problem
-            prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
+            prob = Integrators.build_problem(integ, sys, config; variable=nothing)
 
             # Build options
             opts = Integrators.build_options(integ, config)
@@ -300,7 +300,7 @@ function test_sciml_extension()
             config = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 2.0])
             integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
-            prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
+            prob = Integrators.build_problem(integ, sys, config; variable=nothing)
             opts = Integrators.build_options(integ, config)
             result = Integrators.solve_problem(integ, prob, opts)
 
@@ -329,7 +329,7 @@ function test_sciml_extension()
                 integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
                 # Build problem
-                prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
 
                 # Build options
                 opts = Integrators.build_options(integ, config)
@@ -352,7 +352,7 @@ function test_sciml_extension()
                 integ = Integrators.SciML(maxiters=1000, reltol=1e-6)
 
                 # Build problem
-                prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
 
                 # Build options
                 opts = Integrators.build_options(integ, config)
@@ -380,7 +380,7 @@ function test_sciml_extension()
                 sys = Systems.VectorFieldSystem(vf)
                 u0  = [1.0, 2.0]
                 config = Configs.StatePointConfig(0.0, u0, 1.0)
-                prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 xf = Integrators.final_state(result)
@@ -392,7 +392,7 @@ function test_sciml_extension()
                 sys = Systems.VectorFieldSystem(vf)
                 u0  = SA[1.0, 2.0]
                 config = Configs.StatePointConfig(0.0, u0, 1.0)
-                prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 xf = Integrators.final_state(result)
@@ -404,7 +404,7 @@ function test_sciml_extension()
                 sys = Systems.VectorFieldSystem(vf)
                 u0  = [1.0, 2.0]
                 config = Configs.StatePointConfig(0.0, u0, 1.0)
-                prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 xf = Integrators.final_state(result)
@@ -416,7 +416,7 @@ function test_sciml_extension()
                 sys = Systems.VectorFieldSystem(vf)
                 u0  = SA[1.0, 2.0]
                 config = Configs.StatePointConfig(0.0, u0, 1.0)
-                prob = Test.@test_logs (:warn, r"InPlace VectorField") Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
+                prob = Test.@test_logs (:warn, r"InPlace VectorField") Integrators.build_problem(integ, sys, config; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 xf = Integrators.final_state(result)
@@ -438,7 +438,7 @@ function test_sciml_extension()
                 x0  = 1.0
                 p0  = 0.5
                 config = Configs.HamiltonianPointConfig(0.0, x0, p0, 1.0)
-                prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 xf = Integrators.final_state(result)
@@ -452,7 +452,7 @@ function test_sciml_extension()
                 x0  = SA[1.0]
                 p0  = SA[0.5]
                 config = Configs.HamiltonianPointConfig(0.0, x0, p0, 1.0)
-                prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 xf = Integrators.final_state(result)
@@ -466,7 +466,7 @@ function test_sciml_extension()
                 x0  = 1.0
                 p0  = 0.5
                 config = Configs.HamiltonianPointConfig(0.0, x0, p0, 1.0)
-                prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 xf = Integrators.final_state(result)
@@ -480,7 +480,7 @@ function test_sciml_extension()
                 x0  = SA[1.0]
                 p0  = SA[0.5]
                 config = Configs.HamiltonianPointConfig(0.0, x0, p0, 1.0)
-                prob = Test.@test_logs (:warn, r"InPlace HamiltonianVectorField") Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
+                prob = Test.@test_logs (:warn, r"InPlace HamiltonianVectorField") Integrators.build_problem(integ, sys, config; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 xf = Integrators.final_state(result)
@@ -540,7 +540,7 @@ function test_sciml_extension()
                 )
                 config = Configs.StatePointConfig(0.0, [1.0], 0.5)
                 integ = Integrators.SciML(reltol=1e-8)
-                prob = Integrators.build_problem(integ, sys, config; variable=nothing, cache=nothing)
+                prob = Integrators.build_problem(integ, sys, config; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 merged = Integrators.merge([result])
@@ -555,14 +555,14 @@ function test_sciml_extension()
                 
                 # First segment: [0, 0.5]
                 config1 = Configs.StatePointConfig(0.0, [1.0], 0.5)
-                prob1 = Integrators.build_problem(integ, sys, config1; variable=nothing, cache=nothing)
+                prob1 = Integrators.build_problem(integ, sys, config1; variable=nothing)
                 opts1 = Integrators.build_options(integ, config1)
                 result1 = Integrators.solve_problem(integ, prob1, opts1)
                 
                 # Second segment: [0.5, 1.0]
                 xf1 = Integrators.final_state(result1)
                 config2 = Configs.StatePointConfig(0.5, xf1, 1.0)
-                prob2 = Integrators.build_problem(integ, sys, config2; variable=nothing, cache=nothing)
+                prob2 = Integrators.build_problem(integ, sys, config2; variable=nothing)
                 opts2 = Integrators.build_options(integ, config2)
                 result2 = Integrators.solve_problem(integ, prob2, opts2)
                 
