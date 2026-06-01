@@ -23,9 +23,6 @@ import CTModels.OCP
 # Sibling imports (temporary - will be removed after full refactoring)
 # ==============================================================================
 
-import ..Traits: Traits
-import ..Configs: Configs
-
 # ==============================================================================
 # Includes
 # ==============================================================================
@@ -43,10 +40,6 @@ include(joinpath(@__DIR__, "internal_norm.jl"))
 
 export AbstractTag
 export AbstractCache
-# Config types moved to Configs module
-# export AbstractConfig, AbstractPointConfig, AbstractTrajectoryConfig, AbstractStateConfig, AbstractHamiltonianConfig, AbstractAugmentedHamiltonianConfig
-# export StatePointConfig, StateTrajectoryConfig, HamiltonianPointConfig, HamiltonianTrajectoryConfig, AugmentedHamiltonianPointConfig
-# export tspan, initial_condition, initial_state, initial_costate, initial_variable_costate, initial_time, final_time
 export NotProvided
 export ODEParameters, variable
 export __is_autonomous, __is_variable, __variable, __unsafe, __is_inplace, __hvf_inplace, _variable_costate

@@ -40,7 +40,6 @@ params_vector = ODEParameters([1.0, 2.0])
 
 See also: [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Traits.Fixed`](@ref), [`CTFlows.Traits.NonFixed`](@ref).
 """
-# TODO: docstring
 struct ODEParameters{V}
     variable::V
 end
