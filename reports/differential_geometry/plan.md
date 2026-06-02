@@ -71,6 +71,15 @@ Extension `CTFlowsDifferentiationInterface` implements `gradient` + `derivative`
 
 ## Step 0 — Branch
 
+Use MCP git commands when available:
+
+- `mcp1_git_checkout` to switch to `develop`
+- Pull latest changes (bash: `git pull`)
+- `mcp1_git_create_branch` to create the new branch from `develop`
+- `mcp1_git_checkout` to switch to the new branch
+
+Fallback to bash commands if MCP is unavailable:
+
 ```bash
 git checkout develop && git pull
 git checkout -b feat/differential-geometry
@@ -809,6 +818,8 @@ PB([1.0, 2.0], [3.0, 4.0])   # expected: 3.0
 ---
 
 ## Phase 5 — Tests
+
+> 📝 **Reuse existing test examples**: The file `reports/differential_geometry/v2/test_differential_geometry.jl` contains comprehensive test cases for `ad`, `Lift`, `Poisson`, `∂ₜ`, backend parameters, variable dependence, nested brackets (Jacobi identity), and the prefix system. Adapt these examples to the new API structure (qualified paths, typed constructors, new error guards) when writing the test files below.
 
 ### Step 19 — `test/suite/differential_geometry/test_ad.jl` (new file)
 
