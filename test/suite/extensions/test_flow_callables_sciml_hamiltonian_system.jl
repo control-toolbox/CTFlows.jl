@@ -24,7 +24,12 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 
 struct FakeHarmonicADBackend <: Differentiation.AbstractADBackend end
 
-function Differentiation.hamiltonian_gradient(backend::FakeHarmonicADBackend, h, t, x, p, v, cache)
+function Differentiation.hamiltonian_gradient(
+    backend::FakeHarmonicADBackend, 
+    h::Data.AbstractHamiltonian,
+    t, x, p, v, 
+    cache::Union{Common.AbstractCache, Nothing},
+)
     # For H_HARMONIC: H = 0.5*(x² + p²) → ∂H/∂x = x, ∂H/∂p = p
     # For H_SCALAR_ONLY: scalar-only gradients that fail with vectors
     #   H = x³/3 - log(p) → ∂H/∂x = x*x, ∂H/∂p = -1/p
@@ -35,12 +40,21 @@ function Differentiation.hamiltonian_gradient(backend::FakeHarmonicADBackend, h,
     end
 end
 
-function Differentiation.variable_gradient(backend::FakeHarmonicADBackend, h, t, x, p, v, cache)
+function Differentiation.variable_gradient(
+    backend::FakeHarmonicADBackend, 
+    h::Data.AbstractHamiltonian, 
+    t, x, p, v, 
+    cache::Union{Common.AbstractCache, Nothing}
+)
     # H = 0.5*v² → ∂H/∂v = v (for NonFixed), or 0.0 for Fixed
     return v === nothing ? 0.0 : v
 end
 
-function Differentiation.prepare_cache(backend::FakeHarmonicADBackend, h, typical_t, typical_x, typical_p, typical_v)
+function Differentiation.prepare_cache(
+    backend::FakeHarmonicADBackend, 
+    h::Data.AbstractHamiltonian, 
+    typical_t, typical_x, typical_p, typical_v
+)
     return nothing
 end
 
