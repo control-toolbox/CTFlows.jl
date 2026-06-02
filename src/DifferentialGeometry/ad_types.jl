@@ -20,6 +20,7 @@ function _check_not_hvf(X::Data.AbstractHamiltonianVectorField)
 end
 
 # Lie bracket: VectorField + VectorField → VectorField
+
 function ad(
     X::Data.AbstractVectorField{TD, VD, MDX},
     Y::Data.AbstractVectorField{TD, VD, MDY};
