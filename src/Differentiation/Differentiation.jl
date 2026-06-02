@@ -71,7 +71,6 @@ include("building.jl")
 export AbstractADBackend
 export DifferentiationInterface
 export build_ad_backend
-export __ad_backend
 export ad_backend
 export hamiltonian_gradient
 export variable_gradient

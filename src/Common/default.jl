@@ -101,3 +101,13 @@ variable costate equation `ṗᵥ = -∂H/∂v` unless explicitly requested.
 See also: [`CTFlows.Configs.AugmentedHamiltonianPointConfig`](@ref).
 """
 _variable_costate()::Bool = false
+
+"""
+$(TYPEDSIGNATURES)
+
+Default AD backend type for hamiltonian_vector_field getter.
+
+Returns `AutoForwardDiff()` by default, meaning the getter uses ForwardDiff
+for gradient computation unless specified otherwise.
+"""
+__ad_backend() = ADTypes.AutoForwardDiff()

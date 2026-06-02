@@ -77,7 +77,7 @@ function CTSolvers.Strategies.metadata(::Type{<:DifferentiationInterface})
         CTSolvers.Strategies.OptionDefinition(;
             name = :ad_backend,
             type = ADTypes.AbstractADType,
-            default = __ad_backend(),
+            default = Common.__ad_backend(),
             description = "DifferentiationInterface.jl backend (e.g. AutoForwardDiff()).",
             aliases=(:backend, :ad),
         ),
