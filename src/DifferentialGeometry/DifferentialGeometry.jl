@@ -22,6 +22,7 @@ module DifferentialGeometry
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
 using ADTypes: ADTypes
+import MacroTools: postwalk, @capture
 
 # ==============================================================================
 # Internal sibling-submodule imports
@@ -42,6 +43,8 @@ include("ad.jl")
 include("ad_types.jl")
 include("lift.jl")
 include("poisson.jl")
+include("time_derivative.jl")
+include("lie_macro.jl")
 
 # ==============================================================================
 # Public API — exports
@@ -50,6 +53,8 @@ include("poisson.jl")
 export ad
 export Lift
 export Poisson
+export ∂ₜ
+export @Lie
 export dg_ad_backend, dg_ad_backend!
 export diffgeo_prefix, diffgeo_prefix!
 
