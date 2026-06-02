@@ -259,6 +259,69 @@ function test_ad_dg()
         x0 = [1.0, 2.0]
         Test.@test isapprox(Xf1(x0), Xf2(x0); atol=1e-5)
     end
+
+    Test.@testset "ad() - MRI Bloch Equations" verbose=VERBOSE showtiming=SHOWTIMING begin
+        # Physical constants for magnetic resonance imaging
+        Γ = 2.0  # Relaxation rate
+        γ = 1.0  # Gyromagnetic ratio
+        δ = γ - Γ
+
+        # Bloch equation vector fields
+        F0(x) = [-Γ * x[1], -Γ * x[2], γ * (1 - x[3])]
+        F1(x) = [0.0, -x[3], x[2]]
+        F2(x) = [x[3], 0.0, -x[1]]
+
+        # Compute Lie brackets
+        F01 = DifferentialGeometry.ad(F0, F1)
+        F02 = DifferentialGeometry.ad(F0, F2)
+        F12 = DifferentialGeometry.ad(F1, F2)
+
+        x = [1.0, 2.0, 3.0]
+
+        # Verify known analytical results for Bloch equations
+        Test.@test F01(x) ≈ -[0.0, γ - δ * x[3], -δ * x[2]] atol=1e-6
+        Test.@test F02(x) ≈ -[-γ + δ * x[3], 0.0, δ * x[1]] atol=1e-6
+        Test.@test F12(x) ≈ -[-x[2], x[1], 0.0] atol=1e-6
+    end
+
+    Test.@testset "ad() - Lie Bracket Intrinsic Definition" verbose=VERBOSE showtiming=SHOWTIMING begin
+        # Verify intrinsic definition: [X, Y]·f = X·(Y·f) - Y·(X·f)
+        X(x) = [x[2]^2, -2x[1] * x[2]]
+        Y(x) = [x[1] * (1 + x[2]), 3x[2]^3]
+        f(x) = x[1]^4 + 2x[2]^3
+
+        x_test = [1.0, 2.0]
+
+        # Method 1: Direct computation of [X,Y]·f
+        XY = DifferentialGeometry.ad(X, Y)
+        XY_dot_f = DifferentialGeometry.ad(XY, f)
+        result_direct = XY_dot_f(x_test)
+
+        # Method 2: Commutator of directional derivatives X·(Y·f) - Y·(X·f)
+        Y_dot_f = DifferentialGeometry.ad(Y, f)
+        X_dot_f = DifferentialGeometry.ad(X, f)
+        X_dot_Yf = DifferentialGeometry.ad(X, Y_dot_f)
+        Y_dot_Xf = DifferentialGeometry.ad(Y, X_dot_f)
+        result_commutator = X_dot_Yf(x_test) - Y_dot_Xf(x_test)
+
+        # Both methods should give the same result
+        Test.@test result_direct ≈ result_commutator atol=1e-6
+    end
+
+    Test.@testset "ad() - Nested Brackets Jacobi Identity" verbose=VERBOSE showtiming=SHOWTIMING begin
+        # [X, [Y, Z]] + [Y, [Z, X]] + [Z, [X, Y]] = 0
+        X(x) = [0, x[3], -x[2]]
+        Y(x) = [-x[3], 0, x[1]]
+        Z(x) = [x[2], -x[1], 0]
+
+        XYZ = DifferentialGeometry.ad(X, DifferentialGeometry.ad(Y, Z))
+        YZX = DifferentialGeometry.ad(Y, DifferentialGeometry.ad(Z, X))
+        ZXY = DifferentialGeometry.ad(Z, DifferentialGeometry.ad(X, Y))
+
+        x0 = [1.0, 2.0, 3.0]
+        sum_jacobi = XYZ(x0) + YZX(x0) + ZXY(x0)
+        Test.@test isapprox(sum_jacobi, [0.0, 0.0, 0.0]; atol=1e-6)
+    end
 end
 
 end # module TestAdDG

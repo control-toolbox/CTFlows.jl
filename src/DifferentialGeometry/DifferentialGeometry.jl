@@ -40,12 +40,16 @@ include("default.jl")
 include("prefix.jl")
 include("ad.jl")
 include("ad_types.jl")
+include("lift.jl")
+include("poisson.jl")
 
 # ==============================================================================
 # Public API — exports
 # ==============================================================================
 
 export ad
+export Lift
+export Poisson
 export dg_ad_backend, dg_ad_backend!
 export diffgeo_prefix, diffgeo_prefix!
 
