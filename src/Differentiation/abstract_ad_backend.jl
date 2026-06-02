@@ -60,7 +60,12 @@ Compute the Hamiltonian gradient (∂H/∂x, ∂H/∂p) using the backend.
 See also: [`CTFlows.Differentiation.variable_gradient`](@ref),
 [`CTFlows.Differentiation.prepare_cache`](@ref).
 """
-function hamiltonian_gradient(backend::AbstractADBackend, h, t, x, p, v, cache)
+function hamiltonian_gradient(
+    backend::AbstractADBackend,
+    h::Data.AbstractHamiltonian,
+    t, x, p, v,
+    cache::Union{Common.AbstractCache, Nothing}
+)
     throw(Exceptions.NotImplemented(
         "hamiltonian_gradient not implemented for $(typeof(backend))",
         required_method = "hamiltonian_gradient(backend::$(typeof(backend)), h, t, x, p, v[, cache])",
@@ -99,7 +104,12 @@ Compute the variable gradient ∂H/∂v using the backend.
 See also: [`CTFlows.Differentiation.hamiltonian_gradient`](@ref),
 [`CTFlows.Differentiation.prepare_cache`](@ref).
 """
-function variable_gradient(backend::AbstractADBackend, h, t, x, p, v, cache)
+function variable_gradient(
+    backend::AbstractADBackend,
+    h::Data.AbstractHamiltonian,
+    t, x, p, v,
+    cache::Union{Common.AbstractCache, Nothing}
+)
     throw(Exceptions.NotImplemented(
         "variable_gradient not implemented for $(typeof(backend))",
         required_method = "variable_gradient(backend::$(typeof(backend)), h, t, x, p, v[, cache])",
@@ -140,7 +150,11 @@ See also: [`CTFlows.Differentiation.hamiltonian_gradient`](@ref),
 [`CTFlows.Common.AbstractCache`](@ref),
 [`CTFlows.Common.ODEParameters`](@ref).
 """
-function prepare_cache(backend::AbstractADBackend, h, typical_t, typical_x, typical_p, typical_v)
+function prepare_cache(
+    backend::AbstractADBackend,
+    h::Data.AbstractHamiltonian,
+    typical_t, typical_x, typical_p, typical_v
+)
     throw(Exceptions.NotImplemented(
         "prepare_cache not implemented for $(typeof(backend))",
         required_method = "prepare_cache(backend::$(typeof(backend)), h, typical_t, typical_x, typical_p, typical_v)",
@@ -213,11 +227,87 @@ See also: [`CTFlows.Differentiation.prepare_cache`](@ref),
 [`CTFlows.Differentiation.hamiltonian_gradient`](@ref),
 [`CTFlows.Differentiation.variable_gradient`](@ref).
 """
-function update!(cache, backend::AbstractADBackend, t, x, p, v)
+function update!(
+    cache::Union{Common.AbstractCache, Nothing},
+    backend::AbstractADBackend,
+    t, x, p, v
+)
     throw(Exceptions.NotImplemented(
         "update! not implemented for $(typeof(backend))",
         required_method = "update!(cache, backend::$(typeof(backend)), t, x, p, v)",
         suggestion = "Implement update! for $(typeof(backend)) or provide a no-op if cache preparation is not used",
+        context = "AD backend contract",
+    ))
+end
+
+# =============================================================================
+# Extension contract — gradient and derivative methods
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Compute the gradient of a scalar function using the backend.
+
+# Arguments
+- `backend::AbstractADBackend`: The AD backend.
+- `f`: The scalar function to differentiate.
+- `x`: The input vector.
+- `cache`: Optional pre-allocated cache for efficient computation.
+
+# Returns
+- `∇f`: The gradient of `f` at `x`.
+
+# Throws
+- `CTBase.Exceptions.NotImplemented`: If the concrete backend does not implement
+  this method.
+
+# Notes
+ - This method is provided for extensions that implement gradient computation
+   via DifferentiationInterface.jl.
+ - The cache defaults to `nothing` so calls without a prepared cache still work.
+
+See also: [`CTFlows.Differentiation.derivative`](@ref),
+[`CTFlows.Differentiation.hamiltonian_gradient`](@ref).
+"""
+function gradient(backend::AbstractADBackend, f::Function, x)
+    throw(Exceptions.NotImplemented(
+        "gradient not implemented for $(typeof(backend))",
+        required_method = "gradient(backend::$(typeof(backend)), f::Function, x)",
+        suggestion = "Load CTFlowsDifferentiationInterface (load DifferentiationInterface)",
+        context = "AD backend contract",
+    ))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Compute the derivative of a scalar function using the backend.
+
+# Arguments
+- `backend::AbstractADBackend`: The AD backend.
+- `g`: The scalar function to differentiate.
+- `t::Real`: The input scalar.
+
+# Returns
+- `dg/dt`: The derivative of `g` at `t`.
+
+# Throws
+- `CTBase.Exceptions.NotImplemented`: If the concrete backend does not implement
+  this method.
+
+# Notes
+ - This method is provided for extensions that implement derivative computation
+   via DifferentiationInterface.jl.
+
+See also: [`CTFlows.Differentiation.gradient`](@ref),
+[`CTFlows.Differentiation.variable_gradient`](@ref).
+"""
+function derivative(backend::AbstractADBackend, g::Function, t::Real)
+    throw(Exceptions.NotImplemented(
+        "derivative not implemented for $(typeof(backend))",
+        required_method = "derivative(backend::$(typeof(backend)), g::Function, t::Real)",
+        suggestion = "Load CTFlowsDifferentiationInterface (load DifferentiationInterface)",
         context = "AD backend contract",
     ))
 end

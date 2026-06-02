@@ -20,7 +20,6 @@ using CTFlows.Common: Common
 using CTFlows.Data: Data
 using CTFlows.Differentiation: Differentiation
 using DifferentiationInterface: DifferentiationInterface as DI
-import CTSolvers
 
 # ==============================================================================
 # DifferentiationInterfaceCache — Prepared gradient plans
@@ -96,9 +95,8 @@ function Differentiation.prepare_cache(
     h::Data.AbstractHamiltonian,
     typical_t, typical_x, typical_p, typical_v
 )
-    opts       = CTSolvers.Strategies.options(backend)
-    di_backend = opts[:ad_backend]
-    do_prepare = opts[:prepare_cache]
+    di_backend = Differentiation.ad_backend(backend)
+    do_prepare = Differentiation.prepare_cache(backend)
 
     if do_prepare
         h_x(x, t, p, v) = h(t, x, p, v)
@@ -118,11 +116,10 @@ function Differentiation.prepare_cache(
 end
 
 function Differentiation.update!(cache::DifferentiationInterfaceCache, backend::Differentiation.DifferentiationInterface, t, x, p, v)
-    opts = CTSolvers.Strategies.options(backend)
-    on_update = opts[:on_update]
+    on_update = Differentiation.on_update(backend)
     isnothing(on_update) || on_update(cache, t, x, p, v)
-    di_backend = opts[:ad_backend]
-    do_prepare = opts[:prepare_cache]
+    di_backend = Differentiation.ad_backend(backend)
+    do_prepare = Differentiation.prepare_cache(backend)
     if !do_prepare
         return nothing
     end
@@ -180,7 +177,7 @@ function Differentiation.hamiltonian_gradient(
     backend::Differentiation.DifferentiationInterface, h, t, x, p, v,
     ::Nothing
 )
-    di_backend = CTSolvers.Strategies.options(backend)[:ad_backend]
+    di_backend = Differentiation.ad_backend(backend)
     h_x(x, t, p, v) = h(t, x, p, v)
     h_p(p, t, x, v) = h(t, x, p, v)
     # Use derivative for scalars, gradient for arrays
@@ -223,7 +220,7 @@ function Differentiation.hamiltonian_gradient(
     backend::Differentiation.DifferentiationInterface, h, t, x, p, v,
     cache::DifferentiationInterfaceCache
 )
-    di_backend = CTSolvers.Strategies.options(backend)[:ad_backend]
+    di_backend = Differentiation.ad_backend(backend)
     try
         # Use derivative for scalars, gradient for arrays
         grad_x = derivator(typeof(x))(cache.h_x, cache.p_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
@@ -275,7 +272,7 @@ function Differentiation.variable_gradient(
     ::Nothing
 )
     # For Fixed problems (v === nothing), return nothing without calling DI.gradient
-    di_backend = CTSolvers.Strategies.options(backend)[:ad_backend]
+    di_backend = Differentiation.ad_backend(backend)
     h_v(v, t, x, p) = h(t, x, p, v)
     # Use derivative for scalars, gradient for arrays
     grad_v = derivator(typeof(v))(h_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
@@ -315,7 +312,7 @@ function Differentiation.variable_gradient(
     backend::Differentiation.DifferentiationInterface, h, t, x, p, v,
     cache::DifferentiationInterfaceCache
 )
-    di_backend = CTSolvers.Strategies.options(backend)[:ad_backend]
+    di_backend = Differentiation.ad_backend(backend)
     try 
         # Use derivative for scalars, gradient for arrays
         grad_v = derivator(typeof(v))(cache.h_v, cache.p_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
@@ -329,6 +326,85 @@ function Differentiation.variable_gradient(
             rethrow(e)
         end
     end
+end
+
+# =============================================================================
+# Differentiation.gradient — extension contract methods
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Compute the gradient of a scalar function using DifferentiationInterface.jl.
+
+# Arguments
+- `backend::Differentiation.DifferentiationInterface`: The AD backend.
+- `f::Function`: The scalar function to differentiate.
+- `x::AbstractArray`: The input vector.
+
+# Returns
+- `∇f`: The gradient of `f` at `x`.
+
+# See also
+- [`CTFlows.Differentiation.derivative`](@ref)
+"""
+function Differentiation.gradient(
+    backend::Differentiation.DifferentiationInterface,
+    f::Function,
+    x::AbstractArray,
+)
+    ad = Differentiation.ad_backend(backend)
+    return DI.gradient(f, ad, x)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Compute the gradient of a scalar function using DifferentiationInterface.jl (scalar case).
+
+# Arguments
+- `backend::Differentiation.DifferentiationInterface`: The AD backend.
+- `f::Function`: The scalar function to differentiate.
+- `x::Real`: The input scalar.
+
+# Returns
+- `df/dx`: The derivative of `f` at `x`.
+
+# See also
+- [`CTFlows.Differentiation.derivative`](@ref)
+"""
+function Differentiation.gradient(
+    backend::Differentiation.DifferentiationInterface,
+    f::Function,
+    x::Real,
+)
+    ad = Differentiation.ad_backend(backend)
+    return DI.derivative(f, ad, x)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Compute the derivative of a scalar function using DifferentiationInterface.jl.
+
+# Arguments
+- `backend::Differentiation.DifferentiationInterface`: The AD backend.
+- `g::Function`: The scalar function to differentiate.
+- `t::Real`: The input scalar.
+
+# Returns
+- `dg/dt`: The derivative of `g` at `t`.
+
+# See also
+- [`CTFlows.Differentiation.gradient`](@ref)
+"""
+function Differentiation.derivative(
+    backend::Differentiation.DifferentiationInterface,
+    g::Function,
+    t::Real,
+)
+    ad = Differentiation.ad_backend(backend)
+    return DI.derivative(g, ad, t)
 end
 
 # =============================================================================

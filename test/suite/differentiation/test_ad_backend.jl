@@ -6,6 +6,8 @@ module TestADBackend
 
 import Test
 import CTFlows.Differentiation
+import CTFlows.Data
+import CTFlows.Traits
 import CTBase.Exceptions
 import CTSolvers
 import ADTypes
@@ -22,6 +24,16 @@ struct FakeADBackend <: Differentiation.AbstractADBackend
 end
 
 FakeADBackend() = FakeADBackend(CTSolvers.Strategies.StrategyOptions())
+
+# ==============================================================================
+# Fake Hamiltonian for Testing (at module top-level)
+# ==============================================================================
+
+struct FakeHamiltonian <: Data.AbstractHamiltonian{Traits.Autonomous, Traits.Fixed}
+    f::Function
+end
+
+FakeHamiltonian() = FakeHamiltonian((x, p) -> 0.0)
 
 function test_ad_backend()
     Test.@testset "AD Backend Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
@@ -81,7 +93,7 @@ function test_ad_backend()
 
         Test.@testset "Error: hamiltonian_gradient stub throws NotImplemented" begin
             backend = FakeADBackend()
-            h = nothing  # Dummy Hamiltonian
+            h = FakeHamiltonian()
             t = 0.0
             x = [1.0, 2.0]
             p = [3.0, 4.0]
@@ -99,7 +111,7 @@ function test_ad_backend()
 
         Test.@testset "Error: variable_gradient stub throws NotImplemented" begin
             backend = FakeADBackend()
-            h = nothing
+            h = FakeHamiltonian()
             t = 0.0
             x = [1.0, 2.0]
             p = [3.0, 4.0]
@@ -117,7 +129,7 @@ function test_ad_backend()
 
         Test.@testset "Error: prepare_cache stub throws NotImplemented" begin
             backend = FakeADBackend()
-            h = nothing
+            h = FakeHamiltonian()
             typical_t = 0.0
             typical_x = [1.0, 2.0]
             typical_p = [3.0, 4.0]
