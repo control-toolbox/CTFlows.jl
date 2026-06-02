@@ -187,6 +187,21 @@ function VectorField(f;
 end
 
 # =============================================================================
+# Typed constructor — calls struct inner constructor directly
+# =============================================================================
+
+function VectorField(
+    f,
+    ::Type{TD}, ::Type{VD}, ::Type{MD},
+) where {
+    TD <: Traits.TimeDependence,
+    VD <: Traits.VariableDependence,
+    MD <: Traits.AbstractMutabilityTrait,
+}
+    return VectorField{typeof(f), TD, VD, MD}(f)
+end
+
+# =============================================================================
 # Natural call signatures - one per trait combination
 # =============================================================================
 

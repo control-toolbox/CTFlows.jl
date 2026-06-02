@@ -28,6 +28,7 @@ include(joinpath(@__DIR__, "abstract_vector_field.jl"))
 include(joinpath(@__DIR__, "vector_field.jl"))
 include(joinpath(@__DIR__, "abstract_hamiltonian.jl"))
 include(joinpath(@__DIR__, "hamiltonian.jl"))
+include(joinpath(@__DIR__, "abstract_hamiltonian_vector_field.jl"))
 include(joinpath(@__DIR__, "hamiltonian_vector_field.jl"))
 
 # ==============================================================================
@@ -37,6 +38,7 @@ include(joinpath(@__DIR__, "hamiltonian_vector_field.jl"))
 export AbstractVectorField
 export VectorField
 export HamiltonianVectorField
+export AbstractHamiltonianVectorField
 export AbstractHamiltonian
 export Hamiltonian
 
