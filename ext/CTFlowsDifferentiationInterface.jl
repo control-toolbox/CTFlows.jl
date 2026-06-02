@@ -174,7 +174,9 @@ is `false` or when the system does not require cache preparation.
 - [`CTFlows.Differentiation.prepare_cache`](@ref)
 """
 function Differentiation.hamiltonian_gradient(
-    backend::Differentiation.DifferentiationInterface, h, t, x, p, v,
+    backend::Differentiation.DifferentiationInterface, 
+    h::Data.AbstractHamiltonian, 
+    t, x, p, v,
     ::Nothing
 )
     di_backend = Differentiation.ad_backend(backend)
@@ -217,7 +219,9 @@ repeated gradient computation during ODE integration.
 - [`CTFlows.Differentiation.prepare_cache`](@ref)
 """
 function Differentiation.hamiltonian_gradient(
-    backend::Differentiation.DifferentiationInterface, h, t, x, p, v,
+    backend::Differentiation.DifferentiationInterface, 
+    h::Data.AbstractHamiltonian, 
+    t, x, p, v,
     cache::DifferentiationInterfaceCache
 )
     di_backend = Differentiation.ad_backend(backend)
@@ -268,7 +272,9 @@ is `false` or when the system does not require cache preparation.
 - [`CTFlows.Differentiation.prepare_cache`](@ref)
 """
 function Differentiation.variable_gradient(
-    backend::Differentiation.DifferentiationInterface, h, t, x, p, v,
+    backend::Differentiation.DifferentiationInterface, 
+    h::Data.AbstractHamiltonian, 
+    t, x, p, v,
     ::Nothing
 )
     # For Fixed problems (v === nothing), return nothing without calling DI.gradient
@@ -309,7 +315,9 @@ computation during ODE integration.
 - [`CTFlows.Differentiation.prepare_cache`](@ref)
 """
 function Differentiation.variable_gradient(
-    backend::Differentiation.DifferentiationInterface, h, t, x, p, v,
+    backend::Differentiation.DifferentiationInterface, 
+    h::Data.AbstractHamiltonian, 
+    t, x, p, v,
     cache::DifferentiationInterfaceCache
 )
     di_backend = Differentiation.ad_backend(backend)
