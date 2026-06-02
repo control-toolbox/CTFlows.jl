@@ -20,17 +20,27 @@ const FakeHamiltonianNF = Data.Hamiltonian((x, p, v) -> 0.5 * (x[1]^2 + x[2]^2) 
 
 struct FakeADBackend <: Differentiation.AbstractADBackend end
 
-function Differentiation.prepare_cache(backend::FakeADBackend, h, t, x, p, v)
+function Differentiation.prepare_cache(backend::FakeADBackend, h::Data.AbstractHamiltonian, t, x, p, v)
     # Fake cache: just return nothing (no actual preparation)
     return nothing
 end
 
-function Differentiation.hamiltonian_gradient(backend::FakeADBackend, h, t, x, p, v, cache)
+function Differentiation.hamiltonian_gradient(
+    backend::FakeADBackend,
+    h::Data.AbstractHamiltonian,
+    t, x, p, v,
+    cache::Union{Common.AbstractCache, Nothing},
+)
     # Fake gradient: ∂H/∂x = x, ∂H/∂p = p
     return (x, p)
 end
 
-function Differentiation.variable_gradient(backend::FakeADBackend, h, t, x, p, v, cache)
+function Differentiation.variable_gradient(
+    backend::FakeADBackend,
+    h::Data.AbstractHamiltonian,
+    t, x, p, v,
+    cache::Union{Common.AbstractCache, Nothing},
+)
     # Fake variable gradient: ∂H/∂v = zeros (since H doesn't depend on v)
     return zeros(length(v))
 end
