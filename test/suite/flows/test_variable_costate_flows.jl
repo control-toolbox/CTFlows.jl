@@ -47,20 +47,34 @@ Integrators.final_state(r::FakeIntegrationResult) = r.u_final
 # Fake AD backend for linear Hamiltonian: H = sum(p^2) / (2 * sum(v))
 struct FakeVariableHarmonicADBackend <: Differentiation.AbstractADBackend end
 
-function Differentiation.hamiltonian_gradient(backend::FakeVariableHarmonicADBackend, h, t, x, p, v, cache)
+function Differentiation.hamiltonian_gradient(
+    backend::FakeVariableHarmonicADBackend,
+    h::Data.AbstractHamiltonian,
+    t, x, p, v,
+    cache::Union{Common.AbstractCache, Nothing},
+)
     # ∂H/∂x = 0, ∂H/∂p = p / sum(v)
     sv = sum(v)
     return (zero(x), p ./ sv)
 end
 
-function Differentiation.variable_gradient(backend::FakeVariableHarmonicADBackend, h, t, x, p, v, cache)
+function Differentiation.variable_gradient(
+    backend::FakeVariableHarmonicADBackend,
+    h::Data.AbstractHamiltonian,
+    t, x, p, v,
+    cache::Union{Common.AbstractCache, Nothing},
+)
     # ∂H/∂v = -sum(p^2) / (2 * sum(v)^2) * ones(length(v))
     sv = sum(v)
     sp2 = sum(abs2, p)
     return fill(-sp2 / (2 * sv^2), length(v))
 end
 
-function Differentiation.prepare_cache(backend::FakeVariableHarmonicADBackend, h, typical_t, typical_x, typical_p, typical_v)
+function Differentiation.prepare_cache(
+    backend::FakeVariableHarmonicADBackend,
+    h::Data.AbstractHamiltonian,
+    typical_t, typical_x, typical_p, typical_v,
+)
     return nothing
 end
 
