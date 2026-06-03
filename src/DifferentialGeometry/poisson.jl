@@ -257,3 +257,75 @@ function Poisson(
         context  = "Poisson on AbstractHamiltonian",
     ))
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Disambiguator error method for two VectorField operands in Poisson bracket.
+
+This overload resolves the ambiguity between the one-sided error methods when both
+arguments are `AbstractVectorField`. It is always an error; use `ad(X, Y)` instead.
+
+# Throws
+- `Exceptions.IncorrectArgument`: Always thrown with suggestion to use Lie bracket.
+
+See also: [`CTFlows.DifferentialGeometry.ad(X::AbstractVectorField, Y::AbstractVectorField)`](@ref)
+"""
+function Poisson(
+    ::Data.AbstractVectorField, ::Data.AbstractVectorField;
+    ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
+)
+    throw(Exceptions.IncorrectArgument(
+        "Poisson is not defined for AbstractVectorField operands";
+        suggestion = "Use ad(X, Y) for the Lie bracket of VectorFields",
+        context    = "Poisson on AbstractVectorField",
+    ))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Error method for VectorField as first operand in Poisson bracket.
+
+# Throws
+- `Exceptions.IncorrectArgument`: Always thrown with suggestion to use Lie bracket.
+"""
+function Poisson(
+    ::Data.AbstractVectorField, ::Any;
+    ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
+)
+    throw(Exceptions.IncorrectArgument(
+        "Poisson is not defined for AbstractVectorField operands";
+        suggestion = "Use ad(X, Y) for the Lie bracket of VectorFields",
+        context    = "Poisson on AbstractVectorField",
+    ))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Error method for VectorField as second operand in Poisson bracket.
+
+This is a symmetric companion to `Poisson(::AbstractVectorField, ::Any)`, handling the case
+where the second argument is a VectorField and the first is some other type.
+
+# Arguments
+- `::Any`: First operand.
+- `::Data.AbstractVectorField`: VectorField second operand (not allowed in Poisson bracket).
+- `ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided}`: AD backend (unused).
+
+# Throws
+- `Exceptions.IncorrectArgument`: Always thrown with suggestion to use Lie bracket.
+
+See also: [`CTFlows.DifferentialGeometry.ad(X::AbstractVectorField, Y::AbstractVectorField)`](@ref)
+"""
+function Poisson(
+    ::Any, ::Data.AbstractVectorField;
+    ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
+)
+    throw(Exceptions.IncorrectArgument(
+        "Poisson is not defined for AbstractVectorField operands";
+        suggestion = "Use ad(X, Y) for the Lie bracket of VectorFields",
+        context    = "Poisson on AbstractVectorField",
+    ))
+end

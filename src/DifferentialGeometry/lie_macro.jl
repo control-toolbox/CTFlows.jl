@@ -108,17 +108,19 @@ function _check_vd(x, ::Type{VDu}, ::Val{true}) where {VDu}
 end
 
 # =============================================================================
-# Runtime dispatch (KISS — single method each)
+# Runtime dispatch (Level 2 — typed dispatch + fallback for data literals)
 # =============================================================================
 
+const _Bracketable = Union{Function, Data.AbstractVectorField}
+
 """
-Runtime dispatch for Lie bracket macro expansion.
+Runtime dispatch for Lie bracket macro expansion — typed method.
 
 Normalizes operands, checks trait consistency, and calls [`CTFlows.DifferentialGeometry.ad`](@ref).
 
 # Arguments
-- `a`: First operand.
-- `b`: Second operand.
+- `a::_Bracketable`: First operand (Function or AbstractVectorField).
+- `b::_Bracketable`: Second operand (Function or AbstractVectorField).
 - `::Type{TD}`: Time dependence type.
 - `::Type{VD}`: Variable dependence type.
 - `has_aut::Val`: Whether to check time dependence.
@@ -128,20 +130,90 @@ Normalizes operands, checks trait consistency, and calls [`CTFlows.DifferentialG
 # Returns
 - Result of [`CTFlows.DifferentialGeometry.ad`](@ref) call.
 """
-function _lie_mac(a, b, ::Type{TD}, ::Type{VD}, has_aut::Val, has_var::Val, backend) where {TD, VD}
+function _lie_mac(a::_Bracketable, b::_Bracketable,
+                  ::Type{TD}, ::Type{VD}, has_aut::Val, has_var::Val, backend) where {TD, VD}
     _check_td(a, TD, has_aut); _check_td(b, TD, has_aut)
     _check_vd(a, VD, has_var); _check_vd(b, VD, has_var)
     return ad(_as_vf(a, TD, VD), _as_vf(b, TD, VD); ad_backend=backend)
 end
 
 """
-Runtime dispatch for Poisson bracket macro expansion.
+Runtime dispatch for Lie bracket macro expansion — error for two Hamiltonian operands.
+
+Disambiguator overload for the case when both operands are `AbstractHamiltonian`,
+which would otherwise be ambiguous between the two one-sided error overloads.
+
+# Throws
+- `Exceptions.IncorrectArgument`: Always thrown with suggestion to use Poisson bracket.
+"""
+function _lie_mac(::Data.AbstractHamiltonian, ::Data.AbstractHamiltonian,
+                  ::Type, ::Type, ::Val, ::Val, _)
+    throw(Exceptions.IncorrectArgument(
+        "@Lie: AbstractHamiltonian cannot be a Lie bracket operand";
+        suggestion = "Use {H, G} (Poisson bracket) for Hamiltonians",
+        context    = "@Lie macro runtime dispatch",
+    ))
+end
+
+"""
+Runtime dispatch for Lie bracket macro expansion — error for Hamiltonian as first operand.
+
+# Throws
+- `Exceptions.IncorrectArgument`: Always thrown with suggestion to use Poisson bracket.
+"""
+function _lie_mac(::Data.AbstractHamiltonian, ::Any,
+                  ::Type, ::Type, ::Val, ::Val, _)
+    throw(Exceptions.IncorrectArgument(
+        "@Lie: AbstractHamiltonian cannot be a Lie bracket operand";
+        suggestion = "Use {H, G} (Poisson bracket) for Hamiltonians",
+        context    = "@Lie macro runtime dispatch",
+    ))
+end
+
+"""
+Runtime dispatch for Lie bracket macro expansion — error for Hamiltonian as second operand.
+
+# Throws
+- `Exceptions.IncorrectArgument`: Always thrown with suggestion to use Poisson bracket.
+"""
+function _lie_mac(::Any, ::Data.AbstractHamiltonian,
+                  ::Type, ::Type, ::Val, ::Val, _)
+    throw(Exceptions.IncorrectArgument(
+        "@Lie: AbstractHamiltonian cannot be a Lie bracket operand";
+        suggestion = "Use {H, G} (Poisson bracket) for Hamiltonians",
+        context    = "@Lie macro runtime dispatch",
+    ))
+end
+
+"""
+Runtime dispatch for Lie bracket macro expansion — fallback for data literals.
+
+When `[a, b]` contains numeric literals or other non-field data, reconstruct the vector.
+
+# Arguments
+- `a`: First operand (data literal).
+- `b`: Second operand (data literal).
+- `::Type`: Time dependence type (unused).
+- `::Type`: Variable dependence type (unused).
+- `::Val`: Whether to check time dependence (unused).
+- `::Val`: Whether to check variable dependence (unused).
+- `_`: AD backend expression (unused).
+
+# Returns
+- `Vector{Any}`: Reconstructed 2-element vector from the literal operands.
+"""
+_lie_mac(a, b, ::Type, ::Type, ::Val, ::Val, _) = [a, b]
+
+const _Poissonable = Union{Function, Data.AbstractHamiltonian}
+
+"""
+Runtime dispatch for Poisson bracket macro expansion — typed method.
 
 Normalizes operands, checks trait consistency, and calls [`CTFlows.DifferentialGeometry.Poisson`](@ref).
 
 # Arguments
-- `h`: First Hamiltonian operand.
-- `g`: Second Hamiltonian operand.
+- `h::_Poissonable`: First Hamiltonian operand (Function or AbstractHamiltonian).
+- `g::_Poissonable`: Second Hamiltonian operand (Function or AbstractHamiltonian).
 - `::Type{TD}`: Time dependence type.
 - `::Type{VD}`: Variable dependence type.
 - `has_aut::Val`: Whether to check time dependence.
@@ -151,10 +223,59 @@ Normalizes operands, checks trait consistency, and calls [`CTFlows.DifferentialG
 # Returns
 - Result of [`CTFlows.DifferentialGeometry.Poisson`](@ref) call.
 """
-function _poisson_mac(h, g, ::Type{TD}, ::Type{VD}, has_aut::Val, has_var::Val, backend) where {TD, VD}
+function _poisson_mac(h::_Poissonable, g::_Poissonable,
+                      ::Type{TD}, ::Type{VD}, has_aut::Val, has_var::Val, backend) where {TD, VD}
     _check_td(h, TD, has_aut); _check_td(g, TD, has_aut)
     _check_vd(h, VD, has_var); _check_vd(g, VD, has_var)
     return Poisson(_as_ham(h, TD, VD), _as_ham(g, TD, VD); ad_backend=backend)
+end
+
+"""
+Runtime dispatch for Poisson bracket macro expansion — error for two VectorField operands.
+
+Disambiguator overload for the case when both operands are `AbstractVectorField`,
+which would otherwise be ambiguous between the two one-sided error overloads.
+
+# Throws
+- `Exceptions.IncorrectArgument`: Always thrown with suggestion to use Lie bracket.
+"""
+function _poisson_mac(::Data.AbstractVectorField, ::Data.AbstractVectorField,
+                      ::Type, ::Type, ::Val, ::Val, _)
+    throw(Exceptions.IncorrectArgument(
+        "@Lie: AbstractVectorField cannot be a Poisson bracket operand";
+        suggestion = "Use [X, Y] (Lie bracket) for VectorFields",
+        context    = "@Lie macro runtime dispatch",
+    ))
+end
+
+"""
+Runtime dispatch for Poisson bracket macro expansion — error for VectorField as first operand.
+
+# Throws
+- `Exceptions.IncorrectArgument`: Always thrown with suggestion to use Lie bracket.
+"""
+function _poisson_mac(::Data.AbstractVectorField, ::Any,
+                      ::Type, ::Type, ::Val, ::Val, _)
+    throw(Exceptions.IncorrectArgument(
+        "@Lie: AbstractVectorField cannot be a Poisson bracket operand";
+        suggestion = "Use [X, Y] (Lie bracket) for VectorFields",
+        context    = "@Lie macro runtime dispatch",
+    ))
+end
+
+"""
+Runtime dispatch for Poisson bracket macro expansion — error for VectorField as second operand.
+
+# Throws
+- `Exceptions.IncorrectArgument`: Always thrown with suggestion to use Lie bracket.
+"""
+function _poisson_mac(::Any, ::Data.AbstractVectorField,
+                      ::Type, ::Type, ::Val, ::Val, _)
+    throw(Exceptions.IncorrectArgument(
+        "@Lie: AbstractVectorField cannot be a Poisson bracket operand";
+        suggestion = "Use [X, Y] (Lie bracket) for VectorFields",
+        context    = "@Lie macro runtime dispatch",
+    ))
 end
 
 # =============================================================================
@@ -209,24 +330,6 @@ function __parse_lie_opts(pfx, epfx, args...)
     return (TD=TD, VD=VD, has_aut=has_aut, has_var=has_var, backend=backend_expr), nothing
 end
 
-"""
-Check if an expression contains both Lie and Poisson brackets.
-
-# Arguments
-- `expr`: Expression to check.
-
-# Returns
-- `Bool`: `true` if both `[...]` and `{...}` are present.
-"""
-function __has_mixed_brackets(expr)
-    has_lie = Ref(false); has_poisson = Ref(false)
-    postwalk(expr) do e
-        @capture(e, [_,_]) && (has_lie[]     = true)
-        @capture(e, {_,_}) && (has_poisson[] = true)
-        e
-    end
-    return has_lie[] && has_poisson[]
-end
 
 """
 Transform bracket expressions into macro dispatch calls.
@@ -322,12 +425,5 @@ macro Lie(expr::Expr, args...)
     epfx = e_prefix()
     opts, err = __parse_lie_opts(pfx, epfx, args...)
     err !== nothing && return esc(err)
-    if __has_mixed_brackets(expr)
-        msg = "@Lie: cannot mix Lie brackets [...] and Poisson brackets {...}"
-        sug = "use only [...] for Lie brackets, or only {...} for Poisson brackets"
-        ctx = "@Lie macro expression validation"
-        return esc(:(throw($epfx.Exceptions.IncorrectArgument(
-            $msg; suggestion=$sug, context=$ctx))))
-    end
     return esc(__transform_brackets(expr, opts, pfx))
 end

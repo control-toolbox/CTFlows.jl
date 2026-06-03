@@ -587,14 +587,68 @@ function test_macro_dg()
     end
 
     # =========================================================================
-    Test.@testset "error — mixed Lie and Poisson brackets" verbose=VERBOSE showtiming=SHOWTIMING begin
-        f = (x, p) -> x[1]*p[1]
-        g = (x, p) -> x[2]*p[2]
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie [f, g] + {f, g}
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie [f, g] * {f, g}
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie [f, g] - {f, g}
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie ([f, g] + {f, g}) + [f, g]
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie {f, g} + ([f, g] + {f, g})
+    Test.@testset "lie macro — literal vector arguments in call, VectorFields" verbose=VERBOSE showtiming=SHOWTIMING begin
+        F0 = _VF(x -> [x[2], -x[1]], Traits.Autonomous, Traits.Fixed)
+        F1 = _VF(x -> [-x[2], x[1]], Traits.Autonomous, Traits.Fixed)
+        ref = DifferentialGeometry.ad(F0, F1)
+        # 2-element literal point (former source of the bug)
+        Test.@test (DifferentialGeometry.@Lie [F0, F1]([1.0, 2.0])) ≈ ref([1.0, 2.0]) atol=1e-6
+        # 3-element literal point (already working, regression guard)
+        F2 = _VF(x -> [x[2], x[3], -x[1]], Traits.Autonomous, Traits.Fixed)
+        F3 = _VF(x -> [x[3], x[1], -x[2]], Traits.Autonomous, Traits.Fixed)
+        ref3 = DifferentialGeometry.ad(F2, F3)
+        Test.@test (DifferentialGeometry.@Lie [F2, F3]([1.0, 2.0, 3.0])) ≈ ref3([1.0, 2.0, 3.0]) atol=1e-6
+    end
+
+    # =========================================================================
+    Test.@testset "poisson macro — literal vector arguments in call, Hamiltonians" verbose=VERBOSE showtiming=SHOWTIMING begin
+        H0 = _H((x, p) -> 0.5*(2x[1]^2 + x[2]^2 + p[1]^2), Traits.Autonomous, Traits.Fixed)
+        H1 = _H((x, p) -> 0.5*(3x[1]^2 + x[2]^2 + p[2]^2), Traits.Autonomous, Traits.Fixed)
+        ref = DifferentialGeometry.Poisson(H0, H1)
+        # Two 2-element literal arguments (former source of the bug)
+        Test.@test (DifferentialGeometry.@Lie {H0, H1}([1.0, 2.0], [2.0, 1.0])) ≈ ref([1.0, 2.0], [2.0, 1.0]) atol=1e-6
+    end
+
+    # =========================================================================
+    Test.@testset "error — Hamiltonian in Lie bracket" verbose=VERBOSE showtiming=SHOWTIMING begin
+        H = _H((x, p) -> p[1]*x[1], Traits.Autonomous, Traits.Fixed)
+        F = _VF(x -> [x[2], -x[1]], Traits.Autonomous, Traits.Fixed)
+        # Both Hamiltonians
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie [H, H]
+        # Mixed: Hamiltonian first, VectorField second
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie [H, F]
+        # Mixed: VectorField first, Hamiltonian second
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie [F, H]
+    end
+
+    # =========================================================================
+    Test.@testset "error — VectorField in Poisson bracket" verbose=VERBOSE showtiming=SHOWTIMING begin
+        F = _VF(x -> [x[2], -x[1]], Traits.Autonomous, Traits.Fixed)
+        H = _H((x, p) -> p[1]*x[1], Traits.Autonomous, Traits.Fixed)
+        # Both VectorFields
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie {F, F}
+        # Mixed: VectorField first, Hamiltonian second
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie {F, H}
+        # Mixed: Hamiltonian first, VectorField second
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie {H, F}
+    end
+
+    # =========================================================================
+    Test.@testset "error — direct ad on Hamiltonians" verbose=VERBOSE showtiming=SHOWTIMING begin
+        H = _H((x, p) -> p[1]*x[1], Traits.Autonomous, Traits.Fixed)
+        F = _VF(x -> [x[2], -x[1]], Traits.Autonomous, Traits.Fixed)
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.ad(H, H)
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.ad(H, F)
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.ad(F, H)
+    end
+
+    # =========================================================================
+    Test.@testset "error — direct Poisson on VectorFields" verbose=VERBOSE showtiming=SHOWTIMING begin
+        F = _VF(x -> [x[2], -x[1]], Traits.Autonomous, Traits.Fixed)
+        H = _H((x, p) -> p[1]*x[1], Traits.Autonomous, Traits.Fixed)
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.Poisson(F, F)
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.Poisson(F, H)
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.Poisson(H, F)
     end
 
     # =========================================================================

@@ -187,3 +187,75 @@ function ad(
         context  = "ad on AbstractVectorField",
     ))
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Disambiguator error method for two Hamiltonian operands in Lie bracket.
+
+This overload resolves the ambiguity between the one-sided error methods when both
+arguments are `AbstractHamiltonian`. It is always an error; use `Poisson(H, G)` instead.
+
+# Throws
+- `Exceptions.IncorrectArgument`: Always thrown with suggestion to use Poisson bracket.
+
+See also: [`CTFlows.DifferentialGeometry.Poisson(H::AbstractHamiltonian, G::AbstractHamiltonian)`](@ref)
+"""
+function ad(
+    ::Data.AbstractHamiltonian, ::Data.AbstractHamiltonian;
+    ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
+)
+    throw(Exceptions.IncorrectArgument(
+        "ad is not defined for AbstractHamiltonian operands";
+        suggestion = "Use Poisson(H, G) for the Poisson bracket of Hamiltonians",
+        context    = "ad on AbstractHamiltonian",
+    ))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Error method for Hamiltonian as first operand in Lie bracket.
+
+# Throws
+- `Exceptions.IncorrectArgument`: Always thrown with suggestion to use Poisson bracket.
+"""
+function ad(
+    ::Data.AbstractHamiltonian, ::Any;
+    ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
+)
+    throw(Exceptions.IncorrectArgument(
+        "ad is not defined for AbstractHamiltonian operands";
+        suggestion = "Use Poisson(H, G) for the Poisson bracket of Hamiltonians",
+        context    = "ad on AbstractHamiltonian",
+    ))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Error method for Hamiltonian as second operand in Lie bracket.
+
+This is a symmetric companion to `ad(::AbstractHamiltonian, ::Any)`, handling the case
+where the second argument is a Hamiltonian and the first is some other type.
+
+# Arguments
+- `::Any`: First operand.
+- `::Data.AbstractHamiltonian`: Hamiltonian second operand (not allowed in Lie bracket).
+- `ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided}`: AD backend (unused).
+
+# Throws
+- `Exceptions.IncorrectArgument`: Always thrown with suggestion to use Poisson bracket.
+
+See also: [`CTFlows.DifferentialGeometry.Poisson(H::AbstractHamiltonian, G::AbstractHamiltonian)`](@ref)
+"""
+function ad(
+    ::Any, ::Data.AbstractHamiltonian;
+    ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
+)
+    throw(Exceptions.IncorrectArgument(
+        "ad is not defined for AbstractHamiltonian operands";
+        suggestion = "Use Poisson(H, G) for the Poisson bracket of Hamiltonians",
+        context    = "ad on AbstractHamiltonian",
+    ))
+end
