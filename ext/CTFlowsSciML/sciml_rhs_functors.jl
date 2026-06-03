@@ -126,12 +126,44 @@ end
 # Display helpers
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Return a human-readable label describing the RHS conversion strategy.
+
+# Arguments
+- `r::IPSciMLIpRHS`: In-place SciML → in-place interface functor.
+- `r::OoPSciMLIpRHS`: In-place SciML → out-of-place interface functor.
+- `r::OoPSciMLIpFinalizeRHS`: In-place SciML → out-of-place interface with type conversion functor.
+- `r::IPSciMLOoPRHS`: Out-of-place SciML → in-place interface functor.
+- `r::OoPSciMLOoPRHS`: Out-of-place SciML → out-of-place interface functor.
+
+# Returns
+- `String`: A descriptive label of the conversion strategy.
+
+# Notes
+- Internal helper used for display purposes in `Base.show` methods.
+- Labels describe both the wrapped SciML function's interface and the provided interface.
+
+See also: [`_AnySciMLRHS`](@ref).
+"""
 _rhs_sciml_label(::IPSciMLIpRHS) = "in-place SciML → in-place interface"
 _rhs_sciml_label(::OoPSciMLIpRHS) = "in-place SciML → out-of-place interface"
 _rhs_sciml_label(::OoPSciMLIpFinalizeRHS) = "in-place SciML → out-of-place interface + finalize"
 _rhs_sciml_label(::IPSciMLOoPRHS) = "out-of-place SciML → in-place interface"
 _rhs_sciml_label(::OoPSciMLOoPRHS) = "out-of-place SciML → out-of-place interface"
 
+"""
+$(TYPEDSIGNATURES)
+
+Union type of all SciML RHS functors.
+
+# Notes
+- Internal type alias used for method dispatch on display methods.
+- Covers all five conversion strategies between in-place and out-of-place interfaces.
+
+See also: [`_rhs_sciml_label`](@ref), [`IPSciMLIpRHS`](@ref), [`OoPSciMLIpRHS`](@ref), [`OoPSciMLIpFinalizeRHS`](@ref), [`IPSciMLOoPRHS`](@ref), [`OoPSciMLOoPRHS`](@ref).
+"""
 const _AnySciMLRHS = Union{IPSciMLIpRHS, OoPSciMLIpRHS, OoPSciMLIpFinalizeRHS,
                            IPSciMLOoPRHS, OoPSciMLOoPRHS}
 

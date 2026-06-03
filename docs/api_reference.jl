@@ -6,9 +6,9 @@
 # the build.
 #
 # The per-submodule file lists below mirror the actual source tree under
-# `src/<Submodule>/`. Keep them in sync when files are added/removed/renamed,
-# otherwise docstrings silently drop out of the reference and internal
-# `@ref` links break.
+# `src/<Submodule>/` and `ext/`. Keep them in sync when files are
+# added/removed/renamed, otherwise docstrings silently drop out of the
+# reference and internal `@ref` links break.
 # ==============================================================================
 
 """
@@ -22,7 +22,14 @@ function generate_api_reference(src_dir::String, ext_dir::String)
     src(files...) = [abspath(joinpath(src_dir, f)) for f in files]
     ext(files...) = [abspath(joinpath(ext_dir, f)) for f in files]
 
-    EXCLUDE_SYMBOLS = Symbol[:include, :eval, :SciMLFunctionSystem]
+    # Base exclusion list for all core modules
+    EXCLUDE_BASE = Symbol[:include, :eval]
+    # Systems exclusion: also hide SciMLFunctionSystem (defined in CTFlowsSciML extension)
+    EXCLUDE_SYSTEMS = Symbol[:include, :eval, :SciMLFunctionSystem]
+    # Extension-specific exclusions for undocumented private implementation symbols
+    EXCLUDE_DI     = Symbol[:include, :eval]
+    EXCLUDE_PLOTS  = Symbol[:include, :eval]
+    EXCLUDE_SCIML  = Symbol[:include, :eval]
 
     pages = [
         # ───────────────────────────────────────────────────────────────────
@@ -44,7 +51,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                     joinpath("Traits", "variable_dependence.jl"),
                 ),
             ],
-            exclude=EXCLUDE_SYMBOLS,
+            exclude=EXCLUDE_BASE,
             public=true,
             private=true,
             title="Traits",
@@ -66,7 +73,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                     joinpath("Configs", "show.jl"),
                 ),
             ],
-            exclude=EXCLUDE_SYMBOLS,
+            exclude=EXCLUDE_BASE,
             public=true,
             private=true,
             title="Configs",
@@ -89,7 +96,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                     joinpath("Common", "ode_parameters.jl"),
                 ),
             ],
-            exclude=EXCLUDE_SYMBOLS,
+            exclude=EXCLUDE_BASE,
             public=true,
             private=true,
             title="Common",
@@ -113,7 +120,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                     joinpath("Data", "helpers.jl"),
                 ),
             ],
-            exclude=EXCLUDE_SYMBOLS,
+            exclude=EXCLUDE_BASE,
             public=true,
             private=true,
             title="Data",
@@ -133,7 +140,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                     joinpath("Differentiation", "differentiation_interface.jl"),
                 ),
             ],
-            exclude=EXCLUDE_SYMBOLS,
+            exclude=EXCLUDE_BASE,
             public=true,
             private=true,
             title="Differentiation",
@@ -159,7 +166,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                     joinpath("DifferentialGeometry", "lie_macro.jl"),
                 ),
             ],
-            exclude=EXCLUDE_SYMBOLS,
+            exclude=EXCLUDE_BASE,
             public=true,
             private=true,
             title="DifferentialGeometry",
@@ -185,7 +192,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                     joinpath("Systems", "hamiltonian_vector_field_system.jl"),
                 ),
             ],
-            exclude=EXCLUDE_SYMBOLS,
+            exclude=EXCLUDE_SYSTEMS,
             public=true,
             private=true,
             title="Systems",
@@ -206,7 +213,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                     joinpath("Integrators", "sciml.jl"),
                 ),
             ],
-            exclude=EXCLUDE_SYMBOLS,
+            exclude=EXCLUDE_BASE,
             public=true,
             private=true,
             title="Integrators",
@@ -229,7 +236,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                     joinpath("Flows", "registry.jl"),
                 ),
             ],
-            exclude=EXCLUDE_SYMBOLS,
+            exclude=EXCLUDE_BASE,
             public=true,
             private=true,
             title="Flows",
@@ -249,7 +256,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                     joinpath("Solutions", "hamiltonian_vector_field_solution.jl"),
                 ),
             ],
-            exclude=EXCLUDE_SYMBOLS,
+            exclude=EXCLUDE_BASE,
             public=true,
             private=true,
             title="Solutions",
@@ -269,7 +276,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                     joinpath("MultiPhase", "multiphase_flow.jl"),
                 ),
             ],
-            exclude=EXCLUDE_SYMBOLS,
+            exclude=EXCLUDE_BASE,
             public=true,
             private=true,
             title="MultiPhase",
@@ -279,24 +286,109 @@ function generate_api_reference(src_dir::String, ext_dir::String)
     ]
 
     # ───────────────────────────────────────────────────────────────────
-    # Extension: ForwardDiff
+    # Extensions
     # ───────────────────────────────────────────────────────────────────
+
     CTFlowsForwardDiff = Base.get_extension(CTFlows, :CTFlowsForwardDiff)
     if !isnothing(CTFlowsForwardDiff)
-        push!(
-            pages,
-            CTBase.automatic_reference_documentation(;
-                subdirectory="api",
-                primary_modules=[CTFlowsForwardDiff => ext("CTFlowsForwardDiff.jl")],
-                external_modules_to_document=[CTFlows],
-                exclude=EXCLUDE_SYMBOLS,
-                public=true,
-                private=true,
-                title="ForwardDiff Extension",
-                title_in_menu="ForwardDiff",
-                filename="ext_forwarddiff",
-            ),
-        )
+        push!(pages, CTBase.automatic_reference_documentation(;
+            subdirectory="api",
+            primary_modules=[CTFlowsForwardDiff => ext("CTFlowsForwardDiff.jl")],
+            external_modules_to_document=[CTFlows],
+            exclude=EXCLUDE_BASE,
+            public=true,
+            private=true,
+            title="ForwardDiff Extension",
+            title_in_menu="ForwardDiff",
+            filename="ext_forwarddiff",
+        ))
+    end
+
+    CTFlowsDifferentiationInterface = Base.get_extension(CTFlows, :CTFlowsDifferentiationInterface)
+    if !isnothing(CTFlowsDifferentiationInterface)
+        push!(pages, CTBase.automatic_reference_documentation(;
+            subdirectory="api",
+            primary_modules=[CTFlowsDifferentiationInterface => ext("CTFlowsDifferentiationInterface.jl")],
+            external_modules_to_document=[CTFlows],
+            exclude=EXCLUDE_DI,
+            public=true,
+            private=true,
+            title="DifferentiationInterface Extension",
+            title_in_menu="DifferentiationInterface",
+            filename="ext_differentiation_interface",
+        ))
+    end
+
+    CTFlowsOrdinaryDiffEqTsit5 = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5)
+    if !isnothing(CTFlowsOrdinaryDiffEqTsit5)
+        push!(pages, CTBase.automatic_reference_documentation(;
+            subdirectory="api",
+            primary_modules=[CTFlowsOrdinaryDiffEqTsit5 => ext("CTFlowsOrdinaryDiffEqTsit5.jl")],
+            external_modules_to_document=[CTFlows],
+            exclude=EXCLUDE_BASE,
+            public=true,
+            private=true,
+            title="OrdinaryDiffEqTsit5 Extension",
+            title_in_menu="OrdinaryDiffEqTsit5",
+            filename="ext_ordinary_diffeq_tsit5",
+        ))
+    end
+
+    CTFlowsPlots = Base.get_extension(CTFlows, :CTFlowsPlots)
+    if !isnothing(CTFlowsPlots)
+        push!(pages, CTBase.automatic_reference_documentation(;
+            subdirectory="api",
+            primary_modules=[CTFlowsPlots => ext("CTFlowsPlots.jl")],
+            external_modules_to_document=[CTFlows],
+            exclude=EXCLUDE_PLOTS,
+            public=true,
+            private=true,
+            title="Plots Extension",
+            title_in_menu="Plots",
+            filename="ext_plots",
+        ))
+    end
+
+    CTFlowsSciML = Base.get_extension(CTFlows, :CTFlowsSciML)
+    if !isnothing(CTFlowsSciML)
+        push!(pages, CTBase.automatic_reference_documentation(;
+            subdirectory="api",
+            primary_modules=[
+                CTFlowsSciML => ext(
+                    joinpath("CTFlowsSciML", "CTFlowsSciML.jl"),
+                    joinpath("CTFlowsSciML", "sciml_function_system.jl"),
+                    joinpath("CTFlowsSciML", "sciml_rhs_functors.jl"),
+                    joinpath("CTFlowsSciML", "build_and_solve.jl"),
+                    joinpath("CTFlowsSciML", "flow_constructors.jl"),
+                    joinpath("CTFlowsSciML", "integration_result.jl"),
+                    joinpath("CTFlowsSciML", "problem_flow.jl"),
+                    joinpath("CTFlowsSciML", "real_norm.jl"),
+                    joinpath("CTFlowsSciML", "strategies.jl"),
+                ),
+            ],
+            external_modules_to_document=[CTFlows],
+            exclude=EXCLUDE_SCIML,
+            public=true,
+            private=true,
+            title="SciML Extension",
+            title_in_menu="SciML",
+            filename="ext_sciml",
+        ))
+    end
+
+    CTFlowsStaticArrays = Base.get_extension(CTFlows, :CTFlowsStaticArrays)
+    if !isnothing(CTFlowsStaticArrays)
+        push!(pages, CTBase.automatic_reference_documentation(;
+            subdirectory="api",
+            primary_modules=[CTFlowsStaticArrays => ext("CTFlowsStaticArrays.jl")],
+            external_modules_to_document=[CTFlows],
+            exclude=EXCLUDE_BASE,
+            public=true,
+            private=true,
+            title="StaticArrays Extension",
+            title_in_menu="StaticArrays",
+            filename="ext_static_arrays",
+        ))
     end
 
     return pages

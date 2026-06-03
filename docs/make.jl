@@ -21,6 +21,16 @@ using DifferentiationInterface
 using OrdinaryDiffEqTsit5
 using Plots
 using SciMLBase, DiffEqBase
+using StaticArrays
+
+# Make extension modules available in Main so that @docs blocks can resolve
+# qualified bindings like CTFlowsSciML.SciMLFunctionSystem.
+for _ext_sym in (:CTFlowsForwardDiff, :CTFlowsDifferentiationInterface,
+                 :CTFlowsOrdinaryDiffEqTsit5, :CTFlowsPlots,
+                 :CTFlowsSciML, :CTFlowsStaticArrays)
+    _m = Base.get_extension(CTFlows, _ext_sym)
+    isnothing(_m) || @eval Main const $_ext_sym = $_m
+end
 
 #
 links = InterLinks(

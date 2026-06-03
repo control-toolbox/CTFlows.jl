@@ -17,7 +17,36 @@ using Plots: Plots
 # Default font settings for plots
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Default font for plot titles in the CTFlowsPlots extension.
+
+# Returns
+- A Plots font object with size 10 and the default font family.
+
+# Notes
+- Internal constant used by plotting methods to set consistent title fonts.
+- Applied via the `titlefont` keyword argument in `Plots.plot` and `Plots.plot!`.
+
+See also: [`_PLOT_LABEL_FONT_SIZE`](@ref).
+"""
 const _PLOT_TITLE_FONT = Plots.font(10, Plots.default(:fontfamily))
+
+"""
+$(TYPEDSIGNATURES)
+
+Default font size for axis labels in the CTFlowsPlots extension.
+
+# Returns
+- `10`: The font size in points.
+
+# Notes
+- Internal constant used by plotting methods to set consistent label font sizes.
+- Applied via the `xguidefontsize` and `yguidefontsize` keyword arguments in `Plots.plot` and `Plots.plot!`.
+
+See also: [`_PLOT_TITLE_FONT`](@ref).
+"""
 const _PLOT_LABEL_FONT_SIZE = 10
 
 # =============================================================================

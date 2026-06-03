@@ -52,10 +52,45 @@ end
 # ==============================================================================
 # Differentiation.prepare_cache — cache preparation for DifferentiationInterface
 # ==============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the appropriate DifferentiationInterface preparation function for scalar types.
+
+# Arguments
+- `::Type{<:Number}`: A scalar type.
+
+# Returns
+- `DI.prepare_derivative`: The preparation function for scalar derivatives.
+
+# Notes
+- Internal helper used by `Differentiation.prepare_cache`.
+- Dispatches to `DI.prepare_derivative` for scalar types.
+
+See also: [`CTFlows.Differentiation.prepare_cache`](@ref), [`derivator`](@ref).
+"""
 function preparator(::Type{<:Number})
     return DI.prepare_derivative
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the appropriate DifferentiationInterface preparation function for array types.
+
+# Arguments
+- `::Type{<:AbstractArray}`: An array type.
+
+# Returns
+- `DI.prepare_gradient`: The preparation function for array gradients.
+
+# Notes
+- Internal helper used by `Differentiation.prepare_cache`.
+- Dispatches to `DI.prepare_gradient` for array types.
+
+See also: [`CTFlows.Differentiation.prepare_cache`](@ref), [`derivator`](@ref).
+"""
 function preparator(::Type{<:AbstractArray})
     return DI.prepare_gradient
 end
@@ -139,10 +174,45 @@ end
 # ==============================================================================
 # Differentiation.hamiltonian_gradient — with/without cache
 # ==============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the appropriate DifferentiationInterface computation function for scalar types.
+
+# Arguments
+- `::Type{<:Number}`: A scalar type.
+
+# Returns
+- `DI.derivative`: The derivative computation function for scalars.
+
+# Notes
+- Internal helper used by gradient computation methods.
+- Dispatches to `DI.derivative` for scalar types.
+
+See also: [`CTFlows.Differentiation.hamiltonian_gradient`](@ref), [`CTFlows.Differentiation.variable_gradient`](@ref), [`preparator`](@ref).
+"""
 function derivator(::Type{<:Number})
     return DI.derivative
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the appropriate DifferentiationInterface computation function for array types.
+
+# Arguments
+- `::Type{<:AbstractArray}`: An array type.
+
+# Returns
+- `DI.gradient`: The gradient computation function for arrays.
+
+# Notes
+- Internal helper used by gradient computation methods.
+- Dispatches to `DI.gradient` for array types.
+
+See also: [`CTFlows.Differentiation.hamiltonian_gradient`](@ref), [`CTFlows.Differentiation.variable_gradient`](@ref), [`preparator`](@ref).
+"""
 function derivator(::Type{<:AbstractArray})
     return DI.gradient
 end
