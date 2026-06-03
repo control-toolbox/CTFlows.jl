@@ -94,7 +94,7 @@ x.(0.0:0.1:1.0)   # broadcast over time grid
   `state(sol)`, `costate(sol)`, `control(sol)` when extended to Hamiltonian systems.
 - No allocation occurs — returns `sol` directly.
 
-See also: [`CTFlows.Solutions.times`](@ref), [`CTFlows.Solutions.evaluate_at`](@ref), [`CTFlows.Solutions.time_grid`](@ref).
+See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Integrators.evaluate_at`](@ref), [`CTFlows.Solutions.time_grid`](@ref).
 """
 function state(sol::VectorFieldSolution)
     return sol
@@ -127,7 +127,7 @@ tg = time_grid(sol)  # same as times(sol)
 - Use `time_grid` when "grid" terminology is clearer in context.
 - Use `times` for brevity in everyday use.
 
-See also: [`CTFlows.Solutions.times`](@ref), [`CTFlows.Solutions.state`](@ref).
+See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Solutions.state`](@ref).
 """
 function time_grid(sol::VectorFieldSolution)
     return Integrators.times(sol)
@@ -145,7 +145,7 @@ Evaluate the solution at a given time by delegating to the integration result.
 # Returns
 - The solution state at time `t`.
 
-See also: [`CTFlows.Solutions.evaluate_at`](@ref), [`CTFlows.Solutions.times`](@ref).
+See also: [`CTFlows.Integrators.evaluate_at`](@ref), [`CTFlows.Integrators.times`](@ref).
 """
 function (sol::VectorFieldSolution)(t::Real)
     return Integrators.evaluate_at(sol.result, t)
@@ -162,7 +162,7 @@ Return the final state from the solution by delegating to the integration result
 # Returns
 - The final state from the integration result.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.final_state`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Integrators.final_state`](@ref).
 """
 function Integrators.final_state(sol::VectorFieldSolution)
     return Integrators.final_state(sol.result)

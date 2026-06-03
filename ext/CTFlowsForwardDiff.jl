@@ -1,3 +1,5 @@
+module CTFlowsForwardDiff
+
 """
     CTFlowsForwardDiff
 
@@ -10,7 +12,7 @@ This extension adds:
 
 These functions extend the fallback implementations in `CTFlows.Common` to support ForwardDiff dual numbers.
 """
-module CTFlowsForwardDiff
+CTFlowsForwardDiff
 
 import DocStringExtensions: TYPEDSIGNATURES
 import ForwardDiff

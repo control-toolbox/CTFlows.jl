@@ -391,7 +391,7 @@ Hamiltonian overload to compute the vector field via automatic differentiation.
 # Notes
 - This overload uses the AD backend stored in `sys.backend` for gradient computation.
 - The `inplace` parameter controls whether the returned closure writes results in-place.
-- Delegates to [`CTFlows.Systems.hamiltonian_vector_field(h::Data.Hamiltonian; ...)`](@ref).
+- Delegates to [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 
 See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Data.Hamiltonian`](@ref), [`CTFlows.Differentiation.AbstractADBackend`](@ref)
 """

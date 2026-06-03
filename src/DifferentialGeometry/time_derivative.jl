@@ -23,7 +23,7 @@ df_dt = ∂ₜ(f)
 df_dt(2.0, [1.0, 3.0])  # Returns 1.0
 ```
 
-See also: [`CTFlows.DifferentialGeometry.∂ₜ(X::AbstractVectorField)`](@ref), [`CTFlows.DifferentialGeometry.∂ₜ(H::AbstractHamiltonian)`](@ref)
+See also: [`CTFlows.DifferentialGeometry.∂ₜ`](@ref)
 """
 function ∂ₜ(
     f::Function;
@@ -63,7 +63,7 @@ dX_dt = ∂ₜ(X)
 dX_dt(2.0, [1.0], [0.5])  # Returns 0.5
 ```
 
-See also: [`CTFlows.DifferentialGeometry.∂ₜ(X::AbstractVectorField)`](@ref), [`CTFlows.DifferentialGeometry.∂ₜ(H::AbstractHamiltonian)`](@ref)
+See also: [`CTFlows.DifferentialGeometry.∂ₜ`](@ref)
 """
 function ∂ₜ(
     X::Data.AbstractHamiltonianVectorField{TD, VD, MD};
@@ -124,7 +124,7 @@ dX_dt = ∂ₜ(X)
 dX_dt(2.0, [1.0, 2.0])  # Returns [1.0, 2.0]
 ```
 
-See also: [`CTFlows.DifferentialGeometry.∂ₜ(X::AbstractHamiltonianVectorField)`](@ref), [`CTFlows.DifferentialGeometry.∂ₜ(H::AbstractHamiltonian)`](@ref)
+See also: [`CTFlows.DifferentialGeometry.∂ₜ`](@ref)
 """
 function ∂ₜ(
     X::Data.AbstractVectorField{TD, VD, MD};
@@ -182,7 +182,7 @@ dH_dt = ∂ₜ(H)
 dH_dt(2.0, [1.0], [0.5])  # Returns 0.5
 ```
 
-See also: [`CTFlows.DifferentialGeometry.∂ₜ(X::AbstractVectorField)`](@ref), [`CTFlows.DifferentialGeometry.∂ₜ(X::AbstractHamiltonianVectorField)`](@ref)
+See also: [`CTFlows.DifferentialGeometry.∂ₜ`](@ref)
 """
 function ∂ₜ(
     H::Data.AbstractHamiltonian{TD, VD};

@@ -188,7 +188,7 @@ if `variable_dependence(obj)` is `NonFixed`.
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): If the object does not support variable-dependence queries.
 - [`CTBase.Exceptions.NotImplemented`](@extref): If `variable_dependence` is not implemented for the object type.
 
-See also: [`CTFlows.Traits.is_variable`](@ref), [`CTFlows.Traits.VariableDependence`](@ref).
+See also: `is_variable`, [`CTFlows.Traits.VariableDependence`](@ref).
 """
 function OCP.has_variable(obj::Any)
     has_variable_dependence_trait(obj)

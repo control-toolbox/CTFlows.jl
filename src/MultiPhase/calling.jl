@@ -235,7 +235,7 @@ Extract the final state from a segment result for state flows.
 # Returns
 - Final state from the segment.
 
-See also: [`CTFlows.Solutions.final_state`](@ref).
+See also: [`CTFlows.Integrators.final_state`]().
 """
 function _extract_final_state(::MultiPhaseStateFlow, segment, current_state)
     return Integrators.final_state(segment)
@@ -254,7 +254,7 @@ Extract the final state and costate from a segment result for Hamiltonian flows.
 # Returns
 - Tuple of (final_state, final_costate) from the segment.
 
-See also: [`CTFlows.Solutions.final_state`](@ref).
+See also: [`CTFlows.Integrators.final_state`]().
 """
 function _extract_final_state(::MultiPhaseHamiltonianFlow, segment, current_state)
     final = Integrators.final_state(segment)

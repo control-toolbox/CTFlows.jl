@@ -93,7 +93,7 @@ Z = ad(X, Y)
 Z([1.0, 2.0])  # Returns [0.0, 0.0]
 ```
 
-See also: [`CTFlows.DifferentialGeometry.ad(X::Function, foo::Function)`](@ref), [`CTFlows.DifferentialGeometry.ad(X::AbstractVectorField, f::Function)`](@ref)
+See also: [`CTFlows.DifferentialGeometry.ad`](@ref)
 """
 function ad(
     X::Data.AbstractVectorField{TD, VD, MDX},
@@ -140,7 +140,7 @@ L = ad(X, f)
 L([1.0, 2.0])  # Returns 0.0
 ```
 
-See also: [`CTFlows.DifferentialGeometry.ad(X::Function, foo::Function)`](@ref), [`CTFlows.DifferentialGeometry.ad(X::AbstractVectorField, Y::AbstractVectorField)`](@ref)
+See also: [`CTFlows.DifferentialGeometry.ad`](@ref)
 """
 function ad(
     X::Data.AbstractVectorField{TD, VD, MDX},
@@ -173,7 +173,7 @@ dependence types, which is not allowed for the Lie bracket operation.
 This is a fallback error method that provides a clear error message when the types do not
 match. Use the matching TD/VD version for valid operations.
 
-See also: [`CTFlows.DifferentialGeometry.ad(X::AbstractVectorField{TD, VD}, Y::AbstractVectorField{TD, VD})`](@ref)
+See also: [`CTFlows.DifferentialGeometry.ad`](@ref)
 """
 function ad(
     X::Data.AbstractVectorField{TD1, VD1, MDX},
@@ -199,7 +199,7 @@ arguments are `AbstractHamiltonian`. It is always an error; use `Poisson(H, G)` 
 # Throws
 - `Exceptions.IncorrectArgument`: Always thrown with suggestion to use Poisson bracket.
 
-See also: [`CTFlows.DifferentialGeometry.Poisson(H::AbstractHamiltonian, G::AbstractHamiltonian)`](@ref)
+See also: [`CTFlows.DifferentialGeometry.Poisson`](@ref)
 """
 function ad(
     ::Data.AbstractHamiltonian, ::Data.AbstractHamiltonian;
@@ -247,7 +247,7 @@ where the second argument is a Hamiltonian and the first is some other type.
 # Throws
 - `Exceptions.IncorrectArgument`: Always thrown with suggestion to use Poisson bracket.
 
-See also: [`CTFlows.DifferentialGeometry.Poisson(H::AbstractHamiltonian, G::AbstractHamiltonian)`](@ref)
+See also: [`CTFlows.DifferentialGeometry.Poisson`](@ref)
 """
 function ad(
     ::Any, ::Data.AbstractHamiltonian;

@@ -7,6 +7,7 @@ pushfirst!(LOAD_PATH, joinpath(@__DIR__, ".."))
 using CTFlows
 using CTBase
 using CTModels
+using CTSolvers
 
 # documentation
 using DocumenterInterLinks
@@ -32,6 +33,11 @@ links = InterLinks(
         "https://control-toolbox.org/CTModels.jl/stable/",
         "https://control-toolbox.org/CTModels.jl/stable/objects.inv",
         joinpath(@__DIR__, "inventories", "CTModels.toml"),
+    ),
+    "CTSolvers" => (
+        "https://control-toolbox.org/CTSolvers.jl/stable/",
+        "https://control-toolbox.org/CTSolvers.jl/stable/objects.inv",
+        joinpath(@__DIR__, "inventories", "CTSolvers.toml"),
     ),
 )
 
@@ -83,6 +89,9 @@ with_api_reference(src_dir, ext_dir) do api_pages
             assets=[
                 asset("https://control-toolbox.org/assets/css/documentation.css"),
                 asset("https://control-toolbox.org/assets/js/documentation.js"),
+            ],
+            size_threshold_ignore=[
+                joinpath("api", "api_traits_public.md"),
             ],
         ),
         pages=[

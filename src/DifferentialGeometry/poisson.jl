@@ -32,7 +32,7 @@ B = Poisson(H, G)
 B([1.0, 2.0], [0.5, 1.0])  # Returns 1.0
 ```
 
-See also: [`CTFlows.DifferentialGeometry.Poisson(H::Function, G::Function, ::Type{TD}, ::Type{VD})`](@ref), [`CTFlows.DifferentialGeometry.ad`](@ref), [`CTFlows.DifferentialGeometry.Lift`](@ref)
+See also: [`CTFlows.DifferentialGeometry.Poisson`](@ref), [`CTFlows.DifferentialGeometry.ad`](@ref), [`CTFlows.DifferentialGeometry.Lift`](@ref)
 """
 function Poisson(
     H::Function, G::Function;
@@ -57,7 +57,7 @@ This typed entry point is used by the [`@Lie`](@ref) macro for compile-time disp
 # Arguments
 - `H::Function`: First Hamiltonian function (returns a scalar).
 - `G::Function`: Second Hamiltonian function (returns a scalar).
-- `::Type{TD}`: Time dependence type ([`CTFlows.Traits.Autonomous`](@ref) or [`CTFlows.Traits.NonAutonomous`](@ref)).
+- `::Type{TD}`: Time dependence type (`Autonomous` or `NonAutonomous`).
 - `::Type{VD}`: Variable dependence type ([`CTFlows.Traits.Fixed`](@ref) or [`CTFlows.Traits.NonFixed`](@ref)).
 - `ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided}`: AD backend to use (default: global backend).
 
@@ -243,7 +243,7 @@ dependence types, which is not allowed for the Poisson bracket operation.
 This is a fallback error method that provides a clear error message when the types do not
 match. Use the matching TD/VD version for valid operations.
 
-See also: [`CTFlows.DifferentialGeometry.Poisson(H::AbstractHamiltonian{TD, VD}, G::AbstractHamiltonian{TD, VD})`](@ref)
+See also: [`CTFlows.DifferentialGeometry.Poisson`](@ref)
 """
 function Poisson(
     H::Data.AbstractHamiltonian{TD1, VD1},
@@ -269,7 +269,7 @@ arguments are `AbstractVectorField`. It is always an error; use `ad(X, Y)` inste
 # Throws
 - `Exceptions.IncorrectArgument`: Always thrown with suggestion to use Lie bracket.
 
-See also: [`CTFlows.DifferentialGeometry.ad(X::AbstractVectorField, Y::AbstractVectorField)`](@ref)
+See also: [`CTFlows.DifferentialGeometry.ad`](@ref)
 """
 function Poisson(
     ::Data.AbstractVectorField, ::Data.AbstractVectorField;
@@ -317,7 +317,7 @@ where the second argument is a VectorField and the first is some other type.
 # Throws
 - `Exceptions.IncorrectArgument`: Always thrown with suggestion to use Lie bracket.
 
-See also: [`CTFlows.DifferentialGeometry.ad(X::AbstractVectorField, Y::AbstractVectorField)`](@ref)
+See also: [`CTFlows.DifferentialGeometry.ad`](@ref)
 """
 function Poisson(
     ::Any, ::Data.AbstractVectorField;

@@ -36,7 +36,7 @@ HamiltonianVectorFieldSystem
   hamiltonian_vector_field: HamiltonianVectorField{var"#1", Autonomous, Fixed, OutOfPlace}
 ```
 
-See also: [`CTFlows.Data.HamiltonianVectorField`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), [`CTFlows.Traits.TimeDependence`](@ref), [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Systems.build_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
+See also: [`CTFlows.Data.HamiltonianVectorField`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), `TimeDependence`, [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Systems.build_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
 """
 struct HamiltonianVectorFieldSystem{F<:Function, TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, MD<:Traits.AbstractMutabilityTrait} <: AbstractHamiltonianSystem{TD, VD, Traits.WithoutAD}
     hvf::Data.HamiltonianVectorField{F, TD, VD, MD}
@@ -120,7 +120,31 @@ _ham_assign!(du::AbstractMatrix, dx, dp, N::Int) = (du[1:N, :] .= dx; du[N+1:2N,
 # Internal helpers for augmented split/assign (Vector + Matrix, concrete integers)
 # =============================================================================
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Split an augmented state vector into state, costate, and variable costate components.
+
+The augmented state vector has the form `[x; p; pv]` where:
+- `x` is the state (first `n_x` elements)
+- `p` is the costate (next `n_x` elements)
+- `pv` is the variable costate (last `n_v` elements)
+
+# Arguments
+- `u::AbstractVector`: Augmented state vector `[x; p; pv]`.
+- `n_x::Int`: State dimension.
+- `n_v::Int`: Variable dimension.
+
+# Returns
+- `Tuple`: `(x, p, pv)` where each component is a view or scalar.
+
+# Notes
+- For scalar state (`n_x == 1`), returns scalars instead of views.
+- For matrix inputs, returns column views.
+- Used internally by [`CTFlows.Systems.HamIpAugRHS`](@ref).
+
+See also: [`CTFlows.Systems._aug_assign!`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
+"""
 function _aug_split(u::AbstractVector, n_x::Int, n_v::Int)
     x   = n_x == 1 ? u[1]    : @view(u[1:n_x])
     p   = n_x == 1 ? u[n_x+1] : @view(u[n_x+1:2*n_x])
@@ -130,7 +154,34 @@ end
 _aug_split(u::AbstractMatrix, n_x::Int, n_v::Int) =
     (@view(u[1:n_x,:]), @view(u[n_x+1:2*n_x,:]), @view(u[end-n_v+1:end,:]))
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Assign derivatives to the augmented derivative vector for Hamiltonian systems with variable costate.
+
+The augmented derivative vector has the form `[dx; dp; dpv]` where:
+- `dx` is the state derivative (first `n_x` elements)
+- `dp` is the costate derivative (next `n_x` elements)
+- `dpv` is the variable costate derivative (last `n_v` elements)
+
+# Arguments
+- `du::AbstractVector`: Augmented derivative vector to fill `[dx; dp; dpv]`.
+- `dx`: State derivative.
+- `dp`: Costate derivative.
+- `dpv`: Variable costate derivative.
+- `n_x::Int`: State dimension.
+- `n_v::Int`: Variable dimension.
+
+# Returns
+- `nothing`.
+
+# Notes
+- Performs in-place assignment using broadcasting.
+- For matrix inputs, broadcasts over columns.
+- Used internally by [`CTFlows.Systems.HamIpAugRHS`](@ref).
+
+See also: [`CTFlows.Systems._aug_split`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
+"""
 _aug_assign!(du::AbstractVector, dx, dp, dpv, n_x::Int, n_v::Int) =
     (du[1:n_x] .= dx; du[n_x+1:2*n_x] .= dp; du[end-n_v+1:end] .= dpv)
 _aug_assign!(du::AbstractMatrix, dx, dp, dpv, n_x::Int, n_v::Int) =

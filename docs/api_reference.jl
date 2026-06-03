@@ -22,7 +22,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
     src(files...) = [abspath(joinpath(src_dir, f)) for f in files]
     ext(files...) = [abspath(joinpath(ext_dir, f)) for f in files]
 
-    EXCLUDE_SYMBOLS = Symbol[:include, :eval]
+    EXCLUDE_SYMBOLS = Symbol[:include, :eval, :SciMLFunctionSystem]
 
     pages = [
         # ───────────────────────────────────────────────────────────────────

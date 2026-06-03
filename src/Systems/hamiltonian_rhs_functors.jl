@@ -6,10 +6,62 @@
 # Abstract hierarchy
 # =============================================================================
 
+"""
+$(TYPEDEF)
+
+Abstract supertype for Hamiltonian right-hand side (RHS) functors.
+
+RHS functors compute the derivatives for Hamiltonian systems according to
+Hamilton's equations. The type parameter encodes the mutability trait
+(in-place vs out-of-place) for compile-time dispatch.
+
+# Type Parameters
+- `T <: AbstractMutabilityTrait`: Mutability trait (`InPlace` or `OutOfPlace`).
+
+# Interface Requirements
+
+All subtypes must implement a callable interface:
+- In-place: `(f::SubType)(du, u, λ, t)` for mutating output
+- Out-of-place: `(f::SubType)(u, λ, t) -> du` for allocating output
+
+# Notes
+- Subtypes include [`CTFlows.Systems.AbstractIPHamRHS`](@ref) and [`CTFlows.Systems.AbstractOoPHamRHS`](@ref).
+- These functors are created by [`CTFlows.Systems.build_rhs`](@ref) and related functions.
+
+See also: [`CTFlows.Systems.AbstractRHS`](@ref), [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamOoPRHS`](@ref).
+"""
 abstract type AbstractHamRHS{T<:Traits.AbstractMutabilityTrait} <: AbstractRHS{T} end
 
+"""
+$(TYPEDEF)
+
+Abstract supertype for in-place Hamiltonian RHS functors.
+
+Subtypes of this abstract type implement in-place computation of Hamiltonian
+derivatives, mutating the output vector `du` rather than allocating a new one.
+
+# Notes
+- All subtypes must implement `(f::SubType)(du, u, λ, t)`.
+- Concrete subtypes include [`CTFlows.Systems.HamIpRHS`](@ref) and [`CTFlows.Systems.HamIpAugRHS`](@ref).
+
+See also: [`CTFlows.Systems.AbstractHamRHS`](@ref), [`CTFlows.Systems.AbstractOoPHamRHS`](@ref).
+"""
 abstract type AbstractIPHamRHS <: AbstractHamRHS{Traits.InPlace} end
 
+"""
+$(TYPEDEF)
+
+Abstract supertype for out-of-place Hamiltonian RHS functors.
+
+Subtypes of this abstract type implement out-of-place computation of Hamiltonian
+derivatives, allocating and returning a new output vector.
+
+# Notes
+- All subtypes must implement `(f::SubType)(u, λ, t) -> du`.
+- Concrete subtypes include [`CTFlows.Systems.HamOoPRHS`](@ref).
+
+See also: [`CTFlows.Systems.AbstractHamRHS`](@ref), [`CTFlows.Systems.AbstractIPHamRHS`](@ref).
+"""
 abstract type AbstractOoPHamRHS <: AbstractHamRHS{Traits.OutOfPlace} end
 
 # =============================================================================
@@ -127,6 +179,28 @@ end
 # Augmented functor (for variable costate integration)
 # =============================================================================
 
+"""
+Check batch size compatibility for augmented Hamiltonian RHS with matrix inputs.
+
+When using batch mode with matrix inputs, ensures that the state matrix `u`
+and variable matrix `v` have compatible batch sizes (same number of columns).
+
+# Arguments
+- `u::AbstractMatrix`: State matrix with shape `(n, batch_size)`.
+- `v::AbstractMatrix`: Variable matrix with shape `(m, batch_size)`.
+
+# Returns
+- `nothing` if batch sizes match.
+
+# Throws
+- `Exceptions.PreconditionError`: If `size(u, 2) ≠ size(v, 2)`.
+
+# Notes
+- No-op for non-matrix inputs (vectors or scalars).
+- Used internally by [`CTFlows.Systems.HamIpAugRHS`](@ref) to validate batch mode.
+
+See also: [`CTFlows.Systems.HamIpAugRHS`](@ref), [`CTFlows.Systems._aug_split`](@ref).
+"""
 function _check_aug_batch_compat(u::AbstractMatrix, v::AbstractMatrix)
     if size(u, 2) != size(v, 2)
         throw(Exceptions.PreconditionError(
@@ -138,6 +212,20 @@ function _check_aug_batch_compat(u::AbstractMatrix, v::AbstractMatrix)
     end
     return nothing
 end
+"""
+No-op version of batch compatibility check for non-matrix inputs.
+
+# Arguments
+- `u`: State input (vector or scalar).
+- `v`: Variable input (vector or scalar).
+
+# Returns
+- `nothing`.
+
+# Notes
+- Used as fallback when inputs are not matrices.
+- See [`CTFlows.Systems._check_aug_batch_compat(::AbstractMatrix, ::AbstractMatrix)`](@ref) for the matrix version.
+"""
 _check_aug_batch_compat(u, v) = nothing   # no-op for non-matrix cases
 
 """
@@ -202,6 +290,21 @@ end
 # Display helpers
 # =============================================================================
 
+"""
+Return a descriptive label for the RHS conversion performed by a Hamiltonian functor.
+
+# Arguments
+- `f::AbstractHamRHS`: The Hamiltonian RHS functor.
+
+# Returns
+- `String`: Description of the conversion (e.g., "Hamiltonian AD → in-place interface").
+
+# Notes
+- Used internally by `Base.show` for display.
+- Different functors have different conversion labels.
+
+See also: [`CTFlows.Systems.AbstractHamRHS`](@ref), [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamOoPRHS`](@ref).
+"""
 _rhs_conversion_label(::HamIpRHS) = "Hamiltonian AD → in-place interface"
 _rhs_conversion_label(::HamOoPRHS) = "Hamiltonian AD → out-of-place interface"
 _rhs_conversion_label(::HamIpAugRHS) = "Hamiltonian AD → in-place augmented interface"

@@ -93,7 +93,7 @@ Returns the pre-computed in-place closure stored in the system, which has signat
 # Returns
 - `Systems.AbstractIPRHS`: The pre-computed functor with signature `(du, u, λ, t)`.
 
-See also: [`SciMLFunctionSystem`](@ref), [`Systems.rhs_oop`](@ref).
+See also: `SciMLFunctionSystem`, [`Systems.rhs_oop`](@ref).
 """
 Systems.rhs(sys::SciMLFunctionSystem) = sys.rhs_fn
 
@@ -113,7 +113,7 @@ always the correct callable regardless of u0 mutability.
 # Returns
 - `Systems.AbstractOoPRHS`: The pre-computed functor with signature `(u, λ, t)`.
 
-See also: [`SciMLFunctionSystem`](@ref), [`Systems.rhs`](@ref).
+See also: `SciMLFunctionSystem`, [`Systems.rhs`](@ref).
 """
 function Systems.rhs_oop(sys::SciMLFunctionSystem{F, RHS, OOPROHS, Nothing}, ::Bool = true) where {F, RHS, OOPROHS}
     return sys.rhs_oop_fn
@@ -144,7 +144,7 @@ condition `u0` is mutable:
 - Prefer out-of-place SciML functions when u0 is immutable (e.g. `StaticArrays.SVector`)
   for best performance.
 
-See also: [`SciMLFunctionSystem`](@ref), [`Systems.rhs`](@ref).
+See also: `SciMLFunctionSystem`, [`Systems.rhs`](@ref).
 """
 function Systems.rhs_oop(sys::SciMLFunctionSystem{F, RHS, OOPROHS, FINRHS}, is_mutable::Bool = true) where {F, RHS, OOPROHS, FINRHS}
     is_mutable && return sys.rhs_oop_fn
@@ -167,7 +167,7 @@ Shows the type name, the wrapped ODE function type, and its mutability trait.
 - `io::IO`: The IO stream to write to.
 - `sys::SciMLFunctionSystem`: The system to display.
 
-See also: [`SciMLFunctionSystem`](@ref).
+See also: `SciMLFunctionSystem`.
 """
 function Base.show(io::IO, sys::SciMLFunctionSystem{F}) where F
     println(io, "SciMLFunctionSystem")
@@ -188,7 +188,7 @@ Delegates to the compact show method.
 - `::MIME"text/plain"`: The MIME type for REPL display.
 - `sys::SciMLFunctionSystem`: The system to display.
 
-See also: [`SciMLFunctionSystem`](@ref).
+See also: `SciMLFunctionSystem`.
 """
 function Base.show(io::IO, ::MIME"text/plain", sys::SciMLFunctionSystem)
     show(io, sys)

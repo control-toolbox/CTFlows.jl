@@ -1,3 +1,23 @@
+"""
+    Traits
+
+Trait types and trait-based dispatch for CTFlows.
+
+This module provides the trait system used throughout CTFlows for compile-time
+dispatch on:
+- Time dependence: [`Autonomous`](@extref), [`NonAutonomous`](@extref)
+- Variable dependence: [`Fixed`](@ref), [`NonFixed`](@ref)
+- Integration mode: [`PointTrait`](@ref), [`TrajectoryTrait`](@ref)
+- Content type: [`StateTrait`](@ref), [`HamiltonianTrait`](@ref), [`AugmentedHamiltonianTrait`](@ref)
+- Mutability: [`InPlace`](@ref), [`OutOfPlace`](@ref)
+- Automatic differentiation: [`WithAD`](@ref), [`WithoutAD`](@ref)
+- Variable costate capability: [`SupportsVariableCostate`](@ref), [`NoVariableCostate`](@ref)
+
+Traits are used as type parameters in configuration types, vector fields, and systems
+to enable static dispatch without runtime type checks.
+
+See also: [`CTFlows.Configs.AbstractConfig`](@ref), [`CTFlows.Data.AbstractVectorField`](@ref).
+"""
 module Traits
 
 # ==============================================================================

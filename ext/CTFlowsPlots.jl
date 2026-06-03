@@ -61,7 +61,7 @@ Uses default `xlabel="time"` for the x-axis label and font size settings (10pt f
 # Returns
 - The plot object returned by `Plots.plot`.
 
-See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.times`](@ref), [`CTFlows.Solutions.state`](@ref).
+See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Solutions.state`](@ref).
 """
 function Plots.plot(sol::Solutions.VectorFieldSolution; kwargs...)
     ts, states = _sol_to_arrays(sol)
@@ -87,7 +87,7 @@ Uses default `xlabel="time"` for the x-axis label and font size settings (10pt f
 # Returns
 - The modified plot object returned by `Plots.plot!`.
 
-See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.times`](@ref), [`CTFlows.Solutions.state`](@ref).
+See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Solutions.state`](@ref).
 """
 function Plots.plot!(sol::Solutions.VectorFieldSolution; kwargs...)
     ts, states = _sol_to_arrays(sol)
@@ -114,7 +114,7 @@ Uses default `xlabel="time"` for the x-axis label and font size settings (10pt f
 # Returns
 - The modified plot object returned by `Plots.plot!`.
 
-See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.times`](@ref), [`CTFlows.Solutions.state`](@ref).
+See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Solutions.state`](@ref).
 """
 function Plots.plot!(p::Plots.Plot, sol::Solutions.VectorFieldSolution; kwargs...)
     ts, states = _sol_to_arrays(sol)
@@ -168,7 +168,7 @@ Uses default `xlabel=["time" "time"]` for both subplots, `title=["state" "costat
 # Returns
 - The plot object returned by `Plots.plot`.
 
-See also: [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Solutions.times`](@ref), [`CTFlows.Solutions.state`](@ref), [`CTFlows.Solutions.costate`](@ref).
+See also: [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Solutions.state`](@ref), [`CTFlows.Solutions.costate`](@ref).
 """
 function Plots.plot(sol::Solutions.HamiltonianVectorFieldSolution; kwargs...)
     ts, states, costates = _ham_sol_to_arrays(sol)
@@ -197,7 +197,7 @@ Uses default `xlabel=["time" "time"]` for both subplots, `title=["state" "costat
 # Returns
 - The modified plot object returned by `Plots.plot!`.
 
-See also: [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Solutions.times`](@ref), [`CTFlows.Solutions.state`](@ref), [`CTFlows.Solutions.costate`](@ref).
+See also: [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Solutions.state`](@ref), [`CTFlows.Solutions.costate`](@ref).
 """
 function Plots.plot!(sol::Solutions.HamiltonianVectorFieldSolution; kwargs...)
     ts, states, costates = _ham_sol_to_arrays(sol)
@@ -227,7 +227,7 @@ Uses default `xlabel=["time" "time"]` for both subplots, `title=["state" "costat
 # Returns
 - The modified plot object returned by `Plots.plot!`.
 
-See also: [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Solutions.times`](@ref), [`CTFlows.Solutions.state`](@ref), [`CTFlows.Solutions.costate`](@ref).
+See also: [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Solutions.state`](@ref), [`CTFlows.Solutions.costate`](@ref).
 """
 function Plots.plot!(p::Plots.Plot, sol::Solutions.HamiltonianVectorFieldSolution; kwargs...)
     ts, states, costates = _ham_sol_to_arrays(sol)

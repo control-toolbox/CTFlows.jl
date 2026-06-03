@@ -56,7 +56,7 @@ Hamiltonian: non-autonomous, fixed (no variable)
   uniform call: h(t, x, p, v)
 ```
 
-See also: [`CTFlows.Data.AbstractHamiltonian`](@ref), [`CTFlows.Traits.TimeDependence`](@ref), [`CTFlows.Traits.VariableDependence`](@ref).
+See also: [`CTFlows.Data.AbstractHamiltonian`](@ref), `TimeDependence`, [`CTFlows.Traits.VariableDependence`](@ref).
 """
 struct Hamiltonian{F<:Function, TD, VD} <: AbstractHamiltonian{TD, VD}
     f::F
@@ -103,7 +103,7 @@ Hamiltonian: autonomous, non-fixed (variable)
 - The default values for `is_autonomous` and `is_variable` come from `Common.__is_autonomous()` and `Common.__is_variable()`.
 - The function signature should match the specified traits (e.g., if `is_autonomous=true` and `is_variable=false`, the function should accept `(x, p)`).
 
-See also: [`CTFlows.Data.Hamiltonian`](@ref), [`CTFlows.Traits.Autonomous`](@ref), [`CTFlows.Traits.NonAutonomous`](@ref), [`CTFlows.Traits.Fixed`](@ref), [`CTFlows.Traits.NonFixed`](@ref).
+See also: [`CTFlows.Data.Hamiltonian`](@ref), `Autonomous`, `NonAutonomous`, [`CTFlows.Traits.Fixed`](@ref), [`CTFlows.Traits.NonFixed`](@ref).
 """
 function Hamiltonian(f;
     is_autonomous::Bool = Common.__is_autonomous(),

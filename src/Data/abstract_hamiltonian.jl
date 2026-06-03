@@ -17,7 +17,7 @@ out-of-place) because a scalar return has no meaningful in-place form.
 - All Hamiltonian types support both natural and uniform call signatures.
 - The uniform signature `(t, x, p, v)` is used internally by systems.
 
-See also: [`CTFlows.Data.Hamiltonian`](@ref), [`CTFlows.Traits.TimeDependence`](@ref), [`CTFlows.Traits.VariableDependence`](@ref).
+See also: [`CTFlows.Data.Hamiltonian`](@ref), `TimeDependence`, [`CTFlows.Traits.VariableDependence`](@ref).
 """
 abstract type AbstractHamiltonian{
     TD <: Traits.TimeDependence,
@@ -67,7 +67,7 @@ Return the time-dependence trait of a Hamiltonian.
 # Returns
 - `TD`: The time-dependence type (`Autonomous` or `NonAutonomous`).
 
-See also: [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Traits.Autonomous`](@ref), [`CTFlows.Traits.NonAutonomous`](@ref).
+See also: [`CTFlows.Traits.VariableDependence`](@ref), `Autonomous`, `NonAutonomous`.
 """
 function Traits.time_dependence(::AbstractHamiltonian{TD, <:Traits.VariableDependence}) where {TD <: Traits.TimeDependence}
     return TD
@@ -84,7 +84,7 @@ Return the variable-dependence trait of a Hamiltonian.
 # Returns
 - `VD`: The variable-dependence type (`Fixed` or `NonFixed`).
 
-See also: [`CTFlows.Traits.TimeDependence`](@ref), [`CTFlows.Traits.Fixed`](@ref), [`CTFlows.Traits.NonFixed`](@ref).
+See also: `TimeDependence`, [`CTFlows.Traits.Fixed`](@ref), [`CTFlows.Traits.NonFixed`](@ref).
 """
 function Traits.variable_dependence(::AbstractHamiltonian{<:Traits.TimeDependence, VD}) where {VD <: Traits.VariableDependence}
     return VD

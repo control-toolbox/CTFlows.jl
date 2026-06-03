@@ -1,7 +1,44 @@
 # Default AD backend sentinel — uses global DG_AD_BACKEND when not overridden
+"""
+$(TYPEDSIGNATURES)
+
+Return the sentinel value indicating no AD backend was explicitly provided.
+
+This function is used as the default value for the `ad_backend` keyword argument
+in DifferentialGeometry operations. When returned, the global backend
+`DG_AD_BACKEND` is used instead.
+
+# Returns
+- `Common.NotProvided`: Sentinel value indicating backend should use global default.
+
+# Notes
+- This is an internal function used by [`CTFlows.DifferentialGeometry._resolve_backend`](@ref).
+- Users should use [`CTFlows.DifferentialGeometry.dg_ad_backend`](@ref) to get the current backend.
+
+See also: [`CTFlows.DifferentialGeometry.DG_AD_BACKEND`](@ref), [`CTFlows.DifferentialGeometry._resolve_backend`](@ref).
+"""
 __dg_ad_backend()::Common.NotProvided = Common.NotProvided()
 
 # Global default backend ref — built once at module load
+"""
+$(TYPEDEF)
+
+Global reference to the automatic differentiation backend used by DifferentialGeometry operations.
+
+This `Ref` holds the current AD backend that is used by [`CTFlows.DifferentialGeometry.ad`](@ref),
+[`CTFlows.DifferentialGeometry.Poisson`](@ref), and [`CTFlows.DifferentialGeometry.∂ₜ`](@ref) when no explicit
+`ad_backend` keyword argument is provided.
+
+# Type
+- `Ref{Differentiation.AbstractADBackend}`: Mutable reference to an AD backend.
+
+# Notes
+- Initialized at module load time with `AutoForwardDiff` via [`CTFlows.Differentiation.build_ad_backend`](@ref).
+- Modified via [`CTFlows.DifferentialGeometry.dg_ad_backend!`](@ref).
+- Accessed via [`CTFlows.DifferentialGeometry.dg_ad_backend`](@ref).
+
+See also: [`CTFlows.DifferentialGeometry.dg_ad_backend`](@ref), [`CTFlows.DifferentialGeometry.dg_ad_backend!`](@ref), [`CTFlows.DifferentialGeometry.__dg_ad_backend`](@ref).
+"""
 const DG_AD_BACKEND = Ref{Differentiation.AbstractADBackend}(
     Differentiation.build_ad_backend()   # AutoForwardDiff via Common.__ad_backend()
 )

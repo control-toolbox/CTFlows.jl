@@ -47,7 +47,7 @@ in a `VectorFieldSolution` for future extensibility.
 # Returns
 - `VectorFieldSolution`: The wrapped integration result.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Configs.TrajectoryTrait`](@ref), [`CTFlows.Configs.StateTrait`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Traits.TrajectoryTrait`](), [`CTFlows.Traits.StateTrait`]().
 """
 function build_solution(
     ::Type{Traits.TrajectoryTrait},
@@ -115,7 +115,7 @@ type of the initial state to handle scalar, vector, and matrix cases.
   - `Tuple{AbstractVector, AbstractVector}` for vector inputs
   - `Tuple{AbstractMatrix, AbstractMatrix}` for matrix inputs
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Configs.HamiltonianTrait`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Traits.HamiltonianTrait`]().
 """
 function build_solution(
     ::Type{Traits.PointTrait},
@@ -145,7 +145,7 @@ Wraps the integration result in a `HamiltonianVectorFieldSolution` for future ex
 # Returns
 - `HamiltonianVectorFieldSolution`: The wrapped integration result.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Configs.TrajectoryTrait`](@ref), [`CTFlows.Configs.HamiltonianTrait`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Traits.TrajectoryTrait`](), [`CTFlows.Traits.HamiltonianTrait`]().
 """
 function build_solution(
     ::Type{Traits.TrajectoryTrait},
@@ -183,7 +183,7 @@ splits using only the state dimension `n = length(initial_state)`.
 - Uses `_aug_split_solution` helper to split the augmented final state.
 - Assumes `n_p = n_x` invariant for Hamiltonian systems.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Configs.AugmentedHamiltonianTrait`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Traits.AugmentedHamiltonianTrait`]().
 """
 function build_solution(
     ::Type{Traits.PointTrait},

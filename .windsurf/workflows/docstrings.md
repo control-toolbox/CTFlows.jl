@@ -17,7 +17,7 @@ This document defines the documentation standards for the Control Toolbox projec
 
 ## Core Principles
 
-1. **Completeness**: Every exported symbol and significant internal component must have a docstring
+1. **Completeness**: Every exported symbol and internal component must have a docstring
 2. **Accuracy**: Documentation must reflect actual behavior, not aspirational or outdated information
 3. **Clarity**: Write for users who understand Julia but may be unfamiliar with the specific domain
 4. **Consistency**: Follow the templates and conventions defined here

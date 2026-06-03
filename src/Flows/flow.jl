@@ -96,7 +96,7 @@ julia> flow = build_flow(system, integrator)
 StateFlow{...}
 \`\`\`
 
-See also: [`CTFlows.Flows.StateFlow`](@ref), [`CTFlows.Flows.build_flow(::AbstractHamiltonianSystem, ::AbstractIntegrator)`](@ref).
+See also: [`CTFlows.Flows.StateFlow`](@ref), [`CTFlows.Flows.build_flow`]().
 """
 function build_flow(system::S, integrator::I) where {S<:Systems.AbstractStateSystem, I<:Integrators.AbstractIntegrator}
     return StateFlow(system, integrator)
@@ -126,7 +126,7 @@ julia> flow = build_flow(system, integrator)
 HamiltonianFlow{...}
 \`\`\`
 
-See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Flows.build_flow(::AbstractStateSystem, ::AbstractIntegrator)`](@ref).
+See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Flows.build_flow`]().
 """
 function build_flow(system::S, integrator::I) where {S<:Systems.AbstractHamiltonianSystem, I<:Integrators.AbstractIntegrator}
     return HamiltonianFlow(system, integrator)
@@ -262,7 +262,7 @@ parameter to control whether the returned closure writes results in-place.
 
 # Notes
 - This overload is for flows whose system is a `HamiltonianSystem` (AD-backed).
-- Delegates to [`CTFlows.Systems.hamiltonian_vector_field(sys::HamiltonianSystem; ...)`](@ref).
+- Delegates to [`CTFlows.Systems.hamiltonian_vector_field`]().
 - The returned vector field has traits matching the flow's time and variable dependence.
 
 See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref)
@@ -291,7 +291,7 @@ the vector field is already constructed.
 
 # Notes
 - This overload is for flows whose system is a `HamiltonianVectorFieldSystem` (HVF-backed).
-- Delegates to [`CTFlows.Systems.hamiltonian_vector_field(sys::HamiltonianVectorFieldSystem)`](@ref).
+- Delegates to [`CTFlows.Systems.hamiltonian_vector_field`]().
 - The returned vector field is identical to the one stored in the system (same object reference).
 
 See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref)

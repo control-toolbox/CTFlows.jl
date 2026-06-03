@@ -11,7 +11,7 @@ This module provides:
 - `state`, `time_grid`: Semantic accessors for VectorFieldSolution
 - `plot`: Plotting functionality for solutions
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.build_solution`](@ref), [`CTFlows.Solutions.plot`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.build_solution`](@ref), `plot`.
 """
 module Solutions
 

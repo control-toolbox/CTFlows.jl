@@ -103,7 +103,7 @@ hvf = Data.HamiltonianVectorField((t, x, p) -> (x, -p); is_autonomous=false)
 Traits.time_dependence(hvf)  # Returns NonAutonomous
 \`\`\`
 
-See also: [`CTFlows.Traits.has_time_dependence_trait`](@ref), [`CTFlows.Traits.is_autonomous`](@ref).
+See also: [`CTFlows.Traits.has_time_dependence_trait`](@ref), `is_autonomous`.
 """
 function Traits.time_dependence(vf::AbstractVectorField{TD, <:Traits.VariableDependence, <:Traits.AbstractMutabilityTrait}) where {TD <: Traits.TimeDependence}
     return TD
@@ -129,7 +129,7 @@ hvf = Data.HamiltonianVectorField((x, p, v) -> (x .* v, -p); is_variable=true)
 Traits.variable_dependence(hvf)  # Returns NonFixed
 \`\`\`
 
-See also: [`CTFlows.Traits.has_variable_dependence_trait`](@ref), [`CTFlows.Traits.is_variable`](@ref).
+See also: [`CTFlows.Traits.has_variable_dependence_trait`](@ref), `is_variable`.
 """
 function Traits.variable_dependence(vf::AbstractVectorField{<:Traits.TimeDependence, VD, <:Traits.AbstractMutabilityTrait}) where {VD <: Traits.VariableDependence}
     return VD

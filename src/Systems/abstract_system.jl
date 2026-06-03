@@ -160,7 +160,7 @@ end
 Traits.time_dependence(MySystem)  # Returns Autonomous
 \`\`\`
 
-See also: [`CTFlows.Traits.has_time_dependence_trait`](@ref), [`CTFlows.Traits.is_autonomous`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
+See also: [`CTFlows.Traits.has_time_dependence_trait`](@ref), `is_autonomous`, [`CTFlows.Systems.AbstractSystem`](@ref).
 """
 function Traits.time_dependence(sys::AbstractSystem{TD, <:Traits.VariableDependence}) where {TD <: Traits.TimeDependence}
     return TD
@@ -186,7 +186,7 @@ end
 Traits.variable_dependence(MySystem)  # Returns Fixed
 \`\`\`
 
-See also: [`CTFlows.Traits.has_variable_dependence_trait`](@ref), [`CTFlows.Traits.is_variable`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
+See also: [`CTFlows.Traits.has_variable_dependence_trait`](@ref), `is_variable`, [`CTFlows.Systems.AbstractSystem`](@ref).
 """
 function Traits.variable_dependence(sys::AbstractSystem{<:Traits.TimeDependence, VD}) where {VD <: Traits.VariableDependence}
     return VD

@@ -36,7 +36,7 @@ side of the ODE in a trait-agnostic way.
 For InPlace vector fields, the natural signature includes the derivative buffer
 as the first argument (e.g., `(dx, x)` for Autonomous/Fixed).
 
-See also: [`CTFlows.Data.AbstractVectorField`](@ref), [`CTFlows.Traits.TimeDependence`](@ref), [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Traits.AbstractMutabilityTrait`](@ref).
+See also: [`CTFlows.Data.AbstractVectorField`](@ref), `TimeDependence`, [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Traits.AbstractMutabilityTrait`](@ref).
 """
 struct VectorField{F<:Function, TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, MD<:Traits.AbstractMutabilityTrait} <: AbstractVectorField{TD, VD, MD}
     f::F
@@ -169,7 +169,7 @@ VectorField: autonomous, fixed (no variable), in-place
 - If `is_inplace` is `nothing` (default), the mutability is auto-detected from the function signature by checking the number of arguments.
 - If the function has multiple methods, auto-detection will fail with a `PreconditionError`. In this case, specify `is_inplace` explicitly.
 
-See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Traits.Autonomous`](@ref), [`CTFlows.Traits.NonAutonomous`](@ref), [`CTFlows.Traits.Fixed`](@ref), [`CTFlows.Traits.NonFixed`](@ref), [`CTFlows.Traits.InPlace`](@ref), [`CTFlows.Traits.OutOfPlace`](@ref).
+See also: [`CTFlows.Data.VectorField`](@ref), `Autonomous`, `NonAutonomous`, [`CTFlows.Traits.Fixed`](@ref), [`CTFlows.Traits.NonFixed`](@ref), [`CTFlows.Traits.InPlace`](@ref), [`CTFlows.Traits.OutOfPlace`](@ref).
 """
 function VectorField(f; 
     is_autonomous::Bool = Common.__is_autonomous(), 

@@ -28,7 +28,7 @@ H = Lift(f)
 H([1.0, 2.0], [0.5, 1.0])  # Returns -1.5
 ```
 
-See also: [`CTFlows.DifferentialGeometry.Lift(f::Function, ::Type{TD}, ::Type{VD})`](@ref), [`CTFlows.DifferentialGeometry.Lift(X::AbstractVectorField)`](@ref), [`CTFlows.DifferentialGeometry.Poisson`](@ref)
+See also: [`CTFlows.DifferentialGeometry.Lift`](@ref), [`CTFlows.DifferentialGeometry.Poisson`](@ref)
 """
 function Lift(
     f::Function;
@@ -50,7 +50,7 @@ point is used by the [`@Lie`](@ref) macro for compile-time dispatch.
 
 # Arguments
 - `f::Function`: Vector field function (returns a vector).
-- `::Type{TD}`: Time dependence type ([`CTFlows.Traits.Autonomous`](@ref) or [`CTFlows.Traits.NonAutonomous`](@ref)).
+- `::Type{TD}`: Time dependence type (`Autonomous` or `NonAutonomous`).
 - `::Type{VD}`: Variable dependence type ([`CTFlows.Traits.Fixed`](@ref) or [`CTFlows.Traits.NonFixed`](@ref)).
 
 # Returns
@@ -67,7 +67,7 @@ H = Lift(f, Traits.Autonomous, Traits.Fixed)
 H([1.0, 2.0], [0.5, 1.0])  # Returns -1.5
 ```
 
-See also: [`CTFlows.DifferentialGeometry.Lift(f::Function)`](@ref), [`CTFlows.DifferentialGeometry.Lift(X::AbstractVectorField)`](@ref), [`CTFlows.DifferentialGeometry.@Lie`](@ref)
+See also: [`CTFlows.DifferentialGeometry.Lift(f::Function)`](@ref), [`CTFlows.DifferentialGeometry.@Lie`](@ref)
 """
 function Lift(f::Function, ::Type{TD}, ::Type{VD}) where {TD, VD}
     return _Lift(f, TD, VD)

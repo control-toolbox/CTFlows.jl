@@ -111,6 +111,21 @@ end
 # Runtime dispatch (Level 2 — typed dispatch + fallback for data literals)
 # =============================================================================
 
+"""
+$(TYPEDEF)
+
+Type alias for operands that support Lie bracket computation.
+
+Unifies `Function` and `AbstractVectorField` for dispatch in the [`@Lie`](@ref) macro
+and related operations. This enables consistent handling of both raw functions and
+wrapped vector fields in Lie bracket computations.
+
+# Notes
+- Used internally by [`CTFlows.DifferentialGeometry._lie_mac`](@ref) for runtime dispatch.
+- Functions are normalized to `VectorField` before actual computation.
+
+See also: [`CTFlows.DifferentialGeometry.@Lie`](@ref), [`CTFlows.DifferentialGeometry.ad`](@ref), [`CTFlows.Data.AbstractVectorField`](@ref).
+"""
 const _Bracketable = Union{Function, Data.AbstractVectorField}
 
 """
@@ -204,6 +219,21 @@ When `[a, b]` contains numeric literals or other non-field data, reconstruct the
 """
 _lie_mac(a, b, ::Type, ::Type, ::Val, ::Val, _) = [a, b]
 
+"""
+$(TYPEDEF)
+
+Type alias for operands that support Poisson bracket computation.
+
+Unifies `Function` and `AbstractHamiltonian` for dispatch in the [`@Lie`](@ref) macro
+and related operations. This enables consistent handling of both raw functions and
+wrapped Hamiltonians in Poisson bracket computations.
+
+# Notes
+- Used internally by [`CTFlows.DifferentialGeometry._poisson_mac`](@ref) for runtime dispatch.
+- Functions are normalized to `Hamiltonian` before actual computation.
+
+See also: [`CTFlows.DifferentialGeometry.@Lie`](@ref), [`CTFlows.DifferentialGeometry.Poisson`](@ref), [`CTFlows.Data.AbstractHamiltonian`](@ref).
+"""
 const _Poissonable = Union{Function, Data.AbstractHamiltonian}
 
 """

@@ -244,7 +244,7 @@ flow = StateFlow(system, integrator)
 flows = get_flows(flow)  # Returns [flow]
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.get_flows(::AnyMultiPhaseFlow)`](@ref), [`CTFlows.MultiPhase.get_switching_times`](@ref).
+See also: [`CTFlows.MultiPhase.get_flows`](), [`CTFlows.MultiPhase.get_switching_times`](@ref).
 """
 function get_flows(f::Flows.AbstractFlow)
     return [f]
@@ -271,7 +271,7 @@ flow = StateFlow(system, integrator)
 times = get_switching_times(flow)  # Returns Real[]
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.get_switching_times(::AnyMultiPhaseFlow)`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
+See also: [`CTFlows.MultiPhase.get_switching_times`](), [`CTFlows.MultiPhase.get_flows`](@ref).
 """
 function get_switching_times(f::Flows.AbstractFlow)
     return Real[]
@@ -298,7 +298,7 @@ flow = StateFlow(system, integrator)
 jumps = get_jumps(flow)  # Returns Any[]
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.get_jumps(::AnyMultiPhaseFlow)`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
+See also: [`CTFlows.MultiPhase.get_jumps`](), [`CTFlows.MultiPhase.get_flows`](@ref).
 """
 function get_jumps(f::Flows.AbstractFlow)
     return Any[]
@@ -324,7 +324,7 @@ using CTFlows.MultiPhase
 flows = get_flows(mpf)  # Returns mpf.flows
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.get_flows(::AbstractFlow)`](@ref), [`CTFlows.MultiPhase.get_switching_times`](@ref).
+See also: [`CTFlows.MultiPhase.get_flows`](), [`CTFlows.MultiPhase.get_switching_times`](@ref).
 """
 function get_flows(mpf::AnyMultiPhaseFlow)
     return mpf.flows
@@ -350,7 +350,7 @@ using CTFlows.MultiPhase
 times = get_switching_times(mpf)  # Returns mpf.switching_times
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.get_switching_times(::AbstractFlow)`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
+See also: [`CTFlows.MultiPhase.get_switching_times`](), [`CTFlows.MultiPhase.get_flows`](@ref).
 """
 function get_switching_times(mpf::AnyMultiPhaseFlow)
     return mpf.switching_times
@@ -376,7 +376,7 @@ using CTFlows.MultiPhase
 jumps = get_jumps(mpf)  # Returns mpf.jumps
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.get_jumps(::AbstractFlow)`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
+See also: [`CTFlows.MultiPhase.get_jumps`](), [`CTFlows.MultiPhase.get_flows`](@ref).
 """
 function get_jumps(mpf::AnyMultiPhaseFlow)
     return mpf.jumps

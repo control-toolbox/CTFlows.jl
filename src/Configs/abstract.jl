@@ -44,6 +44,37 @@ abstract type AbstractConfig{X0} end
 # Type Aliases for Convenient Dispatch
 # =============================================================================
 
+"""
+$(TYPEDEF)
+
+Abstract configuration type with mode and content traits.
+
+Extends `AbstractConfig` with additional type parameters for compile-time dispatch
+on integration mode (point vs trajectory) and content type (state, Hamiltonian, augmented Hamiltonian).
+
+# Type Parameters
+- `X0`: Type of the initial condition (scalar `Number` or vector `AbstractVector`)
+- `Mode <: AbstractModeTrait`: Integration mode trait (`PointTrait` or `TrajectoryTrait`)
+- `Content <: AbstractContentTrait`: Content trait (`StateTrait`, `HamiltonianTrait`, or `AugmentedHamiltonianTrait`)
+
+# Interface Requirements
+
+All subtypes must implement:
+- `tspan(config)`: Return the time span as a tuple `(t0, tf)`.
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Configs
+
+julia> StatePointConfig <: Configs.AbstractConfigWithMaC
+true
+
+julia> HamiltonianPointConfig <: Configs.AbstractConfigWithMaC
+true
+\`\`\`
+
+See also: [`CTFlows.Configs.AbstractConfig`](@ref), [`CTFlows.Configs.AbstractPointConfig`](@ref), [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref), [`CTFlows.Configs.AbstractStateConfig`](@ref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref), [`CTFlows.Configs.AbstractAugmentedHamiltonianConfig`](@ref).
+"""
 abstract type AbstractConfigWithMaC{X0, Mode<:Traits.AbstractModeTrait, Content<:Traits.AbstractContentTrait} <: AbstractConfig{X0} end
 
 """

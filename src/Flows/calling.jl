@@ -199,7 +199,7 @@ flow_nonfixed = Flow(system_nonfixed, integrator)
 sol = call(flow_nonfixed, config; variable=0.5, unsafe=false)  # OK, variable provided
 \`\`\`
 
-See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Configs.VariableDependence`](@ref), [`CTFlows.Common.NotProvided`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Traits.VariableDependence`](), [`CTFlows.Common.NotProvided`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
 """
 function call(flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe)
     VD = Traits.variable_dependence(flow)
@@ -278,7 +278,7 @@ the contract that NonFixed systems must receive a variable parameter.
 - `CTBase.Exceptions.PreconditionError`: Always, with message explaining that a variable is required.
 
 # See also
-[`call`](@ref), [`Configs.NonFixed`](@ref), [`Common.NotProvided`](@ref).
+[`call`](@ref), [`CTFlows.Traits.NonFixed`](), [`Common.NotProvided`](@ref).
 """
 function call(::Type{Traits.NonFixed}, ::Type{Common.NotProvided}, flow, config; unsafe, variable)
     throw(Exceptions.PreconditionError(
@@ -302,7 +302,7 @@ forwards to `core_call` with `variable=nothing`.
 - The result of `core_call`.
 
 # See also
-[`call`](@ref), [`Configs.Fixed`](@ref), [`Common.NotProvided`](@ref), [`core_call`](@ref).
+[`call`](@ref), [`CTFlows.Traits.Fixed`](), [`Common.NotProvided`](@ref), [`core_call`](@ref).
 """
 function call(::Type{Traits.Fixed}, ::Type{Common.NotProvided}, flow, config; unsafe, variable)
     return core_call(flow, config; variable=nothing, unsafe=unsafe)
@@ -321,7 +321,7 @@ to `core_call` with the provided variable value.
 - The result of `core_call`.
 
 # See also
-[`call`](@ref), [`Configs.NonFixed`](@ref), [`core_call`](@ref).
+[`call`](@ref), [`CTFlows.Traits.NonFixed`](), [`core_call`](@ref).
 """
 function call(::Type{Traits.NonFixed}, ::Type{VT}, flow, config; unsafe, variable) where {VT}
     return core_call(flow, config; variable=variable, unsafe=unsafe)
@@ -340,7 +340,7 @@ receive a variable parameter, so it throws a `PreconditionError`.
 - `CTBase.Exceptions.PreconditionError`: Always, with message explaining that variables must not be provided to Fixed flows.
 
 # See also
-[`call`](@ref), [`Configs.Fixed`](@ref).
+[`call`](@ref), [`CTFlows.Traits.Fixed`]().
 """
 function call(::Type{Traits.Fixed}, ::Type{VT}, flow, config; unsafe, variable) where {VT}
     throw(Exceptions.PreconditionError(

@@ -25,6 +25,24 @@ function _flow_families()
     )
 end
 
+"""
+$(TYPEDEF)
+
+Strategy family description for flow construction.
+
+This constant identifies the strategy families used in flow construction:
+- `:di` - DifferentiationInterface family for AD backends
+- `:sciml` - SciML family for ODE integrators
+
+# Type
+- `Tuple{Symbol, Symbol}`: Tuple of strategy family identifiers.
+
+# Notes
+- Used by [`CTFlows.Flows._route_flow_options`](@ref) and [`CTFlows.Flows._build_flow_components`](@ref).
+- Passed to [`CTSolvers.Orchestration.route_all_options`](@extref) and [`CTSolvers.Orchestration.resolve_method`](@extref).
+
+See also: [`CTFlows.Flows._route_flow_options`](@ref), [`CTFlows.Flows._build_flow_components`](@ref), [`CTFlows.Flows._flow_families`](@ref).
+"""
 const _FLOW_DESCRIPTION = (:di, :sciml)
 
 """

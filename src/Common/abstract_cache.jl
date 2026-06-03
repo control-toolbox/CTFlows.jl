@@ -21,6 +21,6 @@ true
 - Concrete cache types are defined in extensions that provide AD backends
 - The RHS closure reads `cache(p)` to access the prepared cache
 
-See also: [`CTFlows.Common.ODEParameters`](@ref), [`CTFlows.Common.AbstractADTrait`](@ref).
+See also: [`CTFlows.Common.ODEParameters`](@ref), [`CTFlows.Traits.AbstractADTrait`](@ref).
 """
 abstract type AbstractCache end

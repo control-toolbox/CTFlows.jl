@@ -1,3 +1,23 @@
+"""
+$(TYPEDEF)
+
+Strategy registry for flow construction.
+
+This constant holds the precomputed strategy registry that maps abstract strategy
+types to their concrete implementations for flow construction:
+- `Differentiation.AbstractADBackend` → `Differentiation.DifferentiationInterface`
+- `Integrators.AbstractIntegrator` → `Integrators.SciML`
+
+# Type
+- `CTSolvers.Strategies.StrategyRegistry`: Registry mapping abstract types to concrete implementations.
+
+# Notes
+- Created at module load time via [`CTSolvers.Strategies.create_registry`](@extref).
+- Used by [`CTFlows.Flows.flow_registry`](@ref) to provide the registry to routing functions.
+- The registry is cached for performance.
+
+See also: [`CTFlows.Flows.flow_registry`](@ref), [`CTFlows.Flows._route_flow_options`](@ref), [`CTSolvers.Strategies.create_registry`](@extref).
+"""
 const _FLOW_REGISTRY = CTSolvers.Strategies.create_registry(
     Differentiation.AbstractADBackend => (Differentiation.DifferentiationInterface,),
     Integrators.AbstractIntegrator => (Integrators.SciML,),

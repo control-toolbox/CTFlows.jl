@@ -1,3 +1,36 @@
+"""
+    Configs
+
+Configuration types for integration problems in CTFlows.
+
+This module provides the configuration type hierarchy that specifies integration
+scenarios including:
+- Integration mode: point-to-point vs trajectory
+- Content type: state-only vs Hamiltonian (state + costate)
+- Time dependence: autonomous vs non-autonomous
+- Variable dependence: fixed vs non-fixed (for optimal control)
+
+Configuration types encode these choices as type parameters for compile-time dispatch.
+
+# Main Types
+- [`AbstractConfig`](@ref): Base configuration type
+- [`AbstractConfigWithMaC`](@ref): Configuration with mode and content traits
+- [`StatePointConfig`](@ref): Point-to-point state integration
+- [`StateTrajectoryConfig`](@ref): Trajectory state integration
+- [`HamiltonianPointConfig`](@ref): Point-to-point Hamiltonian integration
+- [`HamiltonianTrajectoryConfig`](@ref): Trajectory Hamiltonian integration
+- [`AugmentedHamiltonianPointConfig`](@ref): Augmented Hamiltonian for variable costate
+
+# Accessors
+- [`tspan`](@ref): Time span `(t0, tf)`
+- [`initial_state`](@ref): Initial state
+- [`initial_costate`](@ref): Initial costate (Hamiltonian configs)
+- [`initial_variable_costate`](@ref): Initial variable costate (augmented configs)
+- [`mode_trait`](@ref): Integration mode trait
+- [`content_trait`](@ref): Content trait
+
+See also: [`CTFlows.Flows.build_flow`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
+"""
 module Configs
 
 # ==============================================================================

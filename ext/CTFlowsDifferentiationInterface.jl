@@ -87,7 +87,7 @@ When `prepare_cache` is `false`, returns `nothing` and gradient methods compute
 gradients on-the-fly using plain `DI.gradient`.
 
 # See also
-- [`CTFlowsDifferentiationInterface.DifferentiationInterfaceCache`](@ref)
+- `DifferentiationInterfaceCache`
 - [`CTFlows.Differentiation.hamiltonian_gradient`](@ref)
 """
 function Differentiation.prepare_cache(
@@ -170,7 +170,7 @@ is `false` or when the system does not require cache preparation.
   - `grad_p` = ∂H/∂p
 
 # See also
-- [`CTFlowsDifferentiationInterface.DifferentiationInterfaceCache`](@ref)
+- `DifferentiationInterfaceCache`
 - [`CTFlows.Differentiation.prepare_cache`](@ref)
 """
 function Differentiation.hamiltonian_gradient(
@@ -215,7 +215,7 @@ Uses the prepared plans stored in `cache.prep_x` and `cache.prep_p` for efficien
 repeated gradient computation during ODE integration.
 
 # See also
-- [`CTFlowsDifferentiationInterface.DifferentiationInterfaceCache`](@ref)
+- `DifferentiationInterfaceCache`
 - [`CTFlows.Differentiation.prepare_cache`](@ref)
 """
 function Differentiation.hamiltonian_gradient(
@@ -268,7 +268,7 @@ is `false` or when the system does not require cache preparation.
 - `grad_v` = ∂H/∂v for NonFixed problems.
 
 # See also
-- [`CTFlowsDifferentiationInterface.DifferentiationInterfaceCache`](@ref)
+- `DifferentiationInterfaceCache`
 - [`CTFlows.Differentiation.prepare_cache`](@ref)
 """
 function Differentiation.variable_gradient(
@@ -311,7 +311,7 @@ Uses the prepared plan stored in `cache.prep_v` for efficient repeated gradient
 computation during ODE integration.
 
 # See also
-- [`CTFlowsDifferentiationInterface.DifferentiationInterfaceCache`](@ref)
+- `DifferentiationInterfaceCache`
 - [`CTFlows.Differentiation.prepare_cache`](@ref)
 """
 function Differentiation.variable_gradient(
@@ -463,7 +463,7 @@ Display a DifferentiationInterfaceCache in the REPL with the same format as `Bas
 - `::MIME"text/plain"`: The MIME type.
 - `cache::DifferentiationInterfaceCache`: The cache to display.
 
-See also: [`Base.show(io::IO, cache::DifferentiationInterfaceCache)`](@ref).
+See also: `Base.show`.
 """
 function Base.show(io::IO, ::MIME"text/plain", cache::DifferentiationInterfaceCache)
     show(io, cache)

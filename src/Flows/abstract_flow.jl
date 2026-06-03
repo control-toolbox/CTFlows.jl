@@ -92,7 +92,7 @@ Indicate that `AbstractFlow` has the time-dependence trait.
 # Returns
 - `Bool`: Always `true` for `AbstractFlow`.
 
-See also: [`CTFlows.Traits.TimeDependence`](@ref), [`CTFlows.Traits.time_dependence`](@ref).
+See also: `TimeDependence`, [`CTFlows.Traits.time_dependence`](@ref).
 """
 Traits.has_time_dependence_trait(::AbstractFlow) = true
 
@@ -128,7 +128,7 @@ end
 Traits.time_dependence(MyFlow)  # Returns Autonomous
 \`\`\`
 
-See also: [`CTFlows.Traits.has_time_dependence_trait`](@ref), [`CTFlows.Traits.is_autonomous`](@ref), [`CTFlows.Flows.AbstractFlow`](@ref).
+See also: [`CTFlows.Traits.has_time_dependence_trait`](@ref), `is_autonomous`, [`CTFlows.Flows.AbstractFlow`](@ref).
 """
 function Traits.time_dependence(flow::AbstractFlow{TD, <:Traits.VariableDependence}) where {TD <: Traits.TimeDependence}
     return TD
@@ -154,7 +154,7 @@ end
 Traits.variable_dependence(MyFlow)  # Returns Fixed
 \`\`\`
 
-See also: [`CTFlows.Traits.has_variable_dependence_trait`](@ref), [`CTFlows.Traits.is_variable`](@ref), [`CTFlows.Flows.AbstractFlow`](@ref).
+See also: [`CTFlows.Traits.has_variable_dependence_trait`](@ref), `is_variable`, [`CTFlows.Flows.AbstractFlow`](@ref).
 """
 function Traits.variable_dependence(flow::AbstractFlow{<:Traits.TimeDependence, VD}) where {VD <: Traits.VariableDependence}
     return VD

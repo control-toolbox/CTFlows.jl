@@ -49,10 +49,36 @@ struct HamiltonianSystem{
     backend::BACKEND
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the Hamiltonian function from a HamiltonianSystem.
+
+# Arguments
+- `sys::HamiltonianSystem`: The Hamiltonian system.
+
+# Returns
+- `Data.Hamiltonian`: The Hamiltonian function wrapped by the system.
+
+See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.backend`](@ref).
+"""
 function hamiltonian(sys::HamiltonianSystem)
     return sys.h
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the automatic differentiation backend from a HamiltonianSystem.
+
+# Arguments
+- `sys::HamiltonianSystem`: The Hamiltonian system.
+
+# Returns
+- `Differentiation.AbstractADBackend`: The AD backend used for gradient computation.
+
+See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.hamiltonian`](@ref).
+"""
 function backend(sys::HamiltonianSystem)
     return sys.backend
 end

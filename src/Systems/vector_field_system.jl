@@ -31,7 +31,7 @@ VectorFieldSystem
   vector_field: VectorField{var"#1", Autonomous, Fixed, OutOfPlace}
 \`\`\`
 
-See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Traits.TimeDependence`](@ref), [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
+See also: [`CTFlows.Data.VectorField`](@ref), `TimeDependence`, [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
 """
 struct VectorFieldSystem{F<:Function, TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, MD<:Traits.AbstractMutabilityTrait, RHS<:AbstractIPRHS, OOPROHS<:AbstractOoPRHS, FINRHS} <: AbstractStateSystem{TD, VD}
     vf::Data.VectorField{F, TD, VD, MD}

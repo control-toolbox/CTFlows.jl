@@ -52,7 +52,7 @@ CTFlows organises its code into specialised submodules:
 
 ## Contracts at a glance
 
-### `AbstractSystem`
+### AbstractSystem contract
 
 A fully-assembled object that can be integrated. Required methods:
 

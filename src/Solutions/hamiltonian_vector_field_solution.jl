@@ -105,7 +105,7 @@ where "time grid" is the standard terminology.
 # Returns
 - `AbstractVector`: The vector of time points.
 
-See also: [`CTFlows.Solutions.times`](@ref), [`CTFlows.Solutions.state`](@ref).
+See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Solutions.state`](@ref).
 """
 function time_grid(sol::HamiltonianVectorFieldSolution)
     return Integrators.times(sol)
@@ -125,7 +125,7 @@ Splits the combined state vector into state and costate halves.
 # Returns
 - `Tuple{AbstractVector, AbstractVector}`: The state `x(t)` and costate `p(t)` at time `t`.
 
-See also: [`CTFlows.Solutions.evaluate_at`](@ref), [`CTFlows.Solutions.times`](@ref).
+See also: [`CTFlows.Integrators.evaluate_at`](@ref), [`CTFlows.Integrators.times`](@ref).
 """
 function (sol::HamiltonianVectorFieldSolution)(t::Real)
     u = Integrators.evaluate_at(sol.result, t)
@@ -156,7 +156,7 @@ x(0.0)            # initial state
 x(0.5)            # interpolated state at t = 0.5
 ```
 
-See also: [`CTFlows.Solutions.costate`](@ref), [`CTFlows.Solutions.times`](@ref).
+See also: [`CTFlows.Solutions.costate`](@ref), [`CTFlows.Integrators.times`](@ref).
 """
 function state(sol::HamiltonianVectorFieldSolution)
     return t -> sol(t)[1]
@@ -186,7 +186,7 @@ p(0.0)            # initial costate
 p(0.5)            # interpolated costate at t = 0.5
 ```
 
-See also: [`CTFlows.Solutions.state`](@ref), [`CTFlows.Solutions.times`](@ref).
+See also: [`CTFlows.Solutions.state`](@ref), [`CTFlows.Integrators.times`](@ref).
 """
 function costate(sol::HamiltonianVectorFieldSolution)
     return t -> sol(t)[2]
@@ -205,7 +205,7 @@ Splits the combined state vector into state and costate halves.
 # Returns
 - `Tuple{AbstractVector, AbstractVector}`: The final state `xf` and final costate `pf`.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.final_state`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Integrators.final_state`](@ref).
 """
 function Integrators.final_state(sol::HamiltonianVectorFieldSolution)
     u = Integrators.final_state(sol.result)

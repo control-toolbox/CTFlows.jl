@@ -35,7 +35,7 @@ L = ad(X, f)
 L([1.0, 2.0])  # Returns 0.0
 ```
 
-See also: [`CTFlows.DifferentialGeometry.ad(X::Function, foo::Function, ::Type{TD}, ::Type{VD})`](@ref), [`CTFlows.DifferentialGeometry.Poisson`](@ref), [`CTFlows.DifferentialGeometry.Lift`](@ref)
+See also: [`CTFlows.DifferentialGeometry.ad`](@ref), [`CTFlows.DifferentialGeometry.Poisson`](@ref), [`CTFlows.DifferentialGeometry.Lift`](@ref)
 """
 function ad(
     X::Function, foo::Function;
@@ -62,7 +62,7 @@ This typed entry point is used by the [`@Lie`](@ref) macro for compile-time disp
 # Arguments
 - `X::Function`: Vector field function (returns a vector).
 - `foo::Function`: Scalar or vector field function.
-- `::Type{TD}`: Time dependence type ([`CTFlows.Traits.Autonomous`](@ref) or [`CTFlows.Traits.NonAutonomous`](@ref)).
+- `::Type{TD}`: Time dependence type (`Autonomous` or `NonAutonomous`).
 - `::Type{VD}`: Variable dependence type ([`CTFlows.Traits.Fixed`](@ref) or [`CTFlows.Traits.NonFixed`](@ref)).
 - `ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided}`: AD backend to use (default: global backend).
 
