@@ -3,240 +3,149 @@
 # Flows Module Exports Tests
 # ============================================================================
 # This file tests the exports from the `Flows` module. It verifies that
-# the expected types, functions, and constructors are properly exported by
+# the expected types and functions are properly exported by
 # `CTFlows.Flows` and readily accessible to the end user.
+#
+# Functionality tests are in separate files:
+# - test_abstract_flow.jl for abstract flow types
+# - test_flow.jl for Flow constructor and functionality
+# - test_building_flows.jl for flow building functionality
+# - test_calling_flows.jl for calling flows
+# - test_flow_routing.jl for flow routing
+# - test_update_callback.jl for update callbacks
+# - test_variable_costate_flows.jl for variable costate flows
+# - test_hamiltonian_getter_flows.jl for Hamiltonian getter flows
 """
 
 module TestFlowModule
 
 import Test
+import CTFlows
 import CTFlows.Flows
-import CTFlows.Systems
-import CTFlows.Integrators
-import CTFlows.Data
-import CTFlows.Common
-import CTFlows.Traits
-import CTSolvers: CTSolvers
+using CTFlows.Flows  # For testing exported symbols
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
 
 const CurrentModule = TestFlowModule
 
-# ==============================================================================
-# Fake types for contract testing
-# ==============================================================================
+# ============================================================================
+# Hardcoded export lists
+# ============================================================================
+# These lists define the expected public API of the Flows module.
+
+const EXPORTED_ABSTRACT_TYPES = (
+    :AbstractFlow,
+    :AbstractStateFlow,
+    :AbstractHamiltonianFlow,
+)
+
+const EXPORTED_CONCRETE_TYPES = (
+    :Flow,
+    :StateFlow,
+    :HamiltonianFlow,
+)
+
+const EXPORTED_FUNCTIONS = (
+    :system,
+    :integrator,
+    :build_flow,
+    :hamiltonian_vector_field,
+    :flow_registry,
+)
+
+# Note: Flows module has no private symbols (after filtering Julia internals)
+# All symbols are exported
+
+# ============================================================================
+# Helper functions (generic for reuse in other modules)
+# ============================================================================
 
 """
-Fake system for testing the Flow contract.
+    test_exported_symbols(module_ref::Module, symbols::Tuple, test_module::Module)
 
-This minimal implementation provides the required contract methods to test
-routing and default behavior without full system complexity.
+Test that symbols are exported from a module and available via `using`.
 """
-struct FakeSystem <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
-    state_dim::Int
-    param_dim::Int
-end
-
-# Implement contract: rhs
-function Systems.rhs(sys::FakeSystem)
-    return (du, u, p, t) -> du .= -u
-end
-
-# Implement contract: time_dependence
-function Traits.time_dependence(sys::FakeSystem)
-    return Traits.Autonomous
-end
-
-# Implement contract: variable_dependence
-function Traits.variable_dependence(sys::FakeSystem)
-    return Traits.Fixed
+function test_exported_symbols(module_ref::Module, symbols::Tuple, test_module::Module)
+    for sym in symbols
+        Test.@testset "$(sym)" begin
+            Test.@test isdefined(module_ref, sym)
+            Test.@test isdefined(test_module, sym)
+        end
+    end
 end
 
 """
-Fake integrator for testing the Flow contract.
+    test_internal_symbols(module_ref::Module, symbols::Tuple, test_module::Module)
+
+Test that symbols are defined in a module but NOT exported (not available via `using`).
+Generic helper for modules with private symbols.
 """
-struct FakeIntegrator <: Integrators.AbstractIntegrator
-    options::CTSolvers.Strategies.StrategyOptions
+function test_internal_symbols(module_ref::Module, symbols::Tuple, test_module::Module)
+    for sym in symbols
+        Test.@testset "$(sym)" begin
+            Test.@test isdefined(module_ref, sym)
+            Test.@test !isdefined(test_module, sym)
+        end
+    end
 end
 
-function FakeIntegrator()
-    return FakeIntegrator(CTSolvers.Strategies.StrategyOptions())
-end
-
-# Implement CTSolvers strategy contract
-function CTSolvers.Strategies.id(::Type{FakeIntegrator})
-    return :fake_integrator
-end
-
-function CTSolvers.Strategies.metadata(::Type{FakeIntegrator})
-    return CTSolvers.Strategies.StrategyMetadata()
-end
-
-function CTSolvers.Strategies.options(integ::FakeIntegrator)
-    return integ.options
-end
-
-function CTSolvers.Strategies.describe(::Type{FakeIntegrator})
-    return "Fake integrator for testing"
-end
-
-function (integ::FakeIntegrator)(ode_problem)
-    return :fake_solution
-end
-
-# ==============================================================================
+# ============================================================================
 # Test function
-# ==============================================================================
+# ============================================================================
 
 function test_flow_module()
     Test.@testset "Flows Module Exports" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
-        # Abstract Types
+        # Module availability
         # ====================================================================
 
-        Test.@testset "Abstract Types" begin
-            Test.@testset "AbstractFlow is exported" begin
-                Test.@test isdefined(Flows, :AbstractFlow)
+        Test.@testset "Module availability" begin
+            Test.@testset "Flows module exists" begin
+                Test.@test isdefined(CTFlows, :Flows)
+                Test.@test CTFlows.Flows isa Module
+            end
+        end
+
+        # ====================================================================
+        # Exported abstract types verification
+        # ====================================================================
+
+        Test.@testset "Exported abstract types" begin
+            test_exported_symbols(Flows, EXPORTED_ABSTRACT_TYPES, CurrentModule)
+        end
+
+        # ====================================================================
+        # Exported concrete types verification
+        # ====================================================================
+
+        Test.@testset "Exported concrete types" begin
+            test_exported_symbols(Flows, EXPORTED_CONCRETE_TYPES, CurrentModule)
+        end
+
+        # ====================================================================
+        # Exported functions verification
+        # ====================================================================
+
+        Test.@testset "Exported functions" begin
+            test_exported_symbols(Flows, EXPORTED_FUNCTIONS, CurrentModule)
+        end
+
+        # ====================================================================
+        # Type hierarchy tests
+        # ====================================================================
+
+        Test.@testset "Type hierarchy" begin
+            Test.@testset "Abstract types are abstract" begin
                 Test.@test isabstracttype(Flows.AbstractFlow)
-            end
-        end
-
-        # ====================================================================
-        # Concrete Types
-        # ====================================================================
-
-        Test.@testset "Concrete Types" begin
-            Test.@testset "StateFlow is exported" begin
-                Test.@test isdefined(Flows, :StateFlow)
-                sys = FakeSystem(2, 2)
-                integ = FakeIntegrator()
-                flow = Flows.StateFlow(sys, integ)
-                Test.@test flow isa Flows.StateFlow
-                Test.@test flow isa Flows.AbstractFlow
+                Test.@test isabstracttype(Flows.AbstractStateFlow)
+                Test.@test isabstracttype(Flows.AbstractHamiltonianFlow)
             end
 
-            Test.@testset "StateFlow constructor is exported" begin
-                Test.@test isdefined(Flows, :StateFlow)
-                sys = FakeSystem(2, 2)
-                integ = FakeIntegrator()
-                flow = Flows.StateFlow(sys, integ)
-                Test.@test flow isa Flows.StateFlow
-                Test.@test flow isa Flows.AbstractFlow
-            end
-        end
-
-        # ====================================================================
-        # Accessor Functions
-        # ====================================================================
-
-        Test.@testset "Accessor Functions" begin
-            Test.@testset "system is exported" begin
-                Test.@test isdefined(Flows, :system)
-            end
-
-            Test.@testset "system returns the associated system" begin
-                sys = FakeSystem(2, 2)
-                integ = FakeIntegrator()
-                flow = Flows.StateFlow(sys, integ)
-                retrieved_sys = Flows.system(flow)
-                Test.@test retrieved_sys === sys
-            end
-
-            Test.@testset "integrator is exported" begin
-                Test.@test isdefined(Flows, :integrator)
-            end
-
-            Test.@testset "integrator returns the associated integrator" begin
-                sys = FakeSystem(2, 2)
-                integ = FakeIntegrator()
-                flow = Flows.StateFlow(sys, integ)
-                retrieved_integ = Flows.integrator(flow)
-                Test.@test retrieved_integ === integ
-            end
-        end
-
-        # ====================================================================
-        # Trait Support
-        # ====================================================================
-
-        Test.@testset "Trait Support" begin
-            Test.@testset "StateFlow has time dependence trait" begin
-                sys = FakeSystem(2, 2)
-                integ = FakeIntegrator()
-                flow = Flows.StateFlow(sys, integ)
-                Test.@test Traits.has_time_dependence_trait(flow)
-            end
-
-            Test.@testset "StateFlow has variable dependence trait" begin
-                sys = FakeSystem(2, 2)
-                integ = FakeIntegrator()
-                flow = Flows.StateFlow(sys, integ)
-                Test.@test Traits.has_variable_dependence_trait(flow)
-            end
-
-            Test.@testset "time_dependence delegates to system" begin
-                sys = FakeSystem(2, 2)
-                integ = FakeIntegrator()
-                flow = Flows.StateFlow(sys, integ)
-                Test.@test Traits.time_dependence(flow) === Traits.Autonomous
-            end
-
-            Test.@testset "variable_dependence delegates to system" begin
-                sys = FakeSystem(2, 2)
-                integ = FakeIntegrator()
-                flow = Flows.StateFlow(sys, integ)
-                Test.@test Traits.variable_dependence(flow) === Traits.Fixed
-            end
-        end
-
-        # ====================================================================
-        # Type Hierarchy Verification
-        # ====================================================================
-
-        Test.@testset "Type Hierarchy" begin
-            Test.@testset "StateFlow is a subtype of AbstractFlow" begin
-                sys = FakeSystem(2, 2)
-                integ = FakeIntegrator()
-                flow = Flows.StateFlow(sys, integ)
-                Test.@test flow isa Flows.AbstractFlow
-            end
-
-            Test.@testset "Concrete StateFlow instances are AbstractFlow" begin
-                sys = FakeSystem(2, 2)
-                integ = FakeIntegrator()
-                flow = Flows.StateFlow(sys, integ)
-                Test.@test flow isa Flows.AbstractFlow
-                Test.@test flow isa Flows.StateFlow
-            end
-        end
-
-        # ====================================================================
-        # Display Methods
-        # ====================================================================
-
-        Test.@testset "Display Methods" begin
-            Test.@testset "tree-style display works" begin
-                sys = FakeSystem(2, 2)
-                integ = FakeIntegrator()
-                flow = Flows.StateFlow(sys, integ)
-                # Just verify it doesn't throw
-                io = IOBuffer()
-                show(io, MIME("text/plain"), flow)
-                output = String(take!(io))
-                Test.@test !isempty(output)
-            end
-
-            Test.@testset "compact display works" begin
-                sys = FakeSystem(2, 2)
-                integ = FakeIntegrator()
-                flow = Flows.StateFlow(sys, integ)
-                # Just verify it doesn't throw
-                io = IOBuffer()
-                show(io, flow)
-                output = String(take!(io))
-                Test.@test !isempty(output)
+            Test.@testset "Concrete types inherit from abstract types" begin
+                Test.@test Flows.StateFlow <: Flows.AbstractStateFlow
+                Test.@test Flows.HamiltonianFlow <: Flows.AbstractHamiltonianFlow
             end
         end
     end

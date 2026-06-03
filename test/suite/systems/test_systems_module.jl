@@ -3,165 +3,176 @@
 # Systems Module Exports Tests
 # ============================================================================
 # This file tests the exports from the `Systems` module. It verifies that
-# the expected types, functions, and constructors are properly exported by
+# the expected types and functions are properly exported by
 # `CTFlows.Systems` and readily accessible to the end user.
+#
+# Functionality tests are in separate files:
+# - test_abstract_system.jl for abstract system types
+# - test_vector_field_system.jl for VectorFieldSystem constructor and functionality
+# - test_hamiltonian_vector_field_system.jl for HVFSystem constructor and functionality
+# - test_hamiltonian_system.jl for HamiltonianSystem constructor and functionality
+# - test_building_systems.jl for system building functionality
+# - test_hamiltonian_getter.jl for Hamiltonian getter functionality
+# - test_rhs_functors.jl for RHS functor functionality
+# - test_hvf_rhs_functors.jl for HVF RHS functor functionality
+# - test_ham_rhs_functors.jl for Hamiltonian RHS functor functionality
 """
 
 module TestSystemsModule
 
 import Test
+import CTFlows
 import CTFlows.Systems
-import CTFlows.Data
-import CTFlows.Common
-import CTFlows.Traits
+using CTFlows.Systems  # For testing exported symbols
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
 
 const CurrentModule = TestSystemsModule
 
+# ============================================================================
+# Hardcoded export lists
+# ============================================================================
+# These lists define the expected public API of the Systems module.
+
+const EXPORTED_ABSTRACT_TYPES = (
+    :AbstractSystem,
+    :AbstractStateSystem,
+    :AbstractHamiltonianSystem,
+    :AbstractRHS,
+    :AbstractIPRHS,
+    :AbstractOoPRHS,
+    :AbstractHVFRHS,
+    :AbstractIPHVFRHS,
+    :AbstractOoPHVFRHS,
+    :AbstractHamRHS,
+    :AbstractIPHamRHS,
+    :AbstractOoPHamRHS,
+)
+
+const EXPORTED_CONCRETE_TYPES = (
+    :VectorFieldSystem,
+    :HamiltonianVectorFieldSystem,
+    :HamiltonianSystem,
+)
+
+const EXPORTED_FUNCTIONS = (
+    :rhs,
+    :rhs_oop,
+    :build_rhs,
+    :build_oop_rhs,
+    :hamiltonian_vector_field,
+    :build_system,
+    :build_rhs_augmented,
+    :hamiltonian,
+    :backend,
+)
+
+# Note: Systems module has no private symbols (after filtering Julia internals)
+# All symbols are exported
+
+# ============================================================================
+# Helper functions (generic for reuse in other modules)
+# ============================================================================
+
+"""
+    test_exported_symbols(module_ref::Module, symbols::Tuple, test_module::Module)
+
+Test that symbols are exported from a module and available via `using`.
+"""
+function test_exported_symbols(module_ref::Module, symbols::Tuple, test_module::Module)
+    for sym in symbols
+        Test.@testset "$(sym)" begin
+            Test.@test isdefined(module_ref, sym)
+            Test.@test isdefined(test_module, sym)
+        end
+    end
+end
+
+"""
+    test_internal_symbols(module_ref::Module, symbols::Tuple, test_module::Module)
+
+Test that symbols are defined in a module but NOT exported (not available via `using`).
+Generic helper for modules with private symbols.
+"""
+function test_internal_symbols(module_ref::Module, symbols::Tuple, test_module::Module)
+    for sym in symbols
+        Test.@testset "$(sym)" begin
+            Test.@test isdefined(module_ref, sym)
+            Test.@test !isdefined(test_module, sym)
+        end
+    end
+end
+
+# ============================================================================
+# Test function
+# ============================================================================
+
 function test_systems_module()
     Test.@testset "Systems Module Exports" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
-        # Abstract Types
+        # Module availability
         # ====================================================================
 
-        Test.@testset "Abstract Types" begin
-            Test.@testset "AbstractSystem is exported" begin
-                Test.@test isdefined(Systems, :AbstractSystem)
+        Test.@testset "Module availability" begin
+            Test.@testset "Systems module exists" begin
+                Test.@test isdefined(CTFlows, :Systems)
+                Test.@test CTFlows.Systems isa Module
+            end
+        end
+
+        # ====================================================================
+        # Exported abstract types verification
+        # ====================================================================
+
+        Test.@testset "Exported abstract types" begin
+            test_exported_symbols(Systems, EXPORTED_ABSTRACT_TYPES, CurrentModule)
+        end
+
+        # ====================================================================
+        # Exported concrete types verification
+        # ====================================================================
+
+        Test.@testset "Exported concrete types" begin
+            test_exported_symbols(Systems, EXPORTED_CONCRETE_TYPES, CurrentModule)
+        end
+
+        # ====================================================================
+        # Exported functions verification
+        # ====================================================================
+
+        Test.@testset "Exported functions" begin
+            test_exported_symbols(Systems, EXPORTED_FUNCTIONS, CurrentModule)
+        end
+
+        # ====================================================================
+        # Type hierarchy tests
+        # ====================================================================
+
+        Test.@testset "Type hierarchy" begin
+            Test.@testset "Abstract types are abstract" begin
                 Test.@test isabstracttype(Systems.AbstractSystem)
+                Test.@test isabstracttype(Systems.AbstractStateSystem)
+                Test.@test isabstracttype(Systems.AbstractHamiltonianSystem)
+                Test.@test isabstracttype(Systems.AbstractRHS)
+                Test.@test isabstracttype(Systems.AbstractIPRHS)
+                Test.@test isabstracttype(Systems.AbstractOoPRHS)
+                Test.@test isabstracttype(Systems.AbstractHVFRHS)
+                Test.@test isabstracttype(Systems.AbstractIPHVFRHS)
+                Test.@test isabstracttype(Systems.AbstractOoPHVFRHS)
+                Test.@test isabstracttype(Systems.AbstractHamRHS)
+                Test.@test isabstracttype(Systems.AbstractIPHamRHS)
+                Test.@test isabstracttype(Systems.AbstractOoPHamRHS)
             end
-        end
 
-        # ====================================================================
-        # Concrete Types
-        # ====================================================================
-
-        Test.@testset "Concrete Types" begin
-            Test.@testset "VectorFieldSystem is exported" begin
-                Test.@test isdefined(Systems, :VectorFieldSystem)
+            Test.@testset "Concrete types inherit from abstract types" begin
+                Test.@test Systems.VectorFieldSystem <: Systems.AbstractStateSystem
                 Test.@test Systems.VectorFieldSystem <: Systems.AbstractSystem
-            end
-
-            Test.@testset "VectorFieldSystem constructor is exported" begin
-                Test.@test isdefined(Systems, :VectorFieldSystem)
-                vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
-                sys = Systems.VectorFieldSystem(vf)
-                Test.@test sys isa Systems.VectorFieldSystem
-                Test.@test sys isa Systems.AbstractSystem
-            end
-        end
-
-        # ====================================================================
-        # Functions
-        # ====================================================================
-
-        Test.@testset "Functions" begin
-            Test.@testset "rhs is exported" begin
-                Test.@test isdefined(Systems, :rhs)
-            end
-
-            Test.@testset "rhs returns a callable function" begin
-                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
-                sys = Systems.VectorFieldSystem(vf)
-                rhs = Systems.rhs(sys)
-                Test.@test rhs isa Systems.AbstractRHS
-
-                du = zeros(2)
-                u = [1.0, 2.0]
-                p = Common.ODEParameters(nothing)
-                rhs(du, u, p, 0.0)
-                Test.@test du ≈ [-1.0, -2.0]
-            end
-        end
-
-        # ====================================================================
-        # Trait Support
-        # ====================================================================
-
-        Test.@testset "Trait Support" begin
-            Test.@testset "VectorFieldSystem has time dependence trait" begin
-                vf = Data.VectorField(x -> x)
-                sys = Systems.VectorFieldSystem(vf)
-                Test.@test Traits.has_time_dependence_trait(sys)
-            end
-
-            Test.@testset "VectorFieldSystem has variable dependence trait" begin
-                vf = Data.VectorField(x -> x)
-                sys = Systems.VectorFieldSystem(vf)
-                Test.@test Traits.has_variable_dependence_trait(sys)
-            end
-
-            Test.@testset "time_dependence function works with VectorFieldSystem" begin
-                vf_aut = Data.VectorField(x -> x; is_autonomous=true)
-                sys_aut = Systems.VectorFieldSystem(vf_aut)
-                Test.@test Traits.time_dependence(sys_aut) === Traits.Autonomous
-
-                vf_non = Data.VectorField((t, x) -> x; is_autonomous=false)
-                sys_non = Systems.VectorFieldSystem(vf_non)
-                Test.@test Traits.time_dependence(sys_non) === Traits.NonAutonomous
-            end
-
-            Test.@testset "variable_dependence function works with VectorFieldSystem" begin
-                vf_fixed = Data.VectorField(x -> x; is_variable=false)
-                sys_fixed = Systems.VectorFieldSystem(vf_fixed)
-                Test.@test Traits.variable_dependence(sys_fixed) === Traits.Fixed
-
-                vf_nonfixed = Data.VectorField((x, v) -> x .* v; is_variable=true)
-                sys_nonfixed = Systems.VectorFieldSystem(vf_nonfixed)
-                Test.@test Traits.variable_dependence(sys_nonfixed) === Traits.NonFixed
-            end
-        end
-
-        # ====================================================================
-        # Trait Propagation
-        # ====================================================================
-
-        Test.@testset "Trait Propagation" begin
-            Test.@testset "Autonomous Fixed traits propagate" begin
-                vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
-                sys = Systems.VectorFieldSystem(vf)
-                Test.@test Traits.time_dependence(sys) === Traits.Autonomous
-                Test.@test Traits.variable_dependence(sys) === Traits.Fixed
-            end
-
-            Test.@testset "NonAutonomous Fixed traits propagate" begin
-                vf = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
-                sys = Systems.VectorFieldSystem(vf)
-                Test.@test Traits.time_dependence(sys) === Traits.NonAutonomous
-                Test.@test Traits.variable_dependence(sys) === Traits.Fixed
-            end
-
-            Test.@testset "Autonomous NonFixed traits propagate" begin
-                vf = Data.VectorField((x, v) -> x .* v; is_autonomous=true, is_variable=true)
-                sys = Systems.VectorFieldSystem(vf)
-                Test.@test Traits.time_dependence(sys) === Traits.Autonomous
-                Test.@test Traits.variable_dependence(sys) === Traits.NonFixed
-            end
-
-            Test.@testset "NonAutonomous NonFixed traits propagate" begin
-                vf = Data.VectorField((t, x, v) -> t .* x .* v; is_autonomous=false, is_variable=true)
-                sys = Systems.VectorFieldSystem(vf)
-                Test.@test Traits.time_dependence(sys) === Traits.NonAutonomous
-                Test.@test Traits.variable_dependence(sys) === Traits.NonFixed
-            end
-        end
-
-        # ====================================================================
-        # Type Hierarchy Verification
-        # ====================================================================
-
-        Test.@testset "Type Hierarchy" begin
-            Test.@testset "VectorFieldSystem is a subtype of AbstractSystem" begin
-                Test.@test Systems.VectorFieldSystem <: Systems.AbstractSystem
-            end
-
-            Test.@testset "Concrete VectorFieldSystem instances are AbstractSystem" begin
-                vf = Data.VectorField(x -> x)
-                sys = Systems.VectorFieldSystem(vf)
-                Test.@test sys isa Systems.AbstractSystem
-                Test.@test sys isa Systems.VectorFieldSystem
+                Test.@test Systems.HamiltonianVectorFieldSystem <: Systems.AbstractHamiltonianSystem
+                Test.@test Systems.HamiltonianVectorFieldSystem <: Systems.AbstractSystem
+                Test.@test Systems.HamiltonianSystem <: Systems.AbstractHamiltonianSystem
+                Test.@test Systems.HamiltonianSystem <: Systems.AbstractSystem
             end
         end
     end

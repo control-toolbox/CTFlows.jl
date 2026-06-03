@@ -1,5 +1,13 @@
 """
-Module loading and exports tests for the Differentiation submodule.
+# ============================================================================
+# Differentiation Module Exports Tests
+# ============================================================================
+# This file tests the exports from the `Differentiation` module. It verifies that
+# the expected types and functions are properly exported by
+# `CTFlows.Differentiation` and readily accessible to the end user.
+#
+# Functionality tests are in separate files:
+# - test_ad_backend.jl for AD backend functionality
 """
 
 module TestDifferentiationModule
@@ -7,28 +15,129 @@ module TestDifferentiationModule
 import Test
 import CTFlows
 import CTFlows.Differentiation
+using CTFlows.Differentiation  # For testing exported symbols
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
 
+const CurrentModule = TestDifferentiationModule
+
+# ============================================================================
+# Hardcoded export lists
+# ============================================================================
+# These lists define the expected public API of the Differentiation module.
+
+const EXPORTED_ABSTRACT_TYPES = (
+    :AbstractADBackend,
+)
+
+const EXPORTED_CONCRETE_TYPES = (
+    :DifferentiationInterface,
+)
+
+const EXPORTED_FUNCTIONS = (
+    :build_ad_backend,
+    :ad_backend,
+    :prepare_cache,
+    :on_update,
+    :hamiltonian_gradient,
+    :variable_gradient,
+    :update!,
+    :gradient,
+    :derivative,
+)
+
+# Note: Differentiation module has no private symbols (after filtering Julia internals)
+# All symbols are exported
+
+# ============================================================================
+# Helper functions (generic for reuse in other modules)
+# ============================================================================
+
+"""
+    test_exported_symbols(module_ref::Module, symbols::Tuple, test_module::Module)
+
+Test that symbols are exported from a module and available via `using`.
+"""
+function test_exported_symbols(module_ref::Module, symbols::Tuple, test_module::Module)
+    for sym in symbols
+        Test.@testset "$(sym)" begin
+            Test.@test isdefined(module_ref, sym)
+            Test.@test isdefined(test_module, sym)
+        end
+    end
+end
+
+"""
+    test_internal_symbols(module_ref::Module, symbols::Tuple, test_module::Module)
+
+Test that symbols are defined in a module but NOT exported (not available via `using`).
+Generic helper for modules with private symbols.
+"""
+function test_internal_symbols(module_ref::Module, symbols::Tuple, test_module::Module)
+    for sym in symbols
+        Test.@testset "$(sym)" begin
+            Test.@test isdefined(module_ref, sym)
+            Test.@test !isdefined(test_module, sym)
+        end
+    end
+end
+
+# ============================================================================
+# Test function
+# ============================================================================
+
 function test_differentiation_module()
-    Test.@testset "Differentiation Module Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Differentiation Module Exports" verbose=VERBOSE showtiming=SHOWTIMING begin
 
-        Test.@testset "Exports Verification" begin
-            # Verify all expected exports are defined
-            Test.@test isdefined(Differentiation, :AbstractADBackend)
-            Test.@test isdefined(Differentiation, :DifferentiationInterface)
-            Test.@test isdefined(Differentiation, :build_ad_backend)
-            Test.@test isdefined(Differentiation, :hamiltonian_gradient)
-            Test.@test isdefined(Differentiation, :variable_gradient)
-            Test.@test isdefined(Differentiation, :prepare_cache)
+        # ====================================================================
+        # Module availability
+        # ====================================================================
+
+        Test.@testset "Module availability" begin
+            Test.@testset "Differentiation module exists" begin
+                Test.@test isdefined(CTFlows, :Differentiation)
+                Test.@test CTFlows.Differentiation isa Module
+            end
         end
 
-        Test.@testset "Module Loading" begin
-            # Verify the Differentiation submodule is loaded
-            Test.@test CTFlows.Differentiation isa Module
+        # ====================================================================
+        # Exported abstract types verification
+        # ====================================================================
+
+        Test.@testset "Exported abstract types" begin
+            test_exported_symbols(Differentiation, EXPORTED_ABSTRACT_TYPES, CurrentModule)
         end
 
+        # ====================================================================
+        # Exported concrete types verification
+        # ====================================================================
+
+        Test.@testset "Exported concrete types" begin
+            test_exported_symbols(Differentiation, EXPORTED_CONCRETE_TYPES, CurrentModule)
+        end
+
+        # ====================================================================
+        # Exported functions verification
+        # ====================================================================
+
+        Test.@testset "Exported functions" begin
+            test_exported_symbols(Differentiation, EXPORTED_FUNCTIONS, CurrentModule)
+        end
+
+        # ====================================================================
+        # Type hierarchy tests
+        # ====================================================================
+
+        Test.@testset "Type hierarchy" begin
+            Test.@testset "Abstract types are abstract" begin
+                Test.@test isabstracttype(Differentiation.AbstractADBackend)
+            end
+
+            Test.@testset "Concrete types inherit from abstract types" begin
+                Test.@test Differentiation.DifferentiationInterface <: Differentiation.AbstractADBackend
+            end
+        end
     end
 end
 
