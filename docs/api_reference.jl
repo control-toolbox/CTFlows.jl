@@ -24,13 +24,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
 
     # Base exclusion list for all core modules
     EXCLUDE_BASE = Symbol[:include, :eval]
-    # Systems exclusion: also hide SciMLFunctionSystem (defined in CTFlowsSciML extension)
-    EXCLUDE_SYSTEMS = Symbol[:include, :eval, :SciMLFunctionSystem]
-    # Extension-specific exclusions for undocumented private implementation symbols
-    EXCLUDE_DI     = Symbol[:include, :eval]
-    EXCLUDE_PLOTS  = Symbol[:include, :eval]
-    EXCLUDE_SCIML  = Symbol[:include, :eval]
-
+    
     pages = [
         # ───────────────────────────────────────────────────────────────────
         # Traits
@@ -192,7 +186,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                     joinpath("Systems", "hamiltonian_vector_field_system.jl"),
                 ),
             ],
-            exclude=EXCLUDE_SYSTEMS,
+            exclude=EXCLUDE_BASE,
             public=true,
             private=true,
             title="Systems",
@@ -310,7 +304,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             subdirectory="api",
             primary_modules=[CTFlowsDifferentiationInterface => ext("CTFlowsDifferentiationInterface.jl")],
             external_modules_to_document=[CTFlows],
-            exclude=EXCLUDE_DI,
+            exclude=EXCLUDE_BASE,
             public=true,
             private=true,
             title="DifferentiationInterface Extension",
@@ -340,7 +334,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             subdirectory="api",
             primary_modules=[CTFlowsPlots => ext("CTFlowsPlots.jl")],
             external_modules_to_document=[CTFlows],
-            exclude=EXCLUDE_PLOTS,
+            exclude=EXCLUDE_BASE,
             public=true,
             private=true,
             title="Plots Extension",
@@ -367,7 +361,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                 ),
             ],
             external_modules_to_document=[CTFlows],
-            exclude=EXCLUDE_SCIML,
+            exclude=EXCLUDE_BASE,
             public=true,
             private=true,
             title="SciML Extension",
