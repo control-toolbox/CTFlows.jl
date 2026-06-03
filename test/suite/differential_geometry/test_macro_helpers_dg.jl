@@ -100,28 +100,6 @@ function test_macro_helpers_dg()
     end
 
     # =========================================================================
-    Test.@testset "__has_mixed_brackets" verbose=VERBOSE showtiming=SHOWTIMING begin
-
-        # Only Lie brackets
-        Test.@test !DifferentialGeometry.__has_mixed_brackets(quote [a, b] end)
-        Test.@test !DifferentialGeometry.__has_mixed_brackets(quote [[a, b], c] end)
-
-        # Only Poisson brackets
-        Test.@test !DifferentialGeometry.__has_mixed_brackets(quote {a, b} end)
-        Test.@test !DifferentialGeometry.__has_mixed_brackets(quote {{a, b}, c} end)
-
-        # Mixed at same level
-        Test.@test DifferentialGeometry.__has_mixed_brackets(quote [a, b] + {c, d} end)
-
-        # Nested mixed
-        Test.@test DifferentialGeometry.__has_mixed_brackets(quote [[a, b], c] + {d, e} end)
-
-        # No brackets
-        Test.@test !DifferentialGeometry.__has_mixed_brackets(quote a + b * c end)
-        Test.@test !DifferentialGeometry.__has_mixed_brackets(quote f(x) end)
-    end
-
-    # =========================================================================
     Test.@testset "__transform_brackets" verbose=VERBOSE showtiming=SHOWTIMING begin
         pfx  = :CTFlows
         opts = (TD=:Autonomous, VD=:Fixed, has_aut=false, has_var=false,
@@ -297,6 +275,23 @@ function test_macro_helpers_dg()
             Val{false}(), Val{false}(), backend)
         x0 = [1.0, 2.0]
         Test.@test r12(x0) ≈ -r21(x0)
+
+        # Error: Hamiltonian in Lie bracket (both positions)
+        ham = _ham(_h1, Traits.Autonomous, Traits.Fixed)
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry._lie_mac(
+            ham, ham, Traits.Autonomous, Traits.Fixed,
+            Val{false}(), Val{false}(), backend)
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry._lie_mac(
+            ham, _f1, Traits.Autonomous, Traits.Fixed,
+            Val{false}(), Val{false}(), backend)
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry._lie_mac(
+            _f1, ham, Traits.Autonomous, Traits.Fixed,
+            Val{false}(), Val{false}(), backend)
+
+        # Fallback: data literals reconstruct vector
+        r = DifferentialGeometry._lie_mac(1, 2, Traits.Autonomous, Traits.Fixed,
+            Val{false}(), Val{false}(), backend)
+        Test.@test r == [1, 2]
     end
 
     # =========================================================================
@@ -348,6 +343,19 @@ function test_macro_helpers_dg()
             Val{false}(), Val{false}(), backend)
         x0, p0 = [1.0, 2.0], [0.5, 1.5]
         Test.@test r12(x0, p0) ≈ -r21(x0, p0)
+
+        # Error: VectorField in Poisson bracket (both positions)
+        vf = _vf(_f1, Traits.Autonomous, Traits.Fixed)
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry._poisson_mac(
+            vf, vf, Traits.Autonomous, Traits.Fixed,
+            Val{false}(), Val{false}(), backend)
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry._poisson_mac(
+            vf, _h1, Traits.Autonomous, Traits.Fixed,
+            Val{false}(), Val{false}(), backend)
+        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry._poisson_mac(
+            _h1, vf, Traits.Autonomous, Traits.Fixed,
+            Val{false}(), Val{false}(), backend)
+
     end
 
 end # function
