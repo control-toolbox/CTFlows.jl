@@ -16,6 +16,7 @@ using MarkdownAST: MarkdownAST
 
 # trigger extensions
 using ForwardDiff
+using DifferentiationInterface
 using OrdinaryDiffEqTsit5
 using Plots
 using SciMLBase, DiffEqBase
@@ -84,7 +85,19 @@ with_api_reference(src_dir, ext_dir) do api_pages
                 asset("https://control-toolbox.org/assets/js/documentation.js"),
             ],
         ),
-        pages=["Introduction" => "index.md", "API Reference" => api_pages],
+        pages=[
+            "Introduction" => "index.md",
+            "Differential Geometry" => [
+                "Overview" => "differential_geometry/index.md",
+                "Hamiltonian lift" => "differential_geometry/lift.md",
+                "Lie derivative & bracket" => "differential_geometry/lie_derivative_bracket.md",
+                "Poisson bracket" => "differential_geometry/poisson.md",
+                "Partial time derivative" => "differential_geometry/time_derivative.md",
+                "The @Lie macro" => "differential_geometry/lie_macro.md",
+                "Limitations & configuration" => "differential_geometry/limitations.md",
+            ],
+            "API Reference" => api_pages,
+        ],
         plugins=[links],
     )
 end

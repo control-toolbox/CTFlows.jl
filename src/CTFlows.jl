@@ -42,6 +42,9 @@ using .Data
 include(joinpath(@__DIR__, "Differentiation", "Differentiation.jl"))
 using .Differentiation
 
+include(joinpath(@__DIR__, "DifferentialGeometry", "DifferentialGeometry.jl"))
+using .DifferentialGeometry
+
 include(joinpath(@__DIR__, "Systems", "Systems.jl"))
 using .Systems
 

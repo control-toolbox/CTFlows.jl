@@ -82,6 +82,24 @@ struct MultiPhaseHamiltonianFlow{
     jumps::J
 end
 
+"""
+$(TYPEDEF)
+
+Type alias for any multi-phase flow (state or Hamiltonian).
+
+Unifies `MultiPhaseStateFlow` and `MultiPhaseHamiltonianFlow` for generic dispatch
+on multi-phase flow operations.
+
+# Example
+\`\`\`julia
+using CTFlows.MultiPhase
+
+mpf = MultiPhaseStateFlow(...)  # or MultiPhaseHamiltonianFlow(...)
+mpf isa AnyMultiPhaseFlow  # true
+\`\`\`
+
+See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref).
+"""
 const AnyMultiPhaseFlow = Union{MultiPhaseStateFlow, MultiPhaseHamiltonianFlow}
 
 """

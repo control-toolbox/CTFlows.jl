@@ -313,7 +313,7 @@ with the correct signature based on the Hamiltonian's time and variable dependen
 
 # Arguments
 - `h::Data.Hamiltonian{F, TD, VD}`: The scalar Hamiltonian function with traits `TD` (time dependence) and `VD` (variable dependence).
-- `ad_backend`: AD backend type (default: `Differentiation.__ad_backend()` = `AutoForwardDiff()`) or an `AbstractADBackend` instance.
+- `ad_backend`: AD backend type (default: `Common.__ad_backend()` = `AutoForwardDiff()`) or an `AbstractADBackend` instance.
 - `inplace::Bool`: Whether to return an in-place closure (default: `Common.__hvf_inplace()` = `false`).
 
 # Returns
@@ -331,7 +331,7 @@ See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.Hamilto
 """
 function hamiltonian_vector_field(
     h::Data.Hamiltonian{F, TD, VD};
-    ad_backend = Differentiation.__ad_backend(),
+    ad_backend = Common.__ad_backend(),
     inplace::Bool = Common.__hvf_inplace(),
 ) where {F, TD, VD}
     # If ad_backend is an AbstractADBackend instance, use it directly; otherwise wrap it

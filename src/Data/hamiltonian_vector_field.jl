@@ -40,7 +40,7 @@ buffers as the first two arguments (e.g., `(dx, dp, x, p)` for Autonomous/Fixed)
 
 See also: [`CTFlows.Data.AbstractVectorField`](@ref), [`CTFlows.Traits.TimeDependence`](@ref), [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Traits.AbstractMutabilityTrait`](@ref).
 """
-struct HamiltonianVectorField{F<:Function, TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, MD<:Traits.AbstractMutabilityTrait} <: AbstractVectorField{TD, VD, MD}
+struct HamiltonianVectorField{F<:Function, TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, MD<:Traits.AbstractMutabilityTrait} <: AbstractHamiltonianVectorField{TD, VD, MD}
     f::F
 end
 
@@ -186,6 +186,21 @@ function HamiltonianVectorField(f;
     else
         is_inplace ? Traits.InPlace : Traits.OutOfPlace
     end
+    return HamiltonianVectorField{typeof(f), TD, VD, MD}(f)
+end
+
+# =============================================================================
+# Typed constructor — calls struct inner constructor directly
+# =============================================================================
+
+function HamiltonianVectorField(
+    f,
+    ::Type{TD}, ::Type{VD}, ::Type{MD},
+) where {
+    TD <: Traits.TimeDependence,
+    VD <: Traits.VariableDependence,
+    MD <: Traits.AbstractMutabilityTrait,
+}
     return HamiltonianVectorField{typeof(f), TD, VD, MD}(f)
 end
 

@@ -115,6 +115,20 @@ function Hamiltonian(f;
 end
 
 # =============================================================================
+# Typed constructor — calls struct inner constructor directly
+# =============================================================================
+
+function Hamiltonian(
+    f,
+    ::Type{TD}, ::Type{VD},
+) where {
+    TD <: Traits.TimeDependence,
+    VD <: Traits.VariableDependence,
+}
+    return Hamiltonian{typeof(f), TD, VD}(f)
+end
+
+# =============================================================================
 # Natural call signatures - one per trait combination
 # =============================================================================
 

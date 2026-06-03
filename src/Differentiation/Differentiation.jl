@@ -8,11 +8,13 @@ for computing gradients of scalar Hamiltonian functions.
 
 ## Architecture
 
-The module defines an abstract contract `AbstractADBackend` with four methods:
+The module defines an abstract contract `AbstractADBackend` with six methods:
 - `hamiltonian_gradient(backend, h, t, x, p, v, cache)` → (∂H/∂x, ∂H/∂p)
 - `variable_gradient(backend, h, t, x, p, v, cache)` → ∂H/∂v
 - `prepare_cache(backend, h, typical_t, typical_x, typical_p, typical_v)` → AbstractCache
 - `update!(cache, backend, t, x, p, v)` → nothing (re-prepare cache on type/dimension mismatch)
+- `gradient(backend, f, x, cache)` → ∇f (extension contract)
+- `derivative(backend, f, x, cache)` → df/dx (extension contract)
 
 The concrete strategy `DifferentiationInterface` wraps DifferentiationInterface.jl backends
 (e.g., `AutoForwardDiff()`) and stores them in its `:ad_backend` option.
@@ -27,7 +29,7 @@ The concrete strategy `DifferentiationInterface` wraps DifferentiationInterface.
 ## Extension
 
 Gradient computation requires the `CTFlowsDifferentiationInterface` extension (Phase 5),
-which implements the three contract methods using `DifferentiationInterface.gradient`
+which implements the contract methods using `DifferentiationInterface.gradient`
 and `DifferentiationInterface.prepare_gradient`.
 
 ## Exports
@@ -38,6 +40,9 @@ and `DifferentiationInterface.prepare_gradient`.
 - `hamiltonian_gradient`
 - `variable_gradient`
 - `prepare_cache`
+- `update!`
+- `gradient`
+- `derivative`
 """
 module Differentiation
 
@@ -55,6 +60,7 @@ using ADTypes: ADTypes  # Hard dep — provides AutoForwardDiff
 # ==============================================================================
 
 import ..Common: Common
+import ..Data: Data
 
 # ==============================================================================
 # Includes (in dependency order)
@@ -71,11 +77,14 @@ include("building.jl")
 export AbstractADBackend
 export DifferentiationInterface
 export build_ad_backend
-export __ad_backend
 export ad_backend
+export prepare_cache
+export on_update
 export hamiltonian_gradient
 export variable_gradient
 export prepare_cache
 export update!
+export gradient
+export derivative
 
 end # module

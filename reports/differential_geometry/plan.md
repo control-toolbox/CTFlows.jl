@@ -71,6 +71,15 @@ Extension `CTFlowsDifferentiationInterface` implements `gradient` + `derivative`
 
 ## Step 0 — Branch
 
+Use MCP git commands when available:
+
+- `mcp1_git_checkout` to switch to `develop`
+- Pull latest changes (bash: `git pull`)
+- `mcp1_git_create_branch` to create the new branch from `develop`
+- `mcp1_git_checkout` to switch to the new branch
+
+Fallback to bash commands if MCP is unavailable:
+
 ```bash
 git checkout develop && git pull
 git checkout -b feat/differential-geometry
@@ -130,7 +139,7 @@ Add to `vector_field.jl`:
 ```julia
 function VectorField(
     f,
-    ::Type{TD}, ::Type{VD}, ::Type{MD} = Traits.OutOfPlace,
+    ::Type{TD}, ::Type{VD}, ::Type{MD},
 ) where {
     TD <: Traits.TimeDependence,
     VD <: Traits.VariableDependence,
@@ -198,6 +207,8 @@ Run `test/suite/data/`. Verify:
 
 - `HamiltonianVectorField <: AbstractHamiltonianVectorField <: AbstractVectorField`
 - All existing data tests pass unchanged
+
+> **STOP - Ask for permission before committing Phase 2**
 
 ---
 
@@ -306,6 +317,8 @@ end
 ### Checkpoint B — Differentiation tests
 
 Run `test/suite/differentiation/`. All existing tests pass. New stubs throw `NotImplemented` without extension; with extension, `gradient` and `derivative` return correct values.
+
+> **STOP - Ask for permission before committing Phase 3**
 
 ---
 
@@ -806,9 +819,13 @@ PB = CTFlows.DifferentialGeometry.Poisson(H, G)
 PB([1.0, 2.0], [3.0, 4.0])   # expected: 3.0
 ```
 
+> **STOP - Ask for permission before committing Phase 4**
+
 ---
 
 ## Phase 5 — Tests
+
+> 📝 **Reuse existing test examples**: The file `reports/differential_geometry/v2/test_differential_geometry.jl` contains comprehensive test cases for `ad`, `Lift`, `Poisson`, `∂ₜ`, backend parameters, variable dependence, nested brackets (Jacobi identity), and the prefix system. Adapt these examples to the new API structure (qualified paths, typed constructors, new error guards) when writing the test files below.
 
 ### Step 19 — `test/suite/differential_geometry/test_ad.jl` (new file)
 
@@ -917,4 +934,4 @@ Symbols to document:
 - **`Systems/vector_field_system.jl`**: uses concrete `Data.VectorField{F,TD,VD,MD}` — no change in this PR; abstract dispatch in Systems is future work.
 - **Typed `_Lift` reuse**: `_Lift(X::AbstractVectorField, TD, VD)` works because `VectorField` is callable with the natural signature; the 4 `_Lift` methods accept `Any` as first arg.
 - **`_ad` accepts `Any`**: removing `::Function` annotation from `_ad` parameters allows passing `VectorField` and `Hamiltonian` callables without subtyping `Function`.
-- **Never commit without explicit user instruction.**
+- **CRITICAL COMMIT PROTOCOL**: At the end of EACH phase (after Checkpoint A, B, C, D), STOP and ask the user for permission before committing. NEVER commit without explicit user instruction. This applies to Phase 1, Phase 2, Phase 3, Phase 4, Phase 5, and Phase 6.
