@@ -57,9 +57,9 @@ function test_default()
             end
         end
 
-        Test.@testset "_variable_costate export" begin
-            Test.@testset "_variable_costate is exported" begin
-                Test.@test isdefined(Common, :_variable_costate)
+        Test.@testset "__variable_costate export" begin
+            Test.@testset "__variable_costate is exported" begin
+                Test.@test isdefined(Common, :__variable_costate)
             end
         end
     end

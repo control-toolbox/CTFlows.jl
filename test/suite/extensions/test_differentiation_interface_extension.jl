@@ -43,9 +43,9 @@ function test_differentiation_interface_extension()
         # Unit Tests
         # ====================================================================
 
-        Test.@testset "Unit: DifferentiationInterfaceCache construction" begin
+        Test.@testset "Unit: _DifferentiationInterfaceCache construction" begin
             # Create a cache with dummy preps (nothing for now since we can't create real DI plans without the extension loaded)
-            cache = CTFlowsDifferentiationInterface.DifferentiationInterfaceCache(nothing, nothing, nothing, nothing, nothing, nothing)
+            cache = CTFlowsDifferentiationInterface._DifferentiationInterfaceCache(nothing, nothing, nothing, nothing, nothing, nothing)
             Test.@test cache isa Common.AbstractCache
         end
 
@@ -61,7 +61,7 @@ function test_differentiation_interface_extension()
 
             cache = Differentiation.prepare_cache(backend, FAKE_HAMILTONIAN_FIXED, typical_t, typical_x, typical_p, typical_v)
             Test.@test cache !== nothing
-            Test.@test cache isa CTFlowsDifferentiationInterface.DifferentiationInterfaceCache
+            Test.@test cache isa CTFlowsDifferentiationInterface._DifferentiationInterfaceCache
             # p_v should be nothing for Fixed problems
             Test.@test cache.p_v === nothing
         end

@@ -176,7 +176,7 @@ function test_calling_flows()
                 config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 
                 # Execute
-                result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
+                result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
                 
                 # Verify all steps were called
                 Test.@test integ.build_problem_called === true
@@ -194,7 +194,7 @@ function test_calling_flows()
                 config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 
                 # Call with variable (should now raise PreconditionError for Fixed flow)
-                Test.@test_throws Exceptions.PreconditionError Flows.call(flow, config; variable=0.5, unsafe=false)
+                Test.@test_throws Exceptions.PreconditionError Flows._invoke_flow(flow, config; variable=0.5, unsafe=false)
             end
 
             Test.@testset "call with StateTrajectoryConfig" begin
@@ -203,7 +203,7 @@ function test_calling_flows()
                 flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 
-                result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
+                result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -218,7 +218,7 @@ function test_calling_flows()
                 config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
                 # Call with unsafe=true
-                result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=true)
+                result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=true)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -232,7 +232,7 @@ function test_calling_flows()
                 flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Configs.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 
-                result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
+                result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -246,7 +246,7 @@ function test_calling_flows()
                 flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Configs.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
 
-                result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
+                result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -266,7 +266,7 @@ function test_calling_flows()
                 flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Configs.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 
-                result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
+                result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -282,7 +282,7 @@ function test_calling_flows()
                 flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Configs.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 
-                result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
+                result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -296,7 +296,7 @@ function test_calling_flows()
                 flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
                 config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
-                result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
+                result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -310,13 +310,13 @@ function test_calling_flows()
         # UNIT TESTS - Dispatch: 4-way trait dispatch
         # ====================================================================
 
-        Test.@testset "Dispatch: Fixed + NotProvided → core_call (no error)" begin
+        Test.@testset "Dispatch: Fixed + NotProvided → _core_invoke_flow (no error)" begin
             sys = FakeSystemForCalling(2)
             integ = FakeIntegratorForCalling()
             flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
             config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
-            result = Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
+            result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
 
             Test.@test integ.build_problem_called === true
             Test.@test integ.build_options_called === true
@@ -330,16 +330,16 @@ function test_calling_flows()
             flow = FakeFlowForCalling{Traits.Autonomous, Traits.Fixed, typeof(sys), typeof(integ)}(sys, integ)
             config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
-            Test.@test_throws Exceptions.PreconditionError Flows.call(flow, config; variable=0.5, unsafe=false)
+            Test.@test_throws Exceptions.PreconditionError Flows._invoke_flow(flow, config; variable=0.5, unsafe=false)
         end
 
-        Test.@testset "Dispatch: NonFixed + variable provided → core_call" begin
+        Test.@testset "Dispatch: NonFixed + variable provided → _core_invoke_flow" begin
             sys = FakeSystemNonFixed(2)
             integ = FakeIntegratorForCalling()
             flow = FakeFlowForCalling{Traits.Autonomous, Traits.NonFixed, typeof(sys), typeof(integ)}(sys, integ)
             config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
-            result = Flows.call(flow, config; variable=0.5, unsafe=false)
+            result = Flows._invoke_flow(flow, config; variable=0.5, unsafe=false)
 
             Test.@test integ.build_problem_called === true
             Test.@test integ.build_options_called === true
@@ -353,7 +353,7 @@ function test_calling_flows()
             flow = FakeFlowForCalling{Traits.Autonomous, Traits.NonFixed, typeof(sys), typeof(integ)}(sys, integ)
             config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
 
-            Test.@test_throws Exceptions.PreconditionError Flows.call(flow, config; variable=Common.NotProvided(), unsafe=false)
+            Test.@test_throws Exceptions.PreconditionError Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
         end
 
         # ====================================================================
@@ -361,8 +361,8 @@ function test_calling_flows()
         # ====================================================================
 
         Test.@testset "Exports Verification" begin
-            Test.@testset "call function is exported" begin
-                Test.@test isdefined(Flows, :call)
+            Test.@testset "_invoke_flow function is not exported" begin
+                Test.@test isdefined(Flows, :_invoke_flow) && !isdefined(Main, :_invoke_flow)
             end
         end
     end

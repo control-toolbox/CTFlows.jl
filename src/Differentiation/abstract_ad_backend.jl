@@ -141,7 +141,7 @@ Prepare a cache for efficient gradient computation using typical values.
 
 # Notes
  - The cache is passed to gradient methods via the `cache` argument.
- - Concrete cache types are extension-specific (e.g., `DifferentiationInterfaceCache`
+ - Concrete cache types are extension-specific (e.g., `_DifferentiationInterfaceCache`
    from the `CTFlowsDifferentiationInterface` extension).
  - The cache is stored in `ODEParameters` and accessed during ODE integration.
 

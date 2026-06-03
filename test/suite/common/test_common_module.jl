@@ -5,188 +5,143 @@
 # This file tests the exports from the `Common` module. It verifies that
 # the expected types, functions, and constants are properly exported by
 # `CTFlows.Common` and readily accessible to the end user.
+#
+# Functionality tests are in separate files:
+# - test_ode_parameters.jl for ODEParameters
+# - test_internal_norm.jl for deepvalue/real_norm
+# - test_abstract_tag.jl for AbstractTag
 """
 
 module TestCommonModule
 
 import Test
+import CTFlows
 import CTFlows.Common
-import CTFlows.Traits
-import CTModels.OCP
+using CTFlows.Common  # For testing exported symbols
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
 
 const CurrentModule = TestCommonModule
 
+# ============================================================================
+# Hardcoded export lists
+# ============================================================================
+# These lists define the expected public API of the Common module.
+# For other modules, create similar lists with their specific exports.
+
+const EXPORTED_TYPES = (
+    :AbstractTag,
+    :AbstractCache,
+    :NotProvided,
+    :ODEParameters,
+)
+
+const EXPORTED_FUNCTIONS = (
+    :variable,
+    :deepvalue,
+    :real_norm,
+    :make_coerce,
+    # Shared default values (exported for use across modules)
+    :__is_autonomous,
+    :__is_variable,
+    :__variable,
+    :__unsafe,
+    :__is_inplace,
+    :__hvf_inplace,
+    :__variable_costate,
+    :__ad_backend,
+)
+
+# Note: Common module has no private symbols (after filtering Julia internals)
+# All symbols are exported
+
+# ============================================================================
+# Helper functions (generic for reuse in other modules)
+# ============================================================================
+
+"""
+    test_exported_symbols(module_ref::Module, symbols::Tuple, test_module::Module)
+
+Test that symbols are exported from a module and available via `using`.
+"""
+function test_exported_symbols(module_ref::Module, symbols::Tuple, test_module::Module)
+    for sym in symbols
+        Test.@testset "$(sym)" begin
+            Test.@test isdefined(module_ref, sym)
+            Test.@test isdefined(test_module, sym)
+        end
+    end
+end
+
+"""
+    test_internal_symbols(module_ref::Module, symbols::Tuple, test_module::Module)
+
+Test that symbols are defined in a module but NOT exported (not available via `using`).
+Generic helper for modules with private symbols.
+"""
+function test_internal_symbols(module_ref::Module, symbols::Tuple, test_module::Module)
+    for sym in symbols
+        Test.@testset "$(sym)" begin
+            Test.@test isdefined(module_ref, sym)
+            Test.@test !isdefined(test_module, sym)
+        end
+    end
+end
+
+# ============================================================================
+# Test function
+# ============================================================================
+
 function test_common_module()
     Test.@testset "Common Module Exports" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
-        # Tag Types
+        # Module availability
         # ====================================================================
 
-        Test.@testset "Tag Types" begin
-            Test.@testset "AbstractTag is exported" begin
-                Test.@test isdefined(Common, :AbstractTag)
+        Test.@testset "Module availability" begin
+            Test.@testset "Common module exists" begin
+                Test.@test isdefined(CTFlows, :Common)
+                Test.@test CTFlows.Common isa Module
+            end
+        end
+
+        # ====================================================================
+        # Exported types verification
+        # ====================================================================
+
+        Test.@testset "Exported types" begin
+            test_exported_symbols(Common, EXPORTED_TYPES, CurrentModule)
+        end
+
+        # ====================================================================
+        # Exported functions verification
+        # ====================================================================
+
+        Test.@testset "Exported functions" begin
+            test_exported_symbols(Common, EXPORTED_FUNCTIONS, CurrentModule)
+        end
+
+        # ====================================================================
+        # Type hierarchy tests
+        # ====================================================================
+
+        Test.@testset "Type hierarchy" begin
+            Test.@testset "AbstractTag is abstract" begin
                 Test.@test isabstracttype(Common.AbstractTag)
             end
-        end
 
-        # ====================================================================
-        # Config Types (now in Configs module)
-        # ====================================================================
-
-        # Config types have been moved to CTFlows.Configs module
-        # See test/suite/configs/test_configs.jl for config tests
-
-        # ====================================================================
-        # Trait Types (now in Traits module)
-        # ====================================================================
-
-        Test.@testset "Trait Types (Traits module)" begin
-            Test.@testset "TimeDependence is exported from Traits" begin
-                Test.@test isdefined(Traits, :TimeDependence)
-                Test.@test isabstracttype(Traits.TimeDependence)
+            Test.@testset "AbstractCache is abstract" begin
+                Test.@test isabstracttype(Common.AbstractCache)
             end
 
-            Test.@testset "Autonomous is exported from Traits" begin
-                Test.@test isdefined(OCP, :Autonomous)
-                Test.@test Traits.Autonomous <: Traits.TimeDependence
+            Test.@testset "NotProvided is concrete" begin
+                Test.@test !isabstracttype(Common.NotProvided)
             end
 
-            Test.@testset "NonAutonomous is exported from Traits" begin
-                Test.@test isdefined(OCP, :NonAutonomous)
-                Test.@test Traits.NonAutonomous <: Traits.TimeDependence
-            end
-        end
-
-        Test.@testset "Variable-Dependence Trait Types (Traits module)" begin
-            Test.@testset "VariableDependence is exported from Traits" begin
-                Test.@test isdefined(Traits, :VariableDependence)
-                Test.@test isabstracttype(Traits.VariableDependence)
-            end
-
-            Test.@testset "Fixed is exported from Traits" begin
-                Test.@test isdefined(Traits, :Fixed)
-                Test.@test Traits.Fixed <: Traits.VariableDependence
-                trait = Traits.Fixed()
-                Test.@test trait isa Traits.Fixed
-            end
-
-            Test.@testset "NonFixed is exported from Traits" begin
-                Test.@test isdefined(Traits, :NonFixed)
-                Test.@test Traits.NonFixed <: Traits.VariableDependence
-                trait = Traits.NonFixed()
-                Test.@test trait isa Traits.NonFixed
-            end
-        end
-
-        # ====================================================================
-        # ODEParameters Type
-        # ====================================================================
-
-        Test.@testset "ODEParameters Type" begin
-            Test.@testset "ODEParameters is exported" begin
-                Test.@test isdefined(Common, :ODEParameters)
-            end
-
-            Test.@testset "constructs with nothing" begin
-                params = Common.ODEParameters(nothing)
-                Test.@test params isa Common.ODEParameters
-                Test.@test Common.variable(params) === nothing
-            end
-
-            Test.@testset "constructs with value" begin
-                params = Common.ODEParameters(0.5)
-                Test.@test params isa Common.ODEParameters
-                Test.@test Common.variable(params) == 0.5
-            end
-        end
-
-        # ====================================================================
-        # Trait Check Functions (now in Traits module)
-        # ====================================================================
-
-        Test.@testset "Trait Check Functions (Traits module)" begin
-            Test.@testset "has_time_dependence_trait is exported from Traits" begin
-                Test.@test isdefined(Traits, :has_time_dependence_trait)
-            end
-
-            Test.@testset "has_variable_dependence_trait is exported from Traits" begin
-                Test.@test isdefined(Traits, :has_variable_dependence_trait)
-            end
-        end
-
-        # ====================================================================
-        # Trait Query Functions (now in Traits module)
-        # ====================================================================
-
-        Test.@testset "Trait Query Functions (Traits module)" begin
-            Test.@testset "time_dependence is exported from Traits" begin
-                Test.@test isdefined(Traits, :time_dependence)
-            end
-
-            Test.@testset "variable_dependence is exported from Traits" begin
-                Test.@test isdefined(Traits, :variable_dependence)
-            end
-        end
-
-        # ====================================================================
-        # Trait Accessor Functions (now in Traits module)
-        # ====================================================================
-
-        Test.@testset "Trait Accessor Functions (Traits module)" begin
-            Test.@testset "is_autonomous is exported from Traits" begin
-                Test.@test isdefined(Traits, :is_autonomous)
-            end
-
-            Test.@testset "is_nonautonomous is exported from Traits" begin
-                Test.@test isdefined(Traits, :is_nonautonomous)
-            end
-
-            Test.@testset "is_variable is exported from Traits" begin
-                Test.@test isdefined(Traits, :is_variable)
-            end
-
-            Test.@testset "is_nonvariable is exported from Traits" begin
-                Test.@test isdefined(Traits, :is_nonvariable)
-            end
-
-            Test.@testset "has_variable is exported from Traits" begin
-                Test.@test isdefined(Traits, :has_variable)
-            end
-        end
-
-        # ====================================================================
-        # Type Hierarchy Verification (Traits module)
-        # ====================================================================
-
-        Test.@testset "Type Hierarchy (Traits module)" begin
-            Test.@testset "TimeDependence hierarchy" begin
-                Test.@test Traits.Autonomous <: Traits.TimeDependence
-                Test.@test Traits.NonAutonomous <: Traits.TimeDependence
-            end
-
-            Test.@testset "VariableDependence hierarchy" begin
-                Test.@test Traits.Fixed <: Traits.VariableDependence
-                Test.@test Traits.NonFixed <: Traits.VariableDependence
-            end
-        end
-
-        # ====================================================================
-        # Internal Norm Functions
-        # ====================================================================
-
-        Test.@testset "Internal Norm Functions" begin
-            Test.@testset "deepvalue is exported" begin
-                Test.@test isdefined(Common, :deepvalue)
-                Test.@test Common.deepvalue(3.14) === 3.14
-            end
-
-            Test.@testset "real_norm is exported" begin
-                Test.@test isdefined(Common, :real_norm)
-                Test.@test Common.real_norm(3.0, 0.0) === 3.0
+            Test.@testset "ODEParameters is concrete" begin
+                Test.@test !isabstracttype(Common.ODEParameters)
             end
         end
     end

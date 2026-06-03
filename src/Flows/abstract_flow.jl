@@ -205,7 +205,7 @@ Return the variable costate capability trait of a flow.
 # Notes
 - Default implementation returns `NoVariableCostate` for all flows
 - Specialized implementation on `AbstractHamiltonianFlow` delegates to the system's trait
-- This trait is used for dispatch in `call_variable_costate` to determine if augmented integration is possible
+- This trait is used for dispatch in `_invoke_flow_variable_costate` to determine if augmented integration is possible
 
 See also: [`CTFlows.Traits.AbstractVariableCostateCapability`](@ref), [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Traits.NoVariableCostate`](@ref).
 """

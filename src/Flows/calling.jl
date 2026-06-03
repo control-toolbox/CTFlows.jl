@@ -34,7 +34,7 @@ function (f::AbstractStateFlow)(
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 )
-    return call(f, Configs.StatePointConfig(t0, x0, tf); variable=variable, unsafe=unsafe)
+    return _invoke_flow(f, Configs.StatePointConfig(t0, x0, tf); variable=variable, unsafe=unsafe)
 end
 
 """
@@ -77,8 +77,8 @@ function (f::AbstractHamiltonianFlow)(
     variable_costate::Bool=Common.__variable_costate(),
 )
     config = Configs.HamiltonianPointConfig(t0, x0, p0, tf)
-    variable_costate && return call_variable_costate(f, config; variable=variable, unsafe=unsafe)
-    return call(f, config; variable=variable, unsafe=unsafe)
+    variable_costate && return _invoke_flow_variable_costate(f, config; variable=variable, unsafe=unsafe)
+    return _invoke_flow(f, config; variable=variable, unsafe=unsafe)
 end
 
 """
@@ -115,7 +115,7 @@ function (f::AbstractStateFlow)(
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 )
-    return call(f, Configs.StateTrajectoryConfig(tspan, x0); variable=variable, unsafe=unsafe)
+    return _invoke_flow(f, Configs.StateTrajectoryConfig(tspan, x0); variable=variable, unsafe=unsafe)
 end
 
 """
@@ -156,8 +156,8 @@ function (f::AbstractHamiltonianFlow)(
     variable_costate::Bool=Common.__variable_costate(),
 )
     config = Configs.HamiltonianTrajectoryConfig(tspan, x0, p0)
-    variable_costate && return call_variable_costate(f, config; variable=variable, unsafe=unsafe)
-    return call(f, config; variable=variable, unsafe=unsafe)
+    variable_costate && return _invoke_flow_variable_costate(f, config; variable=variable, unsafe=unsafe)
+    return _invoke_flow(f, config; variable=variable, unsafe=unsafe)
 end
 
 """
@@ -192,22 +192,22 @@ This function dispatches to one of four specialized implementations based on:
 # Fixed flow: no variable parameter allowed
 flow_fixed = Flow(system_fixed, integrator)
 config = CTFlows.Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
-sol = call(flow_fixed, config; unsafe=false)  # OK, no variable
+sol = _invoke_flow(flow_fixed, config; unsafe=false)  # OK, no variable
 
 # NonFixed flow: variable parameter required
 flow_nonfixed = Flow(system_nonfixed, integrator)
-sol = call(flow_nonfixed, config; variable=0.5, unsafe=false)  # OK, variable provided
+sol = _invoke_flow(flow_nonfixed, config; variable=0.5, unsafe=false)  # OK, variable provided
 \`\`\`
 
 See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Traits.VariableDependence`](), [`CTFlows.Common.NotProvided`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
 """
-function call(flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe)
+function _invoke_flow(flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe)
     VD = Traits.variable_dependence(flow)
-    return call(VD, typeof(variable), flow, config; variable=variable, unsafe=unsafe)
+    return _invoke_flow(VD, typeof(variable), flow, config; variable=variable, unsafe=unsafe)
 end
 
 # =============================================================================
-# core_call — implementation body (renamed from call)
+# _core_invoke_flow — implementation body (renamed from call)
 # =============================================================================
 
 """
@@ -230,12 +230,12 @@ and constructs the solution.
 - The packaged solution (type varies by config type).
 
 # Notes
-This is an internal function called by the trait-dispatch overloads of `call`.
-Users should call the public `call` function instead.
+This is an internal function called by the trait-dispatch overloads of `_invoke_flow`.
+Users should call the public `_invoke_flow` function instead.
 
-See also: [`call`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
+See also: [`_invoke_flow`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
 """
-function core_call(flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe)
+function _core_invoke_flow(flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe)
 
     # get system and integrator
     sys = system(flow)
@@ -278,9 +278,9 @@ the contract that NonFixed systems must receive a variable parameter.
 - `CTBase.Exceptions.PreconditionError`: Always, with message explaining that a variable is required.
 
 # See also
-[`call`](@ref), [`CTFlows.Traits.NonFixed`](), [`Common.NotProvided`](@ref).
+[`CTFlows.Traits.NonFixed`](), [`Common.NotProvided`](@ref).
 """
-function call(::Type{Traits.NonFixed}, ::Type{Common.NotProvided}, flow, config; unsafe, variable)
+function _invoke_flow(::Type{Traits.NonFixed}, ::Type{Common.NotProvided}, flow, config; unsafe, variable)
     throw(Exceptions.PreconditionError(
         "variable not provided for a NonFixed flow";
         reason    = "flow depends on an extra variable parameter but none was given",
@@ -296,16 +296,16 @@ Dispatch for `Fixed` flows when the variable parameter was not provided.
 
 This overload is selected when a `Fixed` flow (which does not require a variable) is called
 without providing the `variable` argument. This is the expected and valid case, so it
-forwards to `core_call` with `variable=nothing`.
+forwards to `_core_invoke_flow` with `variable=nothing`.
 
 # Returns
-- The result of `core_call`.
+- The result of `_core_invoke_flow`.
 
 # See also
-[`call`](@ref), [`CTFlows.Traits.Fixed`](), [`Common.NotProvided`](@ref), [`core_call`](@ref).
+[`CTFlows.Traits.Fixed`](), [`Common.NotProvided`](@ref), [`_core_invoke_flow`](@ref).
 """
-function call(::Type{Traits.Fixed}, ::Type{Common.NotProvided}, flow, config; unsafe, variable)
-    return core_call(flow, config; variable=nothing, unsafe=unsafe)
+function _invoke_flow(::Type{Traits.Fixed}, ::Type{Common.NotProvided}, flow, config; unsafe, variable)
+    return _core_invoke_flow(flow, config; variable=nothing, unsafe=unsafe)
 end
 
 """
@@ -315,16 +315,16 @@ Dispatch for `NonFixed` flows when a variable parameter is provided.
 
 This overload is selected when a `NonFixed` flow (which requires a variable) is called
 with a provided variable parameter. This is the expected and valid case, so it forwards
-to `core_call` with the provided variable value.
+to `_core_invoke_flow` with the provided variable value.
 
 # Returns
-- The result of `core_call`.
+- The result of `_core_invoke_flow`.
 
 # See also
-[`call`](@ref), [`CTFlows.Traits.NonFixed`](), [`core_call`](@ref).
+[`CTFlows.Traits.NonFixed`](), [`_core_invoke_flow`](@ref).
 """
-function call(::Type{Traits.NonFixed}, ::Type{VT}, flow, config; unsafe, variable) where {VT}
-    return core_call(flow, config; variable=variable, unsafe=unsafe)
+function _invoke_flow(::Type{Traits.NonFixed}, ::Type{VT}, flow, config; unsafe, variable) where {VT}
+    return _core_invoke_flow(flow, config; variable=variable, unsafe=unsafe)
 end
 
 """
@@ -340,9 +340,9 @@ receive a variable parameter, so it throws a `PreconditionError`.
 - `CTBase.Exceptions.PreconditionError`: Always, with message explaining that variables must not be provided to Fixed flows.
 
 # See also
-[`call`](@ref), [`CTFlows.Traits.Fixed`]().
+[`CTFlows.Traits.Fixed`]().
 """
-function call(::Type{Traits.Fixed}, ::Type{VT}, flow, config; unsafe, variable) where {VT}
+function _invoke_flow(::Type{Traits.Fixed}, ::Type{VT}, flow, config; unsafe, variable) where {VT}
     throw(Exceptions.PreconditionError(
         "variable provided for a Fixed flow";
         reason    = "flow does not depend on any variable parameter",
@@ -352,7 +352,7 @@ function call(::Type{Traits.Fixed}, ::Type{VT}, flow, config; unsafe, variable) 
 end
 
 # ==============================================================================
-# call_variable_costate — augmented Hamiltonian integration
+# _invoke_flow_variable_costate — augmented Hamiltonian integration
 # ==============================================================================
 
 """
@@ -377,11 +377,11 @@ integration is supported.
 
 See also: [`CTFlows.Traits.variable_costate_trait`](@ref), [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Traits.NoVariableCostate`](@ref).
 """
-function call_variable_costate(
+function _invoke_flow_variable_costate(
     flow::AbstractHamiltonianFlow,
     config::Configs.AbstractHamiltonianConfig; variable, unsafe
 )
-    return call_variable_costate(
+    return _invoke_flow_variable_costate(
         Traits.variable_costate_trait(flow),
         typeof(variable),
         flow, config; variable=variable, unsafe=unsafe
@@ -401,7 +401,7 @@ This method handles the error case where a flow does not support variable costat
 
 See also: [`CTFlows.Traits.NoVariableCostate`](@ref).
 """
-function call_variable_costate(
+function _invoke_flow_variable_costate(
     ::Type{Traits.NoVariableCostate},
     ::Type{VT},
     flow::AbstractHamiltonianFlow,
@@ -435,7 +435,7 @@ and calls the flow with it.
 
 See also: [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Configs.AugmentedHamiltonianPointConfig`](@ref).
 """
-function call_variable_costate(
+function _invoke_flow_variable_costate(
     ::Type{Traits.SupportsVariableCostate},
     ::Type{VT},
     flow::AbstractHamiltonianFlow,
@@ -447,7 +447,7 @@ function call_variable_costate(
     pv0 = Common.make_coerce(variable)(zeros(eltype(x0), length(variable)))
     tf  = Configs.final_time(config)
     config_aug = Configs.AugmentedHamiltonianPointConfig(t0, x0, p0, pv0, tf)
-    return call(flow, config_aug; variable=variable, unsafe=unsafe)
+    return _invoke_flow(flow, config_aug; variable=variable, unsafe=unsafe)
 end
 
 """
@@ -463,7 +463,7 @@ but the user did not provide the required variable parameter.
 
 See also: [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Common.NotProvided`](@ref).
 """
-function call_variable_costate(
+function _invoke_flow_variable_costate(
     ::Type{Traits.SupportsVariableCostate},
     ::Type{Common.NotProvided},
     flow::AbstractHamiltonianFlow,
@@ -491,7 +491,7 @@ with a trajectory configuration.
 
 See also: [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref).
 """
-function call_variable_costate(
+function _invoke_flow_variable_costate(
     ::Type{Traits.SupportsVariableCostate},
     ::Type{VT},
     flow::AbstractHamiltonianFlow,

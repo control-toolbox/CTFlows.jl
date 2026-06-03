@@ -45,10 +45,10 @@ include(joinpath(@__DIR__, "building.jl"))
 # Module exports
 # ==============================================================================
 
+export AbstractVectorFieldSolution, VectorFieldSolution
+export AbstractHamiltonianVectorFieldSolution, HamiltonianVectorFieldSolution
 export state, time_grid
 export costate
-export VectorFieldSolution
-export HamiltonianVectorFieldSolution
 export build_solution
 export plot
 

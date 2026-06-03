@@ -28,14 +28,14 @@ It provides the **flow integration layer** for systems and optimal control probl
     using CTFlows
     sys      = CTFlows.Systems.AbstractSystem      # abstract type
     flow     = CTFlows.Flows.Flow(system, integ)    # concrete flow
-    sol      = CTFlows.Flows.call(flow, config)     # integrate
+    sol      = CTFlows.Flows._invoke_flow(flow, config)     # integrate
     ```
 
     Or bring a single submodule into scope with `using CTFlows.Submodule`:
 
     ```julia
     using CTFlows.Flows
-    sol = call(flow, config)
+    sol = _invoke_flow(flow, config)
     ```
 
 ## Architecture overview
@@ -93,11 +93,11 @@ flow = Flows.Flow(vf; reltol=1e-8)
 
 # Integrate using a configuration
 config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
-sol = Flows.call(flow, config)
+sol = Flows._invoke_flow(flow, config)
 
 # Or point-to-point integration
 config = Common.StatePointConfig((0.0, 1.0), [1.0, 0.0])
-final_state = Flows.call(flow, config)
+final_state = Flows._invoke_flow(flow, config)
 ```
 
 ## Status

@@ -44,8 +44,7 @@ export AbstractSystem, AbstractStateSystem, AbstractHamiltonianSystem
 export AbstractRHS, AbstractIPRHS, AbstractOoPRHS
 export AbstractHVFRHS, AbstractIPHVFRHS, AbstractOoPHVFRHS
 export AbstractHamRHS, AbstractIPHamRHS, AbstractOoPHamRHS
-export HamIpRHS, HamOoPRHS, HamIpAugRHS
-export rhs
+export rhs, rhs_oop
 export build_rhs
 export build_oop_rhs
 export hamiltonian_vector_field
@@ -54,5 +53,6 @@ export HamiltonianVectorFieldSystem
 export HamiltonianSystem
 export build_system
 export build_rhs_augmented
+export hamiltonian, backend
 
 end # module Systems

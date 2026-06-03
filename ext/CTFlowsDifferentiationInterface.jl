@@ -7,7 +7,7 @@ for automatic differentiation in CTFlows Hamiltonian systems.
 Activated automatically when `DifferentiationInterface` is loaded together with `CTFlows`.
 
 This extension provides:
-- `DifferentiationInterfaceCache` — prepared gradient plans for efficient repeated computation
+- `_DifferentiationInterfaceCache` — prepared gradient plans for efficient repeated computation
 - `Differentiation.prepare_cache` — cache preparation for `DifferentiationInterface` backend
 - `Differentiation.hamiltonian_gradient` — gradient computation with/without cache
 - `Differentiation.variable_gradient` — variable gradient with/without cache
@@ -22,7 +22,7 @@ using CTFlows.Differentiation: Differentiation
 using DifferentiationInterface: DifferentiationInterface as DI
 
 # ==============================================================================
-# DifferentiationInterfaceCache — Prepared gradient plans
+# _DifferentiationInterfaceCache — Prepared gradient plans
 # ==============================================================================
 
 """
@@ -40,7 +40,7 @@ for efficient repeated computation of Hamiltonian gradients.
 - [`CTFlows.Differentiation.prepare_cache`](@ref)
 - [`CTFlows.Differentiation.hamiltonian_gradient`](@ref)
 """
-mutable struct DifferentiationInterfaceCache{HX, HP, HV} <: Common.AbstractCache
+mutable struct _DifferentiationInterfaceCache{HX, HP, HV} <: Common.AbstractCache
     p_x   # DI prepared plan for ∂H/∂x (or Nothing)
     p_p   # DI prepared plan for ∂H/∂p (or Nothing)
     p_v   # DI prepared plan for ∂H/∂v (Nothing if Fixed)
@@ -68,9 +68,9 @@ Return the appropriate DifferentiationInterface preparation function for scalar 
 - Internal helper used by `Differentiation.prepare_cache`.
 - Dispatches to `DI.prepare_derivative` for scalar types.
 
-See also: [`CTFlows.Differentiation.prepare_cache`](@ref), [`derivator`](@ref).
+See also: [`CTFlows.Differentiation.prepare_cache`](@ref), [`_derivator`](@ref).
 """
-function preparator(::Type{<:Number})
+function _preparator(::Type{<:Number})
     return DI.prepare_derivative
 end
 
@@ -89,9 +89,9 @@ Return the appropriate DifferentiationInterface preparation function for array t
 - Internal helper used by `Differentiation.prepare_cache`.
 - Dispatches to `DI.prepare_gradient` for array types.
 
-See also: [`CTFlows.Differentiation.prepare_cache`](@ref), [`derivator`](@ref).
+See also: [`CTFlows.Differentiation.prepare_cache`](@ref), [`_derivator`](@ref).
 """
-function preparator(::Type{<:AbstractArray})
+function _preparator(::Type{<:AbstractArray})
     return DI.prepare_gradient
 end
 
@@ -109,20 +109,20 @@ Prepare a gradient cache for the `DifferentiationInterface` backend.
 - `typical_v`: Typical variable value (for type inference; `nothing` for Fixed problems).
 
 # Returns
-- `DifferentiationInterfaceCache` if `prepare_cache=true` option is set.
+- `_DifferentiationInterfaceCache` if `prepare_cache=true` option is set.
 - `nothing` if `prepare_cache=false` option is set (gradient methods fall back to plain `DI.gradient`).
 
 # Behavior
 When the `prepare_cache` option is `true` (default), this function:
 1. Extracts the DI backend and `do_prepare` flag from the strategy options.
 2. Calls `DI.prepare_gradient` for each variable (∂H/∂x, ∂H/∂p, ∂H/∂v).
-3. Returns a `DifferentiationInterfaceCache` storing the prepared plans.
+3. Returns a `_DifferentiationInterfaceCache` storing the prepared plans.
 
 When `prepare_cache` is `false`, returns `nothing` and gradient methods compute
 gradients on-the-fly using plain `DI.gradient`.
 
 # See also
-- `DifferentiationInterfaceCache`
+- `_DifferentiationInterfaceCache`
 - [`CTFlows.Differentiation.hamiltonian_gradient`](@ref)
 """
 function Differentiation.prepare_cache(
@@ -137,20 +137,20 @@ function Differentiation.prepare_cache(
         h_x(x, t, p, v) = h(t, x, p, v)
         h_p(p, t, x, v) = h(t, x, p, v)
         h_v(v, t, x, p) = h(t, x, p, v)
-        p_x = preparator(typeof(typical_x))(h_x, di_backend, typical_x, DI.Constant(typical_t), DI.Constant(typical_p), DI.Constant(typical_v))
-        p_p = preparator(typeof(typical_p))(h_p, di_backend, typical_p, DI.Constant(typical_t), DI.Constant(typical_x), DI.Constant(typical_v))
+        p_x = _preparator(typeof(typical_x))(h_x, di_backend, typical_x, DI.Constant(typical_t), DI.Constant(typical_p), DI.Constant(typical_v))
+        p_p = _preparator(typeof(typical_p))(h_p, di_backend, typical_p, DI.Constant(typical_t), DI.Constant(typical_x), DI.Constant(typical_v))
         p_v = if typical_v === nothing
             nothing
         else
-            preparator(typeof(typical_v))(h_v, di_backend, typical_v, DI.Constant(typical_t), DI.Constant(typical_x), DI.Constant(typical_p))
+            _preparator(typeof(typical_v))(h_v, di_backend, typical_v, DI.Constant(typical_t), DI.Constant(typical_x), DI.Constant(typical_p))
         end
-        return DifferentiationInterfaceCache(p_x, p_p, p_v, h_x, h_p, h_v)
+        return _DifferentiationInterfaceCache(p_x, p_p, p_v, h_x, h_p, h_v)
     else
         return nothing   # caller gets Nothing; gradient methods fall back to plain DI.gradient
     end
 end
 
-function Differentiation.update!(cache::DifferentiationInterfaceCache, backend::Differentiation.DifferentiationInterface, t, x, p, v)
+function Differentiation.update!(cache::_DifferentiationInterfaceCache, backend::Differentiation.DifferentiationInterface, t, x, p, v)
     on_update = Differentiation.on_update(backend)
     isnothing(on_update) || on_update(cache, t, x, p, v)
     di_backend = Differentiation.ad_backend(backend)
@@ -158,12 +158,12 @@ function Differentiation.update!(cache::DifferentiationInterfaceCache, backend::
     if !do_prepare
         return nothing
     end
-    p_x = preparator(typeof(x))(cache.h_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
-    p_p = preparator(typeof(p))(cache.h_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
+    p_x = _preparator(typeof(x))(cache.h_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
+    p_p = _preparator(typeof(p))(cache.h_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
     p_v = if v === nothing
         nothing
     else
-        preparator(typeof(v))(cache.h_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
+        _preparator(typeof(v))(cache.h_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
     end
     cache.p_x = p_x
     cache.p_p = p_p
@@ -190,9 +190,9 @@ Return the appropriate DifferentiationInterface computation function for scalar 
 - Internal helper used by gradient computation methods.
 - Dispatches to `DI.derivative` for scalar types.
 
-See also: [`CTFlows.Differentiation.hamiltonian_gradient`](@ref), [`CTFlows.Differentiation.variable_gradient`](@ref), [`preparator`](@ref).
+See also: [`CTFlows.Differentiation.hamiltonian_gradient`](@ref), [`CTFlows.Differentiation.variable_gradient`](@ref), [`_preparator`](@ref).
 """
-function derivator(::Type{<:Number})
+function _derivator(::Type{<:Number})
     return DI.derivative
 end
 
@@ -211,9 +211,9 @@ Return the appropriate DifferentiationInterface computation function for array t
 - Internal helper used by gradient computation methods.
 - Dispatches to `DI.gradient` for array types.
 
-See also: [`CTFlows.Differentiation.hamiltonian_gradient`](@ref), [`CTFlows.Differentiation.variable_gradient`](@ref), [`preparator`](@ref).
+See also: [`CTFlows.Differentiation.hamiltonian_gradient`](@ref), [`CTFlows.Differentiation.variable_gradient`](@ref), [`_preparator`](@ref).
 """
-function derivator(::Type{<:AbstractArray})
+function _derivator(::Type{<:AbstractArray})
     return DI.gradient
 end
 
@@ -240,7 +240,7 @@ is `false` or when the system does not require cache preparation.
   - `grad_p` = ∂H/∂p
 
 # See also
-- `DifferentiationInterfaceCache`
+- `_DifferentiationInterfaceCache`
 - [`CTFlows.Differentiation.prepare_cache`](@ref)
 """
 function Differentiation.hamiltonian_gradient(
@@ -253,8 +253,8 @@ function Differentiation.hamiltonian_gradient(
     h_x(x, t, p, v) = h(t, x, p, v)
     h_p(p, t, x, v) = h(t, x, p, v)
     # Use derivative for scalars, gradient for arrays
-    grad_x = derivator(typeof(x))(h_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
-    grad_p = derivator(typeof(p))(h_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
+    grad_x = _derivator(typeof(x))(h_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
+    grad_p = _derivator(typeof(p))(h_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
     return (grad_x, grad_p)
 end
 
@@ -263,7 +263,7 @@ $(TYPEDSIGNATURES)
 
 Compute Hamiltonian gradients (∂H/∂x, ∂H/∂p) using prepared gradient plans.
 
-This overload is used when `cache::DifferentiationInterfaceCache`, i.e., when
+This overload is used when `cache::_DifferentiationInterfaceCache`, i.e., when
 the `prepare_cache` option is `true` and the cache was prepared at flow call time.
 
 # Arguments
@@ -273,7 +273,7 @@ the `prepare_cache` option is `true` and the cache was prepared at flow call tim
 - `x`: State.
 - `p`: Costate.
 - `v`: Variable (or `nothing` for Fixed problems).
-- `cache::DifferentiationInterfaceCache`: Prepared gradient plans from `prepare_cache`.
+- `cache::_DifferentiationInterfaceCache`: Prepared gradient plans from `prepare_cache`.
 
 # Returns
 - Tuple `(grad_x, grad_p)` where:
@@ -285,26 +285,26 @@ Uses the prepared plans stored in `cache.prep_x` and `cache.prep_p` for efficien
 repeated gradient computation during ODE integration.
 
 # See also
-- `DifferentiationInterfaceCache`
+- `_DifferentiationInterfaceCache`
 - [`CTFlows.Differentiation.prepare_cache`](@ref)
 """
 function Differentiation.hamiltonian_gradient(
     backend::Differentiation.DifferentiationInterface, 
     h::Data.AbstractHamiltonian, 
     t, x, p, v,
-    cache::DifferentiationInterfaceCache
+    cache::_DifferentiationInterfaceCache
 )
     di_backend = Differentiation.ad_backend(backend)
     try
         # Use derivative for scalars, gradient for arrays
-        grad_x = derivator(typeof(x))(cache.h_x, cache.p_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
-        grad_p = derivator(typeof(p))(cache.h_p, cache.p_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
+        grad_x = _derivator(typeof(x))(cache.h_x, cache.p_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
+        grad_p = _derivator(typeof(p))(cache.h_p, cache.p_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
         return (grad_x, grad_p)
     catch e
         if e isa DI.PreparationMismatchError
             Differentiation.update!(cache, backend, t, x, p, v) # recompute cache
-            grad_x = derivator(typeof(x))(cache.h_x, cache.p_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
-            grad_p = derivator(typeof(p))(cache.h_p, cache.p_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
+            grad_x = _derivator(typeof(x))(cache.h_x, cache.p_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
+            grad_p = _derivator(typeof(p))(cache.h_p, cache.p_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
             return (grad_x, grad_p)
         else
             rethrow(e)
@@ -338,7 +338,7 @@ is `false` or when the system does not require cache preparation.
 - `grad_v` = ∂H/∂v for NonFixed problems.
 
 # See also
-- `DifferentiationInterfaceCache`
+- `_DifferentiationInterfaceCache`
 - [`CTFlows.Differentiation.prepare_cache`](@ref)
 """
 function Differentiation.variable_gradient(
@@ -351,7 +351,7 @@ function Differentiation.variable_gradient(
     di_backend = Differentiation.ad_backend(backend)
     h_v(v, t, x, p) = h(t, x, p, v)
     # Use derivative for scalars, gradient for arrays
-    grad_v = derivator(typeof(v))(h_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
+    grad_v = _derivator(typeof(v))(h_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
     return grad_v
 end
 
@@ -360,7 +360,7 @@ $(TYPEDSIGNATURES)
 
 Compute variable gradient (∂H/∂v) using prepared gradient plans.
 
-This overload is used when `cache::DifferentiationInterfaceCache`, i.e., when
+This overload is used when `cache::_DifferentiationInterfaceCache`, i.e., when
 the `prepare_cache` option is `true` and the cache was prepared at flow call time.
 
 # Arguments
@@ -370,7 +370,7 @@ the `prepare_cache` option is `true` and the cache was prepared at flow call tim
 - `x`: State.
 - `p`: Costate.
 - `v`: Variable (or `nothing` for Fixed problems).
-- `cache::DifferentiationInterfaceCache`: Prepared gradient plans from `prepare_cache`.
+- `cache::_DifferentiationInterfaceCache`: Prepared gradient plans from `prepare_cache`.
 
 # Returns
 - `nothing` for Fixed problems (`v === nothing`).
@@ -381,24 +381,24 @@ Uses the prepared plan stored in `cache.prep_v` for efficient repeated gradient
 computation during ODE integration.
 
 # See also
-- `DifferentiationInterfaceCache`
+- `_DifferentiationInterfaceCache`
 - [`CTFlows.Differentiation.prepare_cache`](@ref)
 """
 function Differentiation.variable_gradient(
     backend::Differentiation.DifferentiationInterface, 
     h::Data.AbstractHamiltonian, 
     t, x, p, v,
-    cache::DifferentiationInterfaceCache
+    cache::_DifferentiationInterfaceCache
 )
     di_backend = Differentiation.ad_backend(backend)
     try 
         # Use derivative for scalars, gradient for arrays
-        grad_v = derivator(typeof(v))(cache.h_v, cache.p_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
+        grad_v = _derivator(typeof(v))(cache.h_v, cache.p_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
         return grad_v
     catch e
         if e isa DI.PreparationMismatchError
             Differentiation.update!(cache, backend, t, x, p, v) # recompute cache
-            grad_v = derivator(typeof(v))(cache.h_v, cache.p_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
+            grad_v = _derivator(typeof(v))(cache.h_v, cache.p_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
             return grad_v
         else
             rethrow(e)
@@ -490,15 +490,15 @@ end
 # =============================================================================
 
 """
-    Base.show(io::IO, cache::DifferentiationInterfaceCache)
+    Base.show(io::IO, cache::_DifferentiationInterfaceCache)
 
-Display a compact representation of a DifferentiationInterfaceCache.
+Display a compact representation of a _DifferentiationInterfaceCache.
 
 Shows the preparation status for each gradient plan and the update count.
 
 # Arguments
 - `io::IO`: The IO stream.
-- `cache::DifferentiationInterfaceCache`: The cache to display.
+- `cache::_DifferentiationInterfaceCache`: The cache to display.
 
 # Output
 Displays three lines:
@@ -510,32 +510,32 @@ Displays three lines:
 # Example
 ```julia-repl
 julia> cache
-DifferentiationInterfaceCache
+_DifferentiationInterfaceCache
   ∂H/∂x: prepared
   ∂H/∂p: prepared
   ∂H/∂v: prepared
 ```
 """
-function Base.show(io::IO, cache::DifferentiationInterfaceCache)
-    println(io, "DifferentiationInterfaceCache")
+function Base.show(io::IO, cache::_DifferentiationInterfaceCache)
+    println(io, "_DifferentiationInterfaceCache")
     println(io, "  ∂H/∂x: ", _prep_status(cache.p_x))
     println(io, "  ∂H/∂p: ", _prep_status(cache.p_p))
     print(io, "  ∂H/∂v: ", _prep_status(cache.p_v))
 end
 
 """
-    Base.show(io::IO, ::MIME"text/plain", cache::DifferentiationInterfaceCache)
+    Base.show(io::IO, ::MIME"text/plain", cache::_DifferentiationInterfaceCache)
 
-Display a DifferentiationInterfaceCache in the REPL with the same format as `Base.show(io, cache)`.
+Display a _DifferentiationInterfaceCache in the REPL with the same format as `Base.show(io, cache)`.
 
 # Arguments
 - `io::IO`: The IO stream.
 - `::MIME"text/plain"`: The MIME type.
-- `cache::DifferentiationInterfaceCache`: The cache to display.
+- `cache::_DifferentiationInterfaceCache`: The cache to display.
 
 See also: `Base.show`.
 """
-function Base.show(io::IO, ::MIME"text/plain", cache::DifferentiationInterfaceCache)
+function Base.show(io::IO, ::MIME"text/plain", cache::_DifferentiationInterfaceCache)
     show(io, cache)
 end
 

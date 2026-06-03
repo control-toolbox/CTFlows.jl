@@ -43,7 +43,7 @@ export AbstractTag
 export AbstractCache
 export NotProvided
 export ODEParameters, variable
-export __is_autonomous, __is_variable, __variable, __unsafe, __is_inplace, __hvf_inplace, _variable_costate, __ad_backend
+export __is_autonomous, __is_variable, __variable, __unsafe, __is_inplace, __hvf_inplace, __variable_costate, __ad_backend
 export deepvalue, real_norm, make_coerce
 
 end # module Common

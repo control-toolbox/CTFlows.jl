@@ -359,7 +359,7 @@ Add `include("hamiltonian_system.jl")`. Export `HamiltonianSystem`.
 Define the concrete cache type:
 
 ```julia
-struct DifferentiationInterfaceCache{PX, PP, PV} <: Common.AbstractCache
+struct _DifferentiationInterfaceCache{PX, PP, PV} <: Common.AbstractCache
     prep_x::PX   # prepared gradient for ∂H/∂x
     prep_p::PP   # prepared gradient for ∂H/∂p
     prep_v::PV   # prepared gradient for ∂H/∂v (nothing if Fixed)
@@ -383,7 +383,7 @@ function Differentiation.prepare_cache(
     prep_v = typical_v !== nothing ?
         DI.prepare_gradient(h_v, di_backend, typical_v,
             Constant(typical_x), Constant(typical_p), Constant(typical_t)) : nothing
-    return DifferentiationInterfaceCache(prep_x, prep_p, prep_v)
+    return _DifferentiationInterfaceCache(prep_x, prep_p, prep_v)
 end
 ```
 
@@ -435,7 +435,7 @@ DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
 
 ### Step 20 — Test Checkpoint: Extension
 
-- `@testset "Unit: DifferentiationInterfaceCache construction"`
+- `@testset "Unit: _DifferentiationInterfaceCache construction"`
 - `@testset "Integration: prepare_cache with AutoForwardDiff()"` — correct preps
 - `@testset "Integration: hamiltonian_gradient without cache"` — numerical verification
 - `@testset "Integration: hamiltonian_gradient with cache"` — same result, optimised path
@@ -787,7 +787,7 @@ Write docstrings for all new and modified public-facing items:
 - `src/Flows/calling.jl` — `prepare_cache`, `call_augmented`, `augment` parameter
 - `src/Flows/building.jl` — `Flow(h::AbstractHamiltonian; ...)`
 - `src/Solutions/building.jl` — `_aug_split_solution`, `build_solution` augmented overload
-- `ext/CTFlowsDifferentiationInterface.jl` — `DifferentiationInterfaceCache`, implementations
+- `ext/CTFlowsDifferentiationInterface.jl` — `_DifferentiationInterfaceCache`, implementations
 
 ### Step 30 — Final Test Run
 

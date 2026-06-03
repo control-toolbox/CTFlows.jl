@@ -82,7 +82,6 @@ export prepare_cache
 export on_update
 export hamiltonian_gradient
 export variable_gradient
-export prepare_cache
 export update!
 export gradient
 export derivative

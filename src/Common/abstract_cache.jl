@@ -5,7 +5,7 @@ Abstract base type for automatic differentiation caches.
 
 Caches store pre-allocated buffers and prepared differentiation plans to avoid
 repeated allocation during ODE integration. Concrete cache types are extension-specific
-(e.g., `DifferentiationInterfaceCache` from the `CTFlowsDifferentiationInterface` extension).
+(e.g., `_DifferentiationInterfaceCache` from the `CTFlowsDifferentiationInterface` extension).
 
 # Example
 \`\`\`julia-repl

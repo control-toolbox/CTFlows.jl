@@ -173,7 +173,7 @@ paramètres ODE.
 
 **Pourquoi `cache = nothing` ?**
 
-Le cache préparé (`DifferentiationInterfaceCache`) est conçu pour
+Le cache préparé (`_DifferentiationInterfaceCache`) est conçu pour
 **l'intégration ODE répétée** : il pré-alloue les plans de différentiation
 pour des appels successifs avec des `(x, p)` de même type et taille.
 

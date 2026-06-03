@@ -46,8 +46,8 @@ include(joinpath(@__DIR__, "calling.jl"))
 
 export AbstractFlow, AbstractStateFlow, AbstractHamiltonianFlow, Flow, StateFlow, HamiltonianFlow
 export system, integrator
-export call
 export build_flow
 export hamiltonian_vector_field
+export flow_registry
 
 end # module Flows
