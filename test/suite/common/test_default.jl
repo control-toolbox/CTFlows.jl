@@ -43,7 +43,7 @@ function test_default()
             end
 
             Test.@testset "_variable_costate returns false" begin
-                Test.@test Common._variable_costate() === false
+                Test.@test Common.__variable_costate() === false
             end
         end
 

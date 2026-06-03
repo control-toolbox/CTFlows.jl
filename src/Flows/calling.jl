@@ -74,7 +74,7 @@ function (f::AbstractHamiltonianFlow)(
     tf::Real;
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
-    variable_costate::Bool=Common._variable_costate(),
+    variable_costate::Bool=Common.__variable_costate(),
 )
     config = Configs.HamiltonianPointConfig(t0, x0, p0, tf)
     variable_costate && return call_variable_costate(f, config; variable=variable, unsafe=unsafe)
@@ -153,7 +153,7 @@ function (f::AbstractHamiltonianFlow)(
     p0;
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
-    variable_costate::Bool=Common._variable_costate(),
+    variable_costate::Bool=Common.__variable_costate(),
 )
     config = Configs.HamiltonianTrajectoryConfig(tspan, x0, p0)
     variable_costate && return call_variable_costate(f, config; variable=variable, unsafe=unsafe)

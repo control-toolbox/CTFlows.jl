@@ -100,7 +100,7 @@ variable costate equation `ṗᵥ = -∂H/∂v` unless explicitly requested.
 
 See also: [`CTFlows.Configs.AugmentedHamiltonianPointConfig`](@ref).
 """
-_variable_costate()::Bool = false
+__variable_costate()::Bool = false
 
 """
 $(TYPEDSIGNATURES)
