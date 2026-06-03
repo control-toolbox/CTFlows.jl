@@ -39,6 +39,7 @@ import ..Differentiation: Differentiation
 
 include("default.jl")
 include("prefix.jl")
+include("exception_prefix.jl")
 include("ad.jl")
 include("ad_types.jl")
 include("lift.jl")
@@ -57,5 +58,6 @@ export ∂ₜ
 export @Lie
 export dg_ad_backend, dg_ad_backend!
 export diffgeo_prefix, diffgeo_prefix!
+export e_prefix, e_prefix!
 
 end # module DifferentialGeometry
