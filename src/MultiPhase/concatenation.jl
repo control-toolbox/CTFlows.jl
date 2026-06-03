@@ -7,7 +7,7 @@ $(TYPEDSIGNATURES)
 
 Validate that switching times are strictly increasing.
 
-Throws a [`PreconditionError`](@extref) if the switching times are not in strictly
+Throws a [`CTBase.Exceptions.PreconditionError`](@extref) if the switching times are not in strictly
 increasing order (i.e., if any `switches[i] >= switches[i+1]`).
 
 # Arguments

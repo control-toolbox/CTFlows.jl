@@ -12,8 +12,9 @@ mathematics:
 - **square brackets** `[X, Y]` denote a **Lie bracket** of vector fields;
 - **curly braces** `{H, G}` denote a **Poisson bracket** of Hamiltonians.
 
-Brackets may be nested and combined with ordinary arithmetic, and the operands may be
-plain `Function`s or typed objects.
+Brackets may be nested and combined with ordinary arithmetic. Operands may be plain
+`Function`s or typed objects. Evaluation points — including 2-element vector literals such
+as `[1.0, 2.0]` — may appear directly inside the macro expression.
 
 ```@setup liemacro
 using CTFlows
@@ -55,6 +56,22 @@ The macro returns exactly what the underlying function returns — a typed
 (@Lie {{F, G}, G})([1.0, 2.0], [0.5, 1.0])
 ```
 
+## Evaluation at literal points
+
+Vector literals can appear directly as arguments inside a `@Lie` expression. The macro
+resolves the ambiguity at **runtime** through dispatch: if the two elements of a `[a, b]`
+are not field-like objects, the macro reconstructs the vector as data and applies it.
+
+```@example liemacro
+@Lie [X, Y]([1.0, 2.0])
+```
+
+```@example liemacro
+H0 = Hamiltonian((x, p) -> 0.5*(2x[1]^2 + x[2]^2 + p[1]^2); is_autonomous=true)
+H1 = Hamiltonian((x, p) -> 0.5*(3x[1]^2 + x[2]^2 + p[2]^2); is_autonomous=true)
+@Lie {H0, H1}([1.0, 2.0], [2.0, 1.0])
+```
+
 ## Arithmetic on bracket values
 
 Brackets can be evaluated and combined inside a single `@Lie` expression. With the
@@ -77,20 +94,9 @@ we have ``[F_0,F_1](x_3) = (0,-4,-2)`` and ``[F_1,F_2](x_3) = (2,-1,0)``, so
 The same works for Poisson brackets:
 
 ```@example liemacro
-H0 = Hamiltonian((x, p) -> 0.5*(2x[1]^2 + x[2]^2 + p[1]^2); is_autonomous=true)
-H1 = Hamiltonian((x, p) -> 0.5*(3x[1]^2 + x[2]^2 + p[2]^2); is_autonomous=true)
 H2 = Hamiltonian((x, p) -> 0.5*(4x[1]^2 + x[2]^2 + p[1]^3 + p[2]^2); is_autonomous=true)
-xp = [1.0, 2.0]; pp = [2.0, 1.0]
-@Lie {H0, H1}(xp, pp) - {H1, H2}(xp, pp)
+@Lie {H0, H1}([1.0, 2.0], [2.0, 1.0]) - {H1, H2}([1.0, 2.0], [2.0, 1.0])
 ```
-
-!!! warning "Avoid array literals inside `@Lie`"
-
-    Bind evaluation points to variables (here `xp`, `pp`) rather than writing array
-    literals inside the macro. A literal such as `[1.0, 2.0]` is syntactically a
-    `[ , ]` bracket, which the macro mistakes for a Lie bracket — so
-    `@Lie {H0, H1}([1.0, 2.0], [2.0, 1.0])` is wrongly read as *mixing* Lie and Poisson
-    brackets and is rejected. Passing variables avoids the ambiguity.
 
 !!! warning "Trailing keywords bind to `@Lie`"
 
@@ -138,27 +144,52 @@ The macro validates its input and raises
 [`CTBase.Exceptions.IncorrectArgument`](@extref CTBase) in the following situations. These
 snippets are **not executed** (they would throw):
 
-Mixing Lie and Poisson brackets in one expression:
+**Wrong bracket kind for a typed operand.** Using a
+[`Hamiltonian`](@ref CTFlows.Data.Hamiltonian) inside `[...]` (Lie bracket) or a
+[`VectorField`](@ref CTFlows.Data.VectorField) inside `{...}` (Poisson bracket) is
+detected at runtime and raises an error:
 
 ```julia
-@Lie [f, g] + {f, g}     # ❌ cannot mix [...] and {...}
+H = Hamiltonian((x, p) -> p[1]*x[1])
+F = VectorField(x -> [x[2], -x[1]])
+
+@Lie [H, F]    # ❌ Hamiltonian is not a valid Lie bracket operand
+@Lie [F, H]    # ❌ same
+@Lie {F, H}    # ❌ VectorField is not a valid Poisson bracket operand
+@Lie {H, F}    # ❌ same
 ```
 
-An unknown keyword argument:
+**An unknown keyword argument:**
 
 ```julia
 @Lie [F, G] invalid_arg=true   # ❌ unknown @Lie argument
 ```
 
-A keyword that conflicts with typed operands, or operands whose traits disagree:
+**A keyword that conflicts with typed operands, or operands whose traits disagree:**
 
 ```julia
 Xa = VectorField(x -> [x[2], -x[1]];      is_autonomous=true)
 Xt = VectorField((t, x) -> [x[2], -x[1]]; is_autonomous=false)
 
-@Lie [Xa, Xt]                  # ❌ time-dependence mismatch between operands
-@Lie [Xa, Xa] is_autonomous=false   # ❌ flag conflicts with operand traits
+@Lie [Xa, Xt]                        # ❌ time-dependence mismatch between operands
+@Lie [Xa, Xa] is_autonomous=false    # ❌ flag conflicts with operand traits
 ```
+
+## How the macro works
+
+`@Lie` is a macro-time rewrite: every `[a, b]` in the expression is replaced by a call to
+the runtime worker `_lie_mac(a, b, …)`, and every `{c, d}` by `_poisson_mac(c, d, …)`.
+The bracket kind and the trait arguments are baked in at expansion time. Whether `[a, b]`
+is a genuine Lie bracket or a data vector is resolved at **runtime** through multiple
+dispatch:
+
+- Both operands are field-like (`Function` or `AbstractVectorField`) → Lie bracket.
+- Either operand is an `AbstractHamiltonian` → `IncorrectArgument`.
+- Otherwise → the two values are reassembled as `[a, b]` (data vector).
+
+This means the macro is **not type-stable** when it encounters a data vector `[a, b]`:
+the return type depends on the runtime values of `a` and `b`. When both operands are
+known to be field-like (e.g. typed `VectorField` objects), the macro is type-stable.
 
 ## See also
 

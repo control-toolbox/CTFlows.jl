@@ -50,8 +50,8 @@ point is used by the [`@Lie`](@ref) macro for compile-time dispatch.
 
 # Arguments
 - `f::Function`: Vector field function (returns a vector).
-- `::Type{TD}`: Time dependence type ([`CTFlows.Traits.Autonomous`](@extref) or [`CTFlows.Traits.NonAutonomous`](@extref)).
-- `::Type{VD}`: Variable dependence type ([`CTFlows.Traits.Fixed`](@extref) or [`CTFlows.Traits.NonFixed`](@extref)).
+- `::Type{TD}`: Time dependence type ([`CTFlows.Traits.Autonomous`](@ref) or [`CTFlows.Traits.NonAutonomous`](@ref)).
+- `::Type{VD}`: Variable dependence type ([`CTFlows.Traits.Fixed`](@ref) or [`CTFlows.Traits.NonFixed`](@ref)).
 
 # Returns
 - A function with signature depending on TD/VD.

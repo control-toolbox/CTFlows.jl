@@ -62,8 +62,8 @@ This typed entry point is used by the [`@Lie`](@ref) macro for compile-time disp
 # Arguments
 - `X::Function`: Vector field function (returns a vector).
 - `foo::Function`: Scalar or vector field function.
-- `::Type{TD}`: Time dependence type ([`CTFlows.Traits.Autonomous`](@extref) or [`CTFlows.Traits.NonAutonomous`](@extref)).
-- `::Type{VD}`: Variable dependence type ([`CTFlows.Traits.Fixed`](@extref) or [`CTFlows.Traits.NonFixed`](@extref)).
+- `::Type{TD}`: Time dependence type ([`CTFlows.Traits.Autonomous`](@ref) or [`CTFlows.Traits.NonAutonomous`](@ref)).
+- `::Type{VD}`: Variable dependence type ([`CTFlows.Traits.Fixed`](@ref) or [`CTFlows.Traits.NonFixed`](@ref)).
 - `ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided}`: AD backend to use (default: global backend).
 
 # Returns
