@@ -8,7 +8,7 @@ right-hand side function for integration. The resulting system is ready for use
 with flow integration pipelines.
 
 # Arguments
-- `vf::Data.VectorField`: The vector field to wrap into a system.
+- `vf::Data.AbstractVectorField`: The vector field to wrap into a system.
 
 # Returns
 - `VectorFieldSystem`: A concrete system wrapping the vector field with a pre-computed RHS function.
@@ -32,7 +32,7 @@ VectorFieldSystem
 
 See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Systems.VectorFieldSystem`](@ref).
 """
-function build_system(vf::Data.VectorField)
+function build_system(vf::Data.AbstractVectorField)
     return VectorFieldSystem(vf)
 end
 
@@ -45,7 +45,7 @@ Constructs a concrete Hamiltonian system that wraps the Hamiltonian vector field
 RHS closures are built lazily based on actual initial condition types during flow integration.
 
 # Arguments
-- `hvf::Data.HamiltonianVectorField`: The Hamiltonian vector field to wrap into a system.
+- `hvf::Data.AbstractHamiltonianVectorField`: The Hamiltonian vector field to wrap into a system.
 
 # Returns
 - `HamiltonianVectorFieldSystem`: A concrete Hamiltonian system.
@@ -69,7 +69,7 @@ HamiltonianVectorFieldSystem
 
 See also: [`CTFlows.Data.HamiltonianVectorField`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
 """
-function build_system(hvf::Data.HamiltonianVectorField)
+function build_system(hvf::Data.AbstractHamiltonianVectorField)
     return HamiltonianVectorFieldSystem(hvf)
 end
 
@@ -82,7 +82,7 @@ Constructs a concrete Hamiltonian system that wraps the scalar Hamiltonian funct
 RHS closures are built lazily based on actual initial condition types during flow integration.
 
 # Arguments
-- `h::Data.Hamiltonian`: The scalar Hamiltonian function to wrap into a system.
+- `h::Data.AbstractHamiltonian`: The scalar Hamiltonian function to wrap into a system.
 - `backend::Differentiation.AbstractADBackend`: The automatic differentiation backend (e.g., `AutoForwardDiff`, `AutoZygote`).
 
 # Returns
@@ -109,7 +109,7 @@ HamiltonianSystem
 
 See also: [`CTFlows.Data.Hamiltonian`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Differentiation.AbstractADBackend`](@ref).
 """
-function build_system(h::Data.Hamiltonian, backend::Differentiation.AbstractADBackend)
+function build_system(h::Data.AbstractHamiltonian, backend::Differentiation.AbstractADBackend)
     return HamiltonianSystem(h, backend)
 end
 

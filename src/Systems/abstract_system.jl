@@ -324,3 +324,50 @@ function rhs_oop(system::AbstractSystem, ::Bool = true)
         ),
     )
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Build the in-place right-hand side for a Hamiltonian system.
+
+Contract stub — concrete Hamiltonian system types must implement this method.
+`HamiltonianVectorFieldSystem` and `HamiltonianSystem` provide concrete implementations.
+
+# Throws
+- [`CTBase.Exceptions.NotImplemented`](@extref): If not implemented by the concrete type.
+
+See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
+"""
+function build_rhs(system::AbstractHamiltonianSystem, args...)
+    throw(
+        Exceptions.NotImplemented(
+            "AbstractHamiltonianSystem build_rhs method not implemented";
+            required_method = "build_rhs(sys::$(typeof(system)), ...)",
+            suggestion = "Use HamiltonianSystem (AD-backed) or HamiltonianVectorFieldSystem.",
+            context = "AbstractHamiltonianSystem.build_rhs - required method implementation",
+        ),
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Build the out-of-place right-hand side for a Hamiltonian system.
+
+Contract stub — concrete Hamiltonian system types must implement this method.
+
+# Throws
+- [`CTBase.Exceptions.NotImplemented`](@extref): If not implemented by the concrete type.
+
+See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
+"""
+function build_oop_rhs(system::AbstractHamiltonianSystem, args...)
+    throw(
+        Exceptions.NotImplemented(
+            "AbstractHamiltonianSystem build_oop_rhs method not implemented";
+            required_method = "build_oop_rhs(sys::$(typeof(system)), ...)",
+            suggestion = "Use HamiltonianSystem (AD-backed) or HamiltonianVectorFieldSystem.",
+            context = "AbstractHamiltonianSystem.build_oop_rhs - required method implementation",
+        ),
+    )
+end
