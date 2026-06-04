@@ -34,7 +34,7 @@ struct MultiPhaseStateFlow{
         S<:Systems.AbstractStateSystem{TD, VD}, 
         I<:Integrators.AbstractIntegrator,
         ST<:Vector{<:Real},
-        J<:Vector{<:Any}} <: Flows.AbstractStateFlow{TD, VD, S}
+        J<:Vector{<:Any}} <: Flows.AbstractStateFlow{TD, VD}
     flows::Vector{Flows.StateFlow{TD, VD, S, I}}
     switching_times::ST
     jumps::J
@@ -76,7 +76,7 @@ struct MultiPhaseHamiltonianFlow{
         S<:Systems.AbstractHamiltonianSystem{TD, VD},
         I<:Integrators.AbstractIntegrator,
         ST<:Vector{<:Real},
-        J<:Vector{<:Any}} <: Flows.AbstractHamiltonianFlow{TD, VD, S}
+        J<:Vector{<:Any}} <: Flows.AbstractHamiltonianFlow{TD, VD}
     flows::Vector{Flows.HamiltonianFlow{TD, VD, S, I}}
     switching_times::ST
     jumps::J

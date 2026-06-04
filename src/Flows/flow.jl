@@ -1,19 +1,21 @@
 """
 $(TYPEDEF)
 
-Concrete flow for state systems (non-Hamiltonian).
+Concrete flow combining an `AbstractSystem` with an `AbstractIntegrator`.
 
-Combines a state system with an integrator for integration. The type parameters
-encode the time-dependence and variable-dependence traits for compile-time dispatch.
+The dynamics axis is encoded in the type parameter `D`:
+- `D = StateDynamics` → state flow (access via `StateFlow` alias)
+- `D = HamiltonianDynamics` → Hamiltonian flow (access via `HamiltonianFlow` alias)
 
 # Type Parameters
 - `TD <: TimeDependence`: Time dependence trait (Autonomous or NonAutonomous)
 - `VD <: VariableDependence`: Variable dependence trait (Fixed or NonFixed)
-- `S <: AbstractStateSystem{TD, VD}`: The state system type
+- `D <: AbstractDynamicsTrait`: Dynamics trait (`StateDynamics` or `HamiltonianDynamics`)
+- `S <: AbstractSystem{TD, VD, D}`: The system type
 - `I <: AbstractIntegrator`: The integrator type
 
 # Fields
-- `system::S`: The state system to integrate
+- `system::S`: The system to integrate
 - `integrator::I`: The integrator to use for integration
 
 # Example
@@ -28,9 +30,15 @@ julia> flow = StateFlow(system, integrator)
 StateFlow{...}
 \`\`\`
 
-See also: [`CTFlows.Flows.AbstractStateFlow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.StateFlow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref).
 """
-struct StateFlow{TD, VD, S<:Systems.AbstractStateSystem{TD, VD}, I<:Integrators.AbstractIntegrator} <: AbstractStateFlow{TD, VD, S}
+struct Flow{
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    D<:Traits.AbstractDynamicsTrait,
+    S<:Systems.AbstractSystem{TD, VD, D},
+    I<:Integrators.AbstractIntegrator,
+} <: AbstractFlow{TD, VD, D}
     system::S
     integrator::I
 end
@@ -38,205 +46,65 @@ end
 """
 $(TYPEDEF)
 
-Concrete flow for Hamiltonian systems.
+Alias for state flows: `Flow{TD, VD, StateDynamics, S, I}`.
 
-Combines a Hamiltonian system with an integrator for integration. The type parameters
-encode the time-dependence and variable-dependence traits for compile-time dispatch.
-
-# Type Parameters
-- `TD <: TimeDependence`: Time dependence trait (Autonomous or NonAutonomous)
-- `VD <: VariableDependence`: Variable dependence trait (Fixed or NonFixed)
-- `S <: AbstractHamiltonianSystem{TD, VD}`: The Hamiltonian system type
-- `I <: AbstractIntegrator`: The integrator type
-
-# Fields
-- `system::S`: The Hamiltonian system to integrate
-- `integrator::I`: The integrator to use for integration
-
-# Example
-\`\`\`julia-repl
-julia> using CTFlows.Flows, CTFlows.Systems, CTFlows.Integrators
-
-julia> system = HamiltonianVectorFieldSystem(VectorField(x -> -x), VectorField(p -> -p))
-
-julia> integrator = SciML()
-
-julia> flow = HamiltonianFlow(system, integrator)
-HamiltonianFlow{...}
-\`\`\`
-
-See also: [`CTFlows.Flows.AbstractHamiltonianFlow`](@ref), [`CTFlows.Flows.StateFlow`](@ref).
+See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref).
 """
-struct HamiltonianFlow{TD, VD, S<:Systems.AbstractHamiltonianSystem{TD, VD}, I<:Integrators.AbstractIntegrator} <: AbstractHamiltonianFlow{TD, VD, S}
-    system::S
-    integrator::I
+const StateFlow{TD, VD, S, I} = Flow{TD, VD, Traits.StateDynamics, S, I}
+
+function StateFlow(
+    system::S,
+    integrator::I,
+) where {TD, VD, S<:Systems.AbstractStateSystem{TD,VD}, I<:Integrators.AbstractIntegrator}
+    return Flow{TD, VD, Traits.StateDynamics, S, I}(system, integrator)
+end
+
+"""
+$(TYPEDEF)
+
+Alias for Hamiltonian flows: `Flow{TD, VD, HamiltonianDynamics, S, I}`.
+
+See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.StateFlow`](@ref).
+"""
+const HamiltonianFlow{TD, VD, S, I} = Flow{TD, VD, Traits.HamiltonianDynamics, S, I}
+
+function HamiltonianFlow(
+    system::S,
+    integrator::I,
+) where {TD, VD, S<:Systems.AbstractHamiltonianSystem{TD,VD}, I<:Integrators.AbstractIntegrator}
+    return Flow{TD, VD, Traits.HamiltonianDynamics, S, I}(system, integrator)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Build a `StateFlow` from a state system and an integrator.
+Build a `Flow` from a system and an integrator.
 
-# Arguments
-- `system::S`: The state system to integrate.
-- `integrator::I`: The integrator to use for integration.
-
-# Returns
-- `StateFlow`: A concrete state flow combining the system and integrator.
-
-# Example
-\`\`\`julia-repl
-julia> using CTFlows.Flows, CTFlows.Systems, CTFlows.Integrators
-
-julia> system = VectorFieldSystem(VectorField(x -> -x))
-
-julia> integrator = SciML()
-
-julia> flow = build_flow(system, integrator)
-StateFlow{...}
-\`\`\`
-
-See also: [`CTFlows.Flows.StateFlow`](@ref), [`CTFlows.Flows.build_flow`]().
+See also: [`CTFlows.Flows.Flow`](@ref).
 """
-function build_flow(system::S, integrator::I) where {S<:Systems.AbstractStateSystem, I<:Integrators.AbstractIntegrator}
-    return StateFlow(system, integrator)
+function build_flow(system::S, integrator::I) where {S<:Systems.AbstractSystem, I<:Integrators.AbstractIntegrator}
+    return Flow(system, integrator)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Build a `HamiltonianFlow` from a Hamiltonian system and an integrator.
+Return the system associated with a `Flow`.
 
-# Arguments
-- `system::S`: The Hamiltonian system to integrate.
-- `integrator::I`: The integrator to use for integration.
-
-# Returns
-- `HamiltonianFlow`: A concrete Hamiltonian flow combining the system and integrator.
-
-# Example
-\`\`\`julia-repl
-julia> using CTFlows.Flows, CTFlows.Systems, CTFlows.Integrators
-
-julia> system = HamiltonianVectorFieldSystem(VectorField(x -> -x), VectorField(p -> -p))
-
-julia> integrator = SciML()
-
-julia> flow = build_flow(system, integrator)
-HamiltonianFlow{...}
-\`\`\`
-
-See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Flows.build_flow`]().
+See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.integrator`](@ref).
 """
-function build_flow(system::S, integrator::I) where {S<:Systems.AbstractHamiltonianSystem, I<:Integrators.AbstractIntegrator}
-    return HamiltonianFlow(system, integrator)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Return the system associated with a `StateFlow`.
-
-# Arguments
-- `f::StateFlow`: The state flow.
-
-# Returns
-- `S`: The state system stored in the flow.
-
-# Example
-\`\`\`julia-repl
-julia> using CTFlows.Flows
-
-julia> flow = StateFlow(system, integrator)
-
-julia> system(flow) === system
-true
-\`\`\`
-
-See also: [`CTFlows.Flows.StateFlow`](@ref), [`CTFlows.Flows.integrator`](@ref).
-"""
-function system(f::StateFlow{TD, VD, S, I})::S where {TD, VD, S, I}
+function system(f::Flow{TD, VD, D, S, I})::S where {TD, VD, D, S, I}
     return f.system
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Return the system associated with a `HamiltonianFlow`.
+Return the integrator associated with a `Flow`.
 
-# Arguments
-- `f::HamiltonianFlow`: The Hamiltonian flow.
-
-# Returns
-- `S`: The Hamiltonian system stored in the flow.
-
-# Example
-\`\`\`julia-repl
-julia> using CTFlows.Flows
-
-julia> flow = HamiltonianFlow(system, integrator)
-
-julia> system(flow) === system
-true
-\`\`\`
-
-See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Flows.integrator`](@ref).
+See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.system`](@ref).
 """
-function system(f::HamiltonianFlow{TD, VD, S, I})::S where {TD, VD, S, I}
-    return f.system
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Return the integrator associated with a `StateFlow`.
-
-# Arguments
-- `f::StateFlow`: The state flow.
-
-# Returns
-- `I`: The integrator stored in the flow.
-
-# Example
-\`\`\`julia-repl
-julia> using CTFlows.Flows
-
-julia> flow = StateFlow(system, integrator)
-
-julia> integrator(flow) === integrator
-true
-\`\`\`
-
-See also: [`CTFlows.Flows.StateFlow`](@ref), [`CTFlows.Flows.system`](@ref).
-"""
-function integrator(f::StateFlow{TD, VD, S, I})::I where {TD, VD, S, I}
-    return f.integrator
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Return the integrator associated with a `HamiltonianFlow`.
-
-# Arguments
-- `f::HamiltonianFlow`: The Hamiltonian flow.
-
-# Returns
-- `I`: The integrator stored in the flow.
-
-# Example
-\`\`\`julia-repl
-julia> using CTFlows.Flows
-
-julia> flow = HamiltonianFlow(system, integrator)
-
-julia> integrator(flow) === integrator
-true
-\`\`\`
-
-See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Flows.system`](@ref).
-"""
-function integrator(f::HamiltonianFlow{TD, VD, S, I})::I where {TD, VD, S, I}
+function integrator(f::Flow{TD, VD, D, S, I})::I where {TD, VD, D, S, I}
     return f.integrator
 end
 
@@ -249,26 +117,13 @@ $(TYPEDSIGNATURES)
 
 Get the Hamiltonian vector field from a HamiltonianFlow with an AD-backed system.
 
-This function delegates to the system-level getter, extracting the Hamiltonian vector field
-from the `HamiltonianSystem` contained in the flow. The delegation preserves the `inplace`
-parameter to control whether the returned closure writes results in-place.
-
-# Arguments
-- `flow::HamiltonianFlow{TD, VD, <:Systems.HamiltonianSystem}`: The Hamiltonian flow containing a `HamiltonianSystem`.
-- `inplace::Bool`: Whether to return an in-place closure (default: `Common.__hvf_inplace()` = `false`).
-
-# Returns
-- `Data.HamiltonianVectorField`: The Hamiltonian vector field delegated from the flow's system.
-
-# Notes
-- This overload is for flows whose system is a `HamiltonianSystem` (AD-backed).
-- Delegates to [`CTFlows.Systems.hamiltonian_vector_field`]().
-- The returned vector field has traits matching the flow's time and variable dependence.
+Delegates to the system-level getter. The `inplace` parameter controls whether
+the returned closure writes results in-place.
 
 See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref)
 """
 function Systems.hamiltonian_vector_field(
-    flow::HamiltonianFlow{TD, VD, <:Systems.HamiltonianSystem};
+    flow::HamiltonianFlow{TD, VD, <:Systems.HamiltonianSystem, <:Integrators.AbstractIntegrator};
     inplace::Bool = Common.__hvf_inplace(),
 ) where {TD, VD}
     return Systems.hamiltonian_vector_field(flow.system; inplace=inplace)
@@ -279,25 +134,13 @@ $(TYPEDSIGNATURES)
 
 Get the Hamiltonian vector field from a HamiltonianFlow with an HVF-backed system.
 
-This function delegates to the system-level getter, returning the pre-stored Hamiltonian vector field
-from the `HamiltonianVectorFieldSystem` contained in the flow. No computation is performed since
-the vector field is already constructed.
-
-# Arguments
-- `flow::HamiltonianFlow{TD, VD, <:Systems.HamiltonianVectorFieldSystem}`: The Hamiltonian flow containing a `HamiltonianVectorFieldSystem`.
-
-# Returns
-- `Data.HamiltonianVectorField`: The stored Hamiltonian vector field from the flow's system (identical to `flow.system.hvf`).
-
-# Notes
-- This overload is for flows whose system is a `HamiltonianVectorFieldSystem` (HVF-backed).
-- Delegates to [`CTFlows.Systems.hamiltonian_vector_field`]().
-- The returned vector field is identical to the one stored in the system (same object reference).
+Returns the pre-stored vector field from the `HamiltonianVectorFieldSystem` without
+any recomputation.
 
 See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref)
 """
 function Systems.hamiltonian_vector_field(
-    flow::HamiltonianFlow{TD, VD, <:Systems.HamiltonianVectorFieldSystem},
+    flow::HamiltonianFlow{TD, VD, <:Systems.HamiltonianVectorFieldSystem, <:Integrators.AbstractIntegrator},
 ) where {TD, VD}
     return Systems.hamiltonian_vector_field(flow.system)
 end
