@@ -131,15 +131,9 @@ These are used internally by the solution wrappers and normally not called direc
 
 ---
 
-## API reference
+## See also
 
-```@docs
-CTFlows.Solutions.VectorFieldSolution
-CTFlows.Solutions.HamiltonianVectorFieldSolution
-CTFlows.Solutions.state
-CTFlows.Solutions.costate
-CTFlows.Solutions.time_grid
-CTFlows.Integrators.times
-CTFlows.Integrators.final_state
-CTFlows.Integrators.evaluate_at
-```
+- [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref) — solution container types.
+- [`CTFlows.Solutions.state`](@ref), [`CTFlows.Solutions.costate`](@ref) — trajectory accessors.
+- [`CTFlows.Solutions.time_grid`](@ref), [`CTFlows.Integrators.times`](@ref) — time grid accessors.
+- [`CTFlows.Integrators.final_state`](@ref), [`CTFlows.Integrators.evaluate_at`](@ref) — low-level result accessors.

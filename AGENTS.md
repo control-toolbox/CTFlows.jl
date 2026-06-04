@@ -1,6 +1,6 @@
 # CTFlows.jl — Agent Navigation Guide
 
-Quick-reference for Cascade: project architecture and available workflows.
+Quick-reference for any agent working on this repository.
 
 ---
 
@@ -34,11 +34,24 @@ ext/
 
 test/suite/             # Tests organised by functionality (not by src layout)
 docs/                   # Documenter.jl site (auto-generated API via CTBase)
+dev/                    # Code philosophy, operational rules, plan template (versioned)
+reports/                # Working notes and architectural reports (ephemeral)
 ```
 
 ---
 
-## Windsurf Workflows (always active)
+## Developer resources
+
+| File | Purpose |
+|---|---|
+| [`dev/philosophy/PHILOSOPHY.md`](dev/philosophy/PHILOSOPHY.md) | Code philosophy — modules, types/traits, exceptions, docstrings, testing, docs |
+| [`dev/RULES.md`](dev/RULES.md) | Operational rules — running tests (MCP), building docs, git, output capture |
+| [`dev/planning.md`](dev/planning.md) | Plan template — phases, steps, human checkpoints |
+| [`reports/dev/action_plan.md`](reports/dev/action_plan.md) | Active refactor roadmap (traits / dispatch / multiphase) |
+
+---
+
+## Devin Workflows
 
 | Workflow | Trigger | Purpose |
 |---|---|---|
@@ -50,10 +63,10 @@ docs/                   # Documenter.jl site (auto-generated API via CTBase)
 | `performance.md` | — | Hot paths, inner loops, profiling, benchmarking |
 | `plan.md` | — | Writing an implementation plan before coding |
 | `testing-creation.md` | — | Writing or reviewing test files under `test/suite/` |
-| `testing-execution.md` | `model_decision` | How to run tests (commands, `tee` capture, `jtest` alias) |
+| `testing-execution.md` | `model_decision` | How to run tests (commands, `tee` capture) |
 | `type-stability.md` | — | New structs, parametric types, `@inferred` test design |
 
-Workflows live in `.windsurf/workflows/`.
+Workflows live in `.devin/workflows/`.
 
 ---
 
@@ -62,5 +75,6 @@ Workflows live in `.windsurf/workflows/`.
 - **No top-level exports** — use `CTFlows.Submodule.symbol` everywhere.
 - **Qualified imports** — `using PackageName: PackageName`, never bare `using`.
 - **Fake types at module top-level** — never inside test functions.
-- **Plans before code** — write a full plan (see `plan.md` rule) before touching files.
+- **Plans before code** — write a plan and confirm with the user before touching files. Template: [`dev/planning.md`](dev/planning.md).
 - **Docstrings last** — written only after all implementation steps are stable.
+- **Never commit or push without explicit user approval.**

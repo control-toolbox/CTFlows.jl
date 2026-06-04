@@ -174,13 +174,8 @@ programmatically.
 
 ---
 
-## API reference
+## See also
 
-```@docs
-CTFlows.Data.VectorField
-CTFlows.Data.Hamiltonian
-CTFlows.Data.HamiltonianVectorField
-CTFlows.Data.AbstractVectorField
-CTFlows.Data.AbstractHamiltonian
-CTFlows.Data.AbstractHamiltonianVectorField
-```
+- [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Data.Hamiltonian`](@ref), [`CTFlows.Data.HamiltonianVectorField`](@ref) — concrete data types.
+- [`CTFlows.Data.AbstractVectorField`](@ref), [`CTFlows.Data.AbstractHamiltonian`](@ref), [`CTFlows.Data.AbstractHamiltonianVectorField`](@ref) — abstract supertypes.
+- [Traits](traits.md) — the three trait axes and call-signature tables.

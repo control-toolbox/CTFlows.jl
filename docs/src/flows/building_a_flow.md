@@ -161,20 +161,10 @@ hvf_ad = Flows.hamiltonian_vector_field(hflow_ad)
 
 ---
 
-## API reference
+## See also
 
-```@docs
-CTFlows.Flows.Flow
-CTFlows.Flows.build_flow
-CTFlows.Systems.build_system
-CTFlows.Integrators.build_integrator
-CTFlows.Flows.AbstractFlow
-CTFlows.Flows.AbstractStateFlow
-CTFlows.Flows.AbstractHamiltonianFlow
-CTFlows.Flows.StateFlow
-CTFlows.Flows.HamiltonianFlow
-CTFlows.Flows.system
-CTFlows.Flows.integrator
-CTFlows.Systems.AbstractSystem
-CTFlows.Systems.rhs
-```
+- [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.StateFlow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref) — concrete flow types.
+- [`CTFlows.Flows.build_flow`](@ref), [`CTFlows.Systems.build_system`](@ref), [`CTFlows.Integrators.build_integrator`](@ref) — pipeline builders.
+- [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractStateFlow`](@ref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@ref) — abstract supertypes.
+- [`CTFlows.Flows.system`](@ref), [`CTFlows.Flows.integrator`](@ref) — flow accessors.
+- [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Systems.rhs`](@ref) — system contract.

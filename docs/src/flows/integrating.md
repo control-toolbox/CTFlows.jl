@@ -158,17 +158,9 @@ typeof(integ)
 
 ---
 
-## API reference
+## See also
 
-```@docs
-CTFlows.Configs.StatePointConfig
-CTFlows.Configs.StateTrajectoryConfig
-CTFlows.Configs.HamiltonianPointConfig
-CTFlows.Configs.HamiltonianTrajectoryConfig
-CTFlows.Configs.tspan
-CTFlows.Configs.initial_state
-CTFlows.Configs.initial_costate
-CTFlows.Integrators.SciML
-CTFlows.Integrators.build_integrator
-CTFlows.Integrators.AbstractIntegrator
-```
+- [`CTFlows.Configs.StatePointConfig`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref) — state configuration objects.
+- [`CTFlows.Configs.HamiltonianPointConfig`](@ref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref) — Hamiltonian configuration objects.
+- [`CTFlows.Configs.tspan`](@ref), [`CTFlows.Configs.initial_state`](@ref), [`CTFlows.Configs.initial_costate`](@ref) — configuration accessors.
+- [`CTFlows.Integrators.SciML`](@ref), [`CTFlows.Integrators.build_integrator`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref) — integrator types.

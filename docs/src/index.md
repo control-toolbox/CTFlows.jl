@@ -4,110 +4,71 @@
 CurrentModule = CTFlows
 ```
 
-The `CTFlows.jl` package is part of the [control-toolbox ecosystem](https://github.com/control-toolbox).
-It provides the **flow integration layer** for systems and optimal control problems:
-
-- **abstract types** describing systems, flows, and the strategy families that build and integrate them;
-- **pipeline functions** (`build_system`, `build_flow`, `integrate`, `build_solution`, `solve`) operating uniformly on the abstractions;
-- a concrete [`Flow`](@ref) wrapper combining an [`AbstractSystem`](@ref) with an [`AbstractIntegrator`](@ref).
+`CTFlows.jl` is the **flow integration layer** of the
+[control-toolbox ecosystem](https://github.com/control-toolbox). Given a dynamical
+system — a vector field, a Hamiltonian, or a Hamiltonian vector field — it builds a
+callable **flow** that integrates the system from any initial condition to any final
+time, with a pluggable ODE solver and optional automatic differentiation.
 
 !!! info "CTFlows in the ecosystem"
+    **CTFlows** handles **integration**. For **modelling** optimal control problems see
+    [CTModels.jl](https://github.com/control-toolbox/CTModels.jl); for **solving NLPs**
+    see [CTSolvers.jl](https://github.com/control-toolbox/CTSolvers.jl); the umbrella
+    package is [OptimalControl.jl](https://github.com/control-toolbox/OptimalControl.jl).
 
-    **CTFlows** focuses on **integrating** systems (vector fields, OCP-derived Hamiltonian flows, …)
-    via pluggable strategies (modelers, integrators, AD backends).
-    For **modelling** optimal control problems, see [CTModels.jl](https://github.com/control-toolbox/CTModels.jl);
-    for **solving NLPs**, see [CTSolvers.jl](https://github.com/control-toolbox/CTSolvers.jl);
-    the umbrella package is [OptimalControl.jl](https://github.com/control-toolbox/OptimalControl.jl).
-
-!!! warning "Qualified API access"
-
-    CTFlows exports nothing at the package level. All public symbols live in submodules and must
-    be accessed via qualified paths.
-
-    ```julia
-    using CTFlows
-    sys      = CTFlows.Systems.AbstractSystem      # abstract type
-    flow     = CTFlows.Flows.Flow(system, integ)    # concrete flow
-    sol      = CTFlows.Flows._invoke_flow(flow, config)     # integrate
-    ```
-
-    Or bring a single submodule into scope with `using CTFlows.Submodule`:
-
-    ```julia
-    using CTFlows.Flows
-    sol = _invoke_flow(flow, config)
-    ```
-
-## Architecture overview
-
-CTFlows organises its code into specialised submodules:
-
-| Layer | Submodule | Purpose |
-|---|---|---|
-| **Utilities** | [`Common`](@ref CTFlows.Common) | shared types, traits, and configuration |
-| **Data** | [`Data`](@ref CTFlows.Data) | vector field data structures with traits |
-| **Objects** | [`Systems`](@ref CTFlows.Systems), [`Flows`](@ref CTFlows.Flows) | what is acted upon (a fully-assembled system, or a callable flow) |
-| **Strategy families** | [`Integrators`](@ref CTFlows.Integrators) | `<: CTSolvers.Strategies.AbstractStrategy` |
-| **Solutions** | [`Solutions`](@ref CTFlows.Solutions) | solution types and solution building |
-
-## Contracts at a glance
-
-### AbstractSystem contract
-
-A fully-assembled object that can be integrated. Required methods:
-
-- `rhs!(system) → (du, u, p, t) -> nothing` — returns the ODE right-hand side function
-
-Traits (automatically supported):
-
-- `time_dependence(system)` — returns `Autonomous` or `NonAutonomous`
-- `variable_dependence(system)` — returns `Fixed` or `NonFixed`
-
-### `AbstractFlow`
-
-A callable combining a system and an integrator. Required methods:
-
-- `system(flow)` — returns the associated `AbstractSystem`
-- `integrator(flow)` — returns the associated `AbstractIntegrator`
-
-Traits (delegated to system):
-
-- `time_dependence(flow)`, `variable_dependence(flow)` — forwarded to the system
-
-### Strategy families
-
-All inherit from `CTSolvers.Strategies.AbstractStrategy` and gain its full contract
-(`id`, `metadata`, `options`, `Base.show`, `describe`, …).
-
-- [`AbstractIntegrator`](@ref CTFlows.Integrators.AbstractIntegrator):
-  callable `(integrator)(system, config; variable=nothing) → ode_problem`
-
-## API at a glance
+## Quick start
 
 ```julia
-# Build a flow from vector field data
-using CTFlows.Data, CTFlows.Flows, CTFlows.Common
+using CTFlows
+using CTFlows.Data, CTFlows.Flows, CTFlows.Solutions
+import OrdinaryDiffEqTsit5   # activates the SciML integrator extension
 
-vf = Data.VectorField((t, x, v) -> x, Autonomous(), Fixed())
+# 1. Wrap the dynamics
+vf = Data.VectorField(x -> -x)          # autonomous, fixed, out-of-place
+
+# 2. Build the flow
 flow = Flows.Flow(vf; reltol=1e-8)
 
-# Integrate using a configuration
-config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
-sol = Flows._invoke_flow(flow, config)
+# 3. Integrate — point form (final state)
+xf = flow(0.0, [1.0, 0.0], 1.0)
 
-# Or point-to-point integration
-config = Common.StatePointConfig((0.0, 1.0), [1.0, 0.0])
-final_state = Flows._invoke_flow(flow, config)
+# 4. Integrate — trajectory form (full history)
+sol = flow((0.0, 1.0), [1.0, 0.0])
+t   = Solutions.time_grid(sol)
+x   = Solutions.state(sol)              # callable: x(t) → state at time t
+x(0.5)                                  # interpolate
 ```
 
-## Status
+!!! note "Qualified access"
+    CTFlows exports nothing at the package level. Every symbol lives in a submodule
+    (`CTFlows.Data`, `CTFlows.Flows`, …) and is reached via a qualified path or a
+    `using CTFlows.SubModule` import.
 
-The current implementation provides:
+## Architecture
 
-- Abstract types with traits (`AbstractSystem`, `AbstractFlow`, `AbstractIntegrator`)
-- Concrete implementations (`VectorField`, `VectorFieldSystem`, `Flow`, `VectorFieldSolution`)
-- Integration pipeline via `Flows.call` with configuration objects
-- SciML integrator strategy
+CTFlows is organised as a four-layer pipeline:
 
-Future phases will add additional integrator strategies and solution types
-(see the [roadmap](https://github.com/control-toolbox/CTFlows.jl/blob/main/reports/roadmap.md)).
+```
+Data → Systems → Integrators → Flows → Solutions
+```
+
+| Layer | Submodule | Key types |
+|---|---|---|
+| Data | [`CTFlows.Data`](@ref CTFlows.Data) | `VectorField`, `Hamiltonian`, `HamiltonianVectorField` |
+| Systems | [`CTFlows.Systems`](@ref CTFlows.Systems) | `VectorFieldSystem`, `HamiltonianSystem` |
+| Integrators | [`CTFlows.Integrators`](@ref CTFlows.Integrators) | `SciML` |
+| Flows | [`CTFlows.Flows`](@ref CTFlows.Flows) | `StateFlow`, `HamiltonianFlow` |
+| Solutions | [`CTFlows.Solutions`](@ref CTFlows.Solutions) | `VectorFieldSolution`, `HamiltonianVectorFieldSolution` |
+| Multi-phase | [`CTFlows.MultiPhase`](@ref CTFlows.MultiPhase) | `MultiPhaseStateFlow` |
+| Traits | [`CTFlows.Traits`](@ref CTFlows.Traits) | `Autonomous`, `Fixed`, `InPlace`, … |
+
+The shortcut `Flows.Flow(data; opts...)` collapses all pipeline steps into a single
+call. The explicit pipeline (`build_system` → `build_integrator` → `build_flow`)
+gives full control over each step.
+
+## Guides
+
+| Guide | Contents |
+|---|---|
+| [Flows](flows/index.md) | End-to-end pipeline: data → systems → flows → solutions, traits, multi-phase |
+| [Differential Geometry](differential_geometry/index.md) | Hamiltonian lift, Lie bracket, Poisson bracket, `@Lie` macro |

@@ -140,16 +140,9 @@ dx = vf(t, x, v)
 The uniform signature is used by `VectorFieldSystem.rhs` to build the ODE
 right-hand side without trait branches. Users normally never call it directly.
 
-## API reference
+## See also
 
-```@docs
-CTFlows.Traits.Fixed
-CTFlows.Traits.NonFixed
-CTFlows.Traits.InPlace
-CTFlows.Traits.OutOfPlace
-CTFlows.Traits.time_dependence
-CTFlows.Traits.variable_dependence
-CTFlows.Traits.mutability
-CTFlows.Traits.is_inplace
-CTFlows.Traits.is_outofplace
-```
+- [`CTFlows.Traits.Fixed`](@ref), [`CTFlows.Traits.NonFixed`](@ref) — variable-dependence trait values.
+- [`CTFlows.Traits.InPlace`](@ref), [`CTFlows.Traits.OutOfPlace`](@ref) — mutability trait values.
+- [`CTFlows.Traits.time_dependence`](@ref), [`CTFlows.Traits.variable_dependence`](@ref), [`CTFlows.Traits.mutability`](@ref) — trait accessor functions.
+- [`CTFlows.Traits.is_inplace`](@ref), [`CTFlows.Traits.is_outofplace`](@ref) — mutability predicates.

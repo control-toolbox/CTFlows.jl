@@ -106,6 +106,15 @@ with_api_reference(src_dir, ext_dir) do api_pages
         ),
         pages=[
             "Introduction" => "index.md",
+            "Flows" => [
+                "Overview"           => "flows/index.md",
+                "Traits"             => "flows/traits.md",
+                "Data structures"    => "flows/data.md",
+                "Building a flow"    => "flows/building_a_flow.md",
+                "Integrating"        => "flows/integrating.md",
+                "Solutions"          => "flows/solutions.md",
+                "Multi-phase flows"  => "flows/multiphase.md",
+            ],
             "Differential Geometry" => [
                 "Overview" => "differential_geometry/index.md",
                 "Hamiltonian lift" => "differential_geometry/lift.md",
