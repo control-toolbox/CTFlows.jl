@@ -35,16 +35,18 @@ end
 """
 Fake Hamiltonian system for testing the calling workflow.
 """
-struct FakeHamiltonianSystemForCalling <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD}
+struct FakeHamiltonianSystemForCalling <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed}
     state_dim::Int
 end
+Traits.ad_trait(::FakeHamiltonianSystemForCalling) = Traits.WithoutAD
 
 """
 Fake Hamiltonian system with AD trait for testing cache preparation.
 """
-struct FakeHamiltonianSystemWithAD <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithAD}
+struct FakeHamiltonianSystemWithAD <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed}
     state_dim::Int
 end
+Traits.ad_trait(::FakeHamiltonianSystemWithAD) = Traits.WithAD
 
 function Systems.hamiltonian(sys::FakeHamiltonianSystemWithAD)
     return Data.Hamiltonian((x, p) -> 0.5 * sum(x.^2) + sum(p.^2); is_autonomous=true, is_variable=false)

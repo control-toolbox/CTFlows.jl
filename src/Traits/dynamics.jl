@@ -108,3 +108,14 @@ Trait marker for augmented Hamiltonian dynamics, where the Hamiltonian includes 
 See also: [`CTFlows.Traits.HamiltonianDynamics`](@ref), [`CTFlows.Configs.AbstractAugmentedHamiltonianConfig`](@ref), [`CTFlows.Traits.AbstractDynamicsTrait`](@ref).
 """
 struct AugmentedHamiltonianDynamics <: AbstractDynamicsTrait end
+
+"""
+    dynamics_trait(x)
+
+Return the dynamics trait of `x`.
+
+Methods are defined on concrete types in `Systems` and `Configs`.
+
+See also: [`CTFlows.Traits.AbstractDynamicsTrait`](@ref), [`CTFlows.Traits.StateDynamics`](@ref), [`CTFlows.Traits.HamiltonianDynamics`](@ref).
+"""
+function dynamics_trait end

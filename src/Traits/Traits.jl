@@ -61,7 +61,7 @@ export InPlace, OutOfPlace
 export WithAD, WithoutAD
 export SupportsVariableCostate, NoVariableCostate
 export VariableDependence, Fixed, NonFixed
-export ad_trait, variable_costate_trait
+export ad_trait, variable_costate_trait, dynamics_trait
 export is_inplace, is_outofplace
 export has_time_dependence_trait, time_dependence, has_mutability_trait, mutability
 export has_variable_dependence_trait, variable_dependence

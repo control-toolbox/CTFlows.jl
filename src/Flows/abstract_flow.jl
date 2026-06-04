@@ -82,7 +82,7 @@ true
 
 See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractStateFlow`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
 """
-abstract type AbstractHamiltonianFlow{TD, VD, S<:Systems.AbstractHamiltonianSystem{TD,VD,<:Traits.AbstractADTrait}} <: AbstractFlow{TD, VD} end
+abstract type AbstractHamiltonianFlow{TD, VD, S<:Systems.AbstractHamiltonianSystem{TD,VD}} <: AbstractFlow{TD, VD} end
 
 """
 $(TYPEDSIGNATURES)

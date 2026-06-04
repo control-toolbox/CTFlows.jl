@@ -47,7 +47,7 @@ This minimal implementation provides the required contract methods to test
 routing and default behavior without full flow complexity.
 """
 struct FakeFlow{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence} <: Flows.AbstractFlow{TD, VD}
-    sys::Systems.AbstractSystem{TD, VD}
+    sys::Systems.AbstractSystem{TD, VD, <:Traits.AbstractDynamicsTrait}
     integ::Any
     function FakeFlow(sys::Systems.AbstractSystem, integ::Any)
         return new{Traits.time_dependence(sys), Traits.variable_dependence(sys)}(sys, integ)
@@ -78,7 +78,7 @@ end
 Minimal flow that does not implement the contract (for error testing).
 """
 struct MinimalFlow <: Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed}
-    sys::Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed}
+    sys::Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, <:Traits.AbstractDynamicsTrait}
 end
 
 # ==============================================================================

@@ -23,9 +23,10 @@ struct FakeStateSystemFC <: Systems.AbstractStateSystem{Traits.Autonomous, Trait
     n::Int
 end
 
-struct FakeHamSysFC <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD}
+struct FakeHamSysFC <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed}
     n::Int
 end
+Traits.ad_trait(::FakeHamSysFC) = Traits.WithoutAD
 
 struct FakeResultFC <: Integrators.AbstractIntegrationResult end
 

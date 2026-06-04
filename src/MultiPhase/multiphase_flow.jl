@@ -73,7 +73,7 @@ See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Flows.Hami
 struct MultiPhaseHamiltonianFlow{
         TD<:Traits.TimeDependence,
         VD<:Traits.VariableDependence,
-        S<:Systems.AbstractHamiltonianSystem{TD, VD, <:Traits.AbstractADTrait},
+        S<:Systems.AbstractHamiltonianSystem{TD, VD},
         I<:Integrators.AbstractIntegrator,
         ST<:Vector{<:Real},
         J<:Vector{<:Any}} <: Flows.AbstractHamiltonianFlow{TD, VD, S}

@@ -25,7 +25,7 @@ function Systems.rhs(sys::FakeStateSystem)
     return (du, u, p, t) -> du .= sys.data .* u
 end
 
-struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD}
+struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed}
     data::Vector{Float64}
 end
 

@@ -24,7 +24,7 @@ end
 
 Systems.rhs(::FakeStateSystem) = (du, u, p, t) -> (du .= u)
 
-struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD}
+struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed}
     tag::Symbol
 end
 

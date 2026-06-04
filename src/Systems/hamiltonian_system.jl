@@ -44,10 +44,12 @@ struct HamiltonianSystem{
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
     BACKEND<:Differentiation.AbstractADBackend,
-} <: AbstractHamiltonianSystem{TD, VD, Traits.WithAD}
+} <: AbstractHamiltonianSystem{TD, VD}
     h::Data.Hamiltonian{F, TD, VD}
     backend::BACKEND
 end
+
+Traits.ad_trait(::HamiltonianSystem) = Traits.WithAD
 
 """
 $(TYPEDSIGNATURES)
