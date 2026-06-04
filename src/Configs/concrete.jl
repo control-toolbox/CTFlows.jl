@@ -28,7 +28,7 @@ StatePointConfig
 
 See also: [`CTFlows.Configs.StateTrajectoryConfig`](@ref)
 """
-struct StatePointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfigWithMaC{X0, Traits.PointTrait, Traits.StateTrait}
+struct StatePointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfigWithMaC{X0, Traits.PointTrait, Traits.StateDynamics}
     t0::T0
     x0::X0
     tf::TF
@@ -58,7 +58,7 @@ StateTrajectoryConfig
 
 See also: [`CTFlows.Configs.StatePointConfig`](@ref)
 """
-struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractConfigWithMaC{X0, Traits.TrajectoryTrait, Traits.StateTrait}
+struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractConfigWithMaC{X0, Traits.TrajectoryTrait, Traits.StateDynamics}
     tspan::TS
     x0::X0
 end
@@ -93,7 +93,7 @@ HamiltonianPointConfig
 
 See also: [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Configs.StatePointConfig`](@ref).
 """
-struct HamiltonianPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractConfigWithMaC{X0, Traits.PointTrait, Traits.HamiltonianTrait}
+struct HamiltonianPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractConfigWithMaC{X0, Traits.PointTrait, Traits.HamiltonianDynamics}
     t0::T0
     x0::X0
     p0::P0
@@ -127,7 +127,7 @@ HamiltonianTrajectoryConfig
 
 See also: [`CTFlows.Configs.HamiltonianPointConfig`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref).
 """
-struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractConfigWithMaC{X0, Traits.TrajectoryTrait, Traits.HamiltonianTrait}
+struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractConfigWithMaC{X0, Traits.TrajectoryTrait, Traits.HamiltonianDynamics}
     tspan::TS
     x0::X0
     p0::P0
@@ -162,7 +162,7 @@ AugmentedHamiltonianPointConfig
   tf: 1.0
 \`\`\`
 
-See also: [`CTFlows.Configs.HamiltonianPointConfig`](@ref), [`CTFlows.Traits.AugmentedHamiltonianTrait`](@ref).
+See also: [`CTFlows.Configs.HamiltonianPointConfig`](@ref), [`CTFlows.Traits.AugmentedHamiltonianDynamics`](@ref).
 """
 struct AugmentedHamiltonianPointConfig{T0<:Real, X0, P0, PV0, TF<:Real} <: AbstractAugmentedHamiltonianConfig{X0, Traits.PointTrait}
     t0::T0

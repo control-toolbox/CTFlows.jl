@@ -106,7 +106,7 @@ end
 
 function Solutions.build_solution(
     ::Type{Traits.PointTrait},
-    ::Type{Traits.StateTrait},
+    ::Type{Traits.StateDynamics},
     config::Configs.AbstractConfig,
     result::FakeIntegrationResultForCalling,
 )
@@ -115,7 +115,7 @@ end
 
 function Solutions.build_solution(
     ::Type{Traits.TrajectoryTrait},
-    ::Type{Traits.StateTrait},
+    ::Type{Traits.StateDynamics},
     config::Configs.AbstractConfig,
     result::FakeIntegrationResultForCalling,
 )
@@ -124,7 +124,7 @@ end
 
 function Solutions.build_solution(
     ::Type{Traits.PointTrait},
-    ::Type{Traits.HamiltonianTrait},
+    ::Type{Traits.HamiltonianDynamics},
     config::Configs.AbstractConfig,
     result::FakeIntegrationResultForCalling,
 )
@@ -133,7 +133,7 @@ end
 
 function Solutions.build_solution(
     ::Type{Traits.TrajectoryTrait},
-    ::Type{Traits.HamiltonianTrait},
+    ::Type{Traits.HamiltonianDynamics},
     config::Configs.AbstractConfig,
     result::FakeIntegrationResultForCalling,
 )

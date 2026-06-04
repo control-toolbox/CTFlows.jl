@@ -13,7 +13,7 @@ specific integration scenarios (e.g., point-to-point, trajectory, costate).
 The type parameters encode:
 - `X0`: Type of the initial condition (scalar `Number` or vector `AbstractVector`)
 - `Mode`: Integration mode (`PointTrait` or `TrajectoryTrait`)
-- `Content`: Content type (`StateTrait` or `HamiltonianTrait`)
+- `Dyn`: Dynamics type (`StateDynamics` or `HamiltonianDynamics`)
 
 This enables compile-time dispatch on mode and content without runtime type tests.
 
@@ -55,7 +55,7 @@ on integration mode (point vs trajectory) and content type (state, Hamiltonian, 
 # Type Parameters
 - `X0`: Type of the initial condition (scalar `Number` or vector `AbstractVector`)
 - `Mode <: AbstractModeTrait`: Integration mode trait (`PointTrait` or `TrajectoryTrait`)
-- `Content <: AbstractContentTrait`: Content trait (`StateTrait`, `HamiltonianTrait`, or `AugmentedHamiltonianTrait`)
+- `Dyn <: AbstractDynamicsTrait`: Dynamics trait (`StateDynamics`, `HamiltonianDynamics`, or `AugmentedHamiltonianDynamics`)
 
 # Interface Requirements
 
@@ -75,7 +75,7 @@ true
 
 See also: [`CTFlows.Configs.AbstractConfig`](@ref), [`CTFlows.Configs.AbstractPointConfig`](@ref), [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref), [`CTFlows.Configs.AbstractStateConfig`](@ref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref), [`CTFlows.Configs.AbstractAugmentedHamiltonianConfig`](@ref).
 """
-abstract type AbstractConfigWithMaC{X0, Mode<:Traits.AbstractModeTrait, Content<:Traits.AbstractContentTrait} <: AbstractConfig{X0} end
+abstract type AbstractConfigWithMaC{X0, Mode<:Traits.AbstractModeTrait, Dyn<:Traits.AbstractDynamicsTrait} <: AbstractConfig{X0} end
 
 """
 $(TYPEDSIGNATURES)
@@ -97,36 +97,36 @@ config = Configs.HamiltonianPointConfig(0.0, [1.0], [0.5], 1.0)
 Configs.mode_trait(config) === Traits.PointTrait  # true
 \`\`\`
 
-See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Traits.TrajectoryTrait`](@ref), [`CTFlows.Configs.content_trait`](@ref).
+See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Traits.TrajectoryTrait`](@ref), [`CTFlows.Configs.dynamics_trait`](@ref).
 """
-function mode_trait(::AbstractConfigWithMaC{X0, Mode, Content}) where {X0, Mode, Content}
+function mode_trait(::AbstractConfigWithMaC{X0, Mode, Dyn}) where {X0, Mode, Dyn}
     return Mode
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Return the content trait type of a configuration.
+Return the dynamics trait type of a configuration.
 
-Extracts the `Content` type parameter from the configuration's parametric type,
-enabling trait-based dispatch on the integration content (state, Hamiltonian, augmented Hamiltonian).
+Extracts the `Dyn` type parameter from the configuration's parametric type,
+enabling trait-based dispatch on the integration dynamics (state, Hamiltonian, augmented Hamiltonian).
 
 # Arguments
-- `::AbstractConfigWithMaC{X0, Mode, Content}`: Any concrete configuration subtype.
+- `::AbstractConfigWithMaC{X0, Mode, Dyn}`: Any concrete configuration subtype.
 
 # Returns
-- `Type{Content}`: The content trait type (e.g., `StateTrait`, `HamiltonianTrait`, or `AugmentedHamiltonianTrait`).
+- `Type{Dyn}`: The dynamics trait type (e.g., `StateDynamics`, `HamiltonianDynamics`, or `AugmentedHamiltonianDynamics`).
 
 # Example
 \`\`\`julia
 config = Configs.HamiltonianPointConfig(0.0, [1.0], [0.5], 1.0)
-Configs.content_trait(config) === Traits.HamiltonianTrait  # true
+Configs.dynamics_trait(config) === Traits.HamiltonianDynamics  # true
 \`\`\`
 
-See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@ref), [`CTFlows.Traits.StateTrait`](@ref), [`CTFlows.Traits.HamiltonianTrait`](@ref), [`CTFlows.Traits.AugmentedHamiltonianTrait`](@ref), [`CTFlows.Configs.mode_trait`](@ref).
+See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@ref), [`CTFlows.Traits.StateDynamics`](@ref), [`CTFlows.Traits.HamiltonianDynamics`](@ref), [`CTFlows.Traits.AugmentedHamiltonianDynamics`](@ref), [`CTFlows.Configs.mode_trait`](@ref).
 """
-function content_trait(::AbstractConfigWithMaC{X0, Mode, Content}) where {X0, Mode, Content}
-    return Content
+function dynamics_trait(::AbstractConfigWithMaC{X0, Mode, Dyn}) where {X0, Mode, Dyn}
+    return Dyn
 end
 
 """
@@ -152,18 +152,18 @@ $(TYPEDEF)
 
 Alias for state content configurations.
 
-Matches any `AbstractConfig` with `StateTrait` as the content parameter.
+Matches any `AbstractConfig` with `StateDynamics` as the dynamics parameter.
 """
-const AbstractStateConfig{X0, M} = AbstractConfigWithMaC{X0, M, Traits.StateTrait}
+const AbstractStateConfig{X0, M} = AbstractConfigWithMaC{X0, M, Traits.StateDynamics}
 
 """
 $(TYPEDEF)
 
 Alias for Hamiltonian content configurations.
 
-Matches any `AbstractConfig` with `HamiltonianTrait` as the content parameter.
+Matches any `AbstractConfig` with `HamiltonianDynamics` as the dynamics parameter.
 """
-const AbstractHamiltonianConfig{X0, M} = AbstractConfigWithMaC{X0, M, Traits.HamiltonianTrait}
+const AbstractHamiltonianConfig{X0, M} = AbstractConfigWithMaC{X0, M, Traits.HamiltonianDynamics}
 
 """
 $(TYPEDEF)
@@ -177,9 +177,9 @@ Type alias for augmented Hamiltonian configurations, which include state, costat
 # Notes
 - Augmented Hamiltonian configurations are used for systems where the Hamiltonian depends on an additional variable (e.g., a control parameter or optimization variable).
 - The initial condition typically has the form `vcat(x0, p0, pv0)` where `x0` is the initial state, `p0` is the initial costate, and `pv0` is the initial augmented variable.
-- Subtypes [`CTFlows.Configs.AbstractConfigWithMaC`](@ref) with [`CTFlows.Traits.AugmentedHamiltonianTrait`](@ref).
+- Subtypes [`CTFlows.Configs.AbstractConfigWithMaC`](@ref) with [`CTFlows.Traits.AugmentedHamiltonianDynamics`](@ref).
 - Used in conjunction with [`CTFlows.Systems.HamiltonianSystem`](@ref) for automatic differentiation-based Hamiltonian integration.
 
-See also: [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref), [`CTFlows.Traits.AugmentedHamiltonianTrait`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref).
+See also: [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref), [`CTFlows.Traits.AugmentedHamiltonianDynamics`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref).
 """
-const AbstractAugmentedHamiltonianConfig{X0, M} = AbstractConfigWithMaC{X0, M, Traits.AugmentedHamiltonianTrait}
+const AbstractAugmentedHamiltonianConfig{X0, M} = AbstractConfigWithMaC{X0, M, Traits.AugmentedHamiltonianDynamics}

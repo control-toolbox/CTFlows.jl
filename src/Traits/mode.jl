@@ -18,7 +18,7 @@ julia> TrajectoryTrait <: Traits.AbstractModeTrait
 true
 
 julia> # Used in configuration type parameters:
-julia> StatePointConfig <: CTFlows.Configs.AbstractConfig{<:Any, PointTrait, <:Traits.AbstractContentTrait}
+julia> StatePointConfig <: CTFlows.Configs.AbstractConfig{<:Any, PointTrait, <:Traits.AbstractDynamicsTrait}
 true
 \`\`\`
 
@@ -50,7 +50,7 @@ julia> pt isa Traits.AbstractModeTrait
 true
 
 julia> # Used in point-to-point configurations:
-julia> StatePointConfig <: CTFlows.Configs.AbstractConfig{<:Any, PointTrait, <:Traits.AbstractContentTrait}
+julia> StatePointConfig <: CTFlows.Configs.AbstractConfig{<:Any, PointTrait, <:Traits.AbstractDynamicsTrait}
 true
 \`\`\`
 
@@ -82,7 +82,7 @@ julia> traj isa Traits.AbstractModeTrait
 true
 
 julia> # Used in trajectory configurations:
-julia> StateTrajectoryConfig <: CTFlows.Configs.AbstractConfig{<:Any, TrajectoryTrait, <:Traits.AbstractContentTrait}
+julia> StateTrajectoryConfig <: CTFlows.Configs.AbstractConfig{<:Any, TrajectoryTrait, <:Traits.AbstractDynamicsTrait}
 true
 \`\`\`
 

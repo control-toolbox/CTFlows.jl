@@ -338,7 +338,7 @@ function test_sciml_extension()
                 result = Integrators.solve_problem(integ, prob, opts)
 
                 # Build solution
-                flow_sol = Solutions.build_solution(Configs.mode_trait(config), Configs.content_trait(config), config, result)
+                flow_sol = Solutions.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
 
                 Test.@test flow_sol isa Number
             end
@@ -361,7 +361,7 @@ function test_sciml_extension()
                 result = Integrators.solve_problem(integ, prob, opts)
 
                 # Build solution
-                flow_sol = Solutions.build_solution(Configs.mode_trait(config), Configs.content_trait(config), config, result)
+                flow_sol = Solutions.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
 
                 Test.@test flow_sol isa Solutions.VectorFieldSolution
             end

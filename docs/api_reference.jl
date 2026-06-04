@@ -36,7 +36,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                     joinpath("Traits", "Traits.jl"),
                     joinpath("Traits", "abstract.jl"),
                     joinpath("Traits", "ad.jl"),
-                    joinpath("Traits", "content.jl"),
+                    joinpath("Traits", "dynamics.jl"),
                     joinpath("Traits", "helpers.jl"),
                     joinpath("Traits", "mode.jl"),
                     joinpath("Traits", "mutability.jl"),

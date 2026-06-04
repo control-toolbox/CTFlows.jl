@@ -8,7 +8,7 @@ dispatch on:
 - Time dependence: [`Autonomous`](@extref), [`NonAutonomous`](@extref)
 - Variable dependence: [`Fixed`](@ref), [`NonFixed`](@ref)
 - Integration mode: [`PointTrait`](@ref), [`TrajectoryTrait`](@ref)
-- Content type: [`StateTrait`](@ref), [`HamiltonianTrait`](@ref), [`AugmentedHamiltonianTrait`](@ref)
+- Dynamics type: [`StateDynamics`](@ref), [`HamiltonianDynamics`](@ref), [`AugmentedHamiltonianDynamics`](@ref)
 - Mutability: [`InPlace`](@ref), [`OutOfPlace`](@ref)
 - Automatic differentiation: [`WithAD`](@ref), [`WithoutAD`](@ref)
 - Variable costate capability: [`SupportsVariableCostate`](@ref), [`NoVariableCostate`](@ref)
@@ -36,7 +36,7 @@ import CTModels.OCP
 include(joinpath(@__DIR__, "helpers.jl"))
 include(joinpath(@__DIR__, "abstract.jl"))
 include(joinpath(@__DIR__, "mode.jl"))
-include(joinpath(@__DIR__, "content.jl"))
+include(joinpath(@__DIR__, "dynamics.jl"))
 include(joinpath(@__DIR__, "ad.jl"))
 include(joinpath(@__DIR__, "variable_costate.jl"))
 include(joinpath(@__DIR__, "mutability.jl"))
@@ -51,12 +51,12 @@ include(joinpath(@__DIR__, "variable_dependence.jl"))
 @reexport import CTModels.OCP: is_autonomous, is_nonautonomous, is_variable, is_nonvariable, has_variable
 
 export AbstractTrait
-export AbstractModeTrait, AbstractContentTrait
+export AbstractModeTrait, AbstractDynamicsTrait
 export AbstractMutabilityTrait
 export AbstractADTrait
 export AbstractVariableCostateCapability
 export PointTrait, TrajectoryTrait
-export StateTrait, HamiltonianTrait, AugmentedHamiltonianTrait
+export StateDynamics, HamiltonianDynamics, AugmentedHamiltonianDynamics
 export InPlace, OutOfPlace
 export WithAD, WithoutAD
 export SupportsVariableCostate, NoVariableCostate
