@@ -659,22 +659,22 @@ function test_macro_dg()
         F_nfix = _VF((x, v) -> [x[2]+v, -x[1]],    Traits.Autonomous,    Traits.NonFixed)
 
         # Time-dependence mismatch between operands
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie [F_aut, F_naut]
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie [F_naut, F_aut]
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie [F_aut, F_naut]
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie [F_naut, F_aut]
 
         # Variable-dependence mismatch between operands
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie [F_fix, F_nfix]
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie [F_nfix, F_fix]
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie [F_fix, F_nfix]
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie [F_nfix, F_fix]
 
         # User flag conflicts with typed operands
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie [F_aut, F_aut] is_autonomous=false
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie [F_naut, F_naut] is_autonomous=true
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie [F_fix, F_fix] is_variable=true
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie [F_nfix, F_nfix] is_variable=false
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie [F_aut, F_aut] is_autonomous=false
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie [F_naut, F_naut] is_autonomous=true
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie [F_fix, F_fix] is_variable=true
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie [F_nfix, F_nfix] is_variable=false
 
         # Nested brackets — errors propagate
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie [[F_aut, F_naut], F_aut]
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie [[F_aut, F_aut], F_naut]
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie [[F_aut, F_naut], F_aut]
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie [[F_aut, F_aut], F_naut]
     end
 
     # =========================================================================
@@ -685,22 +685,22 @@ function test_macro_dg()
         H_nfix = _H((x, p, v) -> x[1]^2+p[1]^2+v,     Traits.Autonomous,    Traits.NonFixed)
 
         # Time-dependence mismatch
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie {H_aut, H_naut}
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie {H_naut, H_aut}
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie {H_aut, H_naut}
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie {H_naut, H_aut}
 
         # Variable-dependence mismatch
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie {H_fix, H_nfix}
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie {H_nfix, H_fix}
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie {H_fix, H_nfix}
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie {H_nfix, H_fix}
 
         # User flag conflicts
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie {H_aut, H_aut} is_autonomous=false
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie {H_naut, H_naut} is_autonomous=true
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie {H_fix, H_fix} is_variable=true
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie {H_nfix, H_nfix} is_variable=false
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie {H_aut, H_aut} is_autonomous=false
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie {H_naut, H_naut} is_autonomous=true
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie {H_fix, H_fix} is_variable=true
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie {H_nfix, H_nfix} is_variable=false
 
         # Nested brackets — errors propagate
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie {{H_aut, H_naut}, H_aut}
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.@Lie {{H_aut, H_aut}, H_naut}
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie {{H_aut, H_naut}, H_aut}
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.@Lie {{H_aut, H_aut}, H_naut}
     end
 
     # =========================================================================

@@ -60,14 +60,14 @@ Check time dependence consistency when `is_autonomous` is specified.
 - `nothing` if traits match.
 
 # Throws
-- `Exceptions.IncorrectArgument`: If traits conflict.
+- `Exceptions.PreconditionError`: If traits conflict.
 """
 function _check_td(x, ::Type{TDu}, ::Val{true}) where {TDu}
     x isa Function && return nothing  # Functions have no traits to check
     TD2 = Traits.time_dependence(x)
-    TD2 === TDu || throw(Exceptions.IncorrectArgument(
+    TD2 === TDu || throw(Exceptions.PreconditionError(
         "@Lie: is_autonomous conflicts with operand trait";
-        got=string(TDu), expected=string(TD2), context="@Lie consistency check"))
+        reason="`is_autonomous` specifies $(TDu) but operand has $(TD2)", context="@Lie consistency check"))
     return nothing  # Explicitly return nothing when traits match
 end
 
@@ -96,14 +96,14 @@ Check variable dependence consistency when `is_variable` is specified.
 - `nothing` if traits match.
 
 # Throws
-- `Exceptions.IncorrectArgument`: If traits conflict.
+- `Exceptions.PreconditionError`: If traits conflict.
 """
 function _check_vd(x, ::Type{VDu}, ::Val{true}) where {VDu}
     x isa Function && return nothing  # Functions have no traits to check
     VD2 = Traits.variable_dependence(x)
-    VD2 === VDu || throw(Exceptions.IncorrectArgument(
+    VD2 === VDu || throw(Exceptions.PreconditionError(
         "@Lie: is_variable conflicts with operand trait";
-        got=string(VDu), expected=string(VD2), context="@Lie consistency check"))
+        reason="`is_variable` specifies $(VDu) but operand has $(VD2)", context="@Lie consistency check"))
     return nothing  # Explicitly return nothing when traits match
 end
 

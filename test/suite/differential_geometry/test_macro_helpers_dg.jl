@@ -194,10 +194,10 @@ function test_macro_helpers_dg()
         Test.@test DifferentialGeometry._check_td(vf_auto,   Traits.Autonomous,    Val{true}()) === nothing
         Test.@test DifferentialGeometry._check_td(vf_nonaut, Traits.NonAutonomous, Val{true}()) === nothing
 
-        # Val{true} + inconsistent TD → IncorrectArgument
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry._check_td(
+        # Val{true} + inconsistent TD → PreconditionError
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry._check_td(
             vf_auto,   Traits.NonAutonomous, Val{true}())
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry._check_td(
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry._check_td(
             vf_nonaut, Traits.Autonomous,    Val{true}())
     end
 
@@ -219,10 +219,10 @@ function test_macro_helpers_dg()
         Test.@test DifferentialGeometry._check_vd(vf_fixed,    Traits.Fixed,    Val{true}()) === nothing
         Test.@test DifferentialGeometry._check_vd(vf_nonfixed, Traits.NonFixed, Val{true}()) === nothing
 
-        # Val{true} + inconsistent VD → IncorrectArgument
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry._check_vd(
+        # Val{true} + inconsistent VD → PreconditionError
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry._check_vd(
             vf_fixed,    Traits.NonFixed, Val{true}())
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry._check_vd(
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry._check_vd(
             vf_nonfixed, Traits.Fixed,    Val{true}())
     end
 
@@ -256,13 +256,13 @@ function test_macro_helpers_dg()
             Val{false}(), Val{false}(), backend)
         Test.@test r isa Data.VectorField
 
-        # Inconsistent override on TD → IncorrectArgument
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry._lie_mac(
+        # Inconsistent override on TD → PreconditionError
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry._lie_mac(
             vf1, vf2, Traits.NonAutonomous, Traits.Fixed,
             Val{true}(), Val{false}(), backend)
 
-        # Inconsistent override on VD → IncorrectArgument
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry._lie_mac(
+        # Inconsistent override on VD → PreconditionError
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry._lie_mac(
             vf1, vf2, Traits.Autonomous, Traits.NonFixed,
             Val{false}(), Val{true}(), backend)
 
@@ -324,13 +324,13 @@ function test_macro_helpers_dg()
             Val{false}(), Val{false}(), backend)
         Test.@test r isa Data.Hamiltonian
 
-        # Inconsistent override on TD → IncorrectArgument
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry._poisson_mac(
+        # Inconsistent override on TD → PreconditionError
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry._poisson_mac(
             ham1, ham2, Traits.NonAutonomous, Traits.Fixed,
             Val{true}(), Val{false}(), backend)
 
-        # Inconsistent override on VD → IncorrectArgument
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry._poisson_mac(
+        # Inconsistent override on VD → PreconditionError
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry._poisson_mac(
             ham1, ham2, Traits.Autonomous, Traits.NonFixed,
             Val{false}(), Val{true}(), backend)
 

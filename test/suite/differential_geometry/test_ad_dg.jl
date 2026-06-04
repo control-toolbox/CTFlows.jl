@@ -93,7 +93,7 @@ function test_ad_dg()
         X = Data.VectorField(x -> [x[2], -x[1]]; is_autonomous=true, is_variable=false)
         Y = Data.VectorField((t, x) -> [x[1], x[2]]; is_autonomous=false, is_variable=false)
 
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.ad(X, Y)
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.ad(X, Y)
     end
 
     Test.@testset "ad() - Backend: custom ad_backend kwarg" verbose=VERBOSE showtiming=SHOWTIMING begin

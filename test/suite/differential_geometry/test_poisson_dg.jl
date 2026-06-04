@@ -43,10 +43,10 @@ function test_poisson_dg()
         Test.@test PB isa Data.AbstractHamiltonian{Traits.Autonomous, Traits.Fixed}
     end
 
-    Test.@testset "Poisson() - TD/VD mismatch → IncorrectArgument" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Poisson() - TD/VD mismatch → PreconditionError" verbose=VERBOSE showtiming=SHOWTIMING begin
         H = Data.Hamiltonian((x, p) -> p[1]^2; is_autonomous=true, is_variable=false)
         G = Data.Hamiltonian((t, x, p) -> x[1]; is_autonomous=false, is_variable=false)
-        Test.@test_throws Exceptions.IncorrectArgument DifferentialGeometry.Poisson(H, G)
+        Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.Poisson(H, G)
     end
 
     Test.@testset "Poisson() - composition Lift" verbose=VERBOSE showtiming=SHOWTIMING begin

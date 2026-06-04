@@ -237,7 +237,7 @@ dependence types, which is not allowed for the Poisson bracket operation.
 - `ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided}`: AD backend (unused).
 
 # Throws
-- `Exceptions.IncorrectArgument`: Always thrown with details about the TD/VD mismatch.
+- `Exceptions.PreconditionError`: Always thrown with details about the TD/VD mismatch.
 
 # Notes
 This is a fallback error method that provides a clear error message when the types do not
@@ -250,11 +250,11 @@ function Poisson(
     G::Data.AbstractHamiltonian{TD2, VD2};
     ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
 ) where {TD1, VD1, TD2, VD2}
-    throw(Exceptions.IncorrectArgument(
-        "Poisson: TD/VD mismatch between H and G",
-        got      = "H: $(TD1)/$(VD1), G: $(TD2)/$(VD2)",
-        expected = "Both Hamiltonians must share the same TimeDependence and VariableDependence",
-        context  = "Poisson on AbstractHamiltonian",
+    throw(Exceptions.PreconditionError(
+        "Poisson: TD/VD mismatch between H and G";
+        reason     = "H: $(TD1)/$(VD1) ≠ G: $(TD2)/$(VD2) — both Hamiltonians must share the same TimeDependence and VariableDependence",
+        suggestion = "Ensure both Hamiltonians have the same time and variable dependence traits",
+        context    = "Poisson on AbstractHamiltonian",
     ))
 end
 

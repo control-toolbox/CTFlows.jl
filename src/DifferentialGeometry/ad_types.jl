@@ -167,7 +167,7 @@ dependence types, which is not allowed for the Lie bracket operation.
 - `ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided}`: AD backend (unused).
 
 # Throws
-- `Exceptions.IncorrectArgument`: Always thrown with details about the TD/VD mismatch.
+- `Exceptions.PreconditionError`: Always thrown with details about the TD/VD mismatch.
 
 # Notes
 This is a fallback error method that provides a clear error message when the types do not
@@ -180,11 +180,11 @@ function ad(
     Y::Data.AbstractVectorField{TD2, VD2, MDY};
     ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
 ) where {TD1, VD1, MDX, TD2, VD2, MDY}
-    throw(Exceptions.IncorrectArgument(
-        "ad: TD/VD mismatch between X and Y",
-        got      = "X: $(TD1)/$(VD1), Y: $(TD2)/$(VD2)",
-        expected = "Both arguments must share the same TimeDependence and VariableDependence",
-        context  = "ad on AbstractVectorField",
+    throw(Exceptions.PreconditionError(
+        "ad: TD/VD mismatch between X and Y";
+        reason     = "X: $(TD1)/$(VD1) ≠ Y: $(TD2)/$(VD2) — both arguments must share the same TimeDependence and VariableDependence",
+        suggestion = "Ensure both vector fields have the same time and variable dependence traits",
+        context    = "ad on AbstractVectorField",
     ))
 end
 
