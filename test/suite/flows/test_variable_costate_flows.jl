@@ -133,7 +133,7 @@ function test_variable_costate_flows()
             Test.@test pv == [5.0, 6.0, 7.0, 8.0]
         end
 
-        Test.@testset "Unit: build_solution AugmentedHamiltonianTrait" begin
+        Test.@testset "Unit: build_solution AugmentedHamiltonianDynamics" begin
             u_final = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
             x0 = [1.0, 2.0]  # n = 2
             p0 = [3.0, 4.0]
@@ -143,7 +143,7 @@ function test_variable_costate_flows()
 
             xf, pf, pvf = Solutions.build_solution(
                 Configs.mode_trait(config),
-                Configs.content_trait(config),
+                Configs.dynamics_trait(config),
                 config,
                 result,
             )

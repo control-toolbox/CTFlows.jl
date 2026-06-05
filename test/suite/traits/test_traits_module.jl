@@ -9,7 +9,7 @@
 # Functionality tests are in separate files:
 # - test_abstract_traits.jl for abstract trait types
 # - test_ad.jl for AD traits
-# - test_content.jl for content traits
+# - test_dynamics.jl for dynamics traits
 # - test_mode.jl for mode traits
 # - test_mutability.jl for mutability traits
 # - test_time_dependence.jl for time dependence traits
@@ -37,7 +37,7 @@ const CurrentModule = TestTraitsModule
 const EXPORTED_ABSTRACT_TYPES = (
     :AbstractTrait,
     :AbstractModeTrait,
-    :AbstractContentTrait,
+    :AbstractDynamicsTrait,
     :AbstractMutabilityTrait,
     :AbstractADTrait,
     :AbstractVariableCostateCapability,
@@ -48,9 +48,9 @@ const EXPORTED_ABSTRACT_TYPES = (
 const EXPORTED_CONCRETE_TYPES = (
     :PointTrait,
     :TrajectoryTrait,
-    :StateTrait,
-    :HamiltonianTrait,
-    :AugmentedHamiltonianTrait,
+    :StateDynamics,
+    :HamiltonianDynamics,
+    :AugmentedHamiltonianDynamics,
     :InPlace,
     :OutOfPlace,
     :WithAD,
@@ -176,7 +176,7 @@ function test_traits_module()
             Test.@testset "Abstract types are abstract" begin
                 Test.@test isabstracttype(Traits.AbstractTrait)
                 Test.@test isabstracttype(Traits.AbstractModeTrait)
-                Test.@test isabstracttype(Traits.AbstractContentTrait)
+                Test.@test isabstracttype(Traits.AbstractDynamicsTrait)
                 Test.@test isabstracttype(Traits.AbstractMutabilityTrait)
                 Test.@test isabstracttype(Traits.AbstractADTrait)
                 Test.@test isabstracttype(Traits.AbstractVariableCostateCapability)
@@ -187,9 +187,9 @@ function test_traits_module()
             Test.@testset "Concrete types inherit from abstract types" begin
                 Test.@test Traits.PointTrait <: Traits.AbstractModeTrait
                 Test.@test Traits.TrajectoryTrait <: Traits.AbstractModeTrait
-                Test.@test Traits.StateTrait <: Traits.AbstractContentTrait
-                Test.@test Traits.HamiltonianTrait <: Traits.AbstractContentTrait
-                Test.@test Traits.AugmentedHamiltonianTrait <: Traits.AbstractContentTrait
+                Test.@test Traits.StateDynamics <: Traits.AbstractDynamicsTrait
+                Test.@test Traits.HamiltonianDynamics <: Traits.AbstractDynamicsTrait
+                Test.@test Traits.AugmentedHamiltonianDynamics <: Traits.AbstractDynamicsTrait
                 Test.@test Traits.InPlace <: Traits.AbstractMutabilityTrait
                 Test.@test Traits.OutOfPlace <: Traits.AbstractMutabilityTrait
                 Test.@test Traits.WithAD <: Traits.AbstractADTrait

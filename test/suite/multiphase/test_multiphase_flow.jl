@@ -46,7 +46,7 @@ function test_multiphase_flow()
             integ = FakeIntegrator(:fake_result)
             flow1 = Flows.StateFlow(sys, integ)
             flow2 = Flows.StateFlow(sys, integ)
-            mpsf = MultiPhase.MultiPhaseStateFlow([flow1, flow2], [0.5], [nothing])
+            mpsf = MultiPhase.MultiPhaseStateFlow((flow1, flow2), [0.5], [nothing])
 
             Test.@testset "stores flows" begin
                 Test.@test length(mpsf.flows) == 2
@@ -62,11 +62,11 @@ function test_multiphase_flow()
                 Test.@test mpsf.jumps == [nothing]
             end
 
-            Test.@testset "system returns Vector of systems" begin
+            Test.@testset "system returns Tuple of systems" begin
                 sys_result = Flows.system(mpsf)
-                Test.@test sys_result isa Vector
-                Test.@test eltype(sys_result) <: Systems.AbstractSystem
+                Test.@test sys_result isa Tuple
                 Test.@test length(sys_result) == 2
+                Test.@test all(s -> s isa Systems.AbstractSystem, sys_result)
             end
 
             Test.@testset "Display Methods" begin
@@ -76,8 +76,8 @@ function test_multiphase_flow()
                     output = String(take!(io))
                     Test.@test occursin("MultiPhaseStateFlow", output)
                     Test.@test occursin("phases: 2", output)
-                    Test.@test occursin("systems: FakeStateSystem", output)
-                    Test.@test occursin("integrators: FakeIntegrator", output)
+                    Test.@test occursin("FakeStateSystem", output)
+                    Test.@test occursin("FakeIntegrator", output)
                     Test.@test occursin("switching_times: [0.5]", output)
                 end
 
@@ -122,12 +122,12 @@ function test_multiphase_flow()
             integ = FakeIntegrator(:fake_result)
             flow = Flows.StateFlow(sys, integ)
 
-            Test.@testset "get_flows returns single-element vector" begin
+            Test.@testset "get_flows returns single-element tuple" begin
                 result = MultiPhase.get_flows(flow)
-                Test.@test result isa Vector
+                Test.@test result isa Tuple
                 Test.@test length(result) == 1
                 Test.@test result[1] === flow
-                Test.@test Test.@inferred(MultiPhase.get_flows(flow)) isa Vector
+                Test.@test Test.@inferred(MultiPhase.get_flows(flow)) isa Tuple
             end
 
             Test.@testset "get_switching_times returns empty Real vector" begin
@@ -150,7 +150,7 @@ function test_multiphase_flow()
             integ = FakeIntegrator(:fake_result)
             flow1 = Flows.StateFlow(sys, integ)
             flow2 = Flows.StateFlow(sys, integ)
-            mpf = MultiPhase.MultiPhaseStateFlow([flow1, flow2], [0.5], [nothing])
+            mpf = MultiPhase.MultiPhaseStateFlow((flow1, flow2), [0.5], [nothing])
 
             Test.@testset "get_flows delegates to mpf.flows" begin
                 result = MultiPhase.get_flows(mpf)

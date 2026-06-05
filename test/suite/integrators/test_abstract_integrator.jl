@@ -19,7 +19,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake system for testing the AbstractIntegrator contract.
 """
-struct FakeSystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed}
+struct FakeSystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
     state_dim::Int
 end
 

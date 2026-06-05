@@ -23,9 +23,10 @@ struct FakeStateSystemFC <: Systems.AbstractStateSystem{Traits.Autonomous, Trait
     n::Int
 end
 
-struct FakeHamSysFC <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD}
+struct FakeHamSysFC <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed}
     n::Int
 end
+Traits.ad_trait(::FakeHamSysFC) = Traits.WithoutAD
 
 struct FakeResultFC <: Integrators.AbstractIntegrationResult end
 
@@ -52,19 +53,19 @@ function Integrators.solve_problem(integ::FakeIntegFC, prob, options::Dict{Symbo
     return FakeResultFC()
 end
 
-function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.StateTrait}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :state_point_sol
 end
 
-function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.StateTrait}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :state_traj_sol
 end
 
-function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.HamiltonianTrait}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :ham_point_sol
 end
 
-function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.HamiltonianTrait}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :ham_traj_sol
 end
 

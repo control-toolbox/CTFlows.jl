@@ -21,7 +21,7 @@ struct FakeADBackend <: Differentiation.AbstractADBackend end
 struct MockADBackend <: Differentiation.AbstractADBackend end
 
 # Fake system for contract stub test
-struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD} end
+struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed} end
 
 # Mock implementations for testing (without full extension)
 function Differentiation.hamiltonian_gradient(backend::MockADBackend, h, t, x, p, v, cache)

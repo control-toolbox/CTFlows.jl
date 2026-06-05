@@ -13,7 +13,7 @@ mode, content type, mutability).
 Traits are used as type parameters in abstract configuration types to enable
 compile-time dispatch without runtime type checks. For example, `AbstractConfig`
 uses `PointTrait` vs `TrajectoryTrait` to distinguish integration modes, and
-`StateTrait` vs `HamiltonianTrait` to distinguish content types.
+`StateDynamics` vs `HamiltonianDynamics` to distinguish dynamics types.
 
 All concrete trait types are empty structs with no fields, making them zero-cost
 at runtime.
@@ -36,7 +36,7 @@ julia> PointTrait <: Traits.AbstractModeTrait
 true
 
 julia> # Used as type parameters in configs:
-julia> StatePointConfig <: CTFlows.Configs.AbstractConfig{<:Any, PointTrait, StateTrait}
+julia> StatePointConfig <: CTFlows.Configs.AbstractConfig{<:Any, PointTrait, StateDynamics}
 true
 \`\`\`
 
@@ -46,6 +46,6 @@ true
 - All trait types have zero runtime overhead (empty structs)
 - The trait pattern enables static dispatch on configuration properties
 
-See also: [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Traits.AbstractModeTrait`](@ref), [`CTFlows.Traits.AbstractContentTrait`](@ref), [`CTFlows.Traits.AbstractMutabilityTrait`](@ref).
+See also: [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Traits.AbstractModeTrait`](@ref), [`CTFlows.Traits.AbstractDynamicsTrait`](@ref), [`CTFlows.Traits.AbstractMutabilityTrait`](@ref).
 """
 abstract type AbstractTrait end

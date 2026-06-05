@@ -58,7 +58,7 @@ const EXPORTED_FUNCTIONS = (
     :initial_time,
     :final_time,
     :mode_trait,
-    :content_trait,
+    :dynamics_trait,
 )
 
 # Note: Configs module has no private symbols (after filtering Julia internals)

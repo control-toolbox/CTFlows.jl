@@ -37,6 +37,24 @@ const AbstractLazyThing  = AbstractThing{Lazy}
 
 Adding an axis is adding a parameter, not multiplying the type tree.
 
+## When an axis becomes a type parameter (vs. stays an extracted trait)
+
+The criterion is not "is this axis important?" but:
+
+> **Does the axis change the contract visible to consumers of the abstract type?**
+> If yes → type parameter. If no → extracted trait only.
+
+- An axis that changes the **method signatures** the abstract type promises (e.g. number
+  or role of arguments) is structural: it propagates up through the hierarchy and belongs
+  as a type parameter.
+- An axis that only affects **how** a computation is performed *inside* a concrete type,
+  while both variants honour the same abstract contract, stays as an extracted trait on
+  the concrete type.
+
+A practical signal: **if an axis never propagates beyond one level of the hierarchy** —
+present on concrete types but absent from abstract types and their consumers — it is most
+likely an implementation detail, not a structural axis.
+
 ## Dispatch via the trait (Holy trait pattern)
 
 Extract the trait, then re-dispatch on it:

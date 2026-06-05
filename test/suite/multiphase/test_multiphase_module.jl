@@ -129,14 +129,16 @@ function test_multiphase_module()
         # ====================================================================
 
         Test.@testset "Type hierarchy" begin
-            Test.@testset "Concrete types are valid" begin
-                # AnyMultiPhaseFlow is a Union type alias, not an abstract type
-                Test.@test MultiPhase.AnyMultiPhaseFlow === Union{MultiPhase.MultiPhaseStateFlow, MultiPhase.MultiPhaseHamiltonianFlow}
+            Test.@testset "AnyMultiPhaseFlow is MultiPhaseFlow (not a Union)" begin
+                Test.@test MultiPhase.AnyMultiPhaseFlow === MultiPhase.MultiPhaseFlow
             end
 
-            Test.@testset "Concrete types are members of Union" begin
-                Test.@test MultiPhase.MultiPhaseStateFlow <: MultiPhase.AnyMultiPhaseFlow
-                Test.@test MultiPhase.MultiPhaseHamiltonianFlow <: MultiPhase.AnyMultiPhaseFlow
+            Test.@testset "Aliases exist and are distinct from each other" begin
+                Test.@test isdefined(MultiPhase, :MultiPhaseFlow)
+                Test.@test isdefined(MultiPhase, :MultiPhaseStateFlow)
+                Test.@test isdefined(MultiPhase, :MultiPhaseHamiltonianFlow)
+                # The two aliases are not the same type
+                Test.@test MultiPhase.MultiPhaseStateFlow !== MultiPhase.MultiPhaseHamiltonianFlow
             end
         end
     end

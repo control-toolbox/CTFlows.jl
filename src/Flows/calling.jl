@@ -253,7 +253,7 @@ function _core_invoke_flow(flow::Flows.AbstractFlow, config::Configs.AbstractCon
     # build flow solution
     flow_sol = Solutions.build_solution(
         Configs.mode_trait(config),
-        Configs.content_trait(config),
+        Configs.dynamics_trait(config),
         config,
         result,
     )

@@ -38,9 +38,11 @@ HamiltonianVectorFieldSystem
 
 See also: [`CTFlows.Data.HamiltonianVectorField`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), `TimeDependence`, [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Systems.build_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
 """
-struct HamiltonianVectorFieldSystem{F<:Function, TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, MD<:Traits.AbstractMutabilityTrait} <: AbstractHamiltonianSystem{TD, VD, Traits.WithoutAD}
+struct HamiltonianVectorFieldSystem{F<:Function, TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, MD<:Traits.AbstractMutabilityTrait} <: AbstractHamiltonianSystem{TD, VD}
     hvf::Data.HamiltonianVectorField{F, TD, VD, MD}
 end
+
+Traits.ad_trait(::HamiltonianVectorFieldSystem) = Traits.WithoutAD
 
 # =============================================================================
 # Constructors

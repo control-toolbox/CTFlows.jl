@@ -6,7 +6,7 @@ Configuration types for integration problems in CTFlows.
 This module provides the configuration type hierarchy that specifies integration
 scenarios including:
 - Integration mode: point-to-point vs trajectory
-- Content type: state-only vs Hamiltonian (state + costate)
+- Dynamics type: state-only vs Hamiltonian (state + costate)
 - Time dependence: autonomous vs non-autonomous
 - Variable dependence: fixed vs non-fixed (for optimal control)
 
@@ -27,7 +27,7 @@ Configuration types encode these choices as type parameters for compile-time dis
 - [`initial_costate`](@ref): Initial costate (Hamiltonian configs)
 - [`initial_variable_costate`](@ref): Initial variable costate (augmented configs)
 - [`mode_trait`](@ref): Integration mode trait
-- [`content_trait`](@ref): Content trait
+- [`dynamics_trait`](@ref): Dynamics trait
 
 See also: [`CTFlows.Flows.build_flow`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
 """
@@ -66,6 +66,6 @@ export AbstractStateConfig, AbstractHamiltonianConfig, AbstractAugmentedHamilton
 export StatePointConfig, StateTrajectoryConfig
 export HamiltonianPointConfig, HamiltonianTrajectoryConfig, AugmentedHamiltonianPointConfig
 export tspan, initial_condition, initial_state, initial_costate, initial_variable_costate
-export initial_time, final_time, mode_trait, content_trait
+export initial_time, final_time, mode_trait, dynamics_trait
 
 end # module Configs

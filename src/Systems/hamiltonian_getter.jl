@@ -369,7 +369,7 @@ No computation is performed since the vector field is already constructed.
 
 See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Data.HamiltonianVectorField`](@ref)
 """
-function hamiltonian_vector_field(sys::HamiltonianVectorFieldSystem)
+function hamiltonian_vector_field(sys::HamiltonianVectorFieldSystem; inplace::Bool = Common.__hvf_inplace())
     return sys.hvf
 end
 
@@ -403,31 +403,37 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Contract stub for unsupported system types.
+Get the Hamiltonian vector field from any `AbstractHamiltonianSystem`, dispatching on `ad_trait`.
 
-This method throws a `NotImplemented` exception when called on an `AbstractHamiltonianSystem`
-subtype that does not have a specific implementation. This ensures that only supported system
-types (`HamiltonianSystem` and `HamiltonianVectorFieldSystem`) can be used to obtain a Hamiltonian
-vector field.
+- `WithAD` systems: computes the vector field via automatic differentiation using
+  `hamiltonian(sys)` and `backend(sys)` (protocol methods the system must implement).
+- `WithoutAD` systems: throws `NotImplemented` — the system must implement
+  `hamiltonian_vector_field` directly (as `HamiltonianVectorFieldSystem` does).
 
-# Arguments
-- `::AbstractHamiltonianSystem`: Any Hamiltonian system type (catch-all for unsupported types).
-- `kwargs...`: Additional keyword arguments (ignored).
-
-# Throws
-- `CTBase.Exceptions.NotImplemented`: Always thrown for unsupported system types with a helpful error message.
-
-# Notes
-- This is a contract stub following the CTFlows pattern of providing explicit error messages for unimplemented methods.
-- The error message suggests using `HamiltonianSystem` (AD-backed) or `HamiltonianVectorFieldSystem` instead.
-
-See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTBase.Exceptions.NotImplemented`](@extref)
+See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
 """
-function hamiltonian_vector_field(::AbstractHamiltonianSystem; kwargs...)
+function hamiltonian_vector_field(sys::AbstractHamiltonianSystem; inplace::Bool = Common.__hvf_inplace(), kwargs...)
+    return _hamiltonian_vector_field_by_ad(Traits.ad_trait(sys), sys; inplace=inplace)
+end
+
+function _hamiltonian_vector_field_by_ad(
+    ::Type{Traits.WithAD},
+    sys::AbstractHamiltonianSystem;
+    inplace::Bool = Common.__hvf_inplace(),
+)
+    ad_backend = Differentiation.ad_backend(backend(sys))
+    return hamiltonian_vector_field(hamiltonian(sys); ad_backend=ad_backend, inplace=inplace)
+end
+
+function _hamiltonian_vector_field_by_ad(
+    ::Type{Traits.WithoutAD},
+    sys::AbstractHamiltonianSystem;
+    kwargs...,
+)
     throw(Exceptions.NotImplemented(
-        "hamiltonian_vector_field not implemented for this system type";
-        required_method = "hamiltonian_vector_field(sys::HamiltonianSystem, ...)",
-        suggestion = "Use a HamiltonianSystem (AD-backed) or a HamiltonianVectorFieldSystem to get a Hamiltonian vector field",
+        "hamiltonian_vector_field not implemented for this WithoutAD system type";
+        required_method = "hamiltonian_vector_field(sys::$(typeof(sys)))",
+        suggestion = "Implement hamiltonian_vector_field for your system type, or use HamiltonianVectorFieldSystem",
         context = "hamiltonian_vector_field getter",
     ))
 end

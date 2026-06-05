@@ -26,8 +26,8 @@ function test_hamiltonian_vector_field_system()
             Test.@test sys isa Systems.HamiltonianVectorFieldSystem
             Test.@test sys isa Systems.AbstractHamiltonianSystem
 
-            # Hierarchy check: supertype with WithoutAD
-            Test.@test sys isa Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD}
+            # Hierarchy check: supertype (2-param alias, AD via ad_trait)
+            Test.@test sys isa Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed}
         end
 
         Test.@testset "ad_trait" begin

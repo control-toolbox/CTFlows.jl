@@ -237,26 +237,47 @@ Extract the final state from a segment result for state flows.
 
 See also: [`CTFlows.Integrators.final_state`]().
 """
-function _extract_final_state(::MultiPhaseStateFlow, segment, current_state)
+function _extract_final_state(mpf::MultiPhaseFlow, segment, current_state)
+    return _extract_final_state(Traits.dynamics_trait(mpf), segment, current_state)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the final state from a segment result for state dynamics.
+
+# Arguments
+- `::Type{Traits.StateDynamics}`: State dynamics trait tag.
+- `segment`: The segment solution.
+- `_`: Current state (unused for state dynamics).
+
+# Returns
+- Final state from the segment.
+
+# Notes
+This is an internal dispatch method for the `_extract_final_state` function.
+"""
+function _extract_final_state(::Type{Traits.StateDynamics}, segment, _)
     return Integrators.final_state(segment)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Extract the final state and costate from a segment result for Hamiltonian flows.
+Extract the final state and costate from a segment result for Hamiltonian dynamics.
 
 # Arguments
-- `::MultiPhaseHamiltonianFlow`: Multi-phase Hamiltonian flow type tag.
-- `segment`: The segment solution.
-- `current_state`: Current state tuple (used to determine state dimension).
+- `::Type{Traits.HamiltonianDynamics}`: Hamiltonian dynamics trait tag.
+- `segment`: The segment solution (concatenated state and costate).
+- `current_state`: Current state tuple (state, costate) used to determine dimensions.
 
 # Returns
-- Tuple of (final_state, final_costate) from the segment.
+- Tuple of (final_state, final_costate).
 
-See also: [`CTFlows.Integrators.final_state`]().
+# Notes
+This is an internal dispatch method for the `_extract_final_state` function.
 """
-function _extract_final_state(::MultiPhaseHamiltonianFlow, segment, current_state)
+function _extract_final_state(::Type{Traits.HamiltonianDynamics}, segment, current_state)
     final = Integrators.final_state(segment)
     nx = length(current_state[1])
     return (final[1:nx], final[nx+1:end])
@@ -277,29 +298,50 @@ Apply a jump to the state for state flows.
 
 See also: [`CTFlows.MultiPhase.get_jump`](@ref).
 """
-function _apply_jump(mpf::MultiPhaseStateFlow, i, state)
-    jump = get_jump(mpf, i)
-    return state .+ jump
+function _apply_jump(mpf::MultiPhaseFlow, i, state)
+    return _apply_jump(Traits.dynamics_trait(mpf), mpf, i, state)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Apply a jump to the state tuple for Hamiltonian flows.
+Apply a jump to the state for state dynamics.
 
 # Arguments
-- `mpf::MultiPhaseHamiltonianFlow`: The multi-phase Hamiltonian flow.
-- `i`: Phase index.
+- `::Type{Traits.StateDynamics}`: State dynamics trait tag.
+- `mpf::MultiPhaseFlow`: The multi-phase flow.
+- `i::Int`: Phase index.
+- `state`: Current state.
+
+# Returns
+- State after applying the jump (element-wise addition).
+
+# Notes
+This is an internal dispatch method for the `_apply_jump` function.
+"""
+function _apply_jump(::Type{Traits.StateDynamics}, mpf, i, state)
+    return state .+ get_jump(mpf, i)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Apply a jump to the state and costate for Hamiltonian dynamics.
+
+# Arguments
+- `::Type{Traits.HamiltonianDynamics}`: Hamiltonian dynamics trait tag.
+- `mpf::MultiPhaseFlow`: The multi-phase flow.
+- `i::Int`: Phase index.
 - `state_tuple`: Tuple of (state, costate).
 
 # Returns
-- State tuple after applying the jump.
+- Tuple of (state, costate) after applying the jump.
 
-See also: [`CTFlows.MultiPhase._apply_hamiltonian_jump`](@ref), [`CTFlows.MultiPhase.get_jump`](@ref).
+# Notes
+This is an internal dispatch method for the `_apply_jump` function.
 """
-function _apply_jump(mpf::MultiPhaseHamiltonianFlow, i, state_tuple)
-    jump = get_jump(mpf, i)
-    return _apply_hamiltonian_jump(state_tuple, jump)
+function _apply_jump(::Type{Traits.HamiltonianDynamics}, mpf, i, state_tuple)
+    return _apply_hamiltonian_jump(state_tuple, get_jump(mpf, i))
 end
 
 """
@@ -354,25 +396,45 @@ Format the final output for state flows.
 
 See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@ref).
 """
-function _format_final_output(::MultiPhaseStateFlow, x)
+function _format_final_output(mpf::MultiPhaseFlow, state)
+    return _format_final_output(Traits.dynamics_trait(mpf), state)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Format the final output for state dynamics.
+
+# Arguments
+- `::Type{Traits.StateDynamics}`: State dynamics trait tag.
+- `x`: Final state.
+
+# Returns
+- The final state (no formatting needed).
+
+# Notes
+This is an internal dispatch method for the `_format_final_output` function.
+"""
+function _format_final_output(::Type{Traits.StateDynamics}, x)
     return x
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Format the final output for Hamiltonian flows by concatenating state and costate.
+Format the final output for Hamiltonian dynamics.
 
 # Arguments
-- `::MultiPhaseHamiltonianFlow`: Multi-phase Hamiltonian flow type tag.
-- `state_tuple`: Tuple of (final_state, final_costate).
+- `::Type{Traits.HamiltonianDynamics}`: Hamiltonian dynamics trait tag.
+- `state_tuple`: Tuple of (state, costate).
 
 # Returns
 - Concatenated vector [state; costate].
 
-See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@ref).
+# Notes
+This is an internal dispatch method for the `_format_final_output` function.
 """
-function _format_final_output(::MultiPhaseHamiltonianFlow, state_tuple)
+function _format_final_output(::Type{Traits.HamiltonianDynamics}, state_tuple)
     x, p = state_tuple
     return vcat(x, p)
 end
@@ -409,13 +471,13 @@ sol = mpf(0.0, [1.0, 0.0], 3.0)
 
 See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Configs.StatePointConfig`](@ref).
 """
-function (mpf::MultiPhaseStateFlow)(
+function (mpf::MultiPhaseFlow{TD, VD, Traits.StateDynamics})(
     t0::Real,
     x0,
     tf::Real;
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
-)
+) where {TD, VD}
     config = Configs.StatePointConfig(t0, x0, tf)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
@@ -448,12 +510,12 @@ sol = mpf((0.0, 3.0), [1.0, 0.0])
 
 See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref).
 """
-function (mpf::MultiPhaseStateFlow)(
+function (mpf::MultiPhaseFlow{TD, VD, Traits.StateDynamics})(
     tspan::Tuple{Real, Real},
     x0;
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
-)
+) where {TD, VD}
     config = Configs.StateTrajectoryConfig(tspan, x0)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
@@ -487,14 +549,14 @@ sol = mpf(0.0, [1.0, 0.0], [0.5, 0.3], 3.0)
 
 See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Configs.HamiltonianPointConfig`](@ref).
 """
-function (mpf::MultiPhaseHamiltonianFlow)(
+function (mpf::MultiPhaseFlow{TD, VD, Traits.HamiltonianDynamics})(
     t0::Real,
     x0,
     p0,
     tf::Real;
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
-)
+) where {TD, VD}
     config = Configs.HamiltonianPointConfig(t0, x0, p0, tf)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
@@ -528,13 +590,13 @@ sol = mpf((0.0, 3.0), [1.0, 0.0], [0.5, 0.3])
 
 See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref).
 """
-function (mpf::MultiPhaseHamiltonianFlow)(
+function (mpf::MultiPhaseFlow{TD, VD, Traits.HamiltonianDynamics})(
     tspan::Tuple{Real, Real},
     x0,
     p0;
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
-)
+) where {TD, VD}
     config = Configs.HamiltonianTrajectoryConfig(tspan, x0, p0)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end

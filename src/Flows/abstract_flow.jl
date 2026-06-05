@@ -32,57 +32,53 @@ true
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref).
 """
-abstract type AbstractFlow{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence} end
+abstract type AbstractFlow{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, D<:Traits.AbstractDynamicsTrait} end
 
 """
 $(TYPEDEF)
 
-Abstract type for state flows.
+Alias for state flows.
 
-Subtype of `AbstractFlow` specialized for state systems (not Hamiltonian systems).
-Carries the system type parameter `S` which must be an `AbstractStateSystem`.
+Matches any `AbstractFlow` with `StateDynamics` as the dynamics parameter.
 
 # Type Parameters
 - `TD <: TimeDependence`: Time dependence trait (Autonomous or NonAutonomous)
 - `VD <: VariableDependence`: Variable dependence trait (Fixed or NonFixed)
-- `S <: AbstractStateSystem{TD, VD}`: The state system type
 
 # Example
 \`\`\`julia-repl
 julia> using CTFlows.Flows
 
-julia> MyStateFlow <: Flows.AbstractStateFlow
+julia> Flow(vf) isa Flows.AbstractStateFlow
 true
 \`\`\`
 
-See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@ref), [`CTFlows.Systems.AbstractStateSystem`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@ref).
 """
-abstract type AbstractStateFlow{TD, VD, S<:Systems.AbstractStateSystem{TD,VD}} <: AbstractFlow{TD, VD} end
+const AbstractStateFlow{TD, VD} = AbstractFlow{TD, VD, Traits.StateDynamics}
 
 """
 $(TYPEDEF)
 
-Abstract type for Hamiltonian flows.
+Alias for Hamiltonian flows.
 
-Subtype of `AbstractFlow` specialized for Hamiltonian systems.
-Carries the system type parameter `S` which must be an `AbstractHamiltonianSystem`.
+Matches any `AbstractFlow` with `HamiltonianDynamics` as the dynamics parameter.
 
 # Type Parameters
 - `TD <: TimeDependence`: Time dependence trait (Autonomous or NonAutonomous)
 - `VD <: VariableDependence`: Variable dependence trait (Fixed or NonFixed)
-- `S <: AbstractHamiltonianSystem{TD, VD}`: The Hamiltonian system type
 
 # Example
 \`\`\`julia-repl
 julia> using CTFlows.Flows
 
-julia> MyHamiltonianFlow <: Flows.AbstractHamiltonianFlow
+julia> Flow(hvf) isa Flows.AbstractHamiltonianFlow
 true
 \`\`\`
 
-See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractStateFlow`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractStateFlow`](@ref).
 """
-abstract type AbstractHamiltonianFlow{TD, VD, S<:Systems.AbstractHamiltonianSystem{TD,VD,<:Traits.AbstractADTrait}} <: AbstractFlow{TD, VD} end
+const AbstractHamiltonianFlow{TD, VD} = AbstractFlow{TD, VD, Traits.HamiltonianDynamics}
 
 """
 $(TYPEDSIGNATURES)
@@ -121,7 +117,7 @@ Extract the time dependence trait from an `AbstractFlow`.
 using CTFlows.Flows
 using CTFlows.Common
 
-struct MyFlow <: Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed}
+struct MyFlow <: Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
     data::Vector{Float64}
 end
 
@@ -130,7 +126,7 @@ Traits.time_dependence(MyFlow)  # Returns Autonomous
 
 See also: [`CTFlows.Traits.has_time_dependence_trait`](@ref), `is_autonomous`, [`CTFlows.Flows.AbstractFlow`](@ref).
 """
-function Traits.time_dependence(flow::AbstractFlow{TD, <:Traits.VariableDependence}) where {TD <: Traits.TimeDependence}
+function Traits.time_dependence(::AbstractFlow{TD, <:Traits.VariableDependence, <:Traits.AbstractDynamicsTrait}) where {TD <: Traits.TimeDependence}
     return TD
 end
 
@@ -147,7 +143,7 @@ Extract the variable dependence trait from an `AbstractFlow`.
 using CTFlows.Flows
 using CTFlows.Common
 
-struct MyFlow <: Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed}
+struct MyFlow <: Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
     data::Vector{Float64}
 end
 
@@ -156,8 +152,22 @@ Traits.variable_dependence(MyFlow)  # Returns Fixed
 
 See also: [`CTFlows.Traits.has_variable_dependence_trait`](@ref), `is_variable`, [`CTFlows.Flows.AbstractFlow`](@ref).
 """
-function Traits.variable_dependence(flow::AbstractFlow{<:Traits.TimeDependence, VD}) where {VD <: Traits.VariableDependence}
+function Traits.variable_dependence(::AbstractFlow{<:Traits.TimeDependence, VD, <:Traits.AbstractDynamicsTrait}) where {VD <: Traits.VariableDependence}
     return VD
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the dynamics trait from an `AbstractFlow`.
+
+# Returns
+- `Type{<:AbstractDynamicsTrait}`: `StateDynamics` or `HamiltonianDynamics`.
+
+See also: [`CTFlows.Traits.AbstractDynamicsTrait`](@ref), [`CTFlows.Flows.AbstractStateFlow`](@ref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@ref).
+"""
+function Traits.dynamics_trait(::AbstractFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, D}) where {D <: Traits.AbstractDynamicsTrait}
+    return D
 end
 
 """
@@ -191,7 +201,7 @@ Return the automatic differentiation capability trait of a Hamiltonian flow.
 
 See also: [`CTFlows.Traits.AbstractADTrait`](@ref), [`CTFlows.Traits.ad_trait`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
 """
-Traits.ad_trait(f::AbstractHamiltonianFlow) = Traits.ad_trait(system(f))
+Traits.ad_trait(f::AbstractFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.HamiltonianDynamics}) = Traits.ad_trait(system(f))
 
 """
 $(TYPEDSIGNATURES)
@@ -225,7 +235,7 @@ Return the variable costate capability trait of a Hamiltonian flow.
 
 See also: [`CTFlows.Traits.AbstractVariableCostateCapability`](@ref), [`CTFlows.Traits.variable_costate_trait`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
 """
-Traits.variable_costate_trait(f::AbstractHamiltonianFlow) = Traits.variable_costate_trait(system(f))
+Traits.variable_costate_trait(f::AbstractFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.HamiltonianDynamics}) = Traits.variable_costate_trait(system(f))
 
 """
 $(TYPEDSIGNATURES)

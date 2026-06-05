@@ -46,11 +46,11 @@ Fake flow for testing the AbstractFlow contract.
 This minimal implementation provides the required contract methods to test
 routing and default behavior without full flow complexity.
 """
-struct FakeFlow{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence} <: Flows.AbstractFlow{TD, VD}
-    sys::Systems.AbstractSystem{TD, VD}
+struct FakeFlow{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, D<:Traits.AbstractDynamicsTrait} <: Flows.AbstractFlow{TD, VD, D}
+    sys::Systems.AbstractSystem{TD, VD, D}
     integ::Any
     function FakeFlow(sys::Systems.AbstractSystem, integ::Any)
-        return new{Traits.time_dependence(sys), Traits.variable_dependence(sys)}(sys, integ)
+        return new{Traits.time_dependence(sys), Traits.variable_dependence(sys), Traits.dynamics_trait(sys)}(sys, integ)
     end
 end
 
@@ -62,23 +62,23 @@ function Flows.integrator(f::FakeFlow)
     return f.integ
 end
 
-function (f::FakeFlow)(t0, x0, tf)
+function (f::FakeFlow)(t0::Real, x0, tf::Real; variable=nothing, unsafe=false)
     return :fake_trajectory
 end
 
-function (f::FakeFlow)(t0, x0, p0, tf)
+function (f::FakeFlow)(t0::Real, x0, p0, tf::Real; variable=nothing, unsafe=false)
     return :fake_trajectory_with_costate
 end
 
-function (f::FakeFlow)(config::Configs.AbstractConfig)
+function (f::FakeFlow)(config::Configs.AbstractConfig; variable=nothing, unsafe=false)
     return :fake_config_trajectory
 end
 
 """
 Minimal flow that does not implement the contract (for error testing).
 """
-struct MinimalFlow <: Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed}
-    sys::Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed}
+struct MinimalFlow <: Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
+    sys::Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
 end
 
 # ==============================================================================
@@ -123,7 +123,7 @@ function test_abstract_flow()
             end
 
             Test.@testset "FakeFlow has correct VD parameter" begin
-                Test.@test flow isa FakeFlow{Traits.Autonomous, Traits.Fixed}
+                Test.@test flow isa FakeFlow{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
             end
 
             Test.@testset "callable (t0, x0, tf)" begin

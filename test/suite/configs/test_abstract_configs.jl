@@ -14,7 +14,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake config type for testing the AbstractConfig contract.
 """
-struct FakeConfig{X0} <: Configs.AbstractConfigWithMaC{X0, Traits.PointTrait, Traits.StateTrait}
+struct FakeConfig{X0} <: Configs.AbstractConfigWithMaC{X0, Traits.PointTrait, Traits.StateDynamics}
     x0::X0
 end
 
@@ -124,15 +124,15 @@ function test_abstract_configs()
                 end
             end
 
-            Test.@testset "content_trait" begin
-                Test.@testset "content_trait for StatePointConfig" begin
+            Test.@testset "dynamics_trait" begin
+                Test.@testset "dynamics_trait for StatePointConfig" begin
                     config = Configs.StatePointConfig(0.0, [1.0], 1.0)
-                    Test.@test Configs.content_trait(config) === Traits.StateTrait
+                    Test.@test Configs.dynamics_trait(config) === Traits.StateDynamics
                 end
 
-                Test.@testset "content_trait for HamiltonianPointConfig" begin
+                Test.@testset "dynamics_trait for HamiltonianPointConfig" begin
                     config = Configs.HamiltonianPointConfig(0.0, [1.0], [0.5], 1.0)
-                    Test.@test Configs.content_trait(config) === Traits.HamiltonianTrait
+                    Test.@test Configs.dynamics_trait(config) === Traits.HamiltonianDynamics
                 end
             end
         end

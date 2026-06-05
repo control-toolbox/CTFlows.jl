@@ -35,7 +35,7 @@ Fake flow for testing Flow contract without requiring SciML extension.
 
 Matches the new parametric Flow{TD, VD, S, I} structure.
 """
-struct FakeFlow{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, S<:Systems.AbstractSystem{TD, VD}, I} <: Flows.AbstractFlow{TD, VD}
+struct FakeFlow{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, D<:Traits.AbstractDynamicsTrait, S<:Systems.AbstractSystem{TD, VD, D}, I} <: Flows.AbstractFlow{TD, VD, D}
     sys::S
     integ::I
 end
@@ -68,11 +68,11 @@ function (flow::FakeFlow)(config::Configs.StateTrajectoryConfig; variable, unsaf
 end
 
 # Positional callable - both Fixed and NonFixed require variable, unsafe
-function (flow::FakeFlow)(t0, x0, tf; variable, unsafe)
+function (flow::FakeFlow)(t0::Real, x0, tf::Real; variable, unsafe)
     return flow.integ.result
 end
 
-function (flow::FakeFlow)(tspan::Tuple, x0; variable, unsafe)
+function (flow::FakeFlow)(tspan::Tuple{<:Real,<:Real}, x0; variable, unsafe)
     return flow.integ.result
 end
 
@@ -91,10 +91,10 @@ function test_flow()
             Test.@testset "Fixed Flow" begin
                 sys = FixedSystem()
                 integ = FakeIntegrator(:fake_ode_sol)
-                flow = FakeFlow{Traits.Autonomous, Traits.Fixed, FixedSystem, typeof(integ)}(sys, integ)
+                flow = FakeFlow{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics, FixedSystem, typeof(integ)}(sys, integ)
 
-                Test.@testset "Flow is AbstractFlow{Autonomous, Fixed}" begin
-                    Test.@test flow isa Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed}
+                Test.@testset "Flow is AbstractStateFlow{Autonomous, Fixed}" begin
+                    Test.@test flow isa Flows.AbstractStateFlow{Traits.Autonomous, Traits.Fixed}
                 end
 
                 Test.@testset "Flow stores system" begin
@@ -109,10 +109,10 @@ function test_flow()
             Test.@testset "NonFixed Flow" begin
                 sys = NonFixedSystem()
                 integ = FakeIntegrator(:fake_ode_sol)
-                flow = FakeFlow{Traits.Autonomous, Traits.NonFixed, NonFixedSystem, typeof(integ)}(sys, integ)
+                flow = FakeFlow{Traits.Autonomous, Traits.NonFixed, Traits.StateDynamics, NonFixedSystem, typeof(integ)}(sys, integ)
 
-                Test.@testset "Flow is AbstractFlow{Autonomous, NonFixed}" begin
-                    Test.@test flow isa Flows.AbstractFlow{Traits.Autonomous, Traits.NonFixed}
+                Test.@testset "Flow is AbstractStateFlow{Autonomous, NonFixed}" begin
+                    Test.@test flow isa Flows.AbstractStateFlow{Traits.Autonomous, Traits.NonFixed}
                 end
 
                 Test.@testset "Flow stores system" begin
@@ -140,7 +140,7 @@ function test_flow()
                 end
 
                 Test.@testset "Flow has correct traits" begin
-                    Test.@test flow isa Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed}
+                    Test.@test flow isa Flows.AbstractStateFlow{Traits.Autonomous, Traits.Fixed}
                 end
 
                 Test.@testset "Flow stores system" begin
@@ -162,7 +162,7 @@ function test_flow()
                 end
 
                 Test.@testset "Flow has correct traits" begin
-                    Test.@test flow isa Flows.AbstractFlow{Traits.Autonomous, Traits.NonFixed}
+                    Test.@test flow isa Flows.AbstractStateFlow{Traits.Autonomous, Traits.NonFixed}
                 end
 
                 Test.@testset "Flow stores system" begin
@@ -182,7 +182,7 @@ function test_flow()
         Test.@testset "Flow Callable - Fixed Systems" begin
             sys = FixedSystem()
             integ = FakeIntegrator(:solution)
-            flow = FakeFlow{Traits.Autonomous, Traits.Fixed, FixedSystem, typeof(integ)}(sys, integ)
+            flow = FakeFlow{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics, FixedSystem, typeof(integ)}(sys, integ)
 
             Test.@testset "call with StatePointConfig" begin
                 config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
@@ -229,7 +229,7 @@ function test_flow()
         Test.@testset "Flow Callable - NonFixed Systems" begin
             sys = NonFixedSystem()
             integ = FakeIntegrator(:solution)
-            flow = FakeFlow{Traits.Autonomous, Traits.NonFixed, NonFixedSystem, typeof(integ)}(sys, integ)
+            flow = FakeFlow{Traits.Autonomous, Traits.NonFixed, Traits.StateDynamics, NonFixedSystem, typeof(integ)}(sys, integ)
 
             Test.@testset "call with StatePointConfig" begin
                 config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
@@ -277,7 +277,7 @@ function test_flow()
             Test.@testset "Fixed Flow traits" begin
                 sys = FixedSystem()
                 integ = FakeIntegrator(:solution)
-                flow = FakeFlow{Traits.Autonomous, Traits.Fixed, FixedSystem, typeof(integ)}(sys, integ)
+                flow = FakeFlow{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics, FixedSystem, typeof(integ)}(sys, integ)
 
                 Test.@testset "variable_dependence delegates to system" begin
                     Test.@test Traits.variable_dependence(flow) === Traits.Fixed
@@ -291,7 +291,7 @@ function test_flow()
             Test.@testset "NonFixed Flow traits" begin
                 sys = NonFixedSystem()
                 integ = FakeIntegrator(:solution)
-                flow = FakeFlow{Traits.Autonomous, Traits.NonFixed, NonFixedSystem, typeof(integ)}(sys, integ)
+                flow = FakeFlow{Traits.Autonomous, Traits.NonFixed, Traits.StateDynamics, NonFixedSystem, typeof(integ)}(sys, integ)
 
                 Test.@testset "variable_dependence delegates to system" begin
                     Test.@test Traits.variable_dependence(flow) === Traits.NonFixed
@@ -310,7 +310,7 @@ function test_flow()
         Test.@testset "Base.show" begin
             sys = FixedSystem()
             integ = FakeIntegrator(:fake_ode_sol)
-            flow = FakeFlow{Traits.Autonomous, Traits.Fixed, FixedSystem, typeof(integ)}(sys, integ)
+            flow = FakeFlow{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics, FixedSystem, typeof(integ)}(sys, integ)
 
             Test.@testset "MIME text/plain" begin
                 io = IOBuffer()

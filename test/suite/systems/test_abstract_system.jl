@@ -19,7 +19,7 @@ Fake system for testing the AbstractSystem contract.
 This minimal implementation provides the required contract methods to test
 routing and default behavior without full system complexity.
 """
-struct FakeSystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed}
+struct FakeSystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
     data::Vector{Float64}
 end
 
@@ -37,7 +37,7 @@ function Systems.rhs(sys::FakeStateSystem)
     return (du, u, p, t) -> du .= sys.data .* u
 end
 
-struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD}
+struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed}
     data::Vector{Float64}
 end
 
@@ -48,7 +48,7 @@ end
 """
 Minimal system that does not implement the contract (for error testing).
 """
-struct MinimalSystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed}
+struct MinimalSystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
     state_dim::Int
 end
 

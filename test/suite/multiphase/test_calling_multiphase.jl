@@ -25,7 +25,7 @@ function Systems.rhs(sys::FakeStateSystem)
     return (du, u, p, t) -> du .= sys.data .* u
 end
 
-struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed, Traits.WithoutAD}
+struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed}
     data::Vector{Float64}
 end
 
@@ -148,17 +148,17 @@ function Integrators.evaluate_at(result::MockIntegrationResult, t::Real)
     end
 end
 
-function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.StateTrait}, config::Configs.AbstractConfig, result::MockIntegrationResult)
+function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
     # For StatePointConfig, return the final state directly (as expected by _evaluate_phase)
     return result.u
 end
 
-function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.StateTrait}, config::Configs.AbstractConfig, result::MockIntegrationResult)
+function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
     # For StateTrajectoryConfig with StateFlow, return the full result
     return result
 end
 
-function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.HamiltonianTrait}, config::Configs.AbstractConfig, result::MockIntegrationResult)
+function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
     # For HamiltonianFlow, return a tuple (x, p) matching _ham_split_solution behavior
     x_len = length(result.u) ÷ 2
     x_part = result.u[1:x_len]
@@ -166,7 +166,7 @@ function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.Hamil
     return (x_part, p_part)
 end
 
-function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.HamiltonianTrait}, config::Configs.AbstractConfig, result::MockIntegrationResult)
+function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
     # For HamiltonianTrajectoryConfig, return the full result
     return result
 end

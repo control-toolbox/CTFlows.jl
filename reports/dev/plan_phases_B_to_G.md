@@ -176,15 +176,30 @@ Checkpoint : suites `systems`, `differentiation`, `extensions`, puis suite compl
 
 ## Phase F — MultiPhase : tuple + contrainte de dynamique
 
+**Objectif principal** : lever la contrainte d'homogénéité de type `S`/`I`, i.e. permettre la
+concaténation de flows dont les systèmes ou intégrateurs ont des types concrets différents.
+
 Steps :
 1. [MultiPhase/multiphase_flow.jl](../../src/MultiPhase/multiphase_flow.jl) : champ
    `flows::Tuple{Vararg{Flows.AbstractFlow{TD,VD,D}}}` au lieu de `Vector{Flow{TD,VD,S,I}}`
-   (lève la contrainte de `S`/`I` homogènes). Adapter les paramètres de type des deux structs.
+   (lève la contrainte de `S`/`I` homogènes). Adapter les paramètres de type des deux structs —
+   `S` et `I` disparaissent des params de type du MultiPhase ; seuls `TD`, `VD`, `D` restent.
 2. [MultiPhase/concatenation.jl](../../src/MultiPhase/concatenation.jl) : `*` construit un
    **tuple** : `(get_flows(f1)..., get_flows(f2)...)` au lieu de `vcat`.
 3. Méthodes `*` explicites pour l'erreur état × Hamiltonien (`PreconditionError`).
 4. `_handoff` : vérification dimensionnelle au runtime (`PreconditionError`).
-5. `get_flows`/`get_systems`/`get_integrators` : retours adaptés (tuple).
+5. `get_flows`/`get_switching_times`/`get_jumps` : accesseurs adaptés (retournent le tuple).
+6. Tests — objectif principal, dans deux fichiers :
+   a. `test/suite/multiphase/test_multiphase_flow.jl` : mise à jour (champ `flows` de type
+      `Tuple`, accesseurs).
+   b. `test/suite/multiphase/test_concatenation_heterogeneous.jl` (nouveau) :
+      - Deux `StateFlow` avec des `VectorFieldSystem` de fonctions différentes (S₁ ≠ S₂) —
+        concaténation + intégration correcte.
+      - Deux `HamiltonianFlow` avec des systèmes de types différents (S₁ ≠ S₂) — idem.
+      - Check dimensionnel `_handoff` : deux flows de dimensions incompatibles → `PreconditionError`.
+      - Erreur état × Hamiltonien : `StateFlow * HamiltonianFlow` → `PreconditionError`.
+   c. `test/suite/multiphase/test_concatenation.jl` : vérifier que les tests homogènes existants
+      passent toujours (non-régression).
 
 Checkpoint : suite `multiphase`, puis suite complète.
 
