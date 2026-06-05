@@ -28,6 +28,23 @@ function tspan(c::AbstractConfig)
     ))
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the initial time for a configuration (stub method).
+
+This is a stub method on the base `AbstractConfig` type that throws
+`NotImplemented`. Concrete subtypes should implement this method to return
+their specific initial time.
+
+# Arguments
+- `c::AbstractConfig`: The configuration.
+
+# Throws
+- `Exceptions.NotImplemented`: Always thrown for the base abstract type.
+
+See also: [`CTFlows.Configs.AbstractConfig`](@ref), [`CTFlows.Configs.final_time`](@ref).
+"""
 function initial_time(c::AbstractConfig)
     throw(Exceptions.NotImplemented(
         "AbstractConfig initial_time method not implemented";
@@ -37,6 +54,23 @@ function initial_time(c::AbstractConfig)
     ))
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the final time for a configuration (stub method).
+
+This is a stub method on the base `AbstractConfig` type that throws
+`NotImplemented`. Concrete subtypes should implement this method to return
+their specific final time.
+
+# Arguments
+- `c::AbstractConfig`: The configuration.
+
+# Throws
+- `Exceptions.NotImplemented`: Always thrown for the base abstract type.
+
+See also: [`CTFlows.Configs.AbstractConfig`](@ref), [`CTFlows.Configs.initial_time`](@ref).
+"""
 function final_time(c::AbstractConfig)
     throw(Exceptions.NotImplemented(
         "AbstractConfig final_time method not implemented";

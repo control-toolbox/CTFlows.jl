@@ -114,18 +114,73 @@ end
 # Getter methods for encapsulation
 # ==============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the number of phases in a multi-phase flow.
+
+# Arguments
+- `mpf::MultiPhaseFlow`: The multi-phase flow.
+
+# Returns
+- `Int`: Number of phases.
+
+See also: [`CTFlows.MultiPhase.get_flow`](@ref), [`CTFlows.MultiPhase.get_switching_time`](@ref).
+"""
 function n_phases(mpf::MultiPhaseFlow)
     return length(mpf.flows)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the flow for a specific phase.
+
+# Arguments
+- `mpf::MultiPhaseFlow`: The multi-phase flow.
+- `i::Int`: Phase index (1-based).
+
+# Returns
+- `AbstractFlow`: The flow for phase `i`.
+
+See also: [`CTFlows.MultiPhase.n_phases`](@ref), [`CTFlows.MultiPhase.get_switching_time`](@ref).
+"""
 function get_flow(mpf::MultiPhaseFlow, i::Int)
     return mpf.flows[i]
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the switching time at a specific phase boundary.
+
+# Arguments
+- `mpf::MultiPhaseFlow`: The multi-phase flow.
+- `i::Int`: Phase index (1-based). Returns the switching time between phase `i` and `i+1`.
+
+# Returns
+- `Real`: The switching time.
+
+See also: [`CTFlows.MultiPhase.n_phases`](@ref), [`CTFlows.MultiPhase.get_flow`](@ref).
+"""
 function get_switching_time(mpf::MultiPhaseFlow, i::Int)
     return mpf.switching_times[i]
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the jump function at a specific phase boundary.
+
+# Arguments
+- `mpf::MultiPhaseFlow`: The multi-phase flow.
+- `i::Int`: Phase index (1-based). Returns the jump applied after phase `i`.
+
+# Returns
+- `Union{Nothing, Function, Tuple}`: The jump function, or `nothing` if no jump is defined.
+
+See also: [`CTFlows.MultiPhase.n_phases`](@ref), [`CTFlows.MultiPhase.get_flow`](@ref).
+"""
 function get_jump(mpf::MultiPhaseFlow, i::Int)
     return mpf.jumps[i]
 end
@@ -202,6 +257,20 @@ function _multiphase_display_name(mpf::MultiPhaseFlow)
     return string(nameof(typeof(mpf)))
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display a multi-phase flow in a human-readable format.
+
+# Arguments
+- `io::IO`: IO stream.
+- `::MIME"text/plain"`: MIME type for pretty printing.
+- `mpf::MultiPhaseFlow`: The multi-phase flow to display.
+
+# Notes
+- Shows the flow type, number of phases, systems, integrators, switching times, and jumps.
+- Used by the REPL for interactive display.
+"""
 function Base.show(io::IO, ::MIME"text/plain", mpf::MultiPhaseFlow)
     print(io, _multiphase_display_name(mpf))
     print(io, "\n  phases: ", length(mpf.flows))
@@ -217,6 +286,19 @@ function Base.show(io::IO, ::MIME"text/plain", mpf::MultiPhaseFlow)
     print(io, "\n  jumps: ", mpf.jumps)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display a multi-phase flow in a compact single-line format.
+
+# Arguments
+- `io::IO`: IO stream.
+- `mpf::MultiPhaseFlow`: The multi-phase flow to display.
+
+# Notes
+- Shows the flow type, number of phases, and switching times in a compact form.
+- Used when the flow is embedded in other output.
+"""
 function Base.show(io::IO, mpf::MultiPhaseFlow)
     print(io, _multiphase_display_name(mpf), "(")
     parts = String[]

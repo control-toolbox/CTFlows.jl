@@ -241,10 +241,42 @@ function _extract_final_state(mpf::MultiPhaseFlow, segment, current_state)
     return _extract_final_state(Traits.dynamics_trait(mpf), segment, current_state)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Extract the final state from a segment result for state dynamics.
+
+# Arguments
+- `::Type{Traits.StateDynamics}`: State dynamics trait tag.
+- `segment`: The segment solution.
+- `_`: Current state (unused for state dynamics).
+
+# Returns
+- Final state from the segment.
+
+# Notes
+This is an internal dispatch method for the `_extract_final_state` function.
+"""
 function _extract_final_state(::Type{Traits.StateDynamics}, segment, _)
     return Integrators.final_state(segment)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Extract the final state and costate from a segment result for Hamiltonian dynamics.
+
+# Arguments
+- `::Type{Traits.HamiltonianDynamics}`: Hamiltonian dynamics trait tag.
+- `segment`: The segment solution (concatenated state and costate).
+- `current_state`: Current state tuple (state, costate) used to determine dimensions.
+
+# Returns
+- Tuple of (final_state, final_costate).
+
+# Notes
+This is an internal dispatch method for the `_extract_final_state` function.
+"""
 function _extract_final_state(::Type{Traits.HamiltonianDynamics}, segment, current_state)
     final = Integrators.final_state(segment)
     nx = length(current_state[1])
@@ -270,10 +302,44 @@ function _apply_jump(mpf::MultiPhaseFlow, i, state)
     return _apply_jump(Traits.dynamics_trait(mpf), mpf, i, state)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Apply a jump to the state for state dynamics.
+
+# Arguments
+- `::Type{Traits.StateDynamics}`: State dynamics trait tag.
+- `mpf::MultiPhaseFlow`: The multi-phase flow.
+- `i::Int`: Phase index.
+- `state`: Current state.
+
+# Returns
+- State after applying the jump (element-wise addition).
+
+# Notes
+This is an internal dispatch method for the `_apply_jump` function.
+"""
 function _apply_jump(::Type{Traits.StateDynamics}, mpf, i, state)
     return state .+ get_jump(mpf, i)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Apply a jump to the state and costate for Hamiltonian dynamics.
+
+# Arguments
+- `::Type{Traits.HamiltonianDynamics}`: Hamiltonian dynamics trait tag.
+- `mpf::MultiPhaseFlow`: The multi-phase flow.
+- `i::Int`: Phase index.
+- `state_tuple`: Tuple of (state, costate).
+
+# Returns
+- Tuple of (state, costate) after applying the jump.
+
+# Notes
+This is an internal dispatch method for the `_apply_jump` function.
+"""
 function _apply_jump(::Type{Traits.HamiltonianDynamics}, mpf, i, state_tuple)
     return _apply_hamiltonian_jump(state_tuple, get_jump(mpf, i))
 end
@@ -334,10 +400,40 @@ function _format_final_output(mpf::MultiPhaseFlow, state)
     return _format_final_output(Traits.dynamics_trait(mpf), state)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Format the final output for state dynamics.
+
+# Arguments
+- `::Type{Traits.StateDynamics}`: State dynamics trait tag.
+- `x`: Final state.
+
+# Returns
+- The final state (no formatting needed).
+
+# Notes
+This is an internal dispatch method for the `_format_final_output` function.
+"""
 function _format_final_output(::Type{Traits.StateDynamics}, x)
     return x
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Format the final output for Hamiltonian dynamics.
+
+# Arguments
+- `::Type{Traits.HamiltonianDynamics}`: Hamiltonian dynamics trait tag.
+- `state_tuple`: Tuple of (state, costate).
+
+# Returns
+- Concatenated vector [state; costate].
+
+# Notes
+This is an internal dispatch method for the `_format_final_output` function.
+"""
 function _format_final_output(::Type{Traits.HamiltonianDynamics}, state_tuple)
     x, p = state_tuple
     return vcat(x, p)

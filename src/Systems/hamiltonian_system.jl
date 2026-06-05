@@ -213,6 +213,19 @@ end
 # Base.show
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Display a Hamiltonian system in a human-readable format.
+
+# Arguments
+- `io::IO`: IO stream.
+- `sys::HamiltonianSystem`: The Hamiltonian system to display.
+
+# Notes
+- Shows the time dependence, variable dependence, Hamiltonian function, and AD backend.
+- Used by the REPL for interactive display.
+"""
 function Base.show(io::IO, sys::HamiltonianSystem)
     println(io, "HamiltonianSystem")
     println(io, "  time_dependence: ", Traits.time_dependence(sys))

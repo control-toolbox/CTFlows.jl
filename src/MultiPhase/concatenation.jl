@@ -196,6 +196,21 @@ end
 # Cross-dynamics error: StateFlow * HamiltonianFlow and vice versa
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Error method for concatenating a state flow with a Hamiltonian flow.
+
+This method is called when attempting to concatenate a state flow with a Hamiltonian flow
+using the `*` operator, which is not allowed. Flows in a multi-phase sequence must all
+have the same dynamics type.
+
+# Throws
+- `CTBase.Exceptions.PreconditionError`: Always, with message explaining that cross-dynamics concatenation is not allowed.
+
+# Notes
+This is an internal error method for type safety in flow concatenation.
+"""
 function Base.:*(::Flows.AbstractStateFlow, ::Tuple{Real, Flows.AbstractHamiltonianFlow})
     throw(Exceptions.PreconditionError(
         "Cannot concatenate a state flow with a Hamiltonian flow";
@@ -205,6 +220,21 @@ function Base.:*(::Flows.AbstractStateFlow, ::Tuple{Real, Flows.AbstractHamilton
     ))
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Error method for concatenating a state flow with a Hamiltonian flow (with jump).
+
+This method is called when attempting to concatenate a state flow with a Hamiltonian flow
+and a jump function using the `*` operator, which is not allowed. Flows in a multi-phase
+sequence must all have the same dynamics type.
+
+# Throws
+- `CTBase.Exceptions.PreconditionError`: Always, with message explaining that cross-dynamics concatenation is not allowed.
+
+# Notes
+This is an internal error method for type safety in flow concatenation.
+"""
 function Base.:*(::Flows.AbstractStateFlow, ::Tuple{Real, Any, Flows.AbstractHamiltonianFlow})
     throw(Exceptions.PreconditionError(
         "Cannot concatenate a state flow with a Hamiltonian flow";
@@ -214,6 +244,21 @@ function Base.:*(::Flows.AbstractStateFlow, ::Tuple{Real, Any, Flows.AbstractHam
     ))
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Error method for concatenating a Hamiltonian flow with a state flow.
+
+This method is called when attempting to concatenate a Hamiltonian flow with a state flow
+using the `*` operator, which is not allowed. Flows in a multi-phase sequence must all
+have the same dynamics type.
+
+# Throws
+- `CTBase.Exceptions.PreconditionError`: Always, with message explaining that cross-dynamics concatenation is not allowed.
+
+# Notes
+This is an internal error method for type safety in flow concatenation.
+"""
 function Base.:*(::Flows.AbstractHamiltonianFlow, ::Tuple{Real, Flows.AbstractStateFlow})
     throw(Exceptions.PreconditionError(
         "Cannot concatenate a Hamiltonian flow with a state flow";
@@ -223,6 +268,21 @@ function Base.:*(::Flows.AbstractHamiltonianFlow, ::Tuple{Real, Flows.AbstractSt
     ))
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Error method for concatenating a Hamiltonian flow with a state flow (with jump).
+
+This method is called when attempting to concatenate a Hamiltonian flow with a state flow
+and a jump function using the `*` operator, which is not allowed. Flows in a multi-phase
+sequence must all have the same dynamics type.
+
+# Throws
+- `CTBase.Exceptions.PreconditionError`: Always, with message explaining that cross-dynamics concatenation is not allowed.
+
+# Notes
+This is an internal error method for type safety in flow concatenation.
+"""
 function Base.:*(::Flows.AbstractHamiltonianFlow, ::Tuple{Real, Any, Flows.AbstractStateFlow})
     throw(Exceptions.PreconditionError(
         "Cannot concatenate a Hamiltonian flow with a state flow";
