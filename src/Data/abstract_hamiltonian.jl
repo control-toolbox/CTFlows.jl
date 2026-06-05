@@ -89,3 +89,5 @@ See also: `TimeDependence`, [`CTFlows.Traits.Fixed`](@ref), [`CTFlows.Traits.Non
 function Traits.variable_dependence(::AbstractHamiltonian{<:Traits.TimeDependence, VD}) where {VD <: Traits.VariableDependence}
     return VD
 end
+
+Traits.dynamics_trait(::AbstractHamiltonian) = Traits.HamiltonianDynamics

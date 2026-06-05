@@ -38,3 +38,5 @@ abstract type AbstractHamiltonianVectorField{
     VD <: Traits.VariableDependence,
     MD <: Traits.AbstractMutabilityTrait
 } <: AbstractVectorField{TD, VD, MD} end
+
+Traits.dynamics_trait(::AbstractHamiltonianVectorField) = Traits.HamiltonianDynamics

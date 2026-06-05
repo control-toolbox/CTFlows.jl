@@ -160,3 +160,5 @@ See also: [`CTFlows.Traits.has_mutability_trait`](@ref), [`CTFlows.Traits.is_inp
 function Traits.mutability(vf::AbstractVectorField{<:Traits.TimeDependence, <:Traits.VariableDependence, MD}) where {MD <: Traits.AbstractMutabilityTrait}
     return MD
 end
+
+Traits.dynamics_trait(::AbstractVectorField) = Traits.StateDynamics
