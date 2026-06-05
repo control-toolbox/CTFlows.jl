@@ -1,8 +1,9 @@
 # Code philosophy
 
-Design philosophy for CTFlows.jl, written **abstractly**: the principles are the
-package's, but the examples and templates stay **generic** (no package-specific
-symbols). For *tools and procedures* (tests, docs, git), see [`../RULES.md`](../RULES.md).
+Design philosophy for the control-toolbox ecosystem, written **abstractly**: the
+principles apply to all packages, but the examples and templates stay **generic**
+(no package-specific symbols). For *tools and procedures* (tests, docs, git), see
+[`../RULES.md`](../RULES.md).
 
 ## The tenets on one page
 

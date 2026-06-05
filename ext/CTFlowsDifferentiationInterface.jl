@@ -486,6 +486,60 @@ function Differentiation.derivative(
 end
 
 # =============================================================================
+# Differentiation.differentiate / pushforward — new primitives
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Compute the partial derivative or gradient of `f` with respect to the argument at
+slot `Slot`, using DifferentiationInterface.jl.
+
+Internally constructs a `WithActiveArg(f, Val(Slot))` functor, then calls
+`DI.gradient` (array) or `DI.derivative` (scalar) with the remaining arguments
+wrapped as `DI.Constant`.
+
+See also: [`CTFlows.Differentiation.pushforward`](@ref).
+"""
+function Differentiation.differentiate(
+    backend::Differentiation.DifferentiationInterface,
+    f,
+    ::Val{Slot},
+    active,
+    consts...,
+) where {Slot}
+    di = Differentiation.ad_backend(backend)
+    w  = Differentiation.WithActiveArg(f, Val(Slot))
+    return _derivator(typeof(active))(w, di, active, map(DI.Constant, consts)...)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Compute the pushforward (Jacobian-vector product) of `f` at `x` in direction `dx`,
+using DifferentiationInterface.jl.
+
+Internally constructs a `WithActiveArg(f, Val(Slot))` functor, then calls
+`DI.pushforward` with the direction as a one-element tuple and remaining arguments
+wrapped as `DI.Constant`. The single tangent is extracted with `only`.
+
+See also: [`CTFlows.Differentiation.differentiate`](@ref).
+"""
+function Differentiation.pushforward(
+    backend::Differentiation.DifferentiationInterface,
+    f,
+    ::Val{Slot},
+    x,
+    dx,
+    consts...,
+) where {Slot}
+    di = Differentiation.ad_backend(backend)
+    w  = Differentiation.WithActiveArg(f, Val(Slot))
+    ty = DI.pushforward(w, di, x, (dx,), map(DI.Constant, consts)...)
+    return only(ty)
+end
+
+# =============================================================================
 # Base.show
 # =============================================================================
 

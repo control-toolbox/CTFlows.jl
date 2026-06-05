@@ -311,3 +311,77 @@ function derivative(backend::AbstractADBackend, g::Function, t::Real)
         context = "AD backend contract",
     ))
 end
+
+# =============================================================================
+# Partial differentiation and JVP primitives
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Compute the partial derivative or gradient of `f` with respect to the argument at
+slot `Slot`, holding all other arguments fixed.
+
+`f` is called as `f(arg₁, …, argₙ)`. The active argument is `active` (placed at
+position `Slot`); the remaining `n-1` arguments are supplied as `consts...` in
+slot order (skipping `Slot`).
+
+# Arguments
+- `backend::AbstractADBackend`: The AD backend.
+- `f`: The function to differentiate (any callable).
+- `::Val{Slot}`: Compile-time slot index of the active argument.
+- `active`: The point at which to differentiate.
+- `consts...`: The fixed arguments, in order of their slot positions (excluding `Slot`).
+
+# Returns
+- Gradient vector if `active isa AbstractArray`, scalar derivative if `active isa Real`.
+
+# Throws
+- `CTBase.Exceptions.NotImplemented`: If the concrete backend does not implement this method.
+
+See also: [`CTFlows.Differentiation.pushforward`](@ref),
+[`CTFlows.Differentiation.WithActiveArg`](@ref).
+"""
+function differentiate(backend::AbstractADBackend, f, ::Val{Slot}, active, consts...) where {Slot}
+    throw(Exceptions.NotImplemented(
+        "differentiate not implemented for $(typeof(backend))";
+        required_method = "differentiate(backend::$(typeof(backend)), f, ::Val{Slot}, active, consts...)",
+        suggestion = "Load CTFlowsDifferentiationInterface (load DifferentiationInterface)",
+        context = "AD backend contract",
+    ))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Compute the pushforward (Jacobian-vector product) of `f` at `x` in direction `dx`,
+holding fixed arguments `consts...` at the slots other than `Slot`.
+
+Returns `d/ds f(x + s·dx, consts…)|_{s=0}` — the directional derivative of `f`
+at `x` along `dx`, with all other arguments frozen.
+
+# Arguments
+- `backend::AbstractADBackend`: The AD backend.
+- `f`: The function to differentiate (any callable).
+- `::Val{Slot}`: Compile-time slot index of the active (differentiated) argument.
+- `x`: The point at which to differentiate.
+- `dx`: The direction (tangent vector, same shape as `x`).
+- `consts...`: The fixed arguments, in slot order (excluding `Slot`).
+
+# Returns
+- The directional derivative `J_f(x) · dx`, same shape as `f(x, …)`.
+
+# Throws
+- `CTBase.Exceptions.NotImplemented`: If the concrete backend does not implement this method.
+
+See also: [`CTFlows.Differentiation.differentiate`](@ref),
+[`CTFlows.Differentiation.WithActiveArg`](@ref).
+"""
+function pushforward(backend::AbstractADBackend, f, ::Val{Slot}, x, dx, consts...) where {Slot}
+    throw(Exceptions.NotImplemented(
+        "pushforward not implemented for $(typeof(backend))";
+        required_method = "pushforward(backend::$(typeof(backend)), f, ::Val{Slot}, x, dx, consts...)",
+        suggestion = "Load CTFlowsDifferentiationInterface (load DifferentiationInterface)",
+        context = "AD backend contract",
+    ))
+end
