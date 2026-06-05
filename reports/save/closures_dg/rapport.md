@@ -209,15 +209,152 @@ _∂ₜ_vf(X, b::Differentiation.AbstractADBackend, ::Type{Traits.NonAutonomous}
 - 4 closures (une par combinaison TD×VD)
 - Chaque closure contient une closure imbriquée pour la dérivée
 
-**Ligne 209-213** - `_∂ₜ_ham` (4 variantes) :
+---
+
+## 5. Closures remplacées par des functors (VectorFieldSystem)
+
+**Fichier :** `src/Systems/vector_field_system.jl` → remplacé par `src/Systems/rhs_functors.jl`
+
+Ces 5 closures pré-calculées ont été remplacées par des structs callables (functors) pour améliorer la performance et la type-stabilité.
+
+### 5.1 `_build_rhs_vf_oop` → `IPVFOoPRHS`
+
+**Ancienne closure (ligne ~107-109) :**
 ```julia
-_∂ₜ_ham(H, b::Differentiation.AbstractADBackend, ::Type{Traits.Autonomous},    ::Type{Traits.Fixed})    = (t, x, p)    -> Differentiation.derivative(b, s -> H(x, p),    t)
-_∂ₜ_ham(H, b::Differentiation.AbstractADBackend, ::Type{Traits.Autonomous},    ::Type{Traits.NonFixed}) = (t, x, p, v) -> Differentiation.derivative(b, s -> H(x, p, v), t)
-_∂ₜ_ham(H, b::Differentiation.AbstractADBackend, ::Type{Traits.NonAutonomous}, ::Type{Traits.Fixed})    = (t, x, p)    -> Differentiation.derivative(b, s -> H(s, x, p),    t)
-_∂ₜ_ham(H, b::Differentiation.AbstractADBackend, ::Type{Traits.NonAutonomous}, ::Type{Traits.NonFixed}) = (t, x, p, v) -> Differentiation.derivative(b, s -> H(s, x, p, v), t)
+function _build_rhs_vf_oop(vf::Data.VectorField{F,TD,VD,Traits.OutOfPlace})
+    return function (du, u, λ, t)
+        du .= vf(t, u, Common.variable(λ))
+        nothing
+    end
+end
 ```
-- 4 closures (une par combinaison TD×VD)
-- Chaque closure contient une closure imbriquée pour la dérivée
+
+**Nouveau functor :**
+```julia
+struct IPVFOoPRHS{F,TD,VD} <: AbstractIPRHS
+    vf::Data.VectorField{F,TD,VD,Traits.OutOfPlace}
+end
+
+function (f::IPVFOoPRHS)(du, u, λ, t)
+    du .= f.vf(t, u, Common.variable(λ))
+    nothing
+end
+```
+
+### 5.2 `_build_rhs_vf_ip` → `IPVFIpRHS`
+
+**Ancienne closure (ligne ~126-128) :**
+```julia
+function _build_rhs_vf_ip(vf::Data.VectorField{F,TD,VD,Traits.InPlace})
+    return function (du, u, λ, t)
+        vf(du, t, u, Common.variable(λ))
+        nothing
+    end
+end
+```
+
+**Nouveau functor :**
+```julia
+struct IPVFIpRHS{F,TD,VD} <: AbstractIPRHS
+    vf::Data.VectorField{F,TD,VD,Traits.InPlace}
+end
+
+function (f::IPVFIpRHS)(du, u, λ, t)
+    f.vf(du, t, u, Common.variable(λ))
+    nothing
+end
+```
+
+### 5.3 `_build_oop_rhs_vf_oop` → `OoPVFOoPRHS`
+
+**Ancienne closure (ligne ~144-146) :**
+```julia
+function _build_oop_rhs_vf_oop(vf::Data.VectorField{F,TD,VD,Traits.OutOfPlace})
+    return function (u, λ, t)
+        vf(t, u, Common.variable(λ))
+    end
+end
+```
+
+**Nouveau functor :**
+```julia
+struct OoPVFOoPRHS{F,TD,VD} <: AbstractOoPRHS
+    vf::Data.VectorField{F,TD,VD,Traits.OutOfPlace}
+end
+
+function (f::OoPVFOoPRHS)(u, λ, t)
+    f.vf(t, u, Common.variable(λ))
+end
+```
+
+### 5.4 `_build_oop_rhs_vf_ip` → `OoPVFIpRHS`
+
+**Ancienne closure (ligne ~163-169) :**
+```julia
+function _build_oop_rhs_vf_ip(vf::Data.VectorField{F,TD,VD,Traits.InPlace})
+    return function (u, λ, t)
+        dx = similar(u)
+        vf(dx, t, u, Common.variable(λ))
+        dx
+    end
+end
+```
+
+**Nouveau functor :**
+```julia
+struct OoPVFIpRHS{F,TD,VD} <: AbstractOoPRHS
+    vf::Data.VectorField{F,TD,VD,Traits.InPlace}
+end
+
+function (f::OoPVFIpRHS)(u, λ, t)
+    dx = similar(u)
+    f.vf(dx, t, u, Common.variable(λ))
+    dx
+end
+```
+
+### 5.5 `_build_finalize_rhs_vf_ip` → `OoPVFIpFinalizeRHS`
+
+**Ancienne closure (ligne ~187-193) :**
+```julia
+function _build_finalize_rhs_vf_ip(vf::Data.VectorField{F,TD,VD,Traits.InPlace})
+    return function (u, λ, t)
+        dx = similar(u)
+        vf(dx, t, u, Common.variable(λ))
+        typeof(u)(dx)
+    end
+end
+```
+
+**Nouveau functor :**
+```julia
+struct OoPVFIpFinalizeRHS{F,TD,VD} <: AbstractOoPRHS
+    vf::Data.VectorField{F,TD,VD,Traits.InPlace}
+end
+
+function (f::OoPVFIpFinalizeRHS)(u, λ, t)
+    dx = similar(u)
+    f.vf(dx, t, u, Common.variable(λ))
+    typeof(u)(dx)
+end
+```
+
+---
+
+## Résumé des closures remplacées
+
+**Total de closures remplacées par des functors : 5**
+
+- `src/Systems/vector_field_system.jl` : 5 closures → 5 functors dans `src/Systems/rhs_functors.jl`
+  - 2 in-place (IPVFOoPRHS, IPVFIpRHS)
+  - 2 out-of-place (OoPVFOoPRHS, OoPVFIpRHS)
+  - 1 finalize (OoPVFIpFinalizeRHS)
+
+**Avantages du refactor :**
+- Type-stabilité améliorée (les structs sont paramétrés par TD, VD)
+- Meilleure performance (pas de capture de variables dans les closures)
+- Code plus explicite et maintenable
+- Display helpers intégrés pour le débogage
 
 ---
 
