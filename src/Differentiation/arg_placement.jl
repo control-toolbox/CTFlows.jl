@@ -43,7 +43,7 @@ WithActiveArg(f, slot::Integer) = WithActiveArg(f, Val(Int(slot)))
 @generated function (w::WithActiveArg{F, Slot})(active, consts::Vararg{Any, N}) where {F, Slot, N}
     total = N + 1
     if !(1 ≤ Slot ≤ total)
-        return :(throw(CTBase.Exceptions.IncorrectArgument(
+        return :(throw(Exceptions.IncorrectArgument(
             "slot must be in range [1, n] for n arguments";
             got = "slot = " * string($Slot),
             expected = "slot in [1, " * string($total) * "]",
