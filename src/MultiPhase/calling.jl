@@ -237,34 +237,15 @@ Extract the final state from a segment result for state flows.
 
 See also: [`CTFlows.Integrators.final_state`]().
 """
-function _extract_final_state(
-    ::MultiPhaseFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.StateDynamics},
-    segment,
-    current_state,
-)
+function _extract_final_state(mpf::MultiPhaseFlow, segment, current_state)
+    return _extract_final_state(Traits.dynamics_trait(mpf), segment, current_state)
+end
+
+function _extract_final_state(::Type{Traits.StateDynamics}, segment, _)
     return Integrators.final_state(segment)
 end
 
-"""
-$(TYPEDSIGNATURES)
-
-Extract the final state and costate from a segment result for Hamiltonian flows.
-
-# Arguments
-- `::MultiPhaseHamiltonianFlow`: Multi-phase Hamiltonian flow type tag.
-- `segment`: The segment solution.
-- `current_state`: Current state tuple (used to determine state dimension).
-
-# Returns
-- Tuple of (final_state, final_costate) from the segment.
-
-See also: [`CTFlows.Integrators.final_state`]().
-"""
-function _extract_final_state(
-    ::MultiPhaseFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.HamiltonianDynamics},
-    segment,
-    current_state,
-)
+function _extract_final_state(::Type{Traits.HamiltonianDynamics}, segment, current_state)
     final = Integrators.final_state(segment)
     nx = length(current_state[1])
     return (final[1:nx], final[nx+1:end])
@@ -285,37 +266,16 @@ Apply a jump to the state for state flows.
 
 See also: [`CTFlows.MultiPhase.get_jump`](@ref).
 """
-function _apply_jump(
-    mpf::MultiPhaseFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.StateDynamics},
-    i,
-    state,
-)
-    jump = get_jump(mpf, i)
-    return state .+ jump
+function _apply_jump(mpf::MultiPhaseFlow, i, state)
+    return _apply_jump(Traits.dynamics_trait(mpf), mpf, i, state)
 end
 
-"""
-$(TYPEDSIGNATURES)
+function _apply_jump(::Type{Traits.StateDynamics}, mpf, i, state)
+    return state .+ get_jump(mpf, i)
+end
 
-Apply a jump to the state tuple for Hamiltonian flows.
-
-# Arguments
-- `mpf::MultiPhaseHamiltonianFlow`: The multi-phase Hamiltonian flow.
-- `i`: Phase index.
-- `state_tuple`: Tuple of (state, costate).
-
-# Returns
-- State tuple after applying the jump.
-
-See also: [`CTFlows.MultiPhase._apply_hamiltonian_jump`](@ref), [`CTFlows.MultiPhase.get_jump`](@ref).
-"""
-function _apply_jump(
-    mpf::MultiPhaseFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.HamiltonianDynamics},
-    i,
-    state_tuple,
-)
-    jump = get_jump(mpf, i)
-    return _apply_hamiltonian_jump(state_tuple, jump)
+function _apply_jump(::Type{Traits.HamiltonianDynamics}, mpf, i, state_tuple)
+    return _apply_hamiltonian_jump(state_tuple, get_jump(mpf, i))
 end
 
 """
@@ -370,31 +330,15 @@ Format the final output for state flows.
 
 See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@ref).
 """
-function _format_final_output(
-    ::MultiPhaseFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.StateDynamics},
-    x,
-)
+function _format_final_output(mpf::MultiPhaseFlow, state)
+    return _format_final_output(Traits.dynamics_trait(mpf), state)
+end
+
+function _format_final_output(::Type{Traits.StateDynamics}, x)
     return x
 end
 
-"""
-$(TYPEDSIGNATURES)
-
-Format the final output for Hamiltonian flows by concatenating state and costate.
-
-# Arguments
-- `::MultiPhaseHamiltonianFlow`: Multi-phase Hamiltonian flow type tag.
-- `state_tuple`: Tuple of (final_state, final_costate).
-
-# Returns
-- Concatenated vector [state; costate].
-
-See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@ref).
-"""
-function _format_final_output(
-    ::MultiPhaseFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.HamiltonianDynamics},
-    state_tuple,
-)
+function _format_final_output(::Type{Traits.HamiltonianDynamics}, state_tuple)
     x, p = state_tuple
     return vcat(x, p)
 end
