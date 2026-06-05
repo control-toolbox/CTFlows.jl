@@ -304,24 +304,22 @@ function test_hamiltonian_vector_field_solution()
         # UNIT TESTS - Allocation (@allocated)
         # ====================================================================
 
-        Test.@testset "Allocation" begin
+        Test.@testset "Allocation: functor adds no overhead vs direct call" begin
             result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
             x0 = [1.0, 2.0]
             sol = Solutions.HamiltonianVectorFieldSolution(x0, result)
 
-            Test.@testset "state accessor has minimal allocation" begin
-                # Construction allocates the struct, but that's expected
-                x_func = Solutions.state(sol)
-                allocs = @allocated x_func(0.0)
-                # Call should have minimal allocation (fake evaluate_at allocates, real may differ)
-                # The functor itself adds no allocation beyond what evaluate_at does
-                Test.@test allocs < 1000  # Reasonable threshold for fake implementation
+            x_func = Solutions.state(sol)
+            p_func = Solutions.costate(sol)
+            # warm-up (force compilation)
+            x_func(0.0); p_func(0.0); sol(0.0)
+
+            Test.@testset "StateProjection matches direct sol(t)[1]" begin
+                Test.@test (@allocated x_func(0.0)) == (@allocated sol(0.0)[1])
             end
 
-            Test.@testset "costate accessor has minimal allocation" begin
-                p_func = Solutions.costate(sol)
-                allocs = @allocated p_func(0.0)
-                Test.@test allocs < 1000
+            Test.@testset "CostateProjection matches direct sol(t)[2]" begin
+                Test.@test (@allocated p_func(0.0)) == (@allocated sol(0.0)[2])
             end
         end
 

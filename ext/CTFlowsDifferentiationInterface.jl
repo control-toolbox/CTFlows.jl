@@ -32,9 +32,12 @@ Cache for DifferentiationInterface.jl backend, storing prepared gradient plans
 for efficient repeated computation of Hamiltonian gradients.
 
 # Fields
-- `prep_x::PX`: Prepared plan for ∂H/∂x (or `Nothing` if not prepared)
-- `prep_p::PP`: Prepared plan for ∂H/∂p (or `Nothing` if not prepared)
-- `prep_v::PV`: Prepared plan for ∂H/∂v (`Nothing` for Fixed problems)
+- `p_x`: DI prepared plan for ∂H/∂x (or `Nothing` if not prepared)
+- `p_p`: DI prepared plan for ∂H/∂p (or `Nothing` if not prepared)
+- `p_v`: DI prepared plan for ∂H/∂v (`Nothing` for Fixed problems)
+- `h_x::HX`: `WithActiveArg(h, Val(2))` functor — active arg is `x` (slot 2 of `h(t,x,p,v)`)
+- `h_p::HP`: `WithActiveArg(h, Val(3))` functor — active arg is `p` (slot 3)
+- `h_v::HV`: `WithActiveArg(h, Val(4))` functor — active arg is `v` (slot 4)
 
 # See also
 - [`CTFlows.Differentiation.prepare_cache`](@ref)
@@ -44,9 +47,9 @@ mutable struct _DifferentiationInterfaceCache{HX, HP, HV} <: Common.AbstractCach
     p_x   # DI prepared plan for ∂H/∂x (or Nothing)
     p_p   # DI prepared plan for ∂H/∂p (or Nothing)
     p_v   # DI prepared plan for ∂H/∂v (Nothing if Fixed)
-    h_x::HX   # Hamiltonian function for ∂H/∂x
-    h_p::HP   # Hamiltonian function for ∂H/∂p
-    h_v::HV   # Hamiltonian function for ∂H/∂v
+    h_x::HX   # WithActiveArg(h, Val(2)) — reslots x to slot 2
+    h_p::HP   # WithActiveArg(h, Val(3)) — reslots p to slot 3
+    h_v::HV   # WithActiveArg(h, Val(4)) — reslots v to slot 4
 end
 
 # ==============================================================================
@@ -134,9 +137,9 @@ function Differentiation.prepare_cache(
     do_prepare = Differentiation.prepare_cache(backend)
 
     if do_prepare
-        h_x(x, t, p, v) = h(t, x, p, v)
-        h_p(p, t, x, v) = h(t, x, p, v)
-        h_v(v, t, x, p) = h(t, x, p, v)
+        h_x = Differentiation.WithActiveArg(h, Val(2))
+        h_p = Differentiation.WithActiveArg(h, Val(3))
+        h_v = Differentiation.WithActiveArg(h, Val(4))
         p_x = _preparator(typeof(typical_x))(h_x, di_backend, typical_x, DI.Constant(typical_t), DI.Constant(typical_p), DI.Constant(typical_v))
         p_p = _preparator(typeof(typical_p))(h_p, di_backend, typical_p, DI.Constant(typical_t), DI.Constant(typical_x), DI.Constant(typical_v))
         p_v = if typical_v === nothing
@@ -250,9 +253,8 @@ function Differentiation.hamiltonian_gradient(
     ::Nothing
 )
     di_backend = Differentiation.ad_backend(backend)
-    h_x(x, t, p, v) = h(t, x, p, v)
-    h_p(p, t, x, v) = h(t, x, p, v)
-    # Use derivative for scalars, gradient for arrays
+    h_x = Differentiation.WithActiveArg(h, Val(2))
+    h_p = Differentiation.WithActiveArg(h, Val(3))
     grad_x = _derivator(typeof(x))(h_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
     grad_p = _derivator(typeof(p))(h_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
     return (grad_x, grad_p)
@@ -347,10 +349,8 @@ function Differentiation.variable_gradient(
     t, x, p, v,
     ::Nothing
 )
-    # For Fixed problems (v === nothing), return nothing without calling DI.gradient
     di_backend = Differentiation.ad_backend(backend)
-    h_v(v, t, x, p) = h(t, x, p, v)
-    # Use derivative for scalars, gradient for arrays
+    h_v = Differentiation.WithActiveArg(h, Val(4))
     grad_v = _derivator(typeof(v))(h_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
     return grad_v
 end
