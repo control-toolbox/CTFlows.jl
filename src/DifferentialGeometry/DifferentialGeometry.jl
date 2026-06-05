@@ -53,6 +53,7 @@ include("lie_macro.jl")
 
 export ad
 export Lift
+export LiftedHamiltonian
 export Poisson
 export ∂ₜ
 export @Lie

@@ -47,6 +47,7 @@ include(joinpath(@__DIR__, "building.jl"))
 
 export AbstractVectorFieldSolution, VectorFieldSolution
 export AbstractHamiltonianVectorFieldSolution, HamiltonianVectorFieldSolution
+export StateProjection, CostateProjection
 export state, time_grid
 export costate
 export build_solution
