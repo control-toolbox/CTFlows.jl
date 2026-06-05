@@ -76,9 +76,9 @@ function test_concatenation()
             hf = _ham_flow()
 
             Test.@testset "get_flows" begin
-                Test.@test MultiPhase.get_flows(sf) == [sf]
+                Test.@test MultiPhase.get_flows(sf) == (sf,)
                 Test.@test length(MultiPhase.get_flows(sf)) == 1
-                Test.@test MultiPhase.get_flows(hf) == [hf]
+                Test.@test MultiPhase.get_flows(hf) == (hf,)
                 Test.@test length(MultiPhase.get_flows(hf)) == 1
                 # type stability
                 Test.@inferred MultiPhase.get_flows(sf)

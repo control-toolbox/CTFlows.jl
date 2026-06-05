@@ -237,7 +237,11 @@ Extract the final state from a segment result for state flows.
 
 See also: [`CTFlows.Integrators.final_state`]().
 """
-function _extract_final_state(::MultiPhaseStateFlow, segment, current_state)
+function _extract_final_state(
+    ::MultiPhaseFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.StateDynamics},
+    segment,
+    current_state,
+)
     return Integrators.final_state(segment)
 end
 
@@ -256,7 +260,11 @@ Extract the final state and costate from a segment result for Hamiltonian flows.
 
 See also: [`CTFlows.Integrators.final_state`]().
 """
-function _extract_final_state(::MultiPhaseHamiltonianFlow, segment, current_state)
+function _extract_final_state(
+    ::MultiPhaseFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.HamiltonianDynamics},
+    segment,
+    current_state,
+)
     final = Integrators.final_state(segment)
     nx = length(current_state[1])
     return (final[1:nx], final[nx+1:end])
@@ -277,7 +285,11 @@ Apply a jump to the state for state flows.
 
 See also: [`CTFlows.MultiPhase.get_jump`](@ref).
 """
-function _apply_jump(mpf::MultiPhaseStateFlow, i, state)
+function _apply_jump(
+    mpf::MultiPhaseFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.StateDynamics},
+    i,
+    state,
+)
     jump = get_jump(mpf, i)
     return state .+ jump
 end
@@ -297,7 +309,11 @@ Apply a jump to the state tuple for Hamiltonian flows.
 
 See also: [`CTFlows.MultiPhase._apply_hamiltonian_jump`](@ref), [`CTFlows.MultiPhase.get_jump`](@ref).
 """
-function _apply_jump(mpf::MultiPhaseHamiltonianFlow, i, state_tuple)
+function _apply_jump(
+    mpf::MultiPhaseFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.HamiltonianDynamics},
+    i,
+    state_tuple,
+)
     jump = get_jump(mpf, i)
     return _apply_hamiltonian_jump(state_tuple, jump)
 end
@@ -354,7 +370,10 @@ Format the final output for state flows.
 
 See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@ref).
 """
-function _format_final_output(::MultiPhaseStateFlow, x)
+function _format_final_output(
+    ::MultiPhaseFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.StateDynamics},
+    x,
+)
     return x
 end
 
@@ -372,7 +391,10 @@ Format the final output for Hamiltonian flows by concatenating state and costate
 
 See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@ref).
 """
-function _format_final_output(::MultiPhaseHamiltonianFlow, state_tuple)
+function _format_final_output(
+    ::MultiPhaseFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.HamiltonianDynamics},
+    state_tuple,
+)
     x, p = state_tuple
     return vcat(x, p)
 end
@@ -409,13 +431,13 @@ sol = mpf(0.0, [1.0, 0.0], 3.0)
 
 See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Configs.StatePointConfig`](@ref).
 """
-function (mpf::MultiPhaseStateFlow)(
+function (mpf::MultiPhaseFlow{TD, VD, Traits.StateDynamics})(
     t0::Real,
     x0,
     tf::Real;
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
-)
+) where {TD, VD}
     config = Configs.StatePointConfig(t0, x0, tf)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
@@ -448,12 +470,12 @@ sol = mpf((0.0, 3.0), [1.0, 0.0])
 
 See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref).
 """
-function (mpf::MultiPhaseStateFlow)(
+function (mpf::MultiPhaseFlow{TD, VD, Traits.StateDynamics})(
     tspan::Tuple{Real, Real},
     x0;
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
-)
+) where {TD, VD}
     config = Configs.StateTrajectoryConfig(tspan, x0)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
@@ -487,14 +509,14 @@ sol = mpf(0.0, [1.0, 0.0], [0.5, 0.3], 3.0)
 
 See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Configs.HamiltonianPointConfig`](@ref).
 """
-function (mpf::MultiPhaseHamiltonianFlow)(
+function (mpf::MultiPhaseFlow{TD, VD, Traits.HamiltonianDynamics})(
     t0::Real,
     x0,
     p0,
     tf::Real;
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
-)
+) where {TD, VD}
     config = Configs.HamiltonianPointConfig(t0, x0, p0, tf)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
@@ -528,13 +550,13 @@ sol = mpf((0.0, 3.0), [1.0, 0.0], [0.5, 0.3])
 
 See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref).
 """
-function (mpf::MultiPhaseHamiltonianFlow)(
+function (mpf::MultiPhaseFlow{TD, VD, Traits.HamiltonianDynamics})(
     tspan::Tuple{Real, Real},
     x0,
     p0;
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
-)
+) where {TD, VD}
     config = Configs.HamiltonianTrajectoryConfig(tspan, x0, p0)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end

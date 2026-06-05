@@ -57,7 +57,7 @@ mpf = flow1 * (1.0, flow2)
 See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
 """
 function Base.:*(f1::Flows.AbstractStateFlow, (t_switch, f2)::Tuple{Real, Flows.AbstractStateFlow})
-    flows = vcat(get_flows(f1), get_flows(f2))
+    flows = (get_flows(f1)..., get_flows(f2)...)
     switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
     _check_switching_times_order(switches)
     jumps = vcat(get_jumps(f1), [nothing], get_jumps(f2))
@@ -89,7 +89,7 @@ mpf = flow1 * (1.0, jump, flow2)
 See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
 """
 function Base.:*(f1::Flows.AbstractStateFlow, (t_switch, jump, f2)::Tuple{Real, Any, Flows.AbstractStateFlow})
-    flows = vcat(get_flows(f1), get_flows(f2))
+    flows = (get_flows(f1)..., get_flows(f2)...)
     switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
     _check_switching_times_order(switches)
     jumps = vcat(get_jumps(f1), [jump], get_jumps(f2))
@@ -120,7 +120,7 @@ mpf = flow1 * (1.0, flow2)
 See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
 """
 function Base.:*(f1::Flows.AbstractHamiltonianFlow, (t_switch, f2)::Tuple{Real, Flows.AbstractHamiltonianFlow})
-    flows = vcat(get_flows(f1), get_flows(f2))
+    flows = (get_flows(f1)..., get_flows(f2)...)
     switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
     _check_switching_times_order(switches)
     jumps = vcat(get_jumps(f1), [nothing], get_jumps(f2))
@@ -152,7 +152,7 @@ mpf = flow1 * (1.0, jump, flow2)
 See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
 """
 function Base.:*(f1::Flows.AbstractHamiltonianFlow, (t_switch, jump, f2)::Tuple{Real, Any, Flows.AbstractHamiltonianFlow})
-    flows = vcat(get_flows(f1), get_flows(f2))
+    flows = (get_flows(f1)..., get_flows(f2)...)
     switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
     _check_switching_times_order(switches)
     jumps = vcat(get_jumps(f1), [jump], get_jumps(f2))
@@ -185,9 +185,49 @@ mpf = flow1 * (1.0, jump_x, jump_p, flow2)
 See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
 """
 function Base.:*(f1::Flows.AbstractHamiltonianFlow, (t_switch, jump_x, jump_p, f2)::Tuple{Real, Any, Any, Flows.AbstractHamiltonianFlow})
-    flows = vcat(get_flows(f1), get_flows(f2))
+    flows = (get_flows(f1)..., get_flows(f2)...)
     switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
     _check_switching_times_order(switches)
     jumps = vcat(get_jumps(f1), [(jump_x, jump_p)], get_jumps(f2))
     return MultiPhaseHamiltonianFlow(flows, switches, jumps)
+end
+
+# =============================================================================
+# Cross-dynamics error: StateFlow * HamiltonianFlow and vice versa
+# =============================================================================
+
+function Base.:*(::Flows.AbstractStateFlow, ::Tuple{Real, Flows.AbstractHamiltonianFlow})
+    throw(Exceptions.PreconditionError(
+        "Cannot concatenate a state flow with a Hamiltonian flow";
+        reason  = "both flows must have the same dynamics type (state or Hamiltonian)",
+        suggestion = "ensure all flows in a multi-phase sequence are of the same dynamics type",
+        context = "flow concatenation *",
+    ))
+end
+
+function Base.:*(::Flows.AbstractStateFlow, ::Tuple{Real, Any, Flows.AbstractHamiltonianFlow})
+    throw(Exceptions.PreconditionError(
+        "Cannot concatenate a state flow with a Hamiltonian flow";
+        reason  = "both flows must have the same dynamics type (state or Hamiltonian)",
+        suggestion = "ensure all flows in a multi-phase sequence are of the same dynamics type",
+        context = "flow concatenation *",
+    ))
+end
+
+function Base.:*(::Flows.AbstractHamiltonianFlow, ::Tuple{Real, Flows.AbstractStateFlow})
+    throw(Exceptions.PreconditionError(
+        "Cannot concatenate a Hamiltonian flow with a state flow";
+        reason  = "both flows must have the same dynamics type (state or Hamiltonian)",
+        suggestion = "ensure all flows in a multi-phase sequence are of the same dynamics type",
+        context = "flow concatenation *",
+    ))
+end
+
+function Base.:*(::Flows.AbstractHamiltonianFlow, ::Tuple{Real, Any, Flows.AbstractStateFlow})
+    throw(Exceptions.PreconditionError(
+        "Cannot concatenate a Hamiltonian flow with a state flow";
+        reason  = "both flows must have the same dynamics type (state or Hamiltonian)",
+        suggestion = "ensure all flows in a multi-phase sequence are of the same dynamics type",
+        context = "flow concatenation *",
+    ))
 end
