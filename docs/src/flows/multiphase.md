@@ -17,22 +17,15 @@ using CTFlows.MultiPhase
 using CTFlows.Solutions
 import OrdinaryDiffEqTsit5
 
-# Named function shared across phases (required for type compatibility)
 f_dyn(x) = -x
 vf = Data.VectorField(f_dyn)
 flow1 = Flows.Flow(vf; reltol=1e-8)
 flow2 = Flows.Flow(vf; reltol=1e-8)
 flow3 = Flows.Flow(vf; reltol=1e-8)
+
+f_dyn2(x) = -2 .* x
+flow_het = Flows.Flow(Data.VectorField(f_dyn2); reltol=1e-8)
 ```
-
-!!! note "Type constraint"
-
-    All phases in a multi-phase flow must have **the same concrete system type** — that
-    is, the same `VectorField` function type, same integrator type. In practice this
-    means building all phase flows from the **same named function** (anonymous lambdas
-    produce distinct types). Varying the dynamics per phase is done via the
-    `is_variable` / `variable` parameter mechanism: build all phases from the same
-    parametric function and pass a different `variable` at call time.
 
 ---
 
@@ -54,6 +47,33 @@ MultiPhase.n_phases(mpf3)
 
 Switching times must be **strictly increasing**. If they are not, a
 `PreconditionError` is thrown.
+
+---
+
+## Phases with different dynamics
+
+Each phase may wrap a **different vector field** — the dynamics, system type, and
+integrator are all free per phase. The only requirement is that all phases share the
+same `TimeDependence` and `VariableDependence` traits (both autonomous or both
+non-autonomous, both fixed or both variable).
+
+```@example flows_multiphase
+# flow1: f(x) = -x   |   flow_het: f(x) = -2x  — different functions, same TD/VD
+mpf_het = flow1 * (1.0, flow_het)
+MultiPhase.n_phases(mpf_het)
+```
+
+This enables the typical use cases of multi-phase optimal control:
+
+- **Bang-bang trajectories**: `flow_plus * (t_switch, flow_minus)` with distinct
+  controlled dynamics per arc.
+- **Multi-regime systems**: phases with different physical models (e.g. free flight /
+  contact phase).
+- **Different solvers per phase**: stiff phases can use an implicit integrator while
+  smooth phases use an explicit one.
+
+Mixing state flows with Hamiltonian flows is not allowed — attempting it raises a
+`PreconditionError`.
 
 ---
 
@@ -100,7 +120,7 @@ MultiPhase.get_jump(mpf, 1)              # jump at that switching time (nothing 
 ```
 
 ```@example flows_multiphase
-MultiPhase.get_flows(mpf)                # all phase flows
+MultiPhase.get_flows(mpf)                # tuple of all phase flows
 MultiPhase.get_switching_times(mpf)      # all switching times
 MultiPhase.get_jumps(mpf)                # all jump functions
 ```
@@ -132,11 +152,11 @@ xf, pf = hmpf(0.0, x0, p0, 2.0)
 ## Design notes
 
 - Concatenation is an associative binary operation on flows: `(f1 * (t, f2)) * (s, f3)`.
-- All phases must have the **same concrete type parameters** `(TD, VD, S, I)`. This
-  is enforced at construction time by the `flows::Vector{StateFlow{TD, VD, S, I}}`
-  field type. Using different anonymous lambdas for different phases creates different
-  `S` types and will fail — use a shared named function or a parametric vector field
-  with the `is_variable` pattern instead.
+- Phases may have **different system and integrator types** (`S`, `I`): each phase can
+  wrap a distinct function and use its own solver. The `flows` field is a heterogeneous
+  tuple, so the compiler specializes the integration loop per phase combination.
+  The required uniformity across phases is `TD`, `VD`, and the dynamics family
+  (state vs Hamiltonian), enforced at construction time.
 - The trajectory integration merges phase results via `Integrators.merge`, which
   concatenates the time grids and result vectors.
 
