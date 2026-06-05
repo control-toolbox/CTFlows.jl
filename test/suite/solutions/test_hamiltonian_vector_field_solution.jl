@@ -208,17 +208,17 @@ function test_hamiltonian_vector_field_solution()
         # ====================================================================
         # UNIT TESTS - Plot stub
         # ====================================================================
-        
+
         Test.@testset "Plot stub" begin
             Test.@testset "throws ExtensionError without Plots extension" begin
                 fake_sol = FakeHamiltonianVectorFieldSolution("test data")
-                
+
                 Test.@test_throws Exceptions.ExtensionError Solutions.plot(fake_sol)
             end
-            
+
             Test.@testset "error message mentions Plots extension" begin
                 fake_sol = FakeHamiltonianVectorFieldSolution("test data")
-                
+
                 try
                     Solutions.plot(fake_sol)
                     Test.@test false  # Should not reach here
@@ -227,6 +227,128 @@ function test_hamiltonian_vector_field_solution()
                     msg = sprint(showerror, err)
                     Test.@test occursin("Plots", msg)
                 end
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - _ham_split_solution (internal helper)
+        # ====================================================================
+
+        Test.@testset "_ham_split_solution" begin
+            Test.@testset "scalar x0" begin
+                u = [1.0, 2.0]
+                x0 = 1.0
+                x, p = Solutions._ham_split_solution(u, x0)
+                Test.@test x == 1.0
+                Test.@test p == 2.0
+                Test.@test x isa Float64
+                Test.@test p isa Float64
+            end
+
+            Test.@testset "vector x0" begin
+                u = [1.0, 2.0, 3.0, 4.0]
+                x0 = [1.0, 2.0]
+                x, p = Solutions._ham_split_solution(u, x0)
+                Test.@test x == [1.0, 2.0]
+                Test.@test p == [3.0, 4.0]
+                Test.@test length(x) == 2
+                Test.@test length(p) == 2
+            end
+
+            Test.@testset "matrix x0" begin
+                u = [1.0 2.0; 3.0 4.0; 5.0 6.0; 7.0 8.0]
+                x0 = [1.0 2.0; 3.0 4.0]
+                x, p = Solutions._ham_split_solution(u, x0)
+                Test.@test size(x) == (2, 2)
+                Test.@test size(p) == (2, 2)
+                Test.@test x == [1.0 2.0; 3.0 4.0]
+                Test.@test p == [5.0 6.0; 7.0 8.0]
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Type stability (@inferred)
+        # ====================================================================
+
+        Test.@testset "Type stability" begin
+            result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
+            x0 = [1.0, 2.0]
+            sol = Solutions.HamiltonianVectorFieldSolution(x0, result)
+
+            Test.@testset "state accessor returns concrete type" begin
+                x_func = Solutions.state(sol)
+                Test.@test x_func isa Solutions.StateProjection
+            end
+
+            Test.@testset "costate accessor returns concrete type" begin
+                p_func = Solutions.costate(sol)
+                Test.@test p_func isa Solutions.CostateProjection
+            end
+
+            Test.@testset "state function call is type-stable" begin
+                x_func = Solutions.state(sol)
+                Test.@test_nowarn Test.@inferred x_func(0.0)
+            end
+
+            Test.@testset "costate function call is type-stable" begin
+                p_func = Solutions.costate(sol)
+                Test.@test_nowarn Test.@inferred p_func(0.0)
+            end
+
+            Test.@testset "sol(t) is type-stable" begin
+                Test.@test_nowarn Test.@inferred sol(0.0)
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Allocation (@allocated)
+        # ====================================================================
+
+        Test.@testset "Allocation" begin
+            result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
+            x0 = [1.0, 2.0]
+            sol = Solutions.HamiltonianVectorFieldSolution(x0, result)
+
+            Test.@testset "state accessor allocates functor only" begin
+                # Construction allocates the struct, but that's expected
+                x_func = Solutions.state(sol)
+                allocs = @allocated x_func(0.0)
+                # Call should not allocate (result is from existing data)
+                Test.@test allocs == 0
+            end
+
+            Test.@testset "costate accessor allocates functor only" begin
+                p_func = Solutions.costate(sol)
+                allocs = @allocated p_func(0.0)
+                Test.@test allocs == 0
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - Edge cases
+        # ====================================================================
+
+        Test.@testset "Edge cases" begin
+            Test.@testset "time beyond grid returns last point" begin
+                result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
+                x0 = [1.0, 2.0]
+                sol = Solutions.HamiltonianVectorFieldSolution(x0, result)
+
+                x, p = sol(2.0)  # Beyond max time
+                Test.@test x == [2.0, 3.0]
+                Test.@test p == [4.0, 5.0]
+            end
+
+            Test.@testset "scalar initial state" begin
+                result = FakeHamiltonianResult([1.0, 2.0], [0.0, 0.5, 1.0], [[1.0, 2.0], [1.5, 2.5], [2.0, 3.0]])
+                x0 = 1.0
+                sol = Solutions.HamiltonianVectorFieldSolution(x0, result)
+
+                x, p = sol(0.0)
+                Test.@test x == 1.0
+                Test.@test p == 2.0
+                Test.@test x isa Float64
+                Test.@test p isa Float64
             end
         end
     end
