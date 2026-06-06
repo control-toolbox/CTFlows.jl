@@ -28,7 +28,7 @@ function test_time_derivative_dg()
     end
 
     # ====================================================================
-    # VectorField — 4 combinaisons TD×VD
+    # VectorField — 4 combinations TD×VD
     # ====================================================================
 
     Test.@testset "∂ₜ() - NonAutonomous Fixed VectorField: functor + value + @inferred" verbose=VERBOSE showtiming=SHOWTIMING begin
@@ -69,7 +69,7 @@ function test_time_derivative_dg()
     end
 
     # ====================================================================
-    # Hamiltonian — 4 combinaisons TD×VD
+    # Hamiltonian — 4 combinations TD×VD
     # ====================================================================
 
     Test.@testset "∂ₜ() - NonAutonomous Fixed Hamiltonian → correct value" verbose=VERBOSE showtiming=SHOWTIMING begin
@@ -105,7 +105,7 @@ function test_time_derivative_dg()
     end
 
     # ====================================================================
-    # HamiltonianVectorField — 4 combinaisons TD×VD
+    # HamiltonianVectorField — 4 combinations TD×VD
     # ====================================================================
 
     Test.@testset "∂ₜ() - NonAutonomous Fixed HamiltonianVectorField" verbose=VERBOSE showtiming=SHOWTIMING begin
