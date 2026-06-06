@@ -36,8 +36,6 @@ dev/                    # philosophy, rules, planning template (versioned)
 reports/                # working notes, ephemeral (gitignored in production)
 ```
 
-**Stack:** CTBase → CTModels → **CTFlows** → CTSolvers → OptimalControl
-
 ## Key architecture point
 
 `Configs` already has the right model: one abstract type per noun, one trait-parameter
