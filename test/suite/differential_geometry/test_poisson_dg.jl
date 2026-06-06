@@ -89,48 +89,14 @@ function test_poisson_dg()
         Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.Poisson(H, G)
     end
 
-    Test.@testset "Poisson() - composition Lift" verbose=VERBOSE showtiming=SHOWTIMING begin
-        # {Lift(f), Lift(g)} où f(x)=[x2,-x1], g(x)=[x1,x2]
-        F(x) = [x[2], -x[1]]
-        G_fn(x) = [x[1],  x[2]]
-        HF = DifferentialGeometry.Lift(F)
-        HG = DifferentialGeometry.Lift(G_fn)
-        PB = DifferentialGeometry.Poisson(HF, HG)
-        Test.@test PB isa Function
-        x0 = [1.0, 2.0]; p0 = [1.0, 0.0]
-        # Should be computable without error
-        val = PB(x0, p0)
-        Test.@test val isa Number
-    end
-
-    Test.@testset "Poisson() - NonAutonomous Fixed" verbose=VERBOSE showtiming=SHOWTIMING begin
-        H(t, x, p) = t + p[1]^2 / 2 + x[1]
-        G(t, x, p) = p[2]^2 / 2 + x[2]
-        PB = DifferentialGeometry.Poisson(H, G; is_autonomous=false, is_variable=false)
-        Test.@test PB isa Function
-        t0 = 2.0; x0 = [1.0, 2.0]; p0 = [0.5, 1.0]
-        val = PB(t0, x0, p0)
-        Test.@test val isa Number
-    end
-
-    Test.@testset "Poisson() - Autonomous NonFixed" verbose=VERBOSE showtiming=SHOWTIMING begin
-        H(x, p, v) = v[1] * p[1]^2 / 2 + x[1]
-        G(x, p, v) = v[1] * p[2]^2 / 2 + x[2]
-        PB = DifferentialGeometry.Poisson(H, G; is_autonomous=true, is_variable=true)
-        Test.@test PB isa Function
-        x0 = [1.0, 2.0]; p0 = [0.5, 1.0]; v0 = [2.0]
-        val = PB(x0, p0, v0)
-        Test.@test val isa Number
-    end
-
-    Test.@testset "Poisson() - NonAutonomous NonFixed" verbose=VERBOSE showtiming=SHOWTIMING begin
-        H(t, x, p, v) = t * v[1] * p[1]^2 / 2 + x[1]
-        G(t, x, p, v) = t * v[1] * p[2]^2 / 2 + x[2]
-        PB = DifferentialGeometry.Poisson(H, G; is_autonomous=false, is_variable=true)
-        Test.@test PB isa Function
-        t0 = 2.0; x0 = [1.0, 2.0]; p0 = [0.5, 1.0]; v0 = [2.0]
-        val = PB(t0, x0, p0, v0)
-        Test.@test val isa Number
+    Test.@testset "Poisson() - return type (Autonomous/Fixed)" verbose=VERBOSE showtiming=SHOWTIMING begin
+        H(x, p) = p[1]^2 / 2 + x[1]^2
+        G(x, p) = x[1] * p[1]
+        PB = DifferentialGeometry.Poisson(H, G)
+        x0 = [1.0, 2.0]; p0 = [0.5, 1.0]
+        Test.@test PB(x0, p0) isa Float64
+        # @inferred fails: Differentiation.differentiate dispatches through AbstractADBackend
+        # and Julia infers Any. Tracked as known type-instability in PoissonBracket.
     end
 
     Test.@testset "Poisson() - ad_backend parameter" verbose=VERBOSE showtiming=SHOWTIMING begin

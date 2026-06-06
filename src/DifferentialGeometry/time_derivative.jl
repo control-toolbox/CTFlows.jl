@@ -97,15 +97,28 @@ Callable struct for `∂ₜ(X::AbstractHamiltonianVectorField)`.
 - **NonAutonomous** (TD=NonAutonomous): differentiates `X` w.r.t. slot 1 (time) via
   `Differentiation.differentiate`, eliminating the inner `s -> X(s,...)` closure.
 """
+# HVF returns a tuple (ẋ, ṗ); DI.derivative does not extract derivatives from tuple-of-array
+# outputs, so we project onto each component before differentiating.
+struct _HVFComp1{F} <: Function; X::F; end
+struct _HVFComp2{F} <: Function; X::F; end
+(_c::_HVFComp1)(args...) = _c.X(args...)[1]
+(_c::_HVFComp2)(args...) = _c.X(args...)[2]
+
 struct TimeDeriv_HVF{FX, B <: Differentiation.AbstractADBackend, TD, VD} <: Function
     X::FX
     b::B
 end
 
-(dtd::TimeDeriv_HVF{FX, B, Traits.Autonomous,    Traits.Fixed})(_, x, p)    where {FX, B} = zero.(dtd.X(x, p))
+(dtd::TimeDeriv_HVF{FX, B, Traits.Autonomous,    Traits.Fixed})(_, x, p)       where {FX, B} = zero.(dtd.X(x, p))
 (dtd::TimeDeriv_HVF{FX, B, Traits.Autonomous,    Traits.NonFixed})(_, x, p, v) where {FX, B} = zero.(dtd.X(x, p, v))
-(dtd::TimeDeriv_HVF{FX, B, Traits.NonAutonomous, Traits.Fixed})(t, x, p)    where {FX, B} = Differentiation.differentiate(dtd.b, dtd.X, Val(1), t, x, p)
-(dtd::TimeDeriv_HVF{FX, B, Traits.NonAutonomous, Traits.NonFixed})(t, x, p, v) where {FX, B} = Differentiation.differentiate(dtd.b, dtd.X, Val(1), t, x, p, v)
+(dtd::TimeDeriv_HVF{FX, B, Traits.NonAutonomous, Traits.Fixed})(t, x, p) where {FX, B} = (
+    Differentiation.differentiate(dtd.b, _HVFComp1(dtd.X), Val(1), t, x, p),
+    Differentiation.differentiate(dtd.b, _HVFComp2(dtd.X), Val(1), t, x, p),
+)
+(dtd::TimeDeriv_HVF{FX, B, Traits.NonAutonomous, Traits.NonFixed})(t, x, p, v) where {FX, B} = (
+    Differentiation.differentiate(dtd.b, _HVFComp1(dtd.X), Val(1), t, x, p, v),
+    Differentiation.differentiate(dtd.b, _HVFComp2(dtd.X), Val(1), t, x, p, v),
+)
 
 _∂ₜ_hvf(X, b::Differentiation.AbstractADBackend, ::Type{TD}, ::Type{VD}) where {TD, VD} =
     TimeDeriv_HVF{typeof(X), typeof(b), TD, VD}(X, b)
