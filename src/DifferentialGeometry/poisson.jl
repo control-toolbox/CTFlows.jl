@@ -109,7 +109,7 @@ function (pb::PoissonBracket{FH, FG, B, Traits.Autonomous, Traits.Fixed})(x, p) 
     gpH = Differentiation.differentiate(pb.backend, pb.H, Val(2), p, x)
     gxG = Differentiation.differentiate(pb.backend, pb.G, Val(1), x, p)
     gpG = Differentiation.differentiate(pb.backend, pb.G, Val(2), p, x)
-    return gpH' * gxG - gxH' * gpG
+    return (gpH' * gxG - gxH' * gpG)::promote_type(eltype(x), eltype(p))
 end
 
 # NonAutonomous/Fixed: H(t,x,p) — ∂/∂x = slot 2, ∂/∂p = slot 3
@@ -118,7 +118,7 @@ function (pb::PoissonBracket{FH, FG, B, Traits.NonAutonomous, Traits.Fixed})(t, 
     gpH = Differentiation.differentiate(pb.backend, pb.H, Val(3), p, t, x)
     gxG = Differentiation.differentiate(pb.backend, pb.G, Val(2), x, t, p)
     gpG = Differentiation.differentiate(pb.backend, pb.G, Val(3), p, t, x)
-    return gpH' * gxG - gxH' * gpG
+    return (gpH' * gxG - gxH' * gpG)::promote_type(eltype(x), eltype(p))
 end
 
 # Autonomous/NonFixed: H(x,p,v) — ∂/∂x = slot 1, ∂/∂p = slot 2
@@ -127,7 +127,7 @@ function (pb::PoissonBracket{FH, FG, B, Traits.Autonomous, Traits.NonFixed})(x, 
     gpH = Differentiation.differentiate(pb.backend, pb.H, Val(2), p, x, v)
     gxG = Differentiation.differentiate(pb.backend, pb.G, Val(1), x, p, v)
     gpG = Differentiation.differentiate(pb.backend, pb.G, Val(2), p, x, v)
-    return gpH' * gxG - gxH' * gpG
+    return (gpH' * gxG - gxH' * gpG)::promote_type(eltype(x), eltype(p))
 end
 
 # NonAutonomous/NonFixed: H(t,x,p,v) — ∂/∂x = slot 2, ∂/∂p = slot 3
@@ -136,7 +136,7 @@ function (pb::PoissonBracket{FH, FG, B, Traits.NonAutonomous, Traits.NonFixed})(
     gpH = Differentiation.differentiate(pb.backend, pb.H, Val(3), p, t, x, v)
     gxG = Differentiation.differentiate(pb.backend, pb.G, Val(2), x, t, p, v)
     gpG = Differentiation.differentiate(pb.backend, pb.G, Val(3), p, t, x, v)
-    return gpH' * gxG - gxH' * gpG
+    return (gpH' * gxG - gxH' * gpG)::promote_type(eltype(x), eltype(p))
 end
 
 function _Poisson(H, G, backend::Differentiation.AbstractADBackend, ::Type{TD}, ::Type{VD}) where {TD, VD}

@@ -115,7 +115,7 @@ See also: [`CTFlows.Differentiation.ad_backend`](@ref),
 [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 """
 ad_backend(backend::DifferentiationInterface) =
-    CTSolvers.Strategies.options(backend)[:ad_backend]
+    Base.get(CTSolvers.Strategies.options(backend), Val(:ad_backend))
 
 """
 $(TYPEDSIGNATURES)
@@ -135,7 +135,7 @@ Extract the `prepare_cache` option from a `DifferentiationInterface` strategy.
 See also: [`CTFlows.Differentiation.prepare_cache`](@ref).
 """
 prepare_cache(backend::DifferentiationInterface) =
-    CTSolvers.Strategies.options(backend)[:prepare_cache]
+    Base.get(CTSolvers.Strategies.options(backend), Val(:prepare_cache))
 
 """
 $(TYPEDSIGNATURES)
@@ -155,4 +155,4 @@ Extract the `on_update` option from a `DifferentiationInterface` strategy.
 See also: [`CTFlows.Differentiation.update!`](@ref).
 """
 on_update(backend::DifferentiationInterface) =
-    CTSolvers.Strategies.options(backend)[:on_update]
+    Base.get(CTSolvers.Strategies.options(backend), Val(:on_update))

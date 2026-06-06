@@ -492,12 +492,14 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Compute the partial derivative or gradient of `f` with respect to the argument at
-slot `Slot`, using DifferentiationInterface.jl.
+Compute the partial gradient of `f` with respect to the array argument at slot `Slot`,
+using DifferentiationInterface.jl.
 
-Internally constructs a `WithActiveArg(f, Val(Slot))` functor, then calls
-`DI.gradient` (array) or `DI.derivative` (scalar) with the remaining arguments
-wrapped as `DI.Constant`.
+`active` must be an `AbstractArray` and `f` must be scalar-valued. Internally constructs
+a `WithActiveArg(f, Val(Slot))` functor and calls `DI.gradient` directly with the remaining
+arguments wrapped as `DI.Constant`. Dispatching directly to `DI.gradient` (rather than
+through the `_derivator` value-dispatch helper) allows Julia to infer the return type when
+the AD backend is concrete (ensured by the `Val`-keyed `ad_backend` accessor).
 
 See also: [`CTFlows.Differentiation.pushforward`](@ref).
 """
@@ -505,12 +507,37 @@ function Differentiation.differentiate(
     backend::Differentiation.DifferentiationInterface,
     f,
     ::Val{Slot},
-    active,
+    active::AbstractArray,
     consts...,
 ) where {Slot}
     di = Differentiation.ad_backend(backend)
     w  = Differentiation.WithActiveArg(f, Val(Slot))
-    return _derivator(typeof(active))(w, di, active, map(DI.Constant, consts)...)
+    return DI.gradient(w, di, active, map(DI.Constant, consts)...)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Compute the partial derivative of `f` with respect to the scalar argument at slot `Slot`,
+using DifferentiationInterface.jl.
+
+`active` is a scalar (e.g., time `t` in `∂ₜ`). `f` may be vector-valued, so the return
+type is the output type of `f`, which differs from `typeof(active)` — no type assertion
+is applied. Internally constructs a `WithActiveArg(f, Val(Slot))` functor and calls
+`DI.derivative` with the remaining arguments wrapped as `DI.Constant`.
+
+See also: [`CTFlows.Differentiation.pushforward`](@ref).
+"""
+function Differentiation.differentiate(
+    backend::Differentiation.DifferentiationInterface,
+    f,
+    ::Val{Slot},
+    active::Number,
+    consts...,
+) where {Slot}
+    di = Differentiation.ad_backend(backend)
+    w  = Differentiation.WithActiveArg(f, Val(Slot))
+    return DI.derivative(w, di, active, map(DI.Constant, consts)...)
 end
 
 """

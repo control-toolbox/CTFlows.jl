@@ -89,14 +89,20 @@ function test_poisson_dg()
         Test.@test_throws Exceptions.PreconditionError DifferentialGeometry.Poisson(H, G)
     end
 
-    Test.@testset "Poisson() - return type (Autonomous/Fixed)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Poisson() - type stability (Autonomous/Fixed)" verbose=VERBOSE showtiming=SHOWTIMING begin
         H(x, p) = p[1]^2 / 2 + x[1]^2
         G(x, p) = x[1] * p[1]
         PB = DifferentialGeometry.Poisson(H, G)
         x0 = [1.0, 2.0]; p0 = [0.5, 1.0]
-        Test.@test PB(x0, p0) isa Float64
-        # @inferred fails: Differentiation.differentiate dispatches through AbstractADBackend
-        # and Julia infers Any. Tracked as known type-instability in PoissonBracket.
+        Test.@test (Test.@inferred PB(x0, p0)) isa Float64
+    end
+
+    Test.@testset "Poisson() - type stability (Autonomous/NonFixed)" verbose=VERBOSE showtiming=SHOWTIMING begin
+        H(x, p, v) = v[1] * p[1]^2 / 2 + x[1]^2
+        G(x, p, v) = x[1] * p[1]
+        PB = DifferentialGeometry.Poisson(H, G; is_autonomous=true, is_variable=true)
+        x0 = [1.0, 2.0]; p0 = [0.5, 1.0]; v0 = [2.0]
+        Test.@test (Test.@inferred PB(x0, p0, v0)) isa Float64
     end
 
     Test.@testset "Poisson() - ad_backend parameter" verbose=VERBOSE showtiming=SHOWTIMING begin
