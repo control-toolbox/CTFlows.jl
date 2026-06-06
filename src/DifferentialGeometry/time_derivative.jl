@@ -1,9 +1,22 @@
 """
+$(TYPEDEF)
+
+Callable struct for `∂ₜ(f::Function)` — time derivative of a generic callable.
+
+Replaces the outer closure `(t, args...) -> Differentiation.derivative(b, s -> f(s, args...), t)`.
+"""
+struct TimeDeriv_F{F, B <: Differentiation.AbstractADBackend} <: Function
+    f::F
+    b::B
+end
+(dtd::TimeDeriv_F)(t, args...) = Differentiation.differentiate(dtd.b, dtd.f, Val(1), t, args...)
+
+"""
 $(TYPEDSIGNATURES)
 
 Compute the time derivative of a function.
 
-Returns a function representing the partial derivative with respect to time.
+Returns a [`TimeDeriv_F`](@ref) callable representing the partial derivative with respect to time.
 The input function must accept time as its first argument.
 
 # Arguments
@@ -11,7 +24,7 @@ The input function must accept time as its first argument.
 - `ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided}`: AD backend to use (default: global backend).
 
 # Returns
-- A function with signature `(t, args...) -> ∂f/∂t(t, args...)`.
+- A [`TimeDeriv_F`](@ref) callable `(t, args...) -> ∂f/∂t(t, args...)`.
 
 # Example
 ```julia
@@ -30,7 +43,7 @@ function ∂ₜ(
     ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
 )
     backend = _resolve_backend(ad_backend)
-    return (t, args...) -> Differentiation.derivative(backend, s -> f(s, args...), t)
+    return TimeDeriv_F{typeof(f), typeof(backend)}(f, backend)
 end
 
 """
@@ -75,24 +88,27 @@ function ∂ₜ(
     return Data.HamiltonianVectorField(closure, Traits.NonAutonomous, VD, Traits.OutOfPlace)
 end
 
-# Autonomous HVF: call signature (x,p) ou (x,p,v) — s ignoré → dérivée = 0
 """
-Internal time derivative implementation for HamiltonianVectorField (4 TD×VD variants).
+$(TYPEDEF)
 
-# Arguments
-- `X`: Hamiltonian vector field.
-- `b::Differentiation.AbstractADBackend`: AD backend.
-- `::Type{Traits.Autonomous}` or `::Type{Traits.NonAutonomous}`: Time dependence type.
-- `::Type{Traits.Fixed}` or `::Type{Traits.NonFixed}`: Variable dependence type.
+Callable struct for `∂ₜ(X::AbstractHamiltonianVectorField)`.
 
-# Returns
-- A closure with signature depending on TD/VD.
+- **Autonomous** (TD=Autonomous): `∂X/∂t = 0`; evaluates `X` once to get the zero shape.
+- **NonAutonomous** (TD=NonAutonomous): differentiates `X` w.r.t. slot 1 (time) via
+  `Differentiation.differentiate`, eliminating the inner `s -> X(s,...)` closure.
 """
-_∂ₜ_hvf(X, b::Differentiation.AbstractADBackend, ::Type{Traits.Autonomous},    ::Type{Traits.Fixed})    = (t, x, p)    -> Differentiation.derivative(b, s -> X(x, p),    t)
-_∂ₜ_hvf(X, b::Differentiation.AbstractADBackend, ::Type{Traits.Autonomous},    ::Type{Traits.NonFixed}) = (t, x, p, v) -> Differentiation.derivative(b, s -> X(x, p, v), t)
-# NonAutonomous HVF: call signature (t,x,p) ou (t,x,p,v)
-_∂ₜ_hvf(X, b::Differentiation.AbstractADBackend, ::Type{Traits.NonAutonomous}, ::Type{Traits.Fixed})    = (t, x, p)    -> Differentiation.derivative(b, s -> X(s, x, p),    t)
-_∂ₜ_hvf(X, b::Differentiation.AbstractADBackend, ::Type{Traits.NonAutonomous}, ::Type{Traits.NonFixed}) = (t, x, p, v) -> Differentiation.derivative(b, s -> X(s, x, p, v), t)
+struct TimeDeriv_HVF{FX, B <: Differentiation.AbstractADBackend, TD, VD} <: Function
+    X::FX
+    b::B
+end
+
+(dtd::TimeDeriv_HVF{FX, B, Traits.Autonomous,    Traits.Fixed})(_, x, p)    where {FX, B} = zero.(dtd.X(x, p))
+(dtd::TimeDeriv_HVF{FX, B, Traits.Autonomous,    Traits.NonFixed})(_, x, p, v) where {FX, B} = zero.(dtd.X(x, p, v))
+(dtd::TimeDeriv_HVF{FX, B, Traits.NonAutonomous, Traits.Fixed})(t, x, p)    where {FX, B} = Differentiation.differentiate(dtd.b, dtd.X, Val(1), t, x, p)
+(dtd::TimeDeriv_HVF{FX, B, Traits.NonAutonomous, Traits.NonFixed})(t, x, p, v) where {FX, B} = Differentiation.differentiate(dtd.b, dtd.X, Val(1), t, x, p, v)
+
+_∂ₜ_hvf(X, b::Differentiation.AbstractADBackend, ::Type{TD}, ::Type{VD}) where {TD, VD} =
+    TimeDeriv_HVF{typeof(X), typeof(b), TD, VD}(X, b)
 
 """
 $(TYPEDSIGNATURES)
@@ -136,24 +152,26 @@ function ∂ₜ(
     return Data.VectorField(closure, Traits.NonAutonomous, VD, Traits.OutOfPlace)
 end
 
-# Autonomous VF: call signature (x) ou (x,v) — s ignoré → dérivée = 0
 """
-Internal time derivative implementation for VectorField (4 TD×VD variants).
+$(TYPEDEF)
 
-# Arguments
-- `X`: Vector field.
-- `b::Differentiation.AbstractADBackend`: AD backend.
-- `::Type{Traits.Autonomous}` or `::Type{Traits.NonAutonomous}`: Time dependence type.
-- `::Type{Traits.Fixed}` or `::Type{Traits.NonFixed}`: Variable dependence type.
+Callable struct for `∂ₜ(X::AbstractVectorField)`.
 
-# Returns
-- A closure with signature depending on TD/VD.
+- **Autonomous**: `∂X/∂t = 0`; returns `zero.(X(...))` without AD.
+- **NonAutonomous**: differentiates `X` w.r.t. slot 1 (time) via `Differentiation.differentiate`.
 """
-_∂ₜ_vf(X, b::Differentiation.AbstractADBackend, ::Type{Traits.Autonomous},    ::Type{Traits.Fixed})    = (t, x)    -> Differentiation.derivative(b, s -> X(x),    t)
-_∂ₜ_vf(X, b::Differentiation.AbstractADBackend, ::Type{Traits.Autonomous},    ::Type{Traits.NonFixed}) = (t, x, v) -> Differentiation.derivative(b, s -> X(x, v), t)
-# NonAutonomous VF
-_∂ₜ_vf(X, b::Differentiation.AbstractADBackend, ::Type{Traits.NonAutonomous}, ::Type{Traits.Fixed})    = (t, x)    -> Differentiation.derivative(b, s -> X(s, x),    t)
-_∂ₜ_vf(X, b::Differentiation.AbstractADBackend, ::Type{Traits.NonAutonomous}, ::Type{Traits.NonFixed}) = (t, x, v) -> Differentiation.derivative(b, s -> X(s, x, v), t)
+struct TimeDeriv_VF{FX, B <: Differentiation.AbstractADBackend, TD, VD} <: Function
+    X::FX
+    b::B
+end
+
+(dtd::TimeDeriv_VF{FX, B, Traits.Autonomous,    Traits.Fixed})(_, x)    where {FX, B} = zero.(dtd.X(x))
+(dtd::TimeDeriv_VF{FX, B, Traits.Autonomous,    Traits.NonFixed})(_, x, v) where {FX, B} = zero.(dtd.X(x, v))
+(dtd::TimeDeriv_VF{FX, B, Traits.NonAutonomous, Traits.Fixed})(t, x)    where {FX, B} = Differentiation.differentiate(dtd.b, dtd.X, Val(1), t, x)
+(dtd::TimeDeriv_VF{FX, B, Traits.NonAutonomous, Traits.NonFixed})(t, x, v) where {FX, B} = Differentiation.differentiate(dtd.b, dtd.X, Val(1), t, x, v)
+
+_∂ₜ_vf(X, b::Differentiation.AbstractADBackend, ::Type{TD}, ::Type{VD}) where {TD, VD} =
+    TimeDeriv_VF{typeof(X), typeof(b), TD, VD}(X, b)
 
 """
 $(TYPEDSIGNATURES)
@@ -193,21 +211,23 @@ function ∂ₜ(
     return Data.Hamiltonian(closure, Traits.NonAutonomous, VD)
 end
 
-# Autonomous Ham: call signature (x,p) ou (x,p,v) — dérivée = 0
 """
-Internal time derivative implementation for Hamiltonian (4 TD×VD variants).
+$(TYPEDEF)
 
-# Arguments
-- `H`: Hamiltonian.
-- `b::Differentiation.AbstractADBackend`: AD backend.
-- `::Type{Traits.Autonomous}` or `::Type{Traits.NonAutonomous}`: Time dependence type.
-- `::Type{Traits.Fixed}` or `::Type{Traits.NonFixed}`: Variable dependence type.
+Callable struct for `∂ₜ(H::AbstractHamiltonian)`.
 
-# Returns
-- A closure with signature depending on TD/VD.
+- **Autonomous**: `∂H/∂t = 0`; returns `zero(H(...))` without AD.
+- **NonAutonomous**: differentiates `H` w.r.t. slot 1 (time) via `Differentiation.differentiate`.
 """
-_∂ₜ_ham(H, b::Differentiation.AbstractADBackend, ::Type{Traits.Autonomous},    ::Type{Traits.Fixed})    = (t, x, p)    -> Differentiation.derivative(b, s -> H(x, p),    t)
-_∂ₜ_ham(H, b::Differentiation.AbstractADBackend, ::Type{Traits.Autonomous},    ::Type{Traits.NonFixed}) = (t, x, p, v) -> Differentiation.derivative(b, s -> H(x, p, v), t)
-# NonAutonomous Ham
-_∂ₜ_ham(H, b::Differentiation.AbstractADBackend, ::Type{Traits.NonAutonomous}, ::Type{Traits.Fixed})    = (t, x, p)    -> Differentiation.derivative(b, s -> H(s, x, p),    t)
-_∂ₜ_ham(H, b::Differentiation.AbstractADBackend, ::Type{Traits.NonAutonomous}, ::Type{Traits.NonFixed}) = (t, x, p, v) -> Differentiation.derivative(b, s -> H(s, x, p, v), t)
+struct TimeDeriv_Ham{FH, B <: Differentiation.AbstractADBackend, TD, VD} <: Function
+    H::FH
+    b::B
+end
+
+(dtd::TimeDeriv_Ham{FH, B, Traits.Autonomous,    Traits.Fixed})(_, x, p)    where {FH, B} = zero(dtd.H(x, p))
+(dtd::TimeDeriv_Ham{FH, B, Traits.Autonomous,    Traits.NonFixed})(_, x, p, v) where {FH, B} = zero(dtd.H(x, p, v))
+(dtd::TimeDeriv_Ham{FH, B, Traits.NonAutonomous, Traits.Fixed})(t, x, p)    where {FH, B} = Differentiation.differentiate(dtd.b, dtd.H, Val(1), t, x, p)
+(dtd::TimeDeriv_Ham{FH, B, Traits.NonAutonomous, Traits.NonFixed})(t, x, p, v) where {FH, B} = Differentiation.differentiate(dtd.b, dtd.H, Val(1), t, x, p, v)
+
+_∂ₜ_ham(H, b::Differentiation.AbstractADBackend, ::Type{TD}, ::Type{VD}) where {TD, VD} =
+    TimeDeriv_Ham{typeof(H), typeof(b), TD, VD}(H, b)

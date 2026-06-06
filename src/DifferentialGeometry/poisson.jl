@@ -87,99 +87,60 @@ function Poisson(
     return _Poisson(H, G, backend, TD, VD)
 end
 
-# Internal: Differentiation.gradient — 4 variants
 """
-Internal implementation of Poisson bracket for Autonomous/Fixed case.
+$(TYPEDEF)
 
-Computes `{H, G} = ∇ₚH' * ∇ₓG - ∇ₓH' * ∇ₚG` using AD gradients.
+Callable struct representing the Poisson bracket `{H, G} = ∇ₚH'∇ₓG - ∇ₓH'∇ₚG`.
 
-# Arguments
-- `H`: First Hamiltonian function.
-- `G`: Second Hamiltonian function.
-- `backend::Differentiation.AbstractADBackend`: AD backend.
-- `::Type{Traits.Autonomous}`: Time dependence type.
-- `::Type{Traits.Fixed}`: Variable dependence type.
-
-# Returns
-- A function `(x, p) -> result`.
+Replaces the four closures previously returned by `_Poisson`. `TD` and `VD` are
+compile-time trait parameters so the correct call method is resolved statically.
+Partial derivatives are computed via `Differentiation.differentiate`, which uses
+`WithActiveArg` internally — no per-call closure allocation.
 """
-function _Poisson(H, G, backend::Differentiation.AbstractADBackend, ::Type{Traits.Autonomous}, ::Type{Traits.Fixed})
-    return function (x, p)
-        gxH = Differentiation.gradient(backend, y -> H(y, p), x)
-        gpH = Differentiation.gradient(backend, q -> H(x, q), p)
-        gxG = Differentiation.gradient(backend, y -> G(y, p), x)
-        gpG = Differentiation.gradient(backend, q -> G(x, q), p)
-        return gpH' * gxG - gxH' * gpG
-    end
+struct PoissonBracket{FH, FG, B <: Differentiation.AbstractADBackend, TD, VD} <: Function
+    H::FH
+    G::FG
+    backend::B
 end
 
-"""
-Internal implementation of Poisson bracket for NonAutonomous/Fixed case.
-
-# Arguments
-- `H`: First Hamiltonian function.
-- `G`: Second Hamiltonian function.
-- `backend::Differentiation.AbstractADBackend`: AD backend.
-- `::Type{Traits.NonAutonomous}`: Time dependence type.
-- `::Type{Traits.Fixed}`: Variable dependence type.
-
-# Returns
-- A function `(t, x, p) -> result`.
-"""
-function _Poisson(H, G, backend::Differentiation.AbstractADBackend, ::Type{Traits.NonAutonomous}, ::Type{Traits.Fixed})
-    return function (t, x, p)
-        gxH = Differentiation.gradient(backend, y -> H(t, y, p), x)
-        gpH = Differentiation.gradient(backend, q -> H(t, x, q), p)
-        gxG = Differentiation.gradient(backend, y -> G(t, y, p), x)
-        gpG = Differentiation.gradient(backend, q -> G(t, x, q), p)
-        return gpH' * gxG - gxH' * gpG
-    end
+# Autonomous/Fixed: H(x,p) — ∂/∂x = slot 1, ∂/∂p = slot 2
+function (pb::PoissonBracket{FH, FG, B, Traits.Autonomous, Traits.Fixed})(x, p) where {FH, FG, B}
+    gxH = Differentiation.differentiate(pb.backend, pb.H, Val(1), x, p)
+    gpH = Differentiation.differentiate(pb.backend, pb.H, Val(2), p, x)
+    gxG = Differentiation.differentiate(pb.backend, pb.G, Val(1), x, p)
+    gpG = Differentiation.differentiate(pb.backend, pb.G, Val(2), p, x)
+    return gpH' * gxG - gxH' * gpG
 end
 
-"""
-Internal implementation of Poisson bracket for Autonomous/NonFixed case.
-
-# Arguments
-- `H`: First Hamiltonian function.
-- `G`: Second Hamiltonian function.
-- `backend::Differentiation.AbstractADBackend`: AD backend.
-- `::Type{Traits.Autonomous}`: Time dependence type.
-- `::Type{Traits.NonFixed}`: Variable dependence type.
-
-# Returns
-- A function `(x, p, v) -> result`.
-"""
-function _Poisson(H, G, backend::Differentiation.AbstractADBackend, ::Type{Traits.Autonomous}, ::Type{Traits.NonFixed})
-    return function (x, p, v)
-        gxH = Differentiation.gradient(backend, y -> H(y, p, v), x)
-        gpH = Differentiation.gradient(backend, q -> H(x, q, v), p)
-        gxG = Differentiation.gradient(backend, y -> G(y, p, v), x)
-        gpG = Differentiation.gradient(backend, q -> G(x, q, v), p)
-        return gpH' * gxG - gxH' * gpG
-    end
+# NonAutonomous/Fixed: H(t,x,p) — ∂/∂x = slot 2, ∂/∂p = slot 3
+function (pb::PoissonBracket{FH, FG, B, Traits.NonAutonomous, Traits.Fixed})(t, x, p) where {FH, FG, B}
+    gxH = Differentiation.differentiate(pb.backend, pb.H, Val(2), x, t, p)
+    gpH = Differentiation.differentiate(pb.backend, pb.H, Val(3), p, t, x)
+    gxG = Differentiation.differentiate(pb.backend, pb.G, Val(2), x, t, p)
+    gpG = Differentiation.differentiate(pb.backend, pb.G, Val(3), p, t, x)
+    return gpH' * gxG - gxH' * gpG
 end
 
-"""
-Internal implementation of Poisson bracket for NonAutonomous/NonFixed case.
+# Autonomous/NonFixed: H(x,p,v) — ∂/∂x = slot 1, ∂/∂p = slot 2
+function (pb::PoissonBracket{FH, FG, B, Traits.Autonomous, Traits.NonFixed})(x, p, v) where {FH, FG, B}
+    gxH = Differentiation.differentiate(pb.backend, pb.H, Val(1), x, p, v)
+    gpH = Differentiation.differentiate(pb.backend, pb.H, Val(2), p, x, v)
+    gxG = Differentiation.differentiate(pb.backend, pb.G, Val(1), x, p, v)
+    gpG = Differentiation.differentiate(pb.backend, pb.G, Val(2), p, x, v)
+    return gpH' * gxG - gxH' * gpG
+end
 
-# Arguments
-- `H`: First Hamiltonian function.
-- `G`: Second Hamiltonian function.
-- `backend::Differentiation.AbstractADBackend`: AD backend.
-- `::Type{Traits.NonAutonomous}`: Time dependence type.
-- `::Type{Traits.NonFixed}`: Variable dependence type.
+# NonAutonomous/NonFixed: H(t,x,p,v) — ∂/∂x = slot 2, ∂/∂p = slot 3
+function (pb::PoissonBracket{FH, FG, B, Traits.NonAutonomous, Traits.NonFixed})(t, x, p, v) where {FH, FG, B}
+    gxH = Differentiation.differentiate(pb.backend, pb.H, Val(2), x, t, p, v)
+    gpH = Differentiation.differentiate(pb.backend, pb.H, Val(3), p, t, x, v)
+    gxG = Differentiation.differentiate(pb.backend, pb.G, Val(2), x, t, p, v)
+    gpG = Differentiation.differentiate(pb.backend, pb.G, Val(3), p, t, x, v)
+    return gpH' * gxG - gxH' * gpG
+end
 
-# Returns
-- A function `(t, x, p, v) -> result`.
-"""
-function _Poisson(H, G, backend::Differentiation.AbstractADBackend, ::Type{Traits.NonAutonomous}, ::Type{Traits.NonFixed})
-    return function (t, x, p, v)
-        gxH = Differentiation.gradient(backend, y -> H(t, y, p, v), x)
-        gpH = Differentiation.gradient(backend, q -> H(t, x, q, v), p)
-        gxG = Differentiation.gradient(backend, y -> G(t, y, p, v), x)
-        gpG = Differentiation.gradient(backend, q -> G(t, x, q, v), p)
-        return gpH' * gxG - gxH' * gpG
-    end
+function _Poisson(H, G, backend::Differentiation.AbstractADBackend, ::Type{TD}, ::Type{VD}) where {TD, VD}
+    return PoissonBracket{typeof(H), typeof(G), typeof(backend), TD, VD}(H, G, backend)
 end
 
 """
