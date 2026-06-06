@@ -27,6 +27,26 @@ function test_lift_dg()
         Test.@test H_na(2.0, x0, p0) ≈ 8.0 atol=1e-10
     end
 
+    Test.@testset "Lift() - concrete type LiftedHamiltonian" verbose=VERBOSE showtiming=SHOWTIMING begin
+        F(x) = [x[2], -x[1]]
+        H = DifferentialGeometry.Lift(F)
+        Test.@test H isa DifferentialGeometry.LiftedHamiltonian
+        Test.@test H isa DifferentialGeometry.LiftedHamiltonian{typeof(F), Traits.Autonomous, Traits.Fixed}
+    end
+
+    Test.@testset "Lift() - @inferred type-stability" verbose=VERBOSE showtiming=SHOWTIMING begin
+        F(x) = [x[2], -x[1]]
+        H = DifferentialGeometry.Lift(F)
+        x0 = [1.0, 2.0]; p0 = [3.0, 4.0]
+        Test.@test_nowarn Test.@inferred H(x0, p0)
+    end
+
+    Test.@testset "Lift() - field .f preserved" verbose=VERBOSE showtiming=SHOWTIMING begin
+        F(x) = [x[2], -x[1]]
+        H = DifferentialGeometry.Lift(F)
+        Test.@test H.f === F
+    end
+
     Test.@testset "Lift() - typed API cohérent avec kwargs" verbose=VERBOSE showtiming=SHOWTIMING begin
         F(x) = [x[2], -x[1]]
         H_kw    = DifferentialGeometry.Lift(F; is_autonomous=true, is_variable=false)
@@ -42,6 +62,9 @@ function test_lift_dg()
         # Check return type
         Test.@test H isa Data.Hamiltonian
         Test.@test H isa Data.AbstractHamiltonian{Traits.Autonomous, Traits.Fixed}
+
+        # Check that internal functor is LiftedHamiltonian
+        Test.@test H.f isa DifferentialGeometry.LiftedHamiltonian
 
         # Check correctness
         x0 = [1.0, 2.0]; p0 = [3.0, 4.0]

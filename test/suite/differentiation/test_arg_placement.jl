@@ -77,6 +77,40 @@ function test_arg_placement()
             Test.@test_throws Exceptions.IncorrectArgument w(1, 2)
         end
 
+        Test.@testset "WithActiveArg: zero allocations on call" begin
+            f(a, b, c) = a + b + c
+            w = Differentiation.WithActiveArg(f, Val(2))
+            w(1.0, 2.0, 3.0)  # warm-up
+            Test.@test (@allocated w(1.0, 2.0, 3.0)) == 0
+        end
+
+        Test.@testset "WithActiveArg: @inferred slot 1 and slot 3" begin
+            f(a, b, c) = a + b + c
+            w1 = Differentiation.WithActiveArg(f, Val(1))
+            w3 = Differentiation.WithActiveArg(f, Val(3))
+            Test.@test (Test.@inferred w1(1.0, 2.0, 3.0)) == 6.0
+            Test.@test (Test.@inferred w3(1.0, 2.0, 3.0)) == 6.0
+        end
+
+        Test.@testset "WithActiveArg: IncorrectArgument fields" begin
+            f(a, b) = a + b
+            w = Differentiation.WithActiveArg(f, Val(5))
+            try
+                w(1, 2)
+                Test.@test false
+            catch err
+                Test.@test err isa Exceptions.IncorrectArgument
+                Test.@test occursin("5", err.got)
+                Test.@test occursin("2", err.expected)  # total = 1 const + 1 active = 2
+            end
+        end
+
+        Test.@testset "WithActiveArg: slot 0 throws" begin
+            f(a, b) = a + b
+            w0 = Differentiation.WithActiveArg(f, Val(0))
+            Test.@test_throws Exceptions.IncorrectArgument w0(1, 2)
+        end
+
         # ======================================================================
         # Stub error tests
         # ======================================================================

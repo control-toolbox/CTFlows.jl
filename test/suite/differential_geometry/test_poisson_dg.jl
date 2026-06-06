@@ -9,6 +9,7 @@ import CTFlows.Traits: Traits
 import CTFlows.Common: Common
 import CTFlows.Data: Data
 import CTFlows.DifferentialGeometry: DifferentialGeometry
+import CTFlows.Differentiation: Differentiation
 
 const VERBOSE    = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE    : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -32,6 +33,45 @@ function test_poisson_dg()
         PB = DifferentialGeometry.Poisson(H, G)
         x0 = [1.0, 2.0]; p0 = [0.5, 1.0]
         Test.@test PB(x0, p0) ≈ -1.0 atol=1e-6
+    end
+
+    Test.@testset "Poisson() - concrete type PoissonBracket" verbose=VERBOSE showtiming=SHOWTIMING begin
+        H(x, p) = p[1]^2 / 2 + x[1]
+        G(x, p) = p[2]^2 / 2 + x[2]
+        PB = DifferentialGeometry.Poisson(H, G)
+        Test.@test PB isa DifferentialGeometry.PoissonBracket
+        Test.@test PB isa DifferentialGeometry.PoissonBracket{typeof(H), typeof(G), <:Differentiation.AbstractADBackend, Traits.Autonomous, Traits.Fixed}
+    end
+
+    Test.@testset "Poisson() - valeur correcte NonAutonomous/Fixed" verbose=VERBOSE showtiming=SHOWTIMING begin
+        # {H,G} with H(t,x,p)=t*p[1], G(t,x,p)=x[1]
+        # ∂H/∂p=[t,0], ∂H/∂x=0, ∂G/∂p=0, ∂G/∂x=[1,0]
+        # {H,G} = ∂H/∂p · ∂G/∂x - ∂H/∂x · ∂G/∂p = t*1 - 0 = t
+        H(t, x, p) = t * p[1]
+        G(t, x, p) = x[1]
+        PB = DifferentialGeometry.Poisson(H, G; is_autonomous=false, is_variable=false)
+        t0 = 3.0; x0 = [1.0, 2.0]; p0 = [0.5, 1.0]
+        Test.@test PB(t0, x0, p0) ≈ t0 atol=1e-6
+    end
+
+    Test.@testset "Poisson() - valeur correcte Autonomous/NonFixed" verbose=VERBOSE showtiming=SHOWTIMING begin
+        # H(x,p,v)=v[1]*p[1], G(x,p,v)=x[1]
+        # {H,G} = v[1]
+        H(x, p, v) = v[1] * p[1]
+        G(x, p, v) = x[1]
+        PB = DifferentialGeometry.Poisson(H, G; is_autonomous=true, is_variable=true)
+        x0 = [1.0, 2.0]; p0 = [0.5, 1.0]; v0 = [2.0]
+        Test.@test PB(x0, p0, v0) ≈ v0[1] atol=1e-6
+    end
+
+    Test.@testset "Poisson() - valeur correcte NonAutonomous/NonFixed" verbose=VERBOSE showtiming=SHOWTIMING begin
+        # H(t,x,p,v)=t*v[1]*p[1], G(t,x,p,v)=x[1]
+        # {H,G} = t*v[1]
+        H(t, x, p, v) = t * v[1] * p[1]
+        G(t, x, p, v) = x[1]
+        PB = DifferentialGeometry.Poisson(H, G; is_autonomous=false, is_variable=true)
+        t0 = 3.0; x0 = [1.0, 2.0]; p0 = [0.5, 1.0]; v0 = [2.0]
+        Test.@test PB(t0, x0, p0, v0) ≈ t0 * v0[1] atol=1e-6
     end
 
     Test.@testset "Poisson() - AbstractHamiltonian → Data.Hamiltonian" verbose=VERBOSE showtiming=SHOWTIMING begin

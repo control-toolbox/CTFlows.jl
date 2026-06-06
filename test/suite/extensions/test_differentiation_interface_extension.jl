@@ -203,6 +203,34 @@ function test_differentiation_interface_extension()
             Test.@test grad_p ≈ 1.0 atol=1e-8
             Test.@test count[] == 0  # on_update should NOT be called
         end
+
+        # ====================================================================
+        # Phase 3: Cache functor types
+        # ====================================================================
+
+        Test.@testset "Cache functor types (Fixed)" begin
+            backend = Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff(), prepare_cache=true)
+            cache = Differentiation.prepare_cache(backend, FAKE_HAMILTONIAN_FIXED, 0.0, [1.0, 2.0], [3.0, 4.0], nothing)
+            Test.@test cache.h_x isa Differentiation.WithActiveArg
+            Test.@test cache.h_p isa Differentiation.WithActiveArg
+            Test.@test cache.p_v === nothing  # Fixed → no DI plan v
+        end
+
+        Test.@testset "Cache functor types (NonFixed)" begin
+            backend = Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff(), prepare_cache=true)
+            cache = Differentiation.prepare_cache(backend, FAKE_HAMILTONIAN_NONFIXED, 0.0, [1.0, 2.0], [3.0, 4.0], [5.0])
+            Test.@test cache.h_x isa Differentiation.WithActiveArg
+            Test.@test cache.h_p isa Differentiation.WithActiveArg
+            Test.@test cache.h_v isa Differentiation.WithActiveArg
+        end
+
+        Test.@testset "Cache: slots correct" begin
+            backend = Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff(), prepare_cache=true)
+            cache = Differentiation.prepare_cache(backend, FAKE_HAMILTONIAN_FIXED, 0.0, [1.0, 2.0], [3.0, 4.0], nothing)
+            # With typical_t passed, signature is h(t,x,p) → slot 2 for x, slot 3 for p
+            Test.@test cache.h_x isa Differentiation.WithActiveArg{<:Any, 2}
+            Test.@test cache.h_p isa Differentiation.WithActiveArg{<:Any, 3}
+        end
     end
 end
 
