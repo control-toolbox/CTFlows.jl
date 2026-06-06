@@ -61,6 +61,33 @@ Les RHS de `VectorFieldSystem` ont été convertis en Phase G (voir git log
 `hvf_rhs_functors.jl` sont entièrement basés sur des callable structs avec la hiérarchie
 `AbstractRHS{T}` → `AbstractIPRHS` / `AbstractOoPRHS`.
 
+### Refactor closures de différentiation — résultat final (phases A–E)
+
+Les phases A à E du refactor ont traité tous les sites de closures de différentiation
+listés ci-dessous. Voir `reports/dev/closures_refactor_action_plan.md` pour le détail.
+
+| Site | Phase | Functor introduit | Statut |
+|---|---|---|---|
+| `src/DifferentialGeometry/lift.jl` | B/2 | `LiftedHamiltonian{F,TD,VD}` | ✅ Terminé |
+| `src/Solutions/hamiltonian_vector_field_solution.jl` | B/2 | `StateProjection{S}`, `CostateProjection{S}` | ✅ Terminé |
+| `ext/CTFlowsDifferentiationInterface.jl` (`h_x/h_p/h_v`) | C/3 | `WithActiveArg(h, Val(1/2/3))` | ✅ Terminé |
+| `src/DifferentialGeometry/poisson.jl` | D/4 | `PoissonBracket{TH,TG,B,TD,VD}` | ✅ Terminé |
+| `src/DifferentialGeometry/time_derivative.jl` | D/4 | `TimeDeriv_F`, `TimeDeriv_HVF`, `TimeDeriv_VF`, `TimeDeriv_Ham` | ✅ Terminé |
+| `src/DifferentialGeometry/ad.jl` | E/5 | `Ad{TX,TF,B,TD,VD}` | ✅ Terminé |
+
+**Primitives ajoutées :**
+- `Differentiation.WithActiveArg{F,Slot}` — réinsertion d'argument au slot `Slot` (Phase A/1)
+- `Differentiation.differentiate(backend, f, ::Val{Slot}, active, consts...)` — dérivée partielle (Phase A/1)
+- `Differentiation.pushforward(backend, f, ::Val{Slot}, x, dx, consts...)` — JVP (Phase A/1)
+
+**Stubs `gradient`/`derivative` (anciens) :**
+`Differentiation.gradient` et `Differentiation.derivative` sont toujours déclarés dans
+`src/Differentiation/abstract_ad_backend.jl` et implémentés dans l'extension
+`CTFlowsDifferentiationInterface.jl`. Ils ne sont plus appelés depuis `src/` (les 4 sites
+DG utilisent désormais `pushforward`/`differentiate`). La suppression de ces stubs et de
+leur implémentation dans l'ext nécessite un checkpoint humain explicite (voir plan)
+car `gradient`/`derivative` peuvent être utilisés par du code utilisateur externe.
+
 ---
 
 ## Inventaire des closures restantes

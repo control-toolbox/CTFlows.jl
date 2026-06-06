@@ -106,8 +106,9 @@ Callable struct representing the Lie derivative or Lie bracket of `foo` along `X
 
 - **Scalar `foo`**: Lie derivative `∇foo(x)'·X(x)` — first JVP, no second pass.
 - **Vector `foo`**: Lie bracket `J_foo(x)·X(x) - J_X(x)·foo(x)` — two JVPs via
-  `Differentiation.pushforward`, eliminating the four inner `x_->...` and `s->...`
-  closures previously returned by `_ad`.
+  `Differentiation.pushforward`, eliminating the per-call inner closures
+  (`X̂ = x_->X(x_)`, `f̂ = x_->foo(x_)`, `g(s) = f̂(x+s·X_x)`) that the old
+  closure-based `_ad` created on every evaluation.
 
 `TD` and `VD` are compile-time trait parameters so the correct call method (and slot
 numbering) is resolved statically.
