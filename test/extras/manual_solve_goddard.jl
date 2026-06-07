@@ -110,7 +110,7 @@ function shoot!(s, p0, t1, t2, t3, tf)
     s[4] = H1(x1, p1)                             # H1 = H01 = 0
     s[5] = H01(x1, p1)                            # at the entrance of the singular arc
     s[6] = g(x2)                                  # g = 0 when entering the boundary arc
-    s[7] = H0(xf, pf)                             # since tf is free
+    return s[7] = H0(xf, pf)                             # since tf is free
 end
 
 # Initial guess
