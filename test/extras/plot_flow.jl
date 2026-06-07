@@ -130,7 +130,9 @@ function pretty_plot(S, p0; Np0=20, kwargs...)
     plot!(plt_shoot, [p0_sol], [0]; seriestype=:scatter, color=:green, label=false)
 
     # final plot 
-    plot(plt_flow, plt_shoot; layout=(1, 2), leftmargin=15px, bottommargin=15px, kwargs...)
+    return plot(
+        plt_flow, plt_shoot; layout=(1, 2), leftmargin=15px, bottommargin=15px, kwargs...
+    )
 end
 
 pretty_plot(S, p0_sol; size=(800, 450))
