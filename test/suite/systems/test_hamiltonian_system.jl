@@ -18,9 +18,7 @@ function Differentiation.hamiltonian_gradient(
     backend::FakeADBackend,
     h::Data.AbstractHamiltonian,
     t, x, p, v,
-    cache::Union{Common.AbstractCache, Nothing},
 )
-    # Fake gradient: ∂H/∂x = x, ∂H/∂p = p (for H = 0.5*(x^2 + p^2))
     return (x, p)
 end
 
@@ -28,15 +26,8 @@ function Differentiation.variable_gradient(
     backend::FakeADBackend,
     h::Data.AbstractHamiltonian,
     t, x, p, v,
-    cache::Union{Common.AbstractCache, Nothing},
 )
-    # Fake gradient: ∂H/∂v = v (for H = 0.5*v^2), or 0.0 if v is nothing
     return v === nothing ? 0.0 : v
-end
-
-function Differentiation.prepare_cache(backend::FakeADBackend, h::Data.AbstractHamiltonian, t, x, p, v)
-    # Fake cache: just return nothing (no actual preparation)
-    return nothing
 end
 
 function test_hamiltonian_system()

@@ -24,14 +24,13 @@ struct MockADBackend <: Differentiation.AbstractADBackend end
 struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed} end
 
 # Mock implementations for testing (without full extension)
-function Differentiation.hamiltonian_gradient(backend::MockADBackend, h, t, x, p, v, cache)
-    # Simple mock: return zero gradients
+function Differentiation.hamiltonian_gradient(backend::MockADBackend, h, t, x, p, v)
     ∂x = zero(x)
     ∂p = zero(p)
     return (∂x, ∂p)
 end
 
-function Differentiation.variable_gradient(backend::MockADBackend, h, t, x, p, v, cache)
+function Differentiation.variable_gradient(backend::MockADBackend, h, t, x, p, v)
     return 0.0
 end
 

@@ -81,18 +81,6 @@ function CTSolvers.Strategies.metadata(::Type{<:DifferentiationInterface})
             description = "DifferentiationInterface.jl backend (e.g. AutoForwardDiff()).",
             aliases=(:backend, :ad),
         ),
-        CTSolvers.Strategies.OptionDefinition(;
-            name = :prepare_cache,
-            type = Bool,
-            default = false,
-            description = "If true, call DI.prepare_gradient once at cache-preparation time and reuse the plan. If false, call plain DI.gradient at every integration step (no preallocation).",
-        ),
-        CTSolvers.Strategies.OptionDefinition(;
-            name = :on_update,
-            type = Union{Nothing, Function},
-            default = nothing,
-            description = "Optional callback invoked whenever update! re-prepares the cache after a type or dimension mismatch. Signature: on_update(cache, t, x, p, v) -> nothing. Useful for testing and instrumentation.",
-        ),
     )
 end
 
@@ -117,42 +105,4 @@ See also: [`CTFlows.Differentiation.ad_backend`](@ref),
 ad_backend(backend::DifferentiationInterface) =
     Base.get(CTSolvers.Strategies.options(backend), Val(:ad_backend))
 
-"""
-$(TYPEDSIGNATURES)
 
-Extract the `prepare_cache` option from a `DifferentiationInterface` strategy.
-
-# Arguments
-- `backend::DifferentiationInterface`: The AD backend.
-
-# Returns
-- `Bool`: Whether to prepare cache for gradient computation.
-
-# Notes
- - This extracts the `:prepare_cache` option from the strategy's options.
- - Used by the `prepare_cache` method to decide whether to prepare DI plans.
-
-See also: [`CTFlows.Differentiation.prepare_cache`](@ref).
-"""
-prepare_cache(backend::DifferentiationInterface) =
-    Base.get(CTSolvers.Strategies.options(backend), Val(:prepare_cache))
-
-"""
-$(TYPEDSIGNATURES)
-
-Extract the `on_update` option from a `DifferentiationInterface` strategy.
-
-# Arguments
-- `backend::DifferentiationInterface`: The AD backend.
-
-# Returns
-- `Union{Nothing, Function}`: Callback function invoked on cache update.
-
-# Notes
- - This extracts the `:on_update` option from the strategy's options.
- - Used by the `update!` method to invoke user callbacks on cache re-preparation.
-
-See also: [`CTFlows.Differentiation.update!`](@ref).
-"""
-on_update(backend::DifferentiationInterface) =
-    Base.get(CTSolvers.Strategies.options(backend), Val(:on_update))

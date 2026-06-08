@@ -8,11 +8,9 @@ for computing gradients of scalar Hamiltonian functions.
 
 ## Architecture
 
-The module defines an abstract contract `AbstractADBackend` with eight methods:
-- `hamiltonian_gradient(backend, h, t, x, p, v, cache)` → (∂H/∂x, ∂H/∂p)
-- `variable_gradient(backend, h, t, x, p, v, cache)` → ∂H/∂v
-- `prepare_cache(backend, h, typical_t, typical_x, typical_p, typical_v)` → AbstractCache
-- `update!(cache, backend, t, x, p, v)` → nothing (re-prepare cache on type/dimension mismatch)
+The module defines an abstract contract `AbstractADBackend` with seven methods:
+- `hamiltonian_gradient(backend, h, t, x, p, v)` → (∂H/∂x, ∂H/∂p)
+- `variable_gradient(backend, h, t, x, p, v)` → ∂H/∂v
 - `gradient(backend, f, x)` → ∇f (extension contract)
 - `derivative(backend, g, t)` → dg/dt (extension contract)
 - `differentiate(backend, f, ::Val{Slot}, active, consts...)` → partial derivative at slot
@@ -44,8 +42,6 @@ and `DifferentiationInterface.prepare_gradient`.
 - `build_ad_backend`
 - `hamiltonian_gradient`
 - `variable_gradient`
-- `prepare_cache`
-- `update!`
 - `gradient`
 - `derivative`
 - `differentiate`
@@ -87,11 +83,8 @@ export AbstractADBackend
 export DifferentiationInterface
 export build_ad_backend
 export ad_backend
-export prepare_cache
-export on_update
 export hamiltonian_gradient
 export variable_gradient
-export update!
 export gradient
 export derivative
 export differentiate

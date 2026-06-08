@@ -12,7 +12,6 @@
 # - test_building_flows.jl for flow building functionality
 # - test_calling_flows.jl for calling flows
 # - test_flow_routing.jl for flow routing
-# - test_update_callback.jl for update callbacks
 # - test_variable_costate_flows.jl for variable costate flows
 # - test_hamiltonian_getter_flows.jl for Hamiltonian getter flows
 """

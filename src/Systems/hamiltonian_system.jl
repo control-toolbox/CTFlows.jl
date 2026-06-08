@@ -124,13 +124,12 @@ scalar, vector, and matrix inputs.
 
 See also: [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
 """
-function build_rhs(sys::HamiltonianSystem, x0, p0, t0, variable)
+function build_rhs(sys::HamiltonianSystem, x0, p0, _, _)
     N = _state_dim(x0)
     cx = Common.make_coerce(x0)
     cp = Common.make_coerce(p0)
     h, backend = sys.h, sys.backend
-    cache = Differentiation.prepare_cache(backend, h, t0, cx(x0), cp(p0), variable)
-    return HamIpRHS(h, backend, N, cx, cp, cache)
+    return HamIpRHS(h, backend, N, cx, cp)
 end
 
 """
@@ -160,13 +159,12 @@ scalar, vector, and matrix inputs.
 
 See also: [`CTFlows.Systems.HamOoPRHS`](@ref), [`CTFlows.Systems.build_rhs`](@ref).
 """
-function build_oop_rhs(sys::HamiltonianSystem, x0, p0, t0, variable)
+function build_oop_rhs(sys::HamiltonianSystem, x0, p0, _, _)
     N = _state_dim(x0)
     cx = Common.make_coerce(x0)
     cp = Common.make_coerce(p0)
     h, backend = sys.h, sys.backend
-    cache = Differentiation.prepare_cache(backend, h, t0, cx(x0), cp(p0), variable)
-    return HamOoPRHS(h, backend, N, cx, cp, cache)
+    return HamOoPRHS(h, backend, N, cx, cp)
 end
 
 # =============================================================================
@@ -203,10 +201,9 @@ variable costate.
 
 See also: [`CTFlows.Systems.HamIpAugRHS`](@ref), [`CTFlows.Systems.build_rhs`](@ref).
 """
-function build_rhs_augmented(sys::HamiltonianSystem, n_x::Int, n_v::Int, x0, p0, t0, variable)
+function build_rhs_augmented(sys::HamiltonianSystem, n_x::Int, n_v::Int, _, _, _, _)
     h, backend = sys.h, sys.backend
-    cache = Differentiation.prepare_cache(backend, h, t0, x0, p0, variable)
-    return HamIpAugRHS(h, backend, n_x, n_v, cache)
+    return HamIpAugRHS(h, backend, n_x, n_v)
 end
 
 # =============================================================================

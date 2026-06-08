@@ -38,11 +38,8 @@ const EXPORTED_CONCRETE_TYPES = (
 const EXPORTED_FUNCTIONS = (
     :build_ad_backend,
     :ad_backend,
-    :prepare_cache,
-    :on_update,
     :hamiltonian_gradient,
     :variable_gradient,
-    :update!,
     :gradient,
     :derivative,
 )
