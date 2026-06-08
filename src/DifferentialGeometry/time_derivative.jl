@@ -9,7 +9,9 @@ struct TimeDeriv_F{F, B <: Differentiation.AbstractADBackend} <: Function
     f::F
     b::B
 end
-(dtd::TimeDeriv_F)(t, args...) = Differentiation.differentiate(dtd.b, dtd.f, Val(1), t, args...)
+function (dtd::TimeDeriv_F{F, B})(t, args...) where {F, B}
+    return Differentiation.differentiate(dtd.b, dtd.f, Val(1), t, args...)
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -111,14 +113,18 @@ end
 
 (dtd::TimeDeriv_HVF{FX, B, Traits.Autonomous,    Traits.Fixed})(_, x, p)       where {FX, B} = zero.(dtd.X(x, p))
 (dtd::TimeDeriv_HVF{FX, B, Traits.Autonomous,    Traits.NonFixed})(_, x, p, v) where {FX, B} = zero.(dtd.X(x, p, v))
-(dtd::TimeDeriv_HVF{FX, B, Traits.NonAutonomous, Traits.Fixed})(t, x, p) where {FX, B} = (
-    Differentiation.differentiate(dtd.b, _HVFComp1(dtd.X), Val(1), t, x, p),
-    Differentiation.differentiate(dtd.b, _HVFComp2(dtd.X), Val(1), t, x, p),
-)
-(dtd::TimeDeriv_HVF{FX, B, Traits.NonAutonomous, Traits.NonFixed})(t, x, p, v) where {FX, B} = (
-    Differentiation.differentiate(dtd.b, _HVFComp1(dtd.X), Val(1), t, x, p, v),
-    Differentiation.differentiate(dtd.b, _HVFComp2(dtd.X), Val(1), t, x, p, v),
-)
+function (dtd::TimeDeriv_HVF{FX, B, Traits.NonAutonomous, Traits.Fixed})(t, x, p) where {FX, B}
+    return (
+        Differentiation.differentiate(dtd.b, _HVFComp1(dtd.X), Val(1), t, x, p),
+        Differentiation.differentiate(dtd.b, _HVFComp2(dtd.X), Val(1), t, x, p),
+    )
+end
+function (dtd::TimeDeriv_HVF{FX, B, Traits.NonAutonomous, Traits.NonFixed})(t, x, p, v) where {FX, B}
+    return (
+        Differentiation.differentiate(dtd.b, _HVFComp1(dtd.X), Val(1), t, x, p, v),
+        Differentiation.differentiate(dtd.b, _HVFComp2(dtd.X), Val(1), t, x, p, v),
+    )
+end
 
 _∂ₜ_hvf(X, b::Differentiation.AbstractADBackend, ::Type{TD}, ::Type{VD}) where {TD, VD} =
     TimeDeriv_HVF{typeof(X), typeof(b), TD, VD}(X, b)
@@ -180,8 +186,12 @@ end
 
 (dtd::TimeDeriv_VF{FX, B, Traits.Autonomous,    Traits.Fixed})(_, x)    where {FX, B} = zero.(dtd.X(x))
 (dtd::TimeDeriv_VF{FX, B, Traits.Autonomous,    Traits.NonFixed})(_, x, v) where {FX, B} = zero.(dtd.X(x, v))
-(dtd::TimeDeriv_VF{FX, B, Traits.NonAutonomous, Traits.Fixed})(t, x)    where {FX, B} = Differentiation.differentiate(dtd.b, dtd.X, Val(1), t, x)
-(dtd::TimeDeriv_VF{FX, B, Traits.NonAutonomous, Traits.NonFixed})(t, x, v) where {FX, B} = Differentiation.differentiate(dtd.b, dtd.X, Val(1), t, x, v)
+function (dtd::TimeDeriv_VF{FX, B, Traits.NonAutonomous, Traits.Fixed})(t, x) where {FX, B}
+    return Differentiation.differentiate(dtd.b, dtd.X, Val(1), t, x)
+end
+function (dtd::TimeDeriv_VF{FX, B, Traits.NonAutonomous, Traits.NonFixed})(t, x, v) where {FX, B}
+    return Differentiation.differentiate(dtd.b, dtd.X, Val(1), t, x, v)
+end
 
 _∂ₜ_vf(X, b::Differentiation.AbstractADBackend, ::Type{TD}, ::Type{VD}) where {TD, VD} =
     TimeDeriv_VF{typeof(X), typeof(b), TD, VD}(X, b)
@@ -239,8 +249,148 @@ end
 
 (dtd::TimeDeriv_Ham{FH, B, Traits.Autonomous,    Traits.Fixed})(_, x, p)    where {FH, B} = zero(dtd.H(x, p))
 (dtd::TimeDeriv_Ham{FH, B, Traits.Autonomous,    Traits.NonFixed})(_, x, p, v) where {FH, B} = zero(dtd.H(x, p, v))
-(dtd::TimeDeriv_Ham{FH, B, Traits.NonAutonomous, Traits.Fixed})(t, x, p)    where {FH, B} = Differentiation.differentiate(dtd.b, dtd.H, Val(1), t, x, p)
-(dtd::TimeDeriv_Ham{FH, B, Traits.NonAutonomous, Traits.NonFixed})(t, x, p, v) where {FH, B} = Differentiation.differentiate(dtd.b, dtd.H, Val(1), t, x, p, v)
+function (dtd::TimeDeriv_Ham{FH, B, Traits.NonAutonomous, Traits.Fixed})(t, x, p) where {FH, B}
+    return Differentiation.differentiate(dtd.b, dtd.H, Val(1), t, x, p)
+end
+function (dtd::TimeDeriv_Ham{FH, B, Traits.NonAutonomous, Traits.NonFixed})(t, x, p, v) where {FH, B}
+    return Differentiation.differentiate(dtd.b, dtd.H, Val(1), t, x, p, v)
+end
 
 _∂ₜ_ham(H, b::Differentiation.AbstractADBackend, ::Type{TD}, ::Type{VD}) where {TD, VD} =
     TimeDeriv_Ham{typeof(H), typeof(b), TD, VD}(H, b)
+
+# =============================================================================
+# Base.show
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of a `TimeDeriv_F` callable (time derivative of a generic function).
+
+# Arguments
+- `io::IO`: The IO stream.
+- `dtd::TimeDeriv_F`: The time derivative object.
+
+# Example
+```julia-repl
+julia> df = ∂ₜ((t, x) -> t * x[1])
+∂ₜ (generic function)
+  backend: ForwardDiffBackend
+  cache: not prepared
+```
+"""
+function Base.show(io::IO, dtd::TimeDeriv_F{F, B}) where {F, B}
+    println(io, "∂ₜ (generic function)")
+    print(io, "  backend: ", nameof(typeof(dtd.b)))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a `TimeDeriv_F` in the REPL with the same format as `Base.show(io, dtd)`.
+
+See also: [`CTFlows.DifferentialGeometry.∂ₜ`](@ref).
+"""
+function Base.show(io::IO, ::MIME"text/plain", dtd::TimeDeriv_F{F, B}) where {F, B}
+    show(io, dtd)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of a `TimeDeriv_HVF` callable (time derivative of a HamiltonianVectorField).
+
+# Arguments
+- `io::IO`: The IO stream.
+- `dtd::TimeDeriv_HVF`: The time derivative object.
+
+# Example
+```julia-repl
+julia> dX = ∂ₜ(HamiltonianVectorField((t, x, p) -> (t * p, -x), Traits.NonAutonomous, Traits.Fixed, Traits.OutOfPlace))
+∂ₜ (HamiltonianVectorField): non-autonomous, fixed (no variable)
+  backend: ForwardDiffBackend
+  cache: not prepared
+```
+"""
+function Base.show(io::IO, dtd::TimeDeriv_HVF{FX, B, TD, VD}) where {FX, B, TD, VD}
+    println(io, "∂ₜ (HamiltonianVectorField): $(Data._td_label(TD)), $(Data._vd_label(VD))")
+    print(io, "  backend: ", nameof(typeof(dtd.b)))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a `TimeDeriv_HVF` in the REPL with the same format as `Base.show(io, dtd)`.
+
+See also: [`CTFlows.DifferentialGeometry.∂ₜ`](@ref).
+"""
+function Base.show(io::IO, ::MIME"text/plain", dtd::TimeDeriv_HVF{FX, B, TD, VD}) where {FX, B, TD, VD}
+    show(io, dtd)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of a `TimeDeriv_VF` callable (time derivative of a VectorField).
+
+# Arguments
+- `io::IO`: The IO stream.
+- `dtd::TimeDeriv_VF`: The time derivative object.
+
+# Example
+```julia-repl
+julia> dX = ∂ₜ(VectorField((t, x) -> t * x, Traits.NonAutonomous, Traits.Fixed, Traits.OutOfPlace))
+∂ₜ (VectorField): non-autonomous, fixed (no variable)
+  backend: ForwardDiffBackend
+  cache: not prepared
+```
+"""
+function Base.show(io::IO, dtd::TimeDeriv_VF{FX, B, TD, VD}) where {FX, B, TD, VD}
+    println(io, "∂ₜ (VectorField): $(Data._td_label(TD)), $(Data._vd_label(VD))")
+    print(io, "  backend: ", nameof(typeof(dtd.b)))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a `TimeDeriv_VF` in the REPL with the same format as `Base.show(io, dtd)`.
+
+See also: [`CTFlows.DifferentialGeometry.∂ₜ`](@ref).
+"""
+function Base.show(io::IO, ::MIME"text/plain", dtd::TimeDeriv_VF{FX, B, TD, VD}) where {FX, B, TD, VD}
+    show(io, dtd)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of a `TimeDeriv_Ham` callable (time derivative of a Hamiltonian).
+
+# Arguments
+- `io::IO`: The IO stream.
+- `dtd::TimeDeriv_Ham`: The time derivative object.
+
+# Example
+```julia-repl
+julia> dH = ∂ₜ(Hamiltonian((t, x, p) -> t * p[1] + x[1]^2, Traits.NonAutonomous, Traits.Fixed))
+∂ₜ (Hamiltonian): non-autonomous, fixed (no variable)
+  backend: ForwardDiffBackend
+  cache: not prepared
+```
+"""
+function Base.show(io::IO, dtd::TimeDeriv_Ham{FH, B, TD, VD}) where {FH, B, TD, VD}
+    println(io, "∂ₜ (Hamiltonian): $(Data._td_label(TD)), $(Data._vd_label(VD))")
+    print(io, "  backend: ", nameof(typeof(dtd.b)))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a `TimeDeriv_Ham` in the REPL with the same format as `Base.show(io, dtd)`.
+
+See also: [`CTFlows.DifferentialGeometry.∂ₜ`](@ref).
+"""
+function Base.show(io::IO, ::MIME"text/plain", dtd::TimeDeriv_Ham{FH, B, TD, VD}) where {FH, B, TD, VD}
+    show(io, dtd)
+end

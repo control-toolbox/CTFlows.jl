@@ -219,15 +219,16 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the final state and costate from the solution as a tuple `(xf, pf)`.
+Return the raw final ODE state vector `[xf; pf]` from the integration result.
 
-Splits the combined state vector into state and costate halves.
+Delegates directly to the underlying integration result without splitting.
+Callers that need the split form should use `_ham_split_solution` explicitly.
 
 # Arguments
 - `sol::HamiltonianVectorFieldSolution`: The Hamiltonian vector field solution.
 
 # Returns
-- `Tuple{AbstractVector, AbstractVector}`: The final state `xf` and final costate `pf`.
+- `AbstractVector`: The concatenated final state `[xf; pf]`.
 
 See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Integrators.final_state`](@ref).
 """

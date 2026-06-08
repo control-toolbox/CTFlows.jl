@@ -283,6 +283,10 @@ function _extract_final_state(::Type{Traits.HamiltonianDynamics}, segment, curre
     return (final[1:nx], final[nx+1:end])
 end
 
+function _extract_final_state(::Type{Traits.HamiltonianDynamics}, segment::Solutions.HamiltonianVectorFieldSolution, _)
+    return Integrators.final_state(segment)
+end
+
 """
 $(TYPEDSIGNATURES)
 

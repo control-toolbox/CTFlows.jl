@@ -119,37 +119,69 @@ struct Ad{TX, TF, B <: Differentiation.AbstractADBackend, TD, VD} <: Function
     backend::B
 end
 
-# Autonomous/Fixed: X(x), foo(x) — active = x = slot 1, consts = ()
 function (a::Ad{TX, TF, B, Traits.Autonomous, Traits.Fixed})(x) where {TX, TF, B}
     X_x  = a.X(x)
     dfoo = Differentiation.pushforward(a.backend, a.foo, Val(1), x, X_x)
     return _ad_bracket(a.X, a.foo, dfoo, a.backend, Val(1), x)
 end
 
-# NonAutonomous/Fixed: X(t,x), foo(t,x) — active = x = slot 2, consts = (t,)
 function (a::Ad{TX, TF, B, Traits.NonAutonomous, Traits.Fixed})(t, x) where {TX, TF, B}
     X_x  = a.X(t, x)
     dfoo = Differentiation.pushforward(a.backend, a.foo, Val(2), x, X_x, t)
     return _ad_bracket(a.X, a.foo, dfoo, a.backend, Val(2), x, t)
 end
 
-# Autonomous/NonFixed: X(x,v), foo(x,v) — active = x = slot 1, consts = (v,)
 function (a::Ad{TX, TF, B, Traits.Autonomous, Traits.NonFixed})(x, v) where {TX, TF, B}
     X_x  = a.X(x, v)
     dfoo = Differentiation.pushforward(a.backend, a.foo, Val(1), x, X_x, v)
     return _ad_bracket(a.X, a.foo, dfoo, a.backend, Val(1), x, v)
 end
 
-# NonAutonomous/NonFixed: X(t,x,v), foo(t,x,v) — active = x = slot 2, consts = (t, v)
 function (a::Ad{TX, TF, B, Traits.NonAutonomous, Traits.NonFixed})(t, x, v) where {TX, TF, B}
     X_x  = a.X(t, x, v)
     dfoo = Differentiation.pushforward(a.backend, a.foo, Val(2), x, X_x, t, v)
     return _ad_bracket(a.X, a.foo, dfoo, a.backend, Val(2), x, t, v)
 end
 
-# Factory — single method replaces the four closure-returning _ad methods
 function _ad(X, foo, backend::Differentiation.AbstractADBackend, ::Type{TD}, ::Type{VD}) where {TD, VD}
     return Ad{typeof(X), typeof(foo), typeof(backend), TD, VD}(X, foo, backend)
+end
+
+# =============================================================================
+# Base.show
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of an `Ad` callable (Lie derivative or Lie bracket).
+
+# Arguments
+- `io::IO`: The IO stream.
+- `a::Ad`: The `Ad` object.
+
+# Example
+```julia-repl
+julia> L = ad(x -> [x[2], -x[1]], x -> x[1]^2 + x[2]^2)
+Ad: autonomous, fixed (no variable)
+  backend: ForwardDiffBackend
+  cache: not prepared
+```
+"""
+function Base.show(io::IO, a::Ad{TX, TF, B, TD, VD}) where {TX, TF, B, TD, VD}
+    println(io, "Ad: $(Data._td_label(TD)), $(Data._vd_label(VD))")
+    print(io, "  backend: ", nameof(typeof(a.backend)))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display an `Ad` callable in the REPL with the same format as `Base.show(io, a)`.
+
+See also: [`CTFlows.DifferentialGeometry.Ad`](@ref).
+"""
+function Base.show(io::IO, ::MIME"text/plain", a::Ad{TX, TF, B, TD, VD}) where {TX, TF, B, TD, VD}
+    show(io, a)
 end
 
 # Lie derivative (scalar): directional derivative already computed — nothing more to do

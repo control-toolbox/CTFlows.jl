@@ -130,3 +130,44 @@ function Lift(X::Data.AbstractVectorField{TD, VD}) where {TD, VD}
     lh = LiftedHamiltonian{typeof(X), TD, VD}(X)
     return Data.Hamiltonian(lh, TD, VD)   # typed constructor (no MD param)
 end
+
+# =============================================================================
+# Base.show
+# =============================================================================
+
+_lh_call_sig(::Type{Traits.Autonomous},    ::Type{Traits.Fixed})    = "h(x, p) = p' * f(x)"
+_lh_call_sig(::Type{Traits.Autonomous},    ::Type{Traits.NonFixed}) = "h(x, p, v) = p' * f(x, v)"
+_lh_call_sig(::Type{Traits.NonAutonomous}, ::Type{Traits.Fixed})    = "h(t, x, p) = p' * f(t, x)"
+_lh_call_sig(::Type{Traits.NonAutonomous}, ::Type{Traits.NonFixed}) = "h(t, x, p, v) = p' * f(t, x, v)"
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of a `LiftedHamiltonian` showing its traits and call signature.
+
+# Arguments
+- `io::IO`: The IO stream.
+- `h::LiftedHamiltonian`: The lifted Hamiltonian object.
+
+# Example
+```julia-repl
+julia> H = Lift(x -> [x[2], -x[1]])
+LiftedHamiltonian: autonomous, fixed (no variable)
+  call: h(x, p) = p' * f(x)
+```
+"""
+function Base.show(io::IO, ::LiftedHamiltonian{F, TD, VD}) where {F, TD, VD}
+    println(io, "LiftedHamiltonian: $(Data._td_label(TD)), $(Data._vd_label(VD))")
+    print(io, "  call: ", _lh_call_sig(TD, VD))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a `LiftedHamiltonian` in the REPL with the same format as `Base.show(io, h)`.
+
+See also: [`CTFlows.DifferentialGeometry.LiftedHamiltonian`](@ref).
+"""
+function Base.show(io::IO, ::MIME"text/plain", h::LiftedHamiltonian{F, TD, VD}) where {F, TD, VD}
+    show(io, h)
+end

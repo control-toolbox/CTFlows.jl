@@ -143,6 +143,43 @@ function _Poisson(H, G, backend::Differentiation.AbstractADBackend, ::Type{TD}, 
     return PoissonBracket{typeof(H), typeof(G), typeof(backend), TD, VD}(H, G, backend)
 end
 
+# =============================================================================
+# Base.show
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of a `PoissonBracket` callable.
+
+# Arguments
+- `io::IO`: The IO stream.
+- `pb::PoissonBracket`: The Poisson bracket object.
+
+# Example
+```julia-repl
+julia> B = Poisson((x, p) -> p[1]^2 / 2 + x[1]^2, (x, p) -> x[1] * p[1])
+PoissonBracket: autonomous, fixed (no variable)
+  backend: ForwardDiffBackend
+  cache: not prepared
+```
+"""
+function Base.show(io::IO, pb::PoissonBracket{FH, FG, B, TD, VD}) where {FH, FG, B, TD, VD}
+    println(io, "PoissonBracket: $(Data._td_label(TD)), $(Data._vd_label(VD))")
+    print(io, "  backend: ", nameof(typeof(pb.backend)))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a `PoissonBracket` in the REPL with the same format as `Base.show(io, pb)`.
+
+See also: [`CTFlows.DifferentialGeometry.PoissonBracket`](@ref).
+"""
+function Base.show(io::IO, ::MIME"text/plain", pb::PoissonBracket{FH, FG, B, TD, VD}) where {FH, FG, B, TD, VD}
+    show(io, pb)
+end
+
 """
 $(TYPEDSIGNATURES)
 

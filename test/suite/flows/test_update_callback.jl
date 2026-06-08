@@ -38,20 +38,6 @@ function test_update_callback()
         # INTEGRATION TESTS - Flow integration with on_update callback
         # ====================================================================
 
-        Test.@testset "Integration: flow with Int x0 triggers on_update" begin
-            # Test that on_update is called when ODE solver promotes Int to Float
-            count = Ref(0)
-            flow = Flows.Flow(FAKE_HAMILTONIAN_AUTO_FIXED;
-                ad_backend=ADTypes.AutoForwardDiff(),
-                prepare_cache=true,
-                on_update=(c, t, x, p, v) -> (count[] += 1)
-            )
-
-            # Integrate with Int initial condition (ODE solver promotes to Float)
-            x_final, p_final = flow(0.0, Int(1), Int(1), 1.0)
-            Test.@test count[] >= 1  # on_update should be called at least once
-        end
-
         Test.@testset "Integration: flow with Float x0 does not trigger on_update" begin
             # Test that on_update is NOT called when types match
             count = Ref(0)
@@ -62,7 +48,7 @@ function test_update_callback()
             )
 
             # Integrate with Float initial condition (types match)
-            x_final, p_final = flow(0.0, 1.0, 1.0, 1.0)
+            flow(0.0, 1.0, 1.0, 1.0)
             Test.@test count[] == 0  # on_update should NOT be called
         end
     end

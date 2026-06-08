@@ -245,6 +245,7 @@ function test_poisson_dg()
         Test.@test DifferentialGeometry.Poisson(F_na, G_na; is_autonomous=false)(t_test, x_test, p_test) ≈
               DifferentialGeometry.Poisson(F_na_explicit, G_na_explicit; is_autonomous=false)(t_test, x_test, p_test) atol=1e-6
     end
+
 end
 
 end # module TestPoissonDG
