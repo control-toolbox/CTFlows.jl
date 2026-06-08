@@ -3,6 +3,8 @@ locale = "en"
 extend-ignore-re = [
     "OT",
     "_anf",
+    "GODD",
+    "_godd",
 ]
 
 [files]

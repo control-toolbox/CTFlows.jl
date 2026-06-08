@@ -81,7 +81,7 @@ This constructor builds a complete Hamiltonian flow by:
 - `h::CTFlows.Data.AbstractHamiltonian`: The scalar Hamiltonian function.
 - `kwargs...`: Keyword options passed to the backend and integrator strategies.
   Options are automatically routed based on their names:
-  - Backend options (e.g., `ad_backend`, `prepare_cache`) → `:di` strategy
+  - Backend options (e.g., `ad_backend`) → `:di` strategy
   - Integrator options (e.g., `reltol`, `abstol`, `alg`) → `:sciml` strategy
 
 # Returns

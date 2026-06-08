@@ -322,6 +322,46 @@ function test_ad_dg()
         sum_jacobi = XYZ(x0) + YZX(x0) + ZXY(x0)
         Test.@test isapprox(sum_jacobi, [0.0, 0.0, 0.0]; atol=1e-6)
     end
+
+    # ====================================================================
+    # Phase 5: Ad callable struct — concrete type + @inferred
+    # ====================================================================
+
+    Test.@testset "ad() - concrete type Ad (Lie derivative, Autonomous/Fixed)" verbose=VERBOSE showtiming=SHOWTIMING begin
+        Xad(x) = [x[2], -x[1]]
+        fad(x) = x[1]^2 + x[2]^2
+        a = DifferentialGeometry.ad(Xad, fad)
+        Test.@test a isa DifferentialGeometry.Ad
+        Test.@test a isa DifferentialGeometry.Ad{typeof(Xad), typeof(fad),
+            <:Differentiation.AbstractADBackend, Traits.Autonomous, Traits.Fixed}
+    end
+
+    Test.@testset "ad() - concrete type Ad (Lie bracket, Autonomous/Fixed)" verbose=VERBOSE showtiming=SHOWTIMING begin
+        Xad(x) = [x[2], -x[1]]
+        Yad(x) = [x[1],  x[2]]
+        a = DifferentialGeometry.ad(Xad, Yad)
+        Test.@test a isa DifferentialGeometry.Ad
+        Test.@test a isa DifferentialGeometry.Ad{typeof(Xad), typeof(Yad),
+            <:Differentiation.AbstractADBackend, Traits.Autonomous, Traits.Fixed}
+    end
+
+    Test.@testset "ad() - @inferred scalar (Lie derivative)" verbose=VERBOSE showtiming=SHOWTIMING begin
+        Xad(x) = [x[2], -x[1]]
+        fad(x) = x[1]^2 + x[2]^2
+        a = DifferentialGeometry.ad(Xad, fad)
+        x0 = [1.0, 2.0]
+        a(x0)  # warm-up
+        Test.@test_nowarn Test.@inferred a(x0)
+    end
+
+    Test.@testset "ad() - @inferred vector (Lie bracket)" verbose=VERBOSE showtiming=SHOWTIMING begin
+        Xad(x) = [x[2], -x[1]]
+        Yad(x) = [x[1],  x[2]]
+        a = DifferentialGeometry.ad(Xad, Yad)
+        x0 = [1.0, 2.0]
+        a(x0)  # warm-up
+        Test.@test_nowarn Test.@inferred a(x0)
+    end
 end
 
 end # module TestAdDG

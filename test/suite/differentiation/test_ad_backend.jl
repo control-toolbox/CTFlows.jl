@@ -78,8 +78,6 @@ function test_ad_backend()
             Test.@test metadata isa CTSolvers.Strategies.StrategyMetadata
             Test.@test length(metadata) > 0
             Test.@test :ad_backend in keys(metadata)
-            Test.@test :prepare_cache in keys(metadata)
-            Test.@test metadata[:prepare_cache].default === false
         end
 
         Test.@testset "Unit: build_ad_backend" begin
@@ -98,10 +96,9 @@ function test_ad_backend()
             x = [1.0, 2.0]
             p = [3.0, 4.0]
             v = 5.0
-            cache = nothing
 
             try
-                Differentiation.hamiltonian_gradient(backend, h, t, x, p, v, cache)
+                Differentiation.hamiltonian_gradient(backend, h, t, x, p, v)
                 Test.@test false  # Should not reach here
             catch err
                 Test.@test err isa Exceptions.NotImplemented
@@ -116,48 +113,13 @@ function test_ad_backend()
             x = [1.0, 2.0]
             p = [3.0, 4.0]
             v = 5.0
-            cache = nothing
 
             try
-                Differentiation.variable_gradient(backend, h, t, x, p, v, cache)
+                Differentiation.variable_gradient(backend, h, t, x, p, v)
                 Test.@test false  # Should not reach here
             catch err
                 Test.@test err isa Exceptions.NotImplemented
                 Test.@test occursin("variable_gradient", err.required_method)
-            end
-        end
-
-        Test.@testset "Error: prepare_cache stub throws NotImplemented" begin
-            backend = FakeADBackend()
-            h = FakeHamiltonian()
-            typical_t = 0.0
-            typical_x = [1.0, 2.0]
-            typical_p = [3.0, 4.0]
-            typical_v = 5.0
-
-            try
-                Differentiation.prepare_cache(backend, h, typical_t, typical_x, typical_p, typical_v)
-                Test.@test false  # Should not reach here
-            catch err
-                Test.@test err isa Exceptions.NotImplemented
-                Test.@test occursin("prepare_cache", err.required_method)
-            end
-        end
-
-        Test.@testset "Error: update! stub throws NotImplemented" begin
-            backend = FakeADBackend()
-            cache = nothing
-            t = 0.0
-            x = [1.0, 2.0]
-            p = [3.0, 4.0]
-            v = 5.0
-
-            try
-                Differentiation.update!(cache, backend, t, x, p, v)
-                Test.@test false  # Should not reach here
-            catch err
-                Test.@test err isa Exceptions.NotImplemented
-                Test.@test occursin("update!", err.required_method)
             end
         end
 

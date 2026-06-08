@@ -111,3 +111,4 @@ builds a fresh backend from the ADType.
 """
 _resolve_backend(::Common.NotProvided) = DG_AD_BACKEND[]
 _resolve_backend(ad_backend::ADTypes.AbstractADType) = Differentiation.build_ad_backend(; ad_backend = ad_backend)
+

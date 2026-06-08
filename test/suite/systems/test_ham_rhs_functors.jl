@@ -20,18 +20,11 @@ const FakeHamiltonianNF = Data.Hamiltonian((x, p, v) -> 0.5 * (x[1]^2 + x[2]^2) 
 
 struct FakeADBackend <: Differentiation.AbstractADBackend end
 
-function Differentiation.prepare_cache(backend::FakeADBackend, h::Data.AbstractHamiltonian, t, x, p, v)
-    # Fake cache: just return nothing (no actual preparation)
-    return nothing
-end
-
 function Differentiation.hamiltonian_gradient(
     backend::FakeADBackend,
     h::Data.AbstractHamiltonian,
     t, x, p, v,
-    cache::Union{Common.AbstractCache, Nothing},
 )
-    # Fake gradient: ∂H/∂x = x, ∂H/∂p = p
     return (x, p)
 end
 
@@ -39,9 +32,7 @@ function Differentiation.variable_gradient(
     backend::FakeADBackend,
     h::Data.AbstractHamiltonian,
     t, x, p, v,
-    cache::Union{Common.AbstractCache, Nothing},
 )
-    # Fake variable gradient: ∂H/∂v = zeros (since H doesn't depend on v)
     return zeros(length(v))
 end
 
@@ -55,10 +46,10 @@ function test_ham_rhs_functors()
         Test.@testset "Abstract types" begin
             backend = FakeADBackend()
             h = FakeHamiltonian
-            
-            ip_rhs = Systems.HamIpRHS(h, backend, 2, identity, identity, nothing)
-            oop_rhs = Systems.HamOoPRHS(h, backend, 2, identity, identity, nothing)
-            aug_rhs = Systems.HamIpAugRHS(h, backend, 2, 1, nothing)
+
+            ip_rhs = Systems.HamIpRHS(h, backend, 2, identity, identity)
+            oop_rhs = Systems.HamOoPRHS(h, backend, 2, identity, identity)
+            aug_rhs = Systems.HamIpAugRHS(h, backend, 2, 1)
 
             Test.@test ip_rhs isa Systems.AbstractIPHamRHS
             Test.@test ip_rhs isa Systems.AbstractRHS{Traits.InPlace}
@@ -66,11 +57,6 @@ function test_ham_rhs_functors()
             Test.@test oop_rhs isa Systems.AbstractRHS{Traits.OutOfPlace}
             Test.@test aug_rhs isa Systems.AbstractIPHamRHS
             Test.@test aug_rhs isa Systems.AbstractRHS{Traits.InPlace}
-
-            # Cache embedding: verify cache field stores the passed value
-            Test.@test ip_rhs.cache === nothing
-            Test.@test oop_rhs.cache === nothing
-            Test.@test aug_rhs.cache === nothing
         end
 
         # =============================================================================
@@ -80,7 +66,7 @@ function test_ham_rhs_functors()
         Test.@testset "HamIpRHS — call" begin
             backend = FakeADBackend()
             h = FakeHamiltonian
-            rhs = Systems.HamIpRHS(h, backend, 2, identity, identity, nothing)
+            rhs = Systems.HamIpRHS(h, backend, 2, identity, identity)
 
             du = zeros(4)
             u = [1.0, 2.0, 3.0, 4.0]
@@ -97,7 +83,7 @@ function test_ham_rhs_functors()
         Test.@testset "HamIpRHS — NonFixed call" begin
             backend = FakeADBackend()
             h = FakeHamiltonianNF
-            rhs = Systems.HamIpRHS(h, backend, 2, identity, identity, nothing)
+            rhs = Systems.HamIpRHS(h, backend, 2, identity, identity)
 
             du = zeros(4)
             u = [1.0, 2.0, 3.0, 4.0]
@@ -118,7 +104,7 @@ function test_ham_rhs_functors()
         Test.@testset "HamOoPRHS — call" begin
             backend = FakeADBackend()
             h = FakeHamiltonian
-            rhs = Systems.HamOoPRHS(h, backend, 2, identity, identity, nothing)
+            rhs = Systems.HamOoPRHS(h, backend, 2, identity, identity)
 
             u = [1.0, 2.0, 3.0, 4.0]
             λ = Common.ODEParameters(nothing)
@@ -134,7 +120,7 @@ function test_ham_rhs_functors()
         Test.@testset "HamOoPRHS — NonFixed call" begin
             backend = FakeADBackend()
             h = FakeHamiltonianNF
-            rhs = Systems.HamOoPRHS(h, backend, 2, identity, identity, nothing)
+            rhs = Systems.HamOoPRHS(h, backend, 2, identity, identity)
 
             u = [1.0, 2.0, 3.0, 4.0]
             λ = Common.ODEParameters(0.5)
@@ -154,7 +140,7 @@ function test_ham_rhs_functors()
         Test.@testset "HamIpAugRHS — call vector" begin
             backend = FakeADBackend()
             h = FakeHamiltonian
-            rhs = Systems.HamIpAugRHS(h, backend, 2, 1, nothing)
+            rhs = Systems.HamIpAugRHS(h, backend, 2, 1)
 
             du = zeros(5)
             u = [1.0, 2.0, 3.0, 4.0, 0.0]
@@ -199,9 +185,9 @@ function test_ham_rhs_functors()
         Test.@testset "Type Stability" begin
             backend = FakeADBackend()
             h = FakeHamiltonian
-            
-            ip_rhs = Systems.HamIpRHS(h, backend, 2, identity, identity, nothing)
-            oop_rhs = Systems.HamOoPRHS(h, backend, 2, identity, identity, nothing)
+
+            ip_rhs = Systems.HamIpRHS(h, backend, 2, identity, identity)
+            oop_rhs = Systems.HamOoPRHS(h, backend, 2, identity, identity)
 
             du = zeros(4)
             u = [1.0, 2.0, 3.0, 4.0]
@@ -221,10 +207,10 @@ function test_ham_rhs_functors()
         Test.@testset "Display" begin
             backend = FakeADBackend()
             h = FakeHamiltonian
-            
-            ip_rhs = Systems.HamIpRHS(h, backend, 2, identity, identity, nothing)
-            oop_rhs = Systems.HamOoPRHS(h, backend, 2, identity, identity, nothing)
-            aug_rhs = Systems.HamIpAugRHS(h, backend, 2, 1, nothing)
+
+            ip_rhs = Systems.HamIpRHS(h, backend, 2, identity, identity)
+            oop_rhs = Systems.HamOoPRHS(h, backend, 2, identity, identity)
+            aug_rhs = Systems.HamIpAugRHS(h, backend, 2, 1)
 
             Test.@test occursin("HamIpRHS", sprint(show, ip_rhs))
             Test.@test occursin("Hamiltonian AD → in-place interface", sprint(show, ip_rhs))

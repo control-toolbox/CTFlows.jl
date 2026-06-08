@@ -251,9 +251,47 @@ function test_calling_multiphase()
         end
 
         Test.@testset "_extract_final_state" begin
-            # Skip complex mocking - test will be covered by integration tests
-            Test.@testset "skipped - covered by integration tests" begin
-                Test.@test true
+            x0 = [1.0, 2.0]
+            p0 = [0.5, 0.3]
+
+            Test.@testset "StateDynamics with MockIntegrationResult" begin
+                sys = FakeStateSystem([1.0, 2.0])
+                integ = FakeIntegrator(:fake_result)
+                flow = Flows.StateFlow(sys, integ)
+                mpf = flow * (0.5, flow)
+
+                u_final = [3.0, 4.0]
+                segment = MockIntegrationResult(u_final, [0.0, 1.0])
+                result = MultiPhase._extract_final_state(mpf, segment, x0)
+                Test.@test result == u_final
+            end
+
+            Test.@testset "HamiltonianDynamics with MockIntegrationResult (flat vector)" begin
+                hsys = FakeHamiltonianSystem([1.0, 2.0])
+                hinteg = FakeHamiltonianIntegrator(:fake_result)
+                hflow = Flows.HamiltonianFlow(hsys, hinteg)
+                hmpf = hflow * (0.5, hflow)
+
+                u_final = vcat(x0 * 2, p0 * 2)
+                segment = MockIntegrationResult(u_final, [0.0, 1.0])
+                xf, pf = MultiPhase._extract_final_state(hmpf, segment, (x0, p0))
+                Test.@test xf == x0 * 2
+                Test.@test pf == p0 * 2
+            end
+
+            Test.@testset "HamiltonianDynamics with HamiltonianVectorFieldSolution (regression for BoundsError)" begin
+                hsys = FakeHamiltonianSystem([1.0, 2.0])
+                hinteg = FakeHamiltonianIntegrator(:fake_result)
+                hflow = Flows.HamiltonianFlow(hsys, hinteg)
+                hmpf = hflow * (0.5, hflow)
+
+                u_final = vcat(x0 * 2, p0 * 2)
+                mock_result = MockIntegrationResult(u_final, [0.0, 1.0])
+                segment = Solutions.HamiltonianVectorFieldSolution(x0, mock_result)
+
+                xf, pf = MultiPhase._extract_final_state(hmpf, segment, (x0, p0))
+                Test.@test xf == x0 * 2
+                Test.@test pf == p0 * 2
             end
         end
 

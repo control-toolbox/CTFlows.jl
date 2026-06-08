@@ -1,9 +1,30 @@
 """
+$(TYPEDEF)
+
+Callable struct representing the lifted Hamiltonian `H(…) = p' * f(…)`.
+
+Replaces the four argument-reordering closures previously returned by `_Lift`.
+`TD` and `VD` are compile-time trait parameters, so dispatch to the correct
+call method is resolved at compile time — no allocation per call.
+
+Inherits from `Function` so that it satisfies the `F<:Function` constraint of
+`Data.Hamiltonian` and passes existing `isa Function` checks.
+"""
+struct LiftedHamiltonian{F, TD, VD} <: Function
+    f::F
+end
+
+(h::LiftedHamiltonian{F, Traits.Autonomous,    Traits.Fixed})(x, p)       where {F} = p' * h.f(x)
+(h::LiftedHamiltonian{F, Traits.Autonomous,    Traits.NonFixed})(x, p, v) where {F} = p' * h.f(x, v)
+(h::LiftedHamiltonian{F, Traits.NonAutonomous, Traits.Fixed})(t, x, p)    where {F} = p' * h.f(t, x)
+(h::LiftedHamiltonian{F, Traits.NonAutonomous, Traits.NonFixed})(t, x, p, v) where {F} = p' * h.f(t, x, v)
+
+"""
 $(TYPEDSIGNATURES)
 
 Lift a function to a Hamiltonian via the canonical symplectic structure.
 
-Returns a function representing the Hamiltonian `H(x, p) = p' * f(x)`. This is an
+Returns a [`LiftedHamiltonian`](@ref) representing `H(x, p) = p' * f(x)`. This is an
 algebraic operation that does not use automatic differentiation.
 
 # Arguments
@@ -12,7 +33,7 @@ algebraic operation that does not use automatic differentiation.
 - `is_variable::Bool`: Whether the function depends on a variable parameter (default: from global config).
 
 # Returns
-- A function with signature depending on TD/VD:
+- A [`LiftedHamiltonian`](@ref) with signature depending on TD/VD:
   - Autonomous/Fixed: `(x, p) -> p' * f(x)`
   - NonAutonomous/Fixed: `(t, x, p) -> p' * f(t, x)`
   - Autonomous/NonFixed: `(x, p, v) -> p' * f(x, v)`
@@ -45,7 +66,7 @@ $(TYPEDSIGNATURES)
 
 Lift a function to a Hamiltonian with explicit type parameters.
 
-Returns a function representing the Hamiltonian `H(x, p) = p' * f(x)`. This typed entry
+Returns a [`LiftedHamiltonian`](@ref) representing `H(x, p) = p' * f(x)`. This typed entry
 point is used by the [`@Lie`](@ref) macro for compile-time dispatch.
 
 # Arguments
@@ -54,7 +75,7 @@ point is used by the [`@Lie`](@ref) macro for compile-time dispatch.
 - `::Type{VD}`: Variable dependence type ([`CTFlows.Traits.Fixed`](@ref) or [`CTFlows.Traits.NonFixed`](@ref)).
 
 # Returns
-- A function with signature depending on TD/VD.
+- A [`LiftedHamiltonian{typeof(f), TD, VD}`](@ref).
 
 # Example
 ```julia
@@ -70,27 +91,8 @@ H([1.0, 2.0], [0.5, 1.0])  # Returns -1.5
 See also: [`CTFlows.DifferentialGeometry.Lift(f::Function)`](@ref), [`CTFlows.DifferentialGeometry.@Lie`](@ref)
 """
 function Lift(f::Function, ::Type{TD}, ::Type{VD}) where {TD, VD}
-    return _Lift(f, TD, VD)
+    return LiftedHamiltonian{typeof(f), TD, VD}(f)
 end
-
-# Internal: 4 closures — first arg typed Any so AbstractVectorField callables work
-"""
-Internal implementation of Lift for all TD×VD combinations.
-
-Returns closures representing the Hamiltonian `H(x, p) = p' * f(x)`.
-
-# Arguments
-- `f`: Vector field function (typed Any to accept AbstractVectorField callables).
-- `::Type{Traits.Autonomous}` or `::Type{Traits.NonAutonomous}`: Time dependence type.
-- `::Type{Traits.Fixed}` or `::Type{Traits.NonFixed}`: Variable dependence type.
-
-# Returns
-- A closure with signature depending on TD/VD.
-"""
-_Lift(f, ::Type{Traits.Autonomous},    ::Type{Traits.Fixed})    = (x, p)       -> p' * f(x)
-_Lift(f, ::Type{Traits.Autonomous},    ::Type{Traits.NonFixed}) = (x, p, v)    -> p' * f(x, v)
-_Lift(f, ::Type{Traits.NonAutonomous}, ::Type{Traits.Fixed})    = (t, x, p)    -> p' * f(t, x)
-_Lift(f, ::Type{Traits.NonAutonomous}, ::Type{Traits.NonFixed}) = (t, x, p, v) -> p' * f(t, x, v)
 
 """
 $(TYPEDSIGNATURES)
@@ -125,6 +127,47 @@ See also: [`CTFlows.DifferentialGeometry.Lift(f::Function)`](@ref), [`CTFlows.Di
 """
 function Lift(X::Data.AbstractVectorField{TD, VD}) where {TD, VD}
     _check_not_hvf(X)   # guard from ad_types.jl
-    closure = _Lift(X, TD, VD)
-    return Data.Hamiltonian(closure, TD, VD)   # typed constructor (no MD param)
+    lh = LiftedHamiltonian{typeof(X), TD, VD}(X)
+    return Data.Hamiltonian(lh, TD, VD)   # typed constructor (no MD param)
+end
+
+# =============================================================================
+# Base.show
+# =============================================================================
+
+_lh_call_sig(::Type{Traits.Autonomous},    ::Type{Traits.Fixed})    = "h(x, p) = p' * f(x)"
+_lh_call_sig(::Type{Traits.Autonomous},    ::Type{Traits.NonFixed}) = "h(x, p, v) = p' * f(x, v)"
+_lh_call_sig(::Type{Traits.NonAutonomous}, ::Type{Traits.Fixed})    = "h(t, x, p) = p' * f(t, x)"
+_lh_call_sig(::Type{Traits.NonAutonomous}, ::Type{Traits.NonFixed}) = "h(t, x, p, v) = p' * f(t, x, v)"
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of a `LiftedHamiltonian` showing its traits and call signature.
+
+# Arguments
+- `io::IO`: The IO stream.
+- `h::LiftedHamiltonian`: The lifted Hamiltonian object.
+
+# Example
+```julia-repl
+julia> H = Lift(x -> [x[2], -x[1]])
+LiftedHamiltonian: autonomous, fixed (no variable)
+  call: h(x, p) = p' * f(x)
+```
+"""
+function Base.show(io::IO, ::LiftedHamiltonian{F, TD, VD}) where {F, TD, VD}
+    println(io, "LiftedHamiltonian: $(Data._td_label(TD)), $(Data._vd_label(VD))")
+    print(io, "  call: ", _lh_call_sig(TD, VD))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a `LiftedHamiltonian` in the REPL with the same format as `Base.show(io, h)`.
+
+See also: [`CTFlows.DifferentialGeometry.LiftedHamiltonian`](@ref).
+"""
+function Base.show(io::IO, ::MIME"text/plain", h::LiftedHamiltonian{F, TD, VD}) where {F, TD, VD}
+    show(io, h)
 end

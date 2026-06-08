@@ -32,6 +32,13 @@ struct StatePointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfigWithMaC{X0, Tra
     t0::T0
     x0::X0
     tf::TF
+    StatePointConfig{T0, X0, TF}(t0, x0, tf) where {T0<:Real, X0, TF<:Real} = new{T0, X0, TF}(t0, x0, tf)
+    function StatePointConfig(t0::Real, x0, tf::Real)
+        t = float(t0)
+        X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
+        T = float(tf)
+        new{typeof(t), typeof(X), typeof(T)}(t, X, T)
+    end
 end
 
 """
@@ -61,6 +68,12 @@ See also: [`CTFlows.Configs.StatePointConfig`](@ref)
 struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractConfigWithMaC{X0, Traits.TrajectoryTrait, Traits.StateDynamics}
     tspan::TS
     x0::X0
+    StateTrajectoryConfig{TS, X0}(tspan, x0) where {TS<:Tuple{<:Real,<:Real}, X0} = new{TS, X0}(tspan, x0)
+    function StateTrajectoryConfig(tspan::Tuple{<:Real,<:Real}, x0)
+        TS = float.(tspan)
+        X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
+        new{typeof(TS), typeof(X)}(TS, X)
+    end
 end
 
 
@@ -98,6 +111,14 @@ struct HamiltonianPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractConfigWithM
     x0::X0
     p0::P0
     tf::TF
+    HamiltonianPointConfig{T0, X0, P0, TF}(t0, x0, p0, tf) where {T0<:Real, X0, P0, TF<:Real} = new{T0, X0, P0, TF}(t0, x0, p0, tf)
+    function HamiltonianPointConfig(t0::Real, x0, p0, tf::Real)
+        t = float(t0)
+        X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
+        P = eltype(p0) <: AbstractFloat ? p0 : float.(p0)
+        T = float(tf)
+        new{typeof(t), typeof(X), typeof(P), typeof(T)}(t, X, P, T)
+    end
 end
 
 """
@@ -131,6 +152,13 @@ struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: Abstract
     tspan::TS
     x0::X0
     p0::P0
+    HamiltonianTrajectoryConfig{TS, X0, P0}(tspan, x0, p0) where {TS<:Tuple{<:Real,<:Real}, X0, P0} = new{TS, X0, P0}(tspan, x0, p0)
+    function HamiltonianTrajectoryConfig(tspan::Tuple{<:Real,<:Real}, x0, p0)
+        TS = float.(tspan)
+        X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
+        P = eltype(p0) <: AbstractFloat ? p0 : float.(p0)
+        new{typeof(TS), typeof(X), typeof(P)}(TS, X, P)
+    end
 end
 
 """
@@ -170,6 +198,15 @@ struct AugmentedHamiltonianPointConfig{T0<:Real, X0, P0, PV0, TF<:Real} <: Abstr
     p0::P0
     pv0::PV0
     tf::TF
+    AugmentedHamiltonianPointConfig{T0, X0, P0, PV0, TF}(t0, x0, p0, pv0, tf) where {T0<:Real, X0, P0, PV0, TF<:Real} = new{T0, X0, P0, PV0, TF}(t0, x0, p0, pv0, tf)
+    function AugmentedHamiltonianPointConfig(t0::Real, x0, p0, pv0, tf::Real)
+        t = float(t0)
+        X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
+        P = eltype(p0) <: AbstractFloat ? p0 : float.(p0)
+        PV = eltype(pv0) <: AbstractFloat ? pv0 : float.(pv0)
+        T = float(tf)
+        new{typeof(t), typeof(X), typeof(P), typeof(PV), typeof(T)}(t, X, P, PV, T)
+    end
 end
 
 """

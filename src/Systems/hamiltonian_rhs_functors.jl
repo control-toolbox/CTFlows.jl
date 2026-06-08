@@ -105,19 +105,18 @@ gradient in-place, following the canonical Hamiltonian equations:
 
 See also: [`CTFlows.Systems.HamOoPRHS`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
 """
-struct HamIpRHS{F,TD,VD,B,CX,CP,C} <: AbstractIPHamRHS
+struct HamIpRHS{F,TD,VD,B,CX,CP} <: AbstractIPHamRHS
     h::Data.Hamiltonian{F,TD,VD}
     backend::B
     N::Int
     cx::CX
     cp::CP
-    cache::C
 end
 
-function (f::HamIpRHS{F,TD,VD,B,CX,CP,C})(du, u, λ, t) where {F,TD,VD,B,CX,CP,C}
+function (f::HamIpRHS{F,TD,VD,B,CX,CP})(du, u, λ, t) where {F,TD,VD,B,CX,CP}
     x, p = _ham_split(u, f.N)
     ∂x, ∂p = Differentiation.hamiltonian_gradient(
-        f.backend, f.h, t, f.cx(x), f.cp(p), Common.variable(λ), f.cache)
+        f.backend, f.h, t, f.cx(x), f.cp(p), Common.variable(λ))
     _ham_assign!(du, ∂p, -∂x, f.N)
     return nothing
 end
@@ -159,19 +158,18 @@ gradient out-of-place, following the canonical Hamiltonian equations:
 
 See also: [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
 """
-struct HamOoPRHS{F,TD,VD,B,CX,CP,C} <: AbstractOoPHamRHS
+struct HamOoPRHS{F,TD,VD,B,CX,CP} <: AbstractOoPHamRHS
     h::Data.Hamiltonian{F,TD,VD}
     backend::B
     N::Int
     cx::CX
     cp::CP
-    cache::C
 end
 
-function (f::HamOoPRHS{F,TD,VD,B,CX,CP,C})(u, λ, t) where {F,TD,VD,B,CX,CP,C}
+function (f::HamOoPRHS{F,TD,VD,B,CX,CP})(u, λ, t) where {F,TD,VD,B,CX,CP}
     x, p = _ham_split(u, f.N)
     ∂x, ∂p = Differentiation.hamiltonian_gradient(
-        f.backend, f.h, t, f.cx(x), f.cp(p), Common.variable(λ), f.cache)
+        f.backend, f.h, t, f.cx(x), f.cp(p), Common.variable(λ))
     return vcat(∂p, -∂x)
 end
 
@@ -268,20 +266,19 @@ The state vector is augmented as `[x; p; v]` where `v` is the variable costate.
 
 See also: [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamOoPRHS`](@ref).
 """
-struct HamIpAugRHS{F,TD,VD,B,C} <: AbstractIPHamRHS
+struct HamIpAugRHS{F,TD,VD,B} <: AbstractIPHamRHS
     h::Data.Hamiltonian{F,TD,VD}
     backend::B
     n_x::Int
     n_v::Int
-    cache::C
 end
 
-function (f::HamIpAugRHS{F,TD,VD,B,C})(du, u, λ, t) where {F,TD,VD,B,C}
+function (f::HamIpAugRHS{F,TD,VD,B})(du, u, λ, t) where {F,TD,VD,B}
     v = Common.variable(λ)
     _check_aug_batch_compat(u, v)
     x, p, _ = _aug_split(u, f.n_x, f.n_v)
-    ∂x, ∂p = Differentiation.hamiltonian_gradient(f.backend, f.h, t, x, p, v, f.cache)
-    ∂pv = Differentiation.variable_gradient(f.backend, f.h, t, x, p, v, f.cache)
+    ∂x, ∂p = Differentiation.hamiltonian_gradient(f.backend, f.h, t, x, p, v)
+    ∂pv = Differentiation.variable_gradient(f.backend, f.h, t, x, p, v)
     _aug_assign!(du, ∂p, -∂x, -∂pv, f.n_x, f.n_v)
     return nothing
 end

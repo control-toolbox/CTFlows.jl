@@ -8,13 +8,16 @@ for computing gradients of scalar Hamiltonian functions.
 
 ## Architecture
 
-The module defines an abstract contract `AbstractADBackend` with six methods:
-- `hamiltonian_gradient(backend, h, t, x, p, v, cache)` → (∂H/∂x, ∂H/∂p)
-- `variable_gradient(backend, h, t, x, p, v, cache)` → ∂H/∂v
-- `prepare_cache(backend, h, typical_t, typical_x, typical_p, typical_v)` → AbstractCache
-- `update!(cache, backend, t, x, p, v)` → nothing (re-prepare cache on type/dimension mismatch)
-- `gradient(backend, f, x, cache)` → ∇f (extension contract)
-- `derivative(backend, f, x, cache)` → df/dx (extension contract)
+The module defines an abstract contract `AbstractADBackend` with seven methods:
+- `hamiltonian_gradient(backend, h, t, x, p, v)` → (∂H/∂x, ∂H/∂p)
+- `variable_gradient(backend, h, t, x, p, v)` → ∂H/∂v
+- `gradient(backend, f, x)` → ∇f (extension contract)
+- `derivative(backend, g, t)` → dg/dt (extension contract)
+- `differentiate(backend, f, ::Val{Slot}, active, consts...)` → partial derivative at slot
+- `pushforward(backend, f, ::Val{Slot}, x, dx, consts...)` → JVP along direction dx
+
+It also defines the pure functor `WithActiveArg{F,Slot}` for argument reslotting,
+used internally by extension implementations of `differentiate` and `pushforward`.
 
 The concrete strategy `DifferentiationInterface` wraps DifferentiationInterface.jl backends
 (e.g., `AutoForwardDiff()`) and stores them in its `:ad_backend` option.
@@ -39,10 +42,11 @@ and `DifferentiationInterface.prepare_gradient`.
 - `build_ad_backend`
 - `hamiltonian_gradient`
 - `variable_gradient`
-- `prepare_cache`
-- `update!`
 - `gradient`
 - `derivative`
+- `differentiate`
+- `pushforward`
+- `WithActiveArg`
 """
 module Differentiation
 
@@ -66,6 +70,7 @@ import ..Data: Data
 # Includes (in dependency order)
 # ==============================================================================
 
+include("arg_placement.jl")
 include("abstract_ad_backend.jl")
 include("differentiation_interface.jl")
 include("building.jl")
@@ -78,12 +83,12 @@ export AbstractADBackend
 export DifferentiationInterface
 export build_ad_backend
 export ad_backend
-export prepare_cache
-export on_update
 export hamiltonian_gradient
 export variable_gradient
-export update!
 export gradient
 export derivative
+export differentiate
+export pushforward
+export WithActiveArg
 
 end # module

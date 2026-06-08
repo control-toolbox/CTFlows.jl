@@ -31,7 +31,7 @@ See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differen
 """
 function _make_oop_hvf(h, backend, ::Type{Traits.Autonomous}, ::Type{Traits.Fixed})
     return (x, p) -> begin
-        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, nothing, x, p, nothing, nothing)
+        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, nothing, x, p, nothing)
         return (∂p, -∂x)
     end
 end
@@ -61,7 +61,7 @@ See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differen
 """
 function _make_oop_hvf(h, backend, ::Type{Traits.NonAutonomous}, ::Type{Traits.Fixed})
     return (t, x, p) -> begin
-        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, x, p, nothing, nothing)
+        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, x, p, nothing)
         return (∂p, -∂x)
     end
 end
@@ -93,9 +93,9 @@ See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differen
 """
 function _make_oop_hvf(h, backend, ::Type{Traits.Autonomous}, ::Type{Traits.NonFixed})
     return (x, p, v; variable_costate::Bool=false) -> begin
-        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, nothing, x, p, v, nothing)
+        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, nothing, x, p, v)
         variable_costate || return (∂p, -∂x)
-        ∂v = Differentiation.variable_gradient(backend, h, nothing, x, p, v, nothing)
+        ∂v = Differentiation.variable_gradient(backend, h, nothing, x, p, v)
         return (∂p, -∂x, -∂v)
     end
 end
@@ -127,9 +127,9 @@ See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differen
 """
 function _make_oop_hvf(h, backend, ::Type{Traits.NonAutonomous}, ::Type{Traits.NonFixed})
     return (t, x, p, v; variable_costate::Bool=false) -> begin
-        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, x, p, v, nothing)
+        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, x, p, v)
         variable_costate || return (∂p, -∂x)
-        ∂v = Differentiation.variable_gradient(backend, h, t, x, p, v, nothing)
+        ∂v = Differentiation.variable_gradient(backend, h, t, x, p, v)
         return (∂p, -∂x, -∂v)
     end
 end
@@ -165,7 +165,7 @@ See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differen
 """
 function _make_ip_hvf(h, backend, ::Type{Traits.Autonomous}, ::Type{Traits.Fixed})
     return (dx, dp, x, p) -> begin
-        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, nothing, x, p, nothing, nothing)
+        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, nothing, x, p, nothing)
         dx .= ∂p
         dp .= .-∂x
         return nothing
@@ -199,7 +199,7 @@ See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differen
 """
 function _make_ip_hvf(h, backend, ::Type{Traits.NonAutonomous}, ::Type{Traits.Fixed})
     return (dx, dp, t, x, p) -> begin
-        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, x, p, nothing, nothing)
+        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, x, p, nothing)
         dx .= ∂p
         dp .= .-∂x
         return nothing
@@ -237,7 +237,7 @@ See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differen
 """
 function _make_ip_hvf(h, backend, ::Type{Traits.Autonomous}, ::Type{Traits.NonFixed})
     return (dx, dp, x, p, v; dpv=nothing, variable_costate::Bool=false) -> begin
-        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, nothing, x, p, v, nothing)
+        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, nothing, x, p, v)
         dx .= ∂p
         dp .= .-∂x
         if variable_costate
@@ -245,7 +245,7 @@ function _make_ip_hvf(h, backend, ::Type{Traits.Autonomous}, ::Type{Traits.NonFi
                 "dpv buffer must be provided when variable_costate=true";
                 context = "hamiltonian_vector_field IP Autonomous/NonFixed",
             ))
-            ∂v = Differentiation.variable_gradient(backend, h, nothing, x, p, v, nothing)
+            ∂v = Differentiation.variable_gradient(backend, h, nothing, x, p, v)
             dpv .= .-∂v
         end
         return nothing
@@ -283,7 +283,7 @@ See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differen
 """
 function _make_ip_hvf(h, backend, ::Type{Traits.NonAutonomous}, ::Type{Traits.NonFixed})
     return (dx, dp, t, x, p, v; dpv=nothing, variable_costate::Bool=false) -> begin
-        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, x, p, v, nothing)
+        ∂x, ∂p = Differentiation.hamiltonian_gradient(backend, h, t, x, p, v)
         dx .= ∂p
         dp .= .-∂x
         if variable_costate
@@ -291,7 +291,7 @@ function _make_ip_hvf(h, backend, ::Type{Traits.NonAutonomous}, ::Type{Traits.No
                 "dpv buffer must be provided when variable_costate=true";
                 context = "hamiltonian_vector_field IP NonAutonomous/NonFixed",
             ))
-            ∂v = Differentiation.variable_gradient(backend, h, t, x, p, v, nothing)
+            ∂v = Differentiation.variable_gradient(backend, h, t, x, p, v)
             dpv .= .-∂v
         end
         return nothing
@@ -338,7 +338,7 @@ function hamiltonian_vector_field(
     backend = if ad_backend isa Differentiation.AbstractADBackend
         ad_backend
     else
-        Differentiation.build_ad_backend(; ad_backend=ad_backend, prepare_cache=false)
+        Differentiation.build_ad_backend(; ad_backend=ad_backend)
     end
     f = inplace ? _make_ip_hvf(h, backend, TD, VD) : _make_oop_hvf(h, backend, TD, VD)
     return Data.HamiltonianVectorField(f;

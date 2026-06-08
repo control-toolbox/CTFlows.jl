@@ -133,25 +133,50 @@ function (sol::HamiltonianVectorFieldSolution)(t::Real)
 end
 
 """
+$(TYPEDEF)
+
+Callable struct returning the state component of a `HamiltonianVectorFieldSolution`.
+
+`StateProjection(sol)(t)` is equivalent to `sol(t)[1]`, but avoids creating a closure
+each time `state(sol)` is called. The solution reference is stored once at construction.
+"""
+struct StateProjection{S <: HamiltonianVectorFieldSolution} <: Function
+    sol::S
+end
+(sp::StateProjection)(t::Real) = sp.sol(t)[1]
+
+"""
+$(TYPEDEF)
+
+Callable struct returning the costate component of a `HamiltonianVectorFieldSolution`.
+
+`CostateProjection(sol)(t)` is equivalent to `sol(t)[2]`, but avoids creating a closure
+each time `costate(sol)` is called. The solution reference is stored once at construction.
+"""
+struct CostateProjection{S <: HamiltonianVectorFieldSolution} <: Function
+    sol::S
+end
+(cp::CostateProjection)(t::Real) = cp.sol(t)[2]
+
+"""
 $(TYPEDSIGNATURES)
 
 Return the solution as a state function of time `x(t)`.
 
-This is a semantic accessor that returns a function which, when called with a time,
-returns only the state component `x(t)` (not the costate).
+Returns a [`StateProjection`](@ref) wrapping the solution, callable as `x(t)`.
 
 # Arguments
 - `sol::HamiltonianVectorFieldSolution`: The Hamiltonian vector field solution.
 
 # Returns
-- `Function`: A function `t -> x(t)` that returns the state at time `t`.
+- `StateProjection`: A callable `t -> x(t)` that returns the state at time `t`.
 
 # Example
 ```julia
 using CTFlows.Solutions
 
 sol = HamiltonianVectorFieldSolution(result)
-x = state(sol)    # x is a function of time
+x = state(sol)    # x is a callable StateProjection
 x(0.0)            # initial state
 x(0.5)            # interpolated state at t = 0.5
 ```
@@ -159,7 +184,7 @@ x(0.5)            # interpolated state at t = 0.5
 See also: [`CTFlows.Solutions.costate`](@ref), [`CTFlows.Integrators.times`](@ref).
 """
 function state(sol::HamiltonianVectorFieldSolution)
-    return t -> sol(t)[1]
+    return StateProjection(sol)
 end
 
 """
@@ -167,21 +192,20 @@ $(TYPEDSIGNATURES)
 
 Return the solution as a costate function of time `p(t)`.
 
-This is a semantic accessor that returns a function which, when called with a time,
-returns only the costate component `p(t)` (not the state).
+Returns a [`CostateProjection`](@ref) wrapping the solution, callable as `p(t)`.
 
 # Arguments
 - `sol::HamiltonianVectorFieldSolution`: The Hamiltonian vector field solution.
 
 # Returns
-- `Function`: A function `t -> p(t)` that returns the costate at time `t`.
+- `CostateProjection`: A callable `t -> p(t)` that returns the costate at time `t`.
 
 # Example
 ```julia
 using CTFlows.Solutions
 
 sol = HamiltonianVectorFieldSolution(result)
-p = costate(sol)  # p is a function of time
+p = costate(sol)  # p is a callable CostateProjection
 p(0.0)            # initial costate
 p(0.5)            # interpolated costate at t = 0.5
 ```
@@ -189,21 +213,22 @@ p(0.5)            # interpolated costate at t = 0.5
 See also: [`CTFlows.Solutions.state`](@ref), [`CTFlows.Integrators.times`](@ref).
 """
 function costate(sol::HamiltonianVectorFieldSolution)
-    return t -> sol(t)[2]
+    return CostateProjection(sol)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Return the final state and costate from the solution as a tuple `(xf, pf)`.
+Return the raw final ODE state vector `[xf; pf]` from the integration result.
 
-Splits the combined state vector into state and costate halves.
+Delegates directly to the underlying integration result without splitting.
+Callers that need the split form should use `_ham_split_solution` explicitly.
 
 # Arguments
 - `sol::HamiltonianVectorFieldSolution`: The Hamiltonian vector field solution.
 
 # Returns
-- `Tuple{AbstractVector, AbstractVector}`: The final state `xf` and final costate `pf`.
+- `AbstractVector`: The concatenated final state `[xf; pf]`.
 
 See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Integrators.final_state`](@ref).
 """

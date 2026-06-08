@@ -51,9 +51,7 @@ function Differentiation.hamiltonian_gradient(
     backend::FakeVariableHarmonicADBackend,
     h::Data.AbstractHamiltonian,
     t, x, p, v,
-    cache::Union{Common.AbstractCache, Nothing},
 )
-    # ∂H/∂x = 0, ∂H/∂p = p / sum(v)
     sv = sum(v)
     return (zero(x), p ./ sv)
 end
@@ -62,20 +60,10 @@ function Differentiation.variable_gradient(
     backend::FakeVariableHarmonicADBackend,
     h::Data.AbstractHamiltonian,
     t, x, p, v,
-    cache::Union{Common.AbstractCache, Nothing},
 )
-    # ∂H/∂v = -sum(p^2) / (2 * sum(v)^2) * ones(length(v))
     sv = sum(v)
     sp2 = sum(abs2, p)
     return fill(-sp2 / (2 * sv^2), length(v))
-end
-
-function Differentiation.prepare_cache(
-    backend::FakeVariableHarmonicADBackend,
-    h::Data.AbstractHamiltonian,
-    typical_t, typical_x, typical_p, typical_v,
-)
-    return nothing
 end
 
 # =============================================================================
@@ -99,18 +87,16 @@ const H_LINEAR_VAR = Data.Hamiltonian(H_LINEAR; is_autonomous=true, is_variable=
 const BACKEND_FAKE = FakeVariableHarmonicADBackend()
 const HSYS_FAKE = Systems.HamiltonianSystem(H_LINEAR_VAR, BACKEND_FAKE)
 
-# DifferentiationInterface backends
-const DI_BACKEND_CACHED    = Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff(), prepare_cache=true)
-const DI_BACKEND_UNCACHED  = Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff(), prepare_cache=false)
-const HSYS_DI_CACHED    = Systems.HamiltonianSystem(H_LINEAR_VAR, DI_BACKEND_CACHED)
-const HSYS_DI_UNCACHED  = Systems.HamiltonianSystem(H_LINEAR_VAR, DI_BACKEND_UNCACHED)
+# DifferentiationInterface backend
+const DI_BACKEND   = Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff())
+const HSYS_DI      = Systems.HamiltonianSystem(H_LINEAR_VAR, DI_BACKEND)
 
 # Scalar-only Hamiltonian with variable: H = x³/3 - log(p) + v³/3
 # This will fail if x, p, or v are treated as vectors
 # Gradients: ∂H/∂x = x*x, ∂H/∂p = -1/p, ∂H/∂v = v*v
 H_SCALAR_VAR(x, p, v) = x^3/3 - log(p) + v^3/3
 const H_SCALAR_VAR_H = Data.Hamiltonian(H_SCALAR_VAR; is_autonomous=true, is_variable=true)
-const HSYS_SCALAR_VAR = Systems.HamiltonianSystem(H_SCALAR_VAR_H, DI_BACKEND_CACHED)
+const HSYS_SCALAR_VAR = Systems.HamiltonianSystem(H_SCALAR_VAR_H, DI_BACKEND)
 
 const INTEG = Integrators.SciML()
 
@@ -186,8 +172,8 @@ function test_variable_costate_flows()
             Test.@test Traits.variable_costate_trait(HSYS_FAKE) === Traits.SupportsVariableCostate
 
             # DI backends also support variable costate
-            Test.@test Traits.variable_costate_trait(HSYS_DI_CACHED) === Traits.SupportsVariableCostate
-            Test.@test Traits.variable_costate_trait(HSYS_DI_UNCACHED) === Traits.SupportsVariableCostate
+            Test.@test Traits.variable_costate_trait(HSYS_DI) === Traits.SupportsVariableCostate
+            Test.@test Traits.variable_costate_trait(HSYS_DI) === Traits.SupportsVariableCostate
         end
 
         Test.@testset "Integration: ad_trait on systems" begin
@@ -196,7 +182,7 @@ function test_variable_costate_flows()
             Test.@test Traits.ad_trait(HSYS_FAKE) === Traits.WithAD
 
             # DI backends also have WithAD
-            Test.@test Traits.ad_trait(HSYS_DI_CACHED) === Traits.WithAD
+            Test.@test Traits.ad_trait(HSYS_DI) === Traits.WithAD
         end
 
         Test.@testset "Integration: FakeADBackend variable_costate flow" begin
@@ -281,8 +267,8 @@ function test_variable_costate_flows()
         end
 
         Test.@testset "Integration: DI variable_costate flow" begin
-            Test.@testset "scalar cached with variable_costate=true" begin
-                hflow = Flows.build_flow(HSYS_DI_CACHED, INTEG)
+            Test.@testset "scalar with variable_costate=true" begin
+                hflow = Flows.build_flow(HSYS_DI, INTEG)
                 t0, tf = 0.0, 1.0
                 x0, p0 = 1.0, 2.0
                 v = 3.0
@@ -299,8 +285,8 @@ function test_variable_costate_flows()
                 Test.@test pvf ≈ pvf_ref  atol=ATOL
             end
 
-            Test.@testset "scalar uncached with variable_costate=true" begin
-                hflow = Flows.build_flow(HSYS_DI_UNCACHED, INTEG)
+            Test.@testset "scalar vector-v with variable_costate=true" begin
+                hflow = Flows.build_flow(HSYS_DI, INTEG)
                 t0, tf = 0.0, 1.0
                 x0, p0 = 1.0, 2.0
                 v = [3.0] # TODO: should work with a scalar.
@@ -317,8 +303,8 @@ function test_variable_costate_flows()
                 Test.@test pvf ≈ pvf_ref  atol=ATOL
             end
 
-            Test.@testset "vector cached with variable_costate=true" begin
-                hflow = Flows.build_flow(HSYS_DI_CACHED, INTEG)
+            Test.@testset "vector with variable_costate=true" begin
+                hflow = Flows.build_flow(HSYS_DI, INTEG)
                 t0, tf = 0.0, 1.0
                 x0 = [1.0, 2.0]
                 p0 = [3.0, 4.0]
@@ -339,7 +325,7 @@ function test_variable_costate_flows()
             Test.@testset "comparison FakeADBackend vs DI" begin
                 # Both should give the same numerical result
                 hflow_fake = Flows.build_flow(HSYS_FAKE, INTEG)
-                hflow_di   = Flows.build_flow(HSYS_DI_CACHED, INTEG)
+                hflow_di   = Flows.build_flow(HSYS_DI, INTEG)
 
                 t0, tf = 0.0, 1.0
                 x0, p0 = 1.0, 2.0

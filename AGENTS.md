@@ -9,8 +9,6 @@ Quick-reference for any agent working on this repository.
 **CTFlows.jl** is a Julia package in the [control-toolbox](https://github.com/control-toolbox) ecosystem.
 It provides the **flow layer** for optimal control problems: assembling systems, integrating ODEs, and building solutions.
 
-**Stack position:** CTBase → CTModels → **CTFlows** → CTSolvers → OptimalControl
-
 ---
 
 ## Source Architecture

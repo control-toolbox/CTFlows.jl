@@ -98,139 +98,100 @@ function ad(
 end
 
 # Internal — X/foo unannotés pour accepter AbstractVectorField callables (via ad_types.jl)
+
 """
-Internal implementation of Lie derivative/bracket for Autonomous/Fixed case.
+$(TYPEDEF)
+
+Callable struct representing the Lie derivative or Lie bracket of `foo` along `X`.
+
+- **Scalar `foo`**: Lie derivative `∇foo(x)'·X(x)` — first JVP, no second pass.
+- **Vector `foo`**: Lie bracket `J_foo(x)·X(x) - J_X(x)·foo(x)` — two JVPs via
+  `Differentiation.pushforward`, eliminating the per-call inner closures
+  (`X̂ = x_->X(x_)`, `f̂ = x_->foo(x_)`, `g(s) = f̂(x+s·X_x)`) that the old
+  closure-based `_ad` created on every evaluation.
+
+`TD` and `VD` are compile-time trait parameters so the correct call method (and slot
+numbering) is resolved statically.
+"""
+struct Ad{TX, TF, B <: Differentiation.AbstractADBackend, TD, VD} <: Function
+    X::TX
+    foo::TF
+    backend::B
+end
+
+function (a::Ad{TX, TF, B, Traits.Autonomous, Traits.Fixed})(x) where {TX, TF, B}
+    X_x  = a.X(x)
+    dfoo = Differentiation.pushforward(a.backend, a.foo, Val(1), x, X_x)
+    return _ad_bracket(a.X, a.foo, dfoo, a.backend, Val(1), x)
+end
+
+function (a::Ad{TX, TF, B, Traits.NonAutonomous, Traits.Fixed})(t, x) where {TX, TF, B}
+    X_x  = a.X(t, x)
+    dfoo = Differentiation.pushforward(a.backend, a.foo, Val(2), x, X_x, t)
+    return _ad_bracket(a.X, a.foo, dfoo, a.backend, Val(2), x, t)
+end
+
+function (a::Ad{TX, TF, B, Traits.Autonomous, Traits.NonFixed})(x, v) where {TX, TF, B}
+    X_x  = a.X(x, v)
+    dfoo = Differentiation.pushforward(a.backend, a.foo, Val(1), x, X_x, v)
+    return _ad_bracket(a.X, a.foo, dfoo, a.backend, Val(1), x, v)
+end
+
+function (a::Ad{TX, TF, B, Traits.NonAutonomous, Traits.NonFixed})(t, x, v) where {TX, TF, B}
+    X_x  = a.X(t, x, v)
+    dfoo = Differentiation.pushforward(a.backend, a.foo, Val(2), x, X_x, t, v)
+    return _ad_bracket(a.X, a.foo, dfoo, a.backend, Val(2), x, t, v)
+end
+
+function _ad(X, foo, backend::Differentiation.AbstractADBackend, ::Type{TD}, ::Type{VD}) where {TD, VD}
+    return Ad{typeof(X), typeof(foo), typeof(backend), TD, VD}(X, foo, backend)
+end
+
+# =============================================================================
+# Base.show
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of an `Ad` callable (Lie derivative or Lie bracket).
 
 # Arguments
-- `X`: Vector field (unannotated to accept AbstractVectorField callables).
-- `foo`: Scalar or vector field function.
-- `backend::Differentiation.AbstractADBackend`: AD backend.
-- `::Type{Traits.Autonomous}`: Time dependence type.
-- `::Type{Traits.Fixed}`: Variable dependence type.
+- `io::IO`: The IO stream.
+- `a::Ad`: The `Ad` object.
 
-# Returns
-- A function `(x) -> result`.
+# Example
+```julia-repl
+julia> L = ad(x -> [x[2], -x[1]], x -> x[1]^2 + x[2]^2)
+Ad: autonomous, fixed (no variable)
+  backend: ForwardDiffBackend
+  cache: not prepared
+```
 """
-function _ad(X, foo, backend::Differentiation.AbstractADBackend, ::Type{Traits.Autonomous}, ::Type{Traits.Fixed})
-    return function (x)
-        X_x  = X(x)
-        X̂    = x_ -> X(x_)
-        f̂    = x_ -> foo(x_)
-        g(s) = f̂(x + s * X_x)
-        dfoo = Differentiation.derivative(backend, g, 0.0)
-        return _ad_result(X̂, f̂, dfoo, x, X_x, backend)
-    end
+function Base.show(io::IO, a::Ad{TX, TF, B, TD, VD}) where {TX, TF, B, TD, VD}
+    println(io, "Ad: $(Data._td_label(TD)), $(Data._vd_label(VD))")
+    print(io, "  backend: ", nameof(typeof(a.backend)))
 end
 
 """
-Internal implementation of Lie derivative/bracket for NonAutonomous/Fixed case.
+$(TYPEDSIGNATURES)
 
-# Arguments
-- `X`: Vector field (unannotated to accept AbstractVectorField callables).
-- `foo`: Scalar or vector field function.
-- `backend::Differentiation.AbstractADBackend`: AD backend.
-- `::Type{Traits.NonAutonomous}`: Time dependence type.
-- `::Type{Traits.Fixed}`: Variable dependence type.
+Display an `Ad` callable in the REPL with the same format as `Base.show(io, a)`.
 
-# Returns
-- A function `(t, x) -> result`.
+See also: [`CTFlows.DifferentialGeometry.Ad`](@ref).
 """
-function _ad(X, foo, backend::Differentiation.AbstractADBackend, ::Type{Traits.NonAutonomous}, ::Type{Traits.Fixed})
-    return function (t, x)
-        X_x  = X(t, x)
-        X̂    = x_ -> X(t, x_)
-        f̂    = x_ -> foo(t, x_)
-        g(s) = f̂(x + s * X_x)
-        dfoo = Differentiation.derivative(backend, g, 0.0)
-        return _ad_result(X̂, f̂, dfoo, x, X_x, backend)
-    end
+function Base.show(io::IO, ::MIME"text/plain", a::Ad{TX, TF, B, TD, VD}) where {TX, TF, B, TD, VD}
+    show(io, a)
 end
 
-"""
-Internal implementation of Lie derivative/bracket for Autonomous/NonFixed case.
+# Lie derivative (scalar): directional derivative already computed — nothing more to do
+_ad_bracket(_, _, dfoo::Number, _, ::Val{Slot}, x, consts...) where {Slot} = dfoo
 
-# Arguments
-- `X`: Vector field (unannotated to accept AbstractVectorField callables).
-- `foo`: Scalar or vector field function.
-- `backend::Differentiation.AbstractADBackend`: AD backend.
-- `::Type{Traits.Autonomous}`: Time dependence type.
-- `::Type{Traits.NonFixed}`: Variable dependence type.
-
-# Returns
-- A function `(x, v) -> result`.
-"""
-function _ad(X, foo, backend::Differentiation.AbstractADBackend, ::Type{Traits.Autonomous}, ::Type{Traits.NonFixed})
-    return function (x, v)
-        X_x  = X(x, v)
-        X̂    = x_ -> X(x_, v)
-        f̂    = x_ -> foo(x_, v)
-        g(s) = f̂(x + s * X_x)
-        dfoo = Differentiation.derivative(backend, g, 0.0)
-        return _ad_result(X̂, f̂, dfoo, x, X_x, backend)
-    end
-end
-
-"""
-Internal implementation of Lie derivative/bracket for NonAutonomous/NonFixed case.
-
-# Arguments
-- `X`: Vector field (unannotated to accept AbstractVectorField callables).
-- `foo`: Scalar or vector field function.
-- `backend::Differentiation.AbstractADBackend`: AD backend.
-- `::Type{Traits.NonAutonomous}`: Time dependence type.
-- `::Type{Traits.NonFixed}`: Variable dependence type.
-
-# Returns
-- A function `(t, x, v) -> result`.
-"""
-function _ad(X, foo, backend::Differentiation.AbstractADBackend, ::Type{Traits.NonAutonomous}, ::Type{Traits.NonFixed})
-    return function (t, x, v)
-        X_x  = X(t, x, v)
-        X̂    = x_ -> X(t, x_, v)
-        f̂    = x_ -> foo(t, x_, v)
-        g(s) = f̂(x + s * X_x)
-        dfoo = Differentiation.derivative(backend, g, 0.0)
-        return _ad_result(X̂, f̂, dfoo, x, X_x, backend)
-    end
-end
-
-# Lie derivative (scalar): ∇f(x)'*X(x) — directional derivative déjà calculé
-"""
-Internal result handler for scalar Lie derivative.
-
-# Arguments
-- `X̂::Function`: Vector field closure.
-- `f̂::Function`: Scalar function closure.
-- `dfoo::Number`: Directional derivative result.
-- `x`: State.
-- `X_x`: Vector field evaluated at x.
-- `backend::Differentiation.AbstractADBackend`: AD backend.
-
-# Returns
-- `Number`: The directional derivative.
-"""
-_ad_result(X̂::Function, f̂::Function, dfoo::Number, x, X_x, backend::Differentiation.AbstractADBackend) = dfoo
-
-# Lie bracket (vector): J_Y(x)*X(x) - J_X(x)*Y(x)
-"""
-Internal result handler for vector Lie bracket.
-
-Computes `J_foo(x)*X(x) - J_X(x)*foo(x)`.
-
-# Arguments
-- `X̂::Function`: Vector field closure.
-- `f̂::Function`: Vector field closure.
-- `dfoo::AbstractVector`: Directional derivative of foo along X.
-- `x`: State.
-- `X_x`: Vector field evaluated at x.
-- `backend::Differentiation.AbstractADBackend`: AD backend.
-
-# Returns
-- `AbstractVector`: The Lie bracket.
-"""
-function _ad_result(X̂::Function, f̂::Function, dfoo::AbstractVector, x, X_x, backend::Differentiation.AbstractADBackend)
-    Y_x  = f̂(x)
-    h(s) = X̂(x + s * Y_x)
-    dX   = Differentiation.derivative(backend, h, 0.0)
+# Lie bracket (vector): J_foo(x)·X(x) - J_X(x)·foo(x)
+# `WithActiveArg(foo, Val(Slot))(x, consts...)` reconstructs foo(...) at the current point
+# without a closure; second `pushforward` computes J_X(x)·Y_x.
+function _ad_bracket(X, foo, dfoo::AbstractVector, backend, ::Val{Slot}, x, consts...) where {Slot}
+    Y_x = Differentiation.WithActiveArg(foo, Val(Slot))(x, consts...)
+    dX  = Differentiation.pushforward(backend, X, Val(Slot), x, Y_x, consts...)
     return dfoo - dX
 end

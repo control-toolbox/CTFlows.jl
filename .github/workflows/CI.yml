@@ -7,7 +7,7 @@ on:
     tags: '*'
   pull_request:
     types: [labeled, synchronize, opened, reopened]
-    
+
 jobs:
   # Job pour les runners GitHub hosted (ubuntu, windows, macos)
   test-cpu-github:
