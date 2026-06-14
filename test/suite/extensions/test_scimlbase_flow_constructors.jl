@@ -12,7 +12,8 @@ import SciMLBase: SciMLBase, ODEProblem, ODEFunction
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 using StaticArrays: SA, SVector
 
-const CTFlowsSciML = Base.get_extension(CTFlows, :CTFlowsSciML)
+const CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
+const CTFlowsSciMLFlows      = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
 const CTFlowsOrdinaryDiffEqTsit5 = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5)
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -35,7 +36,7 @@ function test_scimlbase_flow_constructors()
                 flow = Flows.Flow(f; reltol=1e-10)
                 Test.@test flow isa StateFlow
                 Test.@test flow isa AbstractFlow
-                Test.@test Flows.system(flow) isa CTFlowsSciML.SciMLFunctionSystem
+                Test.@test Flows.system(flow) isa CTFlowsSciMLFlows.SciMLFunctionSystem
             end
 
             Test.@testset "out-of-place function returns StateFlow" begin
@@ -43,7 +44,7 @@ function test_scimlbase_flow_constructors()
                 flow = Flows.Flow(f; reltol=1e-10)
                 Test.@test flow isa StateFlow
                 Test.@test flow isa AbstractFlow
-                Test.@test Flows.system(flow) isa CTFlowsSciML.SciMLFunctionSystem
+                Test.@test Flows.system(flow) isa CTFlowsSciMLFlows.SciMLFunctionSystem
             end
 
             Test.@testset "kwargs passed to integrator" begin
@@ -63,7 +64,7 @@ function test_scimlbase_flow_constructors()
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
                 prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
                 flow = Flows.Flow(prob; reltol=1e-10)
-                Test.@test flow isa CTFlowsSciML.SciMLProblemFlow
+                Test.@test flow isa CTFlowsSciMLFlows.SciMLProblemFlow
                 Test.@test flow isa AbstractFlow
             end
 
@@ -122,7 +123,7 @@ function test_scimlbase_flow_constructors()
                 prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
                 flow = Flows.Flow(prob; reltol=1e-10)
                 result = flow((0.0, 1.0), [1.0]; variable=3.0)
-                Test.@test result isa CTFlowsSciML.SciMLIntegrationResult
+                Test.@test result isa CTFlowsSciMLIntegrator.SciMLIntegrationResult
                 xf = Integrators.final_state(result)
                 Test.@test xf isa Vector
                 Test.@test length(xf) == 1

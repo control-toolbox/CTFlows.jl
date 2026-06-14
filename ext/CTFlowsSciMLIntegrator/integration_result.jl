@@ -21,6 +21,14 @@ end
 $(TYPEDSIGNATURES)
 
 Return the final state vector from the SciML ODE solution.
+
+# Arguments
+- `r::SciMLIntegrationResult`: The integration result.
+
+# Returns
+- The final state vector.
+
+See also: [`CTFlowsSciMLIntegrator.SciMLIntegrationResult`](@ref), [`CTFlows.Integrators.times`](@ref).
 """
 Integrators.final_state(r::SciMLIntegrationResult) = last(r.ode_sol.u)
 
@@ -28,6 +36,14 @@ Integrators.final_state(r::SciMLIntegrationResult) = last(r.ode_sol.u)
 $(TYPEDSIGNATURES)
 
 Return the vector of time points from the SciML ODE solution.
+
+# Arguments
+- `r::SciMLIntegrationResult`: The integration result.
+
+# Returns
+- Vector of time points.
+
+See also: [`CTFlowsSciMLIntegrator.SciMLIntegrationResult`](@ref), [`CTFlows.Integrators.final_state`](@ref).
 """
 Integrators.times(r::SciMLIntegrationResult) = r.ode_sol.t
 
@@ -35,6 +51,15 @@ Integrators.times(r::SciMLIntegrationResult) = r.ode_sol.t
 $(TYPEDSIGNATURES)
 
 Evaluate the SciML ODE solution at a specific time `t` using its interpolation.
+
+# Arguments
+- `r::SciMLIntegrationResult`: The integration result.
+- `t::Real`: The time at which to evaluate the solution.
+
+# Returns
+- The state vector at time `t`.
+
+See also: [`CTFlowsSciMLIntegrator.SciMLIntegrationResult`](@ref), [`CTFlows.Integrators.times`](@ref).
 """
 Integrators.evaluate_at(r::SciMLIntegrationResult, t::Real) = r.ode_sol(t)
 

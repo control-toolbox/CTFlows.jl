@@ -7,7 +7,7 @@
 # =============================================================================
 
 """
-    IPSciMLIpRHS{F<:SciMLBase.AbstractODEFunction{true}} <: Systems.AbstractIPRHS
+$(TYPEDEF)
 
 In-place RHS functor for an in-place SciML ODEFunction.
 
@@ -19,6 +19,8 @@ by directly calling the function.
 
 # Call signature
 `(r::IPSciMLIpRHS)(du, u, λ, t) -> nothing`
+
+See also: [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@ref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@ref).
 """
 struct IPSciMLIpRHS{F<:SciMLBase.AbstractODEFunction{true}} <: Systems.AbstractIPRHS
     f::F
@@ -30,7 +32,7 @@ function (r::IPSciMLIpRHS)(du, u, λ, t)
 end
 
 """
-    OoPSciMLIpRHS{F<:SciMLBase.AbstractODEFunction{true}} <: Systems.AbstractOoPRHS
+$(TYPEDEF)
 
 Out-of-place RHS functor for an in-place SciML ODEFunction.
 
@@ -42,6 +44,8 @@ by allocating a temporary buffer on each call.
 
 # Call signature
 `(r::OoPSciMLIpRHS)(u, λ, t) -> du`
+
+See also: [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@ref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@ref).
 """
 struct OoPSciMLIpRHS{F<:SciMLBase.AbstractODEFunction{true}} <: Systems.AbstractOoPRHS
     f::F
@@ -54,7 +58,7 @@ function (r::OoPSciMLIpRHS)(u, λ, t)
 end
 
 """
-    OoPSciMLIpFinalizeRHS{F<:SciMLBase.AbstractODEFunction{true}} <: Systems.AbstractOoPRHS
+$(TYPEDEF)
 
 Out-of-place RHS functor for an in-place SciML ODEFunction with type conversion.
 
@@ -66,6 +70,8 @@ that converts the result to match the input type (e.g., Vector → SVector).
 
 # Call signature
 `(r::OoPSciMLIpFinalizeRHS)(u, λ, t) -> du`
+
+See also: [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@ref).
 """
 struct OoPSciMLIpFinalizeRHS{F<:SciMLBase.AbstractODEFunction{true}} <: Systems.AbstractOoPRHS
     f::F
@@ -78,7 +84,7 @@ function (r::OoPSciMLIpFinalizeRHS)(u, λ, t)
 end
 
 """
-    IPSciMLOoPRHS{F<:SciMLBase.AbstractODEFunction{false}} <: Systems.AbstractIPRHS
+$(TYPEDEF)
 
 In-place RHS functor for an out-of-place SciML ODEFunction.
 
@@ -90,6 +96,8 @@ by allocating the result into the pre-allocated `du` buffer.
 
 # Call signature
 `(r::IPSciMLOoPRHS)(du, u, λ, t) -> nothing`
+
+See also: [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@ref).
 """
 struct IPSciMLOoPRHS{F<:SciMLBase.AbstractODEFunction{false}} <: Systems.AbstractIPRHS
     f::F
@@ -101,7 +109,7 @@ function (r::IPSciMLOoPRHS)(du, u, λ, t)
 end
 
 """
-    OoPSciMLOoPRHS{F<:SciMLBase.AbstractODEFunction{false}} <: Systems.AbstractOoPRHS
+$(TYPEDEF)
 
 Out-of-place RHS functor for an out-of-place SciML ODEFunction.
 
@@ -113,6 +121,8 @@ by directly calling the function.
 
 # Call signature
 `(r::OoPSciMLOoPRHS)(u, λ, t) -> du`
+
+See also: [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@ref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@ref).
 """
 struct OoPSciMLOoPRHS{F<:SciMLBase.AbstractODEFunction{false}} <: Systems.AbstractOoPRHS
     f::F
@@ -167,6 +177,20 @@ See also: [`_rhs_sciml_label`](@ref), [`IPSciMLIpRHS`](@ref), [`OoPSciMLIpRHS`](
 const _AnySciMLRHS = Union{IPSciMLIpRHS, OoPSciMLIpRHS, OoPSciMLIpFinalizeRHS,
                            IPSciMLOoPRHS, OoPSciMLOoPRHS}
 
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of a SciML RHS functor.
+
+Shows the functor type name, the wrapped ODE function's mutability trait,
+and the conversion strategy label.
+
+# Arguments
+- `io::IO`: The IO stream to write to.
+- `r::_AnySciMLRHS`: The SciML RHS functor to display.
+
+See also: [`CTFlowsSciMLFlows._rhs_sciml_label`](@ref), [`CTFlowsSciMLFlows._AnySciMLRHS`](@ref).
+"""
 function Base.show(io::IO, r::_AnySciMLRHS)
     println(io, nameof(typeof(r)))
     iip = SciMLBase.isinplace(r.f)
@@ -174,6 +198,20 @@ function Base.show(io::IO, r::_AnySciMLRHS)
     print(io,   "  converts: ", _rhs_sciml_label(r))
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display a SciML RHS functor in the REPL with text/plain MIME type.
+
+Delegates to the compact show method.
+
+# Arguments
+- `io::IO`: The IO stream to write to.
+- `::MIME"text/plain"`: The MIME type for REPL display.
+- `r::_AnySciMLRHS`: The SciML RHS functor to display.
+
+See also: [`CTFlowsSciMLFlows._AnySciMLRHS`](@ref).
+"""
 function Base.show(io::IO, ::MIME"text/plain", r::_AnySciMLRHS)
     show(io, r)
 end

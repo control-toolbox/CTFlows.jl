@@ -15,7 +15,7 @@ using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 using DiffEqBase: DiffEqBase
 using ForwardDiff: ForwardDiff
 
-const CTFlowsSciML = Base.get_extension(CTFlows, :CTFlowsSciML)
+const CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
 const CTFlowsForwardDiff = Base.get_extension(CTFlows, :CTFlowsForwardDiff)
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -29,8 +29,8 @@ function test_forwarddiff_extension()
         # ====================================================================
 
         Test.@testset "Extension availability" begin
-            Test.@testset "CTFlowsSciML is loaded" begin
-                Test.@test !isnothing(CTFlowsSciML)
+            Test.@testset "CTFlowsSciMLIntegrator is loaded" begin
+                Test.@test !isnothing(CTFlowsSciMLIntegrator)
             end
 
             Test.@testset "CTFlowsForwardDiff availability" begin

@@ -221,7 +221,7 @@ end
 # =============================================================================
 
 """
-    _AUTO_OPTION_KEYS
+$(TYPEDSIGNATURES)
 
 Tuple of option keys that support automatic resolution based on configuration type.
 
@@ -232,6 +232,11 @@ dynamically during integrator construction:
 
 Users can override automatic resolution by providing explicit `true`/`false` values
 when constructing the integrator.
+
+# Returns
+- `Tuple{Symbol, ...}`: The tuple of option keys supporting automatic resolution.
+
+See also: [`CTFlows.Integrators.build_sciml_integrator`](@ref), [`CTFlows.Configs.StatePointConfig`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref).
 """
 const _AUTO_OPTION_KEYS = (:dense, :save_everystep, :save_start)
 
@@ -329,7 +334,7 @@ since only the final state is needed.
 # Returns
 - `Dict{Symbol,Any}`: Pre-computed options optimized for point integration.
 
-See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref), [`CTFlows.Configs.AbstractPointConfig`](@ref).
+See also: [`CTFlows.Integrators.build_options`](@ref), [`CTFlows.Integrators.SciML`](@ref), [`CTFlows.Configs.AbstractPointConfig`](@ref).
 """
 function Integrators.build_options(integ::SciML, config::Configs.AbstractPointConfig)
     return integ.options_point
@@ -351,7 +356,7 @@ full trajectory storage and interpolation.
 # Returns
 - `Dict{Symbol,Any}`: Pre-computed options optimized for trajectory integration.
 
-See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref), [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref).
+See also: [`CTFlows.Integrators.build_options`](@ref), [`CTFlows.Integrators.SciML`](@ref), [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref).
 """
 function Integrators.build_options(integ::SciML, config::Configs.AbstractTrajectoryConfig)
     return integ.options_trajectory
@@ -371,7 +376,7 @@ Defaults to trajectory options when no configuration is provided.
 # Returns
 - `Dict{Symbol,Any}`: Pre-computed options for trajectory integration (fallback).
 
-See also: [`Integrators.build_options`](@ref), [`Integrators.SciML`](@ref).
+See also: [`CTFlows.Integrators.build_options`](@ref), [`CTFlows.Integrators.SciML`](@ref).
 """
 function Integrators.build_options(integ::SciML, config::Nothing)
     return integ.options_trajectory  # fallback vers Trajectory par défaut

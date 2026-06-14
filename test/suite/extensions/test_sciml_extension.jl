@@ -19,7 +19,8 @@ struct FakeTag <: Common.AbstractTag end
 using SciMLBase: SciMLBase, ODEProblem
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 import StaticArrays: SA
-const CTFlowsSciML = Base.get_extension(CTFlows, :CTFlowsSciML)
+const CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
+const CTFlowsSciMLFlows      = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
 const CTFlowsOrdinaryDiffEqTsit5 = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5)
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -37,12 +38,20 @@ function test_sciml_extension()
         # ====================================================================
 
         Test.@testset "Extension Loading" begin
-            Test.@testset "extension is loaded" begin
-                Test.@test !isnothing(CTFlowsSciML)
+            Test.@testset "CTFlowsSciMLIntegrator is loaded" begin
+                Test.@test !isnothing(CTFlowsSciMLIntegrator)
             end
 
-            Test.@testset "extension is a Module" begin
-                Test.@test CTFlowsSciML isa Module
+            Test.@testset "CTFlowsSciMLIntegrator is a Module" begin
+                Test.@test CTFlowsSciMLIntegrator isa Module
+            end
+
+            Test.@testset "CTFlowsSciMLFlows is loaded" begin
+                Test.@test !isnothing(CTFlowsSciMLFlows)
+            end
+
+            Test.@testset "CTFlowsSciMLFlows is a Module" begin
+                Test.@test CTFlowsSciMLFlows isa Module
             end
 
             Test.@testset "Tsit5 extension is loaded" begin
@@ -248,7 +257,7 @@ function test_sciml_extension()
             # Solve
             result = Integrators.solve_problem(integ, prob, opts)
 
-            Test.@test result isa CTFlowsSciML.SciMLIntegrationResult
+            Test.@test result isa CTFlowsSciMLIntegrator.SciMLIntegrationResult
             Test.@test result isa Integrators.AbstractIntegrationResult
         end
 
@@ -284,7 +293,7 @@ function test_sciml_extension()
 
                 # With unsafe=true, should not throw even with bad retcode
                 result = Integrators.solve_problem(integ, prob, opts; unsafe=true)
-                Test.@test result isa CTFlowsSciML.SciMLIntegrationResult
+                Test.@test result isa CTFlowsSciMLIntegrator.SciMLIntegrationResult
             end
         end
 
@@ -573,7 +582,7 @@ function test_sciml_extension()
             end
 
             Test.@testset "merge of empty vector throws IncorrectArgument" begin
-                Test.@test_throws Exceptions.IncorrectArgument Integrators.merge(CTFlowsSciML.SciMLIntegrationResult[])
+                Test.@test_throws Exceptions.IncorrectArgument Integrators.merge(CTFlowsSciMLIntegrator.SciMLIntegrationResult[])
             end
         end
     end

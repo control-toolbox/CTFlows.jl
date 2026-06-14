@@ -52,15 +52,50 @@ end
 Flows.system(f::SciMLProblemFlow) = nothing
 Flows.integrator(f::SciMLProblemFlow) = f.integrator
 
-# No-arg call: solve problem as-is with trajectory options
+"""
+$(TYPEDSIGNATURES)
+
+No-arg call for `SciMLProblemFlow`: solve the problem as-is with trajectory options.
+
+Uses the problem's original initial condition, time span, and parameter. Returns
+the complete integration result with trajectory data.
+
+# Arguments
+- `f::SciMLProblemFlow`: The SciML problem flow to solve.
+- `unsafe=Common.__unsafe()`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+
+# Returns
+- `AbstractIntegrationResult`: The complete integration result with trajectory data.
+
+See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@ref), [`CTFlows.Integrators.build_options`](@ref).
+"""
 function (f::SciMLProblemFlow)(; unsafe = Common.__unsafe())
     opts = Integrators.build_options(f.integrator, nothing)
-    sol = SciMLBase.solve(f.prob; opts...)
-    _check_retcode(sol, unsafe)
-    return SciMLIntegrationResult(sol)
+    return Integrators.solve_problem(f.integrator, f.prob, opts; unsafe)
 end
 
-# Remake call: modify initial condition, time span, and optionally parameter
+"""
+$(TYPEDSIGNATURES)
+
+Point call for `SciMLProblemFlow`: modify initial condition and time span, return final state.
+
+Calls `SciMLBase.remake` to modify the problem with new initial condition and time span,
+then solves with point configuration options (minimal memory usage). Returns only the
+final state, not the full trajectory.
+
+# Arguments
+- `f::SciMLProblemFlow`: The SciML problem flow to solve.
+- `t0::Real`: Initial time.
+- `x0`: Initial state vector.
+- `tf::Real`: Final time.
+- `variable=Common.__variable()`: The variable parameter value (optional, passed to remake).
+- `unsafe=Common.__unsafe()`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+
+# Returns
+- The final state vector.
+
+See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@ref), [`CTFlows.Configs.StatePointConfig`](@ref).
+"""
 function (f::SciMLProblemFlow)(
     t0::Real,
     x0,
@@ -72,12 +107,10 @@ function (f::SciMLProblemFlow)(
     if !(variable isa Common.NotProvided)
         kw = merge(kw, (; p = variable))
     end
-    prob = SciMLBase.remake(f.prob; kw...)
+    prob   = SciMLBase.remake(f.prob; kw...)
     config = Configs.StatePointConfig(t0, x0, tf)
-    opts = Integrators.build_options(f.integrator, config)
-    sol = SciMLBase.solve(prob; opts...)
-    _check_retcode(sol, unsafe)
-    result = SciMLIntegrationResult(sol)
+    opts   = Integrators.build_options(f.integrator, config)
+    result = Integrators.solve_problem(f.integrator, prob, opts; unsafe)
     return Integrators.final_state(result)
 end
 
@@ -96,7 +129,7 @@ Builds a `StateTrajectoryConfig` internally and returns the complete solution.
 - `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
 
 # Returns
-- `SciMLIntegrationResult`: The complete integration result with trajectory data.
+- `AbstractIntegrationResult`: The complete integration result with trajectory data.
 
 # Example
 ```julia
@@ -117,12 +150,10 @@ function (f::SciMLProblemFlow)(
     if !(variable isa Common.NotProvided)
         kw = merge(kw, (; p = variable))
     end
-    prob = SciMLBase.remake(f.prob; kw...)
+    prob   = SciMLBase.remake(f.prob; kw...)
     config = Configs.StateTrajectoryConfig(tspan, x0)
-    opts = Integrators.build_options(f.integrator, config)
-    sol = SciMLBase.solve(prob; opts...)
-    _check_retcode(sol, unsafe)
-    return SciMLIntegrationResult(sol)
+    opts   = Integrators.build_options(f.integrator, config)
+    return Integrators.solve_problem(f.integrator, prob, opts; unsafe)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", f::SciMLProblemFlow)
@@ -135,6 +166,19 @@ function Base.show(io::IO, ::MIME"text/plain", f::SciMLProblemFlow)
     Flows._print_user_options(io, f.integrator)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of a `SciMLProblemFlow`.
+
+Shows the time span, initial condition, and integrator information.
+
+# Arguments
+- `io::IO`: The IO stream to write to.
+- `f::SciMLProblemFlow`: The SciML problem flow to display.
+
+See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@ref).
+"""
 function Base.show(io::IO, f::SciMLProblemFlow)
     print(io, "SciMLProblemFlow(tspan=", f.prob.tspan, ")")
 end
