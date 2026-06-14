@@ -3,7 +3,7 @@
 # =============================================================================
 
 """
-    _check_retcode(sol, unsafe)
+$(TYPEDSIGNATURES)
 
 Check the return code of a SciML ODE solution and throw `SolverFailure` if integration failed.
 
@@ -13,6 +13,8 @@ Check the return code of a SciML ODE solution and throw `SolverFailure` if integ
 
 # Throws
 - `CTBase.Exceptions.SolverFailure`: If `!unsafe` and the retcode indicates failure.
+
+See also: [`CTFlows.Integrators.solve_problem`](@ref).
 """
 function _check_retcode(sol, unsafe)
     if !unsafe && !SciMLBase.successful_retcode(sol.retcode)
@@ -196,7 +198,29 @@ function Integrators.build_problem(
     return ODEProblem(f!, u0, Configs.tspan(config), λ)
 end
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Build an `ODEProblem` for augmented Hamiltonian vector field systems.
+
+Specialized overload for `HamiltonianVectorFieldSystem` with `AbstractAugmentedHamiltonianConfig`.
+Uses the augmented RHS that computes state, costate, and variable costate derivatives.
+
+# Arguments
+- `integ::SciML`: The SciML integrator strategy.
+- `system::Systems.HamiltonianVectorFieldSystem`: The Hamiltonian vector field system.
+- `config::Configs.AbstractAugmentedHamiltonianConfig`: The augmented Hamiltonian configuration.
+- `variable`: Variable parameter for the augmented system.
+
+# Returns
+- `SciMLBase.ODEProblem`: The ODE problem with augmented RHS.
+
+# Notes
+- Only in-place implementation (mutable arrays) since `pv0 = zeros(...)` guarantees mutability.
+- Uses `Systems.build_rhs_augmented` to construct the augmented RHS function.
+
+See also: [`CTFlows.Systems.build_rhs_augmented`](@ref), [`CTFlows.Configs.AbstractAugmentedHamiltonianConfig`](@ref).
+"""
 function Integrators.build_problem(
     integ::SciML,
     system::Systems.HamiltonianVectorFieldSystem,

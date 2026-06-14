@@ -35,6 +35,6 @@ julia> CTFlowsSciMLIntegrator.real_norm(u_real, 0.0) ≈ CTFlowsSciMLIntegrator.
 true
 ```
 
-See also: [`Common.deepvalue`](@ref), [`Common.real_norm`](@ref)
+See also: [`CTFlows.Common.deepvalue`](@ref), [`CTFlows.Common.real_norm`](@ref).
 """
 Common.real_norm(u::AbstractArray, t) = DiffEqBase.ODE_DEFAULT_NORM(Common.deepvalue.(u), t)

@@ -57,6 +57,22 @@ end
 # Constructors
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Construct a `SciMLFunctionSystem` from an in-place SciML ODE function.
+
+Pre-computes all three RHS functors: in-place, out-of-place (with allocation),
+and out-of-place with type conversion for immutable arrays.
+
+# Arguments
+- `f::SciMLBase.AbstractODEFunction{true}`: An in-place ODE function with signature `(du, u, p, t) -> nothing`.
+
+# Returns
+- `SciMLFunctionSystem`: The system with pre-computed RHS functors.
+
+See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@ref).
+"""
 function SciMLFunctionSystem(f::SciMLBase.AbstractODEFunction{true})
     rhs_fn              = IPSciMLIpRHS(f)
     rhs_oop_fn          = OoPSciMLIpRHS(f)
@@ -66,6 +82,22 @@ function SciMLFunctionSystem(f::SciMLBase.AbstractODEFunction{true})
     )
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Construct a `SciMLFunctionSystem` from an out-of-place SciML ODE function.
+
+Pre-computes in-place and out-of-place RHS functors. No finalize functor is needed
+since the function is already out-of-place.
+
+# Arguments
+- `f::SciMLBase.AbstractODEFunction{false}`: An out-of-place ODE function with signature `(u, p, t) -> du`.
+
+# Returns
+- `SciMLFunctionSystem`: The system with pre-computed RHS functors.
+
+See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@ref).
+"""
 function SciMLFunctionSystem(f::SciMLBase.AbstractODEFunction{false})
     rhs_fn     = IPSciMLOoPRHS(f)
     rhs_oop_fn = OoPSciMLOoPRHS(f)
@@ -93,7 +125,7 @@ Returns the pre-computed in-place closure stored in the system, which has signat
 # Returns
 - `Systems.AbstractIPRHS`: The pre-computed functor with signature `(du, u, λ, t)`.
 
-See also: `SciMLFunctionSystem`, [`Systems.rhs_oop`](@ref).
+See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlows.Systems.rhs_oop`](@ref).
 """
 Systems.rhs(sys::SciMLFunctionSystem) = sys.rhs_fn
 
@@ -113,7 +145,7 @@ always the correct callable regardless of u0 mutability.
 # Returns
 - `Systems.AbstractOoPRHS`: The pre-computed functor with signature `(u, λ, t)`.
 
-See also: `SciMLFunctionSystem`, [`Systems.rhs`](@ref).
+See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlows.Systems.rhs`](@ref).
 """
 function Systems.rhs_oop(sys::SciMLFunctionSystem{F, RHS, OOPROHS, Nothing}, ::Bool = true) where {F, RHS, OOPROHS}
     return sys.rhs_oop_fn
@@ -144,7 +176,7 @@ condition `u0` is mutable:
 - Prefer out-of-place SciML functions when u0 is immutable (e.g. `StaticArrays.SVector`)
   for best performance.
 
-See also: `SciMLFunctionSystem`, [`Systems.rhs`](@ref).
+See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlows.Systems.rhs`](@ref).
 """
 function Systems.rhs_oop(sys::SciMLFunctionSystem{F, RHS, OOPROHS, FINRHS}, is_mutable::Bool = true) where {F, RHS, OOPROHS, FINRHS}
     is_mutable && return sys.rhs_oop_fn
@@ -167,7 +199,7 @@ Shows the type name, the wrapped ODE function type, and its mutability trait.
 - `io::IO`: The IO stream to write to.
 - `sys::SciMLFunctionSystem`: The system to display.
 
-See also: `SciMLFunctionSystem`.
+See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref).
 """
 function Base.show(io::IO, sys::SciMLFunctionSystem{F}) where F
     println(io, "SciMLFunctionSystem")
@@ -188,7 +220,7 @@ Delegates to the compact show method.
 - `::MIME"text/plain"`: The MIME type for REPL display.
 - `sys::SciMLFunctionSystem`: The system to display.
 
-See also: `SciMLFunctionSystem`.
+See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref).
 """
 function Base.show(io::IO, ::MIME"text/plain", sys::SciMLFunctionSystem)
     show(io, sys)
