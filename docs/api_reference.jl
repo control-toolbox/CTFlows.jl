@@ -343,30 +343,49 @@ function generate_api_reference(src_dir::String, ext_dir::String)
         ))
     end
 
-    CTFlowsSciML = Base.get_extension(CTFlows, :CTFlowsSciML)
-    if !isnothing(CTFlowsSciML)
+    CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
+    if !isnothing(CTFlowsSciMLIntegrator)
         push!(pages, CTBase.automatic_reference_documentation(;
             subdirectory="api",
             primary_modules=[
-                CTFlowsSciML => ext(
-                    joinpath("CTFlowsSciML", "CTFlowsSciML.jl"),
-                    joinpath("CTFlowsSciML", "sciml_function_system.jl"),
-                    joinpath("CTFlowsSciML", "sciml_rhs_functors.jl"),
-                    joinpath("CTFlowsSciML", "build_and_solve.jl"),
-                    joinpath("CTFlowsSciML", "flow_constructors.jl"),
-                    joinpath("CTFlowsSciML", "integration_result.jl"),
-                    joinpath("CTFlowsSciML", "problem_flow.jl"),
-                    joinpath("CTFlowsSciML", "real_norm.jl"),
-                    joinpath("CTFlowsSciML", "strategies.jl"),
+                CTFlowsSciMLIntegrator => ext(
+                    joinpath("CTFlowsSciMLIntegrator", "CTFlowsSciMLIntegrator.jl"),
+                    joinpath("CTFlowsSciMLIntegrator", "real_norm.jl"),
+                    joinpath("CTFlowsSciMLIntegrator", "strategies.jl"),
+                    joinpath("CTFlowsSciMLIntegrator", "integration_result.jl"),
+                    joinpath("CTFlowsSciMLIntegrator", "build_and_solve.jl"),
                 ),
             ],
             external_modules_to_document=[CTFlows],
             exclude=EXCLUDE_BASE,
             public=true,
             private=true,
-            title="SciML Extension",
-            title_in_menu="SciML",
-            filename="ext_sciml",
+            title="SciML Integrator Extension",
+            title_in_menu="SciML Integrator",
+            filename="ext_sciml_integrator",
+        ))
+    end
+
+    CTFlowsSciMLFlows = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
+    if !isnothing(CTFlowsSciMLFlows)
+        push!(pages, CTBase.automatic_reference_documentation(;
+            subdirectory="api",
+            primary_modules=[
+                CTFlowsSciMLFlows => ext(
+                    joinpath("CTFlowsSciMLFlows", "CTFlowsSciMLFlows.jl"),
+                    joinpath("CTFlowsSciMLFlows", "sciml_rhs_functors.jl"),
+                    joinpath("CTFlowsSciMLFlows", "sciml_function_system.jl"),
+                    joinpath("CTFlowsSciMLFlows", "problem_flow.jl"),
+                    joinpath("CTFlowsSciMLFlows", "flow_constructors.jl"),
+                ),
+            ],
+            external_modules_to_document=[CTFlows],
+            exclude=EXCLUDE_BASE,
+            public=true,
+            private=true,
+            title="SciML Flows Extension",
+            title_in_menu="SciML Flows",
+            filename="ext_sciml_flows",
         ))
     end
 

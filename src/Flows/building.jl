@@ -90,7 +90,7 @@ This constructor builds a complete Hamiltonian flow by:
 # Throws
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): If an option is unknown, ambiguous,
   or routed to the wrong strategy.
-- [`CTBase.Exceptions.ExtensionError`](@extref): If the `CTFlowsSciML` extension is not loaded
+- [`CTBase.Exceptions.ExtensionError`](@extref): If the `CTFlowsSciMLIntegrator` extension is not loaded
   (required for `:sciml` strategy metadata).
 
 # Example
@@ -105,7 +105,7 @@ flow = Flows.Flow(h; reltol=1e-8, ad_backend=ADTypes.AutoForwardDiff())
 # Notes
 - The state dimension is inferred from the Hamiltonian's signature.
 - Use the `state_dimension` argument overload if explicit dimension is needed.
-- Requires the `CTFlowsSciML` extension to be loaded for integrator options.
+- Requires the `CTFlowsSciMLIntegrator` extension to be loaded for integrator options.
 
 See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.build_system`](@ref),
 [`_route_flow_options`](@ref), [`_build_flow_components`](@ref)

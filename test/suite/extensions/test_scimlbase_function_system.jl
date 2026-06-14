@@ -19,7 +19,7 @@ using SciMLBase: SciMLBase, ODEProblem, ODEFunction
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 using StaticArrays: SA, SVector
 
-const CTFlowsSciML = Base.get_extension(CTFlows, :CTFlowsSciML)
+const CTFlowsSciMLFlows = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
 const CTFlowsOrdinaryDiffEqTsit5 = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5)
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -38,11 +38,11 @@ function test_scimlbase_function_system()
 
         Test.@testset "Extension Loading" begin
             Test.@testset "extension is loaded" begin
-                Test.@test !isnothing(CTFlowsSciML)
+                Test.@test !isnothing(CTFlowsSciMLFlows)
             end
 
             Test.@testset "extension is a Module" begin
-                Test.@test CTFlowsSciML isa Module
+                Test.@test CTFlowsSciMLFlows isa Module
             end
         end
 
@@ -53,16 +53,16 @@ function test_scimlbase_function_system()
         Test.@testset "SciMLFunctionSystem Construction" begin
             Test.@testset "in-place ODEFunction" begin
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
-                sys = CTFlowsSciML.SciMLFunctionSystem(f)
-                Test.@test sys isa CTFlowsSciML.SciMLFunctionSystem
+                sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
+                Test.@test sys isa CTFlowsSciMLFlows.SciMLFunctionSystem
                 Test.@test sys isa Systems.AbstractStateSystem
                 Test.@test sys.f === f
             end
 
             Test.@testset "out-of-place ODEFunction" begin
                 f = ODEFunction{false}((u, p, t) -> -p .* u)
-                sys = CTFlowsSciML.SciMLFunctionSystem(f)
-                Test.@test sys isa CTFlowsSciML.SciMLFunctionSystem
+                sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
+                Test.@test sys isa CTFlowsSciMLFlows.SciMLFunctionSystem
                 Test.@test sys isa Systems.AbstractStateSystem
                 Test.@test sys.f === f
             end
@@ -75,7 +75,7 @@ function test_scimlbase_function_system()
         Test.@testset "rhs Dispatch" begin
             Test.@testset "in-place returns pre-computed functor" begin
                 f = ODEFunction((du, u, p, t) -> du .= -u)
-                sys = CTFlowsSciML.SciMLFunctionSystem(f)
+                sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
                 rhs_fn = Systems.rhs(sys)
                 Test.@test rhs_fn !== f  # Not the raw function, but a wrapper
                 Test.@test rhs_fn isa Systems.AbstractIPRHS
@@ -89,7 +89,7 @@ function test_scimlbase_function_system()
 
             Test.@testset "out-of-place returns pre-computed functor" begin
                 f = ODEFunction{false}((u, p, t) -> -u)
-                sys = CTFlowsSciML.SciMLFunctionSystem(f)
+                sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
                 rhs_oop_fn = Systems.rhs_oop(sys)
                 Test.@test rhs_oop_fn !== f  # Not the raw function, but a wrapper
                 Test.@test rhs_oop_fn isa Systems.AbstractOoPRHS
@@ -102,7 +102,7 @@ function test_scimlbase_function_system()
 
             Test.@testset "rhs on out-of-place returns iip wrapper (cross-adapter)" begin
                 f = ODEFunction{false}((u, p, t) -> -u)
-                sys = CTFlowsSciML.SciMLFunctionSystem(f)
+                sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
                 rhs_fn = Systems.rhs(sys)
                 Test.@test rhs_fn isa Systems.AbstractIPRHS
                 # Should return a wrapper that makes the oop function iip
@@ -115,7 +115,7 @@ function test_scimlbase_function_system()
 
             Test.@testset "rhs_oop on in-place returns oop wrapper (cross-adapter)" begin
                 f = ODEFunction((du, u, p, t) -> du .= -u)
-                sys = CTFlowsSciML.SciMLFunctionSystem(f)
+                sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
                 rhs_oop_fn = Systems.rhs_oop(sys)
                 Test.@test rhs_oop_fn isa Systems.AbstractOoPRHS
                 # Should return a wrapper that allocates a buffer
@@ -133,7 +133,7 @@ function test_scimlbase_function_system()
         Test.@testset "build_problem" begin
             Test.@testset "returns raw ODEProblem (no wrapper)" begin
                 f = ODEFunction((du, u, p, t) -> du .= -u)
-                sys = CTFlowsSciML.SciMLFunctionSystem(f)
+                sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
                 integ = Integrators.SciML()
                 config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=2.0)
@@ -144,7 +144,7 @@ function test_scimlbase_function_system()
 
             Test.@testset "variable wrapped in ODEParameters" begin
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
-                sys = CTFlowsSciML.SciMLFunctionSystem(f)
+                sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
                 integ = Integrators.SciML()
                 config = Configs.StatePointConfig(0.0, [1.0], 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=3.5)
@@ -160,14 +160,14 @@ function test_scimlbase_function_system()
         Test.@testset "Base.show" begin
             Test.@testset "in-place display" begin
                 f = ODEFunction((du, u, p, t) -> du .= -u)
-                sys = CTFlowsSciML.SciMLFunctionSystem(f)
+                sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
                 str = sprint(show, sys)
                 Test.@test occursin("in-place", str)
             end
 
             Test.@testset "out-of-place display" begin
                 f = ODEFunction{false}((u, p, t) -> -u)
-                sys = CTFlowsSciML.SciMLFunctionSystem(f)
+                sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
                 str = sprint(show, sys)
                 Test.@test occursin("out-of-place", str)
             end

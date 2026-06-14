@@ -2,7 +2,7 @@
 $(TYPEDEF)
 
 Tag type for SciML integrator dispatch. Used to target the implementation
-provided by the `CTFlowsSciML` package extension.
+provided by the `CTFlowsSciMLIntegrator` package extension.
 """
 struct SciMLTag <: Common.AbstractTag end
 
@@ -48,7 +48,7 @@ Generic SciML ODE integrator strategy.
 
 Wraps any SciML algorithm (e.g. `Tsit5`, `Rodas4`) through a unified
 `CTSolvers`-backed option system. The full implementation (metadata, builder
-and callable) is provided by the `CTFlowsSciML` package extension; this
+and callable) is provided by the `CTFlowsSciMLIntegrator` package extension; this
 file declares the type and **stubs** that throw `ExtensionError` until the
 extension is loaded.
 
@@ -98,13 +98,13 @@ end
 $(TYPEDSIGNATURES)
 
 Construct a `SciML` integrator. Delegates to `build_sciml_integrator`, which
-is overridden by the `CTFlowsSciML` package extension.
+is overridden by the `CTFlowsSciMLIntegrator` package extension.
 
 # Arguments
 - `kwargs...`: Options forwarded to the integrator builder (see extension documentation).
 
 # Throws
-- `CTBase.Exceptions.ExtensionError`: If the CTFlowsSciML extension is not loaded.
+- `CTBase.Exceptions.ExtensionError`: If the CTFlowsSciMLIntegrator extension is not loaded.
 
 See also: `SciML`, `build_sciml_integrator`.
 """
@@ -116,7 +116,7 @@ end
 $(TYPEDSIGNATURES)
 
 Stub builder for `SciML`. The real implementation is provided by
-`CTFlowsSciML`; this stub throws `ExtensionError` until the extension
+`CTFlowsSciMLIntegrator`; this stub throws `ExtensionError` until the extension
 is loaded.
 """
 function build_sciml_integrator(::Type{<:Common.AbstractTag}; kwargs...)
@@ -125,7 +125,7 @@ function build_sciml_integrator(::Type{<:Common.AbstractTag}; kwargs...)
             :OrdinaryDiffEqTsit5;
             message = "to construct a SciML",
             feature = "ODE integration via SciML",
-            context = "Load OrdinaryDiffEqTsit5, OrdinaryDiffEq, or DifferentialEquations to activate the CTFlowsSciML extension.",
+            context = "Load OrdinaryDiffEqTsit5, OrdinaryDiffEq, or DifferentialEquations to activate the CTFlowsSciMLIntegrator extension.",
         ),
     )
 end
@@ -133,7 +133,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Stub function that throws ExtensionError if CTFlowsSciML extension is not loaded.
+Stub function that throws ExtensionError if CTFlowsSciMLIntegrator extension is not loaded.
 Real metadata implementation provided by the extension.
 
 # Throws

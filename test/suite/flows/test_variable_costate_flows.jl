@@ -26,7 +26,7 @@ using ADTypes: ADTypes
 using DifferentiationInterface: DifferentiationInterface as DI
 
 # Load extensions for testing
-const CTFlowsSciML = Base.get_extension(CTFlows, :CTFlowsSciML)
+const CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
 const CTFlowsDifferentiationInterface = Base.get_extension(CTFlows, :CTFlowsDifferentiationInterface)
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true

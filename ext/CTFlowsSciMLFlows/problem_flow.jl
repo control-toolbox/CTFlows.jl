@@ -55,9 +55,7 @@ Flows.integrator(f::SciMLProblemFlow) = f.integrator
 # No-arg call: solve problem as-is with trajectory options
 function (f::SciMLProblemFlow)(; unsafe = Common.__unsafe())
     opts = Integrators.build_options(f.integrator, nothing)
-    sol = SciMLBase.solve(f.prob; opts...)
-    _check_retcode(sol, unsafe)
-    return SciMLIntegrationResult(sol)
+    return Integrators.solve_problem(f.integrator, f.prob, opts; unsafe)
 end
 
 # Remake call: modify initial condition, time span, and optionally parameter
@@ -72,12 +70,10 @@ function (f::SciMLProblemFlow)(
     if !(variable isa Common.NotProvided)
         kw = merge(kw, (; p = variable))
     end
-    prob = SciMLBase.remake(f.prob; kw...)
+    prob   = SciMLBase.remake(f.prob; kw...)
     config = Configs.StatePointConfig(t0, x0, tf)
-    opts = Integrators.build_options(f.integrator, config)
-    sol = SciMLBase.solve(prob; opts...)
-    _check_retcode(sol, unsafe)
-    result = SciMLIntegrationResult(sol)
+    opts   = Integrators.build_options(f.integrator, config)
+    result = Integrators.solve_problem(f.integrator, prob, opts; unsafe)
     return Integrators.final_state(result)
 end
 
@@ -96,7 +92,7 @@ Builds a `StateTrajectoryConfig` internally and returns the complete solution.
 - `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
 
 # Returns
-- `SciMLIntegrationResult`: The complete integration result with trajectory data.
+- `AbstractIntegrationResult`: The complete integration result with trajectory data.
 
 # Example
 ```julia
@@ -117,12 +113,10 @@ function (f::SciMLProblemFlow)(
     if !(variable isa Common.NotProvided)
         kw = merge(kw, (; p = variable))
     end
-    prob = SciMLBase.remake(f.prob; kw...)
+    prob   = SciMLBase.remake(f.prob; kw...)
     config = Configs.StateTrajectoryConfig(tspan, x0)
-    opts = Integrators.build_options(f.integrator, config)
-    sol = SciMLBase.solve(prob; opts...)
-    _check_retcode(sol, unsafe)
-    return SciMLIntegrationResult(sol)
+    opts   = Integrators.build_options(f.integrator, config)
+    return Integrators.solve_problem(f.integrator, prob, opts; unsafe)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", f::SciMLProblemFlow)

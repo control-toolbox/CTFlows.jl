@@ -24,7 +24,8 @@ src/
 └── Integrators/        # AbstractODEIntegrator, building logic
 
 ext/
-├── CTFlowsSciML/       # SciML ODE integration extension
+├── CTFlowsSciMLIntegrator/   # SciML integration backend (strategy, build, solve)
+├── CTFlowsSciMLFlows/        # SciML user API (Flow from ODEFunction/ODEProblem)
 ├── CTFlowsForwardDiff.jl
 ├── CTFlowsOrdinaryDiffEqTsit5.jl
 ├── CTFlowsPlots.jl

@@ -31,7 +31,7 @@ julia> using ForwardDiff
 julia> u_real = [1.0, 2.0, 3.0]
 julia> u_dual = ForwardDiff.Dual{:T}.(u_real, ones(3))
 
-julia> CTFlowsSciML.real_norm(u_real, 0.0) ≈ CTFlowsSciML.real_norm(u_dual, 0.0)
+julia> CTFlowsSciMLIntegrator.real_norm(u_real, 0.0) ≈ CTFlowsSciMLIntegrator.real_norm(u_dual, 0.0)
 true
 ```
 
