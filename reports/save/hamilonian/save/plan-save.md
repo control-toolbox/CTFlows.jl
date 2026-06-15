@@ -7,7 +7,7 @@ This plan adds a `Hamiltonian` type that wraps a scalar Hamiltonian function `H(
 
 **New types:**
 - `Hamiltonian{F, TD, VD, MD}` in `Data` module - wrapper for scalar Hamiltonian functions
-- `HamiltonianAugmentedPointConfig` and `HamiltonianAugmentedTrajectoryConfig` in `Common` - configs for augmented integration
+- `HamiltonianAugmentedEndPointConfig` and `HamiltonianAugmentedTrajectoryConfig` in `Common` - configs for augmented integration
 
 **Modified types:**
 - `HamiltonianSystem` - add optional `rhs_augmented` field and `hamiltonian_source` field to support augmented integration
@@ -469,8 +469,8 @@ grep -E "Error|Fail|Test Summary" /tmp/phase6.log
 
 > 🏗️ Applying Modules Rule — Add new config types following existing pattern
 
-- Add `struct HamiltonianAugmentedPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractConfigWithMaC{X0, PointTrait, HamiltonianTrait}`
-- Add `struct HamiltonianAugmentedTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractConfigWithMaC{X0, TrajectoryTrait, HamiltonianTrait}`
+- Add `struct HamiltonianAugmentedEndPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractConfigWithMaC{X0, EndPointMode, HamiltonianTrait}`
+- Add `struct HamiltonianAugmentedTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractConfigWithMaC{X0, TrajectoryMode, HamiltonianTrait}`
 - Implement `Base.show` methods for both configs
 - Implement `initial_condition` to return `vcat(x0, p0, zeros(m))` (m inferred at runtime)
 
@@ -481,7 +481,7 @@ grep -E "Error|Fail|Test Summary" /tmp/phase6.log
 > 📋 Applying Architecture Rule — Augmented solution builder handles result extraction for augmented flows
 
 - Implement `_aug_split_solution(u, x0, p0, m)` helper (splits [x; p; pv] into components)
-- Implement `function build_augmented_solution(result, sys::HamiltonianSystem, config::HamiltonianAugmentedPointConfig)`
+- Implement `function build_augmented_solution(result, sys::HamiltonianSystem, config::HamiltonianAugmentedEndPointConfig)`
 - Return tuple `(xf, pf, pvf)` with appropriate types (scalar/vector based on dimensions)
 - Implement `function build_augmented_solution(result, sys::HamiltonianSystem, config::HamiltonianAugmentedTrajectoryConfig)`
 - Return wrapped result with augmented accessor methods
@@ -494,7 +494,7 @@ grep -E "Error|Fail|Test Summary" /tmp/phase6.log
 
 - Create `test/suite/common/test_augmented_configs.jl`
 - Test sections:
-  - `@testset "Unit: HamiltonianAugmentedPointConfig construction"` - with scalar/vector dimensions
+  - `@testset "Unit: HamiltonianAugmentedEndPointConfig construction"` - with scalar/vector dimensions
   - `@testset "Unit: HamiltonianAugmentedTrajectoryConfig construction"` - with scalar/vector dimensions
   - `@testset "Unit: initial_condition for augmented configs"` - correct zero-padding
   - `@testset "Unit: build_augmented_solution point"` - correct splitting
@@ -513,7 +513,7 @@ grep -E "Error|Fail|Test Summary" /tmp/phase7.log
 > 📋 Applying Architecture Rule — augment parameter on flow call is most coherent with existing variable/unsafe pattern
 
 - Modify `HamiltonianFlow` callable methods to add `augment::Bool=false` keyword argument
-- In both point and trajectory callables: if `augment=true`, build `HamiltonianAugmentedPointConfig` or `HamiltonianAugmentedTrajectoryConfig`
+- In both point and trajectory callables: if `augment=true`, build `HamiltonianAugmentedEndPointConfig` or `HamiltonianAugmentedTrajectoryConfig`
 - Add validation: if `augment=true` and system is Fixed, throw IncorrectArgument
 - Add validation: if `augment=true` and `rhs_augmented===nothing`, throw PreconditionError
 
@@ -523,7 +523,7 @@ grep -E "Error|Fail|Test Summary" /tmp/phase7.log
 
 > 🏗️ Applying Modules Rule — Add dispatch for augmented configs
 
-- Add method `function call(flow::HamiltonianFlow, config::HamiltonianAugmentedPointConfig; variable, unsafe)`
+- Add method `function call(flow::HamiltonianFlow, config::HamiltonianAugmentedEndPointConfig; variable, unsafe)`
 - Build augmented initial condition `u0 = vcat(x0, p0, zeros(m))`
 - Use `rhs_augmented` from system instead of `rhs`
 - Call `build_augmented_solution` instead of `build_solution`

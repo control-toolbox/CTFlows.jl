@@ -11,14 +11,14 @@ For point configurations, extracts the initial and final times from the
 `t0` and `tf` fields.
 
 # Arguments
-- `c::AbstractPointConfig`: The point configuration.
+- `c::AbstractEndPointConfig`: The point configuration.
 
 # Returns
 - `Tuple{Real, Real}`: Time span as (t0, tf).
 
-See also: [`CTFlows.Configs.AbstractPointConfig`](@ref), [`CTFlows.Configs.tspan`](@ref).
+See also: [`CTFlows.Configs.AbstractEndPointConfig`](@ref), [`CTFlows.Configs.tspan`](@ref).
 """
-function tspan(c::AbstractPointConfig)::Tuple{Real, Real}
+function tspan(c::AbstractEndPointConfig)::Tuple{Real, Real}
     return (c.t0, c.tf)
 end
 
@@ -49,14 +49,14 @@ Return the initial time for point configurations.
 For point configurations, returns the stored `t0` field directly.
 
 # Arguments
-- `c::AbstractPointConfig`: The point configuration.
+- `c::AbstractEndPointConfig`: The point configuration.
 
 # Returns
 - `Real`: Initial time t0.
 
-See also: [`CTFlows.Configs.AbstractPointConfig`](@ref), [`CTFlows.Configs.initial_time`](@ref).
+See also: [`CTFlows.Configs.AbstractEndPointConfig`](@ref), [`CTFlows.Configs.initial_time`](@ref).
 """
-function initial_time(c::AbstractPointConfig)::Real
+function initial_time(c::AbstractEndPointConfig)::Real
     return c.t0
 end
 
@@ -87,14 +87,14 @@ Return the final time for point configurations.
 For point configurations, returns the stored `tf` field directly.
 
 # Arguments
-- `c::AbstractPointConfig`: The point configuration.
+- `c::AbstractEndPointConfig`: The point configuration.
 
 # Returns
 - `Real`: Final time tf.
 
-See also: [`CTFlows.Configs.AbstractPointConfig`](@ref), [`CTFlows.Configs.final_time`](@ref).
+See also: [`CTFlows.Configs.AbstractEndPointConfig`](@ref), [`CTFlows.Configs.final_time`](@ref).
 """
-function final_time(c::AbstractPointConfig)::Real
+function final_time(c::AbstractEndPointConfig)::Real
     return c.tf
 end
 
@@ -217,7 +217,7 @@ function initial_costate(c::AbstractStateConfig)
         "initial_costate is only defined for Hamiltonian configs";
         context = "initial_costate - requires Hamiltonian config",
         reason = "config type $(typeof(c)) does not have a costate field",
-        suggestion = "use HamiltonianPointConfig or HamiltonianTrajectoryConfig instead",
+        suggestion = "use HamiltonianEndPointConfig or HamiltonianTrajectoryConfig instead",
     ))
 end
 

@@ -70,10 +70,10 @@ function test_flow_callables_sciml_hamiltonian_system()
     Test.@testset "Flow Callables SciML HamiltonianSystem Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
-        # INTEGRATION TESTS - HamiltonianSystem → HamiltonianFlow HamiltonianPointConfig
+        # INTEGRATION TESTS - HamiltonianSystem → HamiltonianFlow HamiltonianEndPointConfig
         # ====================================================================
 
-        Test.@testset "HamiltonianFlow HamiltonianPointConfig" begin
+        Test.@testset "HamiltonianFlow HamiltonianEndPointConfig" begin
             Test.@testset "scalar x0, p0" begin
                 hflow = Flows.build_flow(HSYS, INTEG)
                 xf, pf = hflow(0.0, 1.0, 0.0, π/2)

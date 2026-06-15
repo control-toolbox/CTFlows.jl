@@ -32,7 +32,7 @@ Dans `Solutions/building.jl`, `build_solution` reçoit directement une `SciMLBas
 
 ```julia
 function build_solution(ode_sol::SciMLBase.AbstractODESolution,
-                        sys::Systems.VectorFieldSystem, config::StatePointConfig)
+                        sys::Systems.VectorFieldSystem, config::StateEndPointConfig)
     final = ode_sol.u[end]   # connaissance directe de la structure SciML
     return config.x0 isa Number ? final[1] : final
 end
@@ -79,7 +79,7 @@ end
 
 ```julia
 function build_solution(result::AbstractIntegrationResult,
-                        sys::VectorFieldSystem, config::StatePointConfig)
+                        sys::VectorFieldSystem, config::StateEndPointConfig)
     return final_state(result)
 end
 
@@ -298,7 +298,7 @@ Paramétrer `AbstractConfig` avec `X0` pour rendre la distinction scalaire/vecte
 ```julia
 abstract type AbstractConfig{X0} end
 
-struct StatePointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfig{X0}
+struct StateEndPointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfig{X0}
     t0::T0
     x0::X0
     tf::TF
@@ -322,17 +322,17 @@ initial_condition(c::AbstractConfig)           = c.x0
 ```julia
 # Cas scalaire — X0 <: Number
 function build_solution(result::AbstractIntegrationResult, sys,
-                        config::StatePointConfig{<:Real, <:Number, <:Real})
+                        config::StateEndPointConfig{<:Real, <:Number, <:Real})
     return final_state(result)[1]
 end
 
 # Cas général — vecteur
-function build_solution(result::AbstractIntegrationResult, sys, config::StatePointConfig)
+function build_solution(result::AbstractIntegrationResult, sys, config::StateEndPointConfig)
     return final_state(result)
 end
 ```
 
-La distinction scalaire/vecteur ne concerne que `StatePointConfig` — pour `StateTrajectoryConfig` on retourne toujours un `VectorFieldSolution` quelle que soit la dimension, donc pas de cas particulier à gérer.
+La distinction scalaire/vecteur ne concerne que `StateEndPointConfig` — pour `StateTrajectoryConfig` on retourne toujours un `VectorFieldSolution` quelle que soit la dimension, donc pas de cas particulier à gérer.
 
 Le paramètre `X0` sur `AbstractConfig` ne crée pas de propagation gênante : écrire `AbstractConfig` sans paramètre dans une signature signifie "tout `AbstractConfig` quel que soit `X0`", ce qui est le comportement habituel de Julia.
 
@@ -380,7 +380,7 @@ Threader `unsafe` comme kwarg à travers la chaîne d'appel, exactement comme `v
 ```julia
 # Flow callable
 function (f::Flow)(t0, x0, tf; variable=nothing, unsafe=false)
-    return call(f, StatePointConfig(t0, x0, tf); variable=variable, unsafe=unsafe)
+    return call(f, StateEndPointConfig(t0, x0, tf); variable=variable, unsafe=unsafe)
 end
 
 # call

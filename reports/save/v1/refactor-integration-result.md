@@ -54,7 +54,7 @@ Full docstrings (TYPEDEF + TYPEDSIGNATURES, @ref cross-refs).
 ### Step 3 — `src/Solutions/building.jl`
 
 - Change both `build_solution` signatures from `ode_sol::SciMLBase.AbstractODESolution` to `result::AbstractIntegrationResult`
-- `StatePointConfig` branch: `final_state(result)` replaces `ode_sol.u[end]`
+- `StateEndPointConfig` branch: `final_state(result)` replaces `ode_sol.u[end]`
 - `StateTrajectoryConfig` branch: `VectorFieldSolution(result)` (no change to wrapping logic, just different argument type)
 - Update docstrings
 
@@ -182,7 +182,7 @@ Full docstrings (TYPEDEF + TYPEDSIGNATURES, @ref cross-refs).
 - **Functional decoupling test** (the real architectural guarantee):
   - Define `MockIntegrationResult <: Solutions.AbstractIntegrationResult` — pure Julia, zero SciML imports
   - Implement `final_state`, `times`, `evaluate_at` with deterministic test data
-  - `Solutions.build_solution(mock, sys, StatePointConfig)` → returns expected state vector
+  - `Solutions.build_solution(mock, sys, StateEndPointConfig)` → returns expected state vector
   - `Solutions.build_solution(mock, sys, StateTrajectoryConfig)` → returns `VectorFieldSolution`
   - `VectorFieldSolution(mock)` callable: `sol(0.5)` returns expected value
   - `Base.show(io, sol)` and `Base.show(io, MIME("text/plain"), sol)` run without error

@@ -13,7 +13,7 @@ introduced by scalar-promotion at ODE problem construction time.
 This uses compile-time dispatch on the initial state type to avoid runtime type tests.
 
 # Arguments
-- `::Type{Traits.PointTrait}`: The point mode trait type.
+- `::Type{Traits.EndPointMode}`: The point mode trait type.
 - `::Type{Traits.StateDynamics}`: The state content trait type.
 - `initial_state::Number`: The scalar initial state.
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
@@ -21,10 +21,10 @@ This uses compile-time dispatch on the initial state type to avoid runtime type 
 # Returns
 - `Number`: The unwrapped scalar final state.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Traits.StateDynamics`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.EndPointMode`](@ref), [`CTFlows.Traits.StateDynamics`](@ref).
 """
 function build_solution(
-    ::Type{Traits.PointTrait},
+    ::Type{Traits.EndPointMode},
     ::Type{Traits.StateDynamics},
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult, 
@@ -39,7 +39,7 @@ Default implementation for trajectory configs — wrap the integration result
 in a `VectorFieldSolution` for future extensibility.
 
 # Arguments
-- `::Type{Traits.TrajectoryTrait}`: The trajectory mode trait type.
+- `::Type{Traits.TrajectoryMode}`: The trajectory mode trait type.
 - `::Type{Traits.StateDynamics}`: The state content trait type.
 - `initial_state`: The initial state.
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
@@ -47,10 +47,10 @@ in a `VectorFieldSolution` for future extensibility.
 # Returns
 - `VectorFieldSolution`: The wrapped integration result.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Traits.TrajectoryTrait`](), [`CTFlows.Traits.StateDynamics`]().
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Traits.TrajectoryMode`](), [`CTFlows.Traits.StateDynamics`]().
 """
 function build_solution(
-    ::Type{Traits.TrajectoryTrait},
+    ::Type{Traits.TrajectoryMode},
     ::Type{Traits.StateDynamics},
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult, 
@@ -79,7 +79,7 @@ For Hamiltonian systems, `n_p = n_x` always, so the augmented state is `[x; p; p
 - `Tuple{AbstractVector, AbstractVector, AbstractVector}`: Tuple `(x, p, pv)`.
 
 # Notes
-- Internal helper used by `build_solution` for `AugmentedHamiltonianPointConfig`.
+- Internal helper used by `build_solution` for `AugmentedHamiltonianEndPointConfig`.
 - Assumes `n_p = n_x` invariant for Hamiltonian systems.
 """
 function _aug_split_solution(u, x0, pv0)
@@ -104,7 +104,7 @@ Returns the final state and costate as a tuple `(xf, pf)`, dispatching on the
 type of the initial state to handle scalar, vector, and matrix cases.
 
 # Arguments
-- `::Type{Traits.PointTrait}`: The point mode trait type.
+- `::Type{Traits.EndPointMode}`: The point mode trait type.
 - `::Type{Traits.HamiltonianDynamics}`: The Hamiltonian content trait type.
 - `initial_state`: The initial state (scalar, vector, or matrix).
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
@@ -115,10 +115,10 @@ type of the initial state to handle scalar, vector, and matrix cases.
   - `Tuple{AbstractVector, AbstractVector}` for vector inputs
   - `Tuple{AbstractMatrix, AbstractMatrix}` for matrix inputs
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Traits.HamiltonianDynamics`]().
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.EndPointMode`](@ref), [`CTFlows.Traits.HamiltonianDynamics`]().
 """
 function build_solution(
-    ::Type{Traits.PointTrait},
+    ::Type{Traits.EndPointMode},
     ::Type{Traits.HamiltonianDynamics},
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
@@ -137,7 +137,7 @@ Build a solution for Hamiltonian trajectory configs.
 Wraps the integration result in a `HamiltonianVectorFieldSolution` for future extensibility.
 
 # Arguments
-- `::Type{Traits.TrajectoryTrait}`: The trajectory mode trait type.
+- `::Type{Traits.TrajectoryMode}`: The trajectory mode trait type.
 - `::Type{Traits.HamiltonianDynamics}`: The Hamiltonian content trait type.
 - `initial_state`: The initial state.
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
@@ -145,10 +145,10 @@ Wraps the integration result in a `HamiltonianVectorFieldSolution` for future ex
 # Returns
 - `HamiltonianVectorFieldSolution`: The wrapped integration result.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Traits.TrajectoryTrait`](), [`CTFlows.Traits.HamiltonianDynamics`]().
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Traits.TrajectoryMode`](), [`CTFlows.Traits.HamiltonianDynamics`]().
 """
 function build_solution(
-    ::Type{Traits.TrajectoryTrait},
+    ::Type{Traits.TrajectoryMode},
     ::Type{Traits.HamiltonianDynamics},
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
@@ -171,7 +171,7 @@ For Hamiltonian systems, `n_p = n_x` always, so the augmented state `[x; p; pv]`
 splits using only the state dimension `n = length(initial_state)`.
 
 # Arguments
-- `::Type{Traits.PointTrait}`: The point mode trait type.
+- `::Type{Traits.EndPointMode}`: The point mode trait type.
 - `::Type{Traits.AugmentedHamiltonianDynamics}`: The augmented Hamiltonian content trait type.
 - `initial_state`: The initial state (used to determine state dimension `n`).
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
@@ -183,10 +183,10 @@ splits using only the state dimension `n = length(initial_state)`.
 - Uses `_aug_split_solution` helper to split the augmented final state.
 - Assumes `n_p = n_x` invariant for Hamiltonian systems.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Traits.AugmentedHamiltonianDynamics`]().
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.EndPointMode`](@ref), [`CTFlows.Traits.AugmentedHamiltonianDynamics`]().
 """
 function build_solution(
-    ::Type{Traits.PointTrait},
+    ::Type{Traits.EndPointMode},
     ::Type{Traits.AugmentedHamiltonianDynamics},
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,

@@ -9,7 +9,7 @@ built around one key simplification: **a single strategy family**.
 CTFlows organises its code along three concerns:
 
 - **Objects** — `AbstractSystem`, `AbstractFlow`, `AbstractSolution`, and the config types
-  `StatePointConfig` / `StateTrajectoryConfig`. They are *what* is acted upon or returned.
+  `StateEndPointConfig` / `StateTrajectoryConfig`. They are *what* is acted upon or returned.
 - **Single strategy family** — `AbstractIntegrator <: CTSolvers.Strategies.AbstractStrategy`.
   This is the only family. It controls *how* the Cauchy problem is solved.
 - **Pipelines** — `build_system`, `build_flow`, `integrate`, `build_solution`, `solve`.
@@ -36,10 +36,10 @@ is the right mechanism) and that AD configuration is best expressed as a plain
 Config types carry the call-mode data and drive dispatch in `build_solution`. They are plain
 structs, not strategies.
 
-### `StatePointConfig`
+### `StateEndPointConfig`
 
 ```julia
-struct StatePointConfig{T, X, P}
+struct StateEndPointConfig{T, X, P}
     t0::T
     x0::X
     p0::P   # nothing if no costate
@@ -49,8 +49,8 @@ end
 
 Constructors:
 
-- `StatePointConfig(t0, x0, tf)` — no costate (`p0 = nothing`)
-- `StatePointConfig(t0, x0, p0, tf)` — with costate
+- `StateEndPointConfig(t0, x0, tf)` — no costate (`p0 = nothing`)
+- `StateEndPointConfig(t0, x0, p0, tf)` — with costate
 
 **Semantics**: integrate from `t0` to `tf` starting at `x0` (and `p0` if present); return
 only the **final values** `xf` (and `pf` if present).
@@ -107,7 +107,7 @@ build_solution(raw, flow::AbstractFlow, config::AbstractConfig)
   has no further dependency on whatever produced it.
 - `dimensions` is the canonical introspection point; used by the integrator to allocate
   and by the pipeline to verify compatibility.
-- `build_solution` dispatches on `config` type: for `StatePointConfig` it extracts the final
+- `build_solution` dispatches on `config` type: for `StateEndPointConfig` it extracts the final
   state (and costate); for `StateTrajectoryConfig` it wraps the full trajectory.
 
 ### 3.2 `AbstractFlow`
@@ -122,7 +122,7 @@ abstract type AbstractFlow end
 **Required methods** (`NotImplemented` defaults):
 
 ```julia
-(flow::AbstractFlow)(config)      # dispatch on StatePointConfig or StateTrajectoryConfig
+(flow::AbstractFlow)(config)      # dispatch on StateEndPointConfig or StateTrajectoryConfig
 system(flow::AbstractFlow)        # returns the embedded AbstractSystem
 integrator(flow::AbstractFlow)    # returns the embedded AbstractIntegrator
 ```
@@ -314,8 +314,8 @@ end
 `build_solution` dispatches on the config type:
 
 ```julia
-# StatePointConfig — extract and return final values
-function build_solution(raw, flow::AbstractFlow, config::StatePointConfig)
+# StateEndPointConfig — extract and return final values
+function build_solution(raw, flow::AbstractFlow, config::StateEndPointConfig)
     # extract xf (and pf if config.p0 ≢ nothing) from raw
 end
 
@@ -346,7 +346,7 @@ end
 
 | Type | Kind | Required methods |
 | --- | --- | --- |
-| `StatePointConfig` | object (config) | constructor |
+| `StateEndPointConfig` | object (config) | constructor |
 | `StateTrajectoryConfig` | object (config) | constructor |
 | `AbstractSystem` | object | `rhs!`, `dimensions`, `build_solution` |
 | `AbstractFlow` | object | `(flow)(config)`, `system`, `integrator` |

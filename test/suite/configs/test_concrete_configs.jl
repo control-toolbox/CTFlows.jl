@@ -15,9 +15,9 @@ function test_concrete_configs()
         # ====================================================================
 
         Test.@testset "UNIT TESTS - Concrete Type Construction" begin
-            Test.@testset "StatePointConfig construction" begin
-                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
-                Test.@test config isa Configs.StatePointConfig
+            Test.@testset "StateEndPointConfig construction" begin
+                config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
+                Test.@test config isa Configs.StateEndPointConfig
                 Test.@test config.t0 === 0.0
                 Test.@test config.x0 == [1.0, 0.0]
                 Test.@test config.tf === 1.0
@@ -30,9 +30,9 @@ function test_concrete_configs()
                 Test.@test config.x0 == [1.0, 0.0]
             end
 
-            Test.@testset "HamiltonianPointConfig construction" begin
-                config = Configs.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
-                Test.@test config isa Configs.HamiltonianPointConfig
+            Test.@testset "HamiltonianEndPointConfig construction" begin
+                config = Configs.HamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+                Test.@test config isa Configs.HamiltonianEndPointConfig
                 Test.@test config.t0 === 0.0
                 Test.@test config.x0 == [1.0, 0.0]
                 Test.@test config.p0 == [0.5, 0.3]
@@ -47,9 +47,9 @@ function test_concrete_configs()
                 Test.@test config.p0 == [0.5, 0.3]
             end
 
-            Test.@testset "AugmentedHamiltonianPointConfig construction" begin
-                config = Configs.AugmentedHamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
-                Test.@test config isa Configs.AugmentedHamiltonianPointConfig
+            Test.@testset "AugmentedHamiltonianEndPointConfig construction" begin
+                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+                Test.@test config isa Configs.AugmentedHamiltonianEndPointConfig
                 Test.@test config.t0 === 0.0
                 Test.@test config.x0 == [1.0, 0.0]
                 Test.@test config.p0 == [0.5, 0.3]
@@ -63,14 +63,14 @@ function test_concrete_configs()
         # ====================================================================
 
         Test.@testset "UNIT TESTS - Concrete Type Subtype Relationships" begin
-            Test.@testset "StatePointConfig subtypes" begin
-                config = Configs.StatePointConfig(0.0, [1.0], 1.0)
+            Test.@testset "StateEndPointConfig subtypes" begin
+                config = Configs.StateEndPointConfig(0.0, [1.0], 1.0)
                 Test.@test config isa Configs.AbstractConfig
-                Test.@test config isa Configs.AbstractPointConfig
+                Test.@test config isa Configs.AbstractEndPointConfig
                 Test.@test config isa Configs.AbstractStateConfig
-                Test.@test Configs.StatePointConfig <: Configs.AbstractConfig
-                Test.@test Configs.StatePointConfig <: Configs.AbstractPointConfig
-                Test.@test Configs.StatePointConfig <: Configs.AbstractStateConfig
+                Test.@test Configs.StateEndPointConfig <: Configs.AbstractConfig
+                Test.@test Configs.StateEndPointConfig <: Configs.AbstractEndPointConfig
+                Test.@test Configs.StateEndPointConfig <: Configs.AbstractStateConfig
             end
 
             Test.@testset "StateTrajectoryConfig subtypes" begin
@@ -83,14 +83,14 @@ function test_concrete_configs()
                 Test.@test Configs.StateTrajectoryConfig <: Configs.AbstractStateConfig
             end
 
-            Test.@testset "HamiltonianPointConfig subtypes" begin
-                config = Configs.HamiltonianPointConfig(0.0, [1.0], [0.5], 1.0)
+            Test.@testset "HamiltonianEndPointConfig subtypes" begin
+                config = Configs.HamiltonianEndPointConfig(0.0, [1.0], [0.5], 1.0)
                 Test.@test config isa Configs.AbstractConfig
-                Test.@test config isa Configs.AbstractPointConfig
+                Test.@test config isa Configs.AbstractEndPointConfig
                 Test.@test config isa Configs.AbstractHamiltonianConfig
-                Test.@test Configs.HamiltonianPointConfig <: Configs.AbstractConfig
-                Test.@test Configs.HamiltonianPointConfig <: Configs.AbstractPointConfig
-                Test.@test Configs.HamiltonianPointConfig <: Configs.AbstractHamiltonianConfig
+                Test.@test Configs.HamiltonianEndPointConfig <: Configs.AbstractConfig
+                Test.@test Configs.HamiltonianEndPointConfig <: Configs.AbstractEndPointConfig
+                Test.@test Configs.HamiltonianEndPointConfig <: Configs.AbstractHamiltonianConfig
             end
 
             Test.@testset "HamiltonianTrajectoryConfig subtypes" begin
@@ -103,43 +103,43 @@ function test_concrete_configs()
                 Test.@test Configs.HamiltonianTrajectoryConfig <: Configs.AbstractHamiltonianConfig
             end
 
-            Test.@testset "AugmentedHamiltonianPointConfig subtypes" begin
-                config = Configs.AugmentedHamiltonianPointConfig(0.0, [1.0], [0.5], [0.0], 1.0)
+            Test.@testset "AugmentedHamiltonianEndPointConfig subtypes" begin
+                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0], [0.5], [0.0], 1.0)
                 Test.@test config isa Configs.AbstractAugmentedHamiltonianConfig
-                Test.@test config isa Configs.AbstractPointConfig
-                Test.@test Configs.AugmentedHamiltonianPointConfig <: Configs.AbstractAugmentedHamiltonianConfig
-                Test.@test Configs.AugmentedHamiltonianPointConfig <: Configs.AbstractPointConfig
+                Test.@test config isa Configs.AbstractEndPointConfig
+                Test.@test Configs.AugmentedHamiltonianEndPointConfig <: Configs.AbstractAugmentedHamiltonianConfig
+                Test.@test Configs.AugmentedHamiltonianEndPointConfig <: Configs.AbstractEndPointConfig
             end
         end
 
         # ====================================================================
-        # UNIT TESTS - AugmentedHamiltonianPointConfig Specific Methods
+        # UNIT TESTS - AugmentedHamiltonianEndPointConfig Specific Methods
         # ====================================================================
 
-        Test.@testset "UNIT TESTS - AugmentedHamiltonianPointConfig Specific Methods" begin
-            Test.@testset "AugmentedHamiltonianPointConfig initial_condition" begin
-                config = Configs.AugmentedHamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+        Test.@testset "UNIT TESTS - AugmentedHamiltonianEndPointConfig Specific Methods" begin
+            Test.@testset "AugmentedHamiltonianEndPointConfig initial_condition" begin
+                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
                 ic = Configs.initial_condition(config)
                 Test.@test ic == [1.0, 0.0, 0.5, 0.3, 0.0, 0.0]
             end
 
-            Test.@testset "AugmentedHamiltonianPointConfig initial_state" begin
-                config = Configs.AugmentedHamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+            Test.@testset "AugmentedHamiltonianEndPointConfig initial_state" begin
+                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
                 Test.@test Configs.initial_state(config) == [1.0, 0.0]
             end
 
-            Test.@testset "AugmentedHamiltonianPointConfig initial_costate" begin
-                config = Configs.AugmentedHamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+            Test.@testset "AugmentedHamiltonianEndPointConfig initial_costate" begin
+                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
                 Test.@test Configs.initial_costate(config) == [0.5, 0.3]
             end
 
-            Test.@testset "AugmentedHamiltonianPointConfig initial_variable_costate" begin
-                config = Configs.AugmentedHamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+            Test.@testset "AugmentedHamiltonianEndPointConfig initial_variable_costate" begin
+                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
                 Test.@test Configs.initial_variable_costate(config) == [0.0, 0.0]
             end
 
-            Test.@testset "AugmentedHamiltonianPointConfig tspan" begin
-                config = Configs.AugmentedHamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+            Test.@testset "AugmentedHamiltonianEndPointConfig tspan" begin
+                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
                 Test.@test Configs.tspan(config) == (0.0, 1.0)
             end
         end
@@ -149,8 +149,8 @@ function test_concrete_configs()
         # ====================================================================
 
         Test.@testset "TYPE STABILITY TESTS" begin
-            Test.@testset "Type Stability: AugmentedHamiltonianPointConfig getters" begin
-                config = Configs.AugmentedHamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+            Test.@testset "Type Stability: AugmentedHamiltonianEndPointConfig getters" begin
+                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
                 Test.@test_nowarn Test.@inferred(Configs.initial_condition(config)) == [1.0, 0.0, 0.5, 0.3, 0.0, 0.0]
                 Test.@test_nowarn Test.@inferred(Configs.initial_state(config)) == [1.0, 0.0]
                 Test.@test_nowarn Test.@inferred(Configs.initial_costate(config)) == [0.5, 0.3]

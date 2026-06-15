@@ -34,7 +34,7 @@ const CurrentModule = TestConfigsModule
 const EXPORTED_ABSTRACT_TYPES = (
     :AbstractConfig,
     :AbstractConfigWithMaC,
-    :AbstractPointConfig,
+    :AbstractEndPointConfig,
     :AbstractTrajectoryConfig,
     :AbstractStateConfig,
     :AbstractHamiltonianConfig,
@@ -42,11 +42,11 @@ const EXPORTED_ABSTRACT_TYPES = (
 )
 
 const EXPORTED_CONCRETE_TYPES = (
-    :StatePointConfig,
+    :StateEndPointConfig,
     :StateTrajectoryConfig,
-    :HamiltonianPointConfig,
+    :HamiltonianEndPointConfig,
     :HamiltonianTrajectoryConfig,
-    :AugmentedHamiltonianPointConfig,
+    :AugmentedHamiltonianEndPointConfig,
 )
 
 const EXPORTED_FUNCTIONS = (
@@ -147,7 +147,7 @@ function test_configs_module()
             Test.@testset "Abstract types are abstract" begin
                 Test.@test isabstracttype(Configs.AbstractConfig)
                 Test.@test isabstracttype(Configs.AbstractConfigWithMaC)
-                Test.@test isabstracttype(Configs.AbstractPointConfig)
+                Test.@test isabstracttype(Configs.AbstractEndPointConfig)
                 Test.@test isabstracttype(Configs.AbstractTrajectoryConfig)
                 Test.@test isabstracttype(Configs.AbstractStateConfig)
                 Test.@test isabstracttype(Configs.AbstractHamiltonianConfig)
@@ -155,16 +155,16 @@ function test_configs_module()
             end
 
             Test.@testset "Concrete types inherit from abstract types" begin
-                Test.@test Configs.StatePointConfig <: Configs.AbstractPointConfig
-                Test.@test Configs.StatePointConfig <: Configs.AbstractStateConfig
+                Test.@test Configs.StateEndPointConfig <: Configs.AbstractEndPointConfig
+                Test.@test Configs.StateEndPointConfig <: Configs.AbstractStateConfig
                 Test.@test Configs.StateTrajectoryConfig <: Configs.AbstractTrajectoryConfig
                 Test.@test Configs.StateTrajectoryConfig <: Configs.AbstractStateConfig
-                Test.@test Configs.HamiltonianPointConfig <: Configs.AbstractPointConfig
-                Test.@test Configs.HamiltonianPointConfig <: Configs.AbstractHamiltonianConfig
+                Test.@test Configs.HamiltonianEndPointConfig <: Configs.AbstractEndPointConfig
+                Test.@test Configs.HamiltonianEndPointConfig <: Configs.AbstractHamiltonianConfig
                 Test.@test Configs.HamiltonianTrajectoryConfig <: Configs.AbstractTrajectoryConfig
                 Test.@test Configs.HamiltonianTrajectoryConfig <: Configs.AbstractHamiltonianConfig
-                Test.@test Configs.AugmentedHamiltonianPointConfig <: Configs.AbstractPointConfig
-                Test.@test Configs.AugmentedHamiltonianPointConfig <: Configs.AbstractAugmentedHamiltonianConfig
+                Test.@test Configs.AugmentedHamiltonianEndPointConfig <: Configs.AbstractEndPointConfig
+                Test.@test Configs.AugmentedHamiltonianEndPointConfig <: Configs.AbstractAugmentedHamiltonianConfig
             end
         end
     end

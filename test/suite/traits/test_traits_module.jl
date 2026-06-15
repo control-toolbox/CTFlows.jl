@@ -46,8 +46,8 @@ const EXPORTED_ABSTRACT_TYPES = (
 )
 
 const EXPORTED_CONCRETE_TYPES = (
-    :PointTrait,
-    :TrajectoryTrait,
+    :EndPointMode,
+    :TrajectoryMode,
     :StateDynamics,
     :HamiltonianDynamics,
     :AugmentedHamiltonianDynamics,
@@ -185,8 +185,8 @@ function test_traits_module()
             end
 
             Test.@testset "Concrete types inherit from abstract types" begin
-                Test.@test Traits.PointTrait <: Traits.AbstractModeTrait
-                Test.@test Traits.TrajectoryTrait <: Traits.AbstractModeTrait
+                Test.@test Traits.EndPointMode <: Traits.AbstractModeTrait
+                Test.@test Traits.TrajectoryMode <: Traits.AbstractModeTrait
                 Test.@test Traits.StateDynamics <: Traits.AbstractDynamicsTrait
                 Test.@test Traits.HamiltonianDynamics <: Traits.AbstractDynamicsTrait
                 Test.@test Traits.AugmentedHamiltonianDynamics <: Traits.AbstractDynamicsTrait

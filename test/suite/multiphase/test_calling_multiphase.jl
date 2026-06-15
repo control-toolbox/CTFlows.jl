@@ -77,7 +77,7 @@ Strategies.options(integ::MockIntegrator) = Options.StrategyOptions()
 # Mock Integrator Interface Implementation
 # ==============================================================================
 
-function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Configs.StatePointConfig; variable)
+function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Configs.StateEndPointConfig; variable)
     x0 = Configs.initial_state(config)
     tspan = Configs.tspan(config)
     return MockODEProblem(x0, tspan)
@@ -89,7 +89,7 @@ function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractS
     return MockODEProblem(x0, tspan)
 end
 
-function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Configs.HamiltonianPointConfig; variable)
+function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Configs.HamiltonianEndPointConfig; variable)
     x0, p0 = Configs.initial_state(config), Configs.initial_costate(config)
     tspan = Configs.tspan(config)
     return MockODEProblem(vcat(x0, p0), tspan)
@@ -101,7 +101,7 @@ function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractS
     return MockODEProblem(vcat(x0, p0), tspan)
 end
 
-function Integrators.build_options(integ::MockIntegrator, config::Configs.StatePointConfig)
+function Integrators.build_options(integ::MockIntegrator, config::Configs.StateEndPointConfig)
     return Dict{Symbol, Any}()
 end
 
@@ -109,7 +109,7 @@ function Integrators.build_options(integ::MockIntegrator, config::Configs.StateT
     return Dict{Symbol, Any}()
 end
 
-function Integrators.build_options(integ::MockIntegrator, config::Configs.HamiltonianPointConfig)
+function Integrators.build_options(integ::MockIntegrator, config::Configs.HamiltonianEndPointConfig)
     return Dict{Symbol, Any}()
 end
 
@@ -148,17 +148,17 @@ function Integrators.evaluate_at(result::MockIntegrationResult, t::Real)
     end
 end
 
-function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
-    # For StatePointConfig, return the final state directly (as expected by _evaluate_phase)
+function Solutions.build_solution(::Type{Traits.EndPointMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
+    # For StateEndPointConfig, return the final state directly (as expected by _evaluate_phase)
     return result.u
 end
 
-function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
+function Solutions.build_solution(::Type{Traits.TrajectoryMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
     # For StateTrajectoryConfig with StateFlow, return the full result
     return result
 end
 
-function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
+function Solutions.build_solution(::Type{Traits.EndPointMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
     # For HamiltonianFlow, return a tuple (x, p) matching _ham_split_solution behavior
     x_len = length(result.u) ÷ 2
     x_part = result.u[1:x_len]
@@ -166,7 +166,7 @@ function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.Hamil
     return (x_part, p_part)
 end
 
-function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
+function Solutions.build_solution(::Type{Traits.TrajectoryMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
     # For HamiltonianTrajectoryConfig, return the full result
     return result
 end
@@ -198,8 +198,8 @@ function test_calling_multiphase()
             x0 = [1.0, 2.0]
             p0 = [0.5, 0.3]
 
-            Test.@testset "StatePointConfig" begin
-                config = Configs.StatePointConfig(0.0, x0, 1.0)
+            Test.@testset "StateEndPointConfig" begin
+                config = Configs.StateEndPointConfig(0.0, x0, 1.0)
                 result = MultiPhase._extract_initial_state(config)
                 Test.@test result === x0
             end
@@ -210,8 +210,8 @@ function test_calling_multiphase()
                 Test.@test result === x0
             end
 
-            Test.@testset "HamiltonianPointConfig" begin
-                config = Configs.HamiltonianPointConfig(0.0, x0, p0, 1.0)
+            Test.@testset "HamiltonianEndPointConfig" begin
+                config = Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0)
                 result = MultiPhase._extract_initial_state(config)
                 Test.@test result === (x0, p0)
             end
@@ -348,14 +348,14 @@ function test_calling_multiphase()
             x = [1.0, 2.0]
             p = [0.5, 0.3]
 
-            Test.@testset "StateFlow with StatePointConfig" begin
+            Test.@testset "StateFlow with StateEndPointConfig" begin
                 sys = FakeStateSystem([1.0, 2.0])
                 integ = MockIntegrator(2.0)  # Multiplier of 2
                 flow = Flows.StateFlow(sys, integ)
                 t0 = 0.0
                 tf = 1.0
 
-                result = MultiPhase._evaluate_phase(flow, t0, tf, x, Configs.StatePointConfig(t0, x, tf); variable=Common.__variable(), unsafe=Common.__unsafe())
+                result = MultiPhase._evaluate_phase(flow, t0, tf, x, Configs.StateEndPointConfig(t0, x, tf); variable=Common.__variable(), unsafe=Common.__unsafe())
                 
                 Test.@test result == x * 2
             end
@@ -371,14 +371,14 @@ function test_calling_multiphase()
                 Test.@test result.u == x * 2
             end
 
-            Test.@testset "HamiltonianFlow with StatePointConfig" begin
+            Test.@testset "HamiltonianFlow with StateEndPointConfig" begin
                 hsys = FakeHamiltonianSystem([1.0, 2.0])
                 integ = MockIntegrator(2.0)
                 flow = Flows.HamiltonianFlow(hsys, integ)
                 t0 = 0.0
                 tf = 1.0
 
-                result = MultiPhase._evaluate_phase(flow, t0, tf, (x, p), Configs.HamiltonianPointConfig(t0, x, p, tf); variable=Common.__variable(), unsafe=Common.__unsafe())
+                result = MultiPhase._evaluate_phase(flow, t0, tf, (x, p), Configs.HamiltonianEndPointConfig(t0, x, p, tf); variable=Common.__variable(), unsafe=Common.__unsafe())
                 
                 Test.@test result[1] == x * 2
                 Test.@test result[2] == p * 2
@@ -396,7 +396,7 @@ function test_calling_multiphase()
             end
         end
 
-        Test.@testset "_evaluate_multiphase with StatePointConfig" begin
+        Test.@testset "_evaluate_multiphase with StateEndPointConfig" begin
             x0 = [1.0, 2.0]
             p0 = [0.5, 0.3]
 
@@ -407,7 +407,7 @@ function test_calling_multiphase()
                 flow2 = Flows.StateFlow(sys, integ)
                 mpf = flow1 * (0.5, flow2)
 
-                result = MultiPhase._evaluate_multiphase(mpf, Configs.StatePointConfig(0.0, x0, 1.0); variable=Common.__variable(), unsafe=Common.__unsafe())
+                result = MultiPhase._evaluate_multiphase(mpf, Configs.StateEndPointConfig(0.0, x0, 1.0); variable=Common.__variable(), unsafe=Common.__unsafe())
                 
                 # Each phase multiplies by 2, so final is x0 * 2 * 2 = x0 * 4
                 Test.@test result == x0 * 4
@@ -421,7 +421,7 @@ function test_calling_multiphase()
                 jump = [0.1, 0.2]
                 mpf = flow1 * (0.5, jump, flow2)
 
-                result = MultiPhase._evaluate_multiphase(mpf, Configs.StatePointConfig(0.0, x0, 1.0); variable=Common.__variable(), unsafe=Common.__unsafe())
+                result = MultiPhase._evaluate_multiphase(mpf, Configs.StateEndPointConfig(0.0, x0, 1.0); variable=Common.__variable(), unsafe=Common.__unsafe())
                 
                 # Phase 1: x0 * 2, then jump applied, then phase 2: (x0 * 2 + jump) * 2
                 expected = (x0 * 2 + jump) * 2
@@ -435,7 +435,7 @@ function test_calling_multiphase()
                 hflow2 = Flows.HamiltonianFlow(hsys, integ)
                 hmpf = hflow1 * (0.5, hflow2)
 
-                result = MultiPhase._evaluate_multiphase(hmpf, Configs.HamiltonianPointConfig(0.0, x0, p0, 1.0); variable=Common.__variable(), unsafe=Common.__unsafe())
+                result = MultiPhase._evaluate_multiphase(hmpf, Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0); variable=Common.__variable(), unsafe=Common.__unsafe())
                 
                 # Each phase multiplies by 2, _format_final_output returns vcat(x, p)
                 Test.@test result == vcat(x0 * 4, p0 * 4)
@@ -449,7 +449,7 @@ function test_calling_multiphase()
                 jump_p = [0.01, 0.02]
                 hmpf = hflow1 * (0.5, jump_p, hflow2)
 
-                result = MultiPhase._evaluate_multiphase(hmpf, Configs.HamiltonianPointConfig(0.0, x0, p0, 1.0); variable=Common.__variable(), unsafe=Common.__unsafe())
+                result = MultiPhase._evaluate_multiphase(hmpf, Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0); variable=Common.__variable(), unsafe=Common.__unsafe())
                 
                 # Phase 1: x0*2, p0*2, then jump_p applied to p, then phase 2: x*2, (p+jump_p)*2
                 # _format_final_output returns vcat(x, p)

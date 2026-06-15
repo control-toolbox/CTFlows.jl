@@ -5,10 +5,10 @@
 """
 $(TYPEDSIGNATURES)
 
-Display the `StatePointConfig` in tree-style format.
+Display the `StateEndPointConfig` in tree-style format.
 """
-function Base.show(io::IO, c::StatePointConfig)
-    println(io, "StatePointConfig")
+function Base.show(io::IO, c::StateEndPointConfig)
+    println(io, "StateEndPointConfig")
     println(io, "  t0: ", c.t0)
     println(io, "  x0: ", c.x0)
     print(io, "  tf: ", c.tf)
@@ -17,9 +17,9 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Display the `StatePointConfig` in REPL format.
+Display the `StateEndPointConfig` in REPL format.
 """
-function Base.show(io::IO, ::MIME"text/plain", c::StatePointConfig)
+function Base.show(io::IO, ::MIME"text/plain", c::StateEndPointConfig)
     show(io, c)
 end
 
@@ -46,10 +46,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Display the `HamiltonianPointConfig` in tree-style format.
+Display the `HamiltonianEndPointConfig` in tree-style format.
 """
-function Base.show(io::IO, c::HamiltonianPointConfig)
-    println(io, "HamiltonianPointConfig")
+function Base.show(io::IO, c::HamiltonianEndPointConfig)
+    println(io, "HamiltonianEndPointConfig")
     println(io, "  t0: ", c.t0)
     println(io, "  x0: ", c.x0)
     println(io, "  p0: ", c.p0)
@@ -59,9 +59,9 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Display the `HamiltonianPointConfig` in REPL format.
+Display the `HamiltonianEndPointConfig` in REPL format.
 """
-function Base.show(io::IO, ::MIME"text/plain", c::HamiltonianPointConfig)
+function Base.show(io::IO, ::MIME"text/plain", c::HamiltonianEndPointConfig)
     show(io, c)
 end
 
@@ -89,10 +89,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Display the `AugmentedHamiltonianPointConfig` in tree-style format.
+Display the `AugmentedHamiltonianEndPointConfig` in tree-style format.
 """
-function Base.show(io::IO, c::AugmentedHamiltonianPointConfig)
-    println(io, "AugmentedHamiltonianPointConfig")
+function Base.show(io::IO, c::AugmentedHamiltonianEndPointConfig)
+    println(io, "AugmentedHamiltonianEndPointConfig")
     println(io, "  t0: ", c.t0)
     println(io, "  x0: ", c.x0)
     println(io, "  p0: ", c.p0)
@@ -103,8 +103,8 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Display the `AugmentedHamiltonianPointConfig` in REPL format.
+Display the `AugmentedHamiltonianEndPointConfig` in REPL format.
 """
-function Base.show(io::IO, ::MIME"text/plain", c::AugmentedHamiltonianPointConfig)
+function Base.show(io::IO, ::MIME"text/plain", c::AugmentedHamiltonianEndPointConfig)
     show(io, c)
 end

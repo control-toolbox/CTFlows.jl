@@ -16,8 +16,8 @@ The trait pattern enables static dispatch on configuration properties without ru
 
 ### Mode Traits
 
-- `PointTrait` - Point integration mode (single endpoint evaluation)
-- `TrajectoryTrait` - Trajectory integration mode (full time evolution)
+- `EndPointMode` - Point integration mode (single endpoint evaluation)
+- `TrajectoryMode` - Trajectory integration mode (full time evolution)
 
 ### Content Traits
 
@@ -37,11 +37,11 @@ The trait pattern enables static dispatch on configuration properties without ru
 ### Configuration Types
 
 - `AbstractConfig` - Base configuration type
-- `AbstractPointConfig` - Point-mode configuration base
+- `AbstractEndPointConfig` - Point-mode configuration base
 - `AbstractTrajectoryConfig` - Trajectory-mode configuration base
-- `StatePointConfig` - State-only point configuration
+- `StateEndPointConfig` - State-only point configuration
 - `StateTrajectoryConfig` - State-only trajectory configuration
-- `HamiltonianPointConfig` - Hamiltonian point configuration
+- `HamiltonianEndPointConfig` - Hamiltonian point configuration
 - `HamiltonianTrajectoryConfig` - Hamiltonian trajectory configuration
 
 ## Traits

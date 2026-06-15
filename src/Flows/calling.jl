@@ -3,7 +3,7 @@ $(TYPEDSIGNATURES)
 
 Convenience call for `StateFlow` with point configuration.
 
-Builds a `StatePointConfig` internally and calls the flow with it.
+Builds a `StateEndPointConfig` internally and calls the flow with it.
 
 # Arguments
 - `f::StateFlow`: The state flow to integrate.
@@ -25,7 +25,7 @@ julia> flow = StateFlow(system, integrator)
 julia> sol = flow(0.0, [1.0, 0.0], 1.0)
 \`\`\`
 
-See also: [`CTFlows.Configs.StatePointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+See also: [`CTFlows.Configs.StateEndPointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
 """
 function (f::AbstractStateFlow)(
     t0::Real,
@@ -34,7 +34,7 @@ function (f::AbstractStateFlow)(
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 )
-    return _invoke_flow(f, Configs.StatePointConfig(t0, x0, tf); variable=variable, unsafe=unsafe)
+    return _invoke_flow(f, Configs.StateEndPointConfig(t0, x0, tf); variable=variable, unsafe=unsafe)
 end
 
 """
@@ -42,7 +42,7 @@ $(TYPEDSIGNATURES)
 
 Convenience call for `HamiltonianFlow` with point configuration.
 
-Builds a `HamiltonianPointConfig` internally and calls the flow with it.
+Builds a `HamiltonianEndPointConfig` internally and calls the flow with it.
 
 # Arguments
 - `f::HamiltonianFlow`: The Hamiltonian flow to integrate.
@@ -65,7 +65,7 @@ julia> flow = HamiltonianFlow(system, integrator)
 julia> sol = flow(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 \`\`\`
 
-See also: [`CTFlows.Configs.HamiltonianPointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
 """
 function (f::AbstractHamiltonianFlow)(
     t0::Real,
@@ -76,7 +76,7 @@ function (f::AbstractHamiltonianFlow)(
     unsafe=Common.__unsafe(),
     variable_costate::Bool=Common.__variable_costate(),
 )
-    config = Configs.HamiltonianPointConfig(t0, x0, p0, tf)
+    config = Configs.HamiltonianEndPointConfig(t0, x0, p0, tf)
     variable_costate && return _invoke_flow_variable_costate(f, config; variable=variable, unsafe=unsafe)
     return _invoke_flow(f, config; variable=variable, unsafe=unsafe)
 end
@@ -177,7 +177,7 @@ This function dispatches to one of four specialized implementations based on:
 
 # Arguments
 - `flow::CTFlows.Flows.AbstractFlow`: The flow to solve.
-- `config::CTFlows.Configs.AbstractConfig`: The integration configuration (e.g., `StatePointConfig`, `StateTrajectoryConfig`).
+- `config::CTFlows.Configs.AbstractConfig`: The integration configuration (e.g., `StateEndPointConfig`, `StateTrajectoryConfig`).
 - `variable`: The variable parameter value (required for NonFixed systems, must be omitted for Fixed systems).
 - `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
 
@@ -405,7 +405,7 @@ function _invoke_flow_variable_costate(
     ::Type{Traits.NoVariableCostate},
     ::Type{VT},
     flow::AbstractHamiltonianFlow,
-    config::Configs.HamiltonianPointConfig; variable, unsafe
+    config::Configs.HamiltonianEndPointConfig; variable, unsafe
 ) where {VT}
     throw(Exceptions.PreconditionError(
         "variable_costate=true is not supported on this flow";
@@ -420,33 +420,33 @@ $(TYPEDSIGNATURES)
 
 Variable costate call for flows that support it.
 
-Constructs an `AugmentedHamiltonianPointConfig` with zero initial variable costate
+Constructs an `AugmentedHamiltonianEndPointConfig` with zero initial variable costate
 and calls the flow with it.
 
 # Arguments
 - `::Type{Traits.SupportsVariableCostate}`: The capability trait.
 - `flow::AbstractHamiltonianFlow`: The Hamiltonian flow.
-- `config::Configs.HamiltonianPointConfig`: The base Hamiltonian point configuration.
+- `config::Configs.HamiltonianEndPointConfig`: The base Hamiltonian point configuration.
 - `variable`: The variable parameter value.
 - `unsafe`: If `true`, bypass ODE solver retcode checking.
 
 # Returns
 - `Tuple{AbstractVector, AbstractVector, AbstractVector}`: The augmented solution `(xf, pf, pvf)`.
 
-See also: [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Configs.AugmentedHamiltonianPointConfig`](@ref).
+See also: [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@ref).
 """
 function _invoke_flow_variable_costate(
     ::Type{Traits.SupportsVariableCostate},
     ::Type{VT},
     flow::AbstractHamiltonianFlow,
-    config::Configs.HamiltonianPointConfig; variable, unsafe
+    config::Configs.HamiltonianEndPointConfig; variable, unsafe
 ) where {VT}
     t0  = Configs.initial_time(config) 
     x0  = Configs.initial_state(config)
     p0  = Configs.initial_costate(config)
     pv0 = Common.make_coerce(variable)(zeros(eltype(x0), length(variable)))
     tf  = Configs.final_time(config)
-    config_aug = Configs.AugmentedHamiltonianPointConfig(t0, x0, p0, pv0, tf)
+    config_aug = Configs.AugmentedHamiltonianEndPointConfig(t0, x0, p0, pv0, tf)
     return _invoke_flow(flow, config_aug; variable=variable, unsafe=unsafe)
 end
 
@@ -467,7 +467,7 @@ function _invoke_flow_variable_costate(
     ::Type{Traits.SupportsVariableCostate},
     ::Type{Common.NotProvided},
     flow::AbstractHamiltonianFlow,
-    config::Configs.HamiltonianPointConfig; variable, unsafe
+    config::Configs.HamiltonianEndPointConfig; variable, unsafe
 )
     throw(Exceptions.PreconditionError(
         "variable must be provided when variable_costate=true";

@@ -66,7 +66,7 @@ Add `AbstractCache` as a common abstract type (parallel to `AbstractTag`, `Abstr
 abstract type AbstractCache end
 ```
 
-Add a new content trait for augmented integration (used by `AugmentedHamiltonianPointConfig` — see Step 24a):
+Add a new content trait for augmented integration (used by `AugmentedHamiltonianEndPointConfig` — see Step 24a):
 
 ```julia
 struct AugmentedHamiltonianTrait <: ContentTrait end
@@ -481,7 +481,7 @@ end
 ```
 
 `config` is typed as `AbstractConfig` (not restricted to `AbstractHamiltonianConfig`) so that
-the same `prepare_cache` works when `call` is invoked with an `AugmentedHamiltonianPointConfig`
+the same `prepare_cache` works when `call` is invoked with an `AugmentedHamiltonianEndPointConfig`
 (which defines `initial_state` and `initial_costate` via its own getters — see Step 24a).
 
 Unified `call` for all `HamiltonianFlow`s — a single implementation, no duplication:
@@ -517,7 +517,7 @@ function Integrators.build_problem(integ::SciML, sys, config; variable, cache=no
 end
 ```
 
-A new overload dispatching on `AugmentedHamiltonianPointConfig` builds the augmented RHS
+A new overload dispatching on `AugmentedHamiltonianEndPointConfig` builds the augmented RHS
 **lazily** using concrete dimensions from the config, which solves the split ambiguity when
 `N = nothing`:
 
@@ -525,7 +525,7 @@ A new overload dispatching on `AugmentedHamiltonianPointConfig` builds the augme
 function Integrators.build_problem(
     integ::SciML,
     sys::Systems.HamiltonianSystem,
-    config::Common.AugmentedHamiltonianPointConfig;
+    config::Common.AugmentedHamiltonianEndPointConfig;
     variable, cache=nothing
 )
     u0  = Common.initial_condition(config)              # vcat(x0, p0, pv0)
@@ -559,8 +559,8 @@ avoids any `augmented=true` boolean on `build_problem` and lets the entire exist
 **New config struct:**
 
 ```julia
-struct AugmentedHamiltonianPointConfig{T0<:Real, X0, P0, PV0, TF<:Real} <:
-    AbstractConfigWithMaC{X0, PointTrait, AugmentedHamiltonianTrait}
+struct AugmentedHamiltonianEndPointConfig{T0<:Real, X0, P0, PV0, TF<:Real} <:
+    AbstractConfigWithMaC{X0, EndPointMode, AugmentedHamiltonianTrait}
     t0::T0
     x0::X0
     p0::P0
@@ -569,29 +569,29 @@ struct AugmentedHamiltonianPointConfig{T0<:Real, X0, P0, PV0, TF<:Real} <:
 end
 ```
 
-`tspan` is inherited from `AbstractPointConfig` (`(c.t0, c.tf)`).
+`tspan` is inherited from `AbstractEndPointConfig` (`(c.t0, c.tf)`).
 
 **Getters** (add to `configs.jl`):
 
 ```julia
-function initial_condition(c::AugmentedHamiltonianPointConfig)
+function initial_condition(c::AugmentedHamiltonianEndPointConfig)
     return vcat(c.x0, c.p0, c.pv0)   # feeds build_problem directly
 end
 
-function initial_state(c::AugmentedHamiltonianPointConfig)
+function initial_state(c::AugmentedHamiltonianEndPointConfig)
     return c.x0
 end
 
-function initial_costate(c::AugmentedHamiltonianPointConfig)
+function initial_costate(c::AugmentedHamiltonianEndPointConfig)
     return c.p0   # enables prepare_cache (WithAD) to work unchanged
 end
 
-function initial_variable_costate(c::AugmentedHamiltonianPointConfig)
+function initial_variable_costate(c::AugmentedHamiltonianEndPointConfig)
     return c.pv0
 end
 ```
 
-Export: `AugmentedHamiltonianPointConfig`, `initial_variable_costate`.
+Export: `AugmentedHamiltonianEndPointConfig`, `initial_variable_costate`.
 
 ### Step 24 — `src/Flows/calling.jl` (modified)
 
@@ -604,7 +604,7 @@ function (f::HamiltonianFlow)(
     unsafe    = Common.__unsafe(),
     augment::Bool = false,
 )
-    config = Common.HamiltonianPointConfig(t0, x0, p0, tf)
+    config = Common.HamiltonianEndPointConfig(t0, x0, p0, tf)
     augment && return call_augmented(f, config; variable=variable, unsafe=unsafe)
     return call(f, config; variable=variable, unsafe=unsafe)
 end
@@ -617,7 +617,7 @@ Implement `call_augmented` using trait dispatch — a front-end extracts both
 # Front-end: extract both traits, delegate
 function call_augmented(
     flow::HamiltonianFlow,
-    config::Common.HamiltonianPointConfig; variable, unsafe
+    config::Common.HamiltonianEndPointConfig; variable, unsafe
 )
     sys = system(flow)
     return call_augmented(
@@ -630,7 +630,7 @@ end
 # WithoutAD — any VD: clear message
 function call_augmented(
     ::Type{Common.WithoutAD}, ::Type{<:Common.VariableDependence},
-    flow::HamiltonianFlow, config::Common.HamiltonianPointConfig; variable, unsafe
+    flow::HamiltonianFlow, config::Common.HamiltonianEndPointConfig; variable, unsafe
 )
     throw(IncorrectArgument(
         "augment=true is not supported on this flow";
@@ -643,7 +643,7 @@ end
 # Any AT — Fixed: clear message
 function call_augmented(
     ::Type{<:Common.WithAD}, ::Type{Common.Fixed},
-    flow::HamiltonianFlow, config::Common.HamiltonianPointConfig; variable, unsafe
+    flow::HamiltonianFlow, config::Common.HamiltonianEndPointConfig; variable, unsafe
 )
     throw(IncorrectArgument(
         "augment=true requires a variable-dependent Hamiltonian";
@@ -656,12 +656,12 @@ end
 # WithAD + NonFixed: valid path
 function call_augmented(
     ::Type{Common.WithAD}, ::Type{Common.NonFixed},
-    flow::HamiltonianFlow, config::Common.HamiltonianPointConfig; variable, unsafe
+    flow::HamiltonianFlow, config::Common.HamiltonianEndPointConfig; variable, unsafe
 )
     sys    = system(flow)
     x0     = Common.initial_state(config)
     pv0    = zeros(eltype(x0), length(variable))
-    config_aug = Common.AugmentedHamiltonianPointConfig(
+    config_aug = Common.AugmentedHamiltonianEndPointConfig(
         config.t0, x0, Common.initial_costate(config), pv0, config.tf
     )
     return call(flow, config_aug; variable=variable, unsafe=unsafe)
@@ -670,8 +670,8 @@ end
 
 **Key simplification**: `call(flow, config_aug; ...)` reuses the existing pipeline unchanged:
 
-- `prepare_cache` uses `initial_state`/`initial_costate` on `AugmentedHamiltonianPointConfig` ✓
-- `build_problem` dispatches on `AugmentedHamiltonianPointConfig` → calls `build_rhs_augmented(sys, n_x, n_v)` ✓
+- `prepare_cache` uses `initial_state`/`initial_costate` on `AugmentedHamiltonianEndPointConfig` ✓
+- `build_problem` dispatches on `AugmentedHamiltonianEndPointConfig` → calls `build_rhs_augmented(sys, n_x, n_v)` ✓
 - `build_solution` dispatches on `AugmentedHamiltonianTrait` → returns `(xf, pf, pvf)` ✓
 
 ### Step 25 — `src/Solutions/building.jl` (modified)
@@ -696,7 +696,7 @@ _aug_split_solution(u, x0::AbstractVector, pv0::AbstractVector) = (
 function build_solution(
     result::Integrators.AbstractIntegrationResult,
     sys::Systems.AbstractHamiltonianSystem,
-    config::Common.AbstractPointConfig{X0, Common.AugmentedHamiltonianTrait}
+    config::Common.AbstractEndPointConfig{X0, Common.AugmentedHamiltonianTrait}
 ) where {X0}
     u = Integrators.final_state(result)
     return _aug_split_solution(
@@ -711,8 +711,8 @@ Returns `(xf, pf, pvf)`. `build_augmented_solution` from the original draft is *
 
 ### Step 26 — Test Checkpoint: `augment=true`
 
-- `@testset "Unit: AugmentedHamiltonianPointConfig construction"` — fields, `initial_condition`, getters
-- `@testset "Unit: prepare_cache on AugmentedHamiltonianPointConfig"` — same result as on `HamiltonianPointConfig`
+- `@testset "Unit: AugmentedHamiltonianEndPointConfig construction"` — fields, `initial_condition`, getters
+- `@testset "Unit: prepare_cache on AugmentedHamiltonianEndPointConfig"` — same result as on `HamiltonianEndPointConfig`
 - `@testset "Error: augment=true on WithoutAD flow"` — `IncorrectArgument` with message
 - `@testset "Error: augment=true on Fixed system"` — `IncorrectArgument` with message
 - `@testset "Integration: augment=true returns (xf, pf, pvf)"`
@@ -783,7 +783,7 @@ Write docstrings for all new and modified public-facing items:
 - `src/Differentiation/building.jl` — `build_ad_backend`
 - `src/Systems/hamiltonian_system.jl` — `HamiltonianSystem`, constructors, accessors
 - `src/Systems/building.jl` — new `build_system` overloads
-- `src/Common/configs.jl` — `AugmentedHamiltonianPointConfig`, `initial_variable_costate`
+- `src/Common/configs.jl` — `AugmentedHamiltonianEndPointConfig`, `initial_variable_costate`
 - `src/Flows/calling.jl` — `prepare_cache`, `call_augmented`, `augment` parameter
 - `src/Flows/building.jl` — `Flow(h::AbstractHamiltonian; ...)`
 - `src/Solutions/building.jl` — `_aug_split_solution`, `build_solution` augmented overload

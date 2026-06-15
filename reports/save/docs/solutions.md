@@ -17,7 +17,7 @@ The Solutions module provides solution types and solution building functions for
 
 ## Traits
 
-Solution types inherit their trait information from the configuration parameter C. The configuration encodes mode (PointTrait vs TrajectoryTrait) and content (StateTrait vs HamiltonianTrait) traits, which determine what data is stored and how it can be accessed.
+Solution types inherit their trait information from the configuration parameter C. The configuration encodes mode (EndPointMode vs TrajectoryMode) and content (StateTrait vs HamiltonianTrait) traits, which determine what data is stored and how it can be accessed.
 
 ## Usage Pattern
 

@@ -212,7 +212,7 @@ f2 = Flow(sys, integrator_opts)
 f  = f1 * (t_switch, f2)
 
 # Usage identique à un flot simple
-xf       = f(t0, x0, tf)           # StatePointConfig
+xf       = f(t0, x0, tf)           # StateEndPointConfig
 sol      = f((t0, tf), x0)         # StateTrajectoryConfig
 ```
 
@@ -457,14 +457,14 @@ end
 
 ### Intégration Séquentielle dans call()
 
-Deux méthodes distinctes selon `StatePointConfig` (pas de fusion) et `StateTrajectoryConfig` (fusion progressive).
+Deux méthodes distinctes selon `StateEndPointConfig` (pas de fusion) et `StateTrajectoryConfig` (fusion progressive).
 
-#### StatePointConfig — pas de stockage intermédiaire
+#### StateEndPointConfig — pas de stockage intermédiaire
 
 ```julia
 function call(
     flow   :: Union{MultiPhaseStateFlow, MultiPhaseHamiltonianFlow},
-    config :: Common.StatePointConfig;
+    config :: Common.StateEndPointConfig;
     variable, unsafe
 )
     t0, tf    = Common.tspan(config)
@@ -542,8 +542,8 @@ end
 Construit une configuration pour une phase individuelle. Le type de config est préservé.
 
 ```julia
-function _make_phase_config(t_start, t_end, z0, ::Common.StatePointConfig)
-    return Common.StatePointConfig(t_start, z0, t_end)
+function _make_phase_config(t_start, t_end, z0, ::Common.StateEndPointConfig)
+    return Common.StateEndPointConfig(t_start, z0, t_end)
 end
 
 function _make_phase_config(t_start, t_end, z0, ::Common.StateTrajectoryConfig)
@@ -554,11 +554,11 @@ end
 #### _extract_final_state
 
 Extrait l'état final du résultat d'une phase.
-Pour `StatePointConfig`, le résultat **est** déjà l'état final.
+Pour `StateEndPointConfig`, le résultat **est** déjà l'état final.
 Pour `StateTrajectoryConfig`, l'état final est le dernier point de la trajectoire.
 
 ```julia
-_extract_final_state(result::AbstractVector) = result       # StatePointConfig → déjà l'état
+_extract_final_state(result::AbstractVector) = result       # StateEndPointConfig → déjà l'état
 _extract_final_state(result::VectorFieldSolution) = result.u[end]  # StateTrajectoryConfig
 ```
 
@@ -695,9 +695,9 @@ Note : `MultiPhaseSystem` ici n'est **pas** le `MultiPhaseSystem` de la discussi
 Les méthodes appelables (l'API publique) se comportent comme un flot simple :
 
 ```julia
-# Évaluation point (délègue à call avec StatePointConfig)
+# Évaluation point (délègue à call avec StateEndPointConfig)
 function (f::MultiPhaseStateFlow)(t0, x0, tf; variable=nothing, unsafe=false)
-    config = Common.StatePointConfig(t0, x0, tf)
+    config = Common.StateEndPointConfig(t0, x0, tf)
     return Flows.call(f, config; variable, unsafe)
 end
 
@@ -741,7 +741,7 @@ end
 
 ### 5.2 Fusion des Résultats
 
-#### StatePointConfig
+#### StateEndPointConfig
 
 Pas de fusion : on propage seulement l'état final d'une phase à l'autre. Résultat final = état final de la dernière phase.
 
@@ -923,7 +923,7 @@ end
 2. `Flow` hérite du bon sous-type abstrait selon son système
 3. `MultiPhaseStateFlow` et `MultiPhaseHamiltonianFlow` avec leurs invariants
 4. Opérateurs `*` avec `_flatten_*` pour le chaînage associatif
-5. `call()` pour `StatePointConfig` (simple)
+5. `call()` pour `StateEndPointConfig` (simple)
 6. `call()` pour `StateTrajectoryConfig` (fusion progressive)
 7. Stub `_build_merged_solution` dans `src/` + implémentation dans `CTFlowsSciML`
 8. Tests : contrats, sauts, chaînage, exactitude vs approche à la volée

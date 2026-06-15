@@ -30,7 +30,7 @@ Not all modules deserve a `DifferentialGeometry`-level treatment. Three tiers:
 | **Traits** | 🟡 Cross-cutting *conceptual* guide | Determines call signatures everywhere. Explain **once**, not per module. The DG traits/signatures table is an embryo of this. |
 | **Integrators** | 🟡 Configuration page | Mainly `SciML` + options. For advanced users switching backends. |
 | **Differentiation** | 🟡 Short page (or section in DG Limitations) | AD backend selection. Partly covered by `differential_geometry/limitations.md`. |
-| **Configs** | 🔴 API reference only | Pipeline plumbing (`StatePointConfig`, …). No narrative guide. |
+| **Configs** | 🔴 API reference only | Pipeline plumbing (`StateEndPointConfig`, …). No narrative guide. |
 | **Common** | 🔴 API reference only | Almost entirely internal (`__is_autonomous`, `__variable`, …). |
 
 🟢 = written guide · 🟡 = brief/config page · 🔴 = docstrings + generated API reference only
@@ -94,7 +94,7 @@ Modelled on `differential_geometry/index.md`. Contents:
 
 ### `flows/integrating.md`
 
-- Configuration objects (`StatePointConfig`, `StateTrajectoryConfig`,
+- Configuration objects (`StateEndPointConfig`, `StateTrajectoryConfig`,
   Hamiltonian variants) — what each drives.
 - Calling a flow; point-to-point vs full-trajectory.
 - Selecting / configuring an integrator (`SciML`, `Tsit5`, tolerances) — overlaps

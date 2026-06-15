@@ -94,7 +94,7 @@ final state, not the full trajectory.
 # Returns
 - The final state vector.
 
-See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@ref), [`CTFlows.Configs.StatePointConfig`](@ref).
+See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@ref), [`CTFlows.Configs.StateEndPointConfig`](@ref).
 """
 function (f::SciMLProblemFlow)(
     t0::Real,
@@ -108,7 +108,7 @@ function (f::SciMLProblemFlow)(
         kw = merge(kw, (; p = variable))
     end
     prob   = SciMLBase.remake(f.prob; kw...)
-    config = Configs.StatePointConfig(t0, x0, tf)
+    config = Configs.StateEndPointConfig(t0, x0, tf)
     opts   = Integrators.build_options(f.integrator, config)
     result = Integrators.solve_problem(f.integrator, prob, opts; unsafe)
     return Integrators.final_state(result)

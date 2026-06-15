@@ -8,7 +8,7 @@ $(TYPEDSIGNATURES)
 Extract the initial state from a state configuration.
 
 # Arguments
-- `config::Configs.AbstractStateConfig`: The state configuration (StatePointConfig or StateTrajectoryConfig).
+- `config::Configs.AbstractStateConfig`: The state configuration (StateEndPointConfig or StateTrajectoryConfig).
 
 # Returns
 - Initial state vector.
@@ -25,7 +25,7 @@ $(TYPEDSIGNATURES)
 Extract the initial state and costate from a Hamiltonian configuration.
 
 # Arguments
-- `config::Configs.AbstractHamiltonianConfig`: The Hamiltonian configuration (HamiltonianPointConfig or HamiltonianTrajectoryConfig).
+- `config::Configs.AbstractHamiltonianConfig`: The Hamiltonian configuration (HamiltonianEndPointConfig or HamiltonianTrajectoryConfig).
 
 # Returns
 - Tuple of (initial_state, initial_costate).
@@ -45,7 +45,7 @@ Iterates through all phases sequentially, applying jumps at switching times.
 
 # Arguments
 - `mpf`: The multi-phase flow to evaluate.
-- `config::Configs.AbstractPointConfig`: The point configuration with time span and initial conditions.
+- `config::Configs.AbstractEndPointConfig`: The point configuration with time span and initial conditions.
 - `variable`: The variable parameter value (for NonFixed systems).
 - `unsafe`: If true, bypass ODE solver retcode checking.
 
@@ -54,7 +54,7 @@ Iterates through all phases sequentially, applying jumps at switching times.
 
 See also: [`CTFlows.MultiPhase._evaluate_phase`](@ref), [`CTFlows.MultiPhase._apply_jump`](@ref).
 """
-function _evaluate_multiphase(mpf, config::Configs.AbstractPointConfig; variable, unsafe)
+function _evaluate_multiphase(mpf, config::Configs.AbstractEndPointConfig; variable, unsafe)
     t0, tf = Configs.tspan(config)
     current_state = _extract_initial_state(config)
     current_t = t0
@@ -138,7 +138,7 @@ Evaluate a single phase for a state flow with point configuration.
 - `t0`: Start time.
 - `tf`: End time.
 - `x`: Initial state.
-- `::Configs.AbstractPointConfig`: Point configuration type tag.
+- `::Configs.AbstractEndPointConfig`: Point configuration type tag.
 - `variable`: The variable parameter value (for NonFixed systems).
 - `unsafe`: If true, bypass ODE solver retcode checking.
 
@@ -147,7 +147,7 @@ Evaluate a single phase for a state flow with point configuration.
 
 See also: [`CTFlows.Flows.StateFlow`](@ref).
 """
-function _evaluate_phase(flow::Flows.StateFlow, t0, tf, x, ::Configs.AbstractPointConfig; variable, unsafe)
+function _evaluate_phase(flow::Flows.StateFlow, t0, tf, x, ::Configs.AbstractEndPointConfig; variable, unsafe)
     return flow(t0, x, tf; variable=variable, unsafe=unsafe)
 end
 
@@ -184,7 +184,7 @@ Evaluate a single phase for a Hamiltonian flow with point configuration.
 - `t0`: Start time.
 - `tf`: End time.
 - `state_tuple`: Tuple of (initial_state, initial_costate).
-- `::Configs.AbstractPointConfig`: Point configuration type tag.
+- `::Configs.AbstractEndPointConfig`: Point configuration type tag.
 - `variable`: The variable parameter value (for NonFixed systems).
 - `unsafe`: If true, bypass ODE solver retcode checking.
 
@@ -193,7 +193,7 @@ Evaluate a single phase for a Hamiltonian flow with point configuration.
 
 See also: [`CTFlows.Flows.HamiltonianFlow`](@ref).
 """
-function _evaluate_phase(flow::Flows.HamiltonianFlow, t0, tf, state_tuple, ::Configs.AbstractPointConfig; variable, unsafe)
+function _evaluate_phase(flow::Flows.HamiltonianFlow, t0, tf, state_tuple, ::Configs.AbstractEndPointConfig; variable, unsafe)
     x, p = state_tuple
     return flow(t0, x, p, tf; variable=variable, unsafe=unsafe)
 end
@@ -452,7 +452,7 @@ $(TYPEDSIGNATURES)
 
 Convenience call for `MultiPhaseStateFlow` with point configuration.
 
-Builds a `StatePointConfig` internally and evaluates the multi-phase flow.
+Builds a `StateEndPointConfig` internally and evaluates the multi-phase flow.
 
 # Arguments
 - `mpf::MultiPhaseStateFlow`: The multi-phase state flow to evaluate.
@@ -473,7 +473,7 @@ mpf = flow1 * (1.0, flow2) * (2.0, flow3)
 sol = mpf(0.0, [1.0, 0.0], 3.0)
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Configs.StatePointConfig`](@ref).
+See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Configs.StateEndPointConfig`](@ref).
 """
 function (mpf::MultiPhaseFlow{TD, VD, Traits.StateDynamics})(
     t0::Real,
@@ -482,7 +482,7 @@ function (mpf::MultiPhaseFlow{TD, VD, Traits.StateDynamics})(
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 ) where {TD, VD}
-    config = Configs.StatePointConfig(t0, x0, tf)
+    config = Configs.StateEndPointConfig(t0, x0, tf)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
 
@@ -529,7 +529,7 @@ $(TYPEDSIGNATURES)
 
 Convenience call for `MultiPhaseHamiltonianFlow` with point configuration.
 
-Builds a `HamiltonianPointConfig` internally and evaluates the multi-phase flow.
+Builds a `HamiltonianEndPointConfig` internally and evaluates the multi-phase flow.
 
 # Arguments
 - `mpf::MultiPhaseHamiltonianFlow`: The multi-phase Hamiltonian flow to evaluate.
@@ -551,7 +551,7 @@ mpf = flow1 * (1.0, flow2) * (2.0, flow3)
 sol = mpf(0.0, [1.0, 0.0], [0.5, 0.3], 3.0)
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Configs.HamiltonianPointConfig`](@ref).
+See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref).
 """
 function (mpf::MultiPhaseFlow{TD, VD, Traits.HamiltonianDynamics})(
     t0::Real,
@@ -561,7 +561,7 @@ function (mpf::MultiPhaseFlow{TD, VD, Traits.HamiltonianDynamics})(
     variable=Common.__variable(),
     unsafe=Common.__unsafe(),
 ) where {TD, VD}
-    config = Configs.HamiltonianPointConfig(t0, x0, p0, tf)
+    config = Configs.HamiltonianEndPointConfig(t0, x0, p0, tf)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
 

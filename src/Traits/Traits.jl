@@ -7,7 +7,7 @@ This module provides the trait system used throughout CTFlows for compile-time
 dispatch on:
 - Time dependence: [`Autonomous`](@extref), [`NonAutonomous`](@extref)
 - Variable dependence: [`Fixed`](@ref), [`NonFixed`](@ref)
-- Integration mode: [`PointTrait`](@ref), [`TrajectoryTrait`](@ref)
+- Integration mode: [`EndPointMode`](@ref), [`TrajectoryMode`](@ref)
 - Dynamics type: [`StateDynamics`](@ref), [`HamiltonianDynamics`](@ref), [`AugmentedHamiltonianDynamics`](@ref)
 - Mutability: [`InPlace`](@ref), [`OutOfPlace`](@ref)
 - Automatic differentiation: [`WithAD`](@ref), [`WithoutAD`](@ref)
@@ -55,7 +55,7 @@ export AbstractModeTrait, AbstractDynamicsTrait
 export AbstractMutabilityTrait
 export AbstractADTrait
 export AbstractVariableCostateCapability
-export PointTrait, TrajectoryTrait
+export EndPointMode, TrajectoryMode
 export StateDynamics, HamiltonianDynamics, AugmentedHamiltonianDynamics
 export InPlace, OutOfPlace
 export WithAD, WithoutAD

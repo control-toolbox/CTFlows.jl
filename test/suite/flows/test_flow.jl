@@ -59,7 +59,7 @@ function Flows.integrator(flow::FakeFlow)
 end
 
 # Config-based callable - both Fixed and NonFixed require variable, unsafe
-function (flow::FakeFlow)(config::Configs.StatePointConfig; variable, unsafe)
+function (flow::FakeFlow)(config::Configs.StateEndPointConfig; variable, unsafe)
     return flow.integ.result
 end
 
@@ -184,14 +184,14 @@ function test_flow()
             integ = FakeIntegrator(:solution)
             flow = FakeFlow{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics, FixedSystem, typeof(integ)}(sys, integ)
 
-            Test.@testset "call with StatePointConfig" begin
-                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            Test.@testset "call with StateEndPointConfig" begin
+                config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
                 result = flow(config; variable=nothing, unsafe=false)
                 Test.@test result === :solution
             end
 
-            Test.@testset "call with StatePointConfig and variable (ignored for Fixed)" begin
-                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            Test.@testset "call with StateEndPointConfig and variable (ignored for Fixed)" begin
+                config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
                 result = flow(config; variable=0.5, unsafe=false)
                 Test.@test result === :solution
             end
@@ -231,14 +231,14 @@ function test_flow()
             integ = FakeIntegrator(:solution)
             flow = FakeFlow{Traits.Autonomous, Traits.NonFixed, Traits.StateDynamics, NonFixedSystem, typeof(integ)}(sys, integ)
 
-            Test.@testset "call with StatePointConfig" begin
-                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            Test.@testset "call with StateEndPointConfig" begin
+                config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
                 result = flow(config; variable=nothing, unsafe=false)
                 Test.@test result === :solution
             end
 
-            Test.@testset "call with StatePointConfig and variable" begin
-                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            Test.@testset "call with StateEndPointConfig and variable" begin
+                config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
                 result = flow(config; variable=0.5, unsafe=false)
                 Test.@test result === :solution
             end

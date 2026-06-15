@@ -15,11 +15,11 @@ Configuration types encode these choices as type parameters for compile-time dis
 # Main Types
 - [`AbstractConfig`](@ref): Base configuration type
 - [`AbstractConfigWithMaC`](@ref): Configuration with mode and content traits
-- [`StatePointConfig`](@ref): Point-to-point state integration
+- [`StateEndPointConfig`](@ref): Point-to-point state integration
 - [`StateTrajectoryConfig`](@ref): Trajectory state integration
-- [`HamiltonianPointConfig`](@ref): Point-to-point Hamiltonian integration
+- [`HamiltonianEndPointConfig`](@ref): Point-to-point Hamiltonian integration
 - [`HamiltonianTrajectoryConfig`](@ref): Trajectory Hamiltonian integration
-- [`AugmentedHamiltonianPointConfig`](@ref): Augmented Hamiltonian for variable costate
+- [`AugmentedHamiltonianEndPointConfig`](@ref): Augmented Hamiltonian for variable costate
 
 # Accessors
 - [`tspan`](@ref): Time span `(t0, tf)`
@@ -61,10 +61,10 @@ include(joinpath(@__DIR__, "show.jl"))
 # ==============================================================================
 
 export AbstractConfig, AbstractConfigWithMaC
-export AbstractPointConfig, AbstractTrajectoryConfig
+export AbstractEndPointConfig, AbstractTrajectoryConfig
 export AbstractStateConfig, AbstractHamiltonianConfig, AbstractAugmentedHamiltonianConfig
-export StatePointConfig, StateTrajectoryConfig
-export HamiltonianPointConfig, HamiltonianTrajectoryConfig, AugmentedHamiltonianPointConfig
+export StateEndPointConfig, StateTrajectoryConfig
+export HamiltonianEndPointConfig, HamiltonianTrajectoryConfig, AugmentedHamiltonianEndPointConfig
 export tspan, initial_condition, initial_state, initial_costate, initial_variable_costate
 export initial_time, final_time, mode_trait, dynamics_trait
 

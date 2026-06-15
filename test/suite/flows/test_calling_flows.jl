@@ -107,7 +107,7 @@ function Integrators.solve_problem(integ::FakeIntegratorForCalling, prob, option
 end
 
 function Solutions.build_solution(
-    ::Type{Traits.PointTrait},
+    ::Type{Traits.EndPointMode},
     ::Type{Traits.StateDynamics},
     config::Configs.AbstractConfig,
     result::FakeIntegrationResultForCalling,
@@ -116,7 +116,7 @@ function Solutions.build_solution(
 end
 
 function Solutions.build_solution(
-    ::Type{Traits.TrajectoryTrait},
+    ::Type{Traits.TrajectoryMode},
     ::Type{Traits.StateDynamics},
     config::Configs.AbstractConfig,
     result::FakeIntegrationResultForCalling,
@@ -125,7 +125,7 @@ function Solutions.build_solution(
 end
 
 function Solutions.build_solution(
-    ::Type{Traits.PointTrait},
+    ::Type{Traits.EndPointMode},
     ::Type{Traits.HamiltonianDynamics},
     config::Configs.AbstractConfig,
     result::FakeIntegrationResultForCalling,
@@ -134,7 +134,7 @@ function Solutions.build_solution(
 end
 
 function Solutions.build_solution(
-    ::Type{Traits.TrajectoryTrait},
+    ::Type{Traits.TrajectoryMode},
     ::Type{Traits.HamiltonianDynamics},
     config::Configs.AbstractConfig,
     result::FakeIntegrationResultForCalling,
@@ -179,7 +179,7 @@ function test_calling_flows()
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
                 flow = FakeFlowForCalling(sys, integ)
-                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+                config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
                 
                 # Execute
                 result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
@@ -189,7 +189,7 @@ function test_calling_flows()
                 Test.@test integ.build_options_called === true
                 Test.@test integ.solve_problem_called === true
                 
-                # Verify result - for StatePointConfig it unwraps the vector
+                # Verify result - for StateEndPointConfig it unwraps the vector
                 Test.@test result == :fake_flow_solution
             end
 
@@ -197,7 +197,7 @@ function test_calling_flows()
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
                 flow = FakeFlowForCalling(sys, integ)
-                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+                config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
                 
                 # Call with variable (should now raise PreconditionError for Fixed flow)
                 Test.@test_throws Exceptions.PreconditionError Flows._invoke_flow(flow, config; variable=0.5, unsafe=false)
@@ -221,7 +221,7 @@ function test_calling_flows()
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
                 flow = FakeFlowForCalling(sys, integ)
-                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+                config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
 
                 # Call with unsafe=true
                 result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=true)
@@ -232,11 +232,11 @@ function test_calling_flows()
                 Test.@test result == :fake_flow_solution
             end
 
-            Test.@testset "call with HamiltonianPointConfig" begin
+            Test.@testset "call with HamiltonianEndPointConfig" begin
                 sys = FakeHamiltonianSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
                 flow = FakeFlowForCalling(sys, integ)
-                config = Configs.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+                config = Configs.HamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 
                 result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
 
@@ -270,7 +270,7 @@ function test_calling_flows()
                 sys = FakeHamiltonianSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
                 flow = FakeFlowForCalling(sys, integ)
-                config = Configs.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+                config = Configs.HamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 
                 result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
 
@@ -286,7 +286,7 @@ function test_calling_flows()
                 sys = FakeHamiltonianSystemWithAD(2)
                 integ = FakeIntegratorForCalling()
                 flow = FakeFlowForCalling(sys, integ)
-                config = Configs.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+                config = Configs.HamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 
                 result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
 
@@ -300,7 +300,7 @@ function test_calling_flows()
                 sys = FakeSystemForCalling(2)
                 integ = FakeIntegratorForCalling()
                 flow = FakeFlowForCalling(sys, integ)
-                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+                config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
 
                 result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
 
@@ -320,7 +320,7 @@ function test_calling_flows()
             sys = FakeSystemForCalling(2)
             integ = FakeIntegratorForCalling()
             flow = FakeFlowForCalling(sys, integ)
-            config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
 
             result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
 
@@ -334,7 +334,7 @@ function test_calling_flows()
             sys = FakeSystemForCalling(2)
             integ = FakeIntegratorForCalling()
             flow = FakeFlowForCalling(sys, integ)
-            config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
 
             Test.@test_throws Exceptions.PreconditionError Flows._invoke_flow(flow, config; variable=0.5, unsafe=false)
         end
@@ -343,7 +343,7 @@ function test_calling_flows()
             sys = FakeSystemNonFixed(2)
             integ = FakeIntegratorForCalling()
             flow = FakeFlowForCalling(sys, integ)
-            config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
 
             result = Flows._invoke_flow(flow, config; variable=0.5, unsafe=false)
 
@@ -357,7 +357,7 @@ function test_calling_flows()
             sys = FakeSystemNonFixed(2)
             integ = FakeIntegratorForCalling()
             flow = FakeFlowForCalling(sys, integ)
-            config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
 
             Test.@test_throws Exceptions.PreconditionError Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
         end
