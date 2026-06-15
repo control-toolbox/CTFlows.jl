@@ -39,7 +39,7 @@ The v1 refactoring is complete. CTFlows now has a modular architecture with spec
 ⚠️ **Partial**
 
 - ✅ Multi-phase flows (module `MultiPhase/`)
-- ✅ Augmented Hamiltonian support (`AugmentedHamiltonianPointConfig`, `build_rhs_augmented`)
+- ✅ Augmented Hamiltonian support (`AugmentedHamiltonianEndPointConfig`, `build_rhs_augmented`)
 - ❌ Complete flow construction features — Closed- and open-loop encapsulation, control-free OCP, DAE support, and generic objects. See [#247](https://github.com/control-toolbox/CTFlows.jl/issues/247).
 
 ---

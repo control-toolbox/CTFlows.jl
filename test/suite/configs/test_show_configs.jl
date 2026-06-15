@@ -14,23 +14,23 @@ function test_show_configs()
         # ====================================================================
 
         Test.@testset "UNIT TESTS - Display Methods" begin
-            Test.@testset "StatePointConfig show methods" begin
-                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            Test.@testset "StateEndPointConfig show methods" begin
+                config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
                 io = IOBuffer()
                 show(io, config)
                 output = String(take!(io))
-                Test.@test occursin("StatePointConfig", output)
+                Test.@test occursin("StateEndPointConfig", output)
                 Test.@test occursin("t0:", output)
                 Test.@test occursin("x0:", output)
                 Test.@test occursin("tf:", output)
             end
 
-            Test.@testset "StatePointConfig text/plain show method" begin
-                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            Test.@testset "StateEndPointConfig text/plain show method" begin
+                config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
                 io = IOBuffer()
                 show(io, MIME("text/plain"), config)
                 output = String(take!(io))
-                Test.@test occursin("StatePointConfig", output)
+                Test.@test occursin("StateEndPointConfig", output)
                 Test.@test occursin("t0:", output)
                 Test.@test occursin("x0:", output)
                 Test.@test occursin("tf:", output)
@@ -56,24 +56,24 @@ function test_show_configs()
                 Test.@test occursin("x0:", output)
             end
 
-            Test.@testset "HamiltonianPointConfig show methods" begin
-                config = Configs.HamiltonianPointConfig(0.0, [1.0], [0.5], 1.0)
+            Test.@testset "HamiltonianEndPointConfig show methods" begin
+                config = Configs.HamiltonianEndPointConfig(0.0, [1.0], [0.5], 1.0)
                 io = IOBuffer()
                 show(io, config)
                 output = String(take!(io))
-                Test.@test occursin("HamiltonianPointConfig", output)
+                Test.@test occursin("HamiltonianEndPointConfig", output)
                 Test.@test occursin("t0:", output)
                 Test.@test occursin("x0:", output)
                 Test.@test occursin("p0:", output)
                 Test.@test occursin("tf:", output)
             end
 
-            Test.@testset "HamiltonianPointConfig text/plain show method" begin
-                config = Configs.HamiltonianPointConfig(0.0, [1.0], [0.5], 1.0)
+            Test.@testset "HamiltonianEndPointConfig text/plain show method" begin
+                config = Configs.HamiltonianEndPointConfig(0.0, [1.0], [0.5], 1.0)
                 io = IOBuffer()
                 show(io, MIME("text/plain"), config)
                 output = String(take!(io))
-                Test.@test occursin("HamiltonianPointConfig", output)
+                Test.@test occursin("HamiltonianEndPointConfig", output)
                 Test.@test occursin("t0:", output)
                 Test.@test occursin("x0:", output)
                 Test.@test occursin("p0:", output)
@@ -102,12 +102,12 @@ function test_show_configs()
                 Test.@test occursin("p0:", output)
             end
 
-            Test.@testset "AugmentedHamiltonianPointConfig show methods" begin
-                config = Configs.AugmentedHamiltonianPointConfig(0.0, [1.0], [0.5], [0.0], 1.0)
+            Test.@testset "AugmentedHamiltonianEndPointConfig show methods" begin
+                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0], [0.5], [0.0], 1.0)
                 io = IOBuffer()
                 show(io, config)
                 output = String(take!(io))
-                Test.@test occursin("AugmentedHamiltonianPointConfig", output)
+                Test.@test occursin("AugmentedHamiltonianEndPointConfig", output)
                 Test.@test occursin("t0:", output)
                 Test.@test occursin("x0:", output)
                 Test.@test occursin("p0:", output)
@@ -115,12 +115,12 @@ function test_show_configs()
                 Test.@test occursin("tf:", output)
             end
 
-            Test.@testset "AugmentedHamiltonianPointConfig text/plain show method" begin
-                config = Configs.AugmentedHamiltonianPointConfig(0.0, [1.0], [0.5], [0.0], 1.0)
+            Test.@testset "AugmentedHamiltonianEndPointConfig text/plain show method" begin
+                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0], [0.5], [0.0], 1.0)
                 io = IOBuffer()
                 show(io, MIME("text/plain"), config)
                 output = String(take!(io))
-                Test.@test occursin("AugmentedHamiltonianPointConfig", output)
+                Test.@test occursin("AugmentedHamiltonianEndPointConfig", output)
                 Test.@test occursin("t0:", output)
                 Test.@test occursin("x0:", output)
                 Test.@test occursin("p0:", output)

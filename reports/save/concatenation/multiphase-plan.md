@@ -5,7 +5,7 @@ Ce plan implémente l'intégration séquentielle exacte pour la concaténation d
 ## Ce qui change et pourquoi
 
 - **`Systems`** : `AbstractStateSystem` et `AbstractHamiltonianSystem` sous `AbstractSystem`. `VectorFieldSystem <: AbstractStateSystem`. Permet la contrainte compile-time sur `S` dans `AbstractStateFlow` / `AbstractHamiltonianFlow`.
-- **`Common`** : `HamiltonianPointConfig(t0, x0, p0, tf)` et `HamiltonianTrajectoryConfig(tspan, x0, p0)`. `initial_condition` retourne `vcat(x0, p0)`.
+- **`Common`** : `HamiltonianEndPointConfig(t0, x0, p0, tf)` et `HamiltonianTrajectoryConfig(tspan, x0, p0)`. `initial_condition` retourne `vcat(x0, p0)`.
 - **`Flows`** : `AbstractStateFlow{TD,VD,S<:AbstractStateSystem}` et `AbstractHamiltonianFlow{TD,VD,S<:AbstractHamiltonianSystem}`. `Flow` renommé en `StateFlow`, `HamiltonianFlow` créé. `build_flow` dispatche selon le type de `sys`.
 - **`MultiPhase`** : Nouveau submodule (`src/MultiPhase/`). Contient `MultiPhaseSystem`, `MultiPhaseIntegrator` (wrappers passifs pour le contrat `AbstractFlow`), `MultiPhaseStateFlow`, `MultiPhaseHamiltonianFlow`, opérateurs `*`, et `call()` séquentiel.
 - **Tests** : 7 fichiers existants à mettre à jour (`Flow` → `StateFlow`). 1 nouveau fichier de tests MultiPhase.
@@ -13,7 +13,7 @@ Ce plan implémente l'intégration séquentielle exacte pour la concaténation d
 ## Graphe de dépendances après modification
 
 ```text
-Common  (+ HamiltonianPointConfig, HamiltonianTrajectoryConfig)
+Common  (+ HamiltonianEndPointConfig, HamiltonianTrajectoryConfig)
   ├── Data
   ├── Systems  (+ AbstractStateSystem, AbstractHamiltonianSystem)
   ├── Integrators
@@ -61,7 +61,7 @@ git checkout -b feature/multiphase-concatenation
 
 > 📐 Follow `architecture.md` — ISP: configs Hamiltoniens séparés.
 
-- Ajouter `struct HamiltonianPointConfig{T0, X0, P0, TF} <: AbstractConfig{X0}` avec champs `t0, x0, p0, tf`.
+- Ajouter `struct HamiltonianEndPointConfig{T0, X0, P0, TF} <: AbstractConfig{X0}` avec champs `t0, x0, p0, tf`.
 - Ajouter `struct HamiltonianTrajectoryConfig{TS, X0, P0} <: AbstractConfig{X0}` avec champs `tspan, x0, p0`.
 - Implémenter `tspan` pour les deux nouveaux types.
 - Implémenter `initial_condition` : retourne `vcat(c.x0, c.p0)`.
@@ -71,7 +71,7 @@ git checkout -b feature/multiphase-concatenation
 
 > 🏗️ Follow `modules.md` — Exports en fin de manifest.
 
-- Ajouter `HamiltonianPointConfig`, `HamiltonianTrajectoryConfig` à l'`export`.
+- Ajouter `HamiltonianEndPointConfig`, `HamiltonianTrajectoryConfig` à l'`export`.
 
 ### Step 6 — Test checkpoint 1 : Systems + Common
 
@@ -108,8 +108,8 @@ grep -E "Error|Fail|Test Summary" /tmp/ctflows_phase1.log
 - Adapter `system`, `integrator`, `build_flow` pour les deux structs :
   - `build_flow(sys::Systems.AbstractStateSystem, int)` → `StateFlow(sys, int)`
   - `build_flow(sys::Systems.AbstractHamiltonianSystem, int)` → `HamiltonianFlow(sys, int)`
-- Adapter le callable `StateFlow` : `(f::StateFlow)(t0, x0, tf; ...)` → `Common.StatePointConfig`.
-- Ajouter les callables `HamiltonianFlow` : `(f)(t0, x0, p0, tf; ...)` → `Common.HamiltonianPointConfig` et `(f)(tspan, x0, p0; ...)` → `Common.HamiltonianTrajectoryConfig`.
+- Adapter le callable `StateFlow` : `(f::StateFlow)(t0, x0, tf; ...)` → `Common.StateEndPointConfig`.
+- Ajouter les callables `HamiltonianFlow` : `(f)(t0, x0, p0, tf; ...)` → `Common.HamiltonianEndPointConfig` et `(f)(tspan, x0, p0; ...)` → `Common.HamiltonianTrajectoryConfig`.
 
 ### Step 9 — `src/Flows/building.jl`
 
@@ -188,7 +188,7 @@ grep -E "Error|Fail|Test Summary" /tmp/ctflows_phase2.log
 > 🔬 Follow `type-stability.md` — pré-allouer `t_all`/`u_all`.
 
 - `_make_phase_config`, `_extract_final_state`, `_apply_jump` (dispatch State vs Hamiltonian).
-- `call(flow, ::StatePointConfig)` : boucle séquentielle.
+- `call(flow, ::StateEndPointConfig)` : boucle séquentielle.
 - `call(flow, ::StateTrajectoryConfig)` : fusion progressive.
 - Stub `_build_merged_solution` → `ExtensionError`.
 
@@ -210,7 +210,7 @@ Créer `test/suite/multiphase/test_multiphase.jl` :
 - `@testset "Concatenation"` : `*` sans saut, avec saut, chaînage 3 phases, aplatissement.
 - `@testset "Type constraints"` : types `S` différents → `MethodError`.
 - `@testset "Validation"` : temps non croissants → `IncorrectArgument`.
-- `@testset "call StatePointConfig"` et `@testset "call StateTrajectoryConfig"` avec flot trivial.
+- `@testset "call StateEndPointConfig"` et `@testset "call StateTrajectoryConfig"` avec flot trivial.
 - `@testset "Extension stub"` : `_build_merged_solution` → `ExtensionError`.
 
 ```bash
@@ -228,7 +228,7 @@ grep -E "Error|Fail|Test Summary" /tmp/ctflows_phase3.log
 > 📚 Follow `docstrings.md` — `$(TYPEDEF)` / `$(TYPEDSIGNATURES)`, sections complètes, exemples sûrs.
 
 - `src/Systems/abstract_system.jl` — `AbstractStateSystem`, `AbstractHamiltonianSystem`
-- `src/Common/configs.jl` — `HamiltonianPointConfig`, `HamiltonianTrajectoryConfig`, `tspan`, `initial_condition`, `Base.show`
+- `src/Common/configs.jl` — `HamiltonianEndPointConfig`, `HamiltonianTrajectoryConfig`, `tspan`, `initial_condition`, `Base.show`
 - `src/Flows/abstract_flow.jl` — `AbstractStateFlow`, `AbstractHamiltonianFlow`
 - `src/Flows/flow.jl` — `StateFlow`, `HamiltonianFlow`, callables, `build_flow`
 - `src/MultiPhase/*.jl` — tous les types et fonctions publics exportés

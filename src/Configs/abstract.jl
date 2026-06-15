@@ -12,7 +12,7 @@ specific integration scenarios (e.g., point-to-point, trajectory, costate).
 
 The type parameters encode:
 - `X0`: Type of the initial condition (scalar `Number` or vector `AbstractVector`)
-- `Mode`: Integration mode (`PointTrait` or `TrajectoryTrait`)
+- `Mode`: Integration mode (`EndPointMode` or `TrajectoryMode`)
 - `Dyn`: Dynamics type (`StateDynamics` or `HamiltonianDynamics`)
 
 This enables compile-time dispatch on mode and content without runtime type tests.
@@ -26,17 +26,17 @@ All subtypes must implement:
 \`\`\`julia-repl
 julia> using CTFlows.Configs
 
-julia> StatePointConfig <: Configs.AbstractConfig
+julia> StateEndPointConfig <: Configs.AbstractConfig
 true
 
-julia> StatePointConfig <: Configs.AbstractPointConfig
+julia> StateEndPointConfig <: Configs.AbstractEndPointConfig
 true
 
-julia> StatePointConfig <: Configs.AbstractStateConfig
+julia> StateEndPointConfig <: Configs.AbstractStateConfig
 true
 \`\`\`
 
-See also: [`CTFlows.Configs.AbstractPointConfig`](@ref), [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref), [`CTFlows.Configs.AbstractStateConfig`](@ref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref).
+See also: [`CTFlows.Configs.AbstractEndPointConfig`](@ref), [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref), [`CTFlows.Configs.AbstractStateConfig`](@ref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref).
 """
 abstract type AbstractConfig{X0} end
 
@@ -54,7 +54,7 @@ on integration mode (point vs trajectory) and content type (state, Hamiltonian, 
 
 # Type Parameters
 - `X0`: Type of the initial condition (scalar `Number` or vector `AbstractVector`)
-- `Mode <: AbstractModeTrait`: Integration mode trait (`PointTrait` or `TrajectoryTrait`)
+- `Mode <: AbstractModeTrait`: Integration mode trait (`EndPointMode` or `TrajectoryMode`)
 - `Dyn <: AbstractDynamicsTrait`: Dynamics trait (`StateDynamics`, `HamiltonianDynamics`, or `AugmentedHamiltonianDynamics`)
 
 # Interface Requirements
@@ -66,14 +66,14 @@ All subtypes must implement:
 \`\`\`julia-repl
 julia> using CTFlows.Configs
 
-julia> StatePointConfig <: Configs.AbstractConfigWithMaC
+julia> StateEndPointConfig <: Configs.AbstractConfigWithMaC
 true
 
-julia> HamiltonianPointConfig <: Configs.AbstractConfigWithMaC
+julia> HamiltonianEndPointConfig <: Configs.AbstractConfigWithMaC
 true
 \`\`\`
 
-See also: [`CTFlows.Configs.AbstractConfig`](@ref), [`CTFlows.Configs.AbstractPointConfig`](@ref), [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref), [`CTFlows.Configs.AbstractStateConfig`](@ref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref), [`CTFlows.Configs.AbstractAugmentedHamiltonianConfig`](@ref).
+See also: [`CTFlows.Configs.AbstractConfig`](@ref), [`CTFlows.Configs.AbstractEndPointConfig`](@ref), [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref), [`CTFlows.Configs.AbstractStateConfig`](@ref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref), [`CTFlows.Configs.AbstractAugmentedHamiltonianConfig`](@ref).
 """
 abstract type AbstractConfigWithMaC{X0, Mode<:Traits.AbstractModeTrait, Dyn<:Traits.AbstractDynamicsTrait} <: AbstractConfig{X0} end
 
@@ -89,15 +89,15 @@ enabling trait-based dispatch on the integration mode (point vs trajectory).
 - `::AbstractConfigWithMaC{X0, Mode, Content}`: Any concrete configuration subtype.
 
 # Returns
-- `Type{Mode}`: The mode trait type (e.g., `PointTrait` or `TrajectoryTrait`).
+- `Type{Mode}`: The mode trait type (e.g., `EndPointMode` or `TrajectoryMode`).
 
 # Example
 \`\`\`julia
-config = Configs.HamiltonianPointConfig(0.0, [1.0], [0.5], 1.0)
-Configs.mode_trait(config) === Traits.PointTrait  # true
+config = Configs.HamiltonianEndPointConfig(0.0, [1.0], [0.5], 1.0)
+Configs.mode_trait(config) === Traits.EndPointMode  # true
 \`\`\`
 
-See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@ref), [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Traits.TrajectoryTrait`](@ref), [`CTFlows.Configs.dynamics_trait`](@ref).
+See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@ref), [`CTFlows.Traits.EndPointMode`](@ref), [`CTFlows.Traits.TrajectoryMode`](@ref), [`CTFlows.Configs.dynamics_trait`](@ref).
 """
 function mode_trait(::AbstractConfigWithMaC{X0, Mode, Dyn}) where {X0, Mode, Dyn}
     return Mode
@@ -119,7 +119,7 @@ enabling trait-based dispatch on the integration dynamics (state, Hamiltonian, a
 
 # Example
 \`\`\`julia
-config = Configs.HamiltonianPointConfig(0.0, [1.0], [0.5], 1.0)
+config = Configs.HamiltonianEndPointConfig(0.0, [1.0], [0.5], 1.0)
 Configs.dynamics_trait(config) === Traits.HamiltonianDynamics  # true
 \`\`\`
 
@@ -134,18 +134,18 @@ $(TYPEDEF)
 
 Alias for point integration mode configurations.
 
-Matches any `AbstractConfig` with `PointTrait` as the mode parameter.
+Matches any `AbstractConfig` with `EndPointMode` as the mode parameter.
 """
-const AbstractPointConfig{X0, C} = AbstractConfigWithMaC{X0, Traits.PointTrait, C}
+const AbstractEndPointConfig{X0, C} = AbstractConfigWithMaC{X0, Traits.EndPointMode, C}
 
 """
 $(TYPEDEF)
 
 Alias for trajectory integration mode configurations.
 
-Matches any `AbstractConfig` with `TrajectoryTrait` as the mode parameter.
+Matches any `AbstractConfig` with `TrajectoryMode` as the mode parameter.
 """
-const AbstractTrajectoryConfig{X0, C} = AbstractConfigWithMaC{X0, Traits.TrajectoryTrait, C}
+const AbstractTrajectoryConfig{X0, C} = AbstractConfigWithMaC{X0, Traits.TrajectoryMode, C}
 
 """
 $(TYPEDEF)

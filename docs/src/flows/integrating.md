@@ -88,9 +88,9 @@ pass them to `Flows._invoke_flow`:
 
 | Config type | Usage | Arguments |
 |---|---|---|
-| `StatePointConfig` | state final value | `(t0, x0, tf)` |
+| `StateEndPointConfig` | state final value | `(t0, x0, tf)` |
 | `StateTrajectoryConfig` | state full trajectory | `(tspan, x0)` |
-| `HamiltonianPointConfig` | state+costate final value | `(t0, x0, p0, tf)` |
+| `HamiltonianEndPointConfig` | state+costate final value | `(t0, x0, p0, tf)` |
 | `HamiltonianTrajectoryConfig` | state+costate trajectory | `(tspan, x0, p0)` |
 
 ```@example flows_integrating
@@ -160,7 +160,7 @@ typeof(integ)
 
 ## See also
 
-- [`CTFlows.Configs.StatePointConfig`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref) — state configuration objects.
-- [`CTFlows.Configs.HamiltonianPointConfig`](@ref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref) — Hamiltonian configuration objects.
+- [`CTFlows.Configs.StateEndPointConfig`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref) — state configuration objects.
+- [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref) — Hamiltonian configuration objects.
 - [`CTFlows.Configs.tspan`](@ref), [`CTFlows.Configs.initial_state`](@ref), [`CTFlows.Configs.initial_costate`](@ref) — configuration accessors.
 - [`CTFlows.Integrators.SciML`](@ref), [`CTFlows.Integrators.build_integrator`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref) — integrator types.

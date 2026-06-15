@@ -120,8 +120,8 @@ content_trait(::AbstractConfigWithMaC{X0, Mode, Content}) where {X0, Mode, Conte
 …and `build_solution` dispatches by **passing the extracted trait** as a type argument:
 
 ```julia
-build_solution(::Type{PointTrait}, ::Type{StateTrait},       config, result) = …
-build_solution(::Type{PointTrait}, ::Type{HamiltonianTrait}, config, result) = …
+build_solution(::Type{EndPointMode}, ::Type{StateTrait},       config, result) = …
+build_solution(::Type{EndPointMode}, ::Type{HamiltonianTrait}, config, result) = …
 ```
 
 **This is exactly the target pattern.** `Configs` proves CTFlows already does
@@ -173,8 +173,8 @@ const HamiltonianFlow{TD,VD,S,I} = Flow{TD,VD,HamiltonianDynamics,S,I}
 Call signatures stay cleanly dispatched via the aliases:
 
 ```julia
-(f::AbstractStateFlow)(t0, x0, tf; …)        = _invoke_flow(f, StatePointConfig(t0, x0, tf); …)
-(f::AbstractHamiltonianFlow)(t0, x0, p0, tf; …) = _invoke_flow(f, HamiltonianPointConfig(t0, x0, p0, tf); …)
+(f::AbstractStateFlow)(t0, x0, tf; …)        = _invoke_flow(f, StateEndPointConfig(t0, x0, tf); …)
+(f::AbstractHamiltonianFlow)(t0, x0, p0, tf; …) = _invoke_flow(f, HamiltonianEndPointConfig(t0, x0, p0, tf); …)
 ```
 
 Likewise on the systems side:

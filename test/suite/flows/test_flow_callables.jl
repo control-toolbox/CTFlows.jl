@@ -53,19 +53,19 @@ function Integrators.solve_problem(integ::FakeIntegFC, prob, options::Dict{Symbo
     return FakeResultFC()
 end
 
-function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Solutions.build_solution(::Type{Traits.EndPointMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :state_point_sol
 end
 
-function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Solutions.build_solution(::Type{Traits.TrajectoryMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :state_traj_sol
 end
 
-function Solutions.build_solution(::Type{Traits.PointTrait}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Solutions.build_solution(::Type{Traits.EndPointMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :ham_point_sol
 end
 
-function Solutions.build_solution(::Type{Traits.TrajectoryTrait}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Solutions.build_solution(::Type{Traits.TrajectoryMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :ham_traj_sol
 end
 
@@ -77,10 +77,10 @@ function test_flow_callables()
     Test.@testset "Flow Callables Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
-        # UNIT TESTS - StateFlow (t0, x0, tf) -> StatePointConfig
+        # UNIT TESTS - StateFlow (t0, x0, tf) -> StateEndPointConfig
         # ====================================================================
 
-        Test.@testset "StateFlow (t0, x0, tf) -> StatePointConfig" begin
+        Test.@testset "StateFlow (t0, x0, tf) -> StateEndPointConfig" begin
             integ = FakeIntegFC(nothing)
             sys = FakeStateSystemFC(2)
             flow = Flows.StateFlow(sys, integ)
@@ -88,7 +88,7 @@ function test_flow_callables()
             Test.@testset "scalar x0" begin
                 x0 = 1.0
                 result = flow(0.0, x0, 1.0)
-                Test.@test integ.last_config isa Configs.StatePointConfig
+                Test.@test integ.last_config isa Configs.StateEndPointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0
@@ -98,7 +98,7 @@ function test_flow_callables()
             Test.@testset "vector x0" begin
                 x0 = [1.0, 0.0]
                 result = flow(0.0, x0, 1.0)
-                Test.@test integ.last_config isa Configs.StatePointConfig
+                Test.@test integ.last_config isa Configs.StateEndPointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0
@@ -108,7 +108,7 @@ function test_flow_callables()
             Test.@testset "SVector x0" begin
                 x0 = SA[1.0, 0.0]
                 result = flow(0.0, x0, 1.0)
-                Test.@test integ.last_config isa Configs.StatePointConfig
+                Test.@test integ.last_config isa Configs.StateEndPointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0
@@ -118,7 +118,7 @@ function test_flow_callables()
             Test.@testset "matrix x0" begin
                 x0 = [1.0 2.0; 3.0 4.0]
                 result = flow(0.0, x0, 1.0)
-                Test.@test integ.last_config isa Configs.StatePointConfig
+                Test.@test integ.last_config isa Configs.StateEndPointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0
@@ -164,10 +164,10 @@ function test_flow_callables()
         end
 
         # ====================================================================
-        # UNIT TESTS - HamiltonianFlow (t0, x0, p0, tf) -> HamiltonianPointConfig
+        # UNIT TESTS - HamiltonianFlow (t0, x0, p0, tf) -> HamiltonianEndPointConfig
         # ====================================================================
 
-        Test.@testset "HamiltonianFlow (t0, x0, p0, tf) -> HamiltonianPointConfig" begin
+        Test.@testset "HamiltonianFlow (t0, x0, p0, tf) -> HamiltonianEndPointConfig" begin
             integ = FakeIntegFC(nothing)
             sys = FakeHamSysFC(2)
             flow = Flows.HamiltonianFlow(sys, integ)
@@ -176,7 +176,7 @@ function test_flow_callables()
                 x0 = 1.0
                 p0 = 0.0
                 result = flow(0.0, x0, p0, 1.0)
-                Test.@test integ.last_config isa Configs.HamiltonianPointConfig
+                Test.@test integ.last_config isa Configs.HamiltonianEndPointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0
@@ -188,7 +188,7 @@ function test_flow_callables()
                 x0 = [1.0, 0.0]
                 p0 = [0.0, 1.0]
                 result = flow(0.0, x0, p0, 1.0)
-                Test.@test integ.last_config isa Configs.HamiltonianPointConfig
+                Test.@test integ.last_config isa Configs.HamiltonianEndPointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0
@@ -200,7 +200,7 @@ function test_flow_callables()
                 x0 = SA[1.0, 0.0]
                 p0 = SA[0.0, 1.0]
                 result = flow(0.0, x0, p0, 1.0)
-                Test.@test integ.last_config isa Configs.HamiltonianPointConfig
+                Test.@test integ.last_config isa Configs.HamiltonianEndPointConfig
                 Test.@test integ.last_config.t0 == 0.0
                 Test.@test integ.last_config.tf == 1.0
                 Test.@test integ.last_config.x0 === x0

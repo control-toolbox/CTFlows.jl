@@ -59,7 +59,7 @@ To activate the extension, load any of:
 
 # Fields
 - `options::CTSolvers.Strategies.StrategyOptions`: Validated option bundle.
-- `options_point::Dict{Symbol, Any}`: Pre-computed options for StatePointConfig.
+- `options_point::Dict{Symbol, Any}`: Pre-computed options for StateEndPointConfig.
 - `options_trajectory::Dict{Symbol, Any}`: Pre-computed options for StateTrajectoryConfig.
 """
 struct SciML{O<:CTSolvers.Strategies.StrategyOptions, OP<:Dict{Symbol, Any}, OT<:Dict{Symbol, Any}} <: AbstractSciMLIntegrator

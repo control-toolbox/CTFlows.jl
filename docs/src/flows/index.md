@@ -31,7 +31,7 @@ Each layer has a single responsibility:
 | [Traits](traits.md) | The three trait axes shared by every layer | `Autonomous`, `Fixed`, `InPlace` |
 | [Data structures](data.md) | Wrapping your functions | `VectorField`, `Hamiltonian`, `HamiltonianVectorField` |
 | [Building a flow](building_a_flow.md) | Assembling the pipeline | `build_system`, `build_flow`, `Flow` |
-| [Integrating](integrating.md) | Calling a flow, configuration objects, integrator options | `StatePointConfig`, `StateTrajectoryConfig` |
+| [Integrating](integrating.md) | Calling a flow, configuration objects, integrator options | `StateEndPointConfig`, `StateTrajectoryConfig` |
 | [Solutions](solutions.md) | Reading the result | `state`, `costate`, `time_grid`, `plot` |
 | [Multi-phase flows](multiphase.md) | Concatenating flows with switching times | `MultiPhaseStateFlow`, `*` |
 
@@ -47,7 +47,7 @@ using CTFlows.Systems      # build_system
 using CTFlows.Integrators  # SciML, build_integrator
 using CTFlows.Solutions    # VectorFieldSolution, state, time_grid
 using CTFlows.Traits       # Autonomous, NonAutonomous, Fixed, NonFixed, InPlace, OutOfPlace
-using CTFlows.Configs      # StatePointConfig, StateTrajectoryConfig, …
+using CTFlows.Configs      # StateEndPointConfig, StateTrajectoryConfig, …
 import OrdinaryDiffEqTsit5 # activates the SciML extension
 nothing # hide
 ```

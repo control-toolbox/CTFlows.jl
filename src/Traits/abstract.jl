@@ -12,7 +12,7 @@ mode, content type, mutability).
 
 Traits are used as type parameters in abstract configuration types to enable
 compile-time dispatch without runtime type checks. For example, `AbstractConfig`
-uses `PointTrait` vs `TrajectoryTrait` to distinguish integration modes, and
+uses `EndPointMode` vs `TrajectoryMode` to distinguish integration modes, and
 `StateDynamics` vs `HamiltonianDynamics` to distinguish dynamics types.
 
 All concrete trait types are empty structs with no fields, making them zero-cost
@@ -29,20 +29,20 @@ Concrete trait subtypes should:
 \`\`\`julia-repl
 julia> using CTFlows.Traits
 
-julia> PointTrait <: Traits.AbstractTrait
+julia> EndPointMode <: Traits.AbstractTrait
 true
 
-julia> PointTrait <: Traits.AbstractModeTrait
+julia> EndPointMode <: Traits.AbstractModeTrait
 true
 
 julia> # Used as type parameters in configs:
-julia> StatePointConfig <: CTFlows.Configs.AbstractConfig{<:Any, PointTrait, StateDynamics}
+julia> StateEndPointConfig <: CTFlows.Configs.AbstractConfig{<:Any, EndPointMode, StateDynamics}
 true
 \`\`\`
 
 # Notes
 - Traits are distinct from tags: tags mark extension implementations (e.g., `SciMLTag`),
-  while traits encode configuration semantics (e.g., `PointTrait`)
+  while traits encode configuration semantics (e.g., `EndPointMode`)
 - All trait types have zero runtime overhead (empty structs)
 - The trait pattern enables static dispatch on configuration properties
 

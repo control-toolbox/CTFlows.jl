@@ -389,7 +389,7 @@ function (f::SciMLProblemFlow)(
     prob = SciMLBase.remake(f.prob; kw...)
     opts = Integrators.build_options(
         f.integrator,
-        Common.StatePointConfig(t0, x0, tf),
+        Common.StateEndPointConfig(t0, x0, tf),
     )
     sol = SciMLBase.solve(prob; opts...)
     _check_retcode(sol, unsafe)

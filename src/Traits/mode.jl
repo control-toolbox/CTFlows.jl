@@ -11,14 +11,14 @@ integration (full time evolution).
 \`\`\`julia-repl
 julia> using CTFlows.Traits
 
-julia> PointTrait <: Traits.AbstractModeTrait
+julia> EndPointMode <: Traits.AbstractModeTrait
 true
 
-julia> TrajectoryTrait <: Traits.AbstractModeTrait
+julia> TrajectoryMode <: Traits.AbstractModeTrait
 true
 
 julia> # Used in configuration type parameters:
-julia> StatePointConfig <: CTFlows.Configs.AbstractConfig{<:Any, PointTrait, <:Traits.AbstractDynamicsTrait}
+julia> StateEndPointConfig <: CTFlows.Configs.AbstractConfig{<:Any, EndPointMode, <:Traits.AbstractDynamicsTrait}
 true
 \`\`\`
 
@@ -27,7 +27,7 @@ true
 - Point mode indicates integration from a single initial condition to a specific final time
 - Trajectory mode indicates integration over a continuous time interval
 
-See also: [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Traits.TrajectoryTrait`](@ref), [`CTFlows.Configs.AbstractConfig`](@ref).
+See also: [`CTFlows.Traits.EndPointMode`](@ref), [`CTFlows.Traits.TrajectoryMode`](@ref), [`CTFlows.Configs.AbstractConfig`](@ref).
 """
 abstract type AbstractModeTrait <: AbstractTrait end
 
@@ -43,14 +43,14 @@ which computes the solution at a specific final time from a single initial condi
 \`\`\`julia-repl
 julia> using CTFlows.Traits
 
-julia> pt = PointTrait()
-PointTrait()
+julia> pt = EndPointMode()
+EndPointMode()
 
 julia> pt isa Traits.AbstractModeTrait
 true
 
 julia> # Used in point-to-point configurations:
-julia> StatePointConfig <: CTFlows.Configs.AbstractConfig{<:Any, PointTrait, <:Traits.AbstractDynamicsTrait}
+julia> StateEndPointConfig <: CTFlows.Configs.AbstractConfig{<:Any, EndPointMode, <:Traits.AbstractDynamicsTrait}
 true
 \`\`\`
 
@@ -59,9 +59,9 @@ true
 - This mode is suitable for boundary value problems and shooting methods
 - The `tspan` accessor returns `(c.t0, c.tf)` for point configurations
 
-See also: [`CTFlows.Traits.TrajectoryTrait`](@ref), [`CTFlows.Traits.AbstractModeTrait`](@ref), [`CTFlows.Configs.StatePointConfig`](@ref).
+See also: [`CTFlows.Traits.TrajectoryMode`](@ref), [`CTFlows.Traits.AbstractModeTrait`](@ref), [`CTFlows.Configs.StateEndPointConfig`](@ref).
 """
-struct PointTrait <: AbstractModeTrait end
+struct EndPointMode <: AbstractModeTrait end
 
 """
 $(TYPEDEF)
@@ -75,14 +75,14 @@ which computes the full solution trajectory over a continuous time interval.
 \`\`\`julia-repl
 julia> using CTFlows.Traits
 
-julia> traj = TrajectoryTrait()
-TrajectoryTrait()
+julia> traj = TrajectoryMode()
+TrajectoryMode()
 
 julia> traj isa Traits.AbstractModeTrait
 true
 
 julia> # Used in trajectory configurations:
-julia> StateTrajectoryConfig <: CTFlows.Configs.AbstractConfig{<:Any, TrajectoryTrait, <:Traits.AbstractDynamicsTrait}
+julia> StateTrajectoryConfig <: CTFlows.Configs.AbstractConfig{<:Any, TrajectoryMode, <:Traits.AbstractDynamicsTrait}
 true
 \`\`\`
 
@@ -91,6 +91,6 @@ true
 - This mode is suitable for generating full time evolution and visualization
 - The `tspan` accessor returns `c.tspan` directly for trajectory configurations
 
-See also: [`CTFlows.Traits.PointTrait`](@ref), [`CTFlows.Traits.AbstractModeTrait`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref).
+See also: [`CTFlows.Traits.EndPointMode`](@ref), [`CTFlows.Traits.AbstractModeTrait`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref).
 """
-struct TrajectoryTrait <: AbstractModeTrait end
+struct TrajectoryMode <: AbstractModeTrait end

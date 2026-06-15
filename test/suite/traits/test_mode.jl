@@ -34,41 +34,41 @@ function test_mode()
         # ====================================================================
 
         Test.@testset "UNIT TESTS - Concrete Trait Types" begin
-            Test.@testset "PointTrait" begin
-                Test.@testset "PointTrait is exported" begin
-                    Test.@test isdefined(Traits, :PointTrait)
+            Test.@testset "EndPointMode" begin
+                Test.@testset "EndPointMode is exported" begin
+                    Test.@test isdefined(Traits, :EndPointMode)
                 end
 
-                Test.@testset "PointTrait is concrete" begin
-                    Test.@test !isabstracttype(Traits.PointTrait)
+                Test.@testset "EndPointMode is concrete" begin
+                    Test.@test !isabstracttype(Traits.EndPointMode)
                 end
 
-                Test.@testset "PointTrait instantiates" begin
-                    pt = Traits.PointTrait()
-                    Test.@test pt isa Traits.PointTrait
+                Test.@testset "EndPointMode instantiates" begin
+                    pt = Traits.EndPointMode()
+                    Test.@test pt isa Traits.EndPointMode
                 end
 
-                Test.@testset "PointTrait subtypes AbstractModeTrait" begin
-                    Test.@test Traits.PointTrait <: Traits.AbstractModeTrait
+                Test.@testset "EndPointMode subtypes AbstractModeTrait" begin
+                    Test.@test Traits.EndPointMode <: Traits.AbstractModeTrait
                 end
             end
 
-            Test.@testset "TrajectoryTrait" begin
-                Test.@testset "TrajectoryTrait is exported" begin
-                    Test.@test isdefined(Traits, :TrajectoryTrait)
+            Test.@testset "TrajectoryMode" begin
+                Test.@testset "TrajectoryMode is exported" begin
+                    Test.@test isdefined(Traits, :TrajectoryMode)
                 end
 
-                Test.@testset "TrajectoryTrait is concrete" begin
-                    Test.@test !isabstracttype(Traits.TrajectoryTrait)
+                Test.@testset "TrajectoryMode is concrete" begin
+                    Test.@test !isabstracttype(Traits.TrajectoryMode)
                 end
 
-                Test.@testset "TrajectoryTrait instantiates" begin
-                    traj = Traits.TrajectoryTrait()
-                    Test.@test traj isa Traits.TrajectoryTrait
+                Test.@testset "TrajectoryMode instantiates" begin
+                    traj = Traits.TrajectoryMode()
+                    Test.@test traj isa Traits.TrajectoryMode
                 end
 
-                Test.@testset "TrajectoryTrait subtypes AbstractModeTrait" begin
-                    Test.@test Traits.TrajectoryTrait <: Traits.AbstractModeTrait
+                Test.@testset "TrajectoryMode subtypes AbstractModeTrait" begin
+                    Test.@test Traits.TrajectoryMode <: Traits.AbstractModeTrait
                 end
             end
         end
@@ -79,8 +79,8 @@ function test_mode()
 
         Test.@testset "UNIT TESTS - Type Hierarchy" begin
             Test.@testset "All mode traits subtype AbstractTrait" begin
-                Test.@test Traits.PointTrait <: Traits.AbstractTrait
-                Test.@test Traits.TrajectoryTrait <: Traits.AbstractTrait
+                Test.@test Traits.EndPointMode <: Traits.AbstractTrait
+                Test.@test Traits.TrajectoryMode <: Traits.AbstractTrait
             end
         end
 
@@ -90,7 +90,7 @@ function test_mode()
 
         Test.@testset "Exports Verification" begin
             Test.@testset "Exported mode trait types" begin
-                for sym in (:AbstractModeTrait, :PointTrait, :TrajectoryTrait)
+                for sym in (:AbstractModeTrait, :EndPointMode, :TrajectoryMode)
                     Test.@test isdefined(Traits, sym)
                 end
             end

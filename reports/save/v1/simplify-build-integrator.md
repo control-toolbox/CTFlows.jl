@@ -218,7 +218,7 @@ config = Common.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 sol = Flows.call(flow, config)
 
 # Or point-to-point integration
-config = Common.StatePointConfig((0.0, 1.0), [1.0, 0.0])
+config = Common.StateEndPointConfig((0.0, 1.0), [1.0, 0.0])
 final_state = Flows.call(flow, config)
 ```
 

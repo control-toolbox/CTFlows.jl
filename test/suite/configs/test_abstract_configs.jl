@@ -14,7 +14,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake config type for testing the AbstractConfig contract.
 """
-struct FakeConfig{X0} <: Configs.AbstractConfigWithMaC{X0, Traits.PointTrait, Traits.StateDynamics}
+struct FakeConfig{X0} <: Configs.AbstractConfigWithMaC{X0, Traits.EndPointMode, Traits.StateDynamics}
     x0::X0
 end
 
@@ -47,8 +47,8 @@ function test_abstract_configs()
             end
 
             Test.@testset "Type Aliases" begin
-                Test.@testset "AbstractPointConfig is exported" begin
-                    Test.@test isdefined(Configs, :AbstractPointConfig)
+                Test.@testset "AbstractEndPointConfig is exported" begin
+                    Test.@test isdefined(Configs, :AbstractEndPointConfig)
                 end
 
                 Test.@testset "AbstractTrajectoryConfig is exported" begin
@@ -69,14 +69,14 @@ function test_abstract_configs()
             end
 
             Test.@testset "Trait Alias Hierarchy" begin
-                Test.@testset "StatePointConfig subtypes" begin
-                    Test.@test Configs.StatePointConfig <: Configs.AbstractPointConfig
-                    Test.@test Configs.StatePointConfig <: Configs.AbstractStateConfig
+                Test.@testset "StateEndPointConfig subtypes" begin
+                    Test.@test Configs.StateEndPointConfig <: Configs.AbstractEndPointConfig
+                    Test.@test Configs.StateEndPointConfig <: Configs.AbstractStateConfig
                 end
 
-                Test.@testset "HamiltonianPointConfig subtypes" begin
-                    Test.@test Configs.HamiltonianPointConfig <: Configs.AbstractPointConfig
-                    Test.@test Configs.HamiltonianPointConfig <: Configs.AbstractHamiltonianConfig
+                Test.@testset "HamiltonianEndPointConfig subtypes" begin
+                    Test.@test Configs.HamiltonianEndPointConfig <: Configs.AbstractEndPointConfig
+                    Test.@test Configs.HamiltonianEndPointConfig <: Configs.AbstractHamiltonianConfig
                 end
 
                 Test.@testset "StateTrajectoryConfig subtypes" begin
@@ -90,9 +90,9 @@ function test_abstract_configs()
                 end
 
                 Test.@testset "Negative checks" begin
-                    Test.@test !(Configs.StatePointConfig <: Configs.AbstractHamiltonianConfig)
-                    Test.@test !(Configs.HamiltonianPointConfig <: Configs.AbstractStateConfig)
-                    Test.@test !(Configs.StatePointConfig <: Configs.AbstractTrajectoryConfig)
+                    Test.@test !(Configs.StateEndPointConfig <: Configs.AbstractHamiltonianConfig)
+                    Test.@test !(Configs.HamiltonianEndPointConfig <: Configs.AbstractStateConfig)
+                    Test.@test !(Configs.StateEndPointConfig <: Configs.AbstractTrajectoryConfig)
                 end
             end
         end
@@ -103,35 +103,35 @@ function test_abstract_configs()
 
         Test.@testset "UNIT TESTS - Trait Accessors" begin
             Test.@testset "mode_trait" begin
-                Test.@testset "mode_trait for StatePointConfig" begin
-                    config = Configs.StatePointConfig(0.0, [1.0], 1.0)
-                    Test.@test Configs.mode_trait(config) === Traits.PointTrait
+                Test.@testset "mode_trait for StateEndPointConfig" begin
+                    config = Configs.StateEndPointConfig(0.0, [1.0], 1.0)
+                    Test.@test Configs.mode_trait(config) === Traits.EndPointMode
                 end
 
                 Test.@testset "mode_trait for StateTrajectoryConfig" begin
                     config = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0])
-                    Test.@test Configs.mode_trait(config) === Traits.TrajectoryTrait
+                    Test.@test Configs.mode_trait(config) === Traits.TrajectoryMode
                 end
 
-                Test.@testset "mode_trait for HamiltonianPointConfig" begin
-                    config = Configs.HamiltonianPointConfig(0.0, [1.0], [0.5], 1.0)
-                    Test.@test Configs.mode_trait(config) === Traits.PointTrait
+                Test.@testset "mode_trait for HamiltonianEndPointConfig" begin
+                    config = Configs.HamiltonianEndPointConfig(0.0, [1.0], [0.5], 1.0)
+                    Test.@test Configs.mode_trait(config) === Traits.EndPointMode
                 end
 
                 Test.@testset "mode_trait for HamiltonianTrajectoryConfig" begin
                     config = Configs.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0], [0.5])
-                    Test.@test Configs.mode_trait(config) === Traits.TrajectoryTrait
+                    Test.@test Configs.mode_trait(config) === Traits.TrajectoryMode
                 end
             end
 
             Test.@testset "dynamics_trait" begin
-                Test.@testset "dynamics_trait for StatePointConfig" begin
-                    config = Configs.StatePointConfig(0.0, [1.0], 1.0)
+                Test.@testset "dynamics_trait for StateEndPointConfig" begin
+                    config = Configs.StateEndPointConfig(0.0, [1.0], 1.0)
                     Test.@test Configs.dynamics_trait(config) === Traits.StateDynamics
                 end
 
-                Test.@testset "dynamics_trait for HamiltonianPointConfig" begin
-                    config = Configs.HamiltonianPointConfig(0.0, [1.0], [0.5], 1.0)
+                Test.@testset "dynamics_trait for HamiltonianEndPointConfig" begin
+                    config = Configs.HamiltonianEndPointConfig(0.0, [1.0], [0.5], 1.0)
                     Test.@test Configs.dynamics_trait(config) === Traits.HamiltonianDynamics
                 end
             end

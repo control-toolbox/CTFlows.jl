@@ -16,8 +16,8 @@ function test_implementations_configs()
         # ====================================================================
 
         Test.@testset "UNIT TESTS - tspan Implementations" begin
-            Test.@testset "AbstractPointConfig tspan returns tuple" begin
-                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+            Test.@testset "AbstractEndPointConfig tspan returns tuple" begin
+                config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
                 ts = Configs.tspan(config)
                 Test.@test ts isa Tuple{Real, Real}
                 Test.@test ts == (0.0, 1.0)
@@ -36,8 +36,8 @@ function test_implementations_configs()
         # ====================================================================
 
         Test.@testset "UNIT TESTS - initial_time Implementations" begin
-            Test.@testset "AbstractPointConfig initial_time returns t0" begin
-                config = Configs.StatePointConfig(0.5, [1.0], 1.0)
+            Test.@testset "AbstractEndPointConfig initial_time returns t0" begin
+                config = Configs.StateEndPointConfig(0.5, [1.0], 1.0)
                 Test.@test Configs.initial_time(config) == 0.5
             end
 
@@ -52,8 +52,8 @@ function test_implementations_configs()
         # ====================================================================
 
         Test.@testset "UNIT TESTS - final_time Implementations" begin
-            Test.@testset "AbstractPointConfig final_time returns tf" begin
-                config = Configs.StatePointConfig(0.0, [1.0], 2.5)
+            Test.@testset "AbstractEndPointConfig final_time returns tf" begin
+                config = Configs.StateEndPointConfig(0.0, [1.0], 2.5)
                 Test.@test Configs.final_time(config) == 2.5
             end
 
@@ -69,21 +69,21 @@ function test_implementations_configs()
 
         Test.@testset "UNIT TESTS - initial_condition Implementations" begin
             Test.@testset "AbstractStateConfig with scalar X0 wraps in vector" begin
-                config = Configs.StatePointConfig(0.0, 1.0, 1.0)
+                config = Configs.StateEndPointConfig(0.0, 1.0, 1.0)
                 ic = Configs.initial_condition(config)
                 Test.@test ic isa AbstractVector
                 Test.@test ic == [1.0]
             end
 
             Test.@testset "AbstractStateConfig with vector X0 returns vector" begin
-                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+                config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
                 ic = Configs.initial_condition(config)
                 Test.@test ic isa AbstractVector
                 Test.@test ic == [1.0, 0.0]
             end
 
             Test.@testset "AbstractHamiltonianConfig returns vcat(x0, p0)" begin
-                config = Configs.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+                config = Configs.HamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
                 ic = Configs.initial_condition(config)
                 Test.@test ic == [1.0, 0.0, 0.5, 0.3]
             end
@@ -95,12 +95,12 @@ function test_implementations_configs()
 
         Test.@testset "UNIT TESTS - initial_state Implementation" begin
             Test.@testset "initial_state returns x0 field" begin
-                config = Configs.StatePointConfig(0.0, [1.0, 0.0], 1.0)
+                config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
                 Test.@test Configs.initial_state(config) == [1.0, 0.0]
             end
 
-            Test.@testset "initial_state for HamiltonianPointConfig" begin
-                config = Configs.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+            Test.@testset "initial_state for HamiltonianEndPointConfig" begin
+                config = Configs.HamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
                 Test.@test Configs.initial_state(config) == [1.0, 0.0]
             end
 
@@ -121,12 +121,12 @@ function test_implementations_configs()
 
         Test.@testset "ERROR TESTS - initial_costate Implementations" begin
             Test.@testset "initial_costate throws PreconditionError for state configs" begin
-                config = Configs.StatePointConfig(0.0, [1.0], 1.0)
+                config = Configs.StateEndPointConfig(0.0, [1.0], 1.0)
                 Test.@test_throws Exceptions.PreconditionError Configs.initial_costate(config)
             end
 
             Test.@testset "PreconditionError message quality" begin
-                config = Configs.StatePointConfig(0.0, [1.0], 1.0)
+                config = Configs.StateEndPointConfig(0.0, [1.0], 1.0)
                 e = try
                     Configs.initial_costate(config)
                 catch err
@@ -138,7 +138,7 @@ function test_implementations_configs()
             end
 
             Test.@testset "initial_costate returns p0 for Hamiltonian configs" begin
-                config = Configs.HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+                config = Configs.HamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
                 Test.@test Configs.initial_costate(config) == [0.5, 0.3]
             end
 

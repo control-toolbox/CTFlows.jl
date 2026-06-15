@@ -36,10 +36,10 @@ function test_flow_callables_sciml_vector_field()
     Test.@testset "Flow Callables SciML VectorField Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
-        # INTEGRATION TESTS - StateFlow StatePointConfig
+        # INTEGRATION TESTS - StateFlow StateEndPointConfig
         # ====================================================================
 
-        Test.@testset "StateFlow StatePointConfig" begin
+        Test.@testset "StateFlow StateEndPointConfig" begin
             flow = Flows.build_flow(SYS_DECAY, INTEG)
 
             Test.@testset "scalar Real x0" begin

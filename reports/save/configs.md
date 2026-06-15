@@ -25,15 +25,15 @@ struct HamiltonianTag <: AbstractContentTag end
 abstract type AbstractConfig{X0, Mode<:AbstractModeTag, Content<:AbstractContentTag} end
 
 # Quatre aliases totalement symétriques — tous utilisables en dispatch ET isa
-const AbstractPointConfig{X0, C}       = AbstractConfig{X0, PointTag,      C}
+const AbstractEndPointConfig{X0, C}       = AbstractConfig{X0, PointTag,      C}
 const AbstractTrajectoryConfig{X0, C}  = AbstractConfig{X0, TrajectoryTag,  C}
 const AbstractStateConfig{X0, M}       = AbstractConfig{X0, M, StateTag}
 const AbstractHamiltonianConfig{X0, M} = AbstractConfig{X0, M, HamiltonianTag}
 
 # Types concrets subtypent DIRECTEMENT depuis AbstractConfig
-struct StatePointConfig{T0<:Real, X0, TF<:Real}          <: AbstractConfig{X0, PointTag,     StateTag}       end
+struct StateEndPointConfig{T0<:Real, X0, TF<:Real}          <: AbstractConfig{X0, PointTag,     StateTag}       end
 struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractConfig{X0, TrajectoryTag, StateTag}     end
-struct HamiltonianPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractConfig{X0, PointTag,     HamiltonianTag} end
+struct HamiltonianEndPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractConfig{X0, PointTag,     HamiltonianTag} end
 struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractConfig{X0, TrajectoryTag, HamiltonianTag} end
 ```
 
@@ -41,7 +41,7 @@ struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: Abstract
 
 | Pattern | Signification |
 |---|---|
-| `AbstractPointConfig` | tous les Point (State + Hamiltonian) |
+| `AbstractEndPointConfig` | tous les Point (State + Hamiltonian) |
 | `AbstractTrajectoryConfig` | tous les Trajectory |
 | `AbstractStateConfig` | tous les State (Point + Trajectory) |
 | `AbstractHamiltonianConfig` | tous les Hamiltonian |
@@ -63,16 +63,16 @@ struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: Abstract
 - `initial_costate` : suppression du `Union{...}`
 
 **Ce qui disparaît :**
-- `abstract type AbstractPointConfig{X0} <: AbstractConfig{X0} end` (remplacé par `const` alias)
+- `abstract type AbstractEndPointConfig{X0} <: AbstractConfig{X0} end` (remplacé par `const` alias)
 - `abstract type AbstractTrajectoryConfig{X0} <: AbstractConfig{X0} end` (remplacé par `const` alias)
-- `Union{HamiltonianPointConfig, HamiltonianTrajectoryConfig}` dans `initial_condition` et `initial_costate`
+- `Union{HamiltonianEndPointConfig, HamiltonianTrajectoryConfig}` dans `initial_condition` et `initial_costate`
 - Les 4+4+4 méthodes individuelles réduites
 
 **Ce qui est ajouté :**
 - `AbstractModeTag`, `AbstractContentTag` (intermédiaires) dans `abstract_tag.jl`
 - `PointTag`, `TrajectoryTag`, `StateTag`, `HamiltonianTag` (concrets) dans `abstract_tag.jl`
 - `AbstractStateConfig`, `AbstractHamiltonianConfig` comme nouveaux exports
-- `AbstractPointConfig`, `AbstractTrajectoryConfig` restent exportés (backward compat) mais deviennent des `const` aliases
+- `AbstractEndPointConfig`, `AbstractTrajectoryConfig` restent exportés (backward compat) mais deviennent des `const` aliases
 
 ---
 
@@ -135,7 +135,7 @@ Dans la ligne `export`, ajouter :
 - `PointTag, TrajectoryTag, StateTag, HamiltonianTag` (concrets)
 - `AbstractStateConfig, AbstractHamiltonianConfig`
 
-`AbstractPointConfig` et `AbstractTrajectoryConfig` restent dans les exports (ils deviennent des aliases mais les noms sont inchangés).
+`AbstractEndPointConfig` et `AbstractTrajectoryConfig` restent dans les exports (ils deviennent des aliases mais les noms sont inchangés).
 
 > ⛔ Do NOT write docstrings in this step.
 
@@ -154,31 +154,31 @@ Dans la ligne `export`, ajouter :
 abstract type AbstractConfig{X0, Mode<:AbstractModeTag, Content<:AbstractContentTag} end
 
 # Quatre aliases symétriques (UnionAll)
-const AbstractPointConfig{X0, C}       = AbstractConfig{X0, PointTag,      C}
+const AbstractEndPointConfig{X0, C}       = AbstractConfig{X0, PointTag,      C}
 const AbstractTrajectoryConfig{X0, C}  = AbstractConfig{X0, TrajectoryTag,  C}
 const AbstractStateConfig{X0, M}       = AbstractConfig{X0, M, StateTag}
 const AbstractHamiltonianConfig{X0, M} = AbstractConfig{X0, M, HamiltonianTag}
 ```
 
-**Section "StatePointConfig" — changer le parent :**
-- `struct StatePointConfig{T0<:Real, X0, TF<:Real} <: AbstractPointConfig{X0}` → `<: AbstractConfig{X0, PointTag, StateTag}`
+**Section "StateEndPointConfig" — changer le parent :**
+- `struct StateEndPointConfig{T0<:Real, X0, TF<:Real} <: AbstractEndPointConfig{X0}` → `<: AbstractConfig{X0, PointTag, StateTag}`
 
 **Section "StateTrajectoryConfig" — changer le parent :**
 - `struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractTrajectoryConfig{X0}` → `<: AbstractConfig{X0, TrajectoryTag, StateTag}`
 
-**Section "HamiltonianPointConfig" — changer le parent :**
-- `struct HamiltonianPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractPointConfig{X0}` → `<: AbstractConfig{X0, PointTag, HamiltonianTag}`
+**Section "HamiltonianEndPointConfig" — changer le parent :**
+- `struct HamiltonianEndPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractEndPointConfig{X0}` → `<: AbstractConfig{X0, PointTag, HamiltonianTag}`
 
 **Section "HamiltonianTrajectoryConfig" — changer le parent :**
 - `struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractTrajectoryConfig{X0}` → `<: AbstractConfig{X0, TrajectoryTag, HamiltonianTag}`
 
 **Section "Interface: tspan" — 4 méthodes → 2 + stub :**
 
-Supprimer les 4 méthodes individuelles `tspan(::StatePointConfig)`, `tspan(::HamiltonianPointConfig)`, `tspan(::StateTrajectoryConfig)`, `tspan(::HamiltonianTrajectoryConfig)`.
+Supprimer les 4 méthodes individuelles `tspan(::StateEndPointConfig)`, `tspan(::HamiltonianEndPointConfig)`, `tspan(::StateTrajectoryConfig)`, `tspan(::HamiltonianTrajectoryConfig)`.
 
 Remplacer par :
 ```julia
-function tspan(c::AbstractPointConfig)::Tuple{Real, Real}
+function tspan(c::AbstractEndPointConfig)::Tuple{Real, Real}
     return (c.t0, c.tf)
 end
 
@@ -222,7 +222,7 @@ function initial_costate(c::AbstractStateConfig)
         "initial_costate is only defined for Hamiltonian configs";
         context = "initial_costate - requires Hamiltonian config",
         reason = "config type $(typeof(c)) does not have a costate field",
-        suggestion = "use HamiltonianPointConfig or HamiltonianTrajectoryConfig instead",
+        suggestion = "use HamiltonianEndPointConfig or HamiltonianTrajectoryConfig instead",
     ))
 end
 ```
@@ -255,30 +255,30 @@ struct FakeConfigWithTspan{X0} <: Common.AbstractConfig{X0, Common.PointTag, Com
 ```julia
 Test.@testset "Trait Aliases" begin
     # Mode aliases
-    Test.@test StatePointConfig       <: Common.AbstractPointConfig
-    Test.@test HamiltonianPointConfig <: Common.AbstractPointConfig
+    Test.@test StateEndPointConfig       <: Common.AbstractEndPointConfig
+    Test.@test HamiltonianEndPointConfig <: Common.AbstractEndPointConfig
     Test.@test StateTrajectoryConfig  <: Common.AbstractTrajectoryConfig
     Test.@test HamiltonianTrajectoryConfig <: Common.AbstractTrajectoryConfig
 
     # Content aliases
-    Test.@test StatePointConfig       <: Common.AbstractStateConfig
+    Test.@test StateEndPointConfig       <: Common.AbstractStateConfig
     Test.@test StateTrajectoryConfig  <: Common.AbstractStateConfig
-    Test.@test HamiltonianPointConfig <: Common.AbstractHamiltonianConfig
+    Test.@test HamiltonianEndPointConfig <: Common.AbstractHamiltonianConfig
     Test.@test HamiltonianTrajectoryConfig <: Common.AbstractHamiltonianConfig
 
     # Negative checks
-    Test.@test !(StatePointConfig       <: Common.AbstractHamiltonianConfig)
-    Test.@test !(HamiltonianPointConfig <: Common.AbstractStateConfig)
-    Test.@test !(StatePointConfig       <: Common.AbstractTrajectoryConfig)
+    Test.@test !(StateEndPointConfig       <: Common.AbstractHamiltonianConfig)
+    Test.@test !(HamiltonianEndPointConfig <: Common.AbstractStateConfig)
+    Test.@test !(StateEndPointConfig       <: Common.AbstractTrajectoryConfig)
 end
 ```
 
 **Vérifier `tspan` unifié :**
 ```julia
 Test.@testset "tspan unified dispatch" begin
-    sp  = Common.StatePointConfig(0.0, [1.0], 1.0)
+    sp  = Common.StateEndPointConfig(0.0, [1.0], 1.0)
     st  = Common.StateTrajectoryConfig((0.0, 1.0), [1.0])
-    hp  = Common.HamiltonianPointConfig(0.0, [1.0], [0.5], 1.0)
+    hp  = Common.HamiltonianEndPointConfig(0.0, [1.0], [0.5], 1.0)
     ht  = Common.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0], [0.5])
 
     Test.@test Common.tspan(sp) == (0.0, 1.0)
@@ -303,14 +303,14 @@ grep -E "Error|Fail|Test Summary" /tmp/ctflows_step4.log
 **`build_options` — remplacer les 4 méthodes par 2 :**
 
 Supprimer :
-- `Integrators.build_options(integ::SciML, config::Common.StatePointConfig)`
-- `Integrators.build_options(integ::SciML, config::Common.HamiltonianPointConfig)`
+- `Integrators.build_options(integ::SciML, config::Common.StateEndPointConfig)`
+- `Integrators.build_options(integ::SciML, config::Common.HamiltonianEndPointConfig)`
 - `Integrators.build_options(integ::SciML, config::Common.StateTrajectoryConfig)`
 - `Integrators.build_options(integ::SciML, config::Common.HamiltonianTrajectoryConfig)`
 
 Remplacer par :
 ```julia
-function Integrators.build_options(integ::SciML, config::Common.AbstractPointConfig)
+function Integrators.build_options(integ::SciML, config::Common.AbstractEndPointConfig)
     return integ.options_point
 end
 
@@ -332,9 +332,9 @@ end
 **`_extract_initial_state` — remplacer les 4 méthodes par 2 :**
 
 Supprimer :
-- `_extract_initial_state(config::Common.StatePointConfig)`
+- `_extract_initial_state(config::Common.StateEndPointConfig)`
 - `_extract_initial_state(config::Common.StateTrajectoryConfig)`
-- `_extract_initial_state(config::Common.HamiltonianPointConfig)`
+- `_extract_initial_state(config::Common.HamiltonianEndPointConfig)`
 - `_extract_initial_state(config::Common.HamiltonianTrajectoryConfig)`
 
 Remplacer par :
@@ -362,7 +362,7 @@ build_solution(result, sys::VectorFieldSystem, config::Common.AbstractStateConfi
 # → return final_state(result)[1]   (PointTag importé ou qualifié)
 
 # Vector State Point
-build_solution(result, sys::VectorFieldSystem, config::Common.AbstractPointConfig{<:Any, StateTag})
+build_solution(result, sys::VectorFieldSystem, config::Common.AbstractEndPointConfig{<:Any, StateTag})
 # → return final_state(result)
 
 # State Trajectory
@@ -370,7 +370,7 @@ build_solution(result, sys::VectorFieldSystem, config::Common.AbstractTrajectory
 # → return VectorFieldSolution(result)
 
 # Hamiltonian Point
-build_solution(result, sys::HamiltonianVectorFieldSystem, config::Common.AbstractPointConfig{<:Any, HamiltonianTag})
+build_solution(result, sys::HamiltonianVectorFieldSystem, config::Common.AbstractEndPointConfig{<:Any, HamiltonianTag})
 # → return _ham_split_solution(...)
 
 # Hamiltonian Trajectory
@@ -408,7 +408,7 @@ Fichiers et symboles :
 - `src/Common/abstract_tag.jl` — `PointTag`, `TrajectoryTag`, `StateTag`, `HamiltonianTag`
 - `src/Common/configs.jl` :
   - `AbstractConfig{X0, Mode, Content}` — documenter les 3 paramètres + les 4 aliases
-  - `AbstractPointConfig`, `AbstractTrajectoryConfig`, `AbstractStateConfig`, `AbstractHamiltonianConfig` — documenter comme aliases
+  - `AbstractEndPointConfig`, `AbstractTrajectoryConfig`, `AbstractStateConfig`, `AbstractHamiltonianConfig` — documenter comme aliases
   - `tspan` (2 méthodes unifiées)
   - `initial_condition` (3 méthodes : scalar state, vector state, hamiltonian)
   - `initial_costate` (2 méthodes : hamiltonian, state→PreconditionError)

@@ -19,8 +19,8 @@ integration from a single initial condition to a specific final time.
 \`\`\`julia-repl
 julia> using CTFlows.Configs
 
-julia> config = StatePointConfig(0.0, [1.0, 0.0], 1.0)
-StatePointConfig
+julia> config = StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
+StateEndPointConfig
   t0: 0.0
   x0: [1.0, 0.0]
   tf: 1.0
@@ -28,12 +28,12 @@ StatePointConfig
 
 See also: [`CTFlows.Configs.StateTrajectoryConfig`](@ref)
 """
-struct StatePointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfigWithMaC{X0, Traits.PointTrait, Traits.StateDynamics}
+struct StateEndPointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfigWithMaC{X0, Traits.EndPointMode, Traits.StateDynamics}
     t0::T0
     x0::X0
     tf::TF
-    StatePointConfig{T0, X0, TF}(t0, x0, tf) where {T0<:Real, X0, TF<:Real} = new{T0, X0, TF}(t0, x0, tf)
-    function StatePointConfig(t0::Real, x0, tf::Real)
+    StateEndPointConfig{T0, X0, TF}(t0, x0, tf) where {T0<:Real, X0, TF<:Real} = new{T0, X0, TF}(t0, x0, tf)
+    function StateEndPointConfig(t0::Real, x0, tf::Real)
         t = float(t0)
         X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
         T = float(tf)
@@ -63,9 +63,9 @@ StateTrajectoryConfig
   x0: [1.0, 0.0]
 \`\`\`
 
-See also: [`CTFlows.Configs.StatePointConfig`](@ref)
+See also: [`CTFlows.Configs.StateEndPointConfig`](@ref)
 """
-struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractConfigWithMaC{X0, Traits.TrajectoryTrait, Traits.StateDynamics}
+struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractConfigWithMaC{X0, Traits.TrajectoryMode, Traits.StateDynamics}
     tspan::TS
     x0::X0
     StateTrajectoryConfig{TS, X0}(tspan, x0) where {TS<:Tuple{<:Real,<:Real}, X0} = new{TS, X0}(tspan, x0)
@@ -96,23 +96,23 @@ Hamiltonian framework.
 \`\`\`julia-repl
 julia> using CTFlows.Configs
 
-julia> config = HamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
-HamiltonianPointConfig
+julia> config = HamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+HamiltonianEndPointConfig
   t0: 0.0
   x0: [1.0, 0.0]
   p0: [0.5, 0.3]
   tf: 1.0
 \`\`\`
 
-See also: [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Configs.StatePointConfig`](@ref).
+See also: [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Configs.StateEndPointConfig`](@ref).
 """
-struct HamiltonianPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractConfigWithMaC{X0, Traits.PointTrait, Traits.HamiltonianDynamics}
+struct HamiltonianEndPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractConfigWithMaC{X0, Traits.EndPointMode, Traits.HamiltonianDynamics}
     t0::T0
     x0::X0
     p0::P0
     tf::TF
-    HamiltonianPointConfig{T0, X0, P0, TF}(t0, x0, p0, tf) where {T0<:Real, X0, P0, TF<:Real} = new{T0, X0, P0, TF}(t0, x0, p0, tf)
-    function HamiltonianPointConfig(t0::Real, x0, p0, tf::Real)
+    HamiltonianEndPointConfig{T0, X0, P0, TF}(t0, x0, p0, tf) where {T0<:Real, X0, P0, TF<:Real} = new{T0, X0, P0, TF}(t0, x0, p0, tf)
+    function HamiltonianEndPointConfig(t0::Real, x0, p0, tf::Real)
         t = float(t0)
         X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
         P = eltype(p0) <: AbstractFloat ? p0 : float.(p0)
@@ -146,9 +146,9 @@ HamiltonianTrajectoryConfig
   p0: [0.5, 0.3]
 \`\`\`
 
-See also: [`CTFlows.Configs.HamiltonianPointConfig`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref).
+See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref).
 """
-struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractConfigWithMaC{X0, Traits.TrajectoryTrait, Traits.HamiltonianDynamics}
+struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractConfigWithMaC{X0, Traits.TrajectoryMode, Traits.HamiltonianDynamics}
     tspan::TS
     x0::X0
     p0::P0
@@ -181,8 +181,8 @@ final time in the augmented Hamiltonian framework.
 \`\`\`julia-repl
 julia> using CTFlows.Configs
 
-julia> config = AugmentedHamiltonianPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
-AugmentedHamiltonianPointConfig
+julia> config = AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+AugmentedHamiltonianEndPointConfig
   t0: 0.0
   x0: [1.0, 0.0]
   p0: [0.5, 0.3]
@@ -190,16 +190,16 @@ AugmentedHamiltonianPointConfig
   tf: 1.0
 \`\`\`
 
-See also: [`CTFlows.Configs.HamiltonianPointConfig`](@ref), [`CTFlows.Traits.AugmentedHamiltonianDynamics`](@ref).
+See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref), [`CTFlows.Traits.AugmentedHamiltonianDynamics`](@ref).
 """
-struct AugmentedHamiltonianPointConfig{T0<:Real, X0, P0, PV0, TF<:Real} <: AbstractAugmentedHamiltonianConfig{X0, Traits.PointTrait}
+struct AugmentedHamiltonianEndPointConfig{T0<:Real, X0, P0, PV0, TF<:Real} <: AbstractAugmentedHamiltonianConfig{X0, Traits.EndPointMode}
     t0::T0
     x0::X0
     p0::P0
     pv0::PV0
     tf::TF
-    AugmentedHamiltonianPointConfig{T0, X0, P0, PV0, TF}(t0, x0, p0, pv0, tf) where {T0<:Real, X0, P0, PV0, TF<:Real} = new{T0, X0, P0, PV0, TF}(t0, x0, p0, pv0, tf)
-    function AugmentedHamiltonianPointConfig(t0::Real, x0, p0, pv0, tf::Real)
+    AugmentedHamiltonianEndPointConfig{T0, X0, P0, PV0, TF}(t0, x0, p0, pv0, tf) where {T0<:Real, X0, P0, PV0, TF<:Real} = new{T0, X0, P0, PV0, TF}(t0, x0, p0, pv0, tf)
+    function AugmentedHamiltonianEndPointConfig(t0::Real, x0, p0, pv0, tf::Real)
         t = float(t0)
         X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
         P = eltype(p0) <: AbstractFloat ? p0 : float.(p0)
@@ -218,14 +218,14 @@ For augmented Hamiltonian systems, the initial condition is the concatenation of
 initial state, initial costate, and initial variable costate: `vcat(x0, p0, pv0)`.
 
 # Arguments
-- `c::AugmentedHamiltonianPointConfig`: The augmented Hamiltonian configuration.
+- `c::AugmentedHamiltonianEndPointConfig`: The augmented Hamiltonian configuration.
 
 # Returns
 - Concatenated vector `[x0; p0; pv0]`.
 
-See also: [`CTFlows.Configs.AugmentedHamiltonianPointConfig`](@ref), [`CTFlows.Configs.initial_state`](@ref), [`CTFlows.Configs.initial_costate`](@ref), [`CTFlows.Configs.initial_variable_costate`](@ref).
+See also: [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@ref), [`CTFlows.Configs.initial_state`](@ref), [`CTFlows.Configs.initial_costate`](@ref), [`CTFlows.Configs.initial_variable_costate`](@ref).
 """
-function initial_condition(c::AugmentedHamiltonianPointConfig)
+function initial_condition(c::AugmentedHamiltonianEndPointConfig)
     return vcat(c.x0, c.p0, c.pv0)
 end
 
@@ -237,14 +237,14 @@ Return the initial costate for augmented Hamiltonian configurations.
 Extracts the initial costate field from the augmented Hamiltonian configuration.
 
 # Arguments
-- `c::AugmentedHamiltonianPointConfig`: The augmented Hamiltonian configuration.
+- `c::AugmentedHamiltonianEndPointConfig`: The augmented Hamiltonian configuration.
 
 # Returns
 - The initial costate vector.
 
-See also: [`CTFlows.Configs.AugmentedHamiltonianPointConfig`](@ref).
+See also: [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@ref).
 """
-function initial_costate(c::AugmentedHamiltonianPointConfig)
+function initial_costate(c::AugmentedHamiltonianEndPointConfig)
     return c.p0
 end
 
@@ -256,13 +256,13 @@ Return the initial variable costate for augmented Hamiltonian configurations.
 Extracts the initial variable costate field from the augmented Hamiltonian configuration.
 
 # Arguments
-- `c::AugmentedHamiltonianPointConfig`: The augmented Hamiltonian configuration.
+- `c::AugmentedHamiltonianEndPointConfig`: The augmented Hamiltonian configuration.
 
 # Returns
 - The initial variable costate vector.
 
-See also: [`CTFlows.Configs.AugmentedHamiltonianPointConfig`](@ref).
+See also: [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@ref).
 """
-function initial_variable_costate(c::AugmentedHamiltonianPointConfig)
+function initial_variable_costate(c::AugmentedHamiltonianEndPointConfig)
     return c.pv0
 end

@@ -18,7 +18,7 @@ julia> HamiltonianDynamics <: Traits.AbstractDynamicsTrait
 true
 
 julia> # Used in configuration type parameters:
-julia> StatePointConfig <: CTFlows.Configs.AbstractConfig{<:Any, <:Traits.AbstractModeTrait, StateDynamics}
+julia> StateEndPointConfig <: CTFlows.Configs.AbstractConfig{<:Any, <:Traits.AbstractModeTrait, StateDynamics}
 true
 \`\`\`
 
@@ -50,7 +50,7 @@ julia> st isa Traits.AbstractDynamicsTrait
 true
 
 julia> # Used in state-only configurations:
-julia> StatePointConfig <: CTFlows.Configs.AbstractConfig{<:Any, <:Traits.AbstractModeTrait, StateDynamics}
+julia> StateEndPointConfig <: CTFlows.Configs.AbstractConfig{<:Any, <:Traits.AbstractModeTrait, StateDynamics}
 true
 \`\`\`
 
@@ -59,7 +59,7 @@ true
 - The `initial_costate` accessor throws a `PreconditionError` for state configurations
 - This mode is suitable for standard ODE integration without adjoint variables
 
-See also: [`CTFlows.Traits.HamiltonianDynamics`](@ref), [`CTFlows.Traits.AbstractDynamicsTrait`](@ref), [`CTFlows.Configs.StatePointConfig`](@ref).
+See also: [`CTFlows.Traits.HamiltonianDynamics`](@ref), [`CTFlows.Traits.AbstractDynamicsTrait`](@ref), [`CTFlows.Configs.StateEndPointConfig`](@ref).
 """
 struct StateDynamics <: AbstractDynamicsTrait end
 
@@ -82,7 +82,7 @@ julia> ham isa Traits.AbstractDynamicsTrait
 true
 
 julia> # Used in Hamiltonian configurations:
-julia> HamiltonianPointConfig <: CTFlows.Configs.AbstractConfig{<:Any, <:Traits.AbstractModeTrait, HamiltonianDynamics}
+julia> HamiltonianEndPointConfig <: CTFlows.Configs.AbstractConfig{<:Any, <:Traits.AbstractModeTrait, HamiltonianDynamics}
 true
 \`\`\`
 
@@ -91,7 +91,7 @@ true
 - The `initial_condition` accessor returns `vcat(x0, p0)` for Hamiltonian configurations
 - This mode is suitable for optimal control problems with Pontryagin's maximum principle
 
-See also: [`CTFlows.Traits.StateDynamics`](@ref), [`CTFlows.Traits.AbstractDynamicsTrait`](@ref), [`CTFlows.Configs.HamiltonianPointConfig`](@ref).
+See also: [`CTFlows.Traits.StateDynamics`](@ref), [`CTFlows.Traits.AbstractDynamicsTrait`](@ref), [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref).
 """
 struct HamiltonianDynamics <: AbstractDynamicsTrait end
 

@@ -98,7 +98,7 @@ variable costate equation `ṗᵥ = -∂H/∂v` unless explicitly requested.
 # Returns
 - `Bool`: The default value for the `variable_costate` parameter.
 
-See also: [`CTFlows.Configs.AugmentedHamiltonianPointConfig`](@ref).
+See also: [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@ref).
 """
 __variable_costate()::Bool = false
 

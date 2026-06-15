@@ -45,7 +45,7 @@ avec la variable si le flot est variable.
 
 Remarque : on pourra se poser la question de la nécessité d'avoir dans @building.jl#L23-24 @building.jl#L44-45 @building.jl#L64-65 à la fois le système et la config, qui doivent être les deux cohérents, car si on a un système hamiltonien, il faudra une config hamiltonien. Il est à noter que plus tard, nous aurons des flots construits à partir d'un problème de contrôle optimal, le flot hamiltonien et on voudra faire xf, pf = f(t0, x0, p0, tf) mais dans la version f((t0, tf), x0, p0) la solution retournée aura un type particulier : CTModels.Solution. Ce sera en fait une solution d'un problème de contrôle optimal.
 
-Remarque : pour être très cohérent, doit-on appeler les configs StatePointConfig et StateTrajectoryConfig : StateStatePointConfig et StateStateTrajectoryConfig ?
+Remarque : pour être très cohérent, doit-on appeler les configs StateEndPointConfig et StateTrajectoryConfig : StateStateEndPointConfig et StateStateTrajectoryConfig ?
 
 Pour créer une solution particulière, on aura besoin de créer l'analogue de @vector_field_solution.jl#L1-291 . De manière équivalent, il y aura à gérer l'affichage mais aussi @CTFlowsPlots.jl#L1-101 . On pourra simplement faire un layout (1, 2) pour l'état et le co-état.
 

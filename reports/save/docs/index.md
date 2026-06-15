@@ -57,7 +57,7 @@ The following documents provide detailed conceptual overviews of each major them
 
 ### Traits
 CTFlows uses a trait system for compile-time dispatch. Traits are empty marker types used as type parameters to encode configuration properties:
-- **Mode traits**: PointTrait (point-to-point integration) vs TrajectoryTrait (full trajectory)
+- **Mode traits**: EndPointMode (point-to-point integration) vs TrajectoryMode (full trajectory)
 - **Content traits**: StateTrait (state only) vs HamiltonianTrait (state + costate)
 - **Time dependence**: Autonomous vs NonAutonomous
 - **Variable dependence**: Fixed vs NonFixed

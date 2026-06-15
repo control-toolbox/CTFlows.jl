@@ -251,20 +251,20 @@ function (f::HamiltonianFlow)(t0, x0, p0, tf;
     augment  = false,
 )
     config = augment ?
-        Common.HamiltonianAugmentedPointConfig(t0, x0, p0, tf) :
-        Common.HamiltonianPointConfig(t0, x0, p0, tf)
+        Common.HamiltonianAugmentedEndPointConfig(t0, x0, p0, tf) :
+        Common.HamiltonianEndPointConfig(t0, x0, p0, tf)
     return call(f, config; variable=variable, unsafe=unsafe)
 end
 ```
 
-### 6.2 Nouveau `Config` : `HamiltonianAugmentedPointConfig` / `HamiltonianAugmentedTrajectoryConfig`
+### 6.2 Nouveau `Config` : `HamiltonianAugmentedEndPointConfig` / `HamiltonianAugmentedTrajectoryConfig`
 
 Ces configs signalent au `call` d'utiliser `rhs_augmented` et de découper la solution en `(xf, pf, pvf)`.
 
 ### 6.3 Adaptation de `call`
 
 ```julia
-function call(flow::HamiltonianFlow, config::HamiltonianAugmentedPointConfig; variable, unsafe)
+function call(flow::HamiltonianFlow, config::HamiltonianAugmentedEndPointConfig; variable, unsafe)
     sys  = system(flow)
     int  = integrator(flow)
     # Vérification
