@@ -49,7 +49,7 @@ function test_ham_rhs_functors()
 
             ip_rhs = Systems.HamIpRHS(h, backend, 2, identity, identity)
             oop_rhs = Systems.HamOoPRHS(h, backend, 2, identity, identity)
-            aug_rhs = Systems.HamIpAugRHS(h, backend, 2, 1)
+            aug_rhs = Systems.HamIpAugRHS(h, backend, 2, 1, identity, identity)
 
             Test.@test ip_rhs isa Systems.AbstractIPHamRHS
             Test.@test ip_rhs isa Systems.AbstractRHS{Traits.InPlace}
@@ -140,7 +140,7 @@ function test_ham_rhs_functors()
         Test.@testset "HamIpAugRHS — call vector" begin
             backend = FakeADBackend()
             h = FakeHamiltonian
-            rhs = Systems.HamIpAugRHS(h, backend, 2, 1)
+            rhs = Systems.HamIpAugRHS(h, backend, 2, 1, identity, identity)
 
             du = zeros(5)
             u = [1.0, 2.0, 3.0, 4.0, 0.0]
@@ -210,7 +210,7 @@ function test_ham_rhs_functors()
 
             ip_rhs = Systems.HamIpRHS(h, backend, 2, identity, identity)
             oop_rhs = Systems.HamOoPRHS(h, backend, 2, identity, identity)
-            aug_rhs = Systems.HamIpAugRHS(h, backend, 2, 1)
+            aug_rhs = Systems.HamIpAugRHS(h, backend, 2, 1, identity, identity)
 
             Test.@test occursin("HamIpRHS", sprint(show, ip_rhs))
             Test.@test occursin("Hamiltonian AD → in-place interface", sprint(show, ip_rhs))

@@ -117,3 +117,43 @@ function Flow(h::Data.AbstractHamiltonian; kwargs...)
     return build_flow(sys, components.integrator)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+High-level constructor for an `OptimalControlFlow` from a control-free OCP.
+
+Builds a Hamiltonian flow directly from a `CTModels.Models.Model` with control
+dimension 0, exploiting the OCP structure: state equation ẋ = f(t,x,∅,v) is
+computed exactly (no AD), and only ṗ = −∂H/∂x uses automatic differentiation.
+
+# Arguments
+- `ocp::CTModels.Models.Model`: The optimal control problem model.
+- `kwargs...`: Keyword options passed to the backend and integrator strategies
+  (same as `Flow(h::Data.AbstractHamiltonian; kwargs...)`).
+
+# Returns
+- `OptimalControlFlow`: Wraps an inner `HamiltonianFlow` and exposes:
+  - Point eval: `f(t0, x0, p0, tf; variable, variable_costate, unsafe)`
+  - Trajectory: `f((t0,tf), x0, p0; variable)` → `CTModels.Solution`
+
+See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), [`CTFlows.Flows.Flow`](@ref).
+"""
+function Flow(ocp::CTModels.Models.Model; kwargs...)
+    routed     = _route_flow_options(kwargs)
+    components = _build_flow_components(routed)
+    h          = _ocp_hamiltonian(ocp)
+    sys        = Systems.build_system(h, components.backend)
+    inner      = build_flow(sys, components.integrator)
+    return OptimalControlFlow(inner, ocp)
+end
+
+function Flow(::CTModels.Models.Model, ::Any, args...; kwargs...)
+    throw(Exceptions.PreconditionError(
+        "Flow(ocp, …) with extra positional arguments is not supported for control-free OCPs";
+        reason     = "this OCP is control-free (EmptyControlModel); passing a control law, " *
+                     "state constraint or multiplier is not handled by this path",
+        suggestion = "call Flow(ocp; kwargs…) — the control-free flow takes no control argument",
+        context    = "Flow(ocp::CTModels.Models.Model) — control-free guard",
+    ))
+end
+

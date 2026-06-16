@@ -138,19 +138,19 @@ The augmented state vector has the form `[x; p; pv]` where:
 - `n_v::Int`: Variable dimension.
 
 # Returns
-- `Tuple`: `(x, p, pv)` where each component is a view or scalar.
+- `Tuple`: `(x, p, pv)` where each component is a `@view` slice.
 
 # Notes
-- For scalar state (`n_x == 1`), returns scalars instead of views.
+- Always returns views (never scalars), consistent with `_ham_split`.
 - For matrix inputs, returns column views.
 - Used internally by [`CTFlows.Systems.HamIpAugRHS`](@ref).
 
 See also: [`CTFlows.Systems._aug_assign!`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
 """
 function _aug_split(u::AbstractVector, n_x::Int, n_v::Int)
-    x   = n_x == 1 ? u[1]    : @view(u[1:n_x])
-    p   = n_x == 1 ? u[n_x+1] : @view(u[n_x+1:2*n_x])
-    pv  = @view(u[end-n_v+1:end])
+    x  = @view(u[1:n_x])
+    p  = @view(u[n_x+1:2*n_x])
+    pv = @view(u[end-n_v+1:end])
     return (x, p, pv)
 end
 _aug_split(u::AbstractMatrix, n_x::Int, n_v::Int) =
@@ -252,17 +252,17 @@ end
 # TODO: docstring
 function build_rhs_augmented(
     sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace},
-    n_x::Int, n_v::Int,
+    n_x::Int, n_v::Int, x0, p0,
 ) where {F, TD, VD}
-    return IPHVFOoPAugRHS(sys.hvf, n_x, n_v)
+    return IPHVFOoPAugRHS(sys.hvf, n_x, n_v, Common.make_coerce(x0), Common.make_coerce(p0))
 end
 
 # TODO: docstring
 function build_rhs_augmented(
     sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace},
-    n_x::Int, n_v::Int,
+    n_x::Int, n_v::Int, x0, p0,
 ) where {F, TD, VD}
-    return IPHVFIpAugRHS(sys.hvf, n_x, n_v)
+    return IPHVFIpAugRHS(sys.hvf, n_x, n_v, Common.make_coerce(x0), Common.make_coerce(p0))
 end
 
 # =============================================================================

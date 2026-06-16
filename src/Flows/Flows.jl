@@ -37,6 +37,8 @@ include(joinpath(@__DIR__, "abstract_flow.jl"))
 include(joinpath(@__DIR__, "flow.jl"))
 include(joinpath(@__DIR__, "registry.jl"))
 include(joinpath(@__DIR__, "flow_routing.jl"))
+include(joinpath(@__DIR__, "ocp_model_traits.jl"))
+include(joinpath(@__DIR__, "optimal_control_flow.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 include(joinpath(@__DIR__, "calling.jl"))
 
@@ -45,6 +47,7 @@ include(joinpath(@__DIR__, "calling.jl"))
 # ==============================================================================
 
 export AbstractFlow, AbstractStateFlow, AbstractHamiltonianFlow, Flow, StateFlow, HamiltonianFlow
+export OptimalControlFlow
 export system, integrator
 export build_flow
 export hamiltonian_vector_field

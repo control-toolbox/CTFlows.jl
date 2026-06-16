@@ -201,9 +201,11 @@ variable costate.
 
 See also: [`CTFlows.Systems.HamIpAugRHS`](@ref), [`CTFlows.Systems.build_rhs`](@ref).
 """
-function build_rhs_augmented(sys::HamiltonianSystem, n_x::Int, n_v::Int, _, _, _, _)
+function build_rhs_augmented(sys::HamiltonianSystem, n_x::Int, n_v::Int, x0, p0, _, _)
     h, backend = sys.h, sys.backend
-    return HamIpAugRHS(h, backend, n_x, n_v)
+    cx = Common.make_coerce(x0)
+    cp = Common.make_coerce(p0)
+    return HamIpAugRHS(h, backend, n_x, n_v, cx, cp)
 end
 
 # =============================================================================
