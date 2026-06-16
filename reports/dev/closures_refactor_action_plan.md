@@ -50,7 +50,7 @@ Checkpoint: `test/suite/differentiation` via MCP — vert avant de continuer.
 
 ### Phase B — Sites sans AD (risque nul)
 Steps:
-1. `src/DifferentialGeometry/lift.jl` : `LiftedHamiltonian{TF,TD,VD} <: Function` + 4 call
+1. `src/DifferentialGeometry/lift.jl` : `LiftedHamiltonianFunction{TF,TD,VD} <: Function` + 4 call
    methods ; `_Lift` renvoie le functor (annexe A.4).
 2. `src/Solutions/hamiltonian_vector_field_solution.jl` : `StateProjection`/`CostateProjection`
    (`<: Function`) ; `state`/`costate` renvoient les functors (annexe A.5).
