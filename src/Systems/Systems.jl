@@ -47,6 +47,9 @@ export AbstractHamRHS, AbstractIPHamRHS, AbstractOoPHamRHS
 export rhs, rhs_oop
 export build_rhs
 export build_oop_rhs
+export get_ip_rhs
+export get_oop_rhs
+export get_ip_rhs_augmented
 export hamiltonian_vector_field
 export VectorFieldSystem
 export HamiltonianVectorFieldSystem
