@@ -16,7 +16,7 @@ for better error messages.
 # Throws
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): Always, indicating the object does not have the trait.
 
-See also: [`CTModels.OCP.TimeDependence`](@extref), [`CTFlows.Traits.time_dependence`](@ref).
+See also: [`CTModels.Models.TimeDependence`](@extref), [`CTFlows.Traits.time_dependence`](@ref).
 """
 function has_time_dependence_trait(obj::Any)
     source_method = _caller_function_name()
@@ -42,7 +42,7 @@ to return the specific trait value (`Autonomous` or `NonAutonomous`).
 # Throws
 - [`CTBase.Exceptions.NotImplemented`](@extref): Always, indicating the method must be implemented.
 
-See also: [`CTModels.OCP.TimeDependence`](@extref), [`CTFlows.Traits.has_time_dependence_trait`](@ref).
+See also: [`CTModels.Models.TimeDependence`](@extref), [`CTFlows.Traits.has_time_dependence_trait`](@ref).
 """
 function time_dependence(obj::Any)
     has_time_dependence_trait(obj)
@@ -72,11 +72,11 @@ if `time_dependence(obj)` is `Autonomous`.
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): If the object does not support time-dependence queries.
 - [`CTBase.Exceptions.NotImplemented`](@extref): If `time_dependence` is not implemented for the object type.
 
-See also: [`CTModels.OCP.TimeDependence`](@extref), [`CTFlows.Traits.time_dependence`](@ref).
+See also: [`CTModels.Models.TimeDependence`](@extref), [`CTFlows.Traits.time_dependence`](@ref).
 """
-function OCP.is_autonomous(obj::Any)
+function Models.is_autonomous(obj::Any)
     has_time_dependence_trait(obj)
-    return time_dependence(obj) === OCP.Autonomous
+    return time_dependence(obj) === Models.Autonomous
 end
 
 """
@@ -97,9 +97,9 @@ if `time_dependence(obj)` is `NonAutonomous`.
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): If the object does not support time-dependence queries.
 - [`CTBase.Exceptions.NotImplemented`](@extref): If `time_dependence` is not implemented for the object type.
 
-See also: [`CTModels.OCP.TimeDependence`](@extref), [`CTFlows.Traits.time_dependence`](@ref).
+See also: [`CTModels.Models.TimeDependence`](@extref), [`CTFlows.Traits.time_dependence`](@ref).
 """
-function OCP.is_nonautonomous(obj::Any)
+function Models.is_nonautonomous(obj::Any)
     has_time_dependence_trait(obj)
-    return time_dependence(obj) === OCP.NonAutonomous
+    return time_dependence(obj) === Models.NonAutonomous
 end

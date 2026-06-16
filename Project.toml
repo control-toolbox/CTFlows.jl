@@ -35,7 +35,7 @@ CTFlowsStaticArrays = ["StaticArrays"]
 [compat]
 ADTypes = "1"
 Aqua = "0.8"
-CTBase = "0.18"
+CTBase = "0.20"
 CTModels = "0.10"
 CTSolvers = "0.4"
 CommonSolve = "0.2"

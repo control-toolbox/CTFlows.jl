@@ -3,7 +3,7 @@ module TestTimeDependence
 import Test
 import CTBase.Exceptions
 import CTFlows.Traits
-import CTModels.OCP
+import CTModels.Models
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -19,7 +19,7 @@ Implements both required methods: has_time_dependence_trait and time_dependence.
 struct FakeAutonomous end
 
 Traits.has_time_dependence_trait(::FakeAutonomous; kwargs...) = true
-Traits.time_dependence(::FakeAutonomous) = OCP.Autonomous
+Traits.time_dependence(::FakeAutonomous) = Models.Autonomous
 
 """
 Fake type for testing time-dependence trait pattern with NonAutonomous.
@@ -27,7 +27,7 @@ Fake type for testing time-dependence trait pattern with NonAutonomous.
 struct FakeNonAutonomous end
 
 Traits.has_time_dependence_trait(::FakeNonAutonomous) = true
-Traits.time_dependence(::FakeNonAutonomous) = OCP.NonAutonomous
+Traits.time_dependence(::FakeNonAutonomous) = Models.NonAutonomous
 
 function test_time_dependence()
     Test.@testset "Time Dependence Trait Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
@@ -39,8 +39,8 @@ function test_time_dependence()
         Test.@testset "UNIT TESTS - Trait Types" begin
             Test.@testset "TimeDependence abstract type" begin
                 Test.@test isdefined(OCP, :TimeDependence)
-                Test.@test OCP.Autonomous <: OCP.TimeDependence
-                Test.@test OCP.NonAutonomous <: OCP.TimeDependence
+                Test.@test Models.Autonomous <: Models.TimeDependence
+                Test.@test Models.NonAutonomous <: Models.TimeDependence
             end
         end
 
@@ -68,17 +68,17 @@ function test_time_dependence()
             Test.@testset "FakeAutonomous trait implementation" begin
                 obj = FakeAutonomous()
                 Test.@test Traits.has_time_dependence_trait(obj) === true
-                Test.@test Traits.time_dependence(obj) === OCP.Autonomous
-                Test.@test OCP.is_autonomous(obj) === true
-                Test.@test OCP.is_nonautonomous(obj) === false
+                Test.@test Traits.time_dependence(obj) === Models.Autonomous
+                Test.@test Models.is_autonomous(obj) === true
+                Test.@test Models.is_nonautonomous(obj) === false
             end
 
             Test.@testset "FakeNonAutonomous trait implementation" begin
                 obj = FakeNonAutonomous()
                 Test.@test Traits.has_time_dependence_trait(obj) === true
-                Test.@test Traits.time_dependence(obj) === OCP.NonAutonomous
-                Test.@test OCP.is_autonomous(obj) === false
-                Test.@test OCP.is_nonautonomous(obj) === true
+                Test.@test Traits.time_dependence(obj) === Models.NonAutonomous
+                Test.@test Models.is_autonomous(obj) === false
+                Test.@test Models.is_nonautonomous(obj) === true
             end
         end
 

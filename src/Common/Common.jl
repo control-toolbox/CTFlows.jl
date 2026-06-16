@@ -17,7 +17,6 @@ module Common
 import Base: only
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
-import CTModels.OCP
 using ADTypes: ADTypes
 
 # ==============================================================================

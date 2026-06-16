@@ -140,7 +140,7 @@ if `variable_dependence(obj)` is `NonFixed`.
 
 See also: [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Traits.variable_dependence`](@ref).
 """
-function OCP.is_variable(obj::Any)
+function Models.is_variable(obj::Any)
     has_variable_dependence_trait(obj)
     return variable_dependence(obj) === NonFixed
 end
@@ -165,7 +165,7 @@ if `variable_dependence(obj)` is `Fixed`.
 
 See also: [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Traits.variable_dependence`](@ref).
 """
-function OCP.is_nonvariable(obj::Any)
+function Models.is_nonvariable(obj::Any)
     has_variable_dependence_trait(obj)
     return variable_dependence(obj) === Fixed
 end
@@ -190,7 +190,7 @@ if `variable_dependence(obj)` is `NonFixed`.
 
 See also: `is_variable`, [`CTFlows.Traits.VariableDependence`](@ref).
 """
-function OCP.has_variable(obj::Any)
+function Models.has_variable(obj::Any)
     has_variable_dependence_trait(obj)
     return variable_dependence(obj) === NonFixed
 end

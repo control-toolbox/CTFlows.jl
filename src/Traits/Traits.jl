@@ -27,7 +27,7 @@ module Traits
 using Reexport
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
-import CTModels.OCP
+import CTModels.Models
 
 # ==============================================================================
 # Includes
@@ -47,8 +47,8 @@ include(joinpath(@__DIR__, "variable_dependence.jl"))
 # Module exports
 # ==============================================================================
 
-@reexport import CTModels.OCP: Autonomous, NonAutonomous, TimeDependence
-@reexport import CTModels.OCP: is_autonomous, is_nonautonomous, is_variable, is_nonvariable, has_variable
+@reexport import CTModels.Models: Autonomous, NonAutonomous, TimeDependence
+@reexport import CTModels.Models: is_autonomous, is_nonautonomous, is_variable, is_nonvariable, has_variable
 
 export AbstractTrait
 export AbstractModeTrait, AbstractDynamicsTrait

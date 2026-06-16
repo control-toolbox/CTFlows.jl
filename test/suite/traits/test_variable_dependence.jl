@@ -3,7 +3,7 @@ module TestVariableDependence
 import Test
 import CTBase.Exceptions
 import CTFlows.Traits
-import CTModels.OCP
+import CTModels.Models
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -74,18 +74,18 @@ function test_variable_dependence()
                 obj = FakeFixed()
                 Test.@test Traits.has_variable_dependence_trait(obj) === true
                 Test.@test Traits.variable_dependence(obj) === Traits.Fixed
-                Test.@test OCP.is_variable(obj) === false
-                Test.@test OCP.is_nonvariable(obj) === true
-                Test.@test OCP.has_variable(obj) === false
+                Test.@test Models.is_variable(obj) === false
+                Test.@test Models.is_nonvariable(obj) === true
+                Test.@test Models.has_variable(obj) === false
             end
 
             Test.@testset "FakeNonFixed trait implementation" begin
                 obj = FakeNonFixed()
                 Test.@test Traits.has_variable_dependence_trait(obj) === true
                 Test.@test Traits.variable_dependence(obj) === Traits.NonFixed
-                Test.@test OCP.is_variable(obj) === true
-                Test.@test OCP.is_nonvariable(obj) === false
-                Test.@test OCP.has_variable(obj) === true
+                Test.@test Models.is_variable(obj) === true
+                Test.@test Models.is_nonvariable(obj) === false
+                Test.@test Models.has_variable(obj) === true
             end
         end
 
