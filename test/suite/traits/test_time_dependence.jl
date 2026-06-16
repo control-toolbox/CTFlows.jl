@@ -38,7 +38,7 @@ function test_time_dependence()
 
         Test.@testset "UNIT TESTS - Trait Types" begin
             Test.@testset "TimeDependence abstract type" begin
-                Test.@test isdefined(OCP, :TimeDependence)
+                Test.@test isdefined(Models, :TimeDependence)
                 Test.@test Models.Autonomous <: Models.TimeDependence
                 Test.@test Models.NonAutonomous <: Models.TimeDependence
             end
