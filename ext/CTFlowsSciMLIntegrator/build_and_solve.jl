@@ -227,11 +227,13 @@ function Integrators.build_problem(
     config::Configs.AbstractAugmentedHamiltonianConfig;
     variable,
 )
+    x0  = Configs.initial_state(config)
+    p0  = Configs.initial_costate(config)
     u0  = Configs.initial_condition(config)          # vcat(x0, p0, pv0)
     λ   = Common.ODEParameters(variable)
-    n_x = length(Configs.initial_state(config))
+    n_x = length(x0)
     n_v = length(Configs.initial_variable_costate(config))
-    f!  = Systems.build_rhs_augmented(system, n_x, n_v)
+    f!  = Systems.build_rhs_augmented(system, n_x, n_v, x0, p0)
     return ODEProblem(f!, u0, Configs.tspan(config), λ)
 end
 

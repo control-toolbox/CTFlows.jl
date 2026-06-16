@@ -5,6 +5,7 @@ extend-ignore-re = [
     "_anf",
     "GODD",
     "_godd",
+    "_ANF",
 ]
 
 [files]

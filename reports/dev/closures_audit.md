@@ -68,7 +68,7 @@ listés ci-dessous. Voir `reports/dev/closures_refactor_action_plan.md` pour le 
 
 | Site | Phase | Functor introduit | Statut |
 |---|---|---|---|
-| `src/DifferentialGeometry/lift.jl` | B/2 | `LiftedHamiltonian{F,TD,VD}` | ✅ Terminé |
+| `src/DifferentialGeometry/lift.jl` | B/2 | `LiftedHamiltonianFunction{F,TD,VD}` | ✅ Terminé |
 | `src/Solutions/hamiltonian_vector_field_solution.jl` | B/2 | `StateProjection{S}`, `CostateProjection{S}` | ✅ Terminé |
 | `ext/CTFlowsDifferentiationInterface.jl` (`h_x/h_p/h_v`) | C/3 | `WithActiveArg(h, Val(1/2/3))` | ✅ Terminé |
 | `src/DifferentialGeometry/poisson.jl` | D/4 | `PoissonBracket{TH,TG,B,TD,VD}` | ✅ Terminé |
@@ -111,7 +111,7 @@ _Lift(f, ::Type{Traits.NonAutonomous}, ::Type{Traits.NonFixed}) = (t, x, p, v) -
 | 4 | `f` | `(t, x, p, v)` |
 
 La closure retournée est wrappée dans un `Data.Hamiltonian` par l'appelant.
-Cible naturelle : un functor `LiftedHamiltonian{F, TD, VD}`.
+Cible naturelle : un functor `LiftedHamiltonianFunction{F, TD, VD}`.
 
 ---
 

@@ -211,16 +211,18 @@ for the augmented system (state + costate + variable costate).
 # Call signature
 `(f::IPHVFOoPAugRHS)(du, u, λ, t) -> nothing`
 """
-struct IPHVFOoPAugRHS{F,TD,VD} <: AbstractIPHVFRHS
+struct IPHVFOoPAugRHS{F,TD,VD,CX,CP} <: AbstractIPHVFRHS
     hvf::Data.HamiltonianVectorField{F,TD,VD,Traits.OutOfPlace}
     n_x::Int
     n_v::Int
+    cx::CX
+    cp::CP
 end
 
-function (f::IPHVFOoPAugRHS{F,TD,VD})(du, u, λ, t) where {F,TD,VD}
+function (f::IPHVFOoPAugRHS{F,TD,VD,CX,CP})(du, u, λ, t) where {F,TD,VD,CX,CP}
     v = Common.variable(λ)
     x, p, _ = _aug_split(u, f.n_x, f.n_v)
-    dx, dp, dpv = f.hvf(t, x, p, v; variable_costate=true)
+    dx, dp, dpv = f.hvf(t, f.cx(x), f.cp(p), v; variable_costate=true)
     _aug_assign!(du, dx, dp, dpv, f.n_x, f.n_v)
     return nothing
 end
@@ -241,18 +243,20 @@ for the augmented system (state + costate + variable costate).
 # Call signature
 `(f::IPHVFIpAugRHS)(du, u, λ, t) -> nothing`
 """
-struct IPHVFIpAugRHS{F,TD,VD} <: AbstractIPHVFRHS
+struct IPHVFIpAugRHS{F,TD,VD,CX,CP} <: AbstractIPHVFRHS
     hvf::Data.HamiltonianVectorField{F,TD,VD,Traits.InPlace}
     n_x::Int
     n_v::Int
+    cx::CX
+    cp::CP
 end
 
-function (f::IPHVFIpAugRHS{F,TD,VD})(du, u, λ, t) where {F,TD,VD}
+function (f::IPHVFIpAugRHS{F,TD,VD,CX,CP})(du, u, λ, t) where {F,TD,VD,CX,CP}
     v = Common.variable(λ)
     x, p, _ = _aug_split(u,  f.n_x, f.n_v)
     dx, dp, _ = _aug_split(du, f.n_x, f.n_v)
     dpv = similar(u[end-f.n_v+1:end])
-    f.hvf(dx, dp, t, x, p, v; dpv=dpv, variable_costate=true)
+    f.hvf(dx, dp, t, f.cx(x), f.cp(p), v; dpv=dpv, variable_costate=true)
     du[end-f.n_v+1:end] .= dpv
     return nothing
 end

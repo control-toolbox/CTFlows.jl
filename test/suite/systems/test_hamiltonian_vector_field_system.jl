@@ -329,7 +329,8 @@ function test_hamiltonian_vector_field_system()
 
             Test.@testset "OOP builds" begin
                 n_x, n_v = 2, 1
-                rhs_aug = Systems.build_rhs_augmented(sys, n_x, n_v)
+                x0, p0 = [1.0, 2.0], [3.0, 4.0]
+                rhs_aug = Systems.build_rhs_augmented(sys, n_x, n_v, x0, p0)
                 Test.@test rhs_aug isa Systems.AbstractIPHVFRHS
             end
 
@@ -338,7 +339,8 @@ function test_hamiltonian_vector_field_system()
                 hvf_ip = Data.HamiltonianVectorField((dx, dp, x, p, v; dpv=nothing, variable_costate::Bool=false) -> nothing; is_autonomous=true, is_variable=true, is_inplace=true)
                 sys_ip = Systems.HamiltonianVectorFieldSystem(hvf_ip)
                 n_x, n_v = 2, 1
-                rhs_aug_ip = Systems.build_rhs_augmented(sys_ip, n_x, n_v)
+                x0, p0 = [1.0, 2.0], [3.0, 4.0]
+                rhs_aug_ip = Systems.build_rhs_augmented(sys_ip, n_x, n_v, x0, p0)
                 Test.@test rhs_aug_ip isa Systems.AbstractIPHVFRHS
             end
         end

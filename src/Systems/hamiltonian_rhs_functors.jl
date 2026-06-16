@@ -266,19 +266,21 @@ The state vector is augmented as `[x; p; v]` where `v` is the variable costate.
 
 See also: [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamOoPRHS`](@ref).
 """
-struct HamIpAugRHS{F,TD,VD,B} <: AbstractIPHamRHS
+struct HamIpAugRHS{F,TD,VD,B,CX,CP} <: AbstractIPHamRHS
     h::Data.Hamiltonian{F,TD,VD}
     backend::B
     n_x::Int
     n_v::Int
+    cx::CX
+    cp::CP
 end
 
-function (f::HamIpAugRHS{F,TD,VD,B})(du, u, λ, t) where {F,TD,VD,B}
+function (f::HamIpAugRHS{F,TD,VD,B,CX,CP})(du, u, λ, t) where {F,TD,VD,B,CX,CP}
     v = Common.variable(λ)
     _check_aug_batch_compat(u, v)
     x, p, _ = _aug_split(u, f.n_x, f.n_v)
-    ∂x, ∂p = Differentiation.hamiltonian_gradient(f.backend, f.h, t, x, p, v)
-    ∂pv = Differentiation.variable_gradient(f.backend, f.h, t, x, p, v)
+    ∂x, ∂p = Differentiation.hamiltonian_gradient(f.backend, f.h, t, f.cx(x), f.cp(p), v)
+    ∂pv = Differentiation.variable_gradient(f.backend, f.h, t, f.cx(x), f.cp(p), v)
     _aug_assign!(du, ∂p, -∂x, -∂pv, f.n_x, f.n_v)
     return nothing
 end

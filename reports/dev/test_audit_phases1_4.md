@@ -60,17 +60,17 @@ La condition dans `@generated` est `1 ≤ Slot ≤ total`. Seul `Slot > total` e
 
 ---
 
-## Phase 2 — `LiftedHamiltonian`
+## Phase 2 — `LiftedHamiltonianFunction`
 
 **Fichier** : `test/suite/differential_geometry/test_lift_dg.jl`
 
-### T2.1 — Type concret `LiftedHamiltonian`
+### T2.1 — Type concret `LiftedHamiltonianFunction`
 ```julia
-Test.@testset "Lift() - retourne un LiftedHamiltonian" begin
+Test.@testset "Lift() - retourne un LiftedHamiltonianFunction" begin
     F(x) = [x[2], -x[1]]
     H = DifferentialGeometry.Lift(F)
-    Test.@test H isa DifferentialGeometry.LiftedHamiltonian
-    Test.@test H isa DifferentialGeometry.LiftedHamiltonian{typeof(F), Traits.Autonomous, Traits.Fixed}
+    Test.@test H isa DifferentialGeometry.LiftedHamiltonianFunction
+    Test.@test H isa DifferentialGeometry.LiftedHamiltonianFunction{typeof(F), Traits.Autonomous, Traits.Fixed}
 end
 ```
 Le test existant vérifie `H isa Function` (trop large). Le type concret paramétré est
@@ -85,7 +85,7 @@ Test.@testset "Lift() - @inferred" begin
     Test.@test_nowarn Test.@inferred H(x0, p0)
 end
 ```
-`LiftedHamiltonian` est sur le chemin chaud de `PoissonBracket`. L'inférence doit être
+`LiftedHamiltonianFunction` est sur le chemin chaud de `PoissonBracket`. L'inférence doit être
 totale pour éviter les boîtes dynamiques dans l'intégrateur.
 
 ### T2.3 — Champ `.f` préservé (pas de closure intermédiaire)
@@ -100,14 +100,14 @@ Détecte une régression où `Lift` envelopperait `F` dans une closure avant de 
 
 ### T2.4 — Functor stocké dans `Data.Hamiltonian` (path VectorField)
 ```julia
-Test.@testset "Lift() - VectorField: functor interne est LiftedHamiltonian" begin
+Test.@testset "Lift() - VectorField: functor interne est LiftedHamiltonianFunction" begin
     X = Data.VectorField(x -> [x[2], -x[1]]; is_autonomous=true, is_variable=false)
     H = DifferentialGeometry.Lift(X)
-    Test.@test H.f isa DifferentialGeometry.LiftedHamiltonian
+    Test.@test H.f isa DifferentialGeometry.LiftedHamiltonianFunction
 end
 ```
 Quand `Lift` reçoit un `VectorField`, il construit un `Data.Hamiltonian` dont le champ
-`.f` est un `LiftedHamiltonian`. Aucun test ne vérifie ça actuellement.
+`.f` est un `LiftedHamiltonianFunction`. Aucun test ne vérifie ça actuellement.
 
 ---
 
@@ -336,10 +336,10 @@ end
 | T1.2 | 1     | `test_arg_placement.jl`                     | `@inferred` slot 1 et slot 3                      |
 | T1.3 | 1     | `test_arg_placement.jl`                     | Champs `got`/`expected` de l'erreur               |
 | T1.4 | 1     | `test_arg_placement.jl`                     | Slot 0 lève bien `IncorrectArgument`              |
-| T2.1 | 2     | `test_lift_dg.jl`                           | `isa LiftedHamiltonian{F,TD,VD}`                  |
+| T2.1 | 2     | `test_lift_dg.jl`                           | `isa LiftedHamiltonianFunction{F,TD,VD}`                  |
 | T2.2 | 2     | `test_lift_dg.jl`                           | `@inferred` sur l'appel                           |
 | T2.3 | 2     | `test_lift_dg.jl`                           | `.f === F` (pas de closure intermédiaire)         |
-| T2.4 | 2     | `test_lift_dg.jl`                           | `.f isa LiftedHamiltonian` (path VectorField)     |
+| T2.4 | 2     | `test_lift_dg.jl`                           | `.f isa LiftedHamiltonianFunction` (path VectorField)     |
 | T3.1 | 3     | `test_differentiation_interface_extension.jl` | `cache.h_x/h_p isa WithActiveArg` (Fixed)       |
 | T3.2 | 3     | `test_differentiation_interface_extension.jl` | `cache.h_v isa WithActiveArg` (NonFixed)         |
 | T3.3 | 3     | `test_differentiation_interface_extension.jl` | Slot paramétrique correct dans le type           |

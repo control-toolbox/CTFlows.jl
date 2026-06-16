@@ -557,7 +557,7 @@ avant de convertir les closures internes passées à `gradient`/`derivative`.
 | `IPVFOoPRHS{F,TD,VD}` | `_build_rhs_vf_oop` | 1, 2, 3 |
 | `OoPVFIpRHS{F,TD,VD,BUF}` | `_build_oop_rhs_vf_ip` | 1, 6 |
 | `IPHVFIpRHS{F,TD,VD,CX,CP}` | closure de `build_rhs` (HVF) | 7, 3 |
-| `LiftedHamiltonian{TF,TD,VD}` | 4 closures `_Lift` | 2, 8 |
+| `LiftedHamiltonianFunction{TF,TD,VD}` | 4 closures `_Lift` | 2, 8 |
 | `StateProjection{S}` | `t -> sol(t)[1]` | 1 |
 | `WithActiveArg{F,Slot}` | `h_x/h_p/h_v`, closures `y -> H(y,p)` | 4 |
 | `PoissonBracket{TH,TG,TB,TD,VD}` | 4 closures `_Poisson` + 16 closures internes | 2, 4, 8 |

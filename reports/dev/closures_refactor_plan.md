@@ -160,7 +160,7 @@ Le dispatch scalaire/vecteur de `_ad_result` (déjà présent) est conservé : i
 « dérivée de Lie scalaire » de « crochet de Lie vectoriel ».
 
 ### `src/DifferentialGeometry/lift.jl`
-`_Lift` (4) → `LiftedHamiltonian{F,TD,VD}` à 4 call methods. Pur algébrique (`H = p'·f(x)`),
+`_Lift` (4) → `LiftedHamiltonianFunction{F,TD,VD}` à 4 call methods. Pur algébrique (`H = p'·f(x)`),
 aucune AD, aucune closure interne.
 
 ### `src/Solutions/hamiltonian_vector_field_solution.jl`
@@ -338,19 +338,19 @@ end
 ## A.4 `src/DifferentialGeometry/lift.jl` (sans AD, le plus simple)
 
 ```julia
-struct LiftedHamiltonian{TF,TD,VD} <: Function   # <: Function : voir difficulté #7
+struct LiftedHamiltonianFunction{TF,TD,VD} <: Function   # <: Function : voir difficulté #7
     f::TF
 end
-LiftedHamiltonian(f, ::Type{TD}, ::Type{VD}) where {TD,VD} =
-    LiftedHamiltonian{typeof(f),TD,VD}(f)
+LiftedHamiltonianFunction(f, ::Type{TD}, ::Type{VD}) where {TD,VD} =
+    LiftedHamiltonianFunction{typeof(f),TD,VD}(f)
 
-(L::LiftedHamiltonian{TF,Traits.Autonomous,   Traits.Fixed})(x, p)       where {TF} = p' * L.f(x)
-(L::LiftedHamiltonian{TF,Traits.Autonomous,   Traits.NonFixed})(x, p, v) where {TF} = p' * L.f(x, v)
-(L::LiftedHamiltonian{TF,Traits.NonAutonomous,Traits.Fixed})(t, x, p)    where {TF} = p' * L.f(t, x)
-(L::LiftedHamiltonian{TF,Traits.NonAutonomous,Traits.NonFixed})(t, x, p, v) where {TF} = p' * L.f(t, x, v)
+(L::LiftedHamiltonianFunction{TF,Traits.Autonomous,   Traits.Fixed})(x, p)       where {TF} = p' * L.f(x)
+(L::LiftedHamiltonianFunction{TF,Traits.Autonomous,   Traits.NonFixed})(x, p, v) where {TF} = p' * L.f(x, v)
+(L::LiftedHamiltonianFunction{TF,Traits.NonAutonomous,Traits.Fixed})(t, x, p)    where {TF} = p' * L.f(t, x)
+(L::LiftedHamiltonianFunction{TF,Traits.NonAutonomous,Traits.NonFixed})(t, x, p, v) where {TF} = p' * L.f(t, x, v)
 
 # remplace les 4 _Lift :
-_Lift(f, ::Type{TD}, ::Type{VD}) where {TD,VD} = LiftedHamiltonian(f, TD, VD)
+_Lift(f, ::Type{TD}, ::Type{VD}) where {TD,VD} = LiftedHamiltonianFunction(f, TD, VD)
 ```
 
 `Lift(X::Data.AbstractVectorField)` continue d'appeler `Data.Hamiltonian(_Lift(...), TD, VD)` :
@@ -551,7 +551,7 @@ Le dispatch scalaire/vecteur passe de `_ad_result(::Number/::AbstractVector)` à
    Un callable struct ordinaire n'est **pas** `<:Function` ⇒ échec à la construction
    **et** non-match des call methods. **Résolution** (déjà appliquée dans les snippets
    ci-dessus) : déclarer les functors stockés dans `Data.*` comme `<: Function`
-   (`struct PoissonBracket{…} <: Function`, idem `LiftedHamiltonian`, `TimeDeriv*`). C'est
+   (`struct PoissonBracket{…} <: Function`, idem `LiftedHamiltonianFunction`, `TimeDeriv*`). C'est
    légal en Julia et **reproduit exactement** la relation de type des closures remplacées
    (toute closure est `<:Function`) — donc aucune autre signature `::Function` ailleurs
    n'est cassée. **Ne PAS** relâcher la contrainte des structs `Data.*` (plus invasif et
