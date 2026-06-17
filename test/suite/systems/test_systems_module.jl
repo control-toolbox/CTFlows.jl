@@ -57,13 +57,11 @@ const EXPORTED_CONCRETE_TYPES = (
 )
 
 const EXPORTED_FUNCTIONS = (
-    :rhs,
-    :rhs_oop,
-    :build_rhs,
-    :build_oop_rhs,
+    :get_ip_rhs,
+    :get_oop_rhs,
+    :get_ip_rhs_augmented,
     :hamiltonian_vector_field,
     :build_system,
-    :build_rhs_augmented,
     :hamiltonian,
     :backend,
 )

@@ -107,7 +107,7 @@ using CTFlows.Systems, CTFlows.Common
 
 vf = VectorField(x -> -x; autonomous=true, variable=false)
 sys = VectorFieldSystem(vf)
-rhs = Systems.rhs(sys)
+rhs = Systems.get_ip_rhs(sys, config)
 
 du = zeros(2)
 u = [1.0, 2.0]
@@ -118,65 +118,75 @@ rhs(du, u, p, 0.0)
 
 # Notes
 - The closure is computed once at construction time for performance.
-- Multiple calls to `rhs` return the same function object.
+- Multiple calls to `get_ip_rhs` return the same function object.
 - The closure reads `variable(p)` to access the actual variable value.
 
 See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
 """
-function rhs(sys::VectorFieldSystem)
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the in-place right-hand side for a `VectorFieldSystem`.
+
+Eager implementation: ignores the config and returns the pre-computed closure.
+
+# Arguments
+- `sys::VectorFieldSystem`: The vector field system.
+- `_`: The configuration (ignored).
+
+# Returns
+- `Function`: The pre-computed in-place closure with signature `(du, u, p, t) -> nothing`.
+
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Systems.rhs`](@ref).
+"""
+function get_ip_rhs(sys::VectorFieldSystem, _)
     return sys.rhs
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Out-of-place right-hand side for an `OutOfPlace` `VectorFieldSystem`.
+Return the out-of-place right-hand side for a `VectorFieldSystem`.
 
-Returns the pre-computed closure with signature `(u, p, t) -> du`. The optional
-`is_u0_mutable` argument is accepted but ignored: for out-of-place vector fields
-`rhs_oop` is always the correct callable regardless of u0 mutability.
+Eager implementation: ignores the config and returns the pre-computed closure.
+For `InPlace` systems, returns `rhs_oop_finalize` (the finalize path) since
+`get_oop_rhs` is only called when `!ismutable(u0)`.
 
 # Arguments
 - `sys::VectorFieldSystem{..., OutOfPlace, ...}`: The out-of-place system.
-- `::Bool`: Ignored. Accepted for API uniformity with the `InPlace` method.
+- `_`: The configuration (ignored).
 
 # Returns
-- `Function`: The pre-computed closure with signature `(u, p, t) -> du`.
+- `Function`: The pre-computed out-of-place closure with signature `(u, p, t) -> du`.
 
-See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
-function rhs_oop(sys::VectorFieldSystem{F, TD, VD, Traits.OutOfPlace, RHS, OOPROHS, Nothing}, ::Bool = true) where {F, TD, VD, RHS, OOPROHS}
+function get_oop_rhs(sys::VectorFieldSystem{F, TD, VD, Traits.OutOfPlace, RHS, OOPROHS, Nothing}, _) where {F, TD, VD, RHS, OOPROHS}
     return sys.rhs_oop
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Out-of-place right-hand side for an `InPlace` `VectorFieldSystem`, dispatching on u0 mutability.
+Return the out-of-place right-hand side for an `InPlace` `VectorFieldSystem`.
 
-For in-place vector fields the appropriate callable depends on whether the initial
-condition `u0` is mutable:
-- **`is_u0_mutable = true`** (default): returns `rhs_oop`, which allocates a mutable
-  buffer and returns it. Correct when `u0` is a `Vector` or similar mutable array.
-- **`is_u0_mutable = false`**: returns `rhs_oop_finalize`, which allocates a mutable
-  buffer, fills it via the in-place call, then converts back to `typeof(u)`. Correct
-  when `u0` is immutable (e.g. `StaticArrays.SVector`). A one-time performance
-  warning is emitted in this case.
+Eager implementation: ignores the config and returns the finalize closure.
+This method is called when `!ismutable(u0)`, so we always return `rhs_oop_finalize`.
 
 # Arguments
 - `sys::VectorFieldSystem{..., InPlace, ...}`: The in-place system.
-- `is_u0_mutable::Bool`: `true` if u0 is mutable, `false` if immutable. Defaults to `true`.
+- `_`: The configuration (ignored).
 
 # Returns
-- `Function`: The appropriate closure with signature `(u, p, t) -> du`.
+- `Function`: The finalize closure with signature `(u, p, t) -> du`.
 
 # Notes
-- Prefer out-of-place vector fields when u0 is a `StaticArrays.SVector` for best performance.
+- Emits a performance warning since this path is suboptimal for immutable arrays.
 
-See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
-function rhs_oop(sys::VectorFieldSystem{F, TD, VD, Traits.InPlace, RHS, OOPROHS, FINRHS}, is_u0_mutable::Bool = true) where {F, TD, VD, RHS, OOPROHS, FINRHS}
-    is_u0_mutable && return sys.rhs_oop
+function get_oop_rhs(sys::VectorFieldSystem{F, TD, VD, Traits.InPlace, RHS, OOPROHS, FINRHS}, _) where {F, TD, VD, RHS, OOPROHS, FINRHS}
     @warn "InPlace VectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
     return sys.rhs_oop_finalize
 end

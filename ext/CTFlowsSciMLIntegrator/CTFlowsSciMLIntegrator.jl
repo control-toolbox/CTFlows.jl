@@ -28,6 +28,7 @@ using CTFlows: CTFlows
 using CTFlows.Common: Common
 using CTFlows.Configs: Configs
 using CTFlows.Systems: Systems
+using CTFlows.Traits: Traits
 using CTFlows.Integrators: Integrators, SciML, SciMLTag, Tsit5Tag
 using DiffEqBase: DiffEqBase
 using SciMLBase: SciMLBase, ODEProblem

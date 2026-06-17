@@ -21,7 +21,7 @@ struct FakeStateSystem <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.
     data::Vector{Float64}
 end
 
-function Systems.rhs(sys::FakeStateSystem)
+function Systems.get_ip_rhs(sys::FakeStateSystem, _)
     return (du, u, p, t) -> du .= sys.data .* u
 end
 
@@ -29,7 +29,7 @@ struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonom
     data::Vector{Float64}
 end
 
-function Systems.rhs(sys::FakeHamiltonianSystem)
+function Systems.get_ip_rhs(sys::FakeHamiltonianSystem, _)
     return (dz, z, p, t) -> dz .= sys.data .* z
 end
 

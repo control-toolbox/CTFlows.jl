@@ -28,7 +28,7 @@ struct FakeSystem <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed
     state_dim::Int
 end
 
-function Systems.rhs(sys::FakeSystem)
+function Systems.get_ip_rhs(sys::FakeSystem, _)
     return (du, u, p, t) -> nothing
 end
 

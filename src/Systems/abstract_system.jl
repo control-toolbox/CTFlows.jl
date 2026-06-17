@@ -229,44 +229,33 @@ Traits.variable_costate_trait(::AbstractSystem) = Traits.NoVariableCostate
 """
 $(TYPEDSIGNATURES)
 
-Return the right-hand side function for the system.
+Return the in-place right-hand side function for a system given a configuration.
 
 The returned function must have the signature `(du, u, p, t) -> nothing` and
 fill `du` in place with the derivative at state `u`, parameters `p`, and time `t`.
 
-# Example
+Eager systems (e.g., `VectorFieldSystem`) ignore the config and return pre-computed closures.
+Lazy systems (e.g., `HamiltonianSystem`) read `x0`/`p0` from the config to build type-specific closures.
 
-\`\`\`julia
-using CTFlows.Systems
+# Arguments
+- `system::AbstractSystem`: The system.
+- `config`: The configuration containing initial conditions and time span.
 
-struct MySystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
-    data::Vector{Float64}
-end
-
-# Implement rhs to return the ODE right-hand side function
-function Systems.rhs(sys::MySystem)
-    return (du, u, p, t) -> du .= sys.data .* u
-end
-
-# Usage
-sys = MySystem([1.0, 2.0])
-rhs_func = Systems.rhs(sys)
-du = zeros(2)
-rhs_func(du, [3.0, 4.0], [], 0.0)  # du becomes [3.0, 8.0]
-\`\`\`
+# Returns
+- `Function`: The in-place RHS closure with signature `(du, u, p, t) -> nothing`.
 
 # Throws
 - [`CTBase.Exceptions.NotImplemented`](@extref): If not implemented by the concrete type.
 
-See also: [`CTFlows.Systems.AbstractSystem`](@ref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Systems.get_ip_rhs_augmented`](@ref).
 """
-function rhs(system::AbstractSystem)
+function get_ip_rhs(system::AbstractSystem, config)
     throw(
         Exceptions.NotImplemented(
-            "AbstractSystem rhs method not implemented";
-            required_method = "rhs(system::$(typeof(system)))",
-            suggestion = "Return a function (du, u, p, t) -> nothing that fills du in place.",
-            context = "AbstractSystem.rhs - required method implementation",
+            "AbstractSystem get_ip_rhs method not implemented";
+            required_method = "get_ip_rhs(sys::$(typeof(system)), config)",
+            suggestion = "Implement get_ip_rhs for your system type.",
+            context = "AbstractSystem.get_ip_rhs - required method implementation",
         ),
     )
 end
@@ -274,53 +263,33 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the out-of-place right-hand side function for the system.
+Return the out-of-place right-hand side function for a system given a configuration.
 
 The returned function must have the signature `(u, p, t) -> du` and
 return the derivative at state `u`, parameters `p`, and time `t` without modifying `u`.
 
-This is used for immutable array types like `StaticArrays.SVector` where in-place
-operations are not possible.
+Eager systems ignore the config and return pre-computed closures.
+Lazy systems read `x0`/`p0` from the config to build type-specific closures.
 
-# Example
+# Arguments
+- `system::AbstractSystem`: The system.
+- `config`: The configuration containing initial conditions and time span.
 
-```julia
-using CTFlows.Systems
-
-struct MySystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
-    data::Vector{Float64}
-end
-
-# Implement rhs_oop to return the ODE right-hand side function (out-of-place)
-function Systems.rhs_oop(sys::MySystem)
-    return (u, p, t) -> sys.data .* u
-end
-
-# Usage
-sys = MySystem([1.0, 2.0])
-rhs_oop_func = Systems.rhs_oop(sys)
-u = [3.0, 4.0]
-p = nothing
-t = 0.0
-du = rhs_oop_func(u, p, t)  # du = [3.0, 8.0]
-```
+# Returns
+- `Function`: The out-of-place RHS closure with signature `(u, p, t) -> du`.
 
 # Throws
 - [`CTBase.Exceptions.NotImplemented`](@extref): If not implemented by the concrete type.
 
-# Notes
-- This method is called when `ismutable(u0)` returns `false` for the initial condition.
-- For mutable arrays like `Vector`, the in-place `rhs` method is used instead.
-
-See also: [`CTFlows.Systems.rhs`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_ip_rhs_augmented`](@ref).
 """
-function rhs_oop(system::AbstractSystem, ::Bool = true)
+function get_oop_rhs(system::AbstractSystem, config)
     throw(
         Exceptions.NotImplemented(
-            "AbstractSystem rhs_oop method not implemented";
-            required_method = "rhs_oop(sys::$(typeof(system)))",
-            suggestion = "Implement rhs_oop for your system type to support immutable array initial conditions.",
-            context = "AbstractSystem.rhs_oop - required method implementation",
+            "AbstractSystem get_oop_rhs method not implemented";
+            required_method = "get_oop_rhs(sys::$(typeof(system)), config)",
+            suggestion = "Implement get_oop_rhs for your system type.",
+            context = "AbstractSystem.get_oop_rhs - required method implementation",
         ),
     )
 end
@@ -328,46 +297,30 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build the in-place right-hand side for a Hamiltonian system.
+Return the augmented in-place right-hand side function for a Hamiltonian system.
 
-Contract stub — concrete Hamiltonian system types must implement this method.
-`HamiltonianVectorFieldSystem` and `HamiltonianSystem` provide concrete implementations.
+The returned function computes state, costate, and variable costate derivatives.
+Only applicable to Hamiltonian systems with variable costate support.
 
-# Throws
-- [`CTBase.Exceptions.NotImplemented`](@extref): If not implemented by the concrete type.
+# Arguments
+- `system::AbstractHamiltonianSystem`: The Hamiltonian system.
+- `config`: The augmented Hamiltonian configuration containing `x0`, `p0`, and `pv0`.
 
-See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
-"""
-function build_rhs(system::AbstractHamiltonianSystem, args...)
-    throw(
-        Exceptions.NotImplemented(
-            "AbstractHamiltonianSystem build_rhs method not implemented";
-            required_method = "build_rhs(sys::$(typeof(system)), ...)",
-            suggestion = "Use HamiltonianSystem (AD-backed) or HamiltonianVectorFieldSystem.",
-            context = "AbstractHamiltonianSystem.build_rhs - required method implementation",
-        ),
-    )
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Build the out-of-place right-hand side for a Hamiltonian system.
-
-Contract stub — concrete Hamiltonian system types must implement this method.
+# Returns
+- `Function`: The augmented in-place RHS closure with signature `(du, u, p, t) -> nothing`.
 
 # Throws
 - [`CTBase.Exceptions.NotImplemented`](@extref): If not implemented by the concrete type.
 
-See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
-function build_oop_rhs(system::AbstractHamiltonianSystem, args...)
+function get_ip_rhs_augmented(system::AbstractHamiltonianSystem, config)
     throw(
         Exceptions.NotImplemented(
-            "AbstractHamiltonianSystem build_oop_rhs method not implemented";
-            required_method = "build_oop_rhs(sys::$(typeof(system)), ...)",
-            suggestion = "Use HamiltonianSystem (AD-backed) or HamiltonianVectorFieldSystem.",
-            context = "AbstractHamiltonianSystem.build_oop_rhs - required method implementation",
+            "AbstractHamiltonianSystem get_ip_rhs_augmented method not implemented";
+            required_method = "get_ip_rhs_augmented(sys::$(typeof(system)), config)",
+            suggestion = "Implement get_ip_rhs_augmented for your Hamiltonian system type.",
+            context = "AbstractHamiltonianSystem.get_ip_rhs_augmented - required method implementation",
         ),
     )
 end

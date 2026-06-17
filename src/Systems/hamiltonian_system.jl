@@ -97,34 +97,29 @@ end
 # Public lazy RHS builders
 # =============================================================================
 
+# =============================================================================
+# New unified getters: get_ip_rhs / get_oop_rhs / get_ip_rhs_augmented
+# =============================================================================
+
 """
 $(TYPEDSIGNATURES)
 
-Build an in-place RHS functor for a Hamiltonian system.
+Return the in-place right-hand side for a `HamiltonianSystem`.
 
-This function creates a `HamIpRHS` functor that computes the Hamiltonian gradient
-in-place, following the canonical Hamiltonian equations. The functor is lazily
-constructed based on the initial condition types to ensure correct handling of
-scalar, vector, and matrix inputs.
+Lazy implementation: reads `x0`/`p0` from the config to build type-specific closures.
 
 # Arguments
 - `sys::HamiltonianSystem`: The Hamiltonian system.
-- `x0`: Initial state (used to infer state dimension and conversion).
-- `p0`: Initial costate (used to infer conversion).
-- `t0`: Initial time (for cache preparation in non-autonomous systems).
-- `variable`: Variable value (for cache preparation in non-fixed systems).
+- `config::Configs.AbstractHamiltonianConfig`: The Hamiltonian configuration.
 
 # Returns
 - `HamIpRHS`: An in-place RHS functor with embedded AD cache.
 
-# Notes
-- The AD cache is prepared using the backend's `prepare_cache` method.
-- The cache is embedded in the functor for better composability.
-- This function is called by the SciML extension when building ODE problems.
-
-See also: [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
-function build_rhs(sys::HamiltonianSystem, x0, p0, _, _)
+function get_ip_rhs(sys::HamiltonianSystem, config::Configs.AbstractHamiltonianConfig)
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
     N = _state_dim(x0)
     cx = Common.make_coerce(x0)
     cp = Common.make_coerce(p0)
@@ -135,31 +130,22 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build an out-of-place RHS functor for a Hamiltonian system.
+Return the out-of-place right-hand side for a `HamiltonianSystem`.
 
-This function creates a `HamOoPRHS` functor that computes the Hamiltonian gradient
-out-of-place, following the canonical Hamiltonian equations. The functor is lazily
-constructed based on the initial condition types to ensure correct handling of
-scalar, vector, and matrix inputs.
+Lazy implementation: reads `x0`/`p0` from the config to build type-specific closures.
 
 # Arguments
 - `sys::HamiltonianSystem`: The Hamiltonian system.
-- `x0`: Initial state (used to infer state dimension and conversion).
-- `p0`: Initial costate (used to infer conversion).
-- `t0`: Initial time (for cache preparation in non-autonomous systems).
-- `variable`: Variable value (for cache preparation in non-fixed systems).
+- `config::Configs.AbstractHamiltonianConfig`: The Hamiltonian configuration.
 
 # Returns
 - `HamOoPRHS`: An out-of-place RHS functor with embedded AD cache.
 
-# Notes
-- The AD cache is prepared using the backend's `prepare_cache` method.
-- The cache is embedded in the functor for better composability.
-- This function is called by the SciML extension when building ODE problems.
-
-See also: [`CTFlows.Systems.HamOoPRHS`](@ref), [`CTFlows.Systems.build_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
-function build_oop_rhs(sys::HamiltonianSystem, x0, p0, _, _)
+function get_oop_rhs(sys::HamiltonianSystem, config::Configs.AbstractHamiltonianConfig)
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
     N = _state_dim(x0)
     cx = Common.make_coerce(x0)
     cp = Common.make_coerce(p0)
@@ -167,44 +153,31 @@ function build_oop_rhs(sys::HamiltonianSystem, x0, p0, _, _)
     return HamOoPRHS(h, backend, N, cx, cp)
 end
 
-# =============================================================================
-# build_rhs_augmented — lazy, closes over concrete n_x and n_v
-# =============================================================================
-
 """
 $(TYPEDSIGNATURES)
 
-Build an augmented in-place RHS functor for a Hamiltonian system.
+Return the augmented in-place right-hand side for a `HamiltonianSystem`.
 
-This function creates a `HamIpAugRHS` functor that computes the augmented Hamiltonian
-equations including variable costate evolution, used in sensitivity analysis and
-optimal control. The state vector is augmented as `[x; p; v]` where `v` is the
-variable costate.
+Lazy implementation: reads `x0`/`p0`/`pv0` from the config to build the augmented closure.
 
 # Arguments
 - `sys::HamiltonianSystem`: The Hamiltonian system.
-- `n_x::Int`: State dimension (number of state variables).
-- `n_v::Int`: Variable dimension.
-- `x0`: Initial state (for cache preparation).
-- `p0`: Initial costate (for cache preparation).
-- `t0`: Initial time (for cache preparation in non-autonomous systems).
-- `variable`: Variable value (for cache preparation in non-fixed systems).
+- `config::Configs.AbstractAugmentedHamiltonianConfig`: The augmented Hamiltonian configuration.
 
 # Returns
 - `HamIpAugRHS`: An augmented in-place RHS functor with embedded AD cache.
 
-# Notes
-- The AD cache is prepared using the backend's `prepare_cache` method.
-- The cache is embedded in the functor for better composability.
-- Supports batch mode with matrix inputs (checks batch size compatibility).
-- This function is used for variable costate integration in sensitivity analysis.
-
-See also: [`CTFlows.Systems.HamIpAugRHS`](@ref), [`CTFlows.Systems.build_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
-function build_rhs_augmented(sys::HamiltonianSystem, n_x::Int, n_v::Int, x0, p0, _, _)
-    h, backend = sys.h, sys.backend
+function get_ip_rhs_augmented(sys::HamiltonianSystem, config::Configs.AbstractAugmentedHamiltonianConfig)
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
+    n_x = _state_dim(x0)
+    pv0 = Configs.initial_variable_costate(config)
+    n_v = _state_dim(pv0)
     cx = Common.make_coerce(x0)
     cp = Common.make_coerce(p0)
+    h, backend = sys.h, sys.backend
     return HamIpAugRHS(h, backend, n_x, n_v, cx, cp)
 end
 

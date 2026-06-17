@@ -22,13 +22,13 @@ struct FakeStateSystem <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.
     tag::Symbol
 end
 
-Systems.rhs(::FakeStateSystem) = (du, u, p, t) -> (du .= u)
+Systems.get_ip_rhs(::FakeStateSystem, _) = (du, u, p, t) -> (du .= u)
 
 struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed}
     tag::Symbol
 end
 
-Systems.rhs(::FakeHamiltonianSystem) = (dz, z, p, t) -> (dz .= z)
+Systems.get_ip_rhs(::FakeHamiltonianSystem, _) = (dz, z, p, t) -> (dz .= z)
 
 struct FakeIntegrator <: Integrators.AbstractIntegrator end
 

@@ -107,79 +107,68 @@ function SciMLFunctionSystem(f::SciMLBase.AbstractODEFunction{false})
 end
 
 # =============================================================================
-# rhs and rhs_oop methods
+# Unified getters: get_ip_rhs / get_oop_rhs
 # =============================================================================
 
 """
 $(TYPEDSIGNATURES)
 
-In-place right-hand side for a `SciMLFunctionSystem`.
+Return the in-place right-hand side for a `SciMLFunctionSystem`.
 
-Returns the pre-computed in-place closure stored in the system, which has signature
-`(du, u, λ, t)` where `λ` is a `Common.ODEParameters` wrapper. The closure extracts
-`Common.variable(λ)` and calls the underlying SciML function.
+Eager implementation: ignores the config and returns the pre-computed closure.
 
 # Arguments
-- `sys::SciMLFunctionSystem`: The system for which to return the RHS function.
+- `sys::SciMLFunctionSystem`: The system.
+- `_`: The configuration (ignored).
 
 # Returns
-- `Systems.AbstractIPRHS`: The pre-computed functor with signature `(du, u, λ, t)`.
+- `Systems.AbstractIPRHS`: The pre-computed in-place closure with signature `(du, u, λ, t) -> nothing`.
 
-See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlows.Systems.rhs_oop`](@ref).
+See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
-Systems.rhs(sys::SciMLFunctionSystem) = sys.rhs_fn
+Systems.get_ip_rhs(sys::SciMLFunctionSystem, _) = sys.rhs_fn
 
 """
 $(TYPEDSIGNATURES)
 
-Out-of-place right-hand side for a `SciMLFunctionSystem` with out-of-place function.
+Return the out-of-place right-hand side for an out-of-place `SciMLFunctionSystem`.
 
-Returns the pre-computed out-of-place closure with signature `(u, λ, t)`. The optional
-`is_mutable` argument is accepted but ignored: for out-of-place systems `rhs_oop` is
-always the correct callable regardless of u0 mutability.
+Eager implementation: ignores the config and returns the pre-computed closure.
 
 # Arguments
 - `sys::SciMLFunctionSystem{..., Nothing}`: The out-of-place system.
-- `::Bool`: Ignored. Accepted for API uniformity.
+- `_`: The configuration (ignored).
 
 # Returns
-- `Systems.AbstractOoPRHS`: The pre-computed functor with signature `(u, λ, t)`.
+- `Systems.AbstractOoPRHS`: The pre-computed out-of-place closure with signature `(u, λ, t) -> du`.
 
-See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlows.Systems.rhs`](@ref).
+See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
-function Systems.rhs_oop(sys::SciMLFunctionSystem{F, RHS, OOPROHS, Nothing}, ::Bool = true) where {F, RHS, OOPROHS}
+function Systems.get_oop_rhs(sys::SciMLFunctionSystem{F, RHS, OOPROHS, Nothing}, _) where {F, RHS, OOPROHS}
     return sys.rhs_oop_fn
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Out-of-place right-hand side for a `SciMLFunctionSystem` with in-place function,
-dispatching on u0 mutability.
+Return the out-of-place right-hand side for an in-place `SciMLFunctionSystem`.
 
-For in-place SciML functions the appropriate callable depends on whether the initial
-condition `u0` is mutable:
-- **`is_mutable = true`** (default): returns `rhs_oop_fn`, which allocates a mutable
-  buffer and returns it. Correct when `u0` is a `Vector` or similar mutable array.
-- **`is_mutable = false`**: returns `rhs_oop_finalize_fn`, which allocates a mutable
-  buffer, fills it via the in-place call, then converts back to `typeof(u)`. A one-time
-  performance warning is emitted in this case.
+Eager implementation: ignores the config and returns the finalize closure.
+This method is called when `!ismutable(u0)`, so always returns `rhs_oop_finalize_fn`.
 
 # Arguments
 - `sys::SciMLFunctionSystem{..., FINRHS}`: The in-place system.
-- `is_mutable::Bool`: `true` if u0 is mutable, `false` if immutable. Defaults to `true`.
+- `_`: The configuration (ignored).
 
 # Returns
-- `Systems.AbstractOoPRHS`: The appropriate functor with signature `(u, λ, t)`.
+- `Systems.AbstractOoPRHS`: The finalize closure with signature `(u, λ, t) -> du`.
 
 # Notes
-- Prefer out-of-place SciML functions when u0 is immutable (e.g. `StaticArrays.SVector`)
-  for best performance.
+- Emits a performance warning since this path is suboptimal for immutable arrays.
 
-See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlows.Systems.rhs`](@ref).
+See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
-function Systems.rhs_oop(sys::SciMLFunctionSystem{F, RHS, OOPROHS, FINRHS}, is_mutable::Bool = true) where {F, RHS, OOPROHS, FINRHS}
-    is_mutable && return sys.rhs_oop_fn
+function Systems.get_oop_rhs(sys::SciMLFunctionSystem{F, RHS, OOPROHS, FINRHS}, _) where {F, RHS, OOPROHS, FINRHS}
     @warn "InPlace SciMLFunction with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
     return sys.rhs_oop_finalize_fn
 end

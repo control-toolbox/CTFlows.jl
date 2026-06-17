@@ -23,8 +23,8 @@ struct FakeSystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, Tra
     data::Vector{Float64}
 end
 
-# Implement contract: rhs
-function Systems.rhs(sys::FakeSystem)
+# Implement contract: get_ip_rhs
+function Systems.get_ip_rhs(sys::FakeSystem, _)
     return (du, u, p, t) -> du .= sys.data .* u
 end
 
@@ -33,7 +33,7 @@ struct FakeStateSystem <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.
     data::Vector{Float64}
 end
 
-function Systems.rhs(sys::FakeStateSystem)
+function Systems.get_ip_rhs(sys::FakeStateSystem, _)
     return (du, u, p, t) -> du .= sys.data .* u
 end
 
@@ -41,7 +41,7 @@ struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonom
     data::Vector{Float64}
 end
 
-function Systems.rhs(sys::FakeHamiltonianSystem)
+function Systems.get_ip_rhs(sys::FakeHamiltonianSystem, _)
     return (du, u, p, t) -> du .= sys.data .* u
 end
 
@@ -83,15 +83,16 @@ function test_abstract_system()
         # ====================================================================
 
         Test.@testset "Contract Implementation" begin
+            dummy_config = nothing
             sys = FakeSystem([1.0, 2.0])
 
-            Test.@testset "rhs returns callable" begin
-                rhs = Systems.rhs(sys)
+            Test.@testset "get_ip_rhs returns callable" begin
+                rhs = Systems.get_ip_rhs(sys, dummy_config)
                 Test.@test rhs isa Function
             end
 
-            Test.@testset "rhs function has correct signature (du, u, p, t)" begin
-                rhs = Systems.rhs(sys)
+            Test.@testset "get_ip_rhs function has correct signature (du, u, p, t)" begin
+                rhs = Systems.get_ip_rhs(sys, dummy_config)
                 du = zeros(2)
                 u = [3.0, 4.0]
                 p = []
@@ -101,18 +102,18 @@ function test_abstract_system()
                 Test.@test du ≈ [3.0, 8.0] atol=1e-10
             end
 
-            Test.@testset "rhs function fills du in place" begin
-                rhs = Systems.rhs(sys)
+            Test.@testset "get_ip_rhs function fills du in place" begin
+                rhs = Systems.get_ip_rhs(sys, dummy_config)
                 du = zeros(2)
                 rhs(du, [3.0, 4.0], [], 0.0)
                 Test.@test du ≈ [3.0, 8.0] atol=1e-10
             end
 
-            Test.@testset "rhs function uses system data" begin
+            Test.@testset "get_ip_rhs function uses system data" begin
                 sys1 = FakeSystem([2.0, 3.0])
                 sys2 = FakeSystem([0.5, 1.0])
-                rhs1 = Systems.rhs(sys1)
-                rhs2 = Systems.rhs(sys2)
+                rhs1 = Systems.get_ip_rhs(sys1, dummy_config)
+                rhs2 = Systems.get_ip_rhs(sys2, dummy_config)
                 du1 = zeros(2)
                 du2 = zeros(2)
                 rhs1(du1, [1.0, 1.0], [], 0.0)
@@ -164,42 +165,32 @@ function test_abstract_system()
         # ====================================================================
 
         Test.@testset "NotImplemented Errors" begin
+            dummy_config = nothing
             sys = MinimalSystem(2)
 
-            Test.@testset "rhs throws NotImplemented" begin
+            Test.@testset "get_ip_rhs throws NotImplemented" begin
                 try
-                    Systems.rhs(sys)
+                    Systems.get_ip_rhs(sys, dummy_config)
                     Test.@test false  # Should not reach here
                 catch err
                     Test.@test err isa Exceptions.NotImplemented
-                    Test.@test occursin("rhs", err.msg)
+                    Test.@test occursin("get_ip_rhs", err.msg)
                 end
             end
 
-            Test.@testset "rhs_oop throws NotImplemented" begin
+            Test.@testset "get_oop_rhs throws NotImplemented" begin
                 try
-                    Systems.rhs_oop(sys)
+                    Systems.get_oop_rhs(sys, dummy_config)
                     Test.@test false  # Should not reach here
                 catch err
                     Test.@test err isa Exceptions.NotImplemented
-                    Test.@test occursin("rhs_oop", err.msg)
-                end
-            end
-
-            Test.@testset "rhs_oop with explicit Bool throws NotImplemented" begin
-                try
-                    Systems.rhs_oop(sys, false)
-                    Test.@test false  # Should not reach here
-                catch err
-                    Test.@test err isa Exceptions.NotImplemented
-                    Test.@test occursin("rhs_oop", err.msg)
-                    Test.@test occursin("AbstractSystem", err.context)
+                    Test.@test occursin("get_oop_rhs", err.msg)
                 end
             end
 
             Test.@testset "NotImplemented error contains required fields" begin
                 try
-                    Systems.rhs(sys)
+                    Systems.get_ip_rhs(sys, dummy_config)
                     Test.@test false  # Should not reach here
                 catch err
                     Test.@test err isa Exceptions.NotImplemented

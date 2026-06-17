@@ -188,56 +188,100 @@ _aug_assign!(du::AbstractVector, dx, dp, dpv, n_x::Int, n_v::Int) =
     (du[1:n_x] .= dx; du[n_x+1:2*n_x] .= dp; du[end-n_v+1:end] .= dpv)
 _aug_assign!(du::AbstractMatrix, dx, dp, dpv, n_x::Int, n_v::Int) =
     (du[1:n_x,:] .= dx; du[n_x+1:2*n_x,:] .= dp; du[end-n_v+1:end,:] .= dpv)
-    
+
 # =============================================================================
-# Public lazy RHS builders
+# New unified getters: get_ip_rhs / get_oop_rhs / get_ip_rhs_augmented
 # =============================================================================
 
 """
-    build_rhs(sys::HamiltonianVectorFieldSystem, x0, p0) -> f!(du, u, λ, t)
+$(TYPEDSIGNATURES)
 
-Build an in-place RHS closure for the given initial conditions.
+Return the in-place right-hand side for a `HamiltonianVectorFieldSystem`.
 
-The closure is constructed lazily based on the shapes of `x0` and `p0`,
-ensuring correct handling of scalar, vector, and matrix inputs.
+Lazy implementation: reads `x0`/`p0` from the config to build type-specific closures.
 
 # Arguments
-- `sys::HamiltonianVectorFieldSystem`: The Hamiltonian system.
-- `x0`: Initial state (scalar, vector, or matrix).
-- `p0`: Initial costate (same shape as `x0`).
+- `sys::HamiltonianVectorFieldSystem{..., OutOfPlace, ...}`: The out-of-place system.
+- `config::Configs.AbstractHamiltonianConfig`: The Hamiltonian configuration.
 
 # Returns
-- `AbstractIPHVFRHS`: A functor with signature `(du, u, λ, t) -> nothing`.
+- `IPHVFOoPRHS`: An in-place RHS functor.
+
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
-function build_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, x0, p0) where {F, TD, VD}
+function get_ip_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, config::Configs.AbstractHamiltonianConfig) where {F, TD, VD}
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
     return IPHVFOoPRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
 end
 
-function build_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, x0, p0) where {F, TD, VD}
+"""
+$(TYPEDSIGNATURES)
+
+Return the in-place right-hand side for a `HamiltonianVectorFieldSystem`.
+
+Lazy implementation: reads `x0`/`p0` from the config to build type-specific closures.
+
+# Arguments
+- `sys::HamiltonianVectorFieldSystem{..., InPlace, ...}`: The in-place system.
+- `config::Configs.AbstractHamiltonianConfig`: The Hamiltonian configuration.
+
+# Returns
+- `IPHVFIpRHS`: An in-place RHS functor.
+
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
+"""
+function get_ip_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, config::Configs.AbstractHamiltonianConfig) where {F, TD, VD}
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
     return IPHVFIpRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
 end
 
 """
-    build_oop_rhs(sys::HamiltonianVectorFieldSystem, x0, p0) -> f(u, λ, t)
+$(TYPEDSIGNATURES)
 
-Build an out-of-place RHS closure for the given initial conditions.
+Return the out-of-place right-hand side for a `HamiltonianVectorFieldSystem`.
 
-The closure is constructed lazily based on the shapes of `x0` and `p0`,
-ensuring correct handling of scalar, vector, and matrix inputs.
+Lazy implementation: reads `x0`/`p0` from the config to build type-specific closures.
 
 # Arguments
-- `sys::HamiltonianVectorFieldSystem`: The Hamiltonian system.
-- `x0`: Initial state (scalar, vector, or matrix).
-- `p0`: Initial costate (same shape as `x0`).
+- `sys::HamiltonianVectorFieldSystem{..., OutOfPlace, ...}`: The out-of-place system.
+- `config::Configs.AbstractHamiltonianConfig`: The Hamiltonian configuration.
 
 # Returns
-- `AbstractOoPHVFRHS`: A functor with signature `(u, λ, t) -> du`.
+- `OoPHVFOoPRHS`: An out-of-place RHS functor.
+
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
-function build_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, x0, p0) where {F, TD, VD}
+function get_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, config::Configs.AbstractHamiltonianConfig) where {F, TD, VD}
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
     return OoPHVFOoPRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
 end
 
-function build_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, x0, p0) where {F, TD, VD}
+"""
+$(TYPEDSIGNATURES)
+
+Return the out-of-place right-hand side for a `HamiltonianVectorFieldSystem`.
+
+Lazy implementation: reads `x0`/`p0` from the config to build type-specific closures.
+For immutable initial conditions, returns the finalize closure.
+
+# Arguments
+- `sys::HamiltonianVectorFieldSystem{..., InPlace, ...}`: The in-place system.
+- `config::Configs.AbstractHamiltonianConfig`: The Hamiltonian configuration.
+
+# Returns
+- `OoPHVFIpRHS` or `OoPHVFIpFinalizeRHS`: An out-of-place RHS functor.
+
+# Notes
+- Emits a performance warning when called with immutable initial conditions.
+
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
+"""
+function get_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, config::Configs.AbstractHamiltonianConfig) where {F, TD, VD}
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
     if !ismutable(x0)
         @warn "InPlace HamiltonianVectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
         return OoPHVFIpFinalizeRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
@@ -245,23 +289,53 @@ function build_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPla
     return OoPHVFIpRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
 end
 
-# =============================================================================
-# Augmented RHS builder for variable costate integration
-# =============================================================================
+"""
+$(TYPEDSIGNATURES)
 
-# TODO: docstring
-function build_rhs_augmented(
-    sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace},
-    n_x::Int, n_v::Int, x0, p0,
-) where {F, TD, VD}
+Return the augmented in-place right-hand side for a `HamiltonianVectorFieldSystem`.
+
+Lazy implementation: reads `x0`/`p0`/`pv0` from the config to build the augmented closure.
+
+# Arguments
+- `sys::HamiltonianVectorFieldSystem{..., OutOfPlace, ...}`: The out-of-place system.
+- `config::Configs.AbstractAugmentedHamiltonianConfig`: The augmented Hamiltonian configuration.
+
+# Returns
+- `IPHVFOoPAugRHS`: An augmented in-place RHS functor.
+
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref).
+"""
+function get_ip_rhs_augmented(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, config::Configs.AbstractAugmentedHamiltonianConfig) where {F, TD, VD}
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
+    n_x = _state_dim(x0)
+    pv0 = Configs.initial_variable_costate(config)
+    n_v = _state_dim(pv0)
     return IPHVFOoPAugRHS(sys.hvf, n_x, n_v, Common.make_coerce(x0), Common.make_coerce(p0))
 end
 
-# TODO: docstring
-function build_rhs_augmented(
-    sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace},
-    n_x::Int, n_v::Int, x0, p0,
-) where {F, TD, VD}
+"""
+$(TYPEDSIGNATURES)
+
+Return the augmented in-place right-hand side for a `HamiltonianVectorFieldSystem`.
+
+Lazy implementation: reads `x0`/`p0`/`pv0` from the config to build the augmented closure.
+
+# Arguments
+- `sys::HamiltonianVectorFieldSystem{..., InPlace, ...}`: The in-place system.
+- `config::Configs.AbstractAugmentedHamiltonianConfig`: The augmented Hamiltonian configuration.
+
+# Returns
+- `IPHVFIpAugRHS`: An augmented in-place RHS functor.
+
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref).
+"""
+function get_ip_rhs_augmented(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, config::Configs.AbstractAugmentedHamiltonianConfig) where {F, TD, VD}
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
+    n_x = _state_dim(x0)
+    pv0 = Configs.initial_variable_costate(config)
+    n_v = _state_dim(pv0)
     return IPHVFIpAugRHS(sys.hvf, n_x, n_v, Common.make_coerce(x0), Common.make_coerce(p0))
 end
 

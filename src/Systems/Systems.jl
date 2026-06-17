@@ -4,7 +4,9 @@
 System types and contracts for CTFlows.
 
 This module defines the `AbstractSystem` type and its required methods:
-- `rhs`: returns the right-hand side function for integration
+- `get_ip_rhs`: returns the in-place right-hand side function for integration
+- `get_oop_rhs`: returns the out-of-place right-hand side function for integration
+- `get_ip_rhs_augmented`: returns the augmented in-place right-hand side for Hamiltonian systems
 - `dimensions`: returns dimensional information (state, costate, control, variable)
 """
 module Systems
@@ -19,6 +21,7 @@ import CTBase.Exceptions
 
 import ..Common: Common
 import ..Traits: Traits
+import ..Configs: Configs
 import ..Data: Data
 import ..Differentiation: Differentiation
 
@@ -44,15 +47,14 @@ export AbstractSystem, AbstractStateSystem, AbstractHamiltonianSystem
 export AbstractRHS, AbstractIPRHS, AbstractOoPRHS
 export AbstractHVFRHS, AbstractIPHVFRHS, AbstractOoPHVFRHS
 export AbstractHamRHS, AbstractIPHamRHS, AbstractOoPHamRHS
-export rhs, rhs_oop
-export build_rhs
-export build_oop_rhs
+export get_ip_rhs
+export get_oop_rhs
+export get_ip_rhs_augmented
 export hamiltonian_vector_field
 export VectorFieldSystem
 export HamiltonianVectorFieldSystem
 export HamiltonianSystem
 export build_system
-export build_rhs_augmented
 export hamiltonian, backend
 
 end # module Systems
