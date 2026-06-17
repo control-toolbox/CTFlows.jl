@@ -249,7 +249,26 @@ end
 # Augmented RHS builder for variable costate integration
 # =============================================================================
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Build an augmented in-place RHS closure for a Hamiltonian vector field system.
+
+The closure computes state, costate, and variable costate derivatives for
+sensitivity analysis and optimal control. The state vector is augmented as `[x; p; v]`.
+
+# Arguments
+- `sys::HamiltonianVectorFieldSystem{..., OutOfPlace, ...}`: The out-of-place system.
+- `n_x::Int`: State dimension.
+- `n_v::Int`: Variable dimension.
+- `x0`: Initial state (for coercion).
+- `p0`: Initial costate (for coercion).
+
+# Returns
+- `IPHVFOoPAugRHS`: An augmented in-place RHS functor.
+
+See also: [`CTFlows.Systems.build_rhs`](@ref), [`CTFlows.Systems.get_ip_rhs_augmented`](@ref).
+"""
 function build_rhs_augmented(
     sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace},
     n_x::Int, n_v::Int, x0, p0,
@@ -257,11 +276,178 @@ function build_rhs_augmented(
     return IPHVFOoPAugRHS(sys.hvf, n_x, n_v, Common.make_coerce(x0), Common.make_coerce(p0))
 end
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Build an augmented in-place RHS closure for a Hamiltonian vector field system.
+
+The closure computes state, costate, and variable costate derivatives for
+sensitivity analysis and optimal control. The state vector is augmented as `[x; p; v]`.
+
+# Arguments
+- `sys::HamiltonianVectorFieldSystem{..., InPlace, ...}`: The in-place system.
+- `n_x::Int`: State dimension.
+- `n_v::Int`: Variable dimension.
+- `x0`: Initial state (for coercion).
+- `p0`: Initial costate (for coercion).
+
+# Returns
+- `IPHVFIpAugRHS`: An augmented in-place RHS functor.
+
+See also: [`CTFlows.Systems.build_rhs`](@ref), [`CTFlows.Systems.get_ip_rhs_augmented`](@ref).
+"""
 function build_rhs_augmented(
     sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace},
     n_x::Int, n_v::Int, x0, p0,
 ) where {F, TD, VD}
+    return IPHVFIpAugRHS(sys.hvf, n_x, n_v, Common.make_coerce(x0), Common.make_coerce(p0))
+end
+
+# =============================================================================
+# New unified getters: get_ip_rhs / get_oop_rhs / get_ip_rhs_augmented
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the in-place right-hand side for a `HamiltonianVectorFieldSystem`.
+
+Lazy implementation: reads `x0`/`p0` from the config to build type-specific closures.
+
+# Arguments
+- `sys::HamiltonianVectorFieldSystem{..., OutOfPlace, ...}`: The out-of-place system.
+- `config::Configs.AbstractHamiltonianConfig`: The Hamiltonian configuration.
+
+# Returns
+- `IPHVFOoPRHS`: An in-place RHS functor.
+
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Systems.build_rhs`](@ref).
+"""
+function get_ip_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, config::Configs.AbstractHamiltonianConfig) where {F, TD, VD}
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
+    return IPHVFOoPRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the in-place right-hand side for a `HamiltonianVectorFieldSystem`.
+
+Lazy implementation: reads `x0`/`p0` from the config to build type-specific closures.
+
+# Arguments
+- `sys::HamiltonianVectorFieldSystem{..., InPlace, ...}`: The in-place system.
+- `config::Configs.AbstractHamiltonianConfig`: The Hamiltonian configuration.
+
+# Returns
+- `IPHVFIpRHS`: An in-place RHS functor.
+
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Systems.build_rhs`](@ref).
+"""
+function get_ip_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, config::Configs.AbstractHamiltonianConfig) where {F, TD, VD}
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
+    return IPHVFIpRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the out-of-place right-hand side for a `HamiltonianVectorFieldSystem`.
+
+Lazy implementation: reads `x0`/`p0` from the config to build type-specific closures.
+
+# Arguments
+- `sys::HamiltonianVectorFieldSystem{..., OutOfPlace, ...}`: The out-of-place system.
+- `config::Configs.AbstractHamiltonianConfig`: The Hamiltonian configuration.
+
+# Returns
+- `OoPHVFOoPRHS`: An out-of-place RHS functor.
+
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
+"""
+function get_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, config::Configs.AbstractHamiltonianConfig) where {F, TD, VD}
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
+    return OoPHVFOoPRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the out-of-place right-hand side for a `HamiltonianVectorFieldSystem`.
+
+Lazy implementation: reads `x0`/`p0` from the config to build type-specific closures.
+For immutable initial conditions, returns the finalize closure.
+
+# Arguments
+- `sys::HamiltonianVectorFieldSystem{..., InPlace, ...}`: The in-place system.
+- `config::Configs.AbstractHamiltonianConfig`: The Hamiltonian configuration.
+
+# Returns
+- `OoPHVFIpRHS` or `OoPHVFIpFinalizeRHS`: An out-of-place RHS functor.
+
+# Notes
+- Emits a performance warning when called with immutable initial conditions.
+
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
+"""
+function get_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, config::Configs.AbstractHamiltonianConfig) where {F, TD, VD}
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
+    if !ismutable(x0)
+        @warn "InPlace HamiltonianVectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
+        return OoPHVFIpFinalizeRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
+    end
+    return OoPHVFIpRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the augmented in-place right-hand side for a `HamiltonianVectorFieldSystem`.
+
+Lazy implementation: reads `x0`/`p0`/`pv0` from the config to build the augmented closure.
+
+# Arguments
+- `sys::HamiltonianVectorFieldSystem{..., OutOfPlace, ...}`: The out-of-place system.
+- `config::Configs.AbstractAugmentedHamiltonianConfig`: The augmented Hamiltonian configuration.
+
+# Returns
+- `IPHVFOoPAugRHS`: An augmented in-place RHS functor.
+
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.build_rhs_augmented`](@ref).
+"""
+function get_ip_rhs_augmented(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, config::Configs.AbstractAugmentedHamiltonianConfig) where {F, TD, VD}
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
+    n_x = length(x0)
+    n_v = length(Configs.initial_variable_costate(config))
+    return IPHVFOoPAugRHS(sys.hvf, n_x, n_v, Common.make_coerce(x0), Common.make_coerce(p0))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the augmented in-place right-hand side for a `HamiltonianVectorFieldSystem`.
+
+Lazy implementation: reads `x0`/`p0`/`pv0` from the config to build the augmented closure.
+
+# Arguments
+- `sys::HamiltonianVectorFieldSystem{..., InPlace, ...}`: The in-place system.
+- `config::Configs.AbstractAugmentedHamiltonianConfig`: The augmented Hamiltonian configuration.
+
+# Returns
+- `IPHVFIpAugRHS`: An augmented in-place RHS functor.
+
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.build_rhs_augmented`](@ref).
+"""
+function get_ip_rhs_augmented(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, config::Configs.AbstractAugmentedHamiltonianConfig) where {F, TD, VD}
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
+    n_x = length(x0)
+    n_v = length(Configs.initial_variable_costate(config))
     return IPHVFIpAugRHS(sys.hvf, n_x, n_v, Common.make_coerce(x0), Common.make_coerce(p0))
 end
 

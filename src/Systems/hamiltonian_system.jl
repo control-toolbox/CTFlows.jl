@@ -209,6 +209,89 @@ function build_rhs_augmented(sys::HamiltonianSystem, n_x::Int, n_v::Int, x0, p0,
 end
 
 # =============================================================================
+# New unified getters: get_ip_rhs / get_oop_rhs / get_ip_rhs_augmented
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the in-place right-hand side for a `HamiltonianSystem`.
+
+Lazy implementation: reads `x0`/`p0` from the config to build type-specific closures.
+
+# Arguments
+- `sys::HamiltonianSystem`: The Hamiltonian system.
+- `config::Configs.AbstractHamiltonianConfig`: The Hamiltonian configuration.
+
+# Returns
+- `HamIpRHS`: An in-place RHS functor with embedded AD cache.
+
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Systems.build_rhs`](@ref).
+"""
+function get_ip_rhs(sys::HamiltonianSystem, config::Configs.AbstractHamiltonianConfig)
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
+    N = _state_dim(x0)
+    cx = Common.make_coerce(x0)
+    cp = Common.make_coerce(p0)
+    h, backend = sys.h, sys.backend
+    return HamIpRHS(h, backend, N, cx, cp)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the out-of-place right-hand side for a `HamiltonianSystem`.
+
+Lazy implementation: reads `x0`/`p0` from the config to build type-specific closures.
+
+# Arguments
+- `sys::HamiltonianSystem`: The Hamiltonian system.
+- `config::Configs.AbstractHamiltonianConfig`: The Hamiltonian configuration.
+
+# Returns
+- `HamOoPRHS`: An out-of-place RHS functor with embedded AD cache.
+
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
+"""
+function get_oop_rhs(sys::HamiltonianSystem, config::Configs.AbstractHamiltonianConfig)
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
+    N = _state_dim(x0)
+    cx = Common.make_coerce(x0)
+    cp = Common.make_coerce(p0)
+    h, backend = sys.h, sys.backend
+    return HamOoPRHS(h, backend, N, cx, cp)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the augmented in-place right-hand side for a `HamiltonianSystem`.
+
+Lazy implementation: reads `x0`/`p0`/`pv0` from the config to build the augmented closure.
+
+# Arguments
+- `sys::HamiltonianSystem`: The Hamiltonian system.
+- `config::Configs.AbstractAugmentedHamiltonianConfig`: The augmented Hamiltonian configuration.
+
+# Returns
+- `HamIpAugRHS`: An augmented in-place RHS functor with embedded AD cache.
+
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.build_rhs_augmented`](@ref).
+"""
+function get_ip_rhs_augmented(sys::HamiltonianSystem, config::Configs.AbstractAugmentedHamiltonianConfig)
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
+    n_x = length(x0)
+    n_v = length(Configs.initial_variable_costate(config))
+    cx = Common.make_coerce(x0)
+    cp = Common.make_coerce(p0)
+    h, backend = sys.h, sys.backend
+    return HamIpAugRHS(h, backend, n_x, n_v, cx, cp)
+end
+
+# =============================================================================
 # Base.show
 # =============================================================================
 

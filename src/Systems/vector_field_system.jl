@@ -181,6 +181,73 @@ function rhs_oop(sys::VectorFieldSystem{F, TD, VD, Traits.InPlace, RHS, OOPROHS,
     return sys.rhs_oop_finalize
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the in-place right-hand side for a `VectorFieldSystem`.
+
+Eager implementation: ignores the config and returns the pre-computed closure.
+
+# Arguments
+- `sys::VectorFieldSystem`: The vector field system.
+- `_`: The configuration (ignored).
+
+# Returns
+- `Function`: The pre-computed in-place closure with signature `(du, u, p, t) -> nothing`.
+
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Systems.rhs`](@ref).
+"""
+function get_ip_rhs(sys::VectorFieldSystem, _)
+    return sys.rhs
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the out-of-place right-hand side for a `VectorFieldSystem`.
+
+Eager implementation: ignores the config and returns the pre-computed closure.
+For `InPlace` systems, returns `rhs_oop_finalize` (the finalize path) since
+`get_oop_rhs` is only called when `!ismutable(u0)`.
+
+# Arguments
+- `sys::VectorFieldSystem{..., OutOfPlace, ...}`: The out-of-place system.
+- `_`: The configuration (ignored).
+
+# Returns
+- `Function`: The pre-computed out-of-place closure with signature `(u, p, t) -> du`.
+
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.rhs_oop`](@ref).
+"""
+function get_oop_rhs(sys::VectorFieldSystem{F, TD, VD, Traits.OutOfPlace, RHS, OOPROHS, Nothing}, _) where {F, TD, VD, RHS, OOPROHS}
+    return sys.rhs_oop
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the out-of-place right-hand side for an `InPlace` `VectorFieldSystem`.
+
+Eager implementation: ignores the config and returns the finalize closure.
+This method is called when `!ismutable(u0)`, so we always return `rhs_oop_finalize`.
+
+# Arguments
+- `sys::VectorFieldSystem{..., InPlace, ...}`: The in-place system.
+- `_`: The configuration (ignored).
+
+# Returns
+- `Function`: The finalize closure with signature `(u, p, t) -> du`.
+
+# Notes
+- Emits a performance warning since this path is suboptimal for immutable arrays.
+
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.rhs_oop`](@ref).
+"""
+function get_oop_rhs(sys::VectorFieldSystem{F, TD, VD, Traits.InPlace, RHS, OOPROHS, FINRHS}, _) where {F, TD, VD, RHS, OOPROHS, FINRHS}
+    @warn "InPlace VectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
+    return sys.rhs_oop_finalize
+end
+
 # =============================================================================
 # Base.show
 # =============================================================================
