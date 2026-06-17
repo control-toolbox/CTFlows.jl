@@ -55,6 +55,14 @@ $(TYPEDSIGNATURES)
 
 Compute Hamiltonian gradients (∂H/∂x, ∂H/∂p) via DifferentiationInterface.jl.
 
+Anonymous closures are used deliberately rather than named functor types such as
+`WithActiveArg`.  Named functor types are visible to Julia's type inference and
+can cause their ForwardDiff `tagcount` to be registered before the outer tag
+(e.g. a NonlinearSolve dual tag) in nested-AD contexts, reversing the expected
+tag ordering and silently producing zero gradients.  Anonymous closures are
+opaque to ahead-of-time inference, so tagcounts are always assigned at runtime
+in the correct left-to-right order inside `ForwardDiff.≺`.
+
 # Returns
 - Tuple `(grad_x, grad_p)` where `grad_x` = ∂H/∂x, `grad_p` = ∂H/∂p.
 """
@@ -64,10 +72,10 @@ function Differentiation.hamiltonian_gradient(
     t, x, p, v,
 )
     di_backend = Differentiation.ad_backend(backend)
-    h_x = Differentiation.WithActiveArg(h, Val(2))
-    h_p = Differentiation.WithActiveArg(h, Val(3))
-    grad_x = _derivator(typeof(x))(h_x, di_backend, x, DI.Constant(t), DI.Constant(p), DI.Constant(v))
-    grad_p = _derivator(typeof(p))(h_p, di_backend, p, DI.Constant(t), DI.Constant(x), DI.Constant(v))
+    h_x(x_) = h(t, x_, p, v)
+    h_p(p_) = h(t, x, p_, v)
+    grad_x = _derivator(typeof(x))(h_x, di_backend, x)
+    grad_p = _derivator(typeof(p))(h_p, di_backend, p)
     return (grad_x, grad_p)
 end
 
@@ -75,6 +83,8 @@ end
 $(TYPEDSIGNATURES)
 
 Compute variable gradient ∂H/∂v via DifferentiationInterface.jl.
+
+See the note in [`hamiltonian_gradient`](@ref) on why anonymous closures are used.
 
 # Returns
 - `grad_v` = ∂H/∂v.
@@ -85,8 +95,8 @@ function Differentiation.variable_gradient(
     t, x, p, v,
 )
     di_backend = Differentiation.ad_backend(backend)
-    h_v = Differentiation.WithActiveArg(h, Val(4))
-    return _derivator(typeof(v))(h_v, di_backend, v, DI.Constant(t), DI.Constant(x), DI.Constant(p))
+    h_v(v_) = h(t, x, p, v_)
+    return _derivator(typeof(v))(h_v, di_backend, v)
 end
 
 # =============================================================================

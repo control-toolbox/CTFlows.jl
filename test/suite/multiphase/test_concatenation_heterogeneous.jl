@@ -21,12 +21,12 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 struct HeteroSysA <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
     state_dim::Int
 end
-Systems.rhs(::HeteroSysA) = (du, u, _, _) -> (du .= -u)
+Systems.get_ip_rhs(::HeteroSysA, _) = (du, u, _, _) -> (du .= -u)
 
 struct HeteroSysB <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
     state_dim::Int
 end
-Systems.rhs(::HeteroSysB) = (du, u, _, _) -> (du .= 2 .* u)
+Systems.get_ip_rhs(::HeteroSysB, _) = (du, u, _, _) -> (du .= 2 .* u)
 
 struct HeteroHamSysA <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed}
     state_dim::Int

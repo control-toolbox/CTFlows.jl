@@ -7,6 +7,7 @@ import CTFlows.Common: Common
 import CTFlows.Traits: Traits
 import CTFlows.Systems: Systems
 import CTFlows.Differentiation: Differentiation
+import CTFlows.Configs: Configs
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
@@ -60,17 +61,18 @@ function test_hamiltonian_system()
         end
 
         # ====================================================================
-        # UNIT TESTS - build_rhs (lazy in-place)
+        # UNIT TESTS - get_ip_rhs (lazy in-place)
         # ====================================================================
 
-        Test.@testset "build_rhs" begin
+        Test.@testset "get_ip_rhs" begin
             h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); is_autonomous=true, is_variable=false)
             backend = FakeADBackend()
             sys = Systems.HamiltonianSystem(h, backend)
 
             x0 = [1.0, 2.0]
             p0 = [3.0, 4.0]
-            rhs = Systems.build_rhs(sys, x0, p0, 0.0, nothing)
+            config = Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0)
+            rhs = Systems.get_ip_rhs(sys, config)
             Test.@test rhs isa Systems.HamIpRHS
 
             # Test RHS call with vector
@@ -86,7 +88,8 @@ function test_hamiltonian_system()
             # Test RHS call with matrix
             x0_mat = [1.0 2.0; 3.0 4.0]
             p0_mat = [5.0 6.0; 7.0 8.0]
-            rhs_mat = Systems.build_rhs(sys, x0_mat, p0_mat, 0.0, nothing)
+            config_mat = Configs.HamiltonianEndPointConfig(0.0, x0_mat, p0_mat, 1.0)
+            rhs_mat = Systems.get_ip_rhs(sys, config_mat)
             u_mat = [1.0 2.0; 3.0 4.0; 5.0 6.0; 7.0 8.0]  # x = [1 2; 3 4], p = [5 6; 7 8]
             du_mat = zeros(4, 2)
             rhs_mat(du_mat, u_mat, p, 0.0)
@@ -94,17 +97,18 @@ function test_hamiltonian_system()
         end
 
         # ====================================================================
-        # UNIT TESTS - build_oop_rhs (lazy out-of-place)
+        # UNIT TESTS - get_oop_rhs (lazy out-of-place)
         # ====================================================================
 
-        Test.@testset "build_oop_rhs" begin
+        Test.@testset "get_oop_rhs" begin
             h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); is_autonomous=true, is_variable=false)
             backend = FakeADBackend()
             sys = Systems.HamiltonianSystem(h, backend)
 
             x0 = [1.0, 2.0]
             p0 = [3.0, 4.0]
-            rhs_oop = Systems.build_oop_rhs(sys, x0, p0, 0.0, nothing)
+            config = Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0)
+            rhs_oop = Systems.get_oop_rhs(sys, config)
             Test.@test rhs_oop isa Systems.HamOoPRHS
 
             # Test OOP call with vector
@@ -117,20 +121,22 @@ function test_hamiltonian_system()
         end
 
         # ====================================================================
-        # UNIT TESTS - build_rhs_augmented
+        # UNIT TESTS - get_ip_rhs_augmented
         # ====================================================================
 
-        Test.@testset "build_rhs_augmented" begin
+        Test.@testset "get_ip_rhs_augmented" begin
             h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2) + 0.5 * v^2; is_autonomous=true, is_variable=false)
             backend = FakeADBackend()
             sys = Systems.HamiltonianSystem(h, backend)
 
             x0 = [1.0, 2.0]
             p0 = [3.0, 4.0]
+            pv0 = [0.5]
             variable = 0.5
 
             # Vector case (n_x=2, n_v=1)
-            rhs_aug = Systems.build_rhs_augmented(sys, 2, 1, x0, p0, 0.0, variable)
+            config = Configs.AugmentedHamiltonianEndPointConfig(0.0, x0, p0, pv0, 1.0)
+            rhs_aug = Systems.get_ip_rhs_augmented(sys, config)
             Test.@test rhs_aug isa Systems.HamIpAugRHS
 
             u = [1.0, 2.0, 3.0, 4.0, 0.5]  # x = [1, 2], p = [3, 4], pv = [0.5]
@@ -144,11 +150,13 @@ function test_hamiltonian_system()
             Test.@test du[3:4] == [-1.0, -2.0]
             Test.@test du[5] == -0.5
 
-            # Matrix compatible case (10×3, v matrice 1×3)
+            # Matrix compatible case (5×3 batch, n_x=2, n_v=1)
             x0_mat = [1.0 2.0 3.0; 4.0 5.0 6.0]
             p0_mat = [7.0 8.0 9.0; 10.0 11.0 12.0]
+            pv0_mat = [0.5 0.6 0.7]
             variable_mat = [0.5 0.6 0.7]
-            rhs_aug_mat = Systems.build_rhs_augmented(sys, 2, 1, x0_mat, p0_mat, 0.0, variable_mat)
+            config_mat = Configs.AugmentedHamiltonianEndPointConfig(0.0, x0_mat, p0_mat, pv0_mat, 1.0)
+            rhs_aug_mat = Systems.get_ip_rhs_augmented(sys, config_mat)
             u_mat = [1.0 2.0 3.0; 4.0 5.0 6.0; 7.0 8.0 9.0; 10.0 11.0 12.0; 0.5 0.6 0.7]
             du_mat = zeros(5, 3)
             p_mat = Common.ODEParameters(variable_mat)
@@ -158,8 +166,10 @@ function test_hamiltonian_system()
             # Matrix incompatible case (10×3, v matrice 1×2) → PreconditionError
             x0_mat2 = [1.0 2.0; 4.0 5.0]
             p0_mat2 = [7.0 8.0; 10.0 11.0]
+            pv0_mat2 = [0.5 0.6]
             variable_mat2 = [0.5 0.6 0.7]
-            rhs_aug_mat2 = Systems.build_rhs_augmented(sys, 2, 1, x0_mat2, p0_mat2, 0.0, variable_mat2)
+            config_mat2 = Configs.AugmentedHamiltonianEndPointConfig(0.0, x0_mat2, p0_mat2, pv0_mat2, 1.0)
+            rhs_aug_mat2 = Systems.get_ip_rhs_augmented(sys, config_mat2)
             u_mat2 = [1.0 2.0; 4.0 5.0; 7.0 8.0; 10.0 11.0; 0.5 0.6]
             du_mat2 = zeros(5, 2)
             p_mat2 = Common.ODEParameters(variable_mat2)
@@ -168,8 +178,10 @@ function test_hamiltonian_system()
             # u Matrix, v Vector (no-op check)
             x0_mat3 = [1.0 2.0; 4.0 5.0]
             p0_mat3 = [7.0 8.0; 10.0 11.0]
+            pv0_mat3 = [0.5 0.6]
             variable_vec = 0.5
-            rhs_aug_mat3 = Systems.build_rhs_augmented(sys, 2, 1, x0_mat3, p0_mat3, 0.0, variable_vec)
+            config_mat3 = Configs.AugmentedHamiltonianEndPointConfig(0.0, x0_mat3, p0_mat3, pv0_mat3, 1.0)
+            rhs_aug_mat3 = Systems.get_ip_rhs_augmented(sys, config_mat3)
             u_mat3 = [1.0 2.0; 4.0 5.0; 7.0 8.0; 10.0 11.0; 0.5 0.6]
             du_mat3 = zeros(5, 2)
             p_vec = Common.ODEParameters(variable_vec)

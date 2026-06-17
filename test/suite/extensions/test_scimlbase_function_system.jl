@@ -69,14 +69,15 @@ function test_scimlbase_function_system()
         end
 
         # ====================================================================
-        # UNIT TESTS - rhs / rhs_oop
+        # UNIT TESTS - get_ip_rhs / get_oop_rhs
         # ====================================================================
 
-        Test.@testset "rhs Dispatch" begin
+        Test.@testset "RHS Dispatch" begin
+            dummy_config = nothing
             Test.@testset "in-place returns pre-computed functor" begin
                 f = ODEFunction((du, u, p, t) -> du .= -u)
                 sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
-                rhs_fn = Systems.rhs(sys)
+                rhs_fn = Systems.get_ip_rhs(sys, dummy_config)
                 Test.@test rhs_fn !== f  # Not the raw function, but a wrapper
                 Test.@test rhs_fn isa Systems.AbstractIPRHS
                 # Test that the wrapper works
@@ -90,7 +91,7 @@ function test_scimlbase_function_system()
             Test.@testset "out-of-place returns pre-computed functor" begin
                 f = ODEFunction{false}((u, p, t) -> -u)
                 sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
-                rhs_oop_fn = Systems.rhs_oop(sys)
+                rhs_oop_fn = Systems.get_oop_rhs(sys, dummy_config)
                 Test.@test rhs_oop_fn !== f  # Not the raw function, but a wrapper
                 Test.@test rhs_oop_fn isa Systems.AbstractOoPRHS
                 # Test that the wrapper works
@@ -100,10 +101,10 @@ function test_scimlbase_function_system()
                 Test.@test du ≈ [-1.0, -2.0]
             end
 
-            Test.@testset "rhs on out-of-place returns iip wrapper (cross-adapter)" begin
+            Test.@testset "get_ip_rhs on out-of-place returns iip wrapper (cross-adapter)" begin
                 f = ODEFunction{false}((u, p, t) -> -u)
                 sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
-                rhs_fn = Systems.rhs(sys)
+                rhs_fn = Systems.get_ip_rhs(sys, dummy_config)
                 Test.@test rhs_fn isa Systems.AbstractIPRHS
                 # Should return a wrapper that makes the oop function iip
                 du = zeros(2)
@@ -113,10 +114,10 @@ function test_scimlbase_function_system()
                 Test.@test du ≈ [-1.0, -2.0]
             end
 
-            Test.@testset "rhs_oop on in-place returns oop wrapper (cross-adapter)" begin
+            Test.@testset "get_oop_rhs on in-place returns oop wrapper (cross-adapter)" begin
                 f = ODEFunction((du, u, p, t) -> du .= -u)
                 sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
-                rhs_oop_fn = Systems.rhs_oop(sys)
+                rhs_oop_fn = Test.@test_logs (:warn, r"InPlace SciMLFunction") Systems.get_oop_rhs(sys, dummy_config)
                 Test.@test rhs_oop_fn isa Systems.AbstractOoPRHS
                 # Should return a wrapper that allocates a buffer
                 u = [1.0, 2.0]

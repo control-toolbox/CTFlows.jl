@@ -15,6 +15,7 @@ module Flows
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
 using CTSolvers: CTSolvers
+import CTModels # ambiguity between CTModels.Solutions and Solutions
 
 # ==============================================================================
 # Internal sibling-submodule imports

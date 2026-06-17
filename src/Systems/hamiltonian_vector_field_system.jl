@@ -188,120 +188,6 @@ _aug_assign!(du::AbstractVector, dx, dp, dpv, n_x::Int, n_v::Int) =
     (du[1:n_x] .= dx; du[n_x+1:2*n_x] .= dp; du[end-n_v+1:end] .= dpv)
 _aug_assign!(du::AbstractMatrix, dx, dp, dpv, n_x::Int, n_v::Int) =
     (du[1:n_x,:] .= dx; du[n_x+1:2*n_x,:] .= dp; du[end-n_v+1:end,:] .= dpv)
-    
-# =============================================================================
-# Public lazy RHS builders
-# =============================================================================
-
-"""
-    build_rhs(sys::HamiltonianVectorFieldSystem, x0, p0) -> f!(du, u, λ, t)
-
-Build an in-place RHS closure for the given initial conditions.
-
-The closure is constructed lazily based on the shapes of `x0` and `p0`,
-ensuring correct handling of scalar, vector, and matrix inputs.
-
-# Arguments
-- `sys::HamiltonianVectorFieldSystem`: The Hamiltonian system.
-- `x0`: Initial state (scalar, vector, or matrix).
-- `p0`: Initial costate (same shape as `x0`).
-
-# Returns
-- `AbstractIPHVFRHS`: A functor with signature `(du, u, λ, t) -> nothing`.
-"""
-function build_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, x0, p0) where {F, TD, VD}
-    return IPHVFOoPRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
-end
-
-function build_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, x0, p0) where {F, TD, VD}
-    return IPHVFIpRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
-end
-
-"""
-    build_oop_rhs(sys::HamiltonianVectorFieldSystem, x0, p0) -> f(u, λ, t)
-
-Build an out-of-place RHS closure for the given initial conditions.
-
-The closure is constructed lazily based on the shapes of `x0` and `p0`,
-ensuring correct handling of scalar, vector, and matrix inputs.
-
-# Arguments
-- `sys::HamiltonianVectorFieldSystem`: The Hamiltonian system.
-- `x0`: Initial state (scalar, vector, or matrix).
-- `p0`: Initial costate (same shape as `x0`).
-
-# Returns
-- `AbstractOoPHVFRHS`: A functor with signature `(u, λ, t) -> du`.
-"""
-function build_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, x0, p0) where {F, TD, VD}
-    return OoPHVFOoPRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
-end
-
-function build_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, x0, p0) where {F, TD, VD}
-    if !ismutable(x0)
-        @warn "InPlace HamiltonianVectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
-        return OoPHVFIpFinalizeRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
-    end
-    return OoPHVFIpRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
-end
-
-# =============================================================================
-# Augmented RHS builder for variable costate integration
-# =============================================================================
-
-"""
-$(TYPEDSIGNATURES)
-
-Build an augmented in-place RHS closure for a Hamiltonian vector field system.
-
-The closure computes state, costate, and variable costate derivatives for
-sensitivity analysis and optimal control. The state vector is augmented as `[x; p; v]`.
-
-# Arguments
-- `sys::HamiltonianVectorFieldSystem{..., OutOfPlace, ...}`: The out-of-place system.
-- `n_x::Int`: State dimension.
-- `n_v::Int`: Variable dimension.
-- `x0`: Initial state (for coercion).
-- `p0`: Initial costate (for coercion).
-
-# Returns
-- `IPHVFOoPAugRHS`: An augmented in-place RHS functor.
-
-See also: [`CTFlows.Systems.build_rhs`](@ref), [`CTFlows.Systems.get_ip_rhs_augmented`](@ref).
-"""
-function build_rhs_augmented(
-    sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace},
-    n_x::Int, n_v::Int, x0, p0,
-) where {F, TD, VD}
-    return IPHVFOoPAugRHS(sys.hvf, n_x, n_v, Common.make_coerce(x0), Common.make_coerce(p0))
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Build an augmented in-place RHS closure for a Hamiltonian vector field system.
-
-The closure computes state, costate, and variable costate derivatives for
-sensitivity analysis and optimal control. The state vector is augmented as `[x; p; v]`.
-
-# Arguments
-- `sys::HamiltonianVectorFieldSystem{..., InPlace, ...}`: The in-place system.
-- `n_x::Int`: State dimension.
-- `n_v::Int`: Variable dimension.
-- `x0`: Initial state (for coercion).
-- `p0`: Initial costate (for coercion).
-
-# Returns
-- `IPHVFIpAugRHS`: An augmented in-place RHS functor.
-
-See also: [`CTFlows.Systems.build_rhs`](@ref), [`CTFlows.Systems.get_ip_rhs_augmented`](@ref).
-"""
-function build_rhs_augmented(
-    sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace},
-    n_x::Int, n_v::Int, x0, p0,
-) where {F, TD, VD}
-    return IPHVFIpAugRHS(sys.hvf, n_x, n_v, Common.make_coerce(x0), Common.make_coerce(p0))
-end
 
 # =============================================================================
 # New unified getters: get_ip_rhs / get_oop_rhs / get_ip_rhs_augmented
@@ -422,8 +308,9 @@ See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.build_rhs_augm
 function get_ip_rhs_augmented(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, config::Configs.AbstractAugmentedHamiltonianConfig) where {F, TD, VD}
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
-    n_x = length(x0)
-    n_v = length(Configs.initial_variable_costate(config))
+    n_x = _state_dim(x0)
+    pv0 = Configs.initial_variable_costate(config)
+    n_v = _state_dim(pv0)
     return IPHVFOoPAugRHS(sys.hvf, n_x, n_v, Common.make_coerce(x0), Common.make_coerce(p0))
 end
 
@@ -446,8 +333,9 @@ See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.build_rhs_augm
 function get_ip_rhs_augmented(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, config::Configs.AbstractAugmentedHamiltonianConfig) where {F, TD, VD}
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
-    n_x = length(x0)
-    n_v = length(Configs.initial_variable_costate(config))
+    n_x = _state_dim(x0)
+    pv0 = Configs.initial_variable_costate(config)
+    n_v = _state_dim(pv0)
     return IPHVFIpAugRHS(sys.hvf, n_x, n_v, Common.make_coerce(x0), Common.make_coerce(p0))
 end
 

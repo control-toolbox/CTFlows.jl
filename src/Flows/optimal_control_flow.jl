@@ -2,8 +2,6 @@
 # OCPHamiltonianFunctionFunction, OptimalControlFlow, and solution builder
 # =============================================================================
 
-import CTModels
-
 # =============================================================================
 # OCPHamiltonianFunction — OCP Hamiltonian H(t,x,p,v) = p·f(t,x,∅,v) + sp0·ℓ(t,x,∅,v)
 #
@@ -34,7 +32,7 @@ function _ocp_H(h::OCPHamiltonianFunction, t, x, p, v)
     xv = _asvec(x)
     pv_arg = _asvec(p)
     if v === nothing
-        T  = promote_type(eltype(xv), eltype(pv_arg))
+        T  = eltype(xv)
         u  = Vector{T}(undef, 0)
         r  = Vector{T}(undef, h.n)
         h.dynamics!(r, t, xv, u, u)
@@ -42,7 +40,7 @@ function _ocp_H(h::OCPHamiltonianFunction, t, x, p, v)
         h.lagrange === nothing || (val += h.sp0 * h.lagrange(t, xv, u, u))
     else
         vv = _asvec(v)
-        T  = promote_type(eltype(xv), eltype(pv_arg), eltype(vv))
+        T  = Base.promote_op(*, eltype(xv), eltype(vv))
         u  = Vector{T}(undef, 0)
         r  = Vector{T}(undef, h.n)
         h.dynamics!(r, t, xv, u, vv)
