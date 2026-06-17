@@ -207,7 +207,7 @@ Lazy implementation: reads `x0`/`p0` from the config to build type-specific clos
 # Returns
 - `IPHVFOoPRHS`: An in-place RHS functor.
 
-See also: [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Systems.build_rhs`](@ref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
 function get_ip_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, config::Configs.AbstractHamiltonianConfig) where {F, TD, VD}
     x0 = Configs.initial_state(config)
@@ -229,7 +229,7 @@ Lazy implementation: reads `x0`/`p0` from the config to build type-specific clos
 # Returns
 - `IPHVFIpRHS`: An in-place RHS functor.
 
-See also: [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Systems.build_rhs`](@ref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
 function get_ip_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, config::Configs.AbstractHamiltonianConfig) where {F, TD, VD}
     x0 = Configs.initial_state(config)
@@ -251,7 +251,7 @@ Lazy implementation: reads `x0`/`p0` from the config to build type-specific clos
 # Returns
 - `OoPHVFOoPRHS`: An out-of-place RHS functor.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function get_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, config::Configs.AbstractHamiltonianConfig) where {F, TD, VD}
     x0 = Configs.initial_state(config)
@@ -277,7 +277,7 @@ For immutable initial conditions, returns the finalize closure.
 # Notes
 - Emits a performance warning when called with immutable initial conditions.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function get_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, config::Configs.AbstractHamiltonianConfig) where {F, TD, VD}
     x0 = Configs.initial_state(config)
@@ -303,7 +303,7 @@ Lazy implementation: reads `x0`/`p0`/`pv0` from the config to build the augmente
 # Returns
 - `IPHVFOoPAugRHS`: An augmented in-place RHS functor.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.build_rhs_augmented`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
 function get_ip_rhs_augmented(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, config::Configs.AbstractAugmentedHamiltonianConfig) where {F, TD, VD}
     x0 = Configs.initial_state(config)
@@ -328,7 +328,7 @@ Lazy implementation: reads `x0`/`p0`/`pv0` from the config to build the augmente
 # Returns
 - `IPHVFIpAugRHS`: An augmented in-place RHS functor.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.build_rhs_augmented`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
 function get_ip_rhs_augmented(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, config::Configs.AbstractAugmentedHamiltonianConfig) where {F, TD, VD}
     x0 = Configs.initial_state(config)

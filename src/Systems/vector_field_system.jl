@@ -160,7 +160,7 @@ For `InPlace` systems, returns `rhs_oop_finalize` (the finalize path) since
 # Returns
 - `Function`: The pre-computed out-of-place closure with signature `(u, p, t) -> du`.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.rhs_oop`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function get_oop_rhs(sys::VectorFieldSystem{F, TD, VD, Traits.OutOfPlace, RHS, OOPROHS, Nothing}, _) where {F, TD, VD, RHS, OOPROHS}
     return sys.rhs_oop
@@ -184,7 +184,7 @@ This method is called when `!ismutable(u0)`, so we always return `rhs_oop_finali
 # Notes
 - Emits a performance warning since this path is suboptimal for immutable arrays.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.rhs_oop`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function get_oop_rhs(sys::VectorFieldSystem{F, TD, VD, Traits.InPlace, RHS, OOPROHS, FINRHS}, _) where {F, TD, VD, RHS, OOPROHS, FINRHS}
     @warn "InPlace VectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."

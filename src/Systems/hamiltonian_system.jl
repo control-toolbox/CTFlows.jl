@@ -115,7 +115,7 @@ Lazy implementation: reads `x0`/`p0` from the config to build type-specific clos
 # Returns
 - `HamIpRHS`: An in-place RHS functor with embedded AD cache.
 
-See also: [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Systems.build_rhs`](@ref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
 function get_ip_rhs(sys::HamiltonianSystem, config::Configs.AbstractHamiltonianConfig)
     x0 = Configs.initial_state(config)
@@ -141,7 +141,7 @@ Lazy implementation: reads `x0`/`p0` from the config to build type-specific clos
 # Returns
 - `HamOoPRHS`: An out-of-place RHS functor with embedded AD cache.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function get_oop_rhs(sys::HamiltonianSystem, config::Configs.AbstractHamiltonianConfig)
     x0 = Configs.initial_state(config)
@@ -167,7 +167,7 @@ Lazy implementation: reads `x0`/`p0`/`pv0` from the config to build the augmente
 # Returns
 - `HamIpAugRHS`: An augmented in-place RHS functor with embedded AD cache.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.build_rhs_augmented`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
 function get_ip_rhs_augmented(sys::HamiltonianSystem, config::Configs.AbstractAugmentedHamiltonianConfig)
     x0 = Configs.initial_state(config)
