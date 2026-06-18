@@ -16,9 +16,6 @@ The module defines an abstract contract `AbstractADBackend` with seven methods:
 - `differentiate(backend, f, ::Val{Slot}, active, consts...)` → partial derivative at slot
 - `pushforward(backend, f, ::Val{Slot}, x, dx, consts...)` → JVP along direction dx
 
-It also defines the pure functor `WithActiveArg{F,Slot}` for argument reslotting,
-used internally by extension implementations of `differentiate` and `pushforward`.
-
 The concrete strategy `DifferentiationInterface` wraps DifferentiationInterface.jl backends
 (e.g., `AutoForwardDiff()`) and stores them in its `:ad_backend` option.
 
@@ -46,7 +43,6 @@ and `DifferentiationInterface.prepare_gradient`.
 - `derivative`
 - `differentiate`
 - `pushforward`
-- `WithActiveArg`
 """
 module Differentiation
 
@@ -70,7 +66,6 @@ import ..Data: Data
 # Includes (in dependency order)
 # ==============================================================================
 
-include("arg_placement.jl")
 include("abstract_ad_backend.jl")
 include("differentiation_interface.jl")
 include("building.jl")
@@ -89,6 +84,5 @@ export gradient
 export derivative
 export differentiate
 export pushforward
-export WithActiveArg
 
 end # module

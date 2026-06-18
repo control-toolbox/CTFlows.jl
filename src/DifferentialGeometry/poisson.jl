@@ -94,8 +94,7 @@ Callable struct representing the Poisson bracket `{H, G} = ∇ₚH'∇ₓG - ∇
 
 Replaces the four closures previously returned by `_Poisson`. `TD` and `VD` are
 compile-time trait parameters so the correct call method is resolved statically.
-Partial derivatives are computed via `Differentiation.differentiate`, which uses
-`WithActiveArg` internally — no per-call closure allocation.
+Partial derivatives are computed via `Differentiation.differentiate`.
 """
 struct PoissonBracket{FH, FG, B <: Differentiation.AbstractADBackend, TD, VD} <: Function
     H::FH

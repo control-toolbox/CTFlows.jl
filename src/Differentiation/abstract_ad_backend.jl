@@ -229,8 +229,7 @@ slot order (skipping `Slot`).
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If the concrete backend does not implement this method.
 
-See also: [`CTFlows.Differentiation.pushforward`](@ref),
-[`CTFlows.Differentiation.WithActiveArg`](@ref).
+See also: [`CTFlows.Differentiation.pushforward`](@ref).
 """
 function differentiate(backend::AbstractADBackend, f, ::Val{Slot}, active, consts...) where {Slot}
     throw(Exceptions.NotImplemented(
@@ -264,8 +263,7 @@ at `x` along `dx`, with all other arguments frozen.
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If the concrete backend does not implement this method.
 
-See also: [`CTFlows.Differentiation.differentiate`](@ref),
-[`CTFlows.Differentiation.WithActiveArg`](@ref).
+See also: [`CTFlows.Differentiation.differentiate`](@ref).
 """
 function pushforward(backend::AbstractADBackend, f, ::Val{Slot}, x, dx, consts...) where {Slot}
     throw(Exceptions.NotImplemented(

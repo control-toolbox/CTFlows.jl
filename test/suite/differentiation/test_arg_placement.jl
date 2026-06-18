@@ -1,5 +1,5 @@
 """
-Tests for WithActiveArg, Differentiation.differentiate, and Differentiation.pushforward.
+Tests for Differentiation.differentiate and Differentiation.pushforward.
 """
 
 module TestArgPlacement
@@ -31,85 +31,7 @@ FakeBackendAP() = FakeBackendAP(CTSolvers.Strategies.StrategyOptions())
 _default_backend() = Differentiation.build_ad_backend()
 
 function test_arg_placement()
-    Test.@testset "WithActiveArg + differentiate/pushforward" verbose=VERBOSE showtiming=SHOWTIMING begin
-
-        # ======================================================================
-        # WithActiveArg — structure
-        # ======================================================================
-
-        Test.@testset "WithActiveArg: construction" begin
-            f(a, b, c) = (a, b, c)
-            w_val = Differentiation.WithActiveArg(f, Val(2))
-            w_int = Differentiation.WithActiveArg(f, 2)
-            Test.@test w_val isa Differentiation.WithActiveArg{typeof(f), 2}
-            Test.@test w_int isa Differentiation.WithActiveArg{typeof(f), 2}
-        end
-
-        Test.@testset "WithActiveArg: reslotting" begin
-            f(a, b, c) = (a, b, c)
-            Test.@test Differentiation.WithActiveArg(f, Val(1))(10, 20, 30) == (10, 20, 30)
-            Test.@test Differentiation.WithActiveArg(f, Val(2))(10, 20, 30) == (20, 10, 30)
-            Test.@test Differentiation.WithActiveArg(f, Val(3))(10, 20, 30) == (20, 30, 10)
-        end
-
-        Test.@testset "WithActiveArg: 2-arg function" begin
-            g(a, b) = a + b
-            Test.@test Differentiation.WithActiveArg(g, Val(1))(5, 3) == 8
-            Test.@test Differentiation.WithActiveArg(g, Val(2))(5, 3) == 8
-            Test.@test Differentiation.WithActiveArg(g, Val(1))(5, 3) ==
-                       Differentiation.WithActiveArg(g, Val(2))(3, 5)
-        end
-
-        Test.@testset "WithActiveArg: 1-arg function" begin
-            h(a) = a^2
-            Test.@test Differentiation.WithActiveArg(h, Val(1))(3) == 9
-        end
-
-        Test.@testset "WithActiveArg: type stability" begin
-            f(a, b, c) = a + b + c
-            w = Differentiation.WithActiveArg(f, Val(2))
-            Test.@test (Test.@inferred w(1.0, 2.0, 3.0)) == 6.0
-        end
-
-        Test.@testset "WithActiveArg: out-of-range slot throws" begin
-            f(a, b) = a + b
-            w = Differentiation.WithActiveArg(f, Val(5))
-            Test.@test_throws Exceptions.IncorrectArgument w(1, 2)
-        end
-
-        Test.@testset "WithActiveArg: zero allocations on call" begin
-            f(a, b, c) = a + b + c
-            w = Differentiation.WithActiveArg(f, Val(2))
-            w(1.0, 2.0, 3.0)  # warm-up
-            Test.@test (@allocated w(1.0, 2.0, 3.0)) == 0
-        end
-
-        Test.@testset "WithActiveArg: @inferred slot 1 and slot 3" begin
-            f(a, b, c) = a + b + c
-            w1 = Differentiation.WithActiveArg(f, Val(1))
-            w3 = Differentiation.WithActiveArg(f, Val(3))
-            Test.@test (Test.@inferred w1(1.0, 2.0, 3.0)) == 6.0
-            Test.@test (Test.@inferred w3(1.0, 2.0, 3.0)) == 6.0
-        end
-
-        Test.@testset "WithActiveArg: IncorrectArgument fields" begin
-            f(a, b) = a + b
-            w = Differentiation.WithActiveArg(f, Val(5))
-            try
-                w(1, 2)
-                Test.@test false
-            catch err
-                Test.@test err isa Exceptions.IncorrectArgument
-                Test.@test occursin("5", err.got)
-                Test.@test occursin("2", err.expected)  # total = 1 const + 1 active = 2
-            end
-        end
-
-        Test.@testset "WithActiveArg: slot 0 throws" begin
-            f(a, b) = a + b
-            w0 = Differentiation.WithActiveArg(f, Val(0))
-            Test.@test_throws Exceptions.IncorrectArgument w0(1, 2)
-        end
+    Test.@testset "differentiate/pushforward" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ======================================================================
         # Stub error tests
