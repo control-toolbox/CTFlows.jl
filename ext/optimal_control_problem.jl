@@ -125,7 +125,7 @@ Guard method that prevents providing a control law to a control-free problem.
 - `CTBase.Exceptions.PreconditionError`: Always throws with a clear error message.
 """
 function CTFlows.Flow(ocp::ControlFreeModel, u::CTFlows.ControlLaw; kwargs...)
-    throw(
+    return throw(
         CTBase.Exceptions.PreconditionError(
             "Cannot provide a control law to a control-free optimal control problem. " *
             "The problem has EmptyControlModel (no control variable). " *
@@ -190,7 +190,7 @@ Guard method that prevents providing a control function to a control-free proble
 - `CTBase.Exceptions.PreconditionError`: Always throws with a clear error message.
 """
 function CTFlows.Flow(ocp::ControlFreeModel, u::Function; kwargs...)
-    throw(
+    return throw(
         CTBase.Exceptions.PreconditionError(
             "Cannot provide a control function to a control-free optimal control problem. " *
             "The problem has EmptyControlModel (no control variable). " *
