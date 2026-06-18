@@ -61,13 +61,6 @@ function test_differentiation_interface_extension()
             Test.@test grad_v ≈ v atol=1e-8
         end
 
-        Test.@testset "Unit: WithActiveArg slots" begin
-            h_x = Differentiation.WithActiveArg(FAKE_HAMILTONIAN_FIXED, Val(2))
-            h_p = Differentiation.WithActiveArg(FAKE_HAMILTONIAN_FIXED, Val(3))
-            Test.@test h_x isa Differentiation.WithActiveArg{<:Any, 2}
-            Test.@test h_p isa Differentiation.WithActiveArg{<:Any, 3}
-        end
-
     end
 end
 

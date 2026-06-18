@@ -55,13 +55,9 @@ $(TYPEDSIGNATURES)
 
 Compute Hamiltonian gradients (∂H/∂x, ∂H/∂p) via DifferentiationInterface.jl.
 
-Anonymous closures are used deliberately rather than named functor types such as
-`WithActiveArg`.  Named functor types are visible to Julia's type inference and
-can cause their ForwardDiff `tagcount` to be registered before the outer tag
-(e.g. a NonlinearSolve dual tag) in nested-AD contexts, reversing the expected
-tag ordering and silently producing zero gradients.  Anonymous closures are
-opaque to ahead-of-time inference, so tagcounts are always assigned at runtime
-in the correct left-to-right order inside `ForwardDiff.≺`.
+Anonymous closures are used deliberately so that ForwardDiff `tagcount` values
+are assigned at runtime in the correct left-to-right order inside `ForwardDiff.≺`,
+avoiding silent zero-gradient bugs in nested-AD contexts (e.g. inside NonlinearSolve).
 
 # Returns
 - Tuple `(grad_x, grad_p)` where `grad_x` = ∂H/∂x, `grad_p` = ∂H/∂p.
@@ -185,14 +181,12 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Compute the partial gradient of `f` with respect to the array argument at slot `Slot`,
-using DifferentiationInterface.jl.
+Compute the partial derivative or gradient of `f` with respect to the argument at
+slot `Slot`, using DifferentiationInterface.jl.
 
-`active` must be an `AbstractArray` and `f` must be scalar-valued. Internally constructs
-a `WithActiveArg(f, Val(Slot))` functor and calls `DI.gradient` directly with the remaining
-arguments wrapped as `DI.Constant`. Dispatching directly to `DI.gradient` (rather than
-through the `_derivator` value-dispatch helper) allows Julia to infer the return type when
-the AD backend is concrete (ensured by the `Val`-keyed `ad_backend` accessor).
+An anonymous closure captures the constant arguments and places `active_` at `Slot`
+via `ntuple` — same rationale as [`hamiltonian_gradient`](@ref) (ForwardDiff tag ordering).
+`_derivator` dispatches to `DI.gradient` for array `active` and `DI.derivative` for scalar.
 
 See also: [`CTFlows.Differentiation.pushforward`](@ref).
 """
@@ -200,37 +194,12 @@ function Differentiation.differentiate(
     backend::Differentiation.DifferentiationInterface,
     f,
     ::Val{Slot},
-    active::AbstractArray,
-    consts...,
-) where {Slot}
+    active,
+    consts::Vararg{Any, N},
+) where {Slot, N}
     di = Differentiation.ad_backend(backend)
-    w  = Differentiation.WithActiveArg(f, Val(Slot))
-    return DI.gradient(w, di, active, map(DI.Constant, consts)...)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Compute the partial derivative of `f` with respect to the scalar argument at slot `Slot`,
-using DifferentiationInterface.jl.
-
-`active` is a scalar (e.g., time `t` in `∂ₜ`). `f` may be vector-valued, so the return
-type is the output type of `f`, which differs from `typeof(active)` — no type assertion
-is applied. Internally constructs a `WithActiveArg(f, Val(Slot))` functor and calls
-`DI.derivative` with the remaining arguments wrapped as `DI.Constant`.
-
-See also: [`CTFlows.Differentiation.pushforward`](@ref).
-"""
-function Differentiation.differentiate(
-    backend::Differentiation.DifferentiationInterface,
-    f,
-    ::Val{Slot},
-    active::Number,
-    consts...,
-) where {Slot}
-    di = Differentiation.ad_backend(backend)
-    w  = Differentiation.WithActiveArg(f, Val(Slot))
-    return DI.derivative(w, di, active, map(DI.Constant, consts)...)
+    f_active(active_) = f(ntuple(i -> i == Slot ? active_ : consts[i < Slot ? i : i - 1], Val(N + 1))...)
+    return _derivator(typeof(active))(f_active, di, active)
 end
 
 """
@@ -239,9 +208,8 @@ $(TYPEDSIGNATURES)
 Compute the pushforward (Jacobian-vector product) of `f` at `x` in direction `dx`,
 using DifferentiationInterface.jl.
 
-Internally constructs a `WithActiveArg(f, Val(Slot))` functor, then calls
-`DI.pushforward` with the direction as a one-element tuple and remaining arguments
-wrapped as `DI.Constant`. The single tangent is extracted with `only`.
+An anonymous closure captures `consts` and reconstructs the full argument tuple via
+`ntuple`, placing `x_` at slot `Slot`. The single tangent is extracted with `only`.
 
 See also: [`CTFlows.Differentiation.differentiate`](@ref).
 """
@@ -251,12 +219,11 @@ function Differentiation.pushforward(
     ::Val{Slot},
     x,
     dx,
-    consts...,
-) where {Slot}
+    consts::Vararg{Any, N},
+) where {Slot, N}
     di = Differentiation.ad_backend(backend)
-    w  = Differentiation.WithActiveArg(f, Val(Slot))
-    ty = DI.pushforward(w, di, x, (dx,), map(DI.Constant, consts)...)
-    return only(ty)
+    f_slot(x_) = f(ntuple(i -> i == Slot ? x_ : consts[i < Slot ? i : i - 1], Val(N + 1))...)
+    return only(DI.pushforward(f_slot, di, x, (dx,)))
 end
 
 end # module

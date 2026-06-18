@@ -188,10 +188,8 @@ end
 _ad_bracket(_, _, dfoo::Number, _, ::Val{Slot}, x, consts...) where {Slot} = dfoo
 
 # Lie bracket (vector): J_foo(x)·X(x) - J_X(x)·foo(x)
-# `WithActiveArg(foo, Val(Slot))(x, consts...)` reconstructs foo(...) at the current point
-# without a closure; second `pushforward` computes J_X(x)·Y_x.
-function _ad_bracket(X, foo, dfoo::AbstractVector, backend, ::Val{Slot}, x, consts...) where {Slot}
-    Y_x = Differentiation.WithActiveArg(foo, Val(Slot))(x, consts...)
+function _ad_bracket(X, foo, dfoo::AbstractVector, backend, ::Val{Slot}, x, consts::Vararg{Any, N}) where {Slot, N}
+    Y_x = foo(ntuple(i -> i == Slot ? x : consts[i < Slot ? i : i - 1], Val(N + 1))...)
     dX  = Differentiation.pushforward(backend, X, Val(Slot), x, Y_x, consts...)
     return dfoo - dX
 end
