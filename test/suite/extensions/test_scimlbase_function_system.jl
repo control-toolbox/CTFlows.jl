@@ -8,7 +8,7 @@ import CTFlows.Configs: Configs
 import CTFlows.Systems: Systems
 import CTFlows.Integrators: Integrators
 import CTFlows.Flows: Flows
-import CTFlows.Solutions: Solutions
+import CTFlows.Trajectories: Trajectories
 import CTSolvers.Strategies: Strategies
 
 # Fake tag type for testing stub behavior
@@ -201,7 +201,7 @@ function test_scimlbase_function_system()
             f = ODEFunction((du, u, p, t) -> du .= -p .* u)
             flow = Flows.Flow(f; reltol=1e-10)
             sol = flow((0.0, 1.0), [1.0]; variable=2.0)
-            Test.@test sol isa Solutions.VectorFieldSolution
+            Test.@test sol isa Trajectories.VectorFieldSolution
             Test.@test sol(0.5)[1] ≈ exp(-2.0 * 0.5) rtol=1e-6
         end
 

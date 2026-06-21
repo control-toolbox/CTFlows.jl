@@ -4,7 +4,7 @@ import Test
 import CTFlows.Systems
 import CTFlows.Flows
 import CTFlows.Integrators
-import CTFlows.Solutions
+import CTFlows.Trajectories
 import CTFlows.Common
 import CTFlows.Configs
 import CTFlows.Traits
@@ -53,19 +53,19 @@ function Integrators.solve_problem(integ::FakeIntegFC, prob, options::Dict{Symbo
     return FakeResultFC()
 end
 
-function Solutions.build_solution(::Type{Traits.EndPointMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Trajectories.build_solution(::Type{Traits.EndPointMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :state_point_sol
 end
 
-function Solutions.build_solution(::Type{Traits.TrajectoryMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Trajectories.build_solution(::Type{Traits.TrajectoryMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :state_traj_sol
 end
 
-function Solutions.build_solution(::Type{Traits.EndPointMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Trajectories.build_solution(::Type{Traits.EndPointMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :ham_point_sol
 end
 
-function Solutions.build_solution(::Type{Traits.TrajectoryMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Trajectories.build_solution(::Type{Traits.TrajectoryMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :ham_traj_sol
 end
 

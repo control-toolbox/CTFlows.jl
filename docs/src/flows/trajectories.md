@@ -1,18 +1,18 @@
-# Solutions
+# Trajectories
 
 ```@meta
 CurrentModule = CTFlows
 ```
 
 A trajectory integration returns a **solution object** that wraps the raw ODE result
-and exposes semantic accessors. The [`CTFlows.Solutions`](@ref CTFlows.Solutions)
+and exposes semantic accessors. The [`CTFlows.Trajectories`](@ref CTFlows.Trajectories)
 submodule provides these wrappers.
 
 ```@setup flows_solutions
 using CTFlows
 using CTFlows.Data
 using CTFlows.Flows
-using CTFlows.Solutions
+using CTFlows.Trajectories
 using CTFlows.Integrators
 import OrdinaryDiffEqTsit5
 
@@ -46,12 +46,12 @@ sol   # produced by flow((t0, tf), x0)
 ### Accessors
 
 ```@example flows_solutions
-ts = Solutions.time_grid(sol)      # vector of time points
+ts = Trajectories.time_grid(sol)      # vector of time points
 ts[1], ts[end]
 ```
 
 ```@example flows_solutions
-x = Solutions.state(sol)           # callable: x(t) → state at time t
+x = Trajectories.state(sol)           # callable: x(t) → state at time t
 x(0.0)                             # initial state (exact)
 ```
 
@@ -89,12 +89,12 @@ hsol   # produced by hflow((t0, tf), x0, p0)
 ### Accessors
 
 ```@example flows_solutions
-ts_h = Solutions.time_grid(hsol)
+ts_h = Trajectories.time_grid(hsol)
 ```
 
 ```@example flows_solutions
-x_h = Solutions.state(hsol)      # state trajectory: x(t)
-p_h = Solutions.costate(hsol)    # costate trajectory: p(t)
+x_h = Trajectories.state(hsol)      # state trajectory: x(t)
+p_h = Trajectories.costate(hsol)    # costate trajectory: p(t)
 x_h(0.0), p_h(0.0)
 ```
 
@@ -133,7 +133,7 @@ These are used internally by the solution wrappers and normally not called direc
 
 ## See also
 
-- [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref) — solution container types.
-- [`CTFlows.Solutions.state`](@ref), [`CTFlows.Solutions.costate`](@ref) — trajectory accessors.
-- [`CTFlows.Solutions.time_grid`](@ref), [`CTFlows.Integrators.times`](@ref) — time grid accessors.
+- [`CTFlows.Trajectories.VectorFieldSolution`](@ref), [`CTFlows.Trajectories.HamiltonianVectorFieldSolution`](@ref) — solution container types.
+- [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.costate`](@ref) — trajectory accessors.
+- [`CTFlows.Trajectories.time_grid`](@ref), [`CTFlows.Integrators.times`](@ref) — time grid accessors.
 - [`CTFlows.Integrators.final_state`](@ref), [`CTFlows.Integrators.evaluate_at`](@ref) — low-level result accessors.

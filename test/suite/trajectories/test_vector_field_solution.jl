@@ -1,7 +1,7 @@
 module TestVectorFieldSolution
 
 import Test
-import CTFlows.Solutions
+import CTFlows.Trajectories
 import CTBase.Exceptions
 import CTFlows.Common
 import CTFlows.Integrators
@@ -31,7 +31,7 @@ end
 """
 Fake VectorFieldSolution for testing stub methods on AbstractVectorFieldSolution.
 """
-struct FakeVectorFieldSolution <: Solutions.AbstractVectorFieldSolution
+struct FakeVectorFieldSolution <: Trajectories.AbstractVectorFieldSolution
     data::String
 end
 
@@ -49,8 +49,8 @@ function test_vector_field_solution()
         Test.@testset "Construction" begin
             Test.@testset "constructs from integration result" begin
                 result = FakeIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
-                sol = Solutions.VectorFieldSolution(result)
-                Test.@test sol isa Solutions.VectorFieldSolution
+                sol = Trajectories.VectorFieldSolution(result)
+                Test.@test sol isa Trajectories.VectorFieldSolution
             end
         end
 
@@ -61,34 +61,34 @@ function test_vector_field_solution()
         Test.@testset "Callable & Delegation" begin
             Test.@testset "delegates evaluate_at to result" begin
                 result = FakeIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
-                sol = Solutions.VectorFieldSolution(result)
+                sol = Trajectories.VectorFieldSolution(result)
                 Test.@test sol(0.5) === Integrators.evaluate_at(result, 0.5)
             end
 
             Test.@testset "delegates times to result" begin
                 result = FakeIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
-                sol = Solutions.VectorFieldSolution(result)
+                sol = Trajectories.VectorFieldSolution(result)
                 Test.@test Integrators.times(sol) === Integrators.times(result)
             end
 
             Test.@testset "state accessor returns sol itself" begin
                 result = FakeIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
-                sol = Solutions.VectorFieldSolution(result)
-                x = Solutions.state(sol)
+                sol = Trajectories.VectorFieldSolution(result)
+                x = Trajectories.state(sol)
                 Test.@test x === sol  # Returns same object
             end
 
             Test.@testset "state accessor is callable" begin
                 result = FakeIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
-                sol = Solutions.VectorFieldSolution(result)
-                x = Solutions.state(sol)
+                sol = Trajectories.VectorFieldSolution(result)
+                x = Trajectories.state(sol)
                 Test.@test x(0.5) ≈ Integrators.evaluate_at(result, 0.5)
             end
 
             Test.@testset "time_grid alias works" begin
                 result = FakeIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
-                sol = Solutions.VectorFieldSolution(result)
-                tg = Solutions.time_grid(sol)
+                sol = Trajectories.VectorFieldSolution(result)
+                tg = Trajectories.time_grid(sol)
                 ts = Integrators.times(sol)
                 Test.@test tg === ts  # Returns same object
             end
@@ -102,14 +102,14 @@ function test_vector_field_solution()
             Test.@testset "throws ExtensionError without Plots extension" begin
                 fake_sol = FakeVectorFieldSolution("test data")
                 
-                Test.@test_throws Exceptions.ExtensionError Solutions.plot(fake_sol)
+                Test.@test_throws Exceptions.ExtensionError Trajectories.plot(fake_sol)
             end
 
             Test.@testset "error message mentions Plots extension" begin
                 fake_sol = FakeVectorFieldSolution("test data")
                 
                 try
-                    Solutions.plot(fake_sol)
+                    Trajectories.plot(fake_sol)
                     Test.@test false  # Should not reach here
                 catch err
                     Test.@test err isa Exceptions.ExtensionError
@@ -126,7 +126,7 @@ function test_vector_field_solution()
         Test.@testset "Base.show" begin
             Test.@testset "MIME text/plain" begin
                 result = FakeIntegrationResult([0.0, 1.0], [[1.0, 2.0], [0.5, 1.0]])
-                sol = Solutions.VectorFieldSolution(result)
+                sol = Trajectories.VectorFieldSolution(result)
                 
                 io = IOBuffer()
                 show(io, MIME("text/plain"), sol)
@@ -136,7 +136,7 @@ function test_vector_field_solution()
 
             Test.@testset "compact" begin
                 result = FakeIntegrationResult([0.0, 1.0], [[1.0, 2.0], [0.5, 1.0]])
-                sol = Solutions.VectorFieldSolution(result)
+                sol = Trajectories.VectorFieldSolution(result)
                 
                 io = IOBuffer()
                 show(io, sol)
@@ -151,7 +151,7 @@ function test_vector_field_solution()
 
         Test.@testset "Exports Verification" begin
             Test.@testset "VectorFieldSolution is exported" begin
-                Test.@test isdefined(Solutions, :VectorFieldSolution)
+                Test.@test isdefined(Trajectories, :VectorFieldSolution)
             end
         end
     end

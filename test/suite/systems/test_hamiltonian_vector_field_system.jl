@@ -7,7 +7,7 @@ import CTFlows.Common: Common
 import CTFlows.Traits: Traits
 import CTFlows.Systems: Systems
 import CTFlows.Configs: Configs
-import CTFlows.Solutions: Solutions
+import CTFlows.Trajectories: Trajectories
 import StaticArrays: SA, StaticArrays
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true

@@ -4,7 +4,7 @@ import Test
 import CTFlows.Systems
 import CTFlows.Flows
 import CTFlows.Integrators
-import CTFlows.Solutions
+import CTFlows.Trajectories
 import CTFlows.Common
 import CTFlows.Data
 
@@ -131,22 +131,22 @@ function test_flow_callables_sciml_vector_field()
 
             Test.@testset "vector x0" begin
                 sol = flow((0.0, 1.0), [1.0, 2.0])
-                Test.@test sol isa Solutions.VectorFieldSolution
+                Test.@test sol isa Trajectories.VectorFieldSolution
             end
 
             Test.@testset "SVector x0" begin
                 sol = flow((0.0, 1.0), SA[1.0, 2.0])
-                Test.@test sol isa Solutions.VectorFieldSolution
+                Test.@test sol isa Trajectories.VectorFieldSolution
             end
 
             Test.@testset "MVector x0" begin
                 sol = flow((0.0, 1.0), MVector{2}(1.0, 2.0))
-                Test.@test sol isa Solutions.VectorFieldSolution
+                Test.@test sol isa Trajectories.VectorFieldSolution
             end
 
             Test.@testset "matrix x0" begin
                 sol = flow((0.0, 1.0), [1.0 2.0; 3.0 4.0])
-                Test.@test sol isa Solutions.VectorFieldSolution
+                Test.@test sol isa Trajectories.VectorFieldSolution
             end
         end
 

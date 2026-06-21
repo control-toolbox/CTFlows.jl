@@ -1,19 +1,19 @@
 """
-    Solutions
+    Trajectories
 
-Solution types and solution building for CTFlows.
+Trajectory types and trajectory building for CTFlows.
 
 This module provides:
 - `AbstractIntegrationResult`: Abstraction for raw ODE integration results
-- `VectorFieldSolution`: Solution type wrapping integration results
-- `build_solution`: Solution building functions for different configuration types
+- `VectorFieldSolution`: Trajectory type wrapping integration results
+- `build_solution`: Trajectory building functions for different configuration types
 - `final_state`, `times`, `evaluate_at`: Semantic accessors for integration results
 - `state`, `time_grid`: Semantic accessors for VectorFieldSolution
-- `plot`: Plotting functionality for solutions
+- `plot`: Plotting functionality for trajectories
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.build_solution`](@ref), `plot`.
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.VectorFieldSolution`](@ref), [`CTFlows.Trajectories.build_solution`](@ref), `plot`.
 """
-module Solutions
+module Trajectories
 
 # ==============================================================================
 # External package imports
@@ -53,4 +53,4 @@ export costate
 export build_solution
 export plot
 
-end # module Solutions
+end # module Trajectories

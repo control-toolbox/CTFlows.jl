@@ -8,7 +8,7 @@ import CTFlows.Systems: Systems
 import CTFlows.Flows: Flows
 import CTFlows.Integrators: Integrators
 import CTFlows.Differentiation: Differentiation
-import CTFlows.Solutions: Solutions
+import CTFlows.Trajectories: Trajectories
 
 using SciMLBase: SciMLBase
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
@@ -194,19 +194,19 @@ function test_flow_callables_sciml_hamiltonian_system()
             Test.@testset "scalar x0, p0" begin
                 hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), 1.0, 0.0)
-                Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+                Test.@test sol isa Trajectories.HamiltonianVectorFieldSolution
             end
 
             Test.@testset "vector x0, p0" begin
                 hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), [1.0, 0.0], [0.0, 1.0])
-                Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+                Test.@test sol isa Trajectories.HamiltonianVectorFieldSolution
             end
 
             Test.@testset "SVector x0, p0" begin
                 hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), SA[1.0, 0.0], SA[0.0, 1.0])
-                Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+                Test.@test sol isa Trajectories.HamiltonianVectorFieldSolution
             end
         end
 

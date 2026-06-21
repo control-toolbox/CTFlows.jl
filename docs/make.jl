@@ -112,7 +112,7 @@ with_api_reference(src_dir, ext_dir) do api_pages
                 "Data structures"    => "flows/data.md",
                 "Building a flow"    => "flows/building_a_flow.md",
                 "Integrating"        => "flows/integrating.md",
-                "Solutions"          => "flows/solutions.md",
+                "Trajectories"       => "flows/trajectories.md",
                 "Multi-phase flows"  => "flows/multiphase.md",
             ],
             "Differential Geometry" => [

@@ -47,7 +47,7 @@ in a `VectorFieldSolution` for future extensibility.
 # Returns
 - `VectorFieldSolution`: The wrapped integration result.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Traits.TrajectoryMode`](), [`CTFlows.Traits.StateDynamics`]().
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.VectorFieldSolution`](@ref), [`CTFlows.Traits.TrajectoryMode`](), [`CTFlows.Traits.StateDynamics`]().
 """
 function build_solution(
     ::Type{Traits.TrajectoryMode},
@@ -125,7 +125,7 @@ function build_solution(
     )
     u = Integrators.final_state(result)
     x0 = Configs.initial_state(config)
-    x, p = Solutions._ham_split_solution(u, x0)
+    x, p = _ham_split_solution(u, x0)
     return (Common.make_coerce(x0)(x), Common.make_coerce(x0)(p))
 end
 
@@ -145,7 +145,7 @@ Wraps the integration result in a `HamiltonianVectorFieldSolution` for future ex
 # Returns
 - `HamiltonianVectorFieldSolution`: The wrapped integration result.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Traits.TrajectoryMode`](), [`CTFlows.Traits.HamiltonianDynamics`]().
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Traits.TrajectoryMode`](), [`CTFlows.Traits.HamiltonianDynamics`]().
 """
 function build_solution(
     ::Type{Traits.TrajectoryMode},

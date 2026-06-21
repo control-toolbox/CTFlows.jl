@@ -5,7 +5,7 @@ Abstract supertype for vector field solution containers.
 
 This type defines the interface for all solution types that wrap ODE integration results.
 
-See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
+See also: [`CTFlows.Trajectories.VectorFieldSolution`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
 """
 abstract type AbstractVectorFieldSolution end
 
@@ -27,7 +27,7 @@ semantic accessors for time grids and state functions.
 
 # Example
 \`\`\`julia
-using CTFlows.Solutions
+using CTFlows.Trajectories
 
 sol = VectorFieldSolution(result)
 ts = times(sol)           # or time_grid(sol)
@@ -35,7 +35,7 @@ x = state(sol)            # callable state function
 x(0.5)                    # evaluate at t = 0.5
 \`\`\`
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.AbstractVectorFieldSolution`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.AbstractVectorFieldSolution`](@ref).
 """
 struct VectorFieldSolution{R<:Integrators.AbstractIntegrationResult} <: AbstractVectorFieldSolution
     result::R
@@ -80,7 +80,7 @@ providing a clear, self-documenting way to obtain the trajectory function.
 
 # Example
 \`\`\`julia
-using CTFlows.Solutions
+using CTFlows.Trajectories
 
 sol = VectorFieldSolution(result)
 x = state(sol)    # x is a function of time
@@ -94,7 +94,7 @@ x.(0.0:0.1:1.0)   # broadcast over time grid
   `state(sol)`, `costate(sol)`, `control(sol)` when extended to Hamiltonian systems.
 - No allocation occurs — returns `sol` directly.
 
-See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Integrators.evaluate_at`](@ref), [`CTFlows.Solutions.time_grid`](@ref).
+See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Integrators.evaluate_at`](@ref), [`CTFlows.Trajectories.time_grid`](@ref).
 """
 function state(sol::VectorFieldSolution)
     return sol
@@ -116,7 +116,7 @@ where "time grid" is the standard terminology.
 
 # Example
 \`\`\`julia
-using CTFlows.Solutions
+using CTFlows.Trajectories
 
 sol = VectorFieldSolution(result)
 tg = time_grid(sol)  # same as times(sol)
@@ -127,7 +127,7 @@ tg = time_grid(sol)  # same as times(sol)
 - Use `time_grid` when "grid" terminology is clearer in context.
 - Use `times` for brevity in everyday use.
 
-See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Solutions.state`](@ref).
+See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Trajectories.state`](@ref).
 """
 function time_grid(sol::VectorFieldSolution)
     return Integrators.times(sol)
@@ -220,7 +220,7 @@ Plot stub — throws error if Plots extension not loaded.
 # Throws
 - `CTBase.Exceptions.ExtensionError`: If Plots extension is not loaded.
 
-See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.AbstractVectorFieldSolution`](@ref).
+See also: [`CTFlows.Trajectories.VectorFieldSolution`](@ref), [`CTFlows.Trajectories.AbstractVectorFieldSolution`](@ref).
 """
 function RecipesBase.plot(sol::AbstractVectorFieldSolution; kwargs...)
     throw(

@@ -1,7 +1,7 @@
 module TestBuildingSolutions
 
 import Test
-import CTFlows.Solutions
+import CTFlows.Trajectories
 import CTFlows.Systems
 import CTFlows.Common
 import CTFlows.Configs
@@ -41,7 +41,7 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
                 config = Configs.StateEndPointConfig(0.0, [1.0, 2.0], 1.0)
                 
-                output = Solutions.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
+                output = Trajectories.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
                 Test.@test output == [0.5, 1.0]
                 Test.@test typeof(config) <: Configs.StateEndPointConfig{Float64, <:AbstractVector, Float64}
             end
@@ -51,7 +51,7 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[3.0], [1.5]])
                 config = Configs.StateEndPointConfig(0.0, 3.0, 1.0)
                 
-                output = Solutions.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
+                output = Trajectories.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
                 Test.@test output == 1.5
                 Test.@test typeof(config) == Configs.StateEndPointConfig{Float64, Float64, Float64}
             end
@@ -67,8 +67,8 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
                 config = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 2.0])
                 
-                output = Solutions.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
-                Test.@test output isa Solutions.VectorFieldSolution
+                output = Trajectories.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
+                Test.@test output isa Trajectories.VectorFieldSolution
             end
 
             Test.@testset "VectorFieldSolution contains correct result" begin
@@ -76,7 +76,7 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[1.0, 2.0], [0.5, 1.0]])
                 config = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 2.0])
                 
-                output = Solutions.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
+                output = Trajectories.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
                 Test.@test output.result === result
             end
         end
@@ -93,7 +93,7 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[1.0, 0.5], [0.5, 0.25]])
                 config = Configs.HamiltonianEndPointConfig(0.0, 1.0, 0.5, 1.0)
                 
-                output = Solutions.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
+                output = Trajectories.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
                 Test.@test output == (0.5, 0.25)
                 Test.@test typeof(config) == Configs.HamiltonianEndPointConfig{Float64, Float64, Float64, Float64}
             end
@@ -105,7 +105,7 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])
                 config = Configs.HamiltonianEndPointConfig(0.0, [1.0, 2.0], [0.5, 0.3], 1.0)
                 
-                output = Solutions.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
+                output = Trajectories.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
                 Test.@test output == ([0.5, 1.0], [0.25, 0.15])
                 Test.@test typeof(config) <: Configs.HamiltonianEndPointConfig{Float64, <:AbstractVector, <:AbstractVector, Float64}
             end
@@ -119,7 +119,7 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[1.0, 2.0, 3.0, 0.5, 0.6, 0.7], [0.5, 1.0, 1.5, 0.25, 0.3, 0.35]])
                 config = Configs.HamiltonianEndPointConfig(0.0, [1.0, 2.0, 3.0], [0.5, 0.6, 0.7], 1.0)
                 
-                output = Solutions.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
+                output = Trajectories.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
                 # Should split into first 3 (state) and last 3 (costate)
                 Test.@test output == ([0.5, 1.0, 1.5], [0.25, 0.3, 0.35])
             end
@@ -137,8 +137,8 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])
                 config = Configs.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 2.0], [0.5, 0.3])
                 
-                output = Solutions.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
-                Test.@test output isa Solutions.HamiltonianVectorFieldSolution
+                output = Trajectories.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
+                Test.@test output isa Trajectories.HamiltonianVectorFieldSolution
             end
 
             Test.@testset "HamiltonianVectorFieldSolution contains correct result" begin
@@ -148,7 +148,7 @@ function test_building_solutions()
                 result = FakeIntegrationResult([[1.0, 2.0, 0.5, 0.3], [0.5, 1.0, 0.25, 0.15]])
                 config = Configs.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 2.0], [0.5, 0.3])
                 
-                output = Solutions.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
+                output = Trajectories.build_solution(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
                 Test.@test output.result === result
             end
         end
@@ -159,11 +159,11 @@ function test_building_solutions()
 
         Test.@testset "Exports Verification" begin
             Test.@testset "build_solution is exported" begin
-                Test.@test isdefined(Solutions, :build_solution)
+                Test.@test isdefined(Trajectories, :build_solution)
             end
 
             Test.@testset "HamiltonianVectorFieldSolution is exported" begin
-                Test.@test isdefined(Solutions, :HamiltonianVectorFieldSolution)
+                Test.@test isdefined(Trajectories, :HamiltonianVectorFieldSolution)
             end
         end
     end

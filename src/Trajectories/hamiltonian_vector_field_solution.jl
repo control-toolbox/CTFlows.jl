@@ -6,7 +6,7 @@ Abstract supertype for Hamiltonian vector field solution containers.
 This type defines the interface for all solution types that wrap ODE integration
 results for Hamiltonian systems.
 
-See also: [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
+See also: [`CTFlows.Trajectories.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
 """
 abstract type AbstractHamiltonianVectorFieldSolution end
 
@@ -29,7 +29,7 @@ semantic accessors for time grids, state functions, and costate functions.
 
 # Example
 ```julia
-using CTFlows.Solutions
+using CTFlows.Trajectories
 
 sol = HamiltonianVectorFieldSolution(result)
 ts = times(sol)           # or time_grid(sol)
@@ -39,7 +39,7 @@ x(0.5), p(0.5)           # evaluate at t = 0.5
 x0, p0 = sol(0.0)        # returns tuple (x(0), p(0))
 ```
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.AbstractHamiltonianVectorFieldSolution`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.AbstractHamiltonianVectorFieldSolution`](@ref).
 """
 struct HamiltonianVectorFieldSolution{X0, R<:Integrators.AbstractIntegrationResult} <: AbstractHamiltonianVectorFieldSolution
     x0::X0
@@ -105,7 +105,7 @@ where "time grid" is the standard terminology.
 # Returns
 - `AbstractVector`: The vector of time points.
 
-See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Solutions.state`](@ref).
+See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Trajectories.state`](@ref).
 """
 function time_grid(sol::HamiltonianVectorFieldSolution)
     return Integrators.times(sol)
@@ -173,7 +173,7 @@ Returns a [`StateProjection`](@ref) wrapping the solution, callable as `x(t)`.
 
 # Example
 ```julia
-using CTFlows.Solutions
+using CTFlows.Trajectories
 
 sol = HamiltonianVectorFieldSolution(result)
 x = state(sol)    # x is a callable StateProjection
@@ -181,7 +181,7 @@ x(0.0)            # initial state
 x(0.5)            # interpolated state at t = 0.5
 ```
 
-See also: [`CTFlows.Solutions.costate`](@ref), [`CTFlows.Integrators.times`](@ref).
+See also: [`CTFlows.Trajectories.costate`](@ref), [`CTFlows.Integrators.times`](@ref).
 """
 function state(sol::HamiltonianVectorFieldSolution)
     return StateProjection(sol)
@@ -202,7 +202,7 @@ Returns a [`CostateProjection`](@ref) wrapping the solution, callable as `p(t)`.
 
 # Example
 ```julia
-using CTFlows.Solutions
+using CTFlows.Trajectories
 
 sol = HamiltonianVectorFieldSolution(result)
 p = costate(sol)  # p is a callable CostateProjection
@@ -210,7 +210,7 @@ p(0.0)            # initial costate
 p(0.5)            # interpolated costate at t = 0.5
 ```
 
-See also: [`CTFlows.Solutions.state`](@ref), [`CTFlows.Integrators.times`](@ref).
+See also: [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Integrators.times`](@ref).
 """
 function costate(sol::HamiltonianVectorFieldSolution)
     return CostateProjection(sol)
@@ -284,7 +284,7 @@ Plot stub — throws error if Plots extension not loaded.
 # Throws
 - `CTBase.Exceptions.ExtensionError`: If Plots extension is not loaded.
 
-See also: [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Solutions.AbstractHamiltonianVectorFieldSolution`](@ref).
+See also: [`CTFlows.Trajectories.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Trajectories.AbstractHamiltonianVectorFieldSolution`](@ref).
 """
 function RecipesBase.plot(sol::AbstractHamiltonianVectorFieldSolution; kwargs...)
     throw(

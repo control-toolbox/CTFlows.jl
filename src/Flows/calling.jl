@@ -199,7 +199,7 @@ flow_nonfixed = Flow(system_nonfixed, integrator)
 sol = _invoke_flow(flow_nonfixed, config; variable=0.5, unsafe=false)  # OK, variable provided
 \`\`\`
 
-See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Traits.VariableDependence`](), [`CTFlows.Common.NotProvided`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Traits.VariableDependence`](), [`CTFlows.Common.NotProvided`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Trajectories.build_solution`](@ref).
 """
 function _invoke_flow(flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe)
     VD = Traits.variable_dependence(flow)
@@ -233,7 +233,7 @@ and constructs the solution.
 This is an internal function called by the trait-dispatch overloads of `_invoke_flow`.
 Users should call the public `_invoke_flow` function instead.
 
-See also: [`_invoke_flow`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
+See also: [`_invoke_flow`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Trajectories.build_solution`](@ref).
 """
 function _core_invoke_flow(flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe)
 
@@ -251,7 +251,7 @@ function _core_invoke_flow(flow::Flows.AbstractFlow, config::Configs.AbstractCon
     result = Integrators.solve_problem(int, prob, opts; unsafe=unsafe)
 
     # build flow solution
-    flow_sol = Solutions.build_solution(
+    flow_sol = Trajectories.build_solution(
         Configs.mode_trait(config),
         Configs.dynamics_trait(config),
         config,

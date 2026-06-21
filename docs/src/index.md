@@ -20,7 +20,7 @@ time, with a pluggable ODE solver and optional automatic differentiation.
 
 ```julia
 using CTFlows
-using CTFlows.Data, CTFlows.Flows, CTFlows.Solutions
+using CTFlows.Data, CTFlows.Flows, CTFlows.Trajectories
 import OrdinaryDiffEqTsit5   # activates the SciML integrator extension
 
 # 1. Wrap the dynamics
@@ -34,8 +34,8 @@ xf = flow(0.0, [1.0, 0.0], 1.0)
 
 # 4. Integrate — trajectory form (full history)
 sol = flow((0.0, 1.0), [1.0, 0.0])
-t   = Solutions.time_grid(sol)
-x   = Solutions.state(sol)              # callable: x(t) → state at time t
+t   = Trajectories.time_grid(sol)
+x   = Trajectories.state(sol)              # callable: x(t) → state at time t
 x(0.5)                                  # interpolate
 ```
 
@@ -49,7 +49,7 @@ x(0.5)                                  # interpolate
 CTFlows is organised as a four-layer pipeline:
 
 ```
-Data → Systems → Integrators → Flows → Solutions
+Data → Systems → Integrators → Flows → Trajectories
 ```
 
 | Layer | Submodule | Key types |
@@ -58,7 +58,7 @@ Data → Systems → Integrators → Flows → Solutions
 | Systems | [`CTFlows.Systems`](@ref CTFlows.Systems) | `VectorFieldSystem`, `HamiltonianSystem` |
 | Integrators | [`CTFlows.Integrators`](@ref CTFlows.Integrators) | `SciML` |
 | Flows | [`CTFlows.Flows`](@ref CTFlows.Flows) | `StateFlow`, `HamiltonianFlow` |
-| Solutions | [`CTFlows.Solutions`](@ref CTFlows.Solutions) | `VectorFieldSolution`, `HamiltonianVectorFieldSolution` |
+| Trajectories | [`CTFlows.Trajectories`](@ref CTFlows.Trajectories) | `VectorFieldSolution`, `HamiltonianVectorFieldSolution` |
 | Multi-phase | [`CTFlows.MultiPhase`](@ref CTFlows.MultiPhase) | `MultiPhaseStateFlow` |
 | Traits | [`CTFlows.Traits`](@ref CTFlows.Traits) | `Autonomous`, `Fixed`, `InPlace`, … |
 

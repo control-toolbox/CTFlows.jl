@@ -29,7 +29,7 @@ Configuration types encode these choices as type parameters for compile-time dis
 - [`mode_trait`](@ref): Integration mode trait
 - [`dynamics_trait`](@ref): Dynamics trait
 
-See also: [`CTFlows.Flows.build_flow`](@ref), [`CTFlows.Solutions.build_solution`](@ref).
+See also: [`CTFlows.Flows.build_flow`](@ref), [`CTFlows.Trajectories.build_solution`](@ref).
 """
 module Configs
 
