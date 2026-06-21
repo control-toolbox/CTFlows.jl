@@ -6,7 +6,7 @@ import CTFlows.Common: Common
 import CTFlows.Data: Data
 import CTFlows.Systems: Systems
 import CTFlows.Integrators: Integrators
-import CTFlows.Solutions: Solutions
+import CTFlows.Trajectories: Trajectories
 import CTFlows.Flows: Flows
 import CTSolvers.Strategies: Strategies
 

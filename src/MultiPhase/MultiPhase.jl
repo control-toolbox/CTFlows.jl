@@ -24,7 +24,7 @@ import ..Traits: Traits
 import ..Systems: Systems
 import ..Integrators: Integrators
 import ..Flows: Flows
-import ..Solutions: Solutions
+import ..Trajectories: Trajectories
 
 # ==============================================================================
 # Include files

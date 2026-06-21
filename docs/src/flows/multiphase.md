@@ -14,7 +14,7 @@ using CTFlows
 using CTFlows.Data
 using CTFlows.Flows
 using CTFlows.MultiPhase
-using CTFlows.Solutions
+using CTFlows.Trajectories
 import OrdinaryDiffEqTsit5
 
 f_dyn(x) = -x

@@ -8,7 +8,7 @@ $(TYPEDEF)
 Integration result from a SciML solver.
 
 Wraps a `SciMLBase.AbstractODESolution` and implements the `AbstractIntegrationResult`
-interface required by the Solutions layer.
+interface required by the Trajectories layer.
 
 # Fields
 - `ode_sol::S`: The raw SciML ODE solution.

@@ -21,7 +21,7 @@ using CTFlows.Traits
 using CTFlows.Systems
 using CTFlows.Integrators
 using CTFlows.Flows
-using CTFlows.Solutions
+using CTFlows.Trajectories
 import OrdinaryDiffEqTsit5
 ```
 

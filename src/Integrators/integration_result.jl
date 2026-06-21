@@ -9,7 +9,7 @@ $(TYPEDEF)
 
 Abstract supertype for integration results produced by integrators.
 
-This abstraction decouples the `Solutions` layer from the concrete types of the underlying
+This abstraction decouples the `Trajectories` layer from the concrete types of the underlying
 ODE solvers (e.g. SciML). Integrators must produce a subtype of `AbstractIntegrationResult`
 which provides semantic accessors.
 

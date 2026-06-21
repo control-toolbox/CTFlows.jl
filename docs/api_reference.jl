@@ -238,24 +238,24 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             filename="api_flows",
         ),
         # ───────────────────────────────────────────────────────────────────
-        # Solutions
+        # Trajectories
         # ───────────────────────────────────────────────────────────────────
         CTBase.automatic_reference_documentation(;
             subdirectory="api",
             primary_modules=[
-                CTFlows.Solutions => src(
-                    joinpath("Solutions", "Solutions.jl"),
-                    joinpath("Solutions", "building.jl"),
-                    joinpath("Solutions", "vector_field_solution.jl"),
-                    joinpath("Solutions", "hamiltonian_vector_field_solution.jl"),
+                CTFlows.Trajectories => src(
+                    joinpath("Trajectories", "Trajectories.jl"),
+                    joinpath("Trajectories", "building.jl"),
+                    joinpath("Trajectories", "vector_field_trajectory.jl"),
+                    joinpath("Trajectories", "hamiltonian_vector_field_trajectory.jl"),
                 ),
             ],
             exclude=EXCLUDE_BASE,
             public=true,
             private=true,
-            title="Solutions",
-            title_in_menu="Solutions",
-            filename="api_solutions",
+            title="Trajectories",
+            title_in_menu="Trajectories",
+            filename="api_trajectories",
         ),
         # ───────────────────────────────────────────────────────────────────
         # MultiPhase

@@ -1,10 +1,10 @@
-module TestHamiltonianVFSolutionShapes
+module TestHamiltonianVFTrajectoryShapes
 
 import Test
 import CTFlows.Systems
 import CTFlows.Flows
 import CTFlows.Integrators
-import CTFlows.Solutions
+import CTFlows.Trajectories
 import CTFlows.Common
 import CTFlows.Data
 import CTFlows.Traits
@@ -30,18 +30,18 @@ const ATOL = 1e-5
 # Test function
 # ==============================================================================
 
-function test_hamiltonian_vf_solution_shapes()
-    Test.@testset "HamiltonianVectorFieldSolution Shape Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+function test_hamiltonian_vf_trajectory_shapes()
+    Test.@testset "HamiltonianVectorFieldTrajectory Shape Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
-        # SHAPE TESTS - sol(t) for HamiltonianVectorFieldSolution
+        # SHAPE TESTS - sol(t) for HamiltonianVectorFieldTrajectory
         # ====================================================================
 
         Test.@testset "sol(t) shape preservation" begin
             Test.@testset "scalar x0, p0 → scalar output" begin
                 hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), 1.0, 0.0)
-                Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+                Test.@test sol isa Trajectories.HamiltonianVectorFieldTrajectory
                 
                 # Test sol(t) at t=π/2
                 x, p = sol(π/2)
@@ -54,7 +54,7 @@ function test_hamiltonian_vf_solution_shapes()
             Test.@testset "vector x0, p0 → vector output" begin
                 hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), [1.0, 0.0], [0.0, 1.0])
-                Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+                Test.@test sol isa Trajectories.HamiltonianVectorFieldTrajectory
                 
                 # Test sol(t) at t=π/2
                 x, p = sol(π/2)
@@ -67,7 +67,7 @@ function test_hamiltonian_vf_solution_shapes()
             Test.@testset "SVector x0, p0 → vector output" begin
                 hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), SA[1.0, 0.0], SA[0.0, 1.0])
-                Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+                Test.@test sol isa Trajectories.HamiltonianVectorFieldTrajectory
                 
                 # Test sol(t) at t=π/2
                 x, p = sol(π/2)
@@ -82,7 +82,7 @@ function test_hamiltonian_vf_solution_shapes()
                 X0 = [1.0 2.0; 3.0 4.0]
                 P0 = [0.0 0.0; 1.0 1.0]
                 sol = hflow((0.0, π/2), X0, P0)
-                Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+                Test.@test sol isa Trajectories.HamiltonianVectorFieldTrajectory
                 
                 # Test sol(t) at t=π/2
                 X, P = sol(π/2)
@@ -99,7 +99,7 @@ function test_hamiltonian_vf_solution_shapes()
                 X0 = SMatrix{2,2}(1.0, 3.0, 2.0, 4.0)
                 P0 = SMatrix{2,2}(0.0, 1.0, 0.0, 1.0)
                 sol = hflow((0.0, π/2), X0, P0)
-                Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+                Test.@test sol isa Trajectories.HamiltonianVectorFieldTrajectory
                 
                 # Test sol(t) at t=π/2
                 X, P = sol(π/2)
@@ -112,7 +112,7 @@ function test_hamiltonian_vf_solution_shapes()
             Test.@testset "complex scalar x0, p0 → complex scalar output" begin
                 hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), 1.0+2.0im, 0.0+0.0im)
-                Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+                Test.@test sol isa Trajectories.HamiltonianVectorFieldTrajectory
                 
                 # Test sol(t) at t=π/2
                 x, p = sol(π/2)
@@ -127,7 +127,7 @@ function test_hamiltonian_vf_solution_shapes()
                 x0 = [1.0+2.0im, 0.0+0.0im]
                 p0 = [0.0+0.0im, 1.0+1.0im]
                 sol = hflow((0.0, π/2), x0, p0)
-                Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+                Test.@test sol isa Trajectories.HamiltonianVectorFieldTrajectory
                 
                 # Test sol(t) at t=π/2
                 x, p = sol(π/2)
@@ -142,7 +142,7 @@ function test_hamiltonian_vf_solution_shapes()
                 X0 = [1.0+2.0im  5.0+6.0im; 3.0+4.0im  7.0+8.0im]
                 P0 = [0.0+0.0im  1.0+1.0im; 2.0+2.0im  3.0+3.0im]
                 sol = hflow((0.0, π/2), X0, P0)
-                Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+                Test.@test sol isa Trajectories.HamiltonianVectorFieldTrajectory
                 
                 # Test sol(t) at t=π/2
                 X, P = sol(π/2)
@@ -229,4 +229,4 @@ end
 
 end # module
 
-test_hamiltonian_vf_solution_shapes() = TestHamiltonianVFSolutionShapes.test_hamiltonian_vf_solution_shapes()
+test_hamiltonian_vf_trajectory_shapes() = TestHamiltonianVFTrajectoryShapes.test_hamiltonian_vf_trajectory_shapes()

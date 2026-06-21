@@ -1,19 +1,19 @@
 """
-    Solutions
+    Trajectories
 
-Solution types and solution building for CTFlows.
+Trajectory types and trajectory building for CTFlows.
 
 This module provides:
 - `AbstractIntegrationResult`: Abstraction for raw ODE integration results
-- `VectorFieldSolution`: Solution type wrapping integration results
-- `build_solution`: Solution building functions for different configuration types
+- `VectorFieldTrajectory`: Trajectory type wrapping integration results
+- `build_trajectory`: Trajectory building functions for different configuration types
 - `final_state`, `times`, `evaluate_at`: Semantic accessors for integration results
-- `state`, `time_grid`: Semantic accessors for VectorFieldSolution
-- `plot`: Plotting functionality for solutions
+- `state`, `time_grid`: Semantic accessors for VectorFieldTrajectory
+- `plot`: Plotting functionality for trajectories
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.build_solution`](@ref), `plot`.
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.build_trajectory`](@ref), `plot`.
 """
-module Solutions
+module Trajectories
 
 # ==============================================================================
 # External package imports
@@ -37,20 +37,20 @@ import ..Traits: Traits
 # Include files
 # ==============================================================================
 
-include(joinpath(@__DIR__, "vector_field_solution.jl"))
-include(joinpath(@__DIR__, "hamiltonian_vector_field_solution.jl"))
+include(joinpath(@__DIR__, "vector_field_trajectory.jl"))
+include(joinpath(@__DIR__, "hamiltonian_vector_field_trajectory.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 
 # ==============================================================================
 # Module exports
 # ==============================================================================
 
-export AbstractVectorFieldSolution, VectorFieldSolution
-export AbstractHamiltonianVectorFieldSolution, HamiltonianVectorFieldSolution
+export AbstractVectorFieldTrajectory, VectorFieldTrajectory
+export AbstractHamiltonianVectorFieldTrajectory, HamiltonianVectorFieldTrajectory
 export StateProjection, CostateProjection
 export state, time_grid
 export costate
-export build_solution
+export build_trajectory
 export plot
 
-end # module Solutions
+end # module Trajectories

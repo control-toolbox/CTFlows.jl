@@ -14,7 +14,7 @@ import CTFlows.Configs: Configs
 import CTFlows.Traits: Traits
 import CTFlows.Systems: Systems
 import CTFlows.Flows: Flows
-import CTFlows.Solutions: Solutions
+import CTFlows.Trajectories: Trajectories
 import CTFlows.Integrators: Integrators
 import CTFlows.Differentiation: Differentiation
 import CTFlows.Data: Data
@@ -112,14 +112,14 @@ function test_variable_costate_flows()
             x0 = [1.0, 2.0]  # n = 2
             pv0 = [5.0, 6.0, 7.0, 8.0]
 
-            x, p, pv = Solutions._aug_split_solution(u, x0, pv0)
+            x, p, pv = Trajectories._aug_split_solution(u, x0, pv0)
 
             Test.@test x == [1.0, 2.0]
             Test.@test p == [3.0, 4.0]
             Test.@test pv == [5.0, 6.0, 7.0, 8.0]
         end
 
-        Test.@testset "Unit: build_solution AugmentedHamiltonianDynamics" begin
+        Test.@testset "Unit: build_trajectory AugmentedHamiltonianDynamics" begin
             u_final = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
             x0 = [1.0, 2.0]  # n = 2
             p0 = [3.0, 4.0]
@@ -127,7 +127,7 @@ function test_variable_costate_flows()
             config = Configs.AugmentedHamiltonianEndPointConfig(0, x0, p0, pv0, 1)
             result = FakeIntegrationResult(u_final)
 
-            xf, pf, pvf = Solutions.build_solution(
+            xf, pf, pvf = Trajectories.build_trajectory(
                 Configs.mode_trait(config),
                 Configs.dynamics_trait(config),
                 config,

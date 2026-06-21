@@ -15,7 +15,7 @@ module Flows
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
 using CTSolvers: CTSolvers
-import CTModels # ambiguity between CTModels.Solutions and Solutions
+import CTModels
 
 # ==============================================================================
 # Internal sibling-submodule imports
@@ -28,7 +28,7 @@ import ..Data: Data
 import ..Differentiation: Differentiation
 import ..Systems: Systems, hamiltonian_vector_field
 import ..Integrators: Integrators
-import ..Solutions: Solutions
+import ..Trajectories: Trajectories
 
 # ==============================================================================
 # Include files

@@ -4,7 +4,7 @@ import Test
 import CTFlows.Systems
 import CTFlows.Flows
 import CTFlows.Integrators
-import CTFlows.Solutions
+import CTFlows.Trajectories
 import CTFlows.Common
 import CTFlows.Data
 
@@ -180,25 +180,25 @@ function test_flow_callables_sciml_hamiltonian_vector_field()
             Test.@testset "scalar x0, p0" begin
                 hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), 1.0, 0.0)
-                Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+                Test.@test sol isa Trajectories.HamiltonianVectorFieldTrajectory
             end
 
             Test.@testset "vector x0, p0" begin
                 hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), [1.0, 0.0], [0.0, 1.0])
-                Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+                Test.@test sol isa Trajectories.HamiltonianVectorFieldTrajectory
             end
 
             Test.@testset "SVector x0, p0" begin
                 hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), SA[1.0, 0.0], SA[0.0, 1.0])
-                Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+                Test.@test sol isa Trajectories.HamiltonianVectorFieldTrajectory
             end
 
             Test.@testset "MVector x0, p0" begin
                 hflow = Flows.build_flow(HSYS, INTEG)
                 sol = hflow((0.0, π/2), MVector{2}(1.0, 0.0), MVector{2}(0.0, 1.0))
-                Test.@test sol isa Solutions.HamiltonianVectorFieldSolution
+                Test.@test sol isa Trajectories.HamiltonianVectorFieldTrajectory
             end
         end
 

@@ -5,9 +5,9 @@ Abstract supertype for vector field solution containers.
 
 This type defines the interface for all solution types that wrap ODE integration results.
 
-See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
+See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
 """
-abstract type AbstractVectorFieldSolution end
+abstract type AbstractVectorFieldTrajectory end
 
 """
 $(TYPEDEF)
@@ -27,17 +27,17 @@ semantic accessors for time grids and state functions.
 
 # Example
 \`\`\`julia
-using CTFlows.Solutions
+using CTFlows.Trajectories
 
-sol = VectorFieldSolution(result)
+sol = VectorFieldTrajectory(result)
 ts = times(sol)           # or time_grid(sol)
 x = state(sol)            # callable state function
 x(0.5)                    # evaluate at t = 0.5
 \`\`\`
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.AbstractVectorFieldSolution`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.AbstractVectorFieldTrajectory`](@ref).
 """
-struct VectorFieldSolution{R<:Integrators.AbstractIntegrationResult} <: AbstractVectorFieldSolution
+struct VectorFieldTrajectory{R<:Integrators.AbstractIntegrationResult} <: AbstractVectorFieldTrajectory
     result::R
 end
 
@@ -53,14 +53,14 @@ Return the vector of time points from the solution.
 Delegates to `Integrators.times(sol.result)`.
 
 # Arguments
-- `sol::VectorFieldSolution`: The vector field solution.
+- `sol::VectorFieldTrajectory`: The vector field solution.
 
 # Returns
 - `AbstractVector`: The vector of time points.
 
 See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Integrators.evaluate_at`](@ref).
 """
-function Integrators.times(sol::VectorFieldSolution)
+function Integrators.times(sol::VectorFieldTrajectory)
     return Integrators.times(sol.result)
 end
 
@@ -73,16 +73,16 @@ This is a semantic accessor that returns `sol` itself (which is already callable
 providing a clear, self-documenting way to obtain the trajectory function.
 
 # Arguments
-- `sol::VectorFieldSolution`: The vector field solution.
+- `sol::VectorFieldTrajectory`: The vector field solution.
 
 # Returns
-- `VectorFieldSolution`: The solution itself, which is callable as a function of time.
+- `VectorFieldTrajectory`: The solution itself, which is callable as a function of time.
 
 # Example
 \`\`\`julia
-using CTFlows.Solutions
+using CTFlows.Trajectories
 
-sol = VectorFieldSolution(result)
+sol = VectorFieldTrajectory(result)
 x = state(sol)    # x is a function of time
 x(0.0)            # initial state
 x(0.5)            # interpolated state at t = 0.5
@@ -94,9 +94,9 @@ x.(0.0:0.1:1.0)   # broadcast over time grid
   `state(sol)`, `costate(sol)`, `control(sol)` when extended to Hamiltonian systems.
 - No allocation occurs — returns `sol` directly.
 
-See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Integrators.evaluate_at`](@ref), [`CTFlows.Solutions.time_grid`](@ref).
+See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Integrators.evaluate_at`](@ref), [`CTFlows.Trajectories.time_grid`](@ref).
 """
-function state(sol::VectorFieldSolution)
+function state(sol::VectorFieldTrajectory)
     return sol
 end
 
@@ -109,16 +109,16 @@ This is an alternative, more explicit name for `times` in numerical contexts
 where "time grid" is the standard terminology.
 
 # Arguments
-- `sol::VectorFieldSolution`: The vector field solution.
+- `sol::VectorFieldTrajectory`: The vector field solution.
 
 # Returns
 - `AbstractVector`: The vector of time points.
 
 # Example
 \`\`\`julia
-using CTFlows.Solutions
+using CTFlows.Trajectories
 
-sol = VectorFieldSolution(result)
+sol = VectorFieldTrajectory(result)
 tg = time_grid(sol)  # same as times(sol)
 \`\`\`
 
@@ -127,9 +127,9 @@ tg = time_grid(sol)  # same as times(sol)
 - Use `time_grid` when "grid" terminology is clearer in context.
 - Use `times` for brevity in everyday use.
 
-See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Solutions.state`](@ref).
+See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Trajectories.state`](@ref).
 """
-function time_grid(sol::VectorFieldSolution)
+function time_grid(sol::VectorFieldTrajectory)
     return Integrators.times(sol)
 end
 
@@ -139,7 +139,7 @@ $(TYPEDSIGNATURES)
 Evaluate the solution at a given time by delegating to the integration result.
 
 # Arguments
-- `sol::VectorFieldSolution`: The vector field solution.
+- `sol::VectorFieldTrajectory`: The vector field solution.
 - `t::Real`: The time at which to evaluate the solution.
 
 # Returns
@@ -147,7 +147,7 @@ Evaluate the solution at a given time by delegating to the integration result.
 
 See also: [`CTFlows.Integrators.evaluate_at`](@ref), [`CTFlows.Integrators.times`](@ref).
 """
-function (sol::VectorFieldSolution)(t::Real)
+function (sol::VectorFieldTrajectory)(t::Real)
     return Integrators.evaluate_at(sol.result, t)
 end
 
@@ -157,40 +157,40 @@ $(TYPEDSIGNATURES)
 Return the final state from the solution by delegating to the integration result.
 
 # Arguments
-- `sol::VectorFieldSolution`: The vector field solution.
+- `sol::VectorFieldTrajectory`: The vector field solution.
 
 # Returns
 - The final state from the integration result.
 
 See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Integrators.final_state`](@ref).
 """
-function Integrators.final_state(sol::VectorFieldSolution)
+function Integrators.final_state(sol::VectorFieldTrajectory)
     return Integrators.final_state(sol.result)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Merge a sequence of VectorFieldSolution objects into a single VectorFieldSolution.
+Merge a sequence of VectorFieldTrajectory objects into a single VectorFieldTrajectory.
 
 This extracts the internal integration results, merges them, and wraps the result
-in a new VectorFieldSolution.
+in a new VectorFieldTrajectory.
 
 # Arguments
-- `segments::AbstractVector{<:VectorFieldSolution}`: Sequence of vector field solutions to merge.
+- `segments::AbstractVector{<:VectorFieldTrajectory}`: Sequence of vector field solutions to merge.
 
 # Returns
-- `VectorFieldSolution`: A merged vector field solution containing the merged integration result.
+- `VectorFieldTrajectory`: A merged vector field solution containing the merged integration result.
 
 See also: [`CTFlows.Integrators.merge`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
 """
-function Integrators.merge(segments::AbstractVector{<:VectorFieldSolution})
+function Integrators.merge(segments::AbstractVector{<:VectorFieldTrajectory})
     if isempty(segments)
         throw(Exceptions.IncorrectArgument(
-            "Cannot merge empty sequence of VectorFieldSolution";
+            "Cannot merge empty sequence of VectorFieldTrajectory";
             got = "0 segments",
             expected = "at least 1 segment",
-            context = "VectorFieldSolution merge",
+            context = "VectorFieldTrajectory merge",
         ))
     end
     
@@ -200,8 +200,8 @@ function Integrators.merge(segments::AbstractVector{<:VectorFieldSolution})
     # Merge the internal results
     merged_result = Integrators.merge(internal_results)
     
-    # Wrap in VectorFieldSolution
-    return VectorFieldSolution(merged_result)
+    # Wrap in VectorFieldTrajectory
+    return VectorFieldTrajectory(merged_result)
 end
 
 # =============================================================================
@@ -214,15 +214,15 @@ $(TYPEDSIGNATURES)
 Plot stub — throws error if Plots extension not loaded.
 
 # Arguments
-- `sol::AbstractVectorFieldSolution`: The vector field solution.
+- `sol::AbstractVectorFieldTrajectory`: The vector field solution.
 - `kwargs...`: Additional plotting keyword arguments (ignored).
 
 # Throws
 - `CTBase.Exceptions.ExtensionError`: If Plots extension is not loaded.
 
-See also: [`CTFlows.Solutions.VectorFieldSolution`](@ref), [`CTFlows.Solutions.AbstractVectorFieldSolution`](@ref).
+See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.AbstractVectorFieldTrajectory`](@ref).
 """
-function RecipesBase.plot(sol::AbstractVectorFieldSolution; kwargs...)
+function RecipesBase.plot(sol::AbstractVectorFieldTrajectory; kwargs...)
     throw(
         Exceptions.ExtensionError(
             :Plots;
@@ -240,15 +240,15 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Display the `VectorFieldSolution` in a readable text/plain format.
+Display the `VectorFieldTrajectory` in a readable text/plain format.
 
 # Arguments
 - `io::IO`: The IO stream to write to.
 - `::MIME"text/plain"`: The MIME type.
-- `sol::VectorFieldSolution`: The solution to display.
+- `sol::VectorFieldTrajectory`: The solution to display.
 """
-function Base.show(io::IO, ::MIME"text/plain", sol::VectorFieldSolution)
-    print(io, "VectorFieldSolution")
+function Base.show(io::IO, ::MIME"text/plain", sol::VectorFieldTrajectory)
+    print(io, "VectorFieldTrajectory")
     print(io, "\n  result: ", nameof(typeof(sol.result)))
     
     try
@@ -264,14 +264,14 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Display the `VectorFieldSolution` in a compact one-line format.
+Display the `VectorFieldTrajectory` in a compact one-line format.
 
 # Arguments
 - `io::IO`: The IO stream to write to.
-- `sol::VectorFieldSolution`: The solution to display.
+- `sol::VectorFieldTrajectory`: The solution to display.
 """
-function Base.show(io::IO, sol::VectorFieldSolution)
-    print(io, "VectorFieldSolution(")
+function Base.show(io::IO, sol::VectorFieldTrajectory)
+    print(io, "VectorFieldTrajectory(")
     parts = String[]
     push!(parts, "result=$(nameof(typeof(sol.result)))")
     

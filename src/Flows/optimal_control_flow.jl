@@ -116,7 +116,7 @@ function (F::OptimalControlFlow)(
     variable = Common.NotProvided(),
     unsafe::Bool = false,
 )
-    sol = F.flow(tspan, x0, p0; variable, unsafe)   # HamiltonianVectorFieldSolution
+    sol = F.flow(tspan, x0, p0; variable, unsafe)   # HamiltonianVectorFieldTrajectory
     return _build_ocp_solution(F.ocp, sol, variable, integrator(F.flow))
 end
 
@@ -152,13 +152,13 @@ end
 
 function _build_ocp_solution(
     ocp,
-    sol::Solutions.HamiltonianVectorFieldSolution,
+    sol::Trajectories.HamiltonianVectorFieldTrajectory,
     variable,
     integ,
 )
-    T      = collect(Float64, Solutions.time_grid(sol))
-    x      = Solutions.state(sol)    # callable StateProjection: t -> x(t)
-    p      = Solutions.costate(sol)  # callable CostateProjection: t -> p(t)
+    T      = collect(Float64, Trajectories.time_grid(sol))
+    x      = Trajectories.state(sol)    # callable StateProjection: t -> x(t)
+    p      = Trajectories.costate(sol)  # callable CostateProjection: t -> p(t)
     t0, tf = first(T), last(T)
     v      = _variable_vector(variable)
     u      = _ -> Float64[]          # empty control for control-free OCP

@@ -7,7 +7,7 @@ import CTFlows.Integrators
 import CTFlows.Flows
 import CTFlows.Data
 import CTFlows.Common
-import CTFlows.Solutions
+import CTFlows.Trajectories
 
 using OrdinaryDiffEqTsit5
 using Plots
@@ -84,7 +84,7 @@ function test_concatenation_sciml()
 
             sol = mpf((0.0, 1.0), [1.0])
 
-            # sol is VectorFieldSolution, use accessors
+            # sol is VectorFieldTrajectory, use accessors
             xf = Integrators.final_state(sol)
             Test.@test xf[1] ≈ exp(-1.0) atol = 1e-4
 
@@ -194,8 +194,8 @@ function test_concatenation_sciml()
             # Call with tspan (StateTrajectoryConfig)
             sol = mpf((0.0, 1.0), [1.0])
 
-            # Verify it's a VectorFieldSolution
-            Test.@test sol isa Solutions.VectorFieldSolution
+            # Verify it's a VectorFieldTrajectory
+            Test.@test sol isa Trajectories.VectorFieldTrajectory
 
             # Test plot function
             p = plot(sol; label="x(t)", title="Trajectory")
@@ -238,7 +238,7 @@ function test_concatenation_sciml()
             flow = Flows.Flow(f)
             mpf = flow * (0.5, flow)
             sol = mpf((0.0, 1.0), [1.0]; variable=1.0)
-            Test.@test sol isa Solutions.VectorFieldSolution
+            Test.@test sol isa Trajectories.VectorFieldTrajectory
             xf = Integrators.final_state(sol)
             Test.@test xf[1] ≈ exp(-1.0) atol=1e-4
         end

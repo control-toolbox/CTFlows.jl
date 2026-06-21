@@ -11,7 +11,7 @@ interval: you hand it an initial condition and a final time, and it returns the 
 CTFlows builds flows through a **four-layer pipeline**:
 
 ```
-Data → Systems → Integrators → Flows → Solutions
+Data → Systems → Integrators → Flows → Trajectories
 ```
 
 Each layer has a single responsibility:
@@ -22,7 +22,7 @@ Each layer has a single responsibility:
 | **Systems** | [`Systems`](@ref CTFlows.Systems) | ODE right-hand side + traits (`VectorFieldSystem`, `HamiltonianSystem`, …) |
 | **Integrators** | [`Integrators`](@ref CTFlows.Integrators) | ODE solver strategy (`SciML`) |
 | **Flows** | [`Flows`](@ref CTFlows.Flows) | Callable integration object (`StateFlow`, `HamiltonianFlow`) |
-| **Solutions** | [`Solutions`](@ref CTFlows.Solutions) | Result container with semantic accessors (`state`, `costate`, `time_grid`) |
+| **Trajectories** | [`Trajectories`](@ref CTFlows.Trajectories) | Result container with semantic accessors (`state`, `costate`, `time_grid`) |
 
 ## Reading order
 
@@ -32,7 +32,7 @@ Each layer has a single responsibility:
 | [Data structures](data.md) | Wrapping your functions | `VectorField`, `Hamiltonian`, `HamiltonianVectorField` |
 | [Building a flow](building_a_flow.md) | Assembling the pipeline | `build_system`, `build_flow`, `Flow` |
 | [Integrating](integrating.md) | Calling a flow, configuration objects, integrator options | `StateEndPointConfig`, `StateTrajectoryConfig` |
-| [Solutions](solutions.md) | Reading the result | `state`, `costate`, `time_grid`, `plot` |
+| [Trajectories](trajectories.md) | Reading the result | `state`, `costate`, `time_grid`, `plot` |
 | [Multi-phase flows](multiphase.md) | Concatenating flows with switching times | `MultiPhaseStateFlow`, `*` |
 
 ## Qualified access
@@ -45,7 +45,7 @@ using CTFlows.Flows        # StateFlow, HamiltonianFlow, Flow, build_flow
 using CTFlows.Data         # VectorField, Hamiltonian, HamiltonianVectorField
 using CTFlows.Systems      # build_system
 using CTFlows.Integrators  # SciML, build_integrator
-using CTFlows.Solutions    # VectorFieldSolution, state, time_grid
+using CTFlows.Trajectories    # VectorFieldTrajectory, state, time_grid
 using CTFlows.Traits       # Autonomous, NonAutonomous, Fixed, NonFixed, InPlace, OutOfPlace
 using CTFlows.Configs      # StateEndPointConfig, StateTrajectoryConfig, …
 import OrdinaryDiffEqTsit5 # activates the SciML extension
@@ -71,8 +71,8 @@ xf = flow(0.0, [1.0, 0.0], 1.0)
 sol = flow((0.0, 1.0), [1.0, 0.0])
 
 # 4. Read the result
-ts = Solutions.time_grid(sol)   # vector of time points
-x  = Solutions.state(sol)       # callable: x(t) → state at time t
+ts = Trajectories.time_grid(sol)   # vector of time points
+x  = Trajectories.state(sol)       # callable: x(t) → state at time t
 x(0.5)                          # interpolate at t = 0.5
 ```
 

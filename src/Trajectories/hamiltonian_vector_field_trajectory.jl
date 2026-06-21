@@ -6,9 +6,9 @@ Abstract supertype for Hamiltonian vector field solution containers.
 This type defines the interface for all solution types that wrap ODE integration
 results for Hamiltonian systems.
 
-See also: [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
+See also: [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
 """
-abstract type AbstractHamiltonianVectorFieldSolution end
+abstract type AbstractHamiltonianVectorFieldTrajectory end
 
 """
 $(TYPEDEF)
@@ -29,9 +29,9 @@ semantic accessors for time grids, state functions, and costate functions.
 
 # Example
 ```julia
-using CTFlows.Solutions
+using CTFlows.Trajectories
 
-sol = HamiltonianVectorFieldSolution(result)
+sol = HamiltonianVectorFieldTrajectory(result)
 ts = times(sol)           # or time_grid(sol)
 x = state(sol)            # callable state function x(t)
 p = costate(sol)          # callable costate function p(t)
@@ -39,9 +39,9 @@ x(0.5), p(0.5)           # evaluate at t = 0.5
 x0, p0 = sol(0.0)        # returns tuple (x(0), p(0))
 ```
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Solutions.AbstractHamiltonianVectorFieldSolution`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.AbstractHamiltonianVectorFieldTrajectory`](@ref).
 """
-struct HamiltonianVectorFieldSolution{X0, R<:Integrators.AbstractIntegrationResult} <: AbstractHamiltonianVectorFieldSolution
+struct HamiltonianVectorFieldTrajectory{X0, R<:Integrators.AbstractIntegrationResult} <: AbstractHamiltonianVectorFieldTrajectory
     x0::X0
     result::R
 end
@@ -80,14 +80,14 @@ Return the vector of time points from the solution.
 Delegates to `Integrators.times(sol.result)`.
 
 # Arguments
-- `sol::HamiltonianVectorFieldSolution`: The Hamiltonian vector field solution.
+- `sol::HamiltonianVectorFieldTrajectory`: The Hamiltonian vector field solution.
 
 # Returns
 - `AbstractVector`: The vector of time points.
 
 See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Integrators.evaluate_at`](@ref).
 """
-function Integrators.times(sol::HamiltonianVectorFieldSolution)
+function Integrators.times(sol::HamiltonianVectorFieldTrajectory)
     return Integrators.times(sol.result)
 end
 
@@ -100,14 +100,14 @@ This is an alternative, more explicit name for `times` in numerical contexts
 where "time grid" is the standard terminology.
 
 # Arguments
-- `sol::HamiltonianVectorFieldSolution`: The Hamiltonian vector field solution.
+- `sol::HamiltonianVectorFieldTrajectory`: The Hamiltonian vector field solution.
 
 # Returns
 - `AbstractVector`: The vector of time points.
 
-See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Solutions.state`](@ref).
+See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Trajectories.state`](@ref).
 """
-function time_grid(sol::HamiltonianVectorFieldSolution)
+function time_grid(sol::HamiltonianVectorFieldTrajectory)
     return Integrators.times(sol)
 end
 
@@ -119,7 +119,7 @@ Evaluate the solution at a given time, returning a tuple `(x(t), p(t))`.
 Splits the combined state vector into state and costate halves.
 
 # Arguments
-- `sol::HamiltonianVectorFieldSolution`: The Hamiltonian vector field solution.
+- `sol::HamiltonianVectorFieldTrajectory`: The Hamiltonian vector field solution.
 - `t::Real`: The time at which to evaluate the solution.
 
 # Returns
@@ -127,7 +127,7 @@ Splits the combined state vector into state and costate halves.
 
 See also: [`CTFlows.Integrators.evaluate_at`](@ref), [`CTFlows.Integrators.times`](@ref).
 """
-function (sol::HamiltonianVectorFieldSolution)(t::Real)
+function (sol::HamiltonianVectorFieldTrajectory)(t::Real)
     u = Integrators.evaluate_at(sol.result, t)
     return _ham_split_solution(u, sol.x0)
 end
@@ -135,12 +135,12 @@ end
 """
 $(TYPEDEF)
 
-Callable struct returning the state component of a `HamiltonianVectorFieldSolution`.
+Callable struct returning the state component of a `HamiltonianVectorFieldTrajectory`.
 
 `StateProjection(sol)(t)` is equivalent to `sol(t)[1]`, but avoids creating a closure
 each time `state(sol)` is called. The solution reference is stored once at construction.
 """
-struct StateProjection{S <: HamiltonianVectorFieldSolution} <: Function
+struct StateProjection{S <: HamiltonianVectorFieldTrajectory} <: Function
     sol::S
 end
 (sp::StateProjection)(t::Real) = sp.sol(t)[1]
@@ -148,12 +148,12 @@ end
 """
 $(TYPEDEF)
 
-Callable struct returning the costate component of a `HamiltonianVectorFieldSolution`.
+Callable struct returning the costate component of a `HamiltonianVectorFieldTrajectory`.
 
 `CostateProjection(sol)(t)` is equivalent to `sol(t)[2]`, but avoids creating a closure
 each time `costate(sol)` is called. The solution reference is stored once at construction.
 """
-struct CostateProjection{S <: HamiltonianVectorFieldSolution} <: Function
+struct CostateProjection{S <: HamiltonianVectorFieldTrajectory} <: Function
     sol::S
 end
 (cp::CostateProjection)(t::Real) = cp.sol(t)[2]
@@ -166,24 +166,24 @@ Return the solution as a state function of time `x(t)`.
 Returns a [`StateProjection`](@ref) wrapping the solution, callable as `x(t)`.
 
 # Arguments
-- `sol::HamiltonianVectorFieldSolution`: The Hamiltonian vector field solution.
+- `sol::HamiltonianVectorFieldTrajectory`: The Hamiltonian vector field solution.
 
 # Returns
 - `StateProjection`: A callable `t -> x(t)` that returns the state at time `t`.
 
 # Example
 ```julia
-using CTFlows.Solutions
+using CTFlows.Trajectories
 
-sol = HamiltonianVectorFieldSolution(result)
+sol = HamiltonianVectorFieldTrajectory(result)
 x = state(sol)    # x is a callable StateProjection
 x(0.0)            # initial state
 x(0.5)            # interpolated state at t = 0.5
 ```
 
-See also: [`CTFlows.Solutions.costate`](@ref), [`CTFlows.Integrators.times`](@ref).
+See also: [`CTFlows.Trajectories.costate`](@ref), [`CTFlows.Integrators.times`](@ref).
 """
-function state(sol::HamiltonianVectorFieldSolution)
+function state(sol::HamiltonianVectorFieldTrajectory)
     return StateProjection(sol)
 end
 
@@ -195,24 +195,24 @@ Return the solution as a costate function of time `p(t)`.
 Returns a [`CostateProjection`](@ref) wrapping the solution, callable as `p(t)`.
 
 # Arguments
-- `sol::HamiltonianVectorFieldSolution`: The Hamiltonian vector field solution.
+- `sol::HamiltonianVectorFieldTrajectory`: The Hamiltonian vector field solution.
 
 # Returns
 - `CostateProjection`: A callable `t -> p(t)` that returns the costate at time `t`.
 
 # Example
 ```julia
-using CTFlows.Solutions
+using CTFlows.Trajectories
 
-sol = HamiltonianVectorFieldSolution(result)
+sol = HamiltonianVectorFieldTrajectory(result)
 p = costate(sol)  # p is a callable CostateProjection
 p(0.0)            # initial costate
 p(0.5)            # interpolated costate at t = 0.5
 ```
 
-See also: [`CTFlows.Solutions.state`](@ref), [`CTFlows.Integrators.times`](@ref).
+See also: [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Integrators.times`](@ref).
 """
-function costate(sol::HamiltonianVectorFieldSolution)
+function costate(sol::HamiltonianVectorFieldTrajectory)
     return CostateProjection(sol)
 end
 
@@ -225,14 +225,14 @@ Delegates directly to the underlying integration result without splitting.
 Callers that need the split form should use `_ham_split_solution` explicitly.
 
 # Arguments
-- `sol::HamiltonianVectorFieldSolution`: The Hamiltonian vector field solution.
+- `sol::HamiltonianVectorFieldTrajectory`: The Hamiltonian vector field solution.
 
 # Returns
 - `AbstractVector`: The concatenated final state `[xf; pf]`.
 
 See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Integrators.final_state`](@ref).
 """
-function Integrators.final_state(sol::HamiltonianVectorFieldSolution)
+function Integrators.final_state(sol::HamiltonianVectorFieldTrajectory)
     u = Integrators.final_state(sol.result)
     return _ham_split_solution(u, sol.x0)
 end
@@ -240,32 +240,32 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Merge a sequence of HamiltonianVectorFieldSolution objects into a single HamiltonianVectorFieldSolution.
+Merge a sequence of HamiltonianVectorFieldTrajectory objects into a single HamiltonianVectorFieldTrajectory.
 
 This extracts the internal integration results, merges them, and wraps the result
-in a new HamiltonianVectorFieldSolution.
+in a new HamiltonianVectorFieldTrajectory.
 
 # Arguments
-- `segments::AbstractVector{<:HamiltonianVectorFieldSolution}`: Sequence of Hamiltonian vector field solutions to merge.
+- `segments::AbstractVector{<:HamiltonianVectorFieldTrajectory}`: Sequence of Hamiltonian vector field solutions to merge.
 
 # Returns
-- `HamiltonianVectorFieldSolution`: A merged Hamiltonian vector field solution containing the merged integration result.
+- `HamiltonianVectorFieldTrajectory`: A merged Hamiltonian vector field solution containing the merged integration result.
 
 See also: [`CTFlows.Integrators.merge`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
 """
-function Integrators.merge(segments::AbstractVector{<:HamiltonianVectorFieldSolution})
+function Integrators.merge(segments::AbstractVector{<:HamiltonianVectorFieldTrajectory})
     if isempty(segments)
         throw(Exceptions.IncorrectArgument(
-            "Cannot merge empty sequence of HamiltonianVectorFieldSolution";
+            "Cannot merge empty sequence of HamiltonianVectorFieldTrajectory";
             got = "0 segments",
             expected = "at least 1 segment",
-            context = "HamiltonianVectorFieldSolution merge",
+            context = "HamiltonianVectorFieldTrajectory merge",
         ))
     end
     
     internal_results = [sol.result for sol in segments]
     merged_result = Integrators.merge(internal_results)
-    return HamiltonianVectorFieldSolution(segments[1].x0, merged_result)
+    return HamiltonianVectorFieldTrajectory(segments[1].x0, merged_result)
 end
 
 # =============================================================================
@@ -278,15 +278,15 @@ $(TYPEDSIGNATURES)
 Plot stub — throws error if Plots extension not loaded.
 
 # Arguments
-- `sol::AbstractHamiltonianVectorFieldSolution`: The Hamiltonian vector field solution.
+- `sol::AbstractHamiltonianVectorFieldTrajectory`: The Hamiltonian vector field solution.
 - `kwargs...`: Additional plotting keyword arguments (ignored).
 
 # Throws
 - `CTBase.Exceptions.ExtensionError`: If Plots extension is not loaded.
 
-See also: [`CTFlows.Solutions.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Solutions.AbstractHamiltonianVectorFieldSolution`](@ref).
+See also: [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.AbstractHamiltonianVectorFieldTrajectory`](@ref).
 """
-function RecipesBase.plot(sol::AbstractHamiltonianVectorFieldSolution; kwargs...)
+function RecipesBase.plot(sol::AbstractHamiltonianVectorFieldTrajectory; kwargs...)
     throw(
         Exceptions.ExtensionError(
             :Plots;
@@ -304,15 +304,15 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Display the `HamiltonianVectorFieldSolution` in a readable text/plain format.
+Display the `HamiltonianVectorFieldTrajectory` in a readable text/plain format.
 
 # Arguments
 - `io::IO`: The IO stream to write to.
 - `::MIME"text/plain"`: The MIME type.
-- `sol::HamiltonianVectorFieldSolution`: The solution to display.
+- `sol::HamiltonianVectorFieldTrajectory`: The solution to display.
 """
-function Base.show(io::IO, ::MIME"text/plain", sol::HamiltonianVectorFieldSolution)
-    print(io, "HamiltonianVectorFieldSolution")
+function Base.show(io::IO, ::MIME"text/plain", sol::HamiltonianVectorFieldTrajectory)
+    print(io, "HamiltonianVectorFieldTrajectory")
     print(io, "\n  result: ", nameof(typeof(sol.result)))
     
     try
@@ -328,14 +328,14 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Display the `HamiltonianVectorFieldSolution` in a compact one-line format.
+Display the `HamiltonianVectorFieldTrajectory` in a compact one-line format.
 
 # Arguments
 - `io::IO`: The IO stream to write to.
-- `sol::HamiltonianVectorFieldSolution`: The solution to display.
+- `sol::HamiltonianVectorFieldTrajectory`: The solution to display.
 """
-function Base.show(io::IO, sol::HamiltonianVectorFieldSolution)
-    print(io, "HamiltonianVectorFieldSolution(")
+function Base.show(io::IO, sol::HamiltonianVectorFieldTrajectory)
+    print(io, "HamiltonianVectorFieldTrajectory(")
     parts = String[]
     push!(parts, "result=$(nameof(typeof(sol.result)))")
     
