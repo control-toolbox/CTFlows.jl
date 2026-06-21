@@ -32,12 +32,12 @@ hsol = hflow((0.0, 1.0), x0, p0)
 
 | Type | Produced by | Content |
 |---|---|---|
-| `VectorFieldSolution` | `StateFlow` trajectory call | state trajectory |
-| `HamiltonianVectorFieldSolution` | `HamiltonianFlow` trajectory call | state + costate trajectories |
+| `VectorFieldTrajectory` | `StateFlow` trajectory call | state trajectory |
+| `HamiltonianVectorFieldTrajectory` | `HamiltonianFlow` trajectory call | state + costate trajectories |
 
 ---
 
-## VectorFieldSolution
+## VectorFieldTrajectory
 
 ```@example flows_solutions
 sol   # produced by flow((t0, tf), x0)
@@ -72,7 +72,7 @@ Point integration (`flow(t0, x0, tf)`) returns the final state directly as a
 `Vector`, **not** a solution object:
 
 ```@example flows_solutions
-xf = flow(0.0, x0, 1.0)   # Vector, not VectorFieldSolution
+xf = flow(0.0, x0, 1.0)   # Vector, not VectorFieldTrajectory
 typeof(xf)
 ```
 
@@ -80,7 +80,7 @@ Use trajectory integration (`flow((t0, tf), x0)`) when you need the full history
 
 ---
 
-## HamiltonianVectorFieldSolution
+## HamiltonianVectorFieldTrajectory
 
 ```@example flows_solutions
 hsol   # produced by hflow((t0, tf), x0, p0)
@@ -133,7 +133,7 @@ These are used internally by the solution wrappers and normally not called direc
 
 ## See also
 
-- [`CTFlows.Trajectories.VectorFieldSolution`](@ref), [`CTFlows.Trajectories.HamiltonianVectorFieldSolution`](@ref) — solution container types.
+- [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref) — solution container types.
 - [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.costate`](@ref) — trajectory accessors.
 - [`CTFlows.Trajectories.time_grid`](@ref), [`CTFlows.Integrators.times`](@ref) — time grid accessors.
 - [`CTFlows.Integrators.final_state`](@ref), [`CTFlows.Integrators.evaluate_at`](@ref) — low-level result accessors.

@@ -119,7 +119,7 @@ function test_variable_costate_flows()
             Test.@test pv == [5.0, 6.0, 7.0, 8.0]
         end
 
-        Test.@testset "Unit: build_solution AugmentedHamiltonianDynamics" begin
+        Test.@testset "Unit: build_trajectory AugmentedHamiltonianDynamics" begin
             u_final = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
             x0 = [1.0, 2.0]  # n = 2
             p0 = [3.0, 4.0]
@@ -127,7 +127,7 @@ function test_variable_costate_flows()
             config = Configs.AugmentedHamiltonianEndPointConfig(0, x0, p0, pv0, 1)
             result = FakeIntegrationResult(u_final)
 
-            xf, pf, pvf = Trajectories.build_solution(
+            xf, pf, pvf = Trajectories.build_trajectory(
                 Configs.mode_trait(config),
                 Configs.dynamics_trait(config),
                 config,

@@ -53,19 +53,19 @@ function Integrators.solve_problem(integ::FakeIntegFC, prob, options::Dict{Symbo
     return FakeResultFC()
 end
 
-function Trajectories.build_solution(::Type{Traits.EndPointMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Trajectories.build_trajectory(::Type{Traits.EndPointMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :state_point_sol
 end
 
-function Trajectories.build_solution(::Type{Traits.TrajectoryMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Trajectories.build_trajectory(::Type{Traits.TrajectoryMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :state_traj_sol
 end
 
-function Trajectories.build_solution(::Type{Traits.EndPointMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Trajectories.build_trajectory(::Type{Traits.EndPointMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :ham_point_sol
 end
 
-function Trajectories.build_solution(::Type{Traits.TrajectoryMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Trajectories.build_trajectory(::Type{Traits.TrajectoryMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
     return :ham_traj_sol
 end
 

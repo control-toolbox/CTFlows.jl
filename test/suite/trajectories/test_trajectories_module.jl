@@ -10,7 +10,7 @@
 # - test_building_solutions.jl for solution building functionality
 """
 
-module TestSolutionsModule
+module TestTrajectoriesModule
 
 import Test
 import CTFlows
@@ -20,7 +20,7 @@ using CTFlows.Trajectories  # For testing exported symbols
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
 
-const CurrentModule = TestSolutionsModule
+const CurrentModule = TestTrajectoriesModule
 
 # ============================================================================
 # Hardcoded export lists
@@ -28,20 +28,20 @@ const CurrentModule = TestSolutionsModule
 # These lists define the expected public API of the Solutions module.
 
 const EXPORTED_ABSTRACT_TYPES = (
-    :AbstractVectorFieldSolution,
-    :AbstractHamiltonianVectorFieldSolution,
+    :AbstractVectorFieldTrajectory,
+    :AbstractHamiltonianVectorFieldTrajectory,
 )
 
 const EXPORTED_CONCRETE_TYPES = (
-    :VectorFieldSolution,
-    :HamiltonianVectorFieldSolution,
+    :VectorFieldTrajectory,
+    :HamiltonianVectorFieldTrajectory,
 )
 
 const EXPORTED_FUNCTIONS = (
     :state,
     :time_grid,
     :costate,
-    :build_solution,
+    :build_trajectory,
     :plot,
 )
 
@@ -85,15 +85,15 @@ end
 # Test function
 # ============================================================================
 
-function test_solutions_module()
-    Test.@testset "Solutions Module Exports" verbose=VERBOSE showtiming=SHOWTIMING begin
+function test_trajectories_module()
+    Test.@testset "Trajectories Module Exports" verbose=VERBOSE showtiming=SHOWTIMING begin
 
         # ====================================================================
         # Module availability
         # ====================================================================
 
         Test.@testset "Module availability" begin
-            Test.@testset "Solutions module exists" begin
+            Test.@testset "Trajectories module exists" begin
                 Test.@test isdefined(CTFlows, :Trajectories)
                 Test.@test CTFlows.Trajectories isa Module
             end
@@ -129,13 +129,13 @@ function test_solutions_module()
 
         Test.@testset "Type hierarchy" begin
             Test.@testset "Abstract types are abstract" begin
-                Test.@test isabstracttype(Trajectories.AbstractVectorFieldSolution)
-                Test.@test isabstracttype(Trajectories.AbstractHamiltonianVectorFieldSolution)
+                Test.@test isabstracttype(Trajectories.AbstractVectorFieldTrajectory)
+                Test.@test isabstracttype(Trajectories.AbstractHamiltonianVectorFieldTrajectory)
             end
 
             Test.@testset "Concrete types inherit from abstract types" begin
-                Test.@test Trajectories.VectorFieldSolution <: Trajectories.AbstractVectorFieldSolution
-                Test.@test Trajectories.HamiltonianVectorFieldSolution <: Trajectories.AbstractHamiltonianVectorFieldSolution
+                Test.@test Trajectories.VectorFieldTrajectory <: Trajectories.AbstractVectorFieldTrajectory
+                Test.@test Trajectories.HamiltonianVectorFieldTrajectory <: Trajectories.AbstractHamiltonianVectorFieldTrajectory
             end
         end
     end
@@ -143,4 +143,4 @@ end
 
 end # module
 
-test_solutions_module() = TestSolutionsModule.test_solutions_module()
+test_trajectories_module() = TestTrajectoriesModule.test_trajectories_module()

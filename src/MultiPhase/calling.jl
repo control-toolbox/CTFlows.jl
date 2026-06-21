@@ -283,7 +283,7 @@ function _extract_final_state(::Type{Traits.HamiltonianDynamics}, segment, curre
     return (final[1:nx], final[nx+1:end])
 end
 
-function _extract_final_state(::Type{Traits.HamiltonianDynamics}, segment::Trajectories.HamiltonianVectorFieldSolution, _)
+function _extract_final_state(::Type{Traits.HamiltonianDynamics}, segment::Trajectories.HamiltonianVectorFieldTrajectory, _)
     return Integrators.final_state(segment)
 end
 

@@ -106,7 +106,7 @@ function Integrators.solve_problem(integ::FakeIntegratorForCalling, prob, option
     return integ.ode_solution
 end
 
-function Trajectories.build_solution(
+function Trajectories.build_trajectory(
     ::Type{Traits.EndPointMode},
     ::Type{Traits.StateDynamics},
     config::Configs.AbstractConfig,
@@ -115,7 +115,7 @@ function Trajectories.build_solution(
     return Integrators.final_state(result)
 end
 
-function Trajectories.build_solution(
+function Trajectories.build_trajectory(
     ::Type{Traits.TrajectoryMode},
     ::Type{Traits.StateDynamics},
     config::Configs.AbstractConfig,
@@ -124,7 +124,7 @@ function Trajectories.build_solution(
     return :fake_vector_field_solution
 end
 
-function Trajectories.build_solution(
+function Trajectories.build_trajectory(
     ::Type{Traits.EndPointMode},
     ::Type{Traits.HamiltonianDynamics},
     config::Configs.AbstractConfig,
@@ -133,7 +133,7 @@ function Trajectories.build_solution(
     return (:fake_xf, :fake_pf)
 end
 
-function Trajectories.build_solution(
+function Trajectories.build_trajectory(
     ::Type{Traits.TrajectoryMode},
     ::Type{Traits.HamiltonianDynamics},
     config::Configs.AbstractConfig,

@@ -45,7 +45,7 @@ using CTFlows.Flows        # StateFlow, HamiltonianFlow, Flow, build_flow
 using CTFlows.Data         # VectorField, Hamiltonian, HamiltonianVectorField
 using CTFlows.Systems      # build_system
 using CTFlows.Integrators  # SciML, build_integrator
-using CTFlows.Trajectories    # VectorFieldSolution, state, time_grid
+using CTFlows.Trajectories    # VectorFieldTrajectory, state, time_grid
 using CTFlows.Traits       # Autonomous, NonAutonomous, Fixed, NonFixed, InPlace, OutOfPlace
 using CTFlows.Configs      # StateEndPointConfig, StateTrajectoryConfig, …
 import OrdinaryDiffEqTsit5 # activates the SciML extension

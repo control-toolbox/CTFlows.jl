@@ -148,17 +148,17 @@ function Integrators.evaluate_at(result::MockIntegrationResult, t::Real)
     end
 end
 
-function Trajectories.build_solution(::Type{Traits.EndPointMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
+function Trajectories.build_trajectory(::Type{Traits.EndPointMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
     # For StateEndPointConfig, return the final state directly (as expected by _evaluate_phase)
     return result.u
 end
 
-function Trajectories.build_solution(::Type{Traits.TrajectoryMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
+function Trajectories.build_trajectory(::Type{Traits.TrajectoryMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
     # For StateTrajectoryConfig with StateFlow, return the full result
     return result
 end
 
-function Trajectories.build_solution(::Type{Traits.EndPointMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
+function Trajectories.build_trajectory(::Type{Traits.EndPointMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
     # For HamiltonianFlow, return a tuple (x, p) matching _ham_split_solution behavior
     x_len = length(result.u) ÷ 2
     x_part = result.u[1:x_len]
@@ -166,7 +166,7 @@ function Trajectories.build_solution(::Type{Traits.EndPointMode}, ::Type{Traits.
     return (x_part, p_part)
 end
 
-function Trajectories.build_solution(::Type{Traits.TrajectoryMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
+function Trajectories.build_trajectory(::Type{Traits.TrajectoryMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
     # For HamiltonianTrajectoryConfig, return the full result
     return result
 end
@@ -279,7 +279,7 @@ function test_calling_multiphase()
                 Test.@test pf == p0 * 2
             end
 
-            Test.@testset "HamiltonianDynamics with HamiltonianVectorFieldSolution (regression for BoundsError)" begin
+            Test.@testset "HamiltonianDynamics with HamiltonianVectorFieldTrajectory (regression for BoundsError)" begin
                 hsys = FakeHamiltonianSystem([1.0, 2.0])
                 hinteg = FakeHamiltonianIntegrator(:fake_result)
                 hflow = Flows.HamiltonianFlow(hsys, hinteg)
@@ -287,7 +287,7 @@ function test_calling_multiphase()
 
                 u_final = vcat(x0 * 2, p0 * 2)
                 mock_result = MockIntegrationResult(u_final, [0.0, 1.0])
-                segment = Trajectories.HamiltonianVectorFieldSolution(x0, mock_result)
+                segment = Trajectories.HamiltonianVectorFieldTrajectory(x0, mock_result)
 
                 xf, pf = MultiPhase._extract_final_state(hmpf, segment, (x0, p0))
                 Test.@test xf == x0 * 2

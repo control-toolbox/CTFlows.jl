@@ -50,8 +50,8 @@ xf, pf = hflow(0.0, x0, p0, 1.0)
 ### Trajectory integration — full time history
 
 ```julia
-flow((t0, tf), x0)          # returns VectorFieldSolution
-hflow((t0, tf), x0, p0)     # returns HamiltonianVectorFieldSolution
+flow((t0, tf), x0)          # returns VectorFieldTrajectory
+hflow((t0, tf), x0, p0)     # returns HamiltonianVectorFieldTrajectory
 ```
 
 ```@example flows_integrating

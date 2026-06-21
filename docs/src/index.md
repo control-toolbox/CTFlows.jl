@@ -58,7 +58,7 @@ Data → Systems → Integrators → Flows → Trajectories
 | Systems | [`CTFlows.Systems`](@ref CTFlows.Systems) | `VectorFieldSystem`, `HamiltonianSystem` |
 | Integrators | [`CTFlows.Integrators`](@ref CTFlows.Integrators) | `SciML` |
 | Flows | [`CTFlows.Flows`](@ref CTFlows.Flows) | `StateFlow`, `HamiltonianFlow` |
-| Trajectories | [`CTFlows.Trajectories`](@ref CTFlows.Trajectories) | `VectorFieldSolution`, `HamiltonianVectorFieldSolution` |
+| Trajectories | [`CTFlows.Trajectories`](@ref CTFlows.Trajectories) | `VectorFieldTrajectory`, `HamiltonianVectorFieldTrajectory` |
 | Multi-phase | [`CTFlows.MultiPhase`](@ref CTFlows.MultiPhase) | `MultiPhaseStateFlow` |
 | Traits | [`CTFlows.Traits`](@ref CTFlows.Traits) | `Autonomous`, `Fixed`, `InPlace`, … |
 

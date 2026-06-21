@@ -137,11 +137,11 @@ function test_scimlbase_flow_constructors()
         # ====================================================================
 
         Test.@testset "Integration: Flow(::AbstractODEFunction) trajectory call" begin
-            Test.@testset "trajectory call returns VectorFieldSolution" begin
+            Test.@testset "trajectory call returns VectorFieldTrajectory" begin
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
                 flow = Flows.Flow(f; reltol=1e-10)
                 sol = flow((0.0, 1.0), [1.0]; variable=2.0)
-                Test.@test sol isa Trajectories.VectorFieldSolution
+                Test.@test sol isa Trajectories.VectorFieldTrajectory
                 Test.@test sol(0.5)[1] ≈ exp(-2.0 * 0.5) rtol=1e-6
             end
         end

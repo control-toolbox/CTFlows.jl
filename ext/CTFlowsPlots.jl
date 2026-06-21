@@ -1,7 +1,7 @@
 """
     CTFlowsPlots
 
-Package extension providing plotting capabilities for `VectorFieldSolution`.
+Package extension providing plotting capabilities for `VectorFieldTrajectory`.
 Activated automatically when `Plots` is loaded together with `CTFlows`.
 """
 module CTFlowsPlots
@@ -59,7 +59,7 @@ $(TYPEDSIGNATURES)
 Internal helper to convert a solution to time and state arrays.
 
 # Arguments
-- `sol::Trajectories.VectorFieldSolution`: The solution to convert.
+- `sol::Trajectories.VectorFieldTrajectory`: The solution to convert.
 
 # Returns
 - `Tuple{AbstractVector, AbstractMatrix}`: A tuple of (time vector, state matrix).
@@ -69,7 +69,7 @@ Internal helper to convert a solution to time and state arrays.
 - Uses `state(sol)` to explicitly obtain the state function.
 - Internal function, not part of public API.
 """
-function _sol_to_arrays(sol::Trajectories.VectorFieldSolution)
+function _sol_to_arrays(sol::Trajectories.VectorFieldTrajectory)
     ts = Integrators.times(sol)
     x = Trajectories.state(sol)
     states = reduce(hcat, x.(ts))'
@@ -79,20 +79,20 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Plot a `VectorFieldSolution` by extracting time points and states.
+Plot a `VectorFieldTrajectory` by extracting time points and states.
 
 Uses default `xlabel="time"` for the x-axis label and font size settings (10pt for labels and titles).
 
 # Arguments
-- `sol::Trajectories.VectorFieldSolution`: The solution to plot.
+- `sol::Trajectories.VectorFieldTrajectory`: The solution to plot.
 - `kwargs...`: Additional keyword arguments passed to `Plots.plot`.
 
 # Returns
 - The plot object returned by `Plots.plot`.
 
-See also: [`CTFlows.Trajectories.VectorFieldSolution`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Trajectories.state`](@ref).
+See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Trajectories.state`](@ref).
 """
-function Plots.plot(sol::Trajectories.VectorFieldSolution; kwargs...)
+function Plots.plot(sol::Trajectories.VectorFieldTrajectory; kwargs...)
     ts, states = _sol_to_arrays(sol)
     return Plots.plot(ts, states; 
         xlabel="time", 
@@ -110,15 +110,15 @@ Plot into an existing plot by extracting time points and states.
 Uses default `xlabel="time"` for the x-axis label and font size settings (10pt for labels and titles).
 
 # Arguments
-- `sol::Trajectories.VectorFieldSolution`: The solution to plot.
+- `sol::Trajectories.VectorFieldTrajectory`: The solution to plot.
 - `kwargs...`: Additional keyword arguments passed to `Plots.plot!`.
 
 # Returns
 - The modified plot object returned by `Plots.plot!`.
 
-See also: [`CTFlows.Trajectories.VectorFieldSolution`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Trajectories.state`](@ref).
+See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Trajectories.state`](@ref).
 """
-function Plots.plot!(sol::Trajectories.VectorFieldSolution; kwargs...)
+function Plots.plot!(sol::Trajectories.VectorFieldTrajectory; kwargs...)
     ts, states = _sol_to_arrays(sol)
     return Plots.plot!(ts, states; 
         xlabel="time", 
@@ -137,15 +137,15 @@ Uses default `xlabel="time"` for the x-axis label and font size settings (10pt f
 
 # Arguments
 - `p::Plots.Plot`: The existing plot to modify.
-- `sol::Trajectories.VectorFieldSolution`: The solution to plot.
+- `sol::Trajectories.VectorFieldTrajectory`: The solution to plot.
 - `kwargs...`: Additional keyword arguments passed to `Plots.plot!`.
 
 # Returns
 - The modified plot object returned by `Plots.plot!`.
 
-See also: [`CTFlows.Trajectories.VectorFieldSolution`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Trajectories.state`](@ref).
+See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Trajectories.state`](@ref).
 """
-function Plots.plot!(p::Plots.Plot, sol::Trajectories.VectorFieldSolution; kwargs...)
+function Plots.plot!(p::Plots.Plot, sol::Trajectories.VectorFieldTrajectory; kwargs...)
     ts, states = _sol_to_arrays(sol)
     return Plots.plot!(p, ts, states; 
         xlabel="time", 
@@ -156,14 +156,14 @@ function Plots.plot!(p::Plots.Plot, sol::Trajectories.VectorFieldSolution; kwarg
 end
 
 # =============================================================================
-# Plots.plot — HamiltonianVectorFieldSolution
+# Plots.plot — HamiltonianVectorFieldTrajectory
 # =============================================================================
 
 """
 Internal helper to convert a Hamiltonian solution to time, state, and costate arrays.
 
 # Arguments
-- `sol::Trajectories.HamiltonianVectorFieldSolution`: The Hamiltonian solution to convert.
+- `sol::Trajectories.HamiltonianVectorFieldTrajectory`: The Hamiltonian solution to convert.
 
 # Returns
 - `Tuple{AbstractVector, AbstractMatrix, AbstractMatrix}`: A tuple of (time vector, state matrix, costate matrix).
@@ -173,7 +173,7 @@ Internal helper to convert a Hamiltonian solution to time, state, and costate ar
 - Uses `state(sol)` and `costate(sol)` to explicitly obtain the state and costate functions.
 - Internal function, not part of public API.
 """
-function _ham_sol_to_arrays(sol::Trajectories.HamiltonianVectorFieldSolution)
+function _ham_sol_to_arrays(sol::Trajectories.HamiltonianVectorFieldTrajectory)
     ts = Integrators.times(sol)
     x = Trajectories.state(sol)
     p = Trajectories.costate(sol)
@@ -185,21 +185,21 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Plot a `HamiltonianVectorFieldSolution` by extracting time points, states, and costates.
+Plot a `HamiltonianVectorFieldTrajectory` by extracting time points, states, and costates.
 
 Uses a `(1, 2)` layout to show state and costate in separate subplots.
 Uses default `xlabel=["time" "time"]` for both subplots, `title=["state" "costate"]` for subplot titles, and font size settings (10pt for labels and titles).
 
 # Arguments
-- `sol::Trajectories.HamiltonianVectorFieldSolution`: The Hamiltonian solution to plot.
+- `sol::Trajectories.HamiltonianVectorFieldTrajectory`: The Hamiltonian solution to plot.
 - `kwargs...`: Additional keyword arguments passed to `Plots.plot`.
 
 # Returns
 - The plot object returned by `Plots.plot`.
 
-See also: [`CTFlows.Trajectories.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.costate`](@ref).
+See also: [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.costate`](@ref).
 """
-function Plots.plot(sol::Trajectories.HamiltonianVectorFieldSolution; kwargs...)
+function Plots.plot(sol::Trajectories.HamiltonianVectorFieldTrajectory; kwargs...)
     ts, states, costates = _ham_sol_to_arrays(sol)
     return Plots.plot(ts, [states costates]; 
         layout=(1, 2), 
@@ -220,15 +220,15 @@ Uses a `(1, 2)` layout to show state and costate in separate subplots.
 Uses default `xlabel=["time" "time"]` for both subplots, `title=["state" "costate"]` for subplot titles, and font size settings (10pt for labels and titles).
 
 # Arguments
-- `sol::Trajectories.HamiltonianVectorFieldSolution`: The Hamiltonian solution to plot.
+- `sol::Trajectories.HamiltonianVectorFieldTrajectory`: The Hamiltonian solution to plot.
 - `kwargs...`: Additional keyword arguments passed to `Plots.plot!`.
 
 # Returns
 - The modified plot object returned by `Plots.plot!`.
 
-See also: [`CTFlows.Trajectories.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.costate`](@ref).
+See also: [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.costate`](@ref).
 """
-function Plots.plot!(sol::Trajectories.HamiltonianVectorFieldSolution; kwargs...)
+function Plots.plot!(sol::Trajectories.HamiltonianVectorFieldTrajectory; kwargs...)
     ts, states, costates = _ham_sol_to_arrays(sol)
     return Plots.plot!(ts, [states costates]; 
         layout=(1, 2), 
@@ -250,15 +250,15 @@ Uses default `xlabel=["time" "time"]` for both subplots, `title=["state" "costat
 
 # Arguments
 - `p::Plots.Plot`: The existing plot to modify.
-- `sol::Trajectories.HamiltonianVectorFieldSolution`: The Hamiltonian solution to plot.
+- `sol::Trajectories.HamiltonianVectorFieldTrajectory`: The Hamiltonian solution to plot.
 - `kwargs...`: Additional keyword arguments passed to `Plots.plot!`.
 
 # Returns
 - The modified plot object returned by `Plots.plot!`.
 
-See also: [`CTFlows.Trajectories.HamiltonianVectorFieldSolution`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.costate`](@ref).
+See also: [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.costate`](@ref).
 """
-function Plots.plot!(p::Plots.Plot, sol::Trajectories.HamiltonianVectorFieldSolution; kwargs...)
+function Plots.plot!(p::Plots.Plot, sol::Trajectories.HamiltonianVectorFieldTrajectory; kwargs...)
     ts, states, costates = _ham_sol_to_arrays(sol)
     return Plots.plot!(p, ts, [states costates]; 
         layout=(1, 2), 

@@ -116,7 +116,7 @@ function (F::OptimalControlFlow)(
     variable = Common.NotProvided(),
     unsafe::Bool = false,
 )
-    sol = F.flow(tspan, x0, p0; variable, unsafe)   # HamiltonianVectorFieldSolution
+    sol = F.flow(tspan, x0, p0; variable, unsafe)   # HamiltonianVectorFieldTrajectory
     return _build_ocp_solution(F.ocp, sol, variable, integrator(F.flow))
 end
 
@@ -152,7 +152,7 @@ end
 
 function _build_ocp_solution(
     ocp,
-    sol::Trajectories.HamiltonianVectorFieldSolution,
+    sol::Trajectories.HamiltonianVectorFieldTrajectory,
     variable,
     integ,
 )

@@ -246,8 +246,8 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                 CTFlows.Trajectories => src(
                     joinpath("Trajectories", "Trajectories.jl"),
                     joinpath("Trajectories", "building.jl"),
-                    joinpath("Trajectories", "vector_field_solution.jl"),
-                    joinpath("Trajectories", "hamiltonian_vector_field_solution.jl"),
+                    joinpath("Trajectories", "vector_field_trajectory.jl"),
+                    joinpath("Trajectories", "hamiltonian_vector_field_trajectory.jl"),
                 ),
             ],
             exclude=EXCLUDE_BASE,

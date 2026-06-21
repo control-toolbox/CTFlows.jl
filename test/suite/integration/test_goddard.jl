@@ -112,7 +112,7 @@ function test_goddard()
         Test.@testset "Flow type — trajectory call" begin
             φf = φ1 * (t1_sol, φs) * (t2_sol, φb) * (t3_sol, φ0)
             sol = φf((_GODD_t0, tf_sol), _GODD_x0, p0_sol; variable=tf_sol)
-            Test.@test sol isa CTFlows.Trajectories.HamiltonianVectorFieldSolution
+            Test.@test sol isa CTFlows.Trajectories.HamiltonianVectorFieldTrajectory
         end
 
         # ======================================================================
