@@ -259,15 +259,15 @@ function test_optimal_control_flow()
             t0, tf = 0.0, 1.0
             x0, p0 = 1.0, 0.5
             sol = OCF_AF_MAYER((t0, tf), x0, p0)
-            Test.@test CTModels.Models.objective(sol) ≈ _may_obj(tf - t0, x0) atol=ATOL
+            Test.@test CTModels.Components.objective(sol) ≈ _may_obj(tf - t0, x0) atol=ATOL
         end
 
         Test.@testset "Integration: (co)state(sol)(tf) ≈ analytic (x,p)(tf)" begin
             t0, tf = 0.0, 1.0
             x0, p0 = 1.0, 0.5
             sol = OCF_AF_MAYER((t0, tf), x0, p0)
-            xsol = CTModels.Models.state(sol)(tf)
-            psol = CTModels.Solutions.costate(sol)(tf) # 
+            xsol = CTModels.Components.state(sol)(tf)
+            psol = CTModels.Components.costate(sol)(tf) # 
             Test.@test xsol ≈ _x_ref(tf, t0, x0) atol=ATOL
             Test.@test psol ≈ _p_ref(tf, t0, p0) atol=ATOL
         end
@@ -276,8 +276,8 @@ function test_optimal_control_flow()
             t0, tf = 0.0, 1.0
             x0, p0 = 1.0, 0.5
             sol = OCF_AF_MAYER((t0, tf), x0, p0)
-            xsol = CTModels.Models.state(sol)(tf)
-            psol = CTModels.Solutions.costate(sol)(tf)
+            xsol = CTModels.Components.state(sol)(tf)
+            psol = CTModels.Components.costate(sol)(tf)
             Test.@test xsol isa Number
             Test.@test psol isa Number
         end
@@ -286,8 +286,8 @@ function test_optimal_control_flow()
             t0, tf = 0.0, 1.0
             x0, p0 = [1.0], [0.5]
             sol = OCF_AF_MAYER((t0, tf), x0, p0)
-            xsol = CTModels.Models.state(sol)(tf)
-            psol = CTModels.Solutions.costate(sol)(tf)
+            xsol = CTModels.Components.state(sol)(tf)
+            psol = CTModels.Components.costate(sol)(tf)
             Test.@test xsol isa Number # AbstractVector
             # Test.@test length(xsol) == 1
             Test.@test psol isa Number # AbstractVector
@@ -302,7 +302,7 @@ function test_optimal_control_flow()
             t0, tf = 0.0, 1.0
             x0, p0 = 1.0, 1.0
             sol = ocf_lag((t0, tf), x0, p0)
-            Test.@test CTModels.Models.objective(sol) ≈ _lag_obj(tf - t0, x0) atol=ATOL
+            Test.@test CTModels.Components.objective(sol) ≈ _lag_obj(tf - t0, x0) atol=ATOL
         end
 
         Test.@testset "Integration: Bolza objective ≈ Mayer + Lagrange" begin
@@ -314,7 +314,7 @@ function test_optimal_control_flow()
             x0, p0 = 1.0, 1.0
             sol = ocf_bolza((t0, tf), x0, p0)
             expected = _may_obj(tf - t0, x0) + _lag_obj(tf - t0, x0)
-            Test.@test CTModels.Models.objective(sol) ≈ expected atol=ATOL
+            Test.@test CTModels.Components.objective(sol) ≈ expected atol=ATOL
         end
 
         # ── cross-check: OCP flow vs generic HamiltonianSystem ────────────────
