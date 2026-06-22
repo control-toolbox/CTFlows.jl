@@ -1,5 +1,5 @@
 """
-Unit and integration tests for flow routing via CTSolvers.
+Unit and integration tests for flow routing via CTBase.Strategies.
 """
 
 module TestFlowRouting
@@ -13,7 +13,7 @@ import CTFlows.Data
 import CTFlows.Systems
 import CTFlows.Traits
 import CTFlows.Common
-import CTSolvers
+import CTBase
 import ADTypes
 using OrdinaryDiffEqTsit5
 
@@ -50,11 +50,11 @@ function test_flow_routing()
 
         Test.@testset "Unit: flow_registry" begin
             registry = Flows.flow_registry()
-            Test.@test registry isa CTSolvers.Strategies.StrategyRegistry
+            Test.@test registry isa CTBase.Strategies.StrategyRegistry
             # Check that strategies are registered
-            backend_ids = CTSolvers.Strategies.strategy_ids(Differentiation.AbstractADBackend, registry)
+            backend_ids = CTBase.Strategies.strategy_ids(Differentiation.AbstractADBackend, registry)
             Test.@test :di in backend_ids
-            integrator_ids = CTSolvers.Strategies.strategy_ids(Integrators.AbstractIntegrator, registry)
+            integrator_ids = CTBase.Strategies.strategy_ids(Integrators.AbstractIntegrator, registry)
             Test.@test :sciml in integrator_ids
         end
 

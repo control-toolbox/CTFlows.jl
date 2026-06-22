@@ -7,7 +7,7 @@ import CTFlows.Integrators
 import CTFlows.Common
 import CTFlows.Configs
 import CTFlows.Traits
-import CTSolvers
+import CTBase
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -26,9 +26,9 @@ struct FakeIntegrator <: Integrators.AbstractIntegrator
 end
 
 # Minimal strategy contract implementation
-CTSolvers.Strategies.id(::Type{FakeIntegrator}) = :fake_integrator
-CTSolvers.Strategies.metadata(::Type{FakeIntegrator}) = CTSolvers.Strategies.StrategyMetadata()
-CTSolvers.Strategies.options(integ::FakeIntegrator) = CTSolvers.Strategies.StrategyOptions()
+CTBase.Strategies.id(::Type{FakeIntegrator}) = :fake_integrator
+CTBase.Strategies.metadata(::Type{FakeIntegrator}) = CTBase.Strategies.StrategyMetadata()
+CTBase.Strategies.options(integ::FakeIntegrator) = CTBase.Strategies.StrategyOptions()
 
 """
 Fake flow for testing Flow contract without requiring SciML extension.

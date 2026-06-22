@@ -8,7 +8,7 @@ import CTFlows.Systems: Systems
 import CTFlows.Integrators: Integrators
 import CTFlows.Trajectories: Trajectories
 import CTFlows.Flows: Flows
-import CTSolvers.Strategies: Strategies
+import CTBase.Strategies: Strategies
 
 using SciMLBase: SciMLBase, ODEProblem
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5

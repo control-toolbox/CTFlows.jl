@@ -5,12 +5,13 @@ Tests for Differentiation.differentiate and Differentiation.pushforward.
 module TestArgPlacement
 
 import Test
+import ForwardDiff  # ensure DI ForwardDiff extension is loaded (AutoForwardDiff backend)
 import DifferentiationInterface   # activates CTFlowsDifferentiationInterface extension
 import CTFlows
 import CTFlows.Differentiation
 import CTFlows.Common
 import CTBase.Exceptions
-import CTSolvers
+import CTBase
 
 const VERBOSE    = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -20,9 +21,9 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # ==============================================================================
 
 struct FakeBackendAP <: Differentiation.AbstractADBackend
-    options::CTSolvers.Strategies.StrategyOptions
+    options::CTBase.Strategies.StrategyOptions
 end
-FakeBackendAP() = FakeBackendAP(CTSolvers.Strategies.StrategyOptions())
+FakeBackendAP() = FakeBackendAP(CTBase.Strategies.StrategyOptions())
 
 # ==============================================================================
 # Helper — default backend (AutoForwardDiff via DI)
