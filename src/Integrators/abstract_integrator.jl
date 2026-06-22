@@ -35,7 +35,7 @@ Additionally, for multi-phase trajectory support, subtypes should implement:
 
 See also: [`CTFlows.Flows.AbstractFlow`](@ref).
 """
-abstract type AbstractIntegrator <: CTBase.Strategies.AbstractStrategy end
+abstract type AbstractIntegrator <: Strategies.AbstractStrategy end
 
 """
 $(TYPEDSIGNATURES)

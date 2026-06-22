@@ -14,6 +14,7 @@ module Integrators
 
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
+import CTBase.Strategies
 
 # ==============================================================================
 # Internal sibling-submodule imports
@@ -22,7 +23,6 @@ import CTBase.Exceptions
 import ..Common: Common
 import ..Configs: Configs
 import ..Systems: Systems
-using CTBase: CTBase
 
 # ==============================================================================
 # Include files

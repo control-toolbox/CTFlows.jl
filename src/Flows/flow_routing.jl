@@ -83,10 +83,10 @@ See also: [`_flow_families`](@ref), [`_build_flow_components`](@ref),
 [`CTBase.Orchestration.route_all_options`](@extref)
 """
 function _route_flow_options(kwargs)
-    return CTBase.Orchestration.route_all_options(
+    return Orchestration.route_all_options(
         _FLOW_DESCRIPTION,
         _flow_families(),
-        CTBase.Options.OptionDefinition[],
+        Options.OptionDefinition[],
         (; kwargs...),
         flow_registry();
         source_mode = :description,
@@ -122,14 +122,14 @@ See also: [`_route_flow_options`](@ref), [`flow_registry`](@ref),
 """
 function _build_flow_components(routed)
     families = _flow_families()
-    resolved = CTBase.Orchestration.resolve_method(
+    resolved = Orchestration.resolve_method(
         _FLOW_DESCRIPTION, families, flow_registry()
     )
-    backend = CTBase.Orchestration.build_strategy_from_resolved(
+    backend = Orchestration.build_strategy_from_resolved(
         resolved, :backend, families, flow_registry();
         routed.strategies.backend...
     )
-    integrator = CTBase.Orchestration.build_strategy_from_resolved(
+    integrator = Orchestration.build_strategy_from_resolved(
         resolved, :integrator, families, flow_registry();
         routed.strategies.integrator...
     )

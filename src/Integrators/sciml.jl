@@ -62,7 +62,7 @@ To activate the extension, load any of:
 - `options_point::Dict{Symbol, Any}`: Pre-computed options for StateEndPointConfig.
 - `options_trajectory::Dict{Symbol, Any}`: Pre-computed options for StateTrajectoryConfig.
 """
-struct SciML{O<:CTBase.Strategies.StrategyOptions, OP<:Dict{Symbol, Any}, OT<:Dict{Symbol, Any}} <: AbstractSciMLIntegrator
+struct SciML{O<:Strategies.StrategyOptions, OP<:Dict{Symbol, Any}, OT<:Dict{Symbol, Any}} <: AbstractSciMLIntegrator
     options::O
     options_point::OP
     options_trajectory::OT
@@ -77,14 +77,14 @@ $(TYPEDSIGNATURES)
 
 Return the unique identifier for SciML integrator.
 """
-CTBase.Strategies.id(::Type{<:SciML}) = :sciml
+Strategies.id(::Type{<:SciML}) = :sciml
 
 """
 $(TYPEDSIGNATURES)
 
 Return the description for the SciML integrator.
 """
-function CTBase.Strategies.description(::Type{<:SciML})
+function Strategies.description(::Type{<:SciML})
     "SciML ODE integrator.\n" *
     "See: https://docs.sciml.ai/DiffEqDocs\n" *
     "Solver options: https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/"
@@ -141,7 +141,7 @@ Real metadata implementation provided by the extension.
 
 See also: `SciML`, `CTBase.Strategies.StrategyMetadata`.
 """
-function CTBase.Strategies.metadata(::Type{<:AbstractSciMLIntegrator})
+function Strategies.metadata(::Type{<:AbstractSciMLIntegrator})
     # Extension is missing
     throw(
         Exceptions.ExtensionError(

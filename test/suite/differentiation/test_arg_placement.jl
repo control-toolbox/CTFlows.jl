@@ -11,7 +11,7 @@ import CTFlows
 import CTFlows.Differentiation
 import CTFlows.Common
 import CTBase.Exceptions
-import CTBase
+import CTBase.Strategies
 
 const VERBOSE    = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -21,9 +21,9 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # ==============================================================================
 
 struct FakeBackendAP <: Differentiation.AbstractADBackend
-    options::CTBase.Strategies.StrategyOptions
+    options::Strategies.StrategyOptions
 end
-FakeBackendAP() = FakeBackendAP(CTBase.Strategies.StrategyOptions())
+FakeBackendAP() = FakeBackendAP(Strategies.StrategyOptions())
 
 # ==============================================================================
 # Helper — default backend (AutoForwardDiff via DI)

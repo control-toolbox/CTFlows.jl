@@ -22,7 +22,7 @@ See also: [`CTFlows.Differentiation.DifferentiationInterface`](@ref),
 [`CTFlows.Differentiation.hamiltonian_gradient`](@ref),
 [`CTFlows.Differentiation.variable_gradient`](@ref).
 """
-abstract type AbstractADBackend <: CTBase.Strategies.AbstractStrategy end
+abstract type AbstractADBackend <: Strategies.AbstractStrategy end
 
 # ==============================================================================
 # Contract Methods

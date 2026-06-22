@@ -6,6 +6,7 @@ module TestFlowRouting
 
 import Test
 import CTBase.Exceptions
+import CTBase.Strategies
 import CTFlows.Flows
 import CTFlows.Differentiation
 import CTFlows.Integrators
@@ -13,7 +14,6 @@ import CTFlows.Data
 import CTFlows.Systems
 import CTFlows.Traits
 import CTFlows.Common
-import CTBase
 import ADTypes
 using OrdinaryDiffEqTsit5
 
@@ -50,11 +50,11 @@ function test_flow_routing()
 
         Test.@testset "Unit: flow_registry" begin
             registry = Flows.flow_registry()
-            Test.@test registry isa CTBase.Strategies.StrategyRegistry
+            Test.@test registry isa Strategies.StrategyRegistry
             # Check that strategies are registered
-            backend_ids = CTBase.Strategies.strategy_ids(Differentiation.AbstractADBackend, registry)
+            backend_ids = Strategies.strategy_ids(Differentiation.AbstractADBackend, registry)
             Test.@test :di in backend_ids
-            integrator_ids = CTBase.Strategies.strategy_ids(Integrators.AbstractIntegrator, registry)
+            integrator_ids = Strategies.strategy_ids(Integrators.AbstractIntegrator, registry)
             Test.@test :sciml in integrator_ids
         end
 

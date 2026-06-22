@@ -2,9 +2,9 @@ module TestSciML
 
 import Test
 import CTBase.Exceptions
+import CTBase.Strategies
 import CTFlows.Integrators
 import CTFlows.Common
-import CTBase: CTBase
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -29,7 +29,7 @@ end
 Fake SciML strategy for testing constructor stub.
 """
 struct FakeSciML <: Integrators.AbstractSciMLIntegrator
-    options::CTBase.Strategies.StrategyOptions
+    options::Strategies.StrategyOptions
 end
 
 # Fake constructor that throws ExtensionError
@@ -66,11 +66,11 @@ function test_sciml()
         Test.@testset "AbstractStrategy Contract" begin
 
             Test.@testset "id returns :sciml" begin
-                Test.@test CTBase.Strategies.id(Integrators.SciML) === :sciml
+                Test.@test Strategies.id(Integrators.SciML) === :sciml
             end
 
             Test.@testset "description returns non-empty string" begin
-                desc = CTBase.Strategies.description(Integrators.SciML)
+                desc = Strategies.description(Integrators.SciML)
                 Test.@test desc isa String
                 Test.@test !isempty(desc)
                 Test.@test occursin("SciML", desc)
@@ -85,7 +85,7 @@ function test_sciml()
 
             Test.@testset "metadata throws ExtensionError" begin
                 fake_integrator = FakeSciMLIntegrator("test")
-                Test.@test_throws Exceptions.ExtensionError CTBase.Strategies.metadata(typeof(fake_integrator))
+                Test.@test_throws Exceptions.ExtensionError Strategies.metadata(typeof(fake_integrator))
             end
 
             Test.@testset "build_sciml_integrator throws ExtensionError" begin
@@ -113,7 +113,7 @@ function test_sciml()
             Test.@testset "metadata error mentions OrdinaryDiffEqTsit5" begin
                 fake_integrator = FakeSciMLIntegrator("test")
                 try
-                    CTBase.Strategies.metadata(typeof(fake_integrator))
+                    Strategies.metadata(typeof(fake_integrator))
                     Test.@test false  # Should not reach here
                 catch err
                     Test.@test err isa Exceptions.ExtensionError

@@ -18,7 +18,7 @@ types to their concrete implementations for flow construction:
 
 See also: [`CTFlows.Flows.flow_registry`](@ref), [`CTFlows.Flows._route_flow_options`](@ref), [`CTBase.Strategies.create_registry`](@extref).
 """
-const _FLOW_REGISTRY = CTBase.Strategies.create_registry(
+const _FLOW_REGISTRY = Strategies.create_registry(
     Differentiation.AbstractADBackend => (Differentiation.DifferentiationInterface,),
     Integrators.AbstractIntegrator => (Integrators.SciML,),
 )
