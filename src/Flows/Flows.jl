@@ -14,7 +14,9 @@ module Flows
 # 1. External-package imports (qualified, pollution-free)
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
-using CTSolvers: CTSolvers
+import CTBase.Strategies
+import CTBase.Options
+import CTBase.Orchestration
 import CTModels
 
 # ==============================================================================

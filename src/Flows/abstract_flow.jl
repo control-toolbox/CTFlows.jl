@@ -377,10 +377,10 @@ Silently does nothing when no user options are set.
 \`\`\`
 """
 function _print_user_options(io::IO, integ::Integrators.AbstractIntegrator)
-    opts      = CTSolvers.Strategies.options(integ)
+    opts      = CTBase.Strategies.options(integ)
     user_opts = sort!(
-        [(k, CTSolvers.value(v)) for (k, v) in pairs(opts.options)
-         if CTSolvers.is_user(opts, k)];
+        [(k, CTBase.Options.value(v)) for (k, v) in pairs(opts.options)
+         if CTBase.Options.is_user(opts, k)];
         by = x -> string(x[1]),
     )
     isempty(user_opts) && return

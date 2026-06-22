@@ -4,7 +4,7 @@
 ODE integrator strategy types for CTFlows.
 
 This module defines the `AbstractIntegrator` type which inherits from
-`CTSolvers.Strategies.AbstractStrategy`.
+`CTBase.Strategies.AbstractStrategy`.
 """
 module Integrators
 
@@ -22,7 +22,7 @@ import CTBase.Exceptions
 import ..Common: Common
 import ..Configs: Configs
 import ..Systems: Systems
-using CTSolvers: CTSolvers
+using CTBase: CTBase
 
 # ==============================================================================
 # Include files

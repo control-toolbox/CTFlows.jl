@@ -6,7 +6,7 @@ High-level constructor for `Flow` from vector field data.
 This constructor builds a complete flow by:
 1. Building a `VectorFieldSystem` from the vector field data
 2. Building a `SciML` integrator with the given options
-3. Routing options through the integrator's CTSolvers strategy
+3. Routing options through the integrator's CTBase.Strategies strategy
 4. Combining them into a callable `Flow`
 
 # Arguments
@@ -40,7 +40,7 @@ High-level constructor for `HamiltonianFlow` from Hamiltonian vector field data.
 This constructor builds a complete Hamiltonian flow by:
 1. Building a `HamiltonianVectorFieldSystem` from the Hamiltonian vector field data
 2. Building a `SciML` integrator with the given options
-3. Routing options through the integrator's CTSolvers strategy
+3. Routing options through the integrator's CTBase.Strategies strategy
 4. Combining them into a callable `HamiltonianFlow`
 
 # Arguments

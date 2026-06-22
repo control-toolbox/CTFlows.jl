@@ -5,7 +5,7 @@ Abstract strategy for solving ODE Cauchy problems.
 
 An `AbstractIntegrator` is a strategy that solves an ODE problem over a time span.
 
-This type inherits the CTSolvers strategy contract:
+This type inherits the CTBase.Strategies strategy contract:
 
 # Type-Level Contract (Static Metadata)
 
@@ -35,7 +35,7 @@ Additionally, for multi-phase trajectory support, subtypes should implement:
 
 See also: [`CTFlows.Flows.AbstractFlow`](@ref).
 """
-abstract type AbstractIntegrator <: CTSolvers.Strategies.AbstractStrategy end
+abstract type AbstractIntegrator <: CTBase.Strategies.AbstractStrategy end
 
 """
 $(TYPEDSIGNATURES)

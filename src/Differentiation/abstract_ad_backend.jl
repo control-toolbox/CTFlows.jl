@@ -12,8 +12,8 @@ scalar Hamiltonian function. Concrete backends (e.g., `DifferentiationInterface`
 implement the contract methods to provide actual gradient computation.
 
 # Notes
- - `AbstractADBackend` subtypes `CTSolvers.Strategies.AbstractStrategy` — they are
-   first-class strategies in the CTSolvers ecosystem.
+ - `AbstractADBackend` subtypes `CTBase.Strategies.AbstractStrategy` — they are
+   first-class strategies in the CTBase.Strategies ecosystem.
  - The contract consists of two methods: `hamiltonian_gradient` and `variable_gradient`.
  - Gradient methods return **non-negated** partial derivatives; the RHS closures
    apply the signs (ṗ = -∂H/∂x, ṽ = -∂H/∂v).
@@ -22,7 +22,7 @@ See also: [`CTFlows.Differentiation.DifferentiationInterface`](@ref),
 [`CTFlows.Differentiation.hamiltonian_gradient`](@ref),
 [`CTFlows.Differentiation.variable_gradient`](@ref).
 """
-abstract type AbstractADBackend <: CTSolvers.Strategies.AbstractStrategy end
+abstract type AbstractADBackend <: CTBase.Strategies.AbstractStrategy end
 
 # ==============================================================================
 # Contract Methods

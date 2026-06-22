@@ -22,7 +22,7 @@ The concrete strategy `DifferentiationInterface` wraps DifferentiationInterface.
 ## Dependencies
 
 - `ADTypes.jl` (hard dependency) — provides `AutoForwardDiff` type
-- `CTSolvers.Strategies` (from CTSolvers) — strategy contract
+- `CTBase.Strategies` — strategy contract
 - `CTBase.Exceptions` — `NotImplemented` for stub methods
 - `Common` (sibling) — `AbstractCache` type
 
@@ -52,7 +52,7 @@ module Differentiation
 
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
-using CTSolvers: CTSolvers
+import CTBase.Strategies
 using ADTypes: ADTypes  # Hard dep — provides AutoForwardDiff
 
 # ==============================================================================
