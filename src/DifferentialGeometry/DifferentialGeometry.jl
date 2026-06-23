@@ -28,7 +28,7 @@ import MacroTools: postwalk, @capture
 # Internal sibling-submodule imports
 # ==============================================================================
 
-import ..Traits: Traits
+import CTBase.Traits
 import ..Common: Common
 import ..Data: Data
 import ..Differentiation: Differentiation

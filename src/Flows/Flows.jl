@@ -25,7 +25,7 @@ import CTModels
 
 import ..Common: Common
 import ..Configs: Configs
-import ..Traits: Traits
+import CTBase.Traits
 import ..Data: Data
 import ..Differentiation: Differentiation
 import ..Systems: Systems, hamiltonian_vector_field
@@ -40,7 +40,6 @@ include(joinpath(@__DIR__, "abstract_flow.jl"))
 include(joinpath(@__DIR__, "flow.jl"))
 include(joinpath(@__DIR__, "registry.jl"))
 include(joinpath(@__DIR__, "flow_routing.jl"))
-include(joinpath(@__DIR__, "ocp_model_traits.jl"))
 include(joinpath(@__DIR__, "optimal_control_flow.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 include(joinpath(@__DIR__, "calling.jl"))

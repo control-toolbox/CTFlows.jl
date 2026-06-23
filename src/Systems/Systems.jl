@@ -20,7 +20,7 @@ import CTBase.Exceptions
 # ==============================================================================
 
 import ..Common: Common
-import ..Traits: Traits
+import CTBase.Traits
 import ..Configs: Configs
 import ..Data: Data
 import ..Differentiation: Differentiation
