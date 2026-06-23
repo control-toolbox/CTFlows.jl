@@ -100,15 +100,12 @@ with_api_reference(src_dir, ext_dir) do api_pages
                 asset("https://control-toolbox.org/assets/css/documentation.css"),
                 asset("https://control-toolbox.org/assets/js/documentation.js"),
             ],
-            size_threshold_ignore=[
-                joinpath("api", "api_traits_public.md"),
-            ],
+            size_threshold_ignore=String[],
         ),
         pages=[
             "Introduction" => "index.md",
             "Flows" => [
                 "Overview"           => "flows/index.md",
-                "Traits"             => "flows/traits.md",
                 "Data structures"    => "flows/data.md",
                 "Building a flow"    => "flows/building_a_flow.md",
                 "Integrating"        => "flows/integrating.md",

@@ -27,32 +27,6 @@ function generate_api_reference(src_dir::String, ext_dir::String)
     
     pages = [
         # ───────────────────────────────────────────────────────────────────
-        # Traits
-        # ───────────────────────────────────────────────────────────────────
-        CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[
-                CTFlows.Traits => src(
-                    joinpath("Traits", "Traits.jl"),
-                    joinpath("Traits", "abstract.jl"),
-                    joinpath("Traits", "ad.jl"),
-                    joinpath("Traits", "dynamics.jl"),
-                    joinpath("Traits", "helpers.jl"),
-                    joinpath("Traits", "mode.jl"),
-                    joinpath("Traits", "mutability.jl"),
-                    joinpath("Traits", "time_dependence.jl"),
-                    joinpath("Traits", "variable_costate.jl"),
-                    joinpath("Traits", "variable_dependence.jl"),
-                ),
-            ],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
-            title="Traits",
-            title_in_menu="Traits",
-            filename="api_traits",
-        ),
-        # ───────────────────────────────────────────────────────────────────
         # Configs
         # ───────────────────────────────────────────────────────────────────
         CTBase.automatic_reference_documentation(;
