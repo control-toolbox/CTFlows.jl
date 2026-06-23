@@ -9,7 +9,7 @@ import CTFlows.Differentiation
 import CTFlows.Data
 import CTFlows.Traits
 import CTBase.Exceptions
-import CTSolvers
+import CTBase.Strategies
 import ADTypes
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
@@ -20,10 +20,10 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 # ==============================================================================
 
 struct FakeADBackend <: Differentiation.AbstractADBackend
-    options::CTSolvers.Strategies.StrategyOptions
+    options::Strategies.StrategyOptions
 end
 
-FakeADBackend() = FakeADBackend(CTSolvers.Strategies.StrategyOptions())
+FakeADBackend() = FakeADBackend(Strategies.StrategyOptions())
 
 # ==============================================================================
 # Fake Hamiltonian for Testing (at module top-level)
@@ -45,7 +45,7 @@ function test_ad_backend()
         Test.@testset "Unit: AbstractADBackend abstract type" begin
             backend = FakeADBackend()
             Test.@test backend isa Differentiation.AbstractADBackend
-            Test.@test backend isa CTSolvers.Strategies.AbstractStrategy
+            Test.@test backend isa Strategies.AbstractStrategy
         end
 
         Test.@testset "Unit: DifferentiationInterface construction" begin
@@ -55,7 +55,7 @@ function test_ad_backend()
             Test.@test di isa Differentiation.AbstractADBackend
 
             # Default backend is AutoForwardDiff
-            metadata = CTSolvers.Strategies.metadata(Differentiation.DifferentiationInterface)
+            metadata = Strategies.metadata(Differentiation.DifferentiationInterface)
             Test.@test metadata[:ad_backend].default === ADTypes.AutoForwardDiff()
 
             # Custom backend
@@ -63,19 +63,19 @@ function test_ad_backend()
             Test.@test di_custom isa Differentiation.DifferentiationInterface
         end
 
-        Test.@testset "Unit: CTSolvers.Strategies contract" begin
+        Test.@testset "Unit: CTBase.Strategies contract" begin
             # id
-            Test.@test CTSolvers.Strategies.id(Differentiation.DifferentiationInterface) ===
+            Test.@test Strategies.id(Differentiation.DifferentiationInterface) ===
                   :di
 
             # description
-            desc = CTSolvers.Strategies.description(Differentiation.DifferentiationInterface)
+            desc = Strategies.description(Differentiation.DifferentiationInterface)
             Test.@test desc isa String
             Test.@test !isempty(desc)
 
             # metadata
-            metadata = CTSolvers.Strategies.metadata(Differentiation.DifferentiationInterface)
-            Test.@test metadata isa CTSolvers.Strategies.StrategyMetadata
+            metadata = Strategies.metadata(Differentiation.DifferentiationInterface)
+            Test.@test metadata isa Strategies.StrategyMetadata
             Test.@test length(metadata) > 0
             Test.@test :ad_backend in keys(metadata)
         end
@@ -130,4 +130,5 @@ end # module
 
 # CRITICAL: Redefine in outer scope for TestRunner
 test_ad_backend() = TestADBackend.test_ad_backend()
+
 

@@ -25,9 +25,9 @@ Concrete subtypes should store strategy options and implement the required contr
 # Interface Requirements
 
 Subtypes must implement:
-- `CTSolvers.Strategies.id(::Type{<:SubType})`: Return unique identifier
-- `CTSolvers.Strategies.description(::Type{<:SubType})`: Return description
-- `CTSolvers.Strategies.metadata(::Type{<:SubType})`: Return option metadata
+- `CTBase.Strategies.id(::Type{<:SubType})`: Return unique identifier
+- `CTBase.Strategies.description(::Type{<:SubType})`: Return description
+- `CTBase.Strategies.metadata(::Type{<:SubType})`: Return option metadata
 
 # Example
 ```julia-repl
@@ -47,7 +47,7 @@ $(TYPEDEF)
 Generic SciML ODE integrator strategy.
 
 Wraps any SciML algorithm (e.g. `Tsit5`, `Rodas4`) through a unified
-`CTSolvers`-backed option system. The full implementation (metadata, builder
+`CTBase.Strategies`-backed option system. The full implementation (metadata, builder
 and callable) is provided by the `CTFlowsSciMLIntegrator` package extension; this
 file declares the type and **stubs** that throw `ExtensionError` until the
 extension is loaded.
@@ -58,11 +58,11 @@ To activate the extension, load any of:
 - `using DifferentialEquations`
 
 # Fields
-- `options::CTSolvers.Strategies.StrategyOptions`: Validated option bundle.
+- `options::CTBase.Strategies.StrategyOptions`: Validated option bundle.
 - `options_point::Dict{Symbol, Any}`: Pre-computed options for StateEndPointConfig.
 - `options_trajectory::Dict{Symbol, Any}`: Pre-computed options for StateTrajectoryConfig.
 """
-struct SciML{O<:CTSolvers.Strategies.StrategyOptions, OP<:Dict{Symbol, Any}, OT<:Dict{Symbol, Any}} <: AbstractSciMLIntegrator
+struct SciML{O<:Strategies.StrategyOptions, OP<:Dict{Symbol, Any}, OT<:Dict{Symbol, Any}} <: AbstractSciMLIntegrator
     options::O
     options_point::OP
     options_trajectory::OT
@@ -77,14 +77,14 @@ $(TYPEDSIGNATURES)
 
 Return the unique identifier for SciML integrator.
 """
-CTSolvers.Strategies.id(::Type{<:SciML}) = :sciml
+Strategies.id(::Type{<:SciML}) = :sciml
 
 """
 $(TYPEDSIGNATURES)
 
 Return the description for the SciML integrator.
 """
-function CTSolvers.Strategies.description(::Type{<:SciML})
+function Strategies.description(::Type{<:SciML})
     "SciML ODE integrator.\n" *
     "See: https://docs.sciml.ai/DiffEqDocs\n" *
     "Solver options: https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/"
@@ -139,9 +139,9 @@ Real metadata implementation provided by the extension.
 # Throws
 - `CTBase.Exceptions.ExtensionError`: Always thrown by this stub implementation
 
-See also: `SciML`, `CTSolvers.Strategies.StrategyMetadata`.
+See also: `SciML`, `CTBase.Strategies.StrategyMetadata`.
 """
-function CTSolvers.Strategies.metadata(::Type{<:AbstractSciMLIntegrator})
+function Strategies.metadata(::Type{<:AbstractSciMLIntegrator})
     # Extension is missing
     throw(
         Exceptions.ExtensionError(

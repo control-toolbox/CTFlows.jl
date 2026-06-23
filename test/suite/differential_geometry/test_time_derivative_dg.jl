@@ -1,6 +1,7 @@
 module TestTimeDerivativeDG
 
 import Test
+import ForwardDiff  # ensure DI ForwardDiff extension is loaded (AutoForwardDiff backend)
 import CTBase.Exceptions
 import DifferentiationInterface
 import ADTypes: ADTypes

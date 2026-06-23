@@ -27,8 +27,8 @@ struct FakeIntegrator <: Integrators.AbstractIntegrator
     result::Any
 end
 
-import CTSolvers.Strategies
-import CTSolvers.Options
+import CTBase.Strategies
+import CTBase.Options
 
 Strategies.id(::Type{FakeIntegrator}) = :fake_integrator
 Strategies.metadata(::Type{FakeIntegrator}) = Strategies.StrategyMetadata()

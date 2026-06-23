@@ -2,6 +2,7 @@ module TestAbstractFlow
 
 import Test
 import CTBase.Exceptions
+import CTBase.Strategies
 import CTFlows.Systems
 import CTFlows.Flows
 import CTFlows.Common
@@ -9,7 +10,6 @@ import CTFlows.Configs
 import CTFlows.Traits
 import CTFlows.Integrators
 import CTFlows.Data
-import CTSolvers
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -36,9 +36,9 @@ struct FakeIntegrator <: Integrators.AbstractIntegrator
     result::Any
 end
 
-CTSolvers.Strategies.id(::Type{FakeIntegrator}) = :fake_integrator
-CTSolvers.Strategies.metadata(::Type{FakeIntegrator}) = CTSolvers.Strategies.StrategyMetadata()
-CTSolvers.Strategies.options(integ::FakeIntegrator) = CTSolvers.Strategies.StrategyOptions()
+Strategies.id(::Type{FakeIntegrator}) = :fake_integrator
+Strategies.metadata(::Type{FakeIntegrator}) = Strategies.StrategyMetadata()
+Strategies.options(integ::FakeIntegrator) = Strategies.StrategyOptions()
 
 """
 Fake flow for testing the AbstractFlow contract.

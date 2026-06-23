@@ -8,8 +8,8 @@ import CTFlows.Integrators
 import CTFlows.Flows
 import CTFlows.Common
 import CTFlows.Traits
-import CTSolvers.Strategies
-import CTSolvers.Options
+import CTBase.Strategies
+import CTBase.Options
 
 const VERBOSE    = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE    : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true

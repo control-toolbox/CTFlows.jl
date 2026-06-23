@@ -5,6 +5,7 @@ Unit and integration tests for the CTFlowsDifferentiationInterface extension.
 module TestDifferentiationInterfaceExtension
 
 import Test
+import ForwardDiff  # ensure DI ForwardDiff extension is loaded (AutoForwardDiff backend)
 import CTFlows: CTFlows
 import CTFlows.Data: Data
 import CTFlows.Differentiation: Differentiation

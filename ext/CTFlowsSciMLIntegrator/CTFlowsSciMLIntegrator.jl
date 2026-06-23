@@ -13,7 +13,7 @@ This extension provides:
 - `Integrators.build_problem` — converts CTFlows systems to `ODEProblem`
 - `Integrators.solve_problem` — solves an `ODEProblem` and returns a `SciMLIntegrationResult`
 
-This is the backend layer intended to eventually migrate to CTSolvers.
+This is the backend layer intended to eventually migrate to CTBase.Strategies.
 The user-facing `Flow(::AbstractODEFunction)` and `Flow(::AbstractODEProblem)` constructors
 live in the `CTFlowsSciMLFlows` extension.
 """
@@ -21,8 +21,8 @@ module CTFlowsSciMLIntegrator
 
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
-import CTSolvers.Strategies
-import CTSolvers.Options
+import CTBase.Strategies
+import CTBase.Options
 
 using CTFlows: CTFlows
 using CTFlows.Common: Common

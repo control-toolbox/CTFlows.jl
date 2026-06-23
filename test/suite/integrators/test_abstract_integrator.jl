@@ -2,12 +2,12 @@ module TestAbstractIntegrator
 
 import Test
 import CTBase.Exceptions
+import CTBase.Strategies
 import CTFlows.Integrators
 import CTFlows.Systems
 import CTFlows.Common
 import CTFlows.Configs
 import CTFlows.Traits
-import CTSolvers: CTSolvers
 
 const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
@@ -41,11 +41,11 @@ This minimal implementation provides all three required callable signatures
 to test routing and default behavior without full integrator complexity.
 """
 struct FakeIntegrator <: Integrators.AbstractIntegrator
-    options::CTSolvers.Strategies.StrategyOptions
+    options::Strategies.StrategyOptions
 end
 
 function FakeIntegrator()
-    return FakeIntegrator(CTSolvers.Strategies.StrategyOptions())
+    return FakeIntegrator(Strategies.StrategyOptions())
 end
 
 # Implement the three required callable signatures
@@ -66,11 +66,11 @@ end
 Minimal integrator that does not implement the contract (for error testing).
 """
 struct MinimalIntegrator <: Integrators.AbstractIntegrator
-    options::CTSolvers.Strategies.StrategyOptions
+    options::Strategies.StrategyOptions
 end
 
 function MinimalIntegrator()
-    return MinimalIntegrator(CTSolvers.Strategies.StrategyOptions())
+    return MinimalIntegrator(Strategies.StrategyOptions())
 end
 
 # ==============================================================================
@@ -87,7 +87,7 @@ function test_abstract_integrator()
         Test.@testset "Abstract Types" begin
             integ = FakeIntegrator()
             Test.@test integ isa Integrators.AbstractIntegrator
-            Test.@test integ isa CTSolvers.Strategies.AbstractStrategy
+            Test.@test integ isa Strategies.AbstractStrategy
 
             minimal = MinimalIntegrator()
             Test.@test minimal isa Integrators.AbstractIntegrator

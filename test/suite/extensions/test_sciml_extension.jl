@@ -9,8 +9,8 @@ import CTFlows.Data: Data
 import CTFlows.Systems: Systems
 import CTFlows.Integrators: Integrators
 import CTFlows.Trajectories: Trajectories
-import CTSolvers.Strategies: Strategies
-import CTSolvers.Options: Options
+import CTBase.Strategies: Strategies
+import CTBase.Options: Options
 
 # Fake tag type for testing stub behavior
 struct FakeTag <: Common.AbstractTag end

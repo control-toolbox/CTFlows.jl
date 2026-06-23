@@ -26,7 +26,7 @@ See also: [`CTFlows.Differentiation.AbstractADBackend`](@ref),
 [`CTFlows.Differentiation.variable_gradient`](@ref),
 [`CTFlows.Differentiation.prepare_cache`](@ref).
 """
-struct DifferentiationInterface{O<:CTSolvers.Strategies.StrategyOptions} <:
+struct DifferentiationInterface{O<:Strategies.StrategyOptions} <:
        AbstractADBackend
     options::O
 end
@@ -44,12 +44,12 @@ Constructor for `DifferentiationInterface` with a specific backend.
 - `DifferentiationInterface`: A new backend strategy instance.
 """
 function DifferentiationInterface(; mode::Symbol=:strict, kwargs...)
-    opts = CTSolvers.Strategies.build_strategy_options(DifferentiationInterface; mode=mode, kwargs...)
+    opts = Strategies.build_strategy_options(DifferentiationInterface; mode=mode, kwargs...)
     return DifferentiationInterface{typeof(opts)}(opts)
 end
 
 # ==============================================================================
-# CTSolvers.Strategies Contract
+# CTBase.Strategies Contract
 # ==============================================================================
 
 """
@@ -57,14 +57,14 @@ $(TYPEDSIGNATURES)
 
 Return the strategy identifier for `DifferentiationInterface`.
 """
-CTSolvers.Strategies.id(::Type{<:DifferentiationInterface}) = :di
+Strategies.id(::Type{<:DifferentiationInterface}) = :di
 
 """
 $(TYPEDSIGNATURES)
 
 Return a human-readable description of the `DifferentiationInterface` strategy.
 """
-CTSolvers.Strategies.description(::Type{<:DifferentiationInterface}) =
+Strategies.description(::Type{<:DifferentiationInterface}) =
     "AD backend wrapping DifferentiationInterface.jl backends (e.g., AutoForwardDiff)."
 
 """
@@ -72,9 +72,9 @@ $(TYPEDSIGNATURES)
 
 Return metadata defining `DifferentiationInterface` options and their specifications.
 """
-function CTSolvers.Strategies.metadata(::Type{<:DifferentiationInterface})
-    return CTSolvers.Strategies.StrategyMetadata(
-        CTSolvers.Strategies.OptionDefinition(;
+function Strategies.metadata(::Type{<:DifferentiationInterface})
+    return Strategies.StrategyMetadata(
+        Strategies.OptionDefinition(;
             name = :ad_backend,
             type = ADTypes.AbstractADType,
             default = Common.__ad_backend(),
@@ -103,6 +103,6 @@ See also: [`CTFlows.Differentiation.ad_backend`](@ref),
 [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 """
 ad_backend(backend::DifferentiationInterface) =
-    Base.get(CTSolvers.Strategies.options(backend), Val(:ad_backend))
+    Base.get(Strategies.options(backend), Val(:ad_backend))
 
 

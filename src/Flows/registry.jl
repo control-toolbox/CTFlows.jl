@@ -9,16 +9,16 @@ types to their concrete implementations for flow construction:
 - `Integrators.AbstractIntegrator` → `Integrators.SciML`
 
 # Type
-- `CTSolvers.Strategies.StrategyRegistry`: Registry mapping abstract types to concrete implementations.
+- `CTBase.Strategies.StrategyRegistry`: Registry mapping abstract types to concrete implementations.
 
 # Notes
-- Created at module load time via [`CTSolvers.Strategies.create_registry`](@extref).
+- Created at module load time via [`CTBase.Strategies.create_registry`](@extref).
 - Used by [`CTFlows.Flows.flow_registry`](@ref) to provide the registry to routing functions.
 - The registry is cached for performance.
 
-See also: [`CTFlows.Flows.flow_registry`](@ref), [`CTFlows.Flows._route_flow_options`](@ref), [`CTSolvers.Strategies.create_registry`](@extref).
+See also: [`CTFlows.Flows.flow_registry`](@ref), [`CTFlows.Flows._route_flow_options`](@ref), [`CTBase.Strategies.create_registry`](@extref).
 """
-const _FLOW_REGISTRY = CTSolvers.Strategies.create_registry(
+const _FLOW_REGISTRY = Strategies.create_registry(
     Differentiation.AbstractADBackend => (Differentiation.DifferentiationInterface,),
     Integrators.AbstractIntegrator => (Integrators.SciML,),
 )
@@ -32,7 +32,7 @@ The registry maps abstract strategy families to their concrete implementations
 for automatic differentiation backends and ODE integrators.
 
 # Returns
-- `CTSolvers.Strategies.StrategyRegistry`: Registry with `:di` (DifferentiationInterface)
+- `CTBase.Strategies.StrategyRegistry`: Registry with `:di` (DifferentiationInterface)
   and `:sciml` (SciML) strategies registered.
 
 # Notes
@@ -41,7 +41,7 @@ for automatic differentiation backends and ODE integrators.
 - The registry is precomputed and cached in `_FLOW_REGISTRY` for performance.
 
 See also: [`_route_flow_options`](@ref), [`_build_flow_components`](@ref),
-[`CTSolvers.Strategies.create_registry`](@extref)
+[`CTBase.Strategies.create_registry`](@extref)
 """
 function flow_registry()
     return _FLOW_REGISTRY

@@ -14,22 +14,22 @@ module Common
 # External package imports
 # ==============================================================================
 
-import Base: only
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
 using ADTypes: ADTypes
 
 # ==============================================================================
-# Sibling imports (temporary - will be removed after full refactoring)
+# Re-exported from CTBase.Core (moved out of CTFlows)
 # ==============================================================================
+
+# `AbstractTag`, `AbstractCache` and `make_coerce` now live in CTBase.Core.
+# They are re-exported here so existing `Common.<symbol>` call sites are unchanged.
+import CTBase.Core: AbstractTag, AbstractCache, make_coerce
 
 # ==============================================================================
 # Includes
 # ==============================================================================
 
-include(joinpath(@__DIR__, "helpers.jl"))
-include(joinpath(@__DIR__, "abstract_tag.jl"))
-include(joinpath(@__DIR__, "abstract_cache.jl"))
 include(joinpath(@__DIR__, "ode_parameters.jl"))
 include(joinpath(@__DIR__, "default.jl"))
 include(joinpath(@__DIR__, "internal_norm.jl"))

@@ -1,6 +1,7 @@
 module TestMacroHelpersDG
 
 import Test
+import ForwardDiff  # ensure DI ForwardDiff extension is loaded (AutoForwardDiff backend)
 import CTBase: CTBase  # for Exceptions prefix in @Lie macro
 import CTBase.Exceptions
 import CTFlows: CTFlows
