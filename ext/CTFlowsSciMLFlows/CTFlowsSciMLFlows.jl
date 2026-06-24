@@ -20,7 +20,7 @@ import CTBase.Exceptions
 using CTFlows: CTFlows
 using CTFlows.Common: Common
 using CTFlows.Configs: Configs
-using CTFlows.Traits: Traits
+using CTBase.Traits: Traits
 using CTFlows.Systems: Systems
 using CTFlows.Integrators: Integrators
 using CTFlows.Flows: Flows, AbstractFlow, build_flow

@@ -17,7 +17,7 @@ import CTBase.Exceptions
 # ==============================================================================
 
 import ..Common: Common
-import ..Traits: Traits
+import CTBase.Traits
 
 # ==============================================================================
 # Include files

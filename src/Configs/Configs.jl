@@ -44,7 +44,7 @@ import CTBase.Exceptions
 # Sibling imports
 # ==============================================================================
 
-import ..Traits: Traits
+import CTBase.Traits
 
 # ==============================================================================
 # Includes

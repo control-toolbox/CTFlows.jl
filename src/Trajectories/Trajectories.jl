@@ -31,7 +31,7 @@ import ..Common: Common
 import ..Configs: Configs
 import ..Systems: Systems
 import ..Integrators: Integrators
-import ..Traits: Traits
+import CTBase.Traits
 
 # ==============================================================================
 # Include files

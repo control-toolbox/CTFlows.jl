@@ -20,7 +20,7 @@ import CTBase.Options
 
 import ..Common: Common
 import ..Configs: Configs
-import ..Traits: Traits
+import CTBase.Traits
 import ..Systems: Systems
 import ..Integrators: Integrators
 import ..Flows: Flows
