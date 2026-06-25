@@ -8,7 +8,7 @@ import Test
 import CTBase.Exceptions
 import CTBase.Strategies
 import CTFlows.Flows
-import CTFlows.Differentiation
+import CTBase.Differentiation
 import CTFlows.Integrators
 import CTBase.Data
 import CTFlows.Systems

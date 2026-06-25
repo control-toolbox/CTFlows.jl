@@ -3,7 +3,7 @@ module TestCallingFlows
 import Test
 import CTFlows.Systems
 import CTBase.Data
-import CTFlows.Differentiation
+import CTBase.Differentiation
 import CTFlows.Flows
 import CTFlows.Integrators
 import CTFlows.Trajectories

@@ -10,7 +10,7 @@ import CTFlows.Common
 import CTBase.Data
 import CTFlows.DifferentialGeometry
 import MacroTools: @capture
-import DifferentiationInterface  # triggers CTFlowsDifferentiationInterface — required for ad/Poisson in _lie_mac/_poisson_mac
+import DifferentiationInterface  # triggers CTBaseDifferentiationInterface — required for ad/Poisson in _lie_mac/_poisson_mac
 
 const VERBOSE    = isdefined(Main, :TestData) ? Main.TestData.VERBOSE    : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

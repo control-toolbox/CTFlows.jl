@@ -43,7 +43,6 @@ const EXPORTED_FUNCTIONS = (
     :__unsafe,
     :__hvf_inplace,
     :__variable_costate,
-    :__ad_backend,
 )
 
 # Note: Common module has no private symbols (after filtering Julia internals)

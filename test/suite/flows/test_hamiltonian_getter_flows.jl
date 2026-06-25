@@ -7,7 +7,7 @@ import CTFlows.Common
 import CTBase.Traits
 import CTBase.Data
 import CTFlows.Systems
-import CTFlows.Differentiation
+import CTBase.Differentiation
 import CTFlows.Flows
 import CTFlows.Integrators
 

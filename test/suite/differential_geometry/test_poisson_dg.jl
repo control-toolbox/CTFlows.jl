@@ -10,7 +10,7 @@ import CTBase.Traits: Traits
 import CTFlows.Common: Common
 import CTBase.Data: Data
 import CTFlows.DifferentialGeometry: DifferentialGeometry
-import CTFlows.Differentiation: Differentiation
+import CTBase.Differentiation
 
 const VERBOSE    = isdefined(Main, :TestData) ? Main.TestData.VERBOSE    : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

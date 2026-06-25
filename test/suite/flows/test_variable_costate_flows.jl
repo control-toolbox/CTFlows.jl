@@ -7,6 +7,7 @@ integration of the augmented state `[x; p; pv]` where `pv` is the costate of the
 module TestVariableCostateFlows
 
 import Test
+import CTBase: CTBase
 import CTBase.Core
 import CTBase.Data: Data
 import CTBase.Exceptions: Exceptions
@@ -18,7 +19,7 @@ import CTFlows.Systems: Systems
 import CTFlows.Flows: Flows
 import CTFlows.Trajectories: Trajectories
 import CTFlows.Integrators: Integrators
-import CTFlows.Differentiation: Differentiation
+import CTBase.Differentiation
 
 using SciMLBase: SciMLBase
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
@@ -29,7 +30,7 @@ import ForwardDiff
 
 # Load extensions for testing
 const CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
-const CTFlowsDifferentiationInterface = Base.get_extension(CTFlows, :CTFlowsDifferentiationInterface)
+const CTBaseDifferentiationInterface = Base.get_extension(CTBase, :CTBaseDifferentiationInterface)
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

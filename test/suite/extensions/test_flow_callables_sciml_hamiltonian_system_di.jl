@@ -11,7 +11,7 @@ import CTFlows.Common: Common
 import CTFlows.Systems: Systems
 import CTFlows.Flows: Flows
 import CTFlows.Integrators: Integrators
-import CTFlows.Differentiation: Differentiation
+import CTBase.Differentiation
 import CTFlows.Trajectories: Trajectories
 
 using SciMLBase: SciMLBase

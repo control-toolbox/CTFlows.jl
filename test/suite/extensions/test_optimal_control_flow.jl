@@ -18,12 +18,13 @@ module TestOptimalControlFlow
 
 import Test
 import CTModels
+import CTBase: CTBase
 import CTBase.Exceptions: Exceptions
 import CTFlows: CTFlows
 import CTFlows.Flows: Flows
 import CTFlows.Systems: Systems
 import CTFlows.Integrators: Integrators
-import CTFlows.Differentiation: Differentiation
+import CTBase.Differentiation
 import CTBase.Data: Data
 import CTBase.Traits: Traits
 
@@ -33,7 +34,7 @@ using ADTypes: ADTypes
 using DifferentiationInterface: DifferentiationInterface as DI
 
 const CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
-const CTFlowsDifferentiationInterface = Base.get_extension(CTFlows, :CTFlowsDifferentiationInterface)
+const CTBaseDifferentiationInterface = Base.get_extension(CTBase, :CTBaseDifferentiationInterface)
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
