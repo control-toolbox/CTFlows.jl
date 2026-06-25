@@ -25,7 +25,7 @@ using StaticArrays
 
 # Make extension modules available in Main so that @docs blocks can resolve
 # qualified bindings like CTFlowsSciMLIntegrator.SciMLIntegrationResult.
-for _ext_sym in (:CTFlowsForwardDiff, :CTFlowsDifferentiationInterface,
+for _ext_sym in (:CTFlowsForwardDiff,
                  :CTFlowsOrdinaryDiffEqTsit5, :CTFlowsPlots,
                  :CTFlowsSciMLIntegrator, :CTFlowsSciMLFlows, :CTFlowsStaticArrays)
     _m = Base.get_extension(CTFlows, _ext_sym)
