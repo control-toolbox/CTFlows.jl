@@ -40,8 +40,8 @@ See also: [`CTFlows.DifferentialGeometry.ad`](@ref), [`CTFlows.DifferentialGeome
 function ad(
     X::Function, foo::Function;
     ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
-    is_autonomous::Bool = Common.__is_autonomous(),
-    is_variable::Bool   = Common.__is_variable(),
+    is_autonomous::Bool = Data.__is_autonomous(),
+    is_variable::Bool   = Data.__is_variable(),
 )
     TD      = is_autonomous ? Traits.Autonomous : Traits.NonAutonomous
     VD      = is_variable   ? Traits.NonFixed : Traits.Fixed
@@ -63,7 +63,7 @@ This typed entry point is used by the [`@Lie`](@ref) macro for compile-time disp
 - `X::Function`: Vector field function (returns a vector).
 - `foo::Function`: Scalar or vector field function.
 - `::Type{TD}`: Time dependence type (`Autonomous` or `NonAutonomous`).
-- `::Type{VD}`: Variable dependence type ([`CTFlows.Traits.Fixed`](@ref) or [`CTFlows.Traits.NonFixed`](@ref)).
+- `::Type{VD}`: Variable dependence type ([`CTBase.Traits.Fixed`](@ref) or [`CTBase.Traits.NonFixed`](@ref)).
 - `ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided}`: AD backend to use (default: global backend).
 
 # Returns
@@ -76,7 +76,7 @@ This typed entry point is used by the [`@Lie`](@ref) macro for compile-time disp
 # Example
 ```julia
 using CTFlows.DifferentialGeometry
-using CTFlows.Traits
+using CTBase.Traits
 
 X = x -> [x[2], -x[1]]
 f = x -> x[1]^2 + x[2]^2

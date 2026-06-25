@@ -13,11 +13,11 @@ module TestOCPHamiltonianFunction
 import Test
 import CTModels
 import CTFlows.Flows: Flows
-import CTFlows.Traits: Traits
-import CTFlows.Data: Data
+import CTBase.Traits: Traits
+import CTBase.Data: Data
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # =============================================================================
 # Shared dynamics (module top-level)

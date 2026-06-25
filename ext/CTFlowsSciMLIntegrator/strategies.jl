@@ -10,7 +10,7 @@ Return metadata defining `SciML` options and their specifications.
 The `internalnorm` option defaults to `real_norm`, which extracts the primal (Float64)
 part of ForwardDiff dual numbers to ensure grid invariance (IND) when ForwardDiff is loaded.
 """
-function Strategies.metadata(::Type{SciML})
+function Strategies.metadata(::Type{Integrators.SciML})
     return Strategies.StrategyMetadata(
         Strategies.OptionDefinition(;
             name = :alg,
@@ -276,10 +276,10 @@ avoiding repeated resolution during integration.
 See also: [`CTFlows.Integrators.build_options`](@ref), [`CTFlows.Integrators.SciML`](@ref),
 [`CTFlows.Configs.StateEndPointConfig`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref).
 """
-function CTFlows.Integrators.build_sciml_integrator(
-    ::Type{CTFlows.Integrators.SciMLTag}; mode::Symbol = :strict, kwargs...,
+function Integrators.build_sciml_integrator(
+    ::Type{Integrators.SciMLTag}; mode::Symbol = :strict, kwargs...,
 )
-    opts = Strategies.build_strategy_options(SciML; mode = mode, kwargs...)
+    opts = Strategies.build_strategy_options(Integrators.SciML; mode = mode, kwargs...)
     raw = Strategies.options_dict(opts)
     
     # Check if algorithm is missing and raise PreconditionError
@@ -309,7 +309,7 @@ function CTFlows.Integrators.build_sciml_integrator(
         get(options_trajectory, key, :auto) === :auto && (options_trajectory[key] = true)
     end
     
-    return CTFlows.Integrators.SciML{typeof(opts), typeof(options_point), typeof(options_trajectory)}(
+    return Integrators.SciML{typeof(opts), typeof(options_point), typeof(options_trajectory)}(
         opts, options_point, options_trajectory
     )
 end
@@ -336,7 +336,7 @@ since only the final state is needed.
 
 See also: [`CTFlows.Integrators.build_options`](@ref), [`CTFlows.Integrators.SciML`](@ref), [`CTFlows.Configs.AbstractEndPointConfig`](@ref).
 """
-function Integrators.build_options(integ::SciML, config::Configs.AbstractEndPointConfig)
+function Integrators.build_options(integ::Integrators.SciML, config::Configs.AbstractEndPointConfig)
     return integ.options_point
 end
 
@@ -358,7 +358,7 @@ full trajectory storage and interpolation.
 
 See also: [`CTFlows.Integrators.build_options`](@ref), [`CTFlows.Integrators.SciML`](@ref), [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref).
 """
-function Integrators.build_options(integ::SciML, config::Configs.AbstractTrajectoryConfig)
+function Integrators.build_options(integ::Integrators.SciML, config::Configs.AbstractTrajectoryConfig)
     return integ.options_trajectory
 end
 
@@ -378,6 +378,6 @@ Defaults to trajectory options when no configuration is provided.
 
 See also: [`CTFlows.Integrators.build_options`](@ref), [`CTFlows.Integrators.SciML`](@ref).
 """
-function Integrators.build_options(integ::SciML, config::Nothing)
+function Integrators.build_options(integ::Integrators.SciML, config::Nothing)
     return integ.options_trajectory  # fallback vers Trajectory par défaut
 end

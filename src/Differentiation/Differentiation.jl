@@ -50,17 +50,17 @@ module Differentiation
 # External Imports
 # ==============================================================================
 
+import ADTypes
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
+import CTBase.Data
 import CTBase.Exceptions
 import CTBase.Strategies
-using ADTypes: ADTypes  # Hard dep — provides AutoForwardDiff
 
 # ==============================================================================
 # Internal Sibling Imports
 # ==============================================================================
 
 import ..Common: Common
-import ..Data: Data
 
 # ==============================================================================
 # Includes (in dependency order)

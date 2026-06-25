@@ -1,10 +1,11 @@
 module TestDefault
 
 import Test
+import CTBase.Data
 import CTFlows.Common
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ==============================================================================
 # Test function
@@ -19,11 +20,11 @@ function test_default()
 
         Test.@testset "Default Value Functions" begin
             Test.@testset "__is_autonomous returns true" begin
-                Test.@test Common.__is_autonomous() === true
+                Test.@test Data.__is_autonomous() === true
             end
 
             Test.@testset "__is_variable returns false" begin
-                Test.@test Common.__is_variable() === false
+                Test.@test Data.__is_variable() === false
             end
 
             Test.@testset "__variable returns NotProvided" begin
@@ -32,10 +33,6 @@ function test_default()
 
             Test.@testset "__unsafe returns false" begin
                 Test.@test Common.__unsafe() === false
-            end
-
-            Test.@testset "__is_inplace returns nothing" begin
-                Test.@test Common.__is_inplace() === nothing
             end
 
             Test.@testset "__hvf_inplace returns false" begin

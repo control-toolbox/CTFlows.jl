@@ -4,7 +4,7 @@ $(TYPEDEF)
 Tag type for SciML integrator dispatch. Used to target the implementation
 provided by the `CTFlowsSciMLIntegrator` package extension.
 """
-struct SciMLTag <: Common.AbstractTag end
+struct SciMLTag <: Core.AbstractTag end
 
 """
 $(TYPEDEF)
@@ -12,7 +12,7 @@ $(TYPEDEF)
 Tag type for Tsit5-specific default algorithm dispatch. Used to target
 the implementation provided by the `CTFlowsOrdinaryDiffEqTsit5` package extension.
 """
-struct Tsit5Tag <: Common.AbstractTag end
+struct Tsit5Tag <: Core.AbstractTag end
 
 """
 $(TYPEDEF)
@@ -119,7 +119,7 @@ Stub builder for `SciML`. The real implementation is provided by
 `CTFlowsSciMLIntegrator`; this stub throws `ExtensionError` until the extension
 is loaded.
 """
-function build_sciml_integrator(::Type{<:Common.AbstractTag}; kwargs...)
+function build_sciml_integrator(::Type{<:Core.AbstractTag}; kwargs...)
     throw(
         Exceptions.ExtensionError(
             :OrdinaryDiffEqTsit5;
@@ -166,6 +166,6 @@ for Tsit5Tag is provided by CTFlowsOrdinaryDiffEqTsit5.
 
 See also: [`Integrators.SciML`](@ref), [`Integrators.Tsit5Tag`](@ref).
 """
-function __default_sciml_algorithm(::Type{<:Common.AbstractTag})
+function __default_sciml_algorithm(::Type{<:Core.AbstractTag})
     return missing
 end

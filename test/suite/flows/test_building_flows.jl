@@ -2,15 +2,15 @@ module TestBuildingFlows
 
 import Test
 using OrdinaryDiffEqTsit5
-import CTFlows.Data
+import CTBase.Data
 import CTFlows.Flows
 import CTFlows.Systems
 import CTFlows.Integrators
 import CTFlows.Common
-import CTFlows.Traits
+import CTBase.Traits
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ==============================================================================
 # Test function

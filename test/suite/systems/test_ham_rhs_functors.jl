@@ -3,13 +3,13 @@ module TestHamRHSFunctors
 import Test
 import CTBase.Exceptions
 import CTFlows.Common: Common
-import CTFlows.Data: Data
+import CTBase.Data: Data
 import CTFlows.Systems: Systems
-import CTFlows.Traits: Traits
+import CTBase.Traits: Traits
 import CTFlows.Differentiation: Differentiation
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # =============================================================================
 # Fake Hamiltonian and backend for testing (top-level)

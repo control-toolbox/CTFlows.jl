@@ -3,7 +3,7 @@ module TestForwardDiffExtension
 import Test
 import CTFlows: CTFlows
 import CTFlows.Common: Common
-import CTFlows.Data: Data
+import CTBase.Data: Data
 import CTFlows.Systems: Systems
 import CTFlows.Integrators: Integrators
 import CTFlows.Trajectories: Trajectories
@@ -18,8 +18,8 @@ using ForwardDiff: ForwardDiff
 const CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
 const CTFlowsForwardDiff = Base.get_extension(CTFlows, :CTFlowsForwardDiff)
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 function test_forwarddiff_extension()
     Test.@testset "ForwardDiff Extension Tests" verbose=VERBOSE showtiming=SHOWTIMING begin

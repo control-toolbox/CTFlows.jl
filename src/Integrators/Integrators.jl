@@ -13,6 +13,7 @@ module Integrators
 # ==============================================================================
 
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
+import CTBase.Core
 import CTBase.Exceptions
 import CTBase.Strategies
 

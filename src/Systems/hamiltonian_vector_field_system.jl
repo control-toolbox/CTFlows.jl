@@ -36,7 +36,7 @@ HamiltonianVectorFieldSystem
   hamiltonian_vector_field: HamiltonianVectorField{var"#1", Autonomous, Fixed, OutOfPlace}
 ```
 
-See also: [`CTFlows.Data.HamiltonianVectorField`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), `TimeDependence`, [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Systems.build_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
+See also: [`CTBase.Data.HamiltonianVectorField`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), `TimeDependence`, [`CTBase.Traits.VariableDependence`](@ref), [`CTFlows.Systems.build_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
 """
 struct HamiltonianVectorFieldSystem{F<:Function, TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, MD<:Traits.AbstractMutabilityTrait} <: AbstractHamiltonianSystem{TD, VD}
     hvf::Data.HamiltonianVectorField{F, TD, VD, MD}
@@ -212,7 +212,7 @@ See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
 function get_ip_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, config::Configs.AbstractHamiltonianConfig) where {F, TD, VD}
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
-    return IPHVFOoPRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
+    return IPHVFOoPRHS(sys.hvf, _state_dim(x0), Core.make_coerce(x0), Core.make_coerce(p0))
 end
 
 """
@@ -234,7 +234,7 @@ See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
 function get_ip_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace}, config::Configs.AbstractHamiltonianConfig) where {F, TD, VD}
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
-    return IPHVFIpRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
+    return IPHVFIpRHS(sys.hvf, _state_dim(x0), Core.make_coerce(x0), Core.make_coerce(p0))
 end
 
 """
@@ -256,7 +256,7 @@ See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 function get_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.OutOfPlace}, config::Configs.AbstractHamiltonianConfig) where {F, TD, VD}
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
-    return OoPHVFOoPRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
+    return OoPHVFOoPRHS(sys.hvf, _state_dim(x0), Core.make_coerce(x0), Core.make_coerce(p0))
 end
 
 """
@@ -284,9 +284,9 @@ function get_oop_rhs(sys::HamiltonianVectorFieldSystem{F, TD, VD, Traits.InPlace
     p0 = Configs.initial_costate(config)
     if !ismutable(x0)
         @warn "InPlace HamiltonianVectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
-        return OoPHVFIpFinalizeRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
+        return OoPHVFIpFinalizeRHS(sys.hvf, _state_dim(x0), Core.make_coerce(x0), Core.make_coerce(p0))
     end
-    return OoPHVFIpRHS(sys.hvf, _state_dim(x0), Common.make_coerce(x0), Common.make_coerce(p0))
+    return OoPHVFIpRHS(sys.hvf, _state_dim(x0), Core.make_coerce(x0), Core.make_coerce(p0))
 end
 
 """
@@ -311,7 +311,7 @@ function get_ip_rhs_augmented(sys::HamiltonianVectorFieldSystem{F, TD, VD, Trait
     n_x = _state_dim(x0)
     pv0 = Configs.initial_variable_costate(config)
     n_v = _state_dim(pv0)
-    return IPHVFOoPAugRHS(sys.hvf, n_x, n_v, Common.make_coerce(x0), Common.make_coerce(p0))
+    return IPHVFOoPAugRHS(sys.hvf, n_x, n_v, Core.make_coerce(x0), Core.make_coerce(p0))
 end
 
 """
@@ -336,7 +336,7 @@ function get_ip_rhs_augmented(sys::HamiltonianVectorFieldSystem{F, TD, VD, Trait
     n_x = _state_dim(x0)
     pv0 = Configs.initial_variable_costate(config)
     n_v = _state_dim(pv0)
-    return IPHVFIpAugRHS(sys.hvf, n_x, n_v, Common.make_coerce(x0), Common.make_coerce(p0))
+    return IPHVFIpAugRHS(sys.hvf, n_x, n_v, Core.make_coerce(x0), Core.make_coerce(p0))
 end
 
 # =============================================================================

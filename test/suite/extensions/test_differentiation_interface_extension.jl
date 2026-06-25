@@ -7,13 +7,13 @@ module TestDifferentiationInterfaceExtension
 import Test
 import ForwardDiff  # ensure DI ForwardDiff extension is loaded (AutoForwardDiff backend)
 import CTFlows: CTFlows
-import CTFlows.Data: Data
+import CTBase.Data: Data
 import CTFlows.Differentiation: Differentiation
 import ADTypes
 import DifferentiationInterface
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ==============================================================================
 # Fake Hamiltonians for testing (module top-level)

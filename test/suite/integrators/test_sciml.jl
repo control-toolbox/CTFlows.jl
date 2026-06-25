@@ -1,13 +1,14 @@
 module TestSciML
 
 import Test
+import CTBase.Core
 import CTBase.Exceptions
 import CTBase.Strategies
 import CTFlows.Integrators
 import CTFlows.Common
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ==============================================================================
 # Fake types for testing stubs
@@ -16,7 +17,7 @@ const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING :
 """
 Fake SciML tag for testing stub methods on AbstractTag.
 """
-struct FakeSciMLTag <: Common.AbstractTag end
+struct FakeSciMLTag <: Core.AbstractTag end
 
 """
 Fake SciML integrator for testing stub methods on AbstractSciMLIntegrator.
@@ -56,7 +57,7 @@ function test_sciml()
         # ====================================================================
 
         Test.@testset "Type Hierarchy" begin
-            Test.@test Integrators.SciMLTag <: Common.AbstractTag
+            Test.@test Integrators.SciMLTag <: Core.AbstractTag
         end
 
         # ====================================================================

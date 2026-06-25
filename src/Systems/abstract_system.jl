@@ -29,7 +29,7 @@ function Systems.rhs(sys::MySystem)
 end
 \`\`\`
 
-See also: [`CTFlows.Systems.rhs`](@ref), [`CTFlows.Traits.time_dependence`](@ref), [`CTFlows.Traits.variable_dependence`](@ref).
+See also: [`CTFlows.Systems.rhs`](@ref), [`CTBase.Traits.time_dependence`](@ref), [`CTBase.Traits.variable_dependence`](@ref).
 """
 abstract type AbstractSystem{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, D<:Traits.AbstractDynamicsTrait} end
 
@@ -106,7 +106,7 @@ function Traits.time_dependence(sys::MySystem)
 end
 \`\`\`
 
-See also: [`CTFlows.Traits.time_dependence`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
+See also: [`CTBase.Traits.time_dependence`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
 """
 Traits.has_time_dependence_trait(::AbstractSystem) = true
 
@@ -135,7 +135,7 @@ function Traits.variable_dependence(sys::MySystem)
 end
 \`\`\`
 
-See also: [`CTFlows.Traits.variable_dependence`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
+See also: [`CTBase.Traits.variable_dependence`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
 """
 Traits.has_variable_dependence_trait(::AbstractSystem) = true
 
@@ -159,7 +159,7 @@ end
 Traits.time_dependence(MySystem)  # Returns Autonomous
 \`\`\`
 
-See also: [`CTFlows.Traits.has_time_dependence_trait`](@ref), `is_autonomous`, [`CTFlows.Systems.AbstractSystem`](@ref).
+See also: [`CTBase.Traits.has_time_dependence_trait`](@ref), `is_autonomous`, [`CTFlows.Systems.AbstractSystem`](@ref).
 """
 function Traits.time_dependence(::AbstractSystem{TD, <:Traits.VariableDependence, <:Traits.AbstractDynamicsTrait}) where {TD <: Traits.TimeDependence}
     return TD
@@ -185,7 +185,7 @@ end
 Traits.variable_dependence(MySystem)  # Returns Fixed
 \`\`\`
 
-See also: [`CTFlows.Traits.has_variable_dependence_trait`](@ref), `is_variable`, [`CTFlows.Systems.AbstractSystem`](@ref).
+See also: [`CTBase.Traits.has_variable_dependence_trait`](@ref), `is_variable`, [`CTFlows.Systems.AbstractSystem`](@ref).
 """
 function Traits.variable_dependence(::AbstractSystem{<:Traits.TimeDependence, VD, <:Traits.AbstractDynamicsTrait}) where {VD <: Traits.VariableDependence}
     return VD
@@ -199,7 +199,7 @@ Extract the dynamics trait from an `AbstractSystem`.
 # Returns
 - `Type{<:AbstractDynamicsTrait}`: `StateDynamics` or `HamiltonianDynamics`.
 
-See also: [`CTFlows.Traits.AbstractDynamicsTrait`](@ref), [`CTFlows.Systems.AbstractStateSystem`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
+See also: [`CTBase.Traits.AbstractDynamicsTrait`](@ref), [`CTFlows.Systems.AbstractStateSystem`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
 """
 function Traits.dynamics_trait(::AbstractSystem{<:Traits.TimeDependence, <:Traits.VariableDependence, D}) where {D <: Traits.AbstractDynamicsTrait}
     return D
@@ -222,7 +222,7 @@ Return the variable costate capability trait of a system.
 - Specialized implementation on `HamiltonianSystem` with `NonFixed` returns `SupportsVariableCostate`
 - This trait is used for dispatch in `_invoke_flow_variable_costate` to determine if augmented integration is possible
 
-See also: [`CTFlows.Traits.AbstractVariableCostateCapability`](@ref), [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Traits.NoVariableCostate`](@ref).
+See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@ref), [`CTBase.Traits.SupportsVariableCostate`](@ref), [`CTBase.Traits.NoVariableCostate`](@ref).
 """
 Traits.variable_costate_trait(::AbstractSystem) = Traits.NoVariableCostate
 

@@ -2,13 +2,13 @@ module TestVectorFieldSystem
 
 import Test
 import CTFlows.Systems
-import CTFlows.Data
+import CTBase.Data
 import CTFlows.Common
-import CTFlows.Traits
+import CTBase.Traits
 import StaticArrays: SA, StaticArrays
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ==============================================================================
 # Test function

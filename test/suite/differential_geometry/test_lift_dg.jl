@@ -3,13 +3,13 @@ module TestLiftDG
 import Test
 import CTBase.Exceptions
 import CTFlows: CTFlows
-import CTFlows.Traits: Traits
+import CTBase.Traits: Traits
 import CTFlows.Common: Common
-import CTFlows.Data: Data
+import CTBase.Data: Data
 import CTFlows.DifferentialGeometry: DifferentialGeometry
 
-const VERBOSE    = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE    : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE    = isdefined(Main, :TestData) ? Main.TestData.VERBOSE    : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 function test_lift_dg()
     Test.@testset "Lift() - Function → Function" verbose=VERBOSE showtiming=SHOWTIMING begin

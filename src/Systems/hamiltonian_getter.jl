@@ -327,7 +327,7 @@ with the correct signature based on the Hamiltonian's time and variable dependen
   - Autonomous/NonFixed: `(x, p, v; variable_costate=false) -> (∂p, -∂x)` or `(x, p, v; variable_costate=true) -> (∂p, -∂x, -∂v)`
   - NonAutonomous/NonFixed: `(t, x, p, v; variable_costate=false) -> (∂p, -∂x)` or `(t, x, p, v; variable_costate=true) -> (∂p, -∂x, -∂v)`
 
-See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Data.HamiltonianVectorField`](@ref)
+See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTBase.Data.HamiltonianVectorField`](@ref)
 """
 function hamiltonian_vector_field(
     h::Data.Hamiltonian{F, TD, VD};
@@ -367,7 +367,7 @@ No computation is performed since the vector field is already constructed.
   redundant automatic differentiation.
 - The returned vector field is identical to `sys.hvf` (same object reference).
 
-See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Data.HamiltonianVectorField`](@ref)
+See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTBase.Data.HamiltonianVectorField`](@ref)
 """
 function hamiltonian_vector_field(sys::HamiltonianVectorFieldSystem; inplace::Bool = Common.__hvf_inplace())
     return sys.hvf
@@ -393,7 +393,7 @@ Hamiltonian overload to compute the vector field via automatic differentiation.
 - The `inplace` parameter controls whether the returned closure writes results in-place.
 - Delegates to [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 
-See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Data.Hamiltonian`](@ref), [`CTFlows.Differentiation.AbstractADBackend`](@ref)
+See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTBase.Data.Hamiltonian`](@ref), [`CTFlows.Differentiation.AbstractADBackend`](@ref)
 """
 function hamiltonian_vector_field(sys::HamiltonianSystem; inplace::Bool = Common.__hvf_inplace())
     ad_backend = Differentiation.ad_backend(sys.backend)

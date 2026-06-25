@@ -11,7 +11,7 @@ of one phase becomes the initial condition of the next.
 
 ```@setup flows_multiphase
 using CTFlows
-using CTFlows.Data
+using CTBase.Data
 using CTFlows.Flows
 using CTFlows.MultiPhase
 using CTFlows.Trajectories

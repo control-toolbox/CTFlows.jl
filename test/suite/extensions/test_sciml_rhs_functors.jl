@@ -3,7 +3,7 @@ module TestSciMLRHSFunctors
 import Test
 import CTFlows: CTFlows
 import CTFlows.Common: Common
-import CTFlows.Traits: Traits
+import CTBase.Traits: Traits
 import CTFlows.Systems: Systems
 import SciMLBase: SciMLBase, ODEFunction
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
@@ -11,8 +11,8 @@ using StaticArrays: SA, SVector
 
 const CTFlowsSciMLFlows = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 function test_sciml_rhs_functors()
     Test.@testset "SciML RHS Functors" verbose=VERBOSE showtiming=SHOWTIMING begin

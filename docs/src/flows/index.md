@@ -18,7 +18,7 @@ Each layer has a single responsibility:
 
 | Layer | Submodule | What it produces |
 |---|---|---|
-| **Data** | [`Data`](@ref CTFlows.Data) | Typed function wrappers (`VectorField`, `Hamiltonian`, `HamiltonianVectorField`) |
+| **Data** | [`Data`](@ref CTBase.Data) | Typed function wrappers (`VectorField`, `Hamiltonian`, `HamiltonianVectorField`) |
 | **Systems** | [`Systems`](@ref CTFlows.Systems) | ODE right-hand side + traits (`VectorFieldSystem`, `HamiltonianSystem`, …) |
 | **Integrators** | [`Integrators`](@ref CTFlows.Integrators) | ODE solver strategy (`SciML`) |
 | **Flows** | [`Flows`](@ref CTFlows.Flows) | Callable integration object (`StateFlow`, `HamiltonianFlow`) |
@@ -42,11 +42,11 @@ CTFlows exports nothing at the package level. Bring submodules into scope explic
 ```@example flows_index
 using CTFlows
 using CTFlows.Flows        # StateFlow, HamiltonianFlow, Flow, build_flow
-using CTFlows.Data         # VectorField, Hamiltonian, HamiltonianVectorField
+using CTBase.Data         # VectorField, Hamiltonian, HamiltonianVectorField
 using CTFlows.Systems      # build_system
 using CTFlows.Integrators  # SciML, build_integrator
 using CTFlows.Trajectories    # VectorFieldTrajectory, state, time_grid
-using CTFlows.Traits       # Autonomous, NonAutonomous, Fixed, NonFixed, InPlace, OutOfPlace
+using CTBase.Traits       # Autonomous, NonAutonomous, Fixed, NonFixed, InPlace, OutOfPlace
 using CTFlows.Configs      # StateEndPointConfig, StateTrajectoryConfig, …
 import OrdinaryDiffEqTsit5 # activates the SciML extension
 nothing # hide

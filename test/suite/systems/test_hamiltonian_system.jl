@@ -2,9 +2,9 @@ module TestHamiltonianSystem
 
 import Test
 import CTBase.Exceptions
-import CTFlows.Data: Data
+import CTBase.Data: Data
 import CTFlows.Common: Common
-import CTFlows.Traits: Traits
+import CTBase.Traits: Traits
 import CTFlows.Systems: Systems
 import CTFlows.Differentiation: Differentiation
 import CTFlows.Configs: Configs

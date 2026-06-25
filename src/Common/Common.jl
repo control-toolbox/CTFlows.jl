@@ -15,16 +15,7 @@ module Common
 # ==============================================================================
 
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
-import CTBase.Exceptions
 using ADTypes: ADTypes
-
-# ==============================================================================
-# Re-exported from CTBase.Core (moved out of CTFlows)
-# ==============================================================================
-
-# `AbstractTag`, `AbstractCache` and `make_coerce` now live in CTBase.Core.
-# They are re-exported here so existing `Common.<symbol>` call sites are unchanged.
-import CTBase.Core: AbstractTag, AbstractCache, make_coerce
 
 # ==============================================================================
 # Includes
@@ -38,11 +29,9 @@ include(joinpath(@__DIR__, "internal_norm.jl"))
 # Module exports
 # ==============================================================================
 
-export AbstractTag
-export AbstractCache
 export NotProvided
 export ODEParameters, variable
-export __is_autonomous, __is_variable, __variable, __unsafe, __is_inplace, __hvf_inplace, __variable_costate, __ad_backend
-export deepvalue, real_norm, make_coerce
+export __variable, __unsafe, __hvf_inplace, __variable_costate, __ad_backend
+export deepvalue, real_norm
 
 end # module Common

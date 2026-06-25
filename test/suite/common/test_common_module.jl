@@ -9,7 +9,6 @@
 # Functionality tests are in separate files:
 # - test_ode_parameters.jl for ODEParameters
 # - test_internal_norm.jl for deepvalue/real_norm
-# - test_abstract_tag.jl for AbstractTag
 """
 
 module TestCommonModule
@@ -19,8 +18,8 @@ import CTFlows
 import CTFlows.Common
 using CTFlows.Common  # For testing exported symbols
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 const CurrentModule = TestCommonModule
 
@@ -31,8 +30,6 @@ const CurrentModule = TestCommonModule
 # For other modules, create similar lists with their specific exports.
 
 const EXPORTED_TYPES = (
-    :AbstractTag,
-    :AbstractCache,
     :NotProvided,
     :ODEParameters,
 )
@@ -41,13 +38,9 @@ const EXPORTED_FUNCTIONS = (
     :variable,
     :deepvalue,
     :real_norm,
-    :make_coerce,
     # Shared default values (exported for use across modules)
-    :__is_autonomous,
-    :__is_variable,
     :__variable,
     :__unsafe,
-    :__is_inplace,
     :__hvf_inplace,
     :__variable_costate,
     :__ad_backend,
@@ -128,14 +121,6 @@ function test_common_module()
         # ====================================================================
 
         Test.@testset "Type hierarchy" begin
-            Test.@testset "AbstractTag is abstract" begin
-                Test.@test isabstracttype(Common.AbstractTag)
-            end
-
-            Test.@testset "AbstractCache is abstract" begin
-                Test.@test isabstracttype(Common.AbstractCache)
-            end
-
             Test.@testset "NotProvided is concrete" begin
                 Test.@test !isabstracttype(Common.NotProvided)
             end

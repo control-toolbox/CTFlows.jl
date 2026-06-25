@@ -26,18 +26,11 @@ module CTFlows
 # ==============================================================================
 # Include submodules in topological order
 # ==============================================================================
-
-# Traits moved to CTBase.Traits; alias kept so `CTFlows.Traits` still resolves.
-import CTBase.Traits
-
 include(joinpath(@__DIR__, "Configs", "Configs.jl"))
 using .Configs
 
 include(joinpath(@__DIR__, "Common", "Common.jl"))
 using .Common
-
-include(joinpath(@__DIR__, "Data", "Data.jl"))
-using .Data
 
 include(joinpath(@__DIR__, "Differentiation", "Differentiation.jl"))
 using .Differentiation

@@ -10,7 +10,7 @@ This constructor builds a complete flow by:
 4. Combining them into a callable `Flow`
 
 # Arguments
-- `data::CTFlows.Data.VectorField`: The vector field defining the system dynamics.
+- `data::CTBase.Data.VectorField`: The vector field defining the system dynamics.
 - `opts...`: Keyword options passed to the integrator's strategy.
 
 # Returns
@@ -18,7 +18,7 @@ This constructor builds a complete flow by:
 
 # Example
 \`\`\`julia
-using CTFlows.Data, CTFlows.Flows, CTFlows.Common
+using CTBase.Data, CTFlows.Flows, CTFlows.Common
 
 vf = Data.VectorField((t, x, v) -> x, Traits.Autonomous(), Traits.Fixed())
 flow = Flows.Flow(vf; reltol=1e-8)
@@ -44,7 +44,7 @@ This constructor builds a complete Hamiltonian flow by:
 4. Combining them into a callable `HamiltonianFlow`
 
 # Arguments
-- `data::CTFlows.Data.HamiltonianVectorField`: The Hamiltonian vector field defining the system dynamics.
+- `data::CTBase.Data.HamiltonianVectorField`: The Hamiltonian vector field defining the system dynamics.
 - `opts...`: Keyword options passed to the integrator's strategy.
 
 # Returns
@@ -52,7 +52,7 @@ This constructor builds a complete Hamiltonian flow by:
 
 # Example
 ```julia
-using CTFlows.Data, CTFlows.Flows
+using CTBase.Data, CTFlows.Flows
 
 hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
 flow = Flows.Flow(hvf; reltol=1e-8)
@@ -78,7 +78,7 @@ This constructor builds a complete Hamiltonian flow by:
 4. Combining them into a callable `HamiltonianFlow`
 
 # Arguments
-- `h::CTFlows.Data.AbstractHamiltonian`: The scalar Hamiltonian function.
+- `h::CTBase.Data.AbstractHamiltonian`: The scalar Hamiltonian function.
 - `kwargs...`: Keyword options passed to the backend and integrator strategies.
   Options are automatically routed based on their names:
   - Backend options (e.g., `ad_backend`) → `:di` strategy
@@ -95,7 +95,7 @@ This constructor builds a complete Hamiltonian flow by:
 
 # Example
 ```julia
-using CTFlows.Data, CTFlows.Flows
+using CTBase.Data, CTFlows.Flows
 
 h = Data.Hamiltonian((t, x, p, v) -> 0.5 * (x[1]^2 + p[1]^2); is_autonomous=true, is_variable=false)
 flow = Flows.Flow(h; reltol=1e-8, ad_backend=ADTypes.AutoForwardDiff())

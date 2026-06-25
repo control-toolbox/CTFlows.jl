@@ -5,14 +5,14 @@ import ForwardDiff  # ensure DI ForwardDiff extension is loaded (AutoForwardDiff
 import CTBase: CTBase  # for Exceptions prefix in @Lie macro
 import CTBase.Exceptions
 import CTFlows: CTFlows
-import CTFlows.Traits: Traits
+import CTBase.Traits: Traits
 import CTFlows.Common: Common
-import CTFlows.Data: Data
+import CTBase.Data: Data
 import CTFlows.DifferentialGeometry: DifferentialGeometry
 import DifferentiationInterface  # triggers CTFlowsDifferentiationInterface extension
 
-const VERBOSE    = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE    : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE    = isdefined(Main, :TestData) ? Main.TestData.VERBOSE    : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ─── Shared constants used across many testsets ────────────────────────────
 const _Γ = 2; const _γ = 1; const _δ = _γ - _Γ  # δ = -1
@@ -542,18 +542,6 @@ function test_macro_dg()
         C2 = _VF(x -> [0.0, 1.0], Traits.Autonomous, Traits.Fixed)
         zero_mac = DifferentialGeometry.@Lie [C1, C2]
         Test.@test zero_mac(_x2) ≈ [0.0, 0.0] atol=1e-10
-    end
-
-    # =========================================================================
-    Test.@testset "prefix system" verbose=VERBOSE showtiming=SHOWTIMING begin
-        old_prefix = DifferentialGeometry.diffgeo_prefix()
-        Test.@test old_prefix === :CTFlows
-
-        DifferentialGeometry.diffgeo_prefix!(:MyModule)
-        Test.@test DifferentialGeometry.diffgeo_prefix() === :MyModule
-
-        DifferentialGeometry.diffgeo_prefix!(old_prefix)
-        Test.@test DifferentialGeometry.diffgeo_prefix() === :CTFlows
     end
 
     # =========================================================================

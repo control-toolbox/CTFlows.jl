@@ -6,14 +6,14 @@ module TestADBackend
 
 import Test
 import CTFlows.Differentiation
-import CTFlows.Data
-import CTFlows.Traits
+import CTBase.Data
+import CTBase.Traits
 import CTBase.Exceptions
 import CTBase.Strategies
 import ADTypes
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ==============================================================================
 # Fake AD Backend for Testing (at module top-level)

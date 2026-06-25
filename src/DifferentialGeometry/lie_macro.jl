@@ -124,7 +124,7 @@ wrapped vector fields in Lie bracket computations.
 - Used internally by [`CTFlows.DifferentialGeometry._lie_mac`](@ref) for runtime dispatch.
 - Functions are normalized to `VectorField` before actual computation.
 
-See also: [`CTFlows.DifferentialGeometry.@Lie`](@ref), [`CTFlows.DifferentialGeometry.ad`](@ref), [`CTFlows.Data.AbstractVectorField`](@ref).
+See also: [`CTFlows.DifferentialGeometry.@Lie`](@ref), [`CTFlows.DifferentialGeometry.ad`](@ref), [`CTBase.Data.AbstractVectorField`](@ref).
 """
 const _Bracketable = Union{Function, Data.AbstractVectorField}
 
@@ -232,7 +232,7 @@ wrapped Hamiltonians in Poisson bracket computations.
 - Used internally by [`CTFlows.DifferentialGeometry._poisson_mac`](@ref) for runtime dispatch.
 - Functions are normalized to `Hamiltonian` before actual computation.
 
-See also: [`CTFlows.DifferentialGeometry.@Lie`](@ref), [`CTFlows.DifferentialGeometry.Poisson`](@ref), [`CTFlows.Data.AbstractHamiltonian`](@ref).
+See also: [`CTFlows.DifferentialGeometry.@Lie`](@ref), [`CTFlows.DifferentialGeometry.Poisson`](@ref), [`CTBase.Data.AbstractHamiltonian`](@ref).
 """
 const _Poissonable = Union{Function, Data.AbstractHamiltonian}
 
@@ -316,18 +316,16 @@ end
 Parse keyword arguments for the @Lie macro.
 
 # Arguments
-- `pfx`: Package prefix symbol.
-- `epfx`: Exception prefix symbol.
 - `args...`: Keyword arguments to parse.
 
 # Returns
 - `NamedTuple`: Parsed options (TD, VD, has_aut, has_var, backend).
 - `Expr`: Error expression if parsing failed, otherwise `nothing`.
 """
-function __parse_lie_opts(pfx, epfx, args...)
-    is_autonomous = Common.__is_autonomous(); has_aut = false
-    is_variable   = Common.__is_variable();   has_var = false
-    backend_expr  = :($pfx.DifferentialGeometry.__dg_ad_backend())
+function __parse_lie_opts(args...)
+    is_autonomous = Data.__is_autonomous(); has_aut = false
+    is_variable   = Data.__is_variable();   has_var = false
+    backend_expr  = :(CTFlows.DifferentialGeometry.__dg_ad_backend())
 
     for arg in args
         if arg isa Expr && (arg.head === :(=) || arg.head === :kw)
@@ -343,7 +341,7 @@ function __parse_lie_opts(pfx, epfx, args...)
                 got = string(key)
                 exp = "is_autonomous, is_variable, or ad_backend"
                 ctx = "@Lie macro keyword parsing"
-                return nothing, :(throw($epfx.Exceptions.IncorrectArgument(
+                return nothing, :(throw(CTBase.Exceptions.IncorrectArgument(
                     $msg; got=$got, expected=$exp, context=$ctx)))
             end
         else
@@ -351,7 +349,7 @@ function __parse_lie_opts(pfx, epfx, args...)
             got = string(arg)
             exp = "a keyword=value argument (e.g. is_autonomous=false)"
             ctx = "@Lie macro argument parsing"
-            return nothing, :(throw($epfx.Exceptions.IncorrectArgument(
+            return nothing, :(throw(CTBase.Exceptions.IncorrectArgument(
                 $msg; got=$got, expected=$exp, context=$ctx)))
         end
     end
@@ -369,21 +367,20 @@ Replaces `[a, b]` with calls to `_lie_mac` and `{a, b}` with calls to `_poisson_
 # Arguments
 - `expr`: Expression to transform.
 - `opts`: NamedTuple with TD, VD, has_aut, has_var, backend.
-- `pfx`: Package prefix symbol.
 
 # Returns
 - `Expr`: Transformed expression.
 """
-function __transform_brackets(expr, opts, pfx)
+function __transform_brackets(expr, opts)
     (; TD, VD, has_aut, has_var, backend) = opts
     postwalk(expr) do x
         if @capture(x, [a_, b_])
-            return :($pfx.DifferentialGeometry._lie_mac(
-                $a, $b, $pfx.Traits.$TD, $pfx.Traits.$VD,
+            return :(CTFlows.DifferentialGeometry._lie_mac(
+                $a, $b, CTBase.Traits.$TD, CTBase.Traits.$VD,
                 Val($has_aut), Val($has_var), $backend))
         elseif @capture(x, {c_, d_})
-            return :($pfx.DifferentialGeometry._poisson_mac(
-                $c, $d, $pfx.Traits.$TD, $pfx.Traits.$VD,
+            return :(CTFlows.DifferentialGeometry._poisson_mac(
+                $c, $d, CTBase.Traits.$TD, CTBase.Traits.$VD,
                 Val($has_aut), Val($has_var), $backend))
         else
             return x
@@ -445,15 +442,13 @@ Z = @Lie [X, Y] is_autonomous=true is_variable=false
 
 # Notes
 - The macro uses compile-time typed dispatch via [`CTFlows.DifferentialGeometry._lie_mac`](@ref) and [`CTFlows.DifferentialGeometry._poisson_mac`](@ref).
-- Operands can be plain functions or typed objects ([`CTFlows.Data.VectorField`](@ref), [`CTFlows.Data.Hamiltonian`](@ref)).
+- Operands can be plain functions or typed objects ([`CTBase.Data.VectorField`](@ref), [`CTBase.Data.Hamiltonian`](@ref)).
 - Mixed types (function + typed object) are automatically normalized.
 
 See also: [`CTFlows.DifferentialGeometry.ad`](@ref), [`CTFlows.DifferentialGeometry.Poisson`](@ref), [`CTFlows.DifferentialGeometry.Lift`](@ref)
 """
 macro Lie(expr::Expr, args...)
-    pfx  = diffgeo_prefix()
-    epfx = e_prefix()
-    opts, err = __parse_lie_opts(pfx, epfx, args...)
+    opts, err = __parse_lie_opts(args...)
     err !== nothing && return esc(err)
-    return esc(__transform_brackets(expr, opts, pfx))
+    return esc(__transform_brackets(expr, opts))
 end

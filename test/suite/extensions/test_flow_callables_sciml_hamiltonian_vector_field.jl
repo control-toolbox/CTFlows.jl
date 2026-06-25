@@ -6,15 +6,15 @@ import CTFlows.Flows
 import CTFlows.Integrators
 import CTFlows.Trajectories
 import CTFlows.Common
-import CTFlows.Data
+import CTBase.Data
 
 using SciMLBase: SciMLBase
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 using StaticArrays: SA, SVector, MVector, SMatrix
 using ForwardDiff: ForwardDiff
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ==============================================================================
 # Reference systems for numerical testing
