@@ -32,9 +32,6 @@ using .Configs
 include(joinpath(@__DIR__, "Common", "Common.jl"))
 using .Common
 
-include(joinpath(@__DIR__, "Differentiation", "Differentiation.jl"))
-using .Differentiation
-
 include(joinpath(@__DIR__, "DifferentialGeometry", "DifferentialGeometry.jl"))
 using .DifferentialGeometry
 

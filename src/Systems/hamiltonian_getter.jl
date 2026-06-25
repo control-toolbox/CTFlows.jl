@@ -27,7 +27,7 @@ Hamiltonian system with fixed parameters. The signature is `(x, p) -> (∂p, -�
 - This is an internal factory function used by [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 - The closure uses automatic differentiation via the provided backend to compute gradients.
 
-See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differentiation.hamiltonian_gradient`](@ref)
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTBase.Differentiation.hamiltonian_gradient`](@ref)
 """
 function _make_oop_hvf(h, backend, ::Type{Traits.Autonomous}, ::Type{Traits.Fixed})
     return (x, p) -> begin
@@ -57,7 +57,7 @@ Hamiltonian system with fixed parameters. The signature is `(t, x, p) -> (∂p, 
 - This is an internal factory function used by [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 - The closure uses automatic differentiation via the provided backend to compute gradients.
 
-See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differentiation.hamiltonian_gradient`](@ref)
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTBase.Differentiation.hamiltonian_gradient`](@ref)
 """
 function _make_oop_hvf(h, backend, ::Type{Traits.NonAutonomous}, ::Type{Traits.Fixed})
     return (t, x, p) -> begin
@@ -89,7 +89,7 @@ or `(x, p, v; variable_costate=true) -> (∂p, -∂x, -∂v)` when the variable 
 - When `variable_costate=true`, the closure also returns `-∂H/∂v` (the negative gradient with respect to variables).
 - The closure uses automatic differentiation via the provided backend to compute gradients.
 
-See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differentiation.hamiltonian_gradient`](@ref), [`CTFlows.Differentiation.variable_gradient`](@ref)
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTBase.Differentiation.hamiltonian_gradient`](@ref), [`CTBase.Differentiation.variable_gradient`](@ref)
 """
 function _make_oop_hvf(h, backend, ::Type{Traits.Autonomous}, ::Type{Traits.NonFixed})
     return (x, p, v; variable_costate::Bool=false) -> begin
@@ -123,7 +123,7 @@ or `(t, x, p, v; variable_costate=true) -> (∂p, -∂x, -∂v)` when the variab
 - When `variable_costate=true`, the closure also returns `-∂H/∂v` (the negative gradient with respect to variables).
 - The closure uses automatic differentiation via the provided backend to compute gradients.
 
-See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differentiation.hamiltonian_gradient`](@ref), [`CTFlows.Differentiation.variable_gradient`](@ref)
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTBase.Differentiation.hamiltonian_gradient`](@ref), [`CTBase.Differentiation.variable_gradient`](@ref)
 """
 function _make_oop_hvf(h, backend, ::Type{Traits.NonAutonomous}, ::Type{Traits.NonFixed})
     return (t, x, p, v; variable_costate::Bool=false) -> begin
@@ -161,7 +161,7 @@ Hamiltonian system with fixed parameters, writing the result in-place. The signa
 - The closure uses automatic differentiation via the provided backend to compute gradients.
 - Output arrays `dx` and `dp` must be pre-allocated with the correct dimensions.
 
-See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differentiation.hamiltonian_gradient`](@ref)
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTBase.Differentiation.hamiltonian_gradient`](@ref)
 """
 function _make_ip_hvf(h, backend, ::Type{Traits.Autonomous}, ::Type{Traits.Fixed})
     return (dx, dp, x, p) -> begin
@@ -195,7 +195,7 @@ Hamiltonian system with fixed parameters, writing the result in-place. The signa
 - The closure uses automatic differentiation via the provided backend to compute gradients.
 - Output arrays `dx` and `dp` must be pre-allocated with the correct dimensions.
 
-See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differentiation.hamiltonian_gradient`](@ref)
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTBase.Differentiation.hamiltonian_gradient`](@ref)
 """
 function _make_ip_hvf(h, backend, ::Type{Traits.NonAutonomous}, ::Type{Traits.Fixed})
     return (dx, dp, t, x, p) -> begin
@@ -233,7 +233,7 @@ Hamiltonian system with variable parameters, writing the result in-place. The si
 # Throws
 - `Exceptions.PreconditionError`: When `variable_costate=true && dpv === nothing`.
 
-See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differentiation.hamiltonian_gradient`](@ref), [`CTFlows.Differentiation.variable_gradient`](@ref)
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTBase.Differentiation.hamiltonian_gradient`](@ref), [`CTBase.Differentiation.variable_gradient`](@ref)
 """
 function _make_ip_hvf(h, backend, ::Type{Traits.Autonomous}, ::Type{Traits.NonFixed})
     return (dx, dp, x, p, v; dpv=nothing, variable_costate::Bool=false) -> begin
@@ -279,7 +279,7 @@ Hamiltonian system with variable parameters, writing the result in-place. The si
 # Throws
 - `Exceptions.PreconditionError`: When `variable_costate=true && dpv === nothing`.
 
-See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Differentiation.hamiltonian_gradient`](@ref), [`CTFlows.Differentiation.variable_gradient`](@ref)
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTBase.Differentiation.hamiltonian_gradient`](@ref), [`CTBase.Differentiation.variable_gradient`](@ref)
 """
 function _make_ip_hvf(h, backend, ::Type{Traits.NonAutonomous}, ::Type{Traits.NonFixed})
     return (dx, dp, t, x, p, v; dpv=nothing, variable_costate::Bool=false) -> begin
@@ -313,7 +313,7 @@ with the correct signature based on the Hamiltonian's time and variable dependen
 
 # Arguments
 - `h::Data.Hamiltonian{F, TD, VD}`: The scalar Hamiltonian function with traits `TD` (time dependence) and `VD` (variable dependence).
-- `ad_backend`: AD backend type (default: `Common.__ad_backend()` = `AutoForwardDiff()`) or an `AbstractADBackend` instance.
+- `ad_backend`: AD backend type (default: `Differentiation.__ad_backend()` = `AutoForwardDiff()`) or an `AbstractADBackend` instance.
 - `inplace::Bool`: Whether to return an in-place closure (default: `Common.__hvf_inplace()` = `false`).
 
 # Returns
@@ -331,7 +331,7 @@ See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.Hamilto
 """
 function hamiltonian_vector_field(
     h::Data.Hamiltonian{F, TD, VD};
-    ad_backend = Common.__ad_backend(),
+    ad_backend = Differentiation.__ad_backend(),
     inplace::Bool = Common.__hvf_inplace(),
 ) where {F, TD, VD}
     # If ad_backend is an AbstractADBackend instance, use it directly; otherwise wrap it
@@ -393,7 +393,7 @@ Hamiltonian overload to compute the vector field via automatic differentiation.
 - The `inplace` parameter controls whether the returned closure writes results in-place.
 - Delegates to [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 
-See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTBase.Data.Hamiltonian`](@ref), [`CTFlows.Differentiation.AbstractADBackend`](@ref)
+See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTBase.Data.Hamiltonian`](@ref), [`CTBase.Differentiation.AbstractADBackend`](@ref)
 """
 function hamiltonian_vector_field(sys::HamiltonianSystem; inplace::Bool = Common.__hvf_inplace())
     ad_backend = Differentiation.ad_backend(sys.backend)

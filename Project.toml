@@ -13,7 +13,6 @@ RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 
 [weakdeps]
 DiffEqBase = "2b5f629d-d688-5b77-993f-72d75c75574e"
-DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 OrdinaryDiffEqTsit5 = "b1df2697-797e-41e3-8120-5422d3b24e4a"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
@@ -21,7 +20,6 @@ SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [extensions]
-CTFlowsDifferentiationInterface = ["DifferentiationInterface"]
 CTFlowsForwardDiff = ["ForwardDiff"]
 CTFlowsOrdinaryDiffEqTsit5 = ["OrdinaryDiffEqTsit5"]
 CTFlowsPlots = ["Plots"]
@@ -32,7 +30,7 @@ CTFlowsStaticArrays = ["StaticArrays"]
 [compat]
 ADTypes = "1"
 Aqua = "0.8"
-CTBase = "0.23"
+CTBase = "0.24"
 CTModels = "0.13"
 DiffEqBase = "6, 7"
 DifferentiationInterface = "0.7"

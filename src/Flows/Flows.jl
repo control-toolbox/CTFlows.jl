@@ -15,6 +15,7 @@ module Flows
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Core
 import CTBase.Data
+import CTBase.Differentiation
 import CTBase.Exceptions
 import CTBase.Strategies
 import CTBase.Options
@@ -28,7 +29,6 @@ import CTModels
 
 import ..Common: Common
 import ..Configs: Configs
-import ..Differentiation: Differentiation
 import ..Systems: Systems, hamiltonian_vector_field
 import ..Integrators: Integrators
 import ..Trajectories: Trajectories

@@ -13,7 +13,7 @@ by [`CTBase.Orchestration.route_all_options`](@extref).
 ```julia
 # Get the strategy families for flow construction
 fam = Flows._flow_families()
-# Returns: (backend = CTFlows.Differentiation.AbstractADBackend, integrator = CTFlows.Integrators.AbstractIntegrator)
+# Returns: (backend = CTBase.Differentiation.AbstractADBackend, integrator = CTFlows.Integrators.AbstractIntegrator)
 ```
 
 See also: [`_route_flow_options`](@ref), [`flow_registry`](@ref)
@@ -113,7 +113,7 @@ that were routed to its family by [`_route_flow_options`](@ref).
 # Build concrete strategies from routed options
 routed = Flows._route_flow_options((; reltol=1e-8))
 components = Flows._build_flow_components(routed)
-# components.backend isa CTFlows.Differentiation.DifferentiationInterface
+# components.backend isa CTBase.Differentiation.DifferentiationInterface
 # components.integrator isa CTFlows.Integrators.SciML
 ```
 

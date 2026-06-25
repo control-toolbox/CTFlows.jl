@@ -107,7 +107,7 @@ HamiltonianSystem
 - The AD backend is used to compute Hamiltonian gradients `∂H/∂x` and `∂H/∂p` automatically during integration.
 - This overload is for scalar Hamiltonian functions where gradients are computed via AD. For explicit vector fields, use [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref) instead.
 
-See also: [`CTBase.Data.Hamiltonian`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Differentiation.AbstractADBackend`](@ref).
+See also: [`CTBase.Data.Hamiltonian`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTBase.Differentiation.AbstractADBackend`](@ref).
 """
 function build_system(h::Data.AbstractHamiltonian, backend::Differentiation.AbstractADBackend)
     return HamiltonianSystem(h, backend)
