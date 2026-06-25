@@ -33,14 +33,14 @@ This `Ref` holds the current AD backend that is used by [`CTFlows.DifferentialGe
 - `Ref{Differentiation.AbstractADBackend}`: Mutable reference to an AD backend.
 
 # Notes
-- Initialized at module load time with `AutoForwardDiff` via [`CTFlows.Differentiation.build_ad_backend`](@ref).
+- Initialized at module load time with `AutoForwardDiff` via [`CTBase.Differentiation.build_ad_backend`](@ref).
 - Modified via [`CTFlows.DifferentialGeometry.dg_ad_backend!`](@ref).
 - Accessed via [`CTFlows.DifferentialGeometry.dg_ad_backend`](@ref).
 
 See also: [`CTFlows.DifferentialGeometry.dg_ad_backend`](@ref), [`CTFlows.DifferentialGeometry.dg_ad_backend!`](@ref), [`CTFlows.DifferentialGeometry.__dg_ad_backend`](@ref).
 """
 const DG_AD_BACKEND = Ref{Differentiation.AbstractADBackend}(
-    Differentiation.build_ad_backend()   # AutoForwardDiff via Common.__ad_backend()
+    Differentiation.build_ad_backend()   # AutoForwardDiff via CTBase.Differentiation.__ad_backend()
 )
 
 """

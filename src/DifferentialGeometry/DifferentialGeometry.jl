@@ -22,6 +22,7 @@ module DifferentialGeometry
 import ADTypes
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Data
+import CTBase.Differentiation
 import CTBase.Exceptions
 import CTBase.Traits
 import MacroTools: postwalk, @capture
@@ -31,7 +32,6 @@ import MacroTools: postwalk, @capture
 # ==============================================================================
 
 import ..Common: Common
-import ..Differentiation: Differentiation
 
 # ==============================================================================
 # Include files (in dependency order)

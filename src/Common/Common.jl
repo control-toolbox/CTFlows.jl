@@ -15,7 +15,6 @@ module Common
 # ==============================================================================
 
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
-using ADTypes: ADTypes
 
 # ==============================================================================
 # Includes
@@ -31,7 +30,7 @@ include(joinpath(@__DIR__, "internal_norm.jl"))
 
 export NotProvided
 export ODEParameters, variable
-export __variable, __unsafe, __hvf_inplace, __variable_costate, __ad_backend
+export __variable, __unsafe, __hvf_inplace, __variable_costate
 export deepvalue, real_norm
 
 end # module Common

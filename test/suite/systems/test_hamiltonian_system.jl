@@ -6,7 +6,7 @@ import CTBase.Data: Data
 import CTFlows.Common: Common
 import CTBase.Traits: Traits
 import CTFlows.Systems: Systems
-import CTFlows.Differentiation: Differentiation
+import CTBase.Differentiation
 import CTFlows.Configs: Configs
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true

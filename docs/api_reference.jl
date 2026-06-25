@@ -72,26 +72,6 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             filename="api_common",
         ),
         # ───────────────────────────────────────────────────────────────────
-        # Differentiation
-        # ───────────────────────────────────────────────────────────────────
-        CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[
-                CTFlows.Differentiation => src(
-                    joinpath("Differentiation", "Differentiation.jl"),
-                    joinpath("Differentiation", "abstract_ad_backend.jl"),
-                    joinpath("Differentiation", "building.jl"),
-                    joinpath("Differentiation", "differentiation_interface.jl"),
-                ),
-            ],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
-            title="Differentiation",
-            title_in_menu="Differentiation",
-            filename="api_differentiation",
-        ),
-        # ───────────────────────────────────────────────────────────────────
         # DifferentialGeometry
         # ───────────────────────────────────────────────────────────────────
         CTBase.automatic_reference_documentation(;
@@ -245,21 +225,6 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             title="ForwardDiff Extension",
             title_in_menu="ForwardDiff",
             filename="ext_forwarddiff",
-        ))
-    end
-
-    CTFlowsDifferentiationInterface = Base.get_extension(CTFlows, :CTFlowsDifferentiationInterface)
-    if !isnothing(CTFlowsDifferentiationInterface)
-        push!(pages, CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[CTFlowsDifferentiationInterface => ext("CTFlowsDifferentiationInterface.jl")],
-            external_modules_to_document=[CTFlows],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
-            title="DifferentiationInterface Extension",
-            title_in_menu="DifferentiationInterface",
-            filename="ext_differentiation_interface",
         ))
     end
 

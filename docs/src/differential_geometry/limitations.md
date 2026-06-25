@@ -89,7 +89,7 @@ on `DifferentiationInterface.jl` (with `ForwardDiff` under the hood) and **must 
 loaded** for gradients/derivatives to be available:
 
 ```julia
-import DifferentiationInterface   # activates the CTFlowsDifferentiationInterface extension
+import DifferentiationInterface   # activates the CTBaseDifferentiationInterface extension
 ```
 
 The global default backend is read and set with

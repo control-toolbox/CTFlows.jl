@@ -15,6 +15,7 @@ module Systems
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Core
 import CTBase.Data
+import CTBase.Differentiation
 import CTBase.Exceptions
 import CTBase.Traits
 
@@ -24,7 +25,6 @@ import CTBase.Traits
 
 import ..Common: Common
 import ..Configs: Configs
-import ..Differentiation: Differentiation
 
 # ==============================================================================
 # Include files

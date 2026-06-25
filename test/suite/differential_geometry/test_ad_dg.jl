@@ -9,7 +9,7 @@ import CTFlows: CTFlows
 import CTBase.Traits: Traits
 import CTFlows.Common: Common
 import CTBase.Data: Data
-import CTFlows.Differentiation: Differentiation
+import CTBase.Differentiation
 import CTFlows.DifferentialGeometry: DifferentialGeometry
 
 const VERBOSE    = isdefined(Main, :TestData) ? Main.TestData.VERBOSE    : true
