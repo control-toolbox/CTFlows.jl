@@ -10,8 +10,8 @@ CTFlows.DifferentialGeometry) operators and the knobs available to configure the
 ```@setup limits
 using CTFlows
 using CTFlows.DifferentialGeometry
-using CTFlows.Data
-using CTFlows.Traits
+using CTBase.Data
+using CTBase.Traits
 import DifferentiationInterface
 ```
 
@@ -20,7 +20,7 @@ import DifferentiationInterface
 ### No in-place support
 
 The operators are defined for **out-of-place** objects only. A field built with
-`is_inplace=true` (mutability [`InPlace`](@ref CTFlows.Traits.InPlace)) is rejected by
+`is_inplace=true` (mutability [`InPlace`](@ref CTBase.Traits.InPlace)) is rejected by
 [`ad`](@ref CTFlows.DifferentialGeometry.ad) and [`∂ₜ`](@ref
 CTFlows.DifferentialGeometry.∂ₜ) with a [`CTBase.Exceptions.NotImplemented`](@extref
 CTBase) error. Reconstruct the field out-of-place before taking brackets or time
@@ -33,7 +33,7 @@ ad(Xip, Xip)        # ❌ NotImplemented — ad is not defined for in-place fiel
 
 ### No Lie operations on a Hamiltonian vector field
 
-A [`HamiltonianVectorField`](@ref CTFlows.Data.HamiltonianVectorField) lives on phase
+A [`HamiltonianVectorField`](@ref CTBase.Data.HamiltonianVectorField) lives on phase
 space with signature `(x, p)`, not `(x)`, so it is **not** a valid operand for the Lie
 bracket / Lie derivative, nor for the [`Lift`](@ref CTFlows.DifferentialGeometry.Lift).
 Both raise [`CTBase.Exceptions.NotImplemented`](@extref CTBase):
@@ -44,7 +44,7 @@ ad(Z, Z)            # ❌ NotImplemented — signature is (x, p), not (x)
 Lift(Z)             # ❌ NotImplemented — Z already lives on phase space
 ```
 
-Use the underlying plain [`VectorField`](@ref CTFlows.Data.VectorField) instead.
+Use the underlying plain [`VectorField`](@ref CTBase.Data.VectorField) instead.
 
 ### Operands must share traits
 
@@ -67,8 +67,8 @@ The same rule is enforced by [`@Lie`](@ref CTFlows.DifferentialGeometry.@Lie); s
 A bare Julia `Function` carries no traits, so the operators assume it is autonomous and
 fixed unless told otherwise via `is_autonomous` / `is_variable` (for `ad`, `Poisson`,
 `Lift`) or the matching keywords of `@Lie`. When in doubt, wrap the function in a typed
-[`VectorField`](@ref CTFlows.Data.VectorField) / [`Hamiltonian`](@ref
-CTFlows.Data.Hamiltonian) so the traits are explicit and checked.
+[`VectorField`](@ref CTBase.Data.VectorField) / [`Hamiltonian`](@ref
+CTBase.Data.Hamiltonian) so the traits are explicit and checked.
 
 ### Qualified access
 

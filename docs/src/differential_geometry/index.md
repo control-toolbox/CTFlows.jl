@@ -12,8 +12,8 @@ available through a single convenience macro, [`@Lie`](@ref).
 
 This guide is aimed at advanced users and developers. Each operator is presented first
 with its mathematical definition, then with runnable examples — both on plain Julia
-`Function`s and on the typed objects ([`VectorField`](@ref CTFlows.Data.VectorField),
-[`Hamiltonian`](@ref CTFlows.Data.Hamiltonian)) — across the various trait combinations
+`Function`s and on the typed objects ([`VectorField`](@ref CTBase.Data.VectorField),
+[`Hamiltonian`](@ref CTBase.Data.Hamiltonian)) — across the various trait combinations
 (autonomous or not, fixed or not).
 
 ## Reading order
@@ -39,40 +39,6 @@ The operators may additionally depend on **time** ``t`` and on a **variable para
 ``v`` (a decision variable, e.g. a free final time or a design parameter). Which of these
 extra arguments appear is encoded by the trait system below.
 
-## Traits and call signatures
-
-Every typed object carries up to three traits that determine its **call signature**:
-
-| Trait | Values | Meaning |
-|---|---|---|
-| Time dependence | `Autonomous` / `NonAutonomous` | does the object depend on time ``t``? |
-| Variable dependence | [`Fixed`](@ref CTFlows.Traits.Fixed) / [`NonFixed`](@ref CTFlows.Traits.NonFixed) | does it depend on a variable ``v``? |
-| Mutability | [`OutOfPlace`](@ref CTFlows.Traits.OutOfPlace) / [`InPlace`](@ref CTFlows.Traits.InPlace) | does it allocate, or write into a buffer? |
-
-The time/variable traits give four call signatures. For a **vector field** ``X``:
-
-| Time dependence | Variable dependence | Signature |
-|---|---|---|
-| `Autonomous` | `Fixed` | `X(x)` |
-| `NonAutonomous` | `Fixed` | `X(t, x)` |
-| `Autonomous` | `NonFixed` | `X(x, v)` |
-| `NonAutonomous` | `NonFixed` | `X(t, x, v)` |
-
-For a **Hamiltonian** ``H`` the costate `p` follows the state `x`:
-
-| Time dependence | Variable dependence | Signature |
-|---|---|---|
-| `Autonomous` | `Fixed` | `H(x, p)` |
-| `NonAutonomous` | `Fixed` | `H(t, x, p)` |
-| `Autonomous` | `NonFixed` | `H(x, p, v)` |
-| `NonAutonomous` | `NonFixed` | `H(t, x, p, v)` |
-
-!!! warning "Out-of-place only"
-
-    The differential-geometry operators are defined for `OutOfPlace` objects only.
-    Passing an `InPlace` vector field raises an error — see
-    [Limitations & configuration](limitations.md).
-
 ## Qualified access
 
 `CTFlows` exports nothing at the package level: every symbol lives in a submodule and must
@@ -82,8 +48,6 @@ submodules into scope:
 ```@example dg
 using CTFlows
 using CTFlows.DifferentialGeometry   # Lift, ad, Poisson, ∂ₜ, @Lie
-using CTFlows.Data                   # VectorField, Hamiltonian, HamiltonianVectorField
-using CTFlows.Traits                 # Autonomous, NonAutonomous, Fixed, NonFixed, OutOfPlace
 nothing # hide
 ```
 

@@ -31,8 +31,8 @@ The relevant method is [`Lift`](@ref CTFlows.DifferentialGeometry.Lift).
 ```@setup lift
 using CTFlows
 using CTFlows.DifferentialGeometry
-using CTFlows.Data
-using CTFlows.Traits
+using CTBase.Data
+using CTBase.Traits
 import DifferentiationInterface
 ```
 
@@ -76,8 +76,8 @@ Htv(2.0, [1.0, 2.0], [0.5, 1.0], 3.0)
 
 ## On typed vector fields
 
-When the argument is a typed [`VectorField`](@ref CTFlows.Data.VectorField), `Lift`
-returns a typed [`Hamiltonian`](@ref CTFlows.Data.Hamiltonian) whose traits are inherited
+When the argument is a typed [`VectorField`](@ref CTBase.Data.VectorField), `Lift`
+returns a typed [`Hamiltonian`](@ref CTBase.Data.Hamiltonian) whose traits are inherited
 from the vector field — no keyword arguments are needed.
 
 ```@example lift
@@ -101,8 +101,8 @@ Htv(2.0, [1.0, 2.0], [0.5, 1.0], 3.0)
 
 !!! note "Not for Hamiltonian vector fields"
 
-    `Lift` accepts a plain [`VectorField`](@ref CTFlows.Data.VectorField), not a
-    [`HamiltonianVectorField`](@ref CTFlows.Data.HamiltonianVectorField): the latter
+    `Lift` accepts a plain [`VectorField`](@ref CTBase.Data.VectorField), not a
+    [`HamiltonianVectorField`](@ref CTBase.Data.HamiltonianVectorField): the latter
     already lives on phase space with signature `(x, p)`. Lifting one raises a
     `NotImplemented` error — see [Limitations & configuration](limitations.md).
 

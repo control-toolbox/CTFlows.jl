@@ -16,8 +16,8 @@ call. This page explains both paths.
 
 ```@setup flows_building
 using CTFlows
-using CTFlows.Data
-using CTFlows.Traits
+using CTBase.Data
+using CTBase.Traits
 using CTFlows.Systems
 using CTFlows.Integrators
 using CTFlows.Flows

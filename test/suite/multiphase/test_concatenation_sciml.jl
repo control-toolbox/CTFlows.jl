@@ -5,7 +5,7 @@ import CTFlows.MultiPhase
 import CTFlows.Systems
 import CTFlows.Integrators
 import CTFlows.Flows
-import CTFlows.Data
+import CTBase.Data
 import CTFlows.Common
 import CTFlows.Trajectories
 
@@ -13,8 +13,8 @@ using OrdinaryDiffEqTsit5
 using Plots
 using SciMLBase: SciMLBase, ODEFunction
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ==============================================================================
 # Test function

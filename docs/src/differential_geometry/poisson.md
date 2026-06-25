@@ -20,8 +20,8 @@ computed by automatic differentiation, so the AD backend extension must be loade
 ```@setup poisson
 using CTFlows
 using CTFlows.DifferentialGeometry
-using CTFlows.Data
-using CTFlows.Traits
+using CTBase.Data
+using CTBase.Traits
 import DifferentiationInterface
 ```
 
@@ -111,7 +111,7 @@ Poisson(Htv, Gtv; is_autonomous=false, is_variable=true)(2.0, [1.0, 2.0], [2.0, 
 
 ## On typed Hamiltonians
 
-When both arguments are typed [`Hamiltonian`](@ref CTFlows.Data.Hamiltonian)s, `Poisson`
+When both arguments are typed [`Hamiltonian`](@ref CTBase.Data.Hamiltonian)s, `Poisson`
 returns a **typed `Hamiltonian`** whose traits are inherited from the operands. Both must
 share the same time- and variable-dependence (see
 [Limitations & configuration](limitations.md)).

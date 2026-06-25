@@ -1,7 +1,9 @@
 module TestSciMLBaseFunctionSystem
 
 import Test
+import CTBase.Core
 import CTBase.Exceptions: Exceptions
+import CTBase.Strategies: Strategies
 import CTFlows: CTFlows
 import CTFlows.Common: Common
 import CTFlows.Configs: Configs
@@ -9,10 +11,9 @@ import CTFlows.Systems: Systems
 import CTFlows.Integrators: Integrators
 import CTFlows.Flows: Flows
 import CTFlows.Trajectories: Trajectories
-import CTBase.Strategies: Strategies
 
 # Fake tag type for testing stub behavior
-struct FakeTag <: Common.AbstractTag end
+struct FakeTag <: Core.AbstractTag end
 
 # Get extension to access SciML integrator
 using SciMLBase: SciMLBase, ODEProblem, ODEFunction
@@ -22,8 +23,8 @@ using StaticArrays: SA, SVector
 const CTFlowsSciMLFlows = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
 const CTFlowsOrdinaryDiffEqTsit5 = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5)
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ==============================================================================
 # Test function

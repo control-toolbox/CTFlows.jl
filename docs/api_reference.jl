@@ -72,30 +72,6 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             filename="api_common",
         ),
         # ───────────────────────────────────────────────────────────────────
-        # Data
-        # ───────────────────────────────────────────────────────────────────
-        CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[
-                CTFlows.Data => src(
-                    joinpath("Data", "Data.jl"),
-                    joinpath("Data", "abstract_vector_field.jl"),
-                    joinpath("Data", "vector_field.jl"),
-                    joinpath("Data", "abstract_hamiltonian.jl"),
-                    joinpath("Data", "hamiltonian.jl"),
-                    joinpath("Data", "abstract_hamiltonian_vector_field.jl"),
-                    joinpath("Data", "hamiltonian_vector_field.jl"),
-                    joinpath("Data", "helpers.jl"),
-                ),
-            ],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
-            title="Data",
-            title_in_menu="Data",
-            filename="api_data",
-        ),
-        # ───────────────────────────────────────────────────────────────────
         # Differentiation
         # ───────────────────────────────────────────────────────────────────
         CTBase.automatic_reference_documentation(;

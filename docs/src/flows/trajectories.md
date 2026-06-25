@@ -10,7 +10,7 @@ submodule provides these wrappers.
 
 ```@setup flows_solutions
 using CTFlows
-using CTFlows.Data
+using CTBase.Data
 using CTFlows.Flows
 using CTFlows.Trajectories
 using CTFlows.Integrators

@@ -23,12 +23,12 @@ using CTFlows
 const TestRunner = Base.get_extension(CTBase, :TestRunner)
 
 # Controls nested testset output formatting (used by individual test files)
-module TestOptions
+module TestData
 const VERBOSE = true
 const SHOWTIMING = true
 end
 
-using .TestOptions: VERBOSE, SHOWTIMING
+using .TestData: VERBOSE, SHOWTIMING
 
 # Run tests using the TestRunner extension
 CTBase.run_tests(;

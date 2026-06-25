@@ -29,8 +29,8 @@ loaded.
 ```@setup dt
 using CTFlows
 using CTFlows.DifferentialGeometry
-using CTFlows.Data
-using CTFlows.Traits
+using CTBase.Data
+using CTBase.Traits
 import DifferentiationInterface
 ```
 
@@ -54,7 +54,7 @@ df(2.0, [1.0, 3.0])      # ∂/∂t (t*x₁ + x₂²) = x₁
 
 ## On typed vector fields
 
-For a [`VectorField`](@ref CTFlows.Data.VectorField), `∂ₜ` returns a new `VectorField`
+For a [`VectorField`](@ref CTBase.Data.VectorField), `∂ₜ` returns a new `VectorField`
 that is `NonAutonomous` and `OutOfPlace`.
 
 ```@example dt
@@ -74,7 +74,7 @@ dXa(0.0, [1.0, 2.0])     # zero
 
 ## On typed Hamiltonians
 
-For a [`Hamiltonian`](@ref CTFlows.Data.Hamiltonian), `∂ₜ` returns a `NonAutonomous`
+For a [`Hamiltonian`](@ref CTBase.Data.Hamiltonian), `∂ₜ` returns a `NonAutonomous`
 `Hamiltonian`.
 
 ```@example dt
@@ -85,7 +85,7 @@ dH(2.0, [1.0], [0.5])    # ∂/∂t (t·p₁ + x₁²) = p₁
 
 ## On typed Hamiltonian vector fields
 
-For a [`HamiltonianVectorField`](@ref CTFlows.Data.HamiltonianVectorField), `∂ₜ` returns a
+For a [`HamiltonianVectorField`](@ref CTBase.Data.HamiltonianVectorField), `∂ₜ` returns a
 `NonAutonomous` `HamiltonianVectorField`.
 
 ```@example dt

@@ -5,15 +5,15 @@ import ForwardDiff  # ensure DI ForwardDiff extension is loaded (AutoForwardDiff
 import CTBase: CTBase  # for Exceptions prefix in @Lie macro
 import CTBase.Exceptions
 import CTFlows: CTFlows
-import CTFlows.Traits: Traits
-import CTFlows.Common: Common
-import CTFlows.Data: Data
-import CTFlows.DifferentialGeometry: DifferentialGeometry
+import CTBase.Traits
+import CTFlows.Common
+import CTBase.Data
+import CTFlows.DifferentialGeometry
 import MacroTools: @capture
 import DifferentiationInterface  # triggers CTFlowsDifferentiationInterface — required for ad/Poisson in _lie_mac/_poisson_mac
 
-const VERBOSE    = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE    : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE    = isdefined(Main, :TestData) ? Main.TestData.VERBOSE    : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ─── Shared fixtures ───────────────────────────────────────────────────────
 
@@ -34,11 +34,8 @@ function test_macro_helpers_dg()
     # =========================================================================
     Test.@testset "__parse_lie_opts" verbose=VERBOSE showtiming=SHOWTIMING begin
 
-        pfx  = :CTFlows
-        epfx = :CTBase
-
         # Defaults
-        opts, err = DifferentialGeometry.__parse_lie_opts(pfx, epfx)
+        opts, err = DifferentialGeometry.__parse_lie_opts()
         Test.@test err === nothing
         Test.@test opts.TD       === :Autonomous
         Test.@test opts.VD       === :Fixed
@@ -46,80 +43,76 @@ function test_macro_helpers_dg()
         Test.@test opts.has_var  === false
 
         # is_autonomous = true
-        opts, err = DifferentialGeometry.__parse_lie_opts(pfx, epfx, Expr(:kw, :is_autonomous, true))
+        opts, err = DifferentialGeometry.__parse_lie_opts(Expr(:kw, :is_autonomous, true))
         Test.@test err === nothing
         Test.@test opts.TD      === :Autonomous
         Test.@test opts.has_aut === true
 
         # is_autonomous = false
-        opts, err = DifferentialGeometry.__parse_lie_opts(pfx, epfx, Expr(:kw, :is_autonomous, false))
+        opts, err = DifferentialGeometry.__parse_lie_opts(Expr(:kw, :is_autonomous, false))
         Test.@test err === nothing
         Test.@test opts.TD      === :NonAutonomous
         Test.@test opts.has_aut === true
 
         # is_variable = true
-        opts, err = DifferentialGeometry.__parse_lie_opts(pfx, epfx, Expr(:kw, :is_variable, true))
+        opts, err = DifferentialGeometry.__parse_lie_opts(Expr(:kw, :is_variable, true))
         Test.@test err === nothing
         Test.@test opts.VD      === :NonFixed
         Test.@test opts.has_var === true
 
         # is_variable = false
-        opts, err = DifferentialGeometry.__parse_lie_opts(pfx, epfx, Expr(:kw, :is_variable, false))
+        opts, err = DifferentialGeometry.__parse_lie_opts(Expr(:kw, :is_variable, false))
         Test.@test err === nothing
         Test.@test opts.VD      === :Fixed
         Test.@test opts.has_var === true
 
         # ad_backend
-        opts, err = DifferentialGeometry.__parse_lie_opts(pfx, epfx, Expr(:kw, :ad_backend, :MyBackend))
+        opts, err = DifferentialGeometry.__parse_lie_opts(Expr(:kw, :ad_backend, :MyBackend))
         Test.@test err === nothing
         Test.@test opts.backend === :MyBackend
 
         # Unknown kwarg → opts===nothing, err≠nothing
-        opts, err = DifferentialGeometry.__parse_lie_opts(pfx, epfx, Expr(:kw, :bad_kwarg, 42))
+        opts, err = DifferentialGeometry.__parse_lie_opts(Expr(:kw, :bad_kwarg, 42))
         Test.@test opts === nothing
         Test.@test err  !== nothing
 
         # Valid combination: is_autonomous + is_variable
-        opts, err = DifferentialGeometry.__parse_lie_opts(
-            pfx, epfx, Expr(:kw, :is_autonomous, true), Expr(:kw, :is_variable, true))
+        opts, err = DifferentialGeometry.__parse_lie_opts(Expr(:kw, :is_autonomous, true), Expr(:kw, :is_variable, true))
         Test.@test err === nothing
         Test.@test opts.TD === :Autonomous
         Test.@test opts.VD === :NonFixed
 
         # Valid combination: is_autonomous=false + ad_backend
-        opts, err = DifferentialGeometry.__parse_lie_opts(
-            pfx, epfx, Expr(:kw, :is_autonomous, false), Expr(:kw, :ad_backend, :Zygote))
+        opts, err = DifferentialGeometry.__parse_lie_opts(Expr(:kw, :is_autonomous, false), Expr(:kw, :ad_backend, :Zygote))
         Test.@test err === nothing
         Test.@test opts.TD      === :NonAutonomous
         Test.@test opts.backend === :Zygote
 
         # One valid kwarg + one invalid → err≠nothing
-        opts, err = DifferentialGeometry.__parse_lie_opts(
-            pfx, epfx, Expr(:kw, :is_autonomous, true), Expr(:kw, :nope, 0))
+        opts, err = DifferentialGeometry.__parse_lie_opts(Expr(:kw, :is_autonomous, true), Expr(:kw, :nope, 0))
         Test.@test opts === nothing
         Test.@test err  !== nothing
     end
 
     # =========================================================================
     Test.@testset "__transform_brackets" verbose=VERBOSE showtiming=SHOWTIMING begin
-        pfx  = :CTFlows
         opts = (TD=:Autonomous, VD=:Fixed, has_aut=false, has_var=false,
                 backend=Expr(:call, :__dg_ad_backend))
 
         # [a,b] → _lie_mac call with correct qualified name and traits
-        result = DifferentialGeometry.__transform_brackets(quote [a, b] end, opts, pfx)
+        result = DifferentialGeometry.__transform_brackets(quote [a, b] end, opts)
         call   = only(_exprs(result))
         Test.@test @capture(call, CTFlows.DifferentialGeometry._lie_mac(
-            _, _, CTFlows.Traits.Autonomous, CTFlows.Traits.Fixed, _, _, _))
+            _, _, CTBase.Traits.Autonomous, CTBase.Traits.Fixed, _, _, _))
 
         # {a,b} → _poisson_mac call with correct qualified name and traits
-        result = DifferentialGeometry.__transform_brackets(quote {a, b} end, opts, pfx)
+        result = DifferentialGeometry.__transform_brackets(quote {a, b} end, opts)
         call   = only(_exprs(result))
         Test.@test @capture(call, CTFlows.DifferentialGeometry._poisson_mac(
-            _, _, CTFlows.Traits.Autonomous, CTFlows.Traits.Fixed, _, _, _))
+            _, _, CTBase.Traits.Autonomous, CTBase.Traits.Fixed, _, _, _))
 
         # [[a,b], c] → outer _lie_mac whose first arg is an inner _lie_mac
-        result = DifferentialGeometry.__transform_brackets(quote [[a, b], c] end, opts, pfx)
+        result = DifferentialGeometry.__transform_brackets(quote [[a, b], c] end, opts)
         outer  = only(_exprs(result))
         local inner_arg
         matched_outer = @capture(outer, CTFlows.DifferentialGeometry._lie_mac(inner_arg_, _, _, _, _, _, _))
@@ -128,16 +121,16 @@ function test_macro_helpers_dg()
 
         # Expression without brackets → returned unchanged
         expr   = quote a + b end
-        result = DifferentialGeometry.__transform_brackets(expr, opts, pfx)
+        result = DifferentialGeometry.__transform_brackets(expr, opts)
         Test.@test result == expr
 
         # opts with NonAutonomous/NonFixed: correct traits propagated into the call
         opts2  = (TD=:NonAutonomous, VD=:NonFixed, has_aut=true, has_var=true,
                   backend=Expr(:call, :__dg_ad_backend))
-        result2 = DifferentialGeometry.__transform_brackets(quote [a, b] end, opts2, pfx)
+        result2 = DifferentialGeometry.__transform_brackets(quote [a, b] end, opts2)
         call2   = only(_exprs(result2))
         Test.@test @capture(call2, CTFlows.DifferentialGeometry._lie_mac(
-            _, _, CTFlows.Traits.NonAutonomous, CTFlows.Traits.NonFixed, _, _, _))
+            _, _, CTBase.Traits.NonAutonomous, CTBase.Traits.NonFixed, _, _, _))
     end
 
     # =========================================================================

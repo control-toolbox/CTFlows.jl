@@ -2,20 +2,20 @@ module TestCallingFlows
 
 import Test
 import CTFlows.Systems
-import CTFlows.Data
+import CTBase.Data
 import CTFlows.Differentiation
 import CTFlows.Flows
 import CTFlows.Integrators
 import CTFlows.Trajectories
 import CTFlows.Common
 import CTFlows.Configs
-import CTFlows.Traits
+import CTBase.Traits
 import ADTypes
 import DifferentiationInterface
 import CTBase.Exceptions
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ==============================================================================
 # Fake types for testing the calling workflow

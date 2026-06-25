@@ -20,7 +20,7 @@ time, with a pluggable ODE solver and optional automatic differentiation.
 
 ```julia
 using CTFlows
-using CTFlows.Data, CTFlows.Flows, CTFlows.Trajectories
+using CTBase.Data, CTFlows.Flows, CTFlows.Trajectories
 import OrdinaryDiffEqTsit5   # activates the SciML integrator extension
 
 # 1. Wrap the dynamics
@@ -41,7 +41,7 @@ x(0.5)                                  # interpolate
 
 !!! note "Qualified access"
     CTFlows exports nothing at the package level. Every symbol lives in a submodule
-    (`CTFlows.Data`, `CTFlows.Flows`, …) and is reached via a qualified path or a
+    (`CTBase.Data`, `CTFlows.Flows`, …) and is reached via a qualified path or a
     `using CTFlows.SubModule` import.
 
 ## Architecture
@@ -54,13 +54,12 @@ Data → Systems → Integrators → Flows → Trajectories
 
 | Layer | Submodule | Key types |
 |---|---|---|
-| Data | [`CTFlows.Data`](@ref CTFlows.Data) | `VectorField`, `Hamiltonian`, `HamiltonianVectorField` |
+| Data | [`CTBase.Data`](@ref CTBase.Data) | `VectorField`, `Hamiltonian`, `HamiltonianVectorField` |
 | Systems | [`CTFlows.Systems`](@ref CTFlows.Systems) | `VectorFieldSystem`, `HamiltonianSystem` |
 | Integrators | [`CTFlows.Integrators`](@ref CTFlows.Integrators) | `SciML` |
 | Flows | [`CTFlows.Flows`](@ref CTFlows.Flows) | `StateFlow`, `HamiltonianFlow` |
 | Trajectories | [`CTFlows.Trajectories`](@ref CTFlows.Trajectories) | `VectorFieldTrajectory`, `HamiltonianVectorFieldTrajectory` |
 | Multi-phase | [`CTFlows.MultiPhase`](@ref CTFlows.MultiPhase) | `MultiPhaseStateFlow` |
-| Traits | [`CTFlows.Traits`](@ref CTFlows.Traits) | `Autonomous`, `Fixed`, `InPlace`, … |
 
 The shortcut `Flows.Flow(data; opts...)` collapses all pipeline steps into a single
 call. The explicit pipeline (`build_system` → `build_integrator` → `build_flow`)

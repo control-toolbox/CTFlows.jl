@@ -41,8 +41,8 @@ singular extremals).
 ```@setup ad
 using CTFlows
 using CTFlows.DifferentialGeometry
-using CTFlows.Data
-using CTFlows.Traits
+using CTBase.Data
+using CTBase.Traits
 import DifferentiationInterface
 ```
 
@@ -100,7 +100,7 @@ Btv(1.0, [1.0, 2.0], 1.0)
 
 ## On typed vector fields
 
-When both arguments are typed [`VectorField`](@ref CTFlows.Data.VectorField)s, `ad`
+When both arguments are typed [`VectorField`](@ref CTBase.Data.VectorField)s, `ad`
 returns a **typed `VectorField`** whose traits are inherited from the operands. The two
 fields must share the same time- and variable-dependence (see
 [Limitations & configuration](limitations.md)).
@@ -148,5 +148,5 @@ ad(F, G)(x0) ≈ -ad(G, F)(x0)
 - [The `@Lie` macro](lie_macro.md) — write `@Lie [X, Y]` instead of `ad(X, Y)`, with
   nesting and arithmetic.
 - [Limitations & configuration](limitations.md) — no Lie operations on a
-  [`HamiltonianVectorField`](@ref CTFlows.Data.HamiltonianVectorField), no in-place fields,
+  [`HamiltonianVectorField`](@ref CTBase.Data.HamiltonianVectorField), no in-place fields,
   matching traits.

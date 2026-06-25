@@ -7,30 +7,32 @@ integration of the augmented state `[x; p; pv]` where `pv` is the costate of the
 module TestVariableCostateFlows
 
 import Test
+import CTBase.Core
+import CTBase.Data: Data
 import CTBase.Exceptions: Exceptions
+import CTBase.Traits: Traits
 import CTFlows: CTFlows
 import CTFlows.Common: Common
 import CTFlows.Configs: Configs
-import CTFlows.Traits: Traits
 import CTFlows.Systems: Systems
 import CTFlows.Flows: Flows
 import CTFlows.Trajectories: Trajectories
 import CTFlows.Integrators: Integrators
 import CTFlows.Differentiation: Differentiation
-import CTFlows.Data: Data
 
 using SciMLBase: SciMLBase
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 using StaticArrays: SA, SVector, MVector
 using ADTypes: ADTypes
 using DifferentiationInterface: DifferentiationInterface as DI
+import ForwardDiff
 
 # Load extensions for testing
 const CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
 const CTFlowsDifferentiationInterface = Base.get_extension(CTFlows, :CTFlowsDifferentiationInterface)
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 const ATOL = 1e-3
 
 # =============================================================================
@@ -75,7 +77,7 @@ end
 # Analytical solution: x(t) = x0 + p0 * (t-t0) / sum(v), p(t) = p0, pv(t) = pv0 - sum(p0^2) * (t-t0) / (2 * sum(v)^2)
 H_LINEAR(x, p, v) = sum(abs2, p) / (2 * sum(v))
 function solve_linear(t, t0, x0, p0, v)
-    pv0 = Common.make_coerce(v)(zeros(length(v)))
+    pv0 = Core.make_coerce(v)(zeros(length(v)))
     dt  = t - t0
     sv  = sum(v)
     x   = x0 .+ p0 .* (dt / sv)

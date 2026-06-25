@@ -6,14 +6,14 @@ import CTBase.Exceptions
 import DifferentiationInterface
 import ADTypes
 import CTFlows: CTFlows
-import CTFlows.Traits: Traits
+import CTBase.Traits: Traits
 import CTFlows.Common: Common
-import CTFlows.Data: Data
+import CTBase.Data: Data
 import CTFlows.Differentiation: Differentiation
 import CTFlows.DifferentialGeometry: DifferentialGeometry
 
-const VERBOSE    = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE    : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE    = isdefined(Main, :TestData) ? Main.TestData.VERBOSE    : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 function test_ad_dg()
     Test.@testset "ad() - Lie Derivative" verbose=VERBOSE showtiming=SHOWTIMING begin

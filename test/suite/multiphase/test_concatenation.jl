@@ -7,12 +7,12 @@ import CTFlows.Systems
 import CTFlows.Integrators
 import CTFlows.Flows
 import CTFlows.Common
-import CTFlows.Traits
+import CTBase.Traits
 import CTBase.Strategies
 import CTBase.Options
 
-const VERBOSE    = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE    : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE    = isdefined(Main, :TestData) ? Main.TestData.VERBOSE    : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ==============================================================================
 # Fake types — module top-level (testing-creation.md §1)

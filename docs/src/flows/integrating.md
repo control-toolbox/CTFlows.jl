@@ -9,8 +9,8 @@ styles depending on whether you need the **full trajectory** or just the **final
 
 ```@setup flows_integrating
 using CTFlows
-using CTFlows.Data
-using CTFlows.Traits
+using CTBase.Data
+using CTBase.Traits
 using CTFlows.Systems
 using CTFlows.Integrators
 using CTFlows.Flows

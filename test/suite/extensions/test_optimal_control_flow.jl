@@ -24,8 +24,8 @@ import CTFlows.Flows: Flows
 import CTFlows.Systems: Systems
 import CTFlows.Integrators: Integrators
 import CTFlows.Differentiation: Differentiation
-import CTFlows.Data: Data
-import CTFlows.Traits: Traits
+import CTBase.Data: Data
+import CTBase.Traits: Traits
 
 using SciMLBase: SciMLBase
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
@@ -35,8 +35,8 @@ using DifferentiationInterface: DifferentiationInterface as DI
 const CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
 const CTFlowsDifferentiationInterface = Base.get_extension(CTFlows, :CTFlowsDifferentiationInterface)
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 const ATOL = 1e-4
 
 # =============================================================================

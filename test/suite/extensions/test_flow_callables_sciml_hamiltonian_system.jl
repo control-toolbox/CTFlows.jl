@@ -2,7 +2,7 @@ module TestFlowCallablesSciMLHamiltonianSystem
 
 import Test
 import CTBase.Exceptions
-import CTFlows.Data: Data
+import CTBase.Data: Data
 import CTFlows.Common: Common
 import CTFlows.Systems: Systems
 import CTFlows.Flows: Flows
@@ -15,8 +15,8 @@ using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 using StaticArrays: SA, SVector, MVector
 using ForwardDiff: ForwardDiff
 
-const VERBOSE = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ==============================================================================
 # Fake AD backend for testing (no actual AD, just harmonic oscillator)

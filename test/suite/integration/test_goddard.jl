@@ -1,13 +1,19 @@
 module TestGoddard
 
 import Test
-import CTFlows: CTFlows
+import CTBase.Data
+import CTFlows.DifferentialGeometry
+import CTFlows.Flows
+import CTFlows.Trajectories
 import DifferentiationInterface
 using OrdinaryDiffEqTsit5
 using NonlinearSolve: NonlinearSolve, NonlinearProblem, SimpleNewtonRaphson, solve
 
-const VERBOSE    = isdefined(Main, :TestOptions) ? Main.TestOptions.VERBOSE    : true
-const SHOWTIMING = isdefined(Main, :TestOptions) ? Main.TestOptions.SHOWTIMING : true
+import CTBase: CTBase # For generated code by the @Lie macro
+import CTFlows: CTFlows # For generated code by the @Lie macro
+
+const VERBOSE    = isdefined(Main, :TestData) ? Main.TestData.VERBOSE    : true
+const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ==============================================================================
 # Goddard problem physics constants and dynamics (module-level)
@@ -42,11 +48,11 @@ function test_goddard()
         # Build Hamiltonians (requires extensions to be loaded)
         # ======================================================================
 
-        H0 = CTFlows.Lift(_godd_F0)                   # H0(x, p) = p' * F0(x)
-        H1 = CTFlows.Lift(_godd_F1)                   # H1(x, p) = p' * F1(x)
-        H01  = CTFlows.@Lie {H0, H1}
-        H001 = CTFlows.@Lie {H0, H01}
-        H101 = CTFlows.@Lie {H1, H01}
+        H0 = DifferentialGeometry.Lift(_godd_F0)                   # H0(x, p) = p' * F0(x)
+        H1 = DifferentialGeometry.Lift(_godd_F1)                   # H1(x, p) = p' * F1(x)
+        H01  = DifferentialGeometry.@Lie {H0, H1}
+        H001 = DifferentialGeometry.@Lie {H0, H01}
+        H101 = DifferentialGeometry.@Lie {H1, H01}
 
         # ======================================================================
         # Control laws and pseudo-Hamiltonians
@@ -54,8 +60,8 @@ function test_goddard()
 
         us(x, p) = -H001(x, p) / H101(x, p)          # singular control
         g(x) = _GODD_vmax - x[2]                     # state constraint v ≤ vmax
-        ub(x) = -CTFlows.ad(_godd_F0, g)(x) / CTFlows.ad(_godd_F1, g)(x)          # boundary control
-        μ(x, p) = H01(x, p) / (CTFlows.ad(_godd_F1, g)(x))         # multiplier
+        ub(x) = -DifferentialGeometry.ad(_godd_F0, g)(x) / DifferentialGeometry.ad(_godd_F1, g)(x)          # boundary control
+        μ(x, p) = H01(x, p) / (DifferentialGeometry.ad(_godd_F1, g)(x))         # multiplier
 
         # Pseudo-Hamiltonian
         H(x, p, u) = (p' * _godd_F0(x) + u * p' * _godd_F1(x))
@@ -70,10 +76,10 @@ function test_goddard()
         # Build flows
         # ======================================================================
 
-        φ0 = CTFlows.Flow(CTFlows.Hamiltonian(Q0; is_variable=true))
-        φ1 = CTFlows.Flow(CTFlows.Hamiltonian(Q1; is_variable=true))
-        φs = CTFlows.Flow(CTFlows.Hamiltonian(Qs; is_variable=true))
-        φb = CTFlows.Flow(CTFlows.Hamiltonian(Qb; is_variable=true))
+        φ0 = Flows.Flow(Data.Hamiltonian(Q0; is_variable=true))
+        φ1 = Flows.Flow(Data.Hamiltonian(Q1; is_variable=true))
+        φs = Flows.Flow(Data.Hamiltonian(Qs; is_variable=true))
+        φb = Flows.Flow(Data.Hamiltonian(Qb; is_variable=true))
 
         # ======================================================================
         # Known solution (from .extras/goddard-latest/goddard-latest.jl)
@@ -112,7 +118,7 @@ function test_goddard()
         Test.@testset "Flow type — trajectory call" begin
             φf = φ1 * (t1_sol, φs) * (t2_sol, φb) * (t3_sol, φ0)
             sol = φf((_GODD_t0, tf_sol), _GODD_x0, p0_sol; variable=tf_sol)
-            Test.@test sol isa CTFlows.Trajectories.HamiltonianVectorFieldTrajectory
+            Test.@test sol isa Trajectories.HamiltonianVectorFieldTrajectory
         end
 
         # ======================================================================

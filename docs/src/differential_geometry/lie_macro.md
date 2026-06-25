@@ -19,8 +19,8 @@ as `[1.0, 2.0]` — may appear directly inside the macro expression.
 ```@setup liemacro
 using CTFlows
 using CTFlows.DifferentialGeometry
-using CTFlows.Data
-using CTFlows.Traits
+using CTBase.Data
+using CTBase.Traits
 import DifferentiationInterface
 ```
 
@@ -39,8 +39,8 @@ G = Hamiltonian((x, p) -> x[1] * p[1]; is_autonomous=true)
 ```
 
 The macro returns exactly what the underlying function returns — a typed
-[`VectorField`](@ref CTFlows.Data.VectorField) for `[…]`, a typed
-[`Hamiltonian`](@ref CTFlows.Data.Hamiltonian) for `{…}`:
+[`VectorField`](@ref CTBase.Data.VectorField) for `[…]`, a typed
+[`Hamiltonian`](@ref CTBase.Data.Hamiltonian) for `{…}`:
 
 ```@example liemacro
 (@Lie [X, Y]) isa VectorField, (@Lie {F, G}) isa Hamiltonian
@@ -145,8 +145,8 @@ The macro validates its input and raises
 snippets are **not executed** (they would throw):
 
 **Wrong bracket kind for a typed operand.** Using a
-[`Hamiltonian`](@ref CTFlows.Data.Hamiltonian) inside `[...]` (Lie bracket) or a
-[`VectorField`](@ref CTFlows.Data.VectorField) inside `{...}` (Poisson bracket) is
+[`Hamiltonian`](@ref CTBase.Data.Hamiltonian) inside `[...]` (Lie bracket) or a
+[`VectorField`](@ref CTBase.Data.VectorField) inside `{...}` (Poisson bracket) is
 detected at runtime and raises an error:
 
 ```julia
