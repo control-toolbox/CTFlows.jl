@@ -16,7 +16,7 @@ module CTFlowsDifferentiationInterface
 
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 using CTFlows: CTFlows
-using CTFlows.Data: Data
+using CTBase.Data: Data
 using CTFlows.Differentiation: Differentiation
 using DifferentiationInterface: DifferentiationInterface as DI
 

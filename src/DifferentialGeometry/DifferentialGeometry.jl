@@ -19,18 +19,18 @@ module DifferentialGeometry
 # External-package imports (qualified, pollution-free)
 # ==============================================================================
 
+import ADTypes
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
+import CTBase.Data
 import CTBase.Exceptions
-using ADTypes: ADTypes
+import CTBase.Traits
 import MacroTools: postwalk, @capture
 
 # ==============================================================================
 # Internal sibling-submodule imports
 # ==============================================================================
 
-import CTBase.Traits
 import ..Common: Common
-import ..Data: Data
 import ..Differentiation: Differentiation
 
 # ==============================================================================
@@ -38,8 +38,6 @@ import ..Differentiation: Differentiation
 # ==============================================================================
 
 include("default.jl")
-include("prefix.jl")
-include("exception_prefix.jl")
 include("ad.jl")
 include("ad_types.jl")
 include("lift.jl")
@@ -58,7 +56,5 @@ export Poisson
 export ∂ₜ
 export @Lie
 export dg_ad_backend, dg_ad_backend!
-export diffgeo_prefix, diffgeo_prefix!
-export e_prefix, e_prefix!
 
 end # module DifferentialGeometry

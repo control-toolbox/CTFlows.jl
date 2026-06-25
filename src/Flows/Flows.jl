@@ -13,10 +13,13 @@ module Flows
 
 # 1. External-package imports (qualified, pollution-free)
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
+import CTBase.Core
+import CTBase.Data
 import CTBase.Exceptions
 import CTBase.Strategies
 import CTBase.Options
 import CTBase.Orchestration
+import CTBase.Traits
 import CTModels
 
 # ==============================================================================
@@ -25,8 +28,6 @@ import CTModels
 
 import ..Common: Common
 import ..Configs: Configs
-import CTBase.Traits
-import ..Data: Data
 import ..Differentiation: Differentiation
 import ..Systems: Systems, hamiltonian_vector_field
 import ..Integrators: Integrators

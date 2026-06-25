@@ -39,11 +39,6 @@ module Configs
 
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
-
-# ==============================================================================
-# Sibling imports
-# ==============================================================================
-
 import CTBase.Traits
 
 # ==============================================================================

@@ -13,6 +13,7 @@ import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
 import CTBase.Strategies
 import CTBase.Options
+import CTBase.Traits
 
 # ==============================================================================
 # Internal sibling-submodule imports
@@ -20,7 +21,6 @@ import CTBase.Options
 
 import ..Common: Common
 import ..Configs: Configs
-import CTBase.Traits
 import ..Systems: Systems
 import ..Integrators: Integrators
 import ..Flows: Flows

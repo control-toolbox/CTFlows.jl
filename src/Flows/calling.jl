@@ -199,7 +199,7 @@ flow_nonfixed = Flow(system_nonfixed, integrator)
 sol = _invoke_flow(flow_nonfixed, config; variable=0.5, unsafe=false)  # OK, variable provided
 \`\`\`
 
-See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Traits.VariableDependence`](), [`CTFlows.Common.NotProvided`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Trajectories.build_trajectory`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTBase.Traits.VariableDependence`](), [`CTFlows.Common.NotProvided`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Trajectories.build_trajectory`](@ref).
 """
 function _invoke_flow(flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe)
     VD = Traits.variable_dependence(flow)
@@ -278,7 +278,7 @@ the contract that NonFixed systems must receive a variable parameter.
 - `CTBase.Exceptions.PreconditionError`: Always, with message explaining that a variable is required.
 
 # See also
-[`CTFlows.Traits.NonFixed`](), [`Common.NotProvided`](@ref).
+[`CTBase.Traits.NonFixed`](), [`Common.NotProvided`](@ref).
 """
 function _invoke_flow(::Type{Traits.NonFixed}, ::Type{Common.NotProvided}, flow, config; unsafe, variable)
     throw(Exceptions.PreconditionError(
@@ -302,7 +302,7 @@ forwards to `_core_invoke_flow` with `variable=nothing`.
 - The result of `_core_invoke_flow`.
 
 # See also
-[`CTFlows.Traits.Fixed`](), [`Common.NotProvided`](@ref), [`_core_invoke_flow`](@ref).
+[`CTBase.Traits.Fixed`](), [`Common.NotProvided`](@ref), [`_core_invoke_flow`](@ref).
 """
 function _invoke_flow(::Type{Traits.Fixed}, ::Type{Common.NotProvided}, flow, config; unsafe, variable)
     return _core_invoke_flow(flow, config; variable=nothing, unsafe=unsafe)
@@ -321,7 +321,7 @@ to `_core_invoke_flow` with the provided variable value.
 - The result of `_core_invoke_flow`.
 
 # See also
-[`CTFlows.Traits.NonFixed`](), [`_core_invoke_flow`](@ref).
+[`CTBase.Traits.NonFixed`](), [`_core_invoke_flow`](@ref).
 """
 function _invoke_flow(::Type{Traits.NonFixed}, ::Type{VT}, flow, config; unsafe, variable) where {VT}
     return _core_invoke_flow(flow, config; variable=variable, unsafe=unsafe)
@@ -340,7 +340,7 @@ receive a variable parameter, so it throws a `PreconditionError`.
 - `CTBase.Exceptions.PreconditionError`: Always, with message explaining that variables must not be provided to Fixed flows.
 
 # See also
-[`CTFlows.Traits.Fixed`]().
+[`CTBase.Traits.Fixed`]().
 """
 function _invoke_flow(::Type{Traits.Fixed}, ::Type{VT}, flow, config; unsafe, variable) where {VT}
     throw(Exceptions.PreconditionError(
@@ -375,7 +375,7 @@ integration is supported.
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: If the flow does not support variable costate.
 
-See also: [`CTFlows.Traits.variable_costate_trait`](@ref), [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Traits.NoVariableCostate`](@ref).
+See also: [`CTBase.Traits.variable_costate_trait`](@ref), [`CTBase.Traits.SupportsVariableCostate`](@ref), [`CTBase.Traits.NoVariableCostate`](@ref).
 """
 function _invoke_flow_variable_costate(
     flow::AbstractHamiltonianFlow,
@@ -399,7 +399,7 @@ This method handles the error case where a flow does not support variable costat
 # Throws
 - `CTBase.Exceptions.PreconditionError`: Always, with a descriptive message indicating that the flow does not support variable costate.
 
-See also: [`CTFlows.Traits.NoVariableCostate`](@ref).
+See also: [`CTBase.Traits.NoVariableCostate`](@ref).
 """
 function _invoke_flow_variable_costate(
     ::Type{Traits.NoVariableCostate},
@@ -433,7 +433,7 @@ and calls the flow with it.
 # Returns
 - `Tuple{AbstractVector, AbstractVector, AbstractVector}`: The augmented solution `(xf, pf, pvf)`.
 
-See also: [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@ref).
+See also: [`CTBase.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@ref).
 """
 function _invoke_flow_variable_costate(
     ::Type{Traits.SupportsVariableCostate},
@@ -444,7 +444,7 @@ function _invoke_flow_variable_costate(
     t0  = Configs.initial_time(config) 
     x0  = Configs.initial_state(config)
     p0  = Configs.initial_costate(config)
-    pv0 = Common.make_coerce(variable)(zeros(eltype(x0), length(variable)))
+    pv0 = Core.make_coerce(variable)(zeros(eltype(x0), length(variable)))
     tf  = Configs.final_time(config)
     config_aug = Configs.AugmentedHamiltonianEndPointConfig(t0, x0, p0, pv0, tf)
     return _invoke_flow(flow, config_aug; variable=variable, unsafe=unsafe)
@@ -461,7 +461,7 @@ but the user did not provide the required variable parameter.
 # Throws
 - `CTBase.Exceptions.PreconditionError`: Always, with a descriptive message indicating that the variable parameter must be provided.
 
-See also: [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Common.NotProvided`](@ref).
+See also: [`CTBase.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Common.NotProvided`](@ref).
 """
 function _invoke_flow_variable_costate(
     ::Type{Traits.SupportsVariableCostate},
@@ -489,7 +489,7 @@ with a trajectory configuration.
 # Throws
 - `CTBase.Exceptions.PreconditionError`: Always, with a descriptive message indicating that variable_costate is only supported for point configurations.
 
-See also: [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref).
+See also: [`CTBase.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref).
 """
 function _invoke_flow_variable_costate(
     ::Type{Traits.SupportsVariableCostate},

@@ -190,7 +190,7 @@ AugmentedHamiltonianEndPointConfig
   tf: 1.0
 \`\`\`
 
-See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref), [`CTFlows.Traits.AugmentedHamiltonianDynamics`](@ref).
+See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref), [`CTBase.Traits.AugmentedHamiltonianDynamics`](@ref).
 """
 struct AugmentedHamiltonianEndPointConfig{T0<:Real, X0, P0, PV0, TF<:Real} <: AbstractAugmentedHamiltonianConfig{X0, Traits.EndPointMode}
     t0::T0

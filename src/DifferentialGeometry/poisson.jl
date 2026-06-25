@@ -37,8 +37,8 @@ See also: [`CTFlows.DifferentialGeometry.Poisson`](@ref), [`CTFlows.Differential
 function Poisson(
     H::Function, G::Function;
     ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
-    is_autonomous::Bool = Common.__is_autonomous(),
-    is_variable::Bool   = Common.__is_variable(),
+    is_autonomous::Bool = Data.__is_autonomous(),
+    is_variable::Bool   = Data.__is_variable(),
 )
     TD      = is_autonomous ? Traits.Autonomous : Traits.NonAutonomous
     VD      = is_variable   ? Traits.NonFixed   : Traits.Fixed
@@ -58,7 +58,7 @@ This typed entry point is used by the [`@Lie`](@ref) macro for compile-time disp
 - `H::Function`: First Hamiltonian function (returns a scalar).
 - `G::Function`: Second Hamiltonian function (returns a scalar).
 - `::Type{TD}`: Time dependence type (`Autonomous` or `NonAutonomous`).
-- `::Type{VD}`: Variable dependence type ([`CTFlows.Traits.Fixed`](@ref) or [`CTFlows.Traits.NonFixed`](@ref)).
+- `::Type{VD}`: Variable dependence type ([`CTBase.Traits.Fixed`](@ref) or [`CTBase.Traits.NonFixed`](@ref)).
 - `ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided}`: AD backend to use (default: global backend).
 
 # Returns
@@ -67,7 +67,7 @@ This typed entry point is used by the [`@Lie`](@ref) macro for compile-time disp
 # Example
 ```julia
 using CTFlows.DifferentialGeometry
-using CTFlows.Traits
+using CTBase.Traits
 
 H = (x, p) -> p[1]^2 / 2 + x[1]^2
 G = (x, p) -> x[1] * p[1]
@@ -198,8 +198,8 @@ Both Hamiltonians must share the same time dependence and variable dependence.
 # Example
 ```julia
 using CTFlows.DifferentialGeometry
-using CTFlows.Data
-using CTFlows.Traits
+using CTBase.Data
+using CTBase.Traits
 
 H = Hamiltonian((x, p) -> p[1]^2 / 2 + x[1]^2, Traits.Autonomous, Traits.Fixed)
 G = Hamiltonian((x, p) -> x[1] * p[1], Traits.Autonomous, Traits.Fixed)

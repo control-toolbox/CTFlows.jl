@@ -24,7 +24,7 @@ inputs with consistent output shapes.
 
 # Example
 ```julia-repl
-julia> using CTFlows.Systems, CTFlows.Common, CTFlows.Data
+julia> using CTFlows.Systems, CTFlows.Common, CTBase.Data
 
 julia> h = Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); autonomous=true, variable=false)
 Hamiltonian{var"#1", Autonomous, Fixed}
@@ -37,7 +37,7 @@ HamiltonianSystem
   backend: AutoForwardDiff()
 ```
 
-See also: [`CTFlows.Data.Hamiltonian`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), [`CTFlows.Traits.AbstractADTrait`](@ref), [`CTFlows.Systems.build_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
+See also: [`CTBase.Data.Hamiltonian`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), [`CTBase.Traits.AbstractADTrait`](@ref), [`CTFlows.Systems.build_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
 """
 struct HamiltonianSystem{
     F<:Function,
@@ -121,8 +121,8 @@ function get_ip_rhs(sys::HamiltonianSystem, config::Configs.AbstractHamiltonianC
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
     N = _state_dim(x0)
-    cx = Common.make_coerce(x0)
-    cp = Common.make_coerce(p0)
+    cx = Core.make_coerce(x0)
+    cp = Core.make_coerce(p0)
     h, backend = sys.h, sys.backend
     return HamIpRHS(h, backend, N, cx, cp)
 end
@@ -147,8 +147,8 @@ function get_oop_rhs(sys::HamiltonianSystem, config::Configs.AbstractHamiltonian
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
     N = _state_dim(x0)
-    cx = Common.make_coerce(x0)
-    cp = Common.make_coerce(p0)
+    cx = Core.make_coerce(x0)
+    cp = Core.make_coerce(p0)
     h, backend = sys.h, sys.backend
     return HamOoPRHS(h, backend, N, cx, cp)
 end
@@ -175,8 +175,8 @@ function get_ip_rhs_augmented(sys::HamiltonianSystem, config::Configs.AbstractAu
     n_x = _state_dim(x0)
     pv0 = Configs.initial_variable_costate(config)
     n_v = _state_dim(pv0)
-    cx = Common.make_coerce(x0)
-    cp = Common.make_coerce(p0)
+    cx = Core.make_coerce(x0)
+    cp = Core.make_coerce(p0)
     h, backend = sys.h, sys.backend
     return HamIpAugRHS(h, backend, n_x, n_v, cx, cp)
 end
@@ -227,7 +227,7 @@ Return the variable costate capability trait of a variable-dependent Hamiltonian
 - This is because only variable-dependent systems have a variable `v` to differentiate against
 - This trait enables the `variable_costate=true` kwarg in Hamiltonian flow calls
 
-See also: [`CTFlows.Traits.AbstractVariableCostateCapability`](@ref), [`CTFlows.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Traits.NoVariableCostate`](@ref).
+See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@ref), [`CTBase.Traits.SupportsVariableCostate`](@ref), [`CTBase.Traits.NoVariableCostate`](@ref).
 """
 function Traits.variable_costate_trait(
     ::HamiltonianSystem{F, TD, Traits.NonFixed, B}

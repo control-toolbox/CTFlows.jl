@@ -3,26 +3,6 @@
 # =============================================================================
 
 """
-$(TYPEDSIGNATURES)
-
-Default value for autonomous flag in time-dependent object constructors.
-
-Returns `true` by default, meaning objects do not explicitly depend on time
-unless specified otherwise.
-"""
-__is_autonomous()::Bool = true
-
-"""
-$(TYPEDSIGNATURES)
-
-Default value for variable flag in time-dependent object constructors.
-
-Returns `false` by default, meaning objects have fixed parameters unless
-specified otherwise.
-"""
-__is_variable()::Bool = false
-
-"""
 $(TYPEDEF)
 
 Sentinel type indicating that a variable parameter was not provided.
@@ -38,7 +18,7 @@ passed `nothing`". This enables proper dispatch based on the system's
 __variable()::NotProvided = NotProvided()
 ```
 
-See also: [`CTFlows.Traits.VariableDependence`](@ref), [`CTFlows.Traits.Fixed`](@ref), [`CTFlows.Traits.NonFixed`](@ref).
+See also: [`CTBase.Traits.VariableDependence`](@ref), [`CTBase.Traits.Fixed`](@ref), [`CTBase.Traits.NonFixed`](@ref).
 """
 struct NotProvided end
 
@@ -61,21 +41,6 @@ Returns `false` by default, meaning ODE solver retcodes are checked and
 failures throw exceptions unless explicitly bypassed.
 """
 __unsafe()::Bool = false
-
-"""
-$(TYPEDSIGNATURES)
-
-Default value for in-place flag in vector field constructors.
-
-Returns `nothing` by default, meaning mutability is auto-detected from
-the function signature unless specified otherwise.
-
-# Returns
-- `Nothing`: The default value for the `is_inplace` parameter.
-
-See also: [`CTFlows.Data.VectorField`](@ref), [`CTFlows.Data.HamiltonianVectorField`](@ref).
-"""
-__is_inplace() = nothing
 
 """
 $(TYPEDSIGNATURES)

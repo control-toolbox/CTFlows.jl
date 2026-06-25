@@ -74,7 +74,7 @@ Covers both state systems (`AbstractStateSystem`) and non-augmented Hamiltonian 
 See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
 """
 function Integrators.build_problem(
-    integ::SciML,
+    ::Integrators.SciML,
     system::Systems.AbstractSystem,
     config::Configs.AbstractConfig;
     variable,
@@ -119,7 +119,7 @@ Always uses the in-place path since `pv0 = zeros(...)` guarantees mutability.
 See also: [`CTFlows.Systems.get_ip_rhs_augmented`](@ref), [`CTFlows.Configs.AbstractAugmentedHamiltonianConfig`](@ref).
 """
 function Integrators.build_problem(
-    integ::SciML,
+    ::Integrators.SciML,
     system::Systems.AbstractSystem,
     config::Configs.AbstractAugmentedHamiltonianConfig;
     variable,
@@ -142,7 +142,7 @@ Solve an `ODEProblem` using resolved options.
 Returns a `SciMLIntegrationResult` wrapping the raw `ODESolution`.
 
 # Arguments
-- `integ::SciML`: The SciML integrator strategy.
+- `integ::Integrators.SciML`: The SciML integrator strategy.
 - `prob::SciMLBase.AbstractODEProblem`: The ODE problem to solve.
 - `options::Dict{Symbol,Any}`: Resolved solver options (typically from `build_options`).
 - `unsafe=Common.__unsafe()`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
@@ -153,7 +153,7 @@ Returns a `SciMLIntegrationResult` wrapping the raw `ODESolution`.
 # Throws
 - `CTBase.Exceptions.SolverFailure`: If the ODE solver returns an unsuccessful retcode and `unsafe=false`.
 """
-function Integrators.solve_problem(integ::SciML, prob::SciMLBase.AbstractODEProblem, options::Dict{Symbol,<:Any}; unsafe=Common.__unsafe())
+function Integrators.solve_problem(::Integrators.SciML, prob::SciMLBase.AbstractODEProblem, options::Dict{Symbol,<:Any}; unsafe=Common.__unsafe())
     ode_sol = SciMLBase.solve(prob; options...)
     _check_retcode(ode_sol, unsafe)
     return SciMLIntegrationResult(ode_sol)

@@ -53,8 +53,8 @@ See also: [`CTFlows.DifferentialGeometry.Lift`](@ref), [`CTFlows.DifferentialGeo
 """
 function Lift(
     f::Function;
-    is_autonomous::Bool = Common.__is_autonomous(),
-    is_variable::Bool   = Common.__is_variable(),
+    is_autonomous::Bool = Data.__is_autonomous(),
+    is_variable::Bool   = Data.__is_variable(),
 )
     TD = is_autonomous ? Traits.Autonomous : Traits.NonAutonomous
     VD = is_variable   ? Traits.NonFixed   : Traits.Fixed
@@ -72,7 +72,7 @@ point is used by the [`@Lie`](@ref) macro for compile-time dispatch.
 # Arguments
 - `f::Function`: Vector field function (returns a vector).
 - `::Type{TD}`: Time dependence type (`Autonomous` or `NonAutonomous`).
-- `::Type{VD}`: Variable dependence type ([`CTFlows.Traits.Fixed`](@ref) or [`CTFlows.Traits.NonFixed`](@ref)).
+- `::Type{VD}`: Variable dependence type ([`CTBase.Traits.Fixed`](@ref) or [`CTBase.Traits.NonFixed`](@ref)).
 
 # Returns
 - A [`LiftedHamiltonianFunction{typeof(f), TD, VD}`](@ref).
@@ -80,7 +80,7 @@ point is used by the [`@Lie`](@ref) macro for compile-time dispatch.
 # Example
 ```julia
 using CTFlows.DifferentialGeometry
-using CTFlows.Traits
+using CTBase.Traits
 
 f = x -> [x[2], -x[1]]
 H = Lift(f, Traits.Autonomous, Traits.Fixed)
@@ -114,8 +114,8 @@ allows lifting typed vector fields directly to Hamiltonians.
 # Example
 ```julia
 using CTFlows.DifferentialGeometry
-using CTFlows.Data
-using CTFlows.Traits
+using CTBase.Data
+using CTBase.Traits
 
 X = VectorField(x -> [x[2], -x[1]], Traits.Autonomous, Traits.Fixed, Traits.OutOfPlace)
 H = Lift(X)

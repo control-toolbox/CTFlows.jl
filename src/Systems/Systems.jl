@@ -13,16 +13,17 @@ module Systems
 
 # 1. External-package imports (qualified, pollution-free)
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
+import CTBase.Core
+import CTBase.Data
 import CTBase.Exceptions
+import CTBase.Traits
 
 # ==============================================================================
 # Internal sibling-submodule imports
 # ==============================================================================
 
 import ..Common: Common
-import CTBase.Traits
 import ..Configs: Configs
-import ..Data: Data
 import ..Differentiation: Differentiation
 
 # ==============================================================================

@@ -20,7 +20,9 @@ module Trajectories
 # ==============================================================================
 
 import DocStringExtensions: TYPEDSIGNATURES, TYPEDEF
+import CTBase.Core
 import CTBase.Exceptions
+import CTBase.Traits
 import RecipesBase: RecipesBase, plot
 
 # ==============================================================================
@@ -31,7 +33,6 @@ import ..Common: Common
 import ..Configs: Configs
 import ..Systems: Systems
 import ..Integrators: Integrators
-import CTBase.Traits
 
 # ==============================================================================
 # Include files

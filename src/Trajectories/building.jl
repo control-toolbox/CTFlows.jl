@@ -21,7 +21,7 @@ This uses compile-time dispatch on the initial state type to avoid runtime type 
 # Returns
 - `Number`: The unwrapped scalar final state.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.EndPointMode`](@ref), [`CTFlows.Traits.StateDynamics`](@ref).
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTBase.Traits.EndPointMode`](@ref), [`CTBase.Traits.StateDynamics`](@ref).
 """
 function build_trajectory(
     ::Type{Traits.EndPointMode},
@@ -29,7 +29,7 @@ function build_trajectory(
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult, 
 )
-    return Common.make_coerce(Configs.initial_state(config))(Integrators.final_state(result))
+    return Core.make_coerce(Configs.initial_state(config))(Integrators.final_state(result))
 end
 
 """
@@ -47,7 +47,7 @@ in a `VectorFieldTrajectory` for future extensibility.
 # Returns
 - `VectorFieldTrajectory`: The wrapped integration result.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Traits.TrajectoryMode`](), [`CTFlows.Traits.StateDynamics`]().
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTBase.Traits.TrajectoryMode`](), [`CTBase.Traits.StateDynamics`]().
 """
 function build_trajectory(
     ::Type{Traits.TrajectoryMode},
@@ -85,9 +85,9 @@ For Hamiltonian systems, `n_p = n_x` always, so the augmented state is `[x; p; p
 function _aug_split_solution(u, x0, pv0)
     n = length(x0)
     return (
-        Common.make_coerce(x0)(u[1:n]),
-        Common.make_coerce(x0)(u[n+1:2n]),
-        Common.make_coerce(pv0)(u[2n+1:end]),
+        Core.make_coerce(x0)(u[1:n]),
+        Core.make_coerce(x0)(u[n+1:2n]),
+        Core.make_coerce(pv0)(u[2n+1:end]),
     )
 end
 
@@ -115,7 +115,7 @@ type of the initial state to handle scalar, vector, and matrix cases.
   - `Tuple{AbstractVector, AbstractVector}` for vector inputs
   - `Tuple{AbstractMatrix, AbstractMatrix}` for matrix inputs
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.EndPointMode`](@ref), [`CTFlows.Traits.HamiltonianDynamics`]().
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTBase.Traits.EndPointMode`](@ref), [`CTBase.Traits.HamiltonianDynamics`]().
 """
 function build_trajectory(
     ::Type{Traits.EndPointMode},
@@ -126,7 +126,7 @@ function build_trajectory(
     u = Integrators.final_state(result)
     x0 = Configs.initial_state(config)
     x, p = _ham_split_solution(u, x0)
-    return (Common.make_coerce(x0)(x), Common.make_coerce(x0)(p))
+    return (Core.make_coerce(x0)(x), Core.make_coerce(x0)(p))
 end
 
 """
@@ -145,7 +145,7 @@ Wraps the integration result in a `HamiltonianVectorFieldTrajectory` for future 
 # Returns
 - `HamiltonianVectorFieldTrajectory`: The wrapped integration result.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTFlows.Traits.TrajectoryMode`](), [`CTFlows.Traits.HamiltonianDynamics`]().
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTBase.Traits.TrajectoryMode`](), [`CTBase.Traits.HamiltonianDynamics`]().
 """
 function build_trajectory(
     ::Type{Traits.TrajectoryMode},
@@ -183,7 +183,7 @@ splits using only the state dimension `n = length(initial_state)`.
 - Uses `_aug_split_solution` helper to split the augmented final state.
 - Assumes `n_p = n_x` invariant for Hamiltonian systems.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Traits.EndPointMode`](@ref), [`CTFlows.Traits.AugmentedHamiltonianDynamics`]().
+See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTBase.Traits.EndPointMode`](@ref), [`CTBase.Traits.AugmentedHamiltonianDynamics`]().
 """
 function build_trajectory(
     ::Type{Traits.EndPointMode},
