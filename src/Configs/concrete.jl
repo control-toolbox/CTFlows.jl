@@ -1,0 +1,268 @@
+# =============================================================================
+# Concrete configurations
+# =============================================================================
+
+"""
+$(TYPEDEF)
+
+Configuration for a point-to-point integration problem.
+
+Defines the initial and final time points along with the initial state for
+integration from a single initial condition to a specific final time.
+
+# Fields
+- `t0::T0`: Initial time
+- `x0::X0`: Initial state vector
+- `tf::TF`: Final time
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Configs
+
+julia> config = StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
+StateEndPointConfig
+  t0: 0.0
+  x0: [1.0, 0.0]
+  tf: 1.0
+\`\`\`
+
+See also: [`CTFlows.Configs.StateTrajectoryConfig`](@ref)
+"""
+struct StateEndPointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfigWithMaC{X0, Traits.EndPointMode, Traits.StateDynamics}
+    t0::T0
+    x0::X0
+    tf::TF
+    StateEndPointConfig{T0, X0, TF}(t0, x0, tf) where {T0<:Real, X0, TF<:Real} = new{T0, X0, TF}(t0, x0, tf)
+    function StateEndPointConfig(t0::Real, x0, tf::Real)
+        t = float(t0)
+        X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
+        T = float(tf)
+        new{typeof(t), typeof(X), typeof(T)}(t, X, T)
+    end
+end
+
+"""
+$(TYPEDEF)
+
+Configuration for a trajectory integration problem.
+
+Defines a time span and initial state for integration over a continuous
+time interval, useful for generating full trajectories.
+
+# Fields
+- `tspan::TS`: Time span as a tuple (t0, tf)
+- `x0::X0`: Initial state vector
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Configs
+
+julia> config = StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+StateTrajectoryConfig
+  tspan: (0.0, 1.0)
+  x0: [1.0, 0.0]
+\`\`\`
+
+See also: [`CTFlows.Configs.StateEndPointConfig`](@ref)
+"""
+struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractConfigWithMaC{X0, Traits.TrajectoryMode, Traits.StateDynamics}
+    tspan::TS
+    x0::X0
+    StateTrajectoryConfig{TS, X0}(tspan, x0) where {TS<:Tuple{<:Real,<:Real}, X0} = new{TS, X0}(tspan, x0)
+    function StateTrajectoryConfig(tspan::Tuple{<:Real,<:Real}, x0)
+        TS = float.(tspan)
+        X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
+        new{typeof(TS), typeof(X)}(TS, X)
+    end
+end
+
+
+"""
+$(TYPEDEF)
+
+Configuration for a Hamiltonian point-to-point integration problem.
+
+Defines the initial and final time points along with the initial state and costate
+for integration from a single initial condition to a specific final time in the
+Hamiltonian framework.
+
+# Fields
+- `t0::T0`: Initial time
+- `x0::X0`: Initial state vector
+- `p0::P0`: Initial costate vector
+- `tf::TF`: Final time
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Configs
+
+julia> config = HamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+HamiltonianEndPointConfig
+  t0: 0.0
+  x0: [1.0, 0.0]
+  p0: [0.5, 0.3]
+  tf: 1.0
+\`\`\`
+
+See also: [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Configs.StateEndPointConfig`](@ref).
+"""
+struct HamiltonianEndPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractConfigWithMaC{X0, Traits.EndPointMode, Traits.HamiltonianDynamics}
+    t0::T0
+    x0::X0
+    p0::P0
+    tf::TF
+    HamiltonianEndPointConfig{T0, X0, P0, TF}(t0, x0, p0, tf) where {T0<:Real, X0, P0, TF<:Real} = new{T0, X0, P0, TF}(t0, x0, p0, tf)
+    function HamiltonianEndPointConfig(t0::Real, x0, p0, tf::Real)
+        t = float(t0)
+        X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
+        P = eltype(p0) <: AbstractFloat ? p0 : float.(p0)
+        T = float(tf)
+        new{typeof(t), typeof(X), typeof(P), typeof(T)}(t, X, P, T)
+    end
+end
+
+"""
+$(TYPEDEF)
+
+Configuration for a Hamiltonian trajectory integration problem.
+
+Defines a time span and initial state and costate for integration over a
+continuous time interval in the Hamiltonian framework, useful for generating
+full Hamiltonian trajectories.
+
+# Fields
+- `tspan::TS`: Time span as a tuple (t0, tf)
+- `x0::X0`: Initial state vector
+- `p0::P0`: Initial costate vector
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Configs
+
+julia> config = HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
+HamiltonianTrajectoryConfig
+  tspan: (0.0, 1.0)
+  x0: [1.0, 0.0]
+  p0: [0.5, 0.3]
+\`\`\`
+
+See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref).
+"""
+struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractConfigWithMaC{X0, Traits.TrajectoryMode, Traits.HamiltonianDynamics}
+    tspan::TS
+    x0::X0
+    p0::P0
+    HamiltonianTrajectoryConfig{TS, X0, P0}(tspan, x0, p0) where {TS<:Tuple{<:Real,<:Real}, X0, P0} = new{TS, X0, P0}(tspan, x0, p0)
+    function HamiltonianTrajectoryConfig(tspan::Tuple{<:Real,<:Real}, x0, p0)
+        TS = float.(tspan)
+        X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
+        P = eltype(p0) <: AbstractFloat ? p0 : float.(p0)
+        new{typeof(TS), typeof(X), typeof(P)}(TS, X, P)
+    end
+end
+
+"""
+$(TYPEDEF)
+
+Configuration for an augmented Hamiltonian point-to-point integration problem.
+
+Defines the initial and final time points along with the initial state, costate,
+and variable costate for integration from a single initial condition to a specific
+final time in the augmented Hamiltonian framework.
+
+# Fields
+- `t0::T0`: Initial time
+- `x0::X0`: Initial state vector
+- `p0::P0`: Initial costate vector
+- `pv0::PV0`: Initial variable costate vector (typically zeros)
+- `tf::TF`: Final time
+
+# Example
+\`\`\`julia-repl
+julia> using CTFlows.Configs
+
+julia> config = AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+AugmentedHamiltonianEndPointConfig
+  t0: 0.0
+  x0: [1.0, 0.0]
+  p0: [0.5, 0.3]
+  pv0: [0.0, 0.0]
+  tf: 1.0
+\`\`\`
+
+See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref), [`CTBase.Traits.AugmentedHamiltonianDynamics`](@ref).
+"""
+struct AugmentedHamiltonianEndPointConfig{T0<:Real, X0, P0, PV0, TF<:Real} <: AbstractAugmentedHamiltonianConfig{X0, Traits.EndPointMode}
+    t0::T0
+    x0::X0
+    p0::P0
+    pv0::PV0
+    tf::TF
+    AugmentedHamiltonianEndPointConfig{T0, X0, P0, PV0, TF}(t0, x0, p0, pv0, tf) where {T0<:Real, X0, P0, PV0, TF<:Real} = new{T0, X0, P0, PV0, TF}(t0, x0, p0, pv0, tf)
+    function AugmentedHamiltonianEndPointConfig(t0::Real, x0, p0, pv0, tf::Real)
+        t = float(t0)
+        X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
+        P = eltype(p0) <: AbstractFloat ? p0 : float.(p0)
+        PV = eltype(pv0) <: AbstractFloat ? pv0 : float.(pv0)
+        T = float(tf)
+        new{typeof(t), typeof(X), typeof(P), typeof(PV), typeof(T)}(t, X, P, PV, T)
+    end
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the initial condition for augmented Hamiltonian configurations.
+
+For augmented Hamiltonian systems, the initial condition is the concatenation of the
+initial state, initial costate, and initial variable costate: `vcat(x0, p0, pv0)`.
+
+# Arguments
+- `c::AugmentedHamiltonianEndPointConfig`: The augmented Hamiltonian configuration.
+
+# Returns
+- Concatenated vector `[x0; p0; pv0]`.
+
+See also: [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@ref), [`CTFlows.Configs.initial_state`](@ref), [`CTFlows.Configs.initial_costate`](@ref), [`CTFlows.Configs.initial_variable_costate`](@ref).
+"""
+function initial_condition(c::AugmentedHamiltonianEndPointConfig)
+    return vcat(c.x0, c.p0, c.pv0)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the initial costate for augmented Hamiltonian configurations.
+
+Extracts the initial costate field from the augmented Hamiltonian configuration.
+
+# Arguments
+- `c::AugmentedHamiltonianEndPointConfig`: The augmented Hamiltonian configuration.
+
+# Returns
+- The initial costate vector.
+
+See also: [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@ref).
+"""
+function initial_costate(c::AugmentedHamiltonianEndPointConfig)
+    return c.p0
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the initial variable costate for augmented Hamiltonian configurations.
+
+Extracts the initial variable costate field from the augmented Hamiltonian configuration.
+
+# Arguments
+- `c::AugmentedHamiltonianEndPointConfig`: The augmented Hamiltonian configuration.
+
+# Returns
+- The initial variable costate vector.
+
+See also: [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@ref).
+"""
+function initial_variable_costate(c::AugmentedHamiltonianEndPointConfig)
+    return c.pv0
+end

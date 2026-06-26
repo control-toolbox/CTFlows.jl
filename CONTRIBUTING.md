@@ -12,3 +12,29 @@ If you want to ask a question, feel free to start a discussion [here](https://gi
 
 >[!NOTE]
 > If you want to add an application or a package to the control-toolbox ecosystem, please follow this [set up tutorial](https://github.com/orgs/control-toolbox/discussions/65).
+
+---
+
+## Code philosophy
+
+CTFlows follows a set of design principles that apply to all contributions. Before
+writing code, please read the philosophy documents in [`dev/philosophy/`](dev/philosophy/PHILOSOPHY.md).
+
+The short version:
+
+- **One submodule per responsibility.** Each submodule lives in `src/<Name>/` with its
+  own manifest. The package top-level exports nothing — all symbols are accessed via
+  qualified paths (`CTFlows.Submodule.symbol`).
+- **Qualified imports everywhere.** Use `import Pkg: Pkg` or `using Pkg: Pkg`, never a
+  bare `using Pkg`. Call sites read `Module.symbol`.
+- **One abstract type per noun, one trait-parameter per orthogonal axis.** Conceptual
+  variants are types; orthogonal axes (autonomous?, in-place?, …) are traits in type
+  parameters. Dispatch via extractors.
+- **Structured errors.** Seven typed exceptions from CTBase; sharp rule between
+  `IncorrectArgument` (single value) and `PreconditionError` (relational/state).
+  See [`dev/philosophy/exceptions.md`](dev/philosophy/exceptions.md).
+- **Tests: module wrapper + callable entry + qualified imports.**
+  See [`dev/philosophy/testing.md`](dev/philosophy/testing.md).
+- **Docstrings last**, once the API is stable.
+
+Full philosophy: [`dev/philosophy/PHILOSOPHY.md`](dev/philosophy/PHILOSOPHY.md)

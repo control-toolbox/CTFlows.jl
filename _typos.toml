@@ -1,0 +1,18 @@
+[default]
+locale = "en"
+extend-ignore-re = [
+    "OT",
+    "_anf",
+    "GODD",
+    "_godd",
+    "_ANF",
+]
+
+[files]
+extend-exclude = [
+    "*.json",
+    "*.toml",
+    "*.svg",
+    "save/**",
+    "reports/**",
+]
