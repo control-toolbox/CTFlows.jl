@@ -3,6 +3,7 @@ module TestDefault
 import Test
 import CTBase.Data
 import CTFlows.Common
+import CTBase.Core
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
@@ -28,7 +29,7 @@ function test_default()
             end
 
             Test.@testset "__variable returns NotProvided" begin
-                Test.@test Common.__variable() isa Common.NotProvided
+                Test.@test Common.__variable() isa Core.NotProvidedType
             end
 
             Test.@testset "__unsafe returns false" begin
@@ -44,14 +45,10 @@ function test_default()
             end
         end
 
-        Test.@testset "NotProvided type" begin
-            Test.@testset "NotProvided is a concrete type" begin
-                Test.@test Common.NotProvided <: Any
-            end
-
-            Test.@testset "NotProvided is exported" begin
-                Test.@test isdefined(Common, :NotProvided)
-            end
+        Test.@testset "NotProvided sentinel (lives in CTBase.Core)" begin
+            Test.@test Core.NotProvidedType <: Any
+            Test.@test isdefined(Core, :NotProvided)
+            Test.@test !isdefined(Common, :NotProvided)
         end
 
         Test.@testset "__variable_costate export" begin

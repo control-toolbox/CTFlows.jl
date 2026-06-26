@@ -102,7 +102,7 @@ integrator(F::OptimalControlFlow) = integrator(F.flow)
 
 function (F::OptimalControlFlow)(
     t0::Real, x0, p0, tf::Real;
-    variable          = Common.NotProvided(),
+    variable          = Core.NotProvided,
     variable_costate::Bool = false,
     unsafe::Bool           = false,
 )
@@ -113,7 +113,7 @@ end
 
 function (F::OptimalControlFlow)(
     tspan::Tuple{<:Real, <:Real}, x0, p0;
-    variable = Common.NotProvided(),
+    variable = Core.NotProvided,
     unsafe::Bool = false,
 )
     sol = F.flow(tspan, x0, p0; variable, unsafe)   # HamiltonianVectorFieldTrajectory
@@ -124,7 +124,7 @@ end
 # Solution helpers
 # =============================================================================
 
-_variable_vector(::Common.NotProvided)  = Float64[]
+_variable_vector(::Core.NotProvidedType)  = Float64[]
 _variable_vector(v::Number)             = [Float64(v)]
 _variable_vector(v::AbstractVector)     = Float64.(v)
 

@@ -56,7 +56,7 @@ function Strategies.metadata(::Type{Integrators.SciML})
         Strategies.OptionDefinition(;
             name = :maxiters,
             type = Integer,
-            default = Options.NotProvided,
+            default = Core.NotProvided,
             description = "Maximum number of solver iterations.",
             aliases=(:max_iters, :max_iter, :maxiter, :max_iterations, :maxit),
             validator = x ->
@@ -73,7 +73,7 @@ function Strategies.metadata(::Type{Integrators.SciML})
         Strategies.OptionDefinition(;
             name = :dt,
             type = Real,
-            default = Options.NotProvided,
+            default = Core.NotProvided,
             description = "Fixed step size (used when adaptive=false).",
             aliases = (:dt0, :timestep),
             validator = x ->
@@ -90,7 +90,7 @@ function Strategies.metadata(::Type{Integrators.SciML})
         Strategies.OptionDefinition(;
             name = :adaptive,
             type = Bool,
-            default = Options.NotProvided,
+            default = Core.NotProvided,
             description = "Whether to use adaptive step-size control.",
             aliases = (:adaptive_step, :adaptive_stepping),
         ),
@@ -103,7 +103,7 @@ function Strategies.metadata(::Type{Integrators.SciML})
         Strategies.OptionDefinition(;
             name = :saveat,
             type = Union{Real, AbstractVector},
-            default = Options.NotProvided,
+            default = Core.NotProvided,
             description = "Times at which to save the solution (Vector or range).",
             aliases = (:save_at, :save_times),
         ),
@@ -116,27 +116,27 @@ function Strategies.metadata(::Type{Integrators.SciML})
         Strategies.OptionDefinition(;
             name = :save_idxs,
             type = AbstractVector{<:Integer},
-            default = Options.NotProvided,
+            default = Core.NotProvided,
             description = "Indices of components to save (Vector of integers).",
             aliases = (:saveindices, :save_indices),
         ),
         Strategies.OptionDefinition(;
             name = :tstops,
             type = AbstractVector{<:Real},
-            default = Options.NotProvided,
+            default = Core.NotProvided,
             description = "Extra times the solver must step to (for discontinuities).",
             aliases = (:t_stops, :stop_times),
         ),
         Strategies.OptionDefinition(;
             name = :d_discontinuities,
             type = AbstractVector{<:Real},
-            default = Options.NotProvided,
+            default = Core.NotProvided,
             description = "Locations of discontinuities in low-order derivatives.",
         ),
         Strategies.OptionDefinition(;
             name = :dtmax,
             type = Real,
-            default = Options.NotProvided,
+            default = Core.NotProvided,
             description = "Maximum step size for adaptive timestepping.",
             aliases = (:max_dt, :dt_max),
             validator = x ->
@@ -153,7 +153,7 @@ function Strategies.metadata(::Type{Integrators.SciML})
         Strategies.OptionDefinition(;
             name = :dtmin,
             type = Real,
-            default = Options.NotProvided,
+            default = Core.NotProvided,
             description = "Minimum step size for adaptive timestepping.",
             aliases = (:min_dt, :dt_min),
             validator = x ->
@@ -170,20 +170,20 @@ function Strategies.metadata(::Type{Integrators.SciML})
         Strategies.OptionDefinition(;
             name = :force_dtmin,
             type = Bool,
-            default = Options.NotProvided,
+            default = Core.NotProvided,
             description = "Whether to continue forcing minimum dt usage.",
         ),
         Strategies.OptionDefinition(;
             name = :callback,
             type = Any,
-            default = Options.NotProvided,
+            default = Core.NotProvided,
             description = "Callback function for event handling.",
             aliases = (:callbacks, :cb),
         ),
         Strategies.OptionDefinition(;
             name = :progress,
             type = Bool,
-            default = Options.NotProvided,
+            default = Core.NotProvided,
             description = "Whether to show progress bar.",
             aliases = (:verbose,),
         ),
@@ -196,7 +196,7 @@ function Strategies.metadata(::Type{Integrators.SciML})
         Strategies.OptionDefinition(;
             name = :save_end,
             type = Bool,
-            default = Options.NotProvided,
+            default = Core.NotProvided,
             description = "Whether to force saving the final timepoint.",
         ),
         Strategies.OptionDefinition(;

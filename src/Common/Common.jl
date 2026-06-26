@@ -15,6 +15,7 @@ module Common
 # ==============================================================================
 
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
+import CTBase.Core
 
 # ==============================================================================
 # Includes
@@ -28,7 +29,6 @@ include(joinpath(@__DIR__, "internal_norm.jl"))
 # Module exports
 # ==============================================================================
 
-export NotProvided
 export ODEParameters, variable
 export __variable, __unsafe, __hvf_inplace, __variable_costate
 export deepvalue, real_norm

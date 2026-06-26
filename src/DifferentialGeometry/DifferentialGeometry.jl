@@ -21,17 +21,12 @@ module DifferentialGeometry
 
 import ADTypes
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
+import CTBase.Core
 import CTBase.Data
 import CTBase.Differentiation
 import CTBase.Exceptions
 import CTBase.Traits
 import MacroTools: postwalk, @capture
-
-# ==============================================================================
-# Internal sibling-submodule imports
-# ==============================================================================
-
-import ..Common: Common
 
 # ==============================================================================
 # Include files (in dependency order)

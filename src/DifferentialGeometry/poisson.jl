@@ -10,7 +10,7 @@ The time dependence and variable dependence are inferred from the `is_autonomous
 # Arguments
 - `H::Function`: First Hamiltonian function (returns a scalar).
 - `G::Function`: Second Hamiltonian function (returns a scalar).
-- `ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided}`: AD backend to use (default: global backend).
+- `ad_backend::Union{ADTypes.AbstractADType, Core.NotProvidedType}`: AD backend to use (default: global backend).
 - `is_autonomous::Bool`: Whether the functions are time-independent (default: from global config).
 - `is_variable::Bool`: Whether the functions depend on a variable parameter (default: from global config).
 
@@ -36,7 +36,7 @@ See also: [`CTFlows.DifferentialGeometry.Poisson`](@ref), [`CTFlows.Differential
 """
 function Poisson(
     H::Function, G::Function;
-    ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
+    ad_backend::Union{ADTypes.AbstractADType, Core.NotProvidedType} = __dg_ad_backend(),
     is_autonomous::Bool = Data.__is_autonomous(),
     is_variable::Bool   = Data.__is_variable(),
 )
@@ -59,7 +59,7 @@ This typed entry point is used by the [`@Lie`](@ref) macro for compile-time disp
 - `G::Function`: Second Hamiltonian function (returns a scalar).
 - `::Type{TD}`: Time dependence type (`Autonomous` or `NonAutonomous`).
 - `::Type{VD}`: Variable dependence type ([`CTBase.Traits.Fixed`](@ref) or [`CTBase.Traits.NonFixed`](@ref)).
-- `ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided}`: AD backend to use (default: global backend).
+- `ad_backend::Union{ADTypes.AbstractADType, Core.NotProvidedType}`: AD backend to use (default: global backend).
 
 # Returns
 - A function with signature depending on TD/VD.
@@ -81,7 +81,7 @@ See also: [`CTFlows.DifferentialGeometry.Poisson(H::Function, G::Function)`](@re
 function Poisson(
     H::Function, G::Function,
     ::Type{TD}, ::Type{VD};
-    ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
+    ad_backend::Union{ADTypes.AbstractADType, Core.NotProvidedType} = __dg_ad_backend(),
 ) where {TD, VD}
     backend = _resolve_backend(ad_backend)
     return _Poisson(H, G, backend, TD, VD)
@@ -190,7 +190,7 @@ Both Hamiltonians must share the same time dependence and variable dependence.
 # Arguments
 - `H::Data.AbstractHamiltonian{TD, VD}`: First Hamiltonian.
 - `G::Data.AbstractHamiltonian{TD, VD}`: Second Hamiltonian.
-- `ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided}`: AD backend to use (default: global backend).
+- `ad_backend::Union{ADTypes.AbstractADType, Core.NotProvidedType}`: AD backend to use (default: global backend).
 
 # Returns
 - `Data.Hamiltonian{TD, VD}`: The Poisson bracket as a Hamiltonian.
@@ -213,7 +213,7 @@ See also: [`CTFlows.DifferentialGeometry.Poisson(H::Function, G::Function)`](@re
 function Poisson(
     H::Data.AbstractHamiltonian{TD, VD},
     G::Data.AbstractHamiltonian{TD, VD};
-    ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
+    ad_backend::Union{ADTypes.AbstractADType, Core.NotProvidedType} = __dg_ad_backend(),
 ) where {TD, VD}
     backend = _resolve_backend(ad_backend)
     closure = _Poisson(H, G, backend, TD, VD)
@@ -231,7 +231,7 @@ dependence types, which is not allowed for the Poisson bracket operation.
 # Arguments
 - `H::Data.AbstractHamiltonian{TD1, VD1}`: First Hamiltonian.
 - `G::Data.AbstractHamiltonian{TD2, VD2}`: Second Hamiltonian with mismatched TD/VD.
-- `ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided}`: AD backend (unused).
+- `ad_backend::Union{ADTypes.AbstractADType, Core.NotProvidedType}`: AD backend (unused).
 
 # Throws
 - `Exceptions.PreconditionError`: Always thrown with details about the TD/VD mismatch.
@@ -245,7 +245,7 @@ See also: [`CTFlows.DifferentialGeometry.Poisson`](@ref)
 function Poisson(
     H::Data.AbstractHamiltonian{TD1, VD1},
     G::Data.AbstractHamiltonian{TD2, VD2};
-    ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
+    ad_backend::Union{ADTypes.AbstractADType, Core.NotProvidedType} = __dg_ad_backend(),
 ) where {TD1, VD1, TD2, VD2}
     throw(Exceptions.PreconditionError(
         "Poisson: TD/VD mismatch between H and G";
@@ -270,7 +270,7 @@ See also: [`CTFlows.DifferentialGeometry.ad`](@ref)
 """
 function Poisson(
     ::Data.AbstractVectorField, ::Data.AbstractVectorField;
-    ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
+    ad_backend::Union{ADTypes.AbstractADType, Core.NotProvidedType} = __dg_ad_backend(),
 )
     throw(Exceptions.IncorrectArgument(
         "Poisson is not defined for AbstractVectorField operands";
@@ -289,7 +289,7 @@ Error method for VectorField as first operand in Poisson bracket.
 """
 function Poisson(
     ::Data.AbstractVectorField, ::Any;
-    ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
+    ad_backend::Union{ADTypes.AbstractADType, Core.NotProvidedType} = __dg_ad_backend(),
 )
     throw(Exceptions.IncorrectArgument(
         "Poisson is not defined for AbstractVectorField operands";
@@ -309,7 +309,7 @@ where the second argument is a VectorField and the first is some other type.
 # Arguments
 - `::Any`: First operand.
 - `::Data.AbstractVectorField`: VectorField second operand (not allowed in Poisson bracket).
-- `ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided}`: AD backend (unused).
+- `ad_backend::Union{ADTypes.AbstractADType, Core.NotProvidedType}`: AD backend (unused).
 
 # Throws
 - `Exceptions.IncorrectArgument`: Always thrown with suggestion to use Lie bracket.
@@ -318,7 +318,7 @@ See also: [`CTFlows.DifferentialGeometry.ad`](@ref)
 """
 function Poisson(
     ::Any, ::Data.AbstractVectorField;
-    ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
+    ad_backend::Union{ADTypes.AbstractADType, Core.NotProvidedType} = __dg_ad_backend(),
 )
     throw(Exceptions.IncorrectArgument(
         "Poisson is not defined for AbstractVectorField operands";

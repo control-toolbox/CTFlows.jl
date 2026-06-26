@@ -3,34 +3,16 @@
 # =============================================================================
 
 """
-$(TYPEDEF)
-
-Sentinel type indicating that a variable parameter was not provided.
-
-Used as the default value for the `variable` keyword argument in flow calls
-to distinguish between "user did not provide a variable" and "user explicitly
-passed `nothing`". This enables proper dispatch based on the system's
-`VariableDependence` trait.
-
-# Example
-```julia
-# Default value for variable parameter
-__variable()::NotProvided = NotProvided()
-```
-
-See also: [`CTBase.Traits.VariableDependence`](@ref), [`CTBase.Traits.Fixed`](@ref), [`CTBase.Traits.NonFixed`](@ref).
-"""
-struct NotProvided end
-
-"""
 $(TYPEDSIGNATURES)
 
 Default value for variable parameter in user-facing API calls.
 
-Returns `NotProvided()` by default, meaning the variable parameter is optional
-unless required by the system's trait (e.g., NonFixed systems).
+Returns [`CTBase.Core.NotProvided`](@ref) by default, meaning the variable parameter
+is optional unless required by the system's trait (e.g., NonFixed systems).
+
+See also: [`CTBase.Traits.VariableDependence`](@ref), [`CTBase.Traits.Fixed`](@ref), [`CTBase.Traits.NonFixed`](@ref).
 """
-__variable()::NotProvided = NotProvided()
+__variable()::Core.NotProvidedType = Core.NotProvided
 
 """
 $(TYPEDSIGNATURES)

@@ -1,6 +1,6 @@
 name = "CTFlows"
 uuid = "1c39547c-7794-42f7-af83-d98194f657c2"
-version = "0.9.3-beta"
+version = "0.9.4-beta"
 authors = ["Olivier Cots <olivier.cots@toulouse-inp.fr>"]
 
 [deps]
@@ -30,7 +30,7 @@ CTFlowsStaticArrays = ["StaticArrays"]
 [compat]
 ADTypes = "1"
 Aqua = "0.8"
-CTBase = "0.24"
+CTBase = "0.25"
 CTModels = "0.13"
 DiffEqBase = "6, 7"
 DifferentiationInterface = "0.7"

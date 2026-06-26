@@ -9,7 +9,7 @@ in DifferentialGeometry operations. When returned, the global backend
 `DG_AD_BACKEND` is used instead.
 
 # Returns
-- `Common.NotProvided`: Sentinel value indicating backend should use global default.
+- `Core.NotProvided` (singleton `Core.NotProvidedType`): sentinel indicating backend should use global default.
 
 # Notes
 - This is an internal function used by [`CTFlows.DifferentialGeometry._resolve_backend`](@ref).
@@ -17,7 +17,7 @@ in DifferentialGeometry operations. When returned, the global backend
 
 See also: [`CTFlows.DifferentialGeometry.DG_AD_BACKEND`](@ref), [`CTFlows.DifferentialGeometry._resolve_backend`](@ref).
 """
-__dg_ad_backend()::Common.NotProvided = Common.NotProvided()
+__dg_ad_backend()::Core.NotProvidedType = Core.NotProvided
 
 # Global default backend ref — built once at module load
 """
@@ -103,12 +103,12 @@ If `NotProvided`, returns the global backend. If an ADTypes backend,
 builds a fresh backend from the ADType.
 
 # Arguments
-- `::Common.NotProvided`: Sentinel value indicating no backend specified.
+- `::Core.NotProvidedType`: Sentinel value indicating no backend specified.
 - `ad_backend::ADTypes.AbstractADType`: ADTypes backend type to build.
 
 # Returns
 - `Differentiation.AbstractADBackend`: The resolved backend.
 """
-_resolve_backend(::Common.NotProvided) = DG_AD_BACKEND[]
+_resolve_backend(::Core.NotProvidedType) = DG_AD_BACKEND[]
 _resolve_backend(ad_backend::ADTypes.AbstractADType) = Differentiation.build_ad_backend(; ad_backend = ad_backend)
 

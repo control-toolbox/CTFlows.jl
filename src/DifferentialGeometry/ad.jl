@@ -12,7 +12,7 @@ The time dependence and variable dependence are inferred from the `is_autonomous
 # Arguments
 - `X::Function`: Vector field function (returns a vector).
 - `foo::Function`: Scalar or vector field function.
-- `ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided}`: AD backend to use (default: global backend).
+- `ad_backend::Union{ADTypes.AbstractADType, Core.NotProvidedType}`: AD backend to use (default: global backend).
 - `is_autonomous::Bool`: Whether the functions are time-independent (default: from global config).
 - `is_variable::Bool`: Whether the functions depend on a variable parameter (default: from global config).
 
@@ -39,7 +39,7 @@ See also: [`CTFlows.DifferentialGeometry.ad`](@ref), [`CTFlows.DifferentialGeome
 """
 function ad(
     X::Function, foo::Function;
-    ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
+    ad_backend::Union{ADTypes.AbstractADType, Core.NotProvidedType} = __dg_ad_backend(),
     is_autonomous::Bool = Data.__is_autonomous(),
     is_variable::Bool   = Data.__is_variable(),
 )
@@ -64,7 +64,7 @@ This typed entry point is used by the [`@Lie`](@ref) macro for compile-time disp
 - `foo::Function`: Scalar or vector field function.
 - `::Type{TD}`: Time dependence type (`Autonomous` or `NonAutonomous`).
 - `::Type{VD}`: Variable dependence type ([`CTBase.Traits.Fixed`](@ref) or [`CTBase.Traits.NonFixed`](@ref)).
-- `ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided}`: AD backend to use (default: global backend).
+- `ad_backend::Union{ADTypes.AbstractADType, Core.NotProvidedType}`: AD backend to use (default: global backend).
 
 # Returns
 - A function with signature depending on TD/VD:
@@ -91,7 +91,7 @@ See also: [`CTFlows.DifferentialGeometry.ad(X::Function, foo::Function)`](@ref),
 function ad(
     X::Function, foo::Function,
     ::Type{TD}, ::Type{VD};
-    ad_backend::Union{ADTypes.AbstractADType, Common.NotProvided} = __dg_ad_backend(),
+    ad_backend::Union{ADTypes.AbstractADType, Core.NotProvidedType} = __dg_ad_backend(),
 ) where {TD <: Traits.TimeDependence, VD <: Traits.VariableDependence}
     backend = _resolve_backend(ad_backend)
     return _ad(X, foo, backend, TD, VD)

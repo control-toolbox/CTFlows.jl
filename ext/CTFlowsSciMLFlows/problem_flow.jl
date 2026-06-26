@@ -104,7 +104,7 @@ function (f::SciMLProblemFlow)(
     unsafe = Common.__unsafe(),
 )
     kw = (; u0 = x0, tspan = (t0, tf))
-    if !(variable isa Common.NotProvided)
+    if !(variable isa Core.NotProvidedType)
         kw = merge(kw, (; p = variable))
     end
     prob   = SciMLBase.remake(f.prob; kw...)
@@ -147,7 +147,7 @@ function (f::SciMLProblemFlow)(
     unsafe = Common.__unsafe(),
 )
     kw = (; u0 = x0, tspan = tspan)
-    if !(variable isa Common.NotProvided)
+    if !(variable isa Core.NotProvidedType)
         kw = merge(kw, (; p = variable))
     end
     prob   = SciMLBase.remake(f.prob; kw...)
