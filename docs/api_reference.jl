@@ -72,32 +72,6 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             filename="api_common",
         ),
         # ───────────────────────────────────────────────────────────────────
-        # DifferentialGeometry
-        # ───────────────────────────────────────────────────────────────────
-        CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[
-                CTFlows.DifferentialGeometry => src(
-                    joinpath("DifferentialGeometry", "DifferentialGeometry.jl"),
-                    joinpath("DifferentialGeometry", "default.jl"),
-                    joinpath("DifferentialGeometry", "prefix.jl"),
-                    joinpath("DifferentialGeometry", "exception_prefix.jl"),
-                    joinpath("DifferentialGeometry", "ad.jl"),
-                    joinpath("DifferentialGeometry", "ad_types.jl"),
-                    joinpath("DifferentialGeometry", "lift.jl"),
-                    joinpath("DifferentialGeometry", "poisson.jl"),
-                    joinpath("DifferentialGeometry", "time_derivative.jl"),
-                    joinpath("DifferentialGeometry", "lie_macro.jl"),
-                ),
-            ],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
-            title="DifferentialGeometry",
-            title_in_menu="DifferentialGeometry",
-            filename="api_differential_geometry",
-        ),
-        # ───────────────────────────────────────────────────────────────────
         # Systems
         # ───────────────────────────────────────────────────────────────────
         CTBase.automatic_reference_documentation(;
