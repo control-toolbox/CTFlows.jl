@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.4-beta] - 2026-06-26
+
+### Changed
+
+- **Breaking (internal sentinel):** `CTFlows.Common.NotProvided` / `CTFlows.Common.NotProvidedType` are removed.
+  The local `struct NotProvided end` is deleted and there is **no re-export** — all code uses
+  `CTBase.Core.NotProvided` (singleton instance of `CTBase.Core.NotProvidedType`) directly.
+- `__variable()` default now returns `CTBase.Core.NotProvided`.
+- `Flows/calling.jl` dispatch updated: `::Type{Common.NotProvided}` → `::Type{Core.NotProvidedType}`.
+- DifferentialGeometry AD-backend sentinel and the SciML extensions consume `CTBase.Core.NotProvided` directly.
+
+### Dependencies
+
+- Bump CTBase compat to `0.25` (CTBase 0.25 moves `NotProvided`/`NotProvidedType` to `CTBase.Core`).
+
 ## [0.8.24-beta] - 2026-04-20
 
 ### Changed

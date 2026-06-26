@@ -8,6 +8,7 @@ import CTFlows.Flows
 import CTFlows.Integrators
 import CTFlows.Trajectories
 import CTFlows.Common
+import CTBase.Core
 import CTFlows.Configs
 import CTBase.Traits
 import ADTypes
@@ -182,7 +183,7 @@ function test_calling_flows()
                 config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
                 
                 # Execute
-                result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
+                result = Flows._invoke_flow(flow, config; variable=Core.NotProvided, unsafe=false)
                 
                 # Verify all steps were called
                 Test.@test integ.build_problem_called === true
@@ -209,7 +210,7 @@ function test_calling_flows()
                 flow = FakeFlowForCalling(sys, integ)
                 config = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 
-                result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
+                result = Flows._invoke_flow(flow, config; variable=Core.NotProvided, unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -224,7 +225,7 @@ function test_calling_flows()
                 config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
 
                 # Call with unsafe=true
-                result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=true)
+                result = Flows._invoke_flow(flow, config; variable=Core.NotProvided, unsafe=true)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -238,7 +239,7 @@ function test_calling_flows()
                 flow = FakeFlowForCalling(sys, integ)
                 config = Configs.HamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 
-                result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
+                result = Flows._invoke_flow(flow, config; variable=Core.NotProvided, unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -252,7 +253,7 @@ function test_calling_flows()
                 flow = FakeFlowForCalling(sys, integ)
                 config = Configs.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
 
-                result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
+                result = Flows._invoke_flow(flow, config; variable=Core.NotProvided, unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -272,7 +273,7 @@ function test_calling_flows()
                 flow = FakeFlowForCalling(sys, integ)
                 config = Configs.HamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 
-                result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
+                result = Flows._invoke_flow(flow, config; variable=Core.NotProvided, unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -288,7 +289,7 @@ function test_calling_flows()
                 flow = FakeFlowForCalling(sys, integ)
                 config = Configs.HamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 
-                result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
+                result = Flows._invoke_flow(flow, config; variable=Core.NotProvided, unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -302,7 +303,7 @@ function test_calling_flows()
                 flow = FakeFlowForCalling(sys, integ)
                 config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
 
-                result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
+                result = Flows._invoke_flow(flow, config; variable=Core.NotProvided, unsafe=false)
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
@@ -322,7 +323,7 @@ function test_calling_flows()
             flow = FakeFlowForCalling(sys, integ)
             config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
 
-            result = Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
+            result = Flows._invoke_flow(flow, config; variable=Core.NotProvided, unsafe=false)
 
             Test.@test integ.build_problem_called === true
             Test.@test integ.build_options_called === true
@@ -359,7 +360,7 @@ function test_calling_flows()
             flow = FakeFlowForCalling(sys, integ)
             config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
 
-            Test.@test_throws Exceptions.PreconditionError Flows._invoke_flow(flow, config; variable=Common.NotProvided(), unsafe=false)
+            Test.@test_throws Exceptions.PreconditionError Flows._invoke_flow(flow, config; variable=Core.NotProvided, unsafe=false)
         end
 
         # ====================================================================

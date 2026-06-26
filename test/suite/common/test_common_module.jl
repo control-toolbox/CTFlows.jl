@@ -30,7 +30,6 @@ const CurrentModule = TestCommonModule
 # For other modules, create similar lists with their specific exports.
 
 const EXPORTED_TYPES = (
-    :NotProvided,
     :ODEParameters,
 )
 
@@ -120,10 +119,6 @@ function test_common_module()
         # ====================================================================
 
         Test.@testset "Type hierarchy" begin
-            Test.@testset "NotProvided is concrete" begin
-                Test.@test !isabstracttype(Common.NotProvided)
-            end
-
             Test.@testset "ODEParameters is concrete" begin
                 Test.@test !isabstracttype(Common.ODEParameters)
             end

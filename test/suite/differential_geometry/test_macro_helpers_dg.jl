@@ -6,7 +6,7 @@ import CTBase: CTBase  # for Exceptions prefix in @Lie macro
 import CTBase.Exceptions
 import CTFlows: CTFlows
 import CTBase.Traits
-import CTFlows.Common
+import CTBase.Core
 import CTBase.Data
 import CTFlows.DifferentialGeometry
 import MacroTools: @capture
@@ -224,7 +224,7 @@ function test_macro_helpers_dg()
     Test.@testset "_lie_mac" verbose=VERBOSE showtiming=SHOWTIMING begin
         vf1 = _vf(_f1, Traits.Autonomous, Traits.Fixed)
         vf2 = _vf(_f2, Traits.Autonomous, Traits.Fixed)
-        backend = Common.NotProvided()
+        backend = Core.NotProvided
 
         # Function + Function → VectorField
         r = DifferentialGeometry._lie_mac(
@@ -292,7 +292,7 @@ function test_macro_helpers_dg()
     Test.@testset "_poisson_mac" verbose=VERBOSE showtiming=SHOWTIMING begin
         ham1 = _ham(_h1, Traits.Autonomous, Traits.Fixed)
         ham2 = _ham(_h2, Traits.Autonomous, Traits.Fixed)
-        backend = Common.NotProvided()
+        backend = Core.NotProvided
 
         # Function + Function → Hamiltonian
         r = DifferentialGeometry._poisson_mac(

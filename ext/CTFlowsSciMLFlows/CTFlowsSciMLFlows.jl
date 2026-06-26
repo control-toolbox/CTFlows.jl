@@ -16,6 +16,7 @@ module CTFlowsSciMLFlows
 
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Exceptions
+import CTBase.Core
 
 using CTFlows: CTFlows
 using CTFlows.Common: Common

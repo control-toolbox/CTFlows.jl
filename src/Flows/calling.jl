@@ -199,7 +199,7 @@ flow_nonfixed = Flow(system_nonfixed, integrator)
 sol = _invoke_flow(flow_nonfixed, config; variable=0.5, unsafe=false)  # OK, variable provided
 \`\`\`
 
-See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTBase.Traits.VariableDependence`](), [`CTFlows.Common.NotProvided`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Trajectories.build_trajectory`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTBase.Traits.VariableDependence`](), [`CTBase.Core.NotProvided`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Trajectories.build_trajectory`](@ref).
 """
 function _invoke_flow(flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe)
     VD = Traits.variable_dependence(flow)
@@ -278,9 +278,9 @@ the contract that NonFixed systems must receive a variable parameter.
 - `CTBase.Exceptions.PreconditionError`: Always, with message explaining that a variable is required.
 
 # See also
-[`CTBase.Traits.NonFixed`](), [`Common.NotProvided`](@ref).
+[`CTBase.Traits.NonFixed`](), [`CTBase.Core.NotProvided`](@ref).
 """
-function _invoke_flow(::Type{Traits.NonFixed}, ::Type{Common.NotProvided}, flow, config; unsafe, variable)
+function _invoke_flow(::Type{Traits.NonFixed}, ::Type{Core.NotProvidedType}, flow, config; unsafe, variable)
     throw(Exceptions.PreconditionError(
         "variable not provided for a NonFixed flow";
         reason    = "flow depends on an extra variable parameter but none was given",
@@ -302,9 +302,9 @@ forwards to `_core_invoke_flow` with `variable=nothing`.
 - The result of `_core_invoke_flow`.
 
 # See also
-[`CTBase.Traits.Fixed`](), [`Common.NotProvided`](@ref), [`_core_invoke_flow`](@ref).
+[`CTBase.Traits.Fixed`](), [`CTBase.Core.NotProvided`](@ref), [`_core_invoke_flow`](@ref).
 """
-function _invoke_flow(::Type{Traits.Fixed}, ::Type{Common.NotProvided}, flow, config; unsafe, variable)
+function _invoke_flow(::Type{Traits.Fixed}, ::Type{Core.NotProvidedType}, flow, config; unsafe, variable)
     return _core_invoke_flow(flow, config; variable=nothing, unsafe=unsafe)
 end
 
@@ -461,11 +461,11 @@ but the user did not provide the required variable parameter.
 # Throws
 - `CTBase.Exceptions.PreconditionError`: Always, with a descriptive message indicating that the variable parameter must be provided.
 
-See also: [`CTBase.Traits.SupportsVariableCostate`](@ref), [`CTFlows.Common.NotProvided`](@ref).
+See also: [`CTBase.Traits.SupportsVariableCostate`](@ref), [`CTBase.Core.NotProvided`](@ref).
 """
 function _invoke_flow_variable_costate(
     ::Type{Traits.SupportsVariableCostate},
-    ::Type{Common.NotProvided},
+    ::Type{Core.NotProvidedType},
     flow::AbstractHamiltonianFlow,
     config::Configs.HamiltonianEndPointConfig; variable, unsafe
 )
