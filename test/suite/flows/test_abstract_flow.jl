@@ -1,6 +1,6 @@
 module TestAbstractFlow
 
-import Test
+using Test: Test
 import CTBase.Exceptions
 import CTBase.Strategies
 import CTFlows.Systems
@@ -24,7 +24,7 @@ Fake system for testing the AbstractFlow contract.
 This minimal implementation provides the required contract methods for AbstractSystem
 to test flow behavior without full system complexity.
 """
-struct FakeSystem <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
+struct FakeSystem <: Systems.AbstractStateSystem{Traits.Autonomous,Traits.Fixed}
     state_dim::Int
 end
 
@@ -46,11 +46,19 @@ Fake flow for testing the AbstractFlow contract.
 This minimal implementation provides the required contract methods to test
 routing and default behavior without full flow complexity.
 """
-struct FakeFlow{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, D<:Traits.AbstractDynamicsTrait} <: Flows.AbstractFlow{TD, VD, D}
-    sys::Systems.AbstractSystem{TD, VD, D}
+struct FakeFlow{
+    TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,D<:Traits.AbstractDynamicsTrait
+} <: Flows.AbstractFlow{TD,VD,D}
+    sys::Systems.AbstractSystem{TD,VD,D}
     integ::Any
     function FakeFlow(sys::Systems.AbstractSystem, integ::Any)
-        return new{Traits.time_dependence(sys), Traits.variable_dependence(sys), Traits.dynamics_trait(sys)}(sys, integ)
+        return new{
+            Traits.time_dependence(sys),
+            Traits.variable_dependence(sys),
+            Traits.dynamics_trait(sys),
+        }(
+            sys, integ
+        )
     end
 end
 
@@ -77,8 +85,9 @@ end
 """
 Minimal flow that does not implement the contract (for error testing).
 """
-struct MinimalFlow <: Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
-    sys::Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
+struct MinimalFlow <:
+       Flows.AbstractFlow{Traits.Autonomous,Traits.Fixed,Traits.StateDynamics}
+    sys::Systems.AbstractSystem{Traits.Autonomous,Traits.Fixed,Traits.StateDynamics}
 end
 
 # ==============================================================================
@@ -123,7 +132,8 @@ function test_abstract_flow()
             end
 
             Test.@testset "FakeFlow has correct VD parameter" begin
-                Test.@test flow isa FakeFlow{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
+                Test.@test flow isa
+                    FakeFlow{Traits.Autonomous,Traits.Fixed,Traits.StateDynamics}
             end
 
             Test.@testset "callable (t0, x0, tf)" begin
@@ -259,7 +269,7 @@ function test_abstract_flow()
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
 
-                Test.@test flow isa FakeFlow{Traits.Autonomous, Traits.Fixed}
+                Test.@test flow isa FakeFlow{Traits.Autonomous,Traits.Fixed}
                 Test.@test Traits.is_autonomous(flow) === true
                 Test.@test Traits.is_nonautonomous(flow) === false
                 Test.@test Traits.is_variable(flow) === false
@@ -268,12 +278,14 @@ function test_abstract_flow()
             end
 
             Test.@testset "NonAutonomous Fixed Flow" begin
-                vf = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
+                vf = Data.VectorField(
+                    (t, x) -> t .* x; is_autonomous=false, is_variable=false
+                )
                 sys = Systems.VectorFieldSystem(vf)
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
 
-                Test.@test flow isa FakeFlow{Traits.NonAutonomous, Traits.Fixed}
+                Test.@test flow isa FakeFlow{Traits.NonAutonomous,Traits.Fixed}
                 Test.@test Traits.is_autonomous(flow) === false
                 Test.@test Traits.is_nonautonomous(flow) === true
                 Test.@test Traits.is_variable(flow) === false
@@ -282,12 +294,14 @@ function test_abstract_flow()
             end
 
             Test.@testset "Autonomous NonFixed Flow" begin
-                vf = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
+                vf = Data.VectorField(
+                    (x, v) -> x .+ v; is_autonomous=true, is_variable=true
+                )
                 sys = Systems.VectorFieldSystem(vf)
                 integ = :fake_integ
                 flow = FakeFlow(sys, integ)
 
-                Test.@test flow isa FakeFlow{Traits.Autonomous, Traits.NonFixed}
+                Test.@test flow isa FakeFlow{Traits.Autonomous,Traits.NonFixed}
                 Test.@test Traits.is_autonomous(flow) === true
                 Test.@test Traits.is_nonautonomous(flow) === false
                 Test.@test Traits.is_variable(flow) === true

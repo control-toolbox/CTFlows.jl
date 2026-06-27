@@ -1,6 +1,6 @@
 module TestBuildingIntegrators
 
-import Test
+using Test: Test
 import CTBase.Exceptions
 import CTFlows.Integrators
 import CTFlows.Integrators: SciML
@@ -21,7 +21,6 @@ function test_building_integrators()
         # ====================================================================
 
         Test.@testset "build_integrator" begin
-
             Test.@testset "builds SciML integrator" begin
                 # This will throw ExtensionError if CTFlowsSciMLIntegrator is not loaded,
                 # but at least it calls the right function

@@ -1,6 +1,6 @@
 module TestSciML
 
-import Test
+using Test: Test
 import CTBase.Core
 import CTBase.Exceptions
 import CTBase.Strategies
@@ -35,7 +35,7 @@ end
 
 # Fake constructor that throws ExtensionError
 function FakeSciML(; kwargs...)
-    throw(
+    return throw(
         Exceptions.ExtensionError(
             :SciML;
             message="SciML extension not loaded",
@@ -65,7 +65,6 @@ function test_sciml()
         # ====================================================================
 
         Test.@testset "AbstractStrategy Contract" begin
-
             Test.@testset "id returns :sciml" begin
                 Test.@test Strategies.id(Integrators.SciML) === :sciml
             end
@@ -83,14 +82,17 @@ function test_sciml()
         # ====================================================================
 
         Test.@testset "Extension Error Stubs" begin
-
             Test.@testset "metadata throws ExtensionError" begin
                 fake_integrator = FakeSciMLIntegrator("test")
-                Test.@test_throws Exceptions.ExtensionError Strategies.metadata(typeof(fake_integrator))
+                Test.@test_throws Exceptions.ExtensionError Strategies.metadata(
+                    typeof(fake_integrator)
+                )
             end
 
             Test.@testset "build_sciml_integrator throws ExtensionError" begin
-                Test.@test_throws Exceptions.ExtensionError Integrators.build_sciml_integrator(FakeSciMLTag)
+                Test.@test_throws Exceptions.ExtensionError Integrators.build_sciml_integrator(
+                    FakeSciMLTag
+                )
             end
         end
 
@@ -99,7 +101,6 @@ function test_sciml()
         # ====================================================================
 
         Test.@testset "Error Messages" begin
-
             Test.@testset "constructor error mentions SciML" begin
                 try
                     FakeSciML()

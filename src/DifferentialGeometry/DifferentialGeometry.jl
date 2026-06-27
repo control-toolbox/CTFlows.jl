@@ -19,7 +19,7 @@ module DifferentialGeometry
 # External-package imports (qualified, pollution-free)
 # ==============================================================================
 
-import ADTypes
+using ADTypes: ADTypes
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Core
 import CTBase.Data

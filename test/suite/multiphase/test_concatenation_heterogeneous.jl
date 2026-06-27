@@ -1,6 +1,6 @@
 module TestConcatenationHeterogeneous
 
-import Test
+using Test: Test
 import CTBase.Exceptions
 import CTFlows.MultiPhase
 import CTFlows.Systems
@@ -10,7 +10,7 @@ import CTBase.Traits
 import CTBase.Strategies
 import CTBase.Options
 
-const VERBOSE    = isdefined(Main, :TestData) ? Main.TestData.VERBOSE    : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ==============================================================================
@@ -18,21 +18,21 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # (this is the heterogeneous case that was impossible before Phase F)
 # ==============================================================================
 
-struct HeteroSysA <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
+struct HeteroSysA <: Systems.AbstractStateSystem{Traits.Autonomous,Traits.Fixed}
     state_dim::Int
 end
 Systems.get_ip_rhs(::HeteroSysA, _) = (du, u, _, _) -> (du .= -u)
 
-struct HeteroSysB <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
+struct HeteroSysB <: Systems.AbstractStateSystem{Traits.Autonomous,Traits.Fixed}
     state_dim::Int
 end
 Systems.get_ip_rhs(::HeteroSysB, _) = (du, u, _, _) -> (du .= 2 .* u)
 
-struct HeteroHamSysA <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed}
+struct HeteroHamSysA <: Systems.AbstractHamiltonianSystem{Traits.Autonomous,Traits.Fixed}
     state_dim::Int
 end
 
-struct HeteroHamSysB <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed}
+struct HeteroHamSysB <: Systems.AbstractHamiltonianSystem{Traits.Autonomous,Traits.Fixed}
     state_dim::Int
 end
 
@@ -48,7 +48,6 @@ Strategies.options(::HeteroIntegB) = Strategies.StrategyOptions()
 
 function test_concatenation_heterogeneous()
     Test.@testset "Heterogeneous Flow Concatenation" verbose=VERBOSE showtiming=SHOWTIMING begin
-
         sysA = HeteroSysA(2)
         sysB = HeteroSysB(2)
         hamA = HeteroHamSysA(2)
@@ -158,4 +157,6 @@ end
 
 end # module
 
-test_concatenation_heterogeneous() = TestConcatenationHeterogeneous.test_concatenation_heterogeneous()
+function test_concatenation_heterogeneous()
+    return TestConcatenationHeterogeneous.test_concatenation_heterogeneous()
+end

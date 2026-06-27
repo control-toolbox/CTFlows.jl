@@ -1,6 +1,6 @@
 module TestInternalNorm
 
-import Test
+using Test: Test
 import CTFlows.Common: Common
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
@@ -34,7 +34,6 @@ function test_internal_norm()
                 Test.@test Common.real_norm(2.5, 1.0) === 2.5
             end
         end
-
     end
 end
 

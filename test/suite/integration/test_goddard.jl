@@ -1,29 +1,35 @@
 module TestGoddard
 
-import Test
+using Test: Test
 import CTBase.Data
 import CTFlows.DifferentialGeometry
 import CTFlows.Flows
 import CTFlows.Trajectories
-import DifferentiationInterface
+using DifferentiationInterface: DifferentiationInterface
 using OrdinaryDiffEqTsit5
 using NonlinearSolve: NonlinearSolve, NonlinearProblem, SimpleNewtonRaphson, solve
 
 import CTBase: CTBase # For generated code by the @Lie macro
 import CTFlows: CTFlows # For generated code by the @Lie macro
 
-const VERBOSE    = isdefined(Main, :TestData) ? Main.TestData.VERBOSE    : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ==============================================================================
 # Goddard problem physics constants and dynamics (module-level)
 # ==============================================================================
 
-const _GODD_t0 = 0.0;  const _GODD_r0 = 1.0;  const _GODD_v0 = 0.0
-const _GODD_m0 = 1.0;  const _GODD_vmax = 0.1; const _GODD_mf = 0.6
+const _GODD_t0 = 0.0;
+const _GODD_r0 = 1.0;
+const _GODD_v0 = 0.0
+const _GODD_m0 = 1.0;
+const _GODD_vmax = 0.1;
+const _GODD_mf = 0.6
 const _GODD_x0 = [_GODD_r0, _GODD_v0, _GODD_m0]
-const _GODD_Cd = 310;  const _GODD_Tmax = 3.5;
-const _GODD_β  = 500;  const _GODD_b   = 2
+const _GODD_Cd = 310;
+const _GODD_Tmax = 3.5;
+const _GODD_β = 500;
+const _GODD_b = 2
 
 # Dynamics
 function _godd_F0(x)
@@ -50,7 +56,7 @@ function test_goddard()
 
         H0 = DifferentialGeometry.Lift(_godd_F0)                   # H0(x, p) = p' * F0(x)
         H1 = DifferentialGeometry.Lift(_godd_F1)                   # H1(x, p) = p' * F1(x)
-        H01  = DifferentialGeometry.@Lie {H0, H1}
+        H01 = DifferentialGeometry.@Lie {H0, H1}
         H001 = DifferentialGeometry.@Lie {H0, H01}
         H101 = DifferentialGeometry.@Lie {H1, H01}
 
@@ -60,7 +66,9 @@ function test_goddard()
 
         us(x, p) = -H001(x, p) / H101(x, p)          # singular control
         g(x) = _GODD_vmax - x[2]                     # state constraint v ≤ vmax
-        ub(x) = -DifferentialGeometry.ad(_godd_F0, g)(x) / DifferentialGeometry.ad(_godd_F1, g)(x)          # boundary control
+        ub(x) =
+            -DifferentialGeometry.ad(_godd_F0, g)(x) /
+            DifferentialGeometry.ad(_godd_F1, g)(x)          # boundary control
         μ(x, p) = H01(x, p) / (DifferentialGeometry.ad(_godd_F1, g)(x))         # multiplier
 
         # Pseudo-Hamiltonian
@@ -154,7 +162,9 @@ function test_goddard()
             shoot!(s, ξ, _) = shoot!(s, ξ[1:3], ξ[4], ξ[5], ξ[6], ξ[7])
 
             prob = NonlinearProblem(shoot!, ξ0)
-            nl_sol = solve(prob, SimpleNewtonRaphson(); abstol=1e-8, reltol=1e-8, show_trace=Val(false))
+            nl_sol = solve(
+                prob, SimpleNewtonRaphson(); abstol=1e-8, reltol=1e-8, show_trace=Val(false)
+            )
 
             # Check convergence
             ξ_opt = nl_sol.u
@@ -162,7 +172,6 @@ function test_goddard()
             shoot!(s_converged, ξ_opt[1:3], ξ_opt[4], ξ_opt[5], ξ_opt[6], ξ_opt[7])
             Test.@test sqrt(sum(abs2, s_converged)) < 1e-7
         end
-
     end
 end
 

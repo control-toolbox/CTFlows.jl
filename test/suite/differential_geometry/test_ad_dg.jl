@@ -1,10 +1,10 @@
 module TestAdDG
 
-import Test
-import ForwardDiff  # ensure DI ForwardDiff extension is loaded (AutoForwardDiff backend)
+using Test: Test
+using ForwardDiff: ForwardDiff  # ensure DI ForwardDiff extension is loaded (AutoForwardDiff backend)
 import CTBase.Exceptions
-import DifferentiationInterface
-import ADTypes
+using DifferentiationInterface: DifferentiationInterface
+using ADTypes: ADTypes
 import CTFlows: CTFlows
 import CTBase.Traits: Traits
 import CTFlows.Common: Common
@@ -12,7 +12,7 @@ import CTBase.Data: Data
 import CTBase.Differentiation
 import CTFlows.DifferentialGeometry: DifferentialGeometry
 
-const VERBOSE    = isdefined(Main, :TestData) ? Main.TestData.VERBOSE    : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 function test_ad_dg()
@@ -53,7 +53,9 @@ function test_ad_dg()
 
         # Check return type
         Test.@test Z isa Data.VectorField
-        Test.@test Z isa Data.AbstractVectorField{Traits.Autonomous, Traits.Fixed, Traits.OutOfPlace}
+        Test.@test Z isa Data.AbstractVectorField{
+            Traits.Autonomous,Traits.Fixed,Traits.OutOfPlace
+        }
 
         # Check correctness
         # J_X = [0 1; -1 0], J_Y = [1 0; 0 1]
@@ -77,14 +79,18 @@ function test_ad_dg()
     end
 
     Test.@testset "ad() - Errors: HVF guard" verbose=VERBOSE showtiming=SHOWTIMING begin
-        hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+        hvf = Data.HamiltonianVectorField(
+            (x, p) -> (x, -p); is_autonomous=true, is_variable=false
+        )
         Y = Data.VectorField(x -> [x[1], x[2]]; is_autonomous=true, is_variable=false)
 
         Test.@test_throws Exceptions.NotImplemented DifferentialGeometry.ad(hvf, Y)
     end
 
     Test.@testset "ad() - Errors: InPlace guard" verbose=VERBOSE showtiming=SHOWTIMING begin
-        ip_vf = Data.VectorField((dx, x) -> (dx .= [x[2], -x[1]]); is_autonomous=true, is_inplace=true)
+        ip_vf = Data.VectorField(
+            (dx, x) -> (dx .= [x[2], -x[1]]); is_autonomous=true, is_inplace=true
+        )
         Y = Data.VectorField(x -> [x[1], x[2]]; is_autonomous=true, is_variable=false)
 
         Test.@test_throws Exceptions.NotImplemented DifferentialGeometry.ad(ip_vf, Y)
@@ -105,7 +111,11 @@ function test_ad_dg()
         Xf1 = DifferentialGeometry.ad(X, f)
 
         # With custom backend (should give same result)
-        Xf2 = DifferentialGeometry.ad(X, f; ad_backend=Differentiation.ad_backend(DifferentialGeometry.dg_ad_backend()))
+        Xf2 = DifferentialGeometry.ad(
+            X,
+            f;
+            ad_backend=Differentiation.ad_backend(DifferentialGeometry.dg_ad_backend()),
+        )
 
         x0 = [1.0, 2.0]
         Test.@test isapprox(Xf1(x0), Xf2(x0); atol=1e-5)
@@ -120,7 +130,9 @@ function test_ad_dg()
 
         try
             # Change global backend
-            DifferentialGeometry.dg_ad_backend!(Differentiation.ad_backend(original_backend))
+            DifferentialGeometry.dg_ad_backend!(
+                Differentiation.ad_backend(original_backend)
+            )
 
             # Call without explicit backend kwarg — should use global
             Z = DifferentialGeometry.ad(X, Y)
@@ -130,7 +142,9 @@ function test_ad_dg()
             Test.@test isapprox(Z(x0), [0.0, 0.0]; atol=1e-6)
         finally
             # Restore original backend
-            DifferentialGeometry.dg_ad_backend!(Differentiation.ad_backend(original_backend))
+            DifferentialGeometry.dg_ad_backend!(
+                Differentiation.ad_backend(original_backend)
+            )
         end
     end
 
@@ -145,8 +159,12 @@ function test_ad_dg()
         # NonAutonomous, Fixed
         X_na(t, x) = [t * x[2], -x[1]]
         f_na(t, x) = t + x[1]^2
-        Lf_na_typed = DifferentialGeometry.ad(X_na, f_na, Traits.NonAutonomous, Traits.Fixed)
-        Lf_na_kwargs = DifferentialGeometry.ad(X_na, f_na; is_autonomous=false, is_variable=false)
+        Lf_na_typed = DifferentialGeometry.ad(
+            X_na, f_na, Traits.NonAutonomous, Traits.Fixed
+        )
+        Lf_na_kwargs = DifferentialGeometry.ad(
+            X_na, f_na; is_autonomous=false, is_variable=false
+        )
         Test.@test Lf_na_typed(2.0, [1.0, 2.0]) ≈ Lf_na_kwargs(2.0, [1.0, 2.0]) atol = 1e-6
     end
 
@@ -181,7 +199,9 @@ function test_ad_dg()
         # NonAutonomous, NonFixed
         X_na_nf(t, x, v) = [t * x[2] * v, -x[1]]
         f_na_nf(t, x, v) = t + x[1]^2 + v
-        Lf_na_nf = DifferentialGeometry.ad(X_na_nf, f_na_nf; is_autonomous=false, is_variable=true)
+        Lf_na_nf = DifferentialGeometry.ad(
+            X_na_nf, f_na_nf; is_autonomous=false, is_variable=true
+        )
         # ∇x f = [2x1, 0], X = [t*x2*v, -x1]
         # dot = 2x1 * t*x2*v
         # t=2, x=[1,2], v=3 -> 2*1*2*2*3 = 24
@@ -189,12 +209,16 @@ function test_ad_dg()
     end
 
     Test.@testset "ad() - VectorField/VectorField NonAutonomous" verbose=VERBOSE showtiming=SHOWTIMING begin
-        X = Data.VectorField((t, x) -> [t * x[2], -x[1]]; is_autonomous=false, is_variable=false)
+        X = Data.VectorField(
+            (t, x) -> [t * x[2], -x[1]]; is_autonomous=false, is_variable=false
+        )
         Y = Data.VectorField((t, x) -> [x[1], x[2]]; is_autonomous=false, is_variable=false)
         Z = DifferentialGeometry.ad(X, Y)
 
         Test.@test Z isa Data.VectorField
-        Test.@test Z isa Data.AbstractVectorField{Traits.NonAutonomous, Traits.Fixed, Traits.OutOfPlace}
+        Test.@test Z isa Data.AbstractVectorField{
+            Traits.NonAutonomous,Traits.Fixed,Traits.OutOfPlace
+        }
 
         # Check correctness at t=2, x=[1,2]
         # J_X = [[0, t], [-1, 0]], J_Y = I
@@ -205,7 +229,9 @@ function test_ad_dg()
     end
 
     Test.@testset "ad() - VectorField/Function NonAutonomous" verbose=VERBOSE showtiming=SHOWTIMING begin
-        X = Data.VectorField((t, x) -> [t * x[2], -x[1]]; is_autonomous=false, is_variable=false)
+        X = Data.VectorField(
+            (t, x) -> [t * x[2], -x[1]]; is_autonomous=false, is_variable=false
+        )
         f(t, x) = t + x[1]^2
         Xf = DifferentialGeometry.ad(X, f)
 
@@ -218,12 +244,16 @@ function test_ad_dg()
     end
 
     Test.@testset "ad() - VectorField/VectorField NonFixed" verbose=VERBOSE showtiming=SHOWTIMING begin
-        X = Data.VectorField((x, v) -> [x[2] * v, -x[1]]; is_autonomous=true, is_variable=true)
+        X = Data.VectorField(
+            (x, v) -> [x[2] * v, -x[1]]; is_autonomous=true, is_variable=true
+        )
         Y = Data.VectorField((x, v) -> [x[1], x[2]]; is_autonomous=true, is_variable=true)
         Z = DifferentialGeometry.ad(X, Y)
 
         Test.@test Z isa Data.VectorField
-        Test.@test Z isa Data.AbstractVectorField{Traits.Autonomous, Traits.NonFixed, Traits.OutOfPlace}
+        Test.@test Z isa Data.AbstractVectorField{
+            Traits.Autonomous,Traits.NonFixed,Traits.OutOfPlace
+        }
 
         # Check correctness at x=[1,2], v=3
         # J_X = [[0, v], [-1, 0]], J_Y = I
@@ -234,7 +264,9 @@ function test_ad_dg()
     end
 
     Test.@testset "ad() - VectorField/Function NonFixed" verbose=VERBOSE showtiming=SHOWTIMING begin
-        X = Data.VectorField((x, v) -> [x[2] * v, -x[1]]; is_autonomous=true, is_variable=true)
+        X = Data.VectorField(
+            (x, v) -> [x[2] * v, -x[1]]; is_autonomous=true, is_variable=true
+        )
         f(x, v) = x[1]^2 + v
         Xf = DifferentialGeometry.ad(X, f)
 
@@ -333,17 +365,27 @@ function test_ad_dg()
         fad(x) = x[1]^2 + x[2]^2
         a = DifferentialGeometry.ad(Xad, fad)
         Test.@test a isa DifferentialGeometry.Ad
-        Test.@test a isa DifferentialGeometry.Ad{typeof(Xad), typeof(fad),
-            <:Differentiation.AbstractADBackend, Traits.Autonomous, Traits.Fixed}
+        Test.@test a isa DifferentialGeometry.Ad{
+            typeof(Xad),
+            typeof(fad),
+            <:Differentiation.AbstractADBackend,
+            Traits.Autonomous,
+            Traits.Fixed,
+        }
     end
 
     Test.@testset "ad() - concrete type Ad (Lie bracket, Autonomous/Fixed)" verbose=VERBOSE showtiming=SHOWTIMING begin
         Xad(x) = [x[2], -x[1]]
-        Yad(x) = [x[1],  x[2]]
+        Yad(x) = [x[1], x[2]]
         a = DifferentialGeometry.ad(Xad, Yad)
         Test.@test a isa DifferentialGeometry.Ad
-        Test.@test a isa DifferentialGeometry.Ad{typeof(Xad), typeof(Yad),
-            <:Differentiation.AbstractADBackend, Traits.Autonomous, Traits.Fixed}
+        Test.@test a isa DifferentialGeometry.Ad{
+            typeof(Xad),
+            typeof(Yad),
+            <:Differentiation.AbstractADBackend,
+            Traits.Autonomous,
+            Traits.Fixed,
+        }
     end
 
     Test.@testset "ad() - @inferred scalar (Lie derivative)" verbose=VERBOSE showtiming=SHOWTIMING begin
@@ -357,7 +399,7 @@ function test_ad_dg()
 
     Test.@testset "ad() - @inferred vector (Lie bracket)" verbose=VERBOSE showtiming=SHOWTIMING begin
         Xad(x) = [x[2], -x[1]]
-        Yad(x) = [x[1],  x[2]]
+        Yad(x) = [x[1], x[2]]
         a = DifferentialGeometry.ad(Xad, Yad)
         x0 = [1.0, 2.0]
         a(x0)  # warm-up

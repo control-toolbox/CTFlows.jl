@@ -25,9 +25,14 @@ using StaticArrays
 
 # Make extension modules available in Main so that @docs blocks can resolve
 # qualified bindings like CTFlowsSciMLIntegrator.SciMLIntegrationResult.
-for _ext_sym in (:CTFlowsForwardDiff,
-                 :CTFlowsOrdinaryDiffEqTsit5, :CTFlowsPlots,
-                 :CTFlowsSciMLIntegrator, :CTFlowsSciMLFlows, :CTFlowsStaticArrays)
+for _ext_sym in (
+    :CTFlowsForwardDiff,
+    :CTFlowsOrdinaryDiffEqTsit5,
+    :CTFlowsPlots,
+    :CTFlowsSciMLIntegrator,
+    :CTFlowsSciMLFlows,
+    :CTFlowsStaticArrays,
+)
     _m = Base.get_extension(CTFlows, _ext_sym)
     isnothing(_m) || @eval Main const $_ext_sym = $_m
 end
@@ -88,7 +93,7 @@ include("api_reference.jl")
 # ══════════════════════════════════════════════════════════════════════════════
 
 with_api_reference(src_dir, ext_dir) do api_pages
-    makedocs(;
+    return makedocs(;
         draft=draft,
         remotes=nothing, # Disable remote links. Needed for DocumenterReference
         warnonly=true,
@@ -105,11 +110,11 @@ with_api_reference(src_dir, ext_dir) do api_pages
         pages=[
             "Introduction" => "index.md",
             "Flows" => [
-                "Overview"           => "flows/index.md",
-                "Building a flow"    => "flows/building_a_flow.md",
-                "Integrating"        => "flows/integrating.md",
-                "Trajectories"       => "flows/trajectories.md",
-                "Multi-phase flows"  => "flows/multiphase.md",
+                "Overview" => "flows/index.md",
+                "Building a flow" => "flows/building_a_flow.md",
+                "Integrating" => "flows/integrating.md",
+                "Trajectories" => "flows/trajectories.md",
+                "Multi-phase flows" => "flows/multiphase.md",
             ],
             "Differential Geometry" => [
                 "Overview" => "differential_geometry/index.md",

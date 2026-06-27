@@ -12,8 +12,8 @@
 
 module TestIntegratorsModule
 
-import Test
-import CTFlows
+using Test: Test
+using CTFlows: CTFlows
 import CTFlows.Integrators
 using CTFlows.Integrators  # For testing exported symbols
 
@@ -28,16 +28,10 @@ const CurrentModule = TestIntegratorsModule
 # These lists define the expected public API of the Integrators module.
 
 const EXPORTED_ABSTRACT_TYPES = (
-    :AbstractIntegrator,
-    :AbstractSciMLIntegrator,
-    :AbstractIntegrationResult,
+    :AbstractIntegrator, :AbstractSciMLIntegrator, :AbstractIntegrationResult
 )
 
-const EXPORTED_CONCRETE_TYPES = (
-    :SciML,
-    :SciMLTag,
-    :Tsit5Tag,
-)
+const EXPORTED_CONCRETE_TYPES = (:SciML, :SciMLTag, :Tsit5Tag)
 
 const EXPORTED_FUNCTIONS = (
     :build_sciml_integrator,

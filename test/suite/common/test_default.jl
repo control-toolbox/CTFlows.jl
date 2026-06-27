@@ -1,6 +1,6 @@
 module TestDefault
 
-import Test
+using Test: Test
 import CTBase.Data
 import CTFlows.Common
 import CTBase.Core

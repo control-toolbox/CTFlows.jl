@@ -24,7 +24,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
 
     # Base exclusion list for all core modules
     EXCLUDE_BASE = Symbol[:include, :eval]
-    
+
     pages = [
         # ───────────────────────────────────────────────────────────────────
         # Configs
@@ -215,108 +215,128 @@ function generate_api_reference(src_dir::String, ext_dir::String)
 
     CTFlowsForwardDiff = Base.get_extension(CTFlows, :CTFlowsForwardDiff)
     if !isnothing(CTFlowsForwardDiff)
-        push!(pages, CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[CTFlowsForwardDiff => ext("CTFlowsForwardDiff.jl")],
-            external_modules_to_document=[CTFlows],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
-            title="ForwardDiff Extension",
-            title_in_menu="ForwardDiff",
-            filename="ext_forwarddiff",
-        ))
+        push!(
+            pages,
+            CTBase.automatic_reference_documentation(;
+                subdirectory="api",
+                primary_modules=[CTFlowsForwardDiff => ext("CTFlowsForwardDiff.jl")],
+                external_modules_to_document=[CTFlows],
+                exclude=EXCLUDE_BASE,
+                public=true,
+                private=true,
+                title="ForwardDiff Extension",
+                title_in_menu="ForwardDiff",
+                filename="ext_forwarddiff",
+            ),
+        )
     end
 
     CTFlowsOrdinaryDiffEqTsit5 = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5)
     if !isnothing(CTFlowsOrdinaryDiffEqTsit5)
-        push!(pages, CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[CTFlowsOrdinaryDiffEqTsit5 => ext("CTFlowsOrdinaryDiffEqTsit5.jl")],
-            external_modules_to_document=[CTFlows],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
-            title="OrdinaryDiffEqTsit5 Extension",
-            title_in_menu="OrdinaryDiffEqTsit5",
-            filename="ext_ordinary_diffeq_tsit5",
-        ))
+        push!(
+            pages,
+            CTBase.automatic_reference_documentation(;
+                subdirectory="api",
+                primary_modules=[
+                    CTFlowsOrdinaryDiffEqTsit5 => ext("CTFlowsOrdinaryDiffEqTsit5.jl")
+                ],
+                external_modules_to_document=[CTFlows],
+                exclude=EXCLUDE_BASE,
+                public=true,
+                private=true,
+                title="OrdinaryDiffEqTsit5 Extension",
+                title_in_menu="OrdinaryDiffEqTsit5",
+                filename="ext_ordinary_diffeq_tsit5",
+            ),
+        )
     end
 
     CTFlowsPlots = Base.get_extension(CTFlows, :CTFlowsPlots)
     if !isnothing(CTFlowsPlots)
-        push!(pages, CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[CTFlowsPlots => ext("CTFlowsPlots.jl")],
-            external_modules_to_document=[CTFlows],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
-            title="Plots Extension",
-            title_in_menu="Plots",
-            filename="ext_plots",
-        ))
+        push!(
+            pages,
+            CTBase.automatic_reference_documentation(;
+                subdirectory="api",
+                primary_modules=[CTFlowsPlots => ext("CTFlowsPlots.jl")],
+                external_modules_to_document=[CTFlows],
+                exclude=EXCLUDE_BASE,
+                public=true,
+                private=true,
+                title="Plots Extension",
+                title_in_menu="Plots",
+                filename="ext_plots",
+            ),
+        )
     end
 
     CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
     if !isnothing(CTFlowsSciMLIntegrator)
-        push!(pages, CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[
-                CTFlowsSciMLIntegrator => ext(
-                    joinpath("CTFlowsSciMLIntegrator", "CTFlowsSciMLIntegrator.jl"),
-                    joinpath("CTFlowsSciMLIntegrator", "real_norm.jl"),
-                    joinpath("CTFlowsSciMLIntegrator", "strategies.jl"),
-                    joinpath("CTFlowsSciMLIntegrator", "integration_result.jl"),
-                    joinpath("CTFlowsSciMLIntegrator", "build_and_solve.jl"),
-                ),
-            ],
-            external_modules_to_document=[CTFlows],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
-            title="SciML Integrator Extension",
-            title_in_menu="SciML Integrator",
-            filename="ext_sciml_integrator",
-        ))
+        push!(
+            pages,
+            CTBase.automatic_reference_documentation(;
+                subdirectory="api",
+                primary_modules=[
+                    CTFlowsSciMLIntegrator => ext(
+                        joinpath("CTFlowsSciMLIntegrator", "CTFlowsSciMLIntegrator.jl"),
+                        joinpath("CTFlowsSciMLIntegrator", "real_norm.jl"),
+                        joinpath("CTFlowsSciMLIntegrator", "strategies.jl"),
+                        joinpath("CTFlowsSciMLIntegrator", "integration_result.jl"),
+                        joinpath("CTFlowsSciMLIntegrator", "build_and_solve.jl"),
+                    ),
+                ],
+                external_modules_to_document=[CTFlows],
+                exclude=EXCLUDE_BASE,
+                public=true,
+                private=true,
+                title="SciML Integrator Extension",
+                title_in_menu="SciML Integrator",
+                filename="ext_sciml_integrator",
+            ),
+        )
     end
 
     CTFlowsSciMLFlows = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
     if !isnothing(CTFlowsSciMLFlows)
-        push!(pages, CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[
-                CTFlowsSciMLFlows => ext(
-                    joinpath("CTFlowsSciMLFlows", "CTFlowsSciMLFlows.jl"),
-                    joinpath("CTFlowsSciMLFlows", "sciml_rhs_functors.jl"),
-                    joinpath("CTFlowsSciMLFlows", "sciml_function_system.jl"),
-                    joinpath("CTFlowsSciMLFlows", "problem_flow.jl"),
-                    joinpath("CTFlowsSciMLFlows", "flow_constructors.jl"),
-                ),
-            ],
-            external_modules_to_document=[CTFlows],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
-            title="SciML Flows Extension",
-            title_in_menu="SciML Flows",
-            filename="ext_sciml_flows",
-        ))
+        push!(
+            pages,
+            CTBase.automatic_reference_documentation(;
+                subdirectory="api",
+                primary_modules=[
+                    CTFlowsSciMLFlows => ext(
+                        joinpath("CTFlowsSciMLFlows", "CTFlowsSciMLFlows.jl"),
+                        joinpath("CTFlowsSciMLFlows", "sciml_rhs_functors.jl"),
+                        joinpath("CTFlowsSciMLFlows", "sciml_function_system.jl"),
+                        joinpath("CTFlowsSciMLFlows", "problem_flow.jl"),
+                        joinpath("CTFlowsSciMLFlows", "flow_constructors.jl"),
+                    ),
+                ],
+                external_modules_to_document=[CTFlows],
+                exclude=EXCLUDE_BASE,
+                public=true,
+                private=true,
+                title="SciML Flows Extension",
+                title_in_menu="SciML Flows",
+                filename="ext_sciml_flows",
+            ),
+        )
     end
 
     CTFlowsStaticArrays = Base.get_extension(CTFlows, :CTFlowsStaticArrays)
     if !isnothing(CTFlowsStaticArrays)
-        push!(pages, CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[CTFlowsStaticArrays => ext("CTFlowsStaticArrays.jl")],
-            external_modules_to_document=[CTFlows],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
-            title="StaticArrays Extension",
-            title_in_menu="StaticArrays",
-            filename="ext_static_arrays",
-        ))
+        push!(
+            pages,
+            CTBase.automatic_reference_documentation(;
+                subdirectory="api",
+                primary_modules=[CTFlowsStaticArrays => ext("CTFlowsStaticArrays.jl")],
+                external_modules_to_document=[CTFlows],
+                exclude=EXCLUDE_BASE,
+                public=true,
+                private=true,
+                title="StaticArrays Extension",
+                title_in_menu="StaticArrays",
+                filename="ext_static_arrays",
+            ),
+        )
     end
 
     return pages

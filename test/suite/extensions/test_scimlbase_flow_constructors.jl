@@ -1,6 +1,6 @@
 module TestSciMLBaseFlowConstructors
 
-import Test
+using Test: Test
 import CTBase.Exceptions: Exceptions
 import CTFlows: CTFlows
 import CTFlows.Common: Common
@@ -13,7 +13,7 @@ using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 using StaticArrays: SA, SVector
 
 const CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
-const CTFlowsSciMLFlows      = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
+const CTFlowsSciMLFlows = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
 const CTFlowsOrdinaryDiffEqTsit5 = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5)
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
@@ -160,7 +160,9 @@ function test_scimlbase_flow_constructors()
         Test.@testset "Integration: iip ODEFunction + SVector u0 (cross-adapter path)" begin
             f = ODEFunction((du, u, p, t) -> du .= -p .* u)
             flow = Flows.Flow(f; reltol=1e-10)
-            xf = Test.@test_logs (:warn, r"InPlace SciMLFunction") flow(0.0, SA[1.0], 1.0; variable=2.0)
+            xf = Test.@test_logs (:warn, r"InPlace SciMLFunction") flow(
+                0.0, SA[1.0], 1.0; variable=2.0
+            )
             Test.@test xf isa SVector
             Test.@test xf[1] ≈ exp(-2.0) rtol=1e-6
         end
@@ -170,4 +172,6 @@ end
 end # module
 
 # CRITICAL: Redefine in outer scope for TestRunner
-test_scimlbase_flow_constructors() = TestSciMLBaseFlowConstructors.test_scimlbase_flow_constructors()
+function test_scimlbase_flow_constructors()
+    return TestSciMLBaseFlowConstructors.test_scimlbase_flow_constructors()
+end

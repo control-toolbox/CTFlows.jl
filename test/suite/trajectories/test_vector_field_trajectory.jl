@@ -1,6 +1,6 @@
 module TestVectorFieldTrajectory
 
-import Test
+using Test: Test
 import CTFlows.Trajectories
 import CTBase.Exceptions
 import CTFlows.Common
@@ -101,13 +101,13 @@ function test_vector_field_trajectory()
         Test.@testset "Plot stub" begin
             Test.@testset "throws ExtensionError without Plots extension" begin
                 fake_sol = FakeVectorFieldTrajectory("test data")
-                
+
                 Test.@test_throws Exceptions.ExtensionError Trajectories.plot(fake_sol)
             end
 
             Test.@testset "error message mentions Plots extension" begin
                 fake_sol = FakeVectorFieldTrajectory("test data")
-                
+
                 try
                     Trajectories.plot(fake_sol)
                     Test.@test false  # Should not reach here
@@ -127,7 +127,7 @@ function test_vector_field_trajectory()
             Test.@testset "MIME text/plain" begin
                 result = FakeIntegrationResult([0.0, 1.0], [[1.0, 2.0], [0.5, 1.0]])
                 sol = Trajectories.VectorFieldTrajectory(result)
-                
+
                 io = IOBuffer()
                 show(io, MIME("text/plain"), sol)
                 output = String(take!(io))
@@ -137,7 +137,7 @@ function test_vector_field_trajectory()
             Test.@testset "compact" begin
                 result = FakeIntegrationResult([0.0, 1.0], [[1.0, 2.0], [0.5, 1.0]])
                 sol = Trajectories.VectorFieldTrajectory(result)
-                
+
                 io = IOBuffer()
                 show(io, sol)
                 output = String(take!(io))

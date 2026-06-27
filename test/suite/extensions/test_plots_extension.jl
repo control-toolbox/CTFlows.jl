@@ -1,6 +1,6 @@
 module TestPlotsExtension
 
-import Test
+using Test: Test
 import CTFlows: CTFlows
 import CTFlows.Integrators: Integrators
 import CTFlows.Trajectories: Trajectories
@@ -97,9 +97,11 @@ function test_plots_extension()
 
         Test.@testset "Internal Helper _sol_to_arrays" begin
             Test.@testset "vector state" begin
-                fake_result = FakePlotIntegrationResult([0.0, 1.0], [[1.0, 2.0], [3.0, 4.0]])
+                fake_result = FakePlotIntegrationResult(
+                    [0.0, 1.0], [[1.0, 2.0], [3.0, 4.0]]
+                )
                 sol = Trajectories.VectorFieldTrajectory(fake_result)
-                
+
                 ts, states = CTFlowsPlots._sol_to_arrays(sol)
                 Test.@test ts == [0.0, 1.0]
                 Test.@test states == [1.0 2.0; 3.0 4.0]
@@ -108,7 +110,7 @@ function test_plots_extension()
             Test.@testset "scalar state" begin
                 fake_result = FakePlotIntegrationResult([0.0, 1.0], [1.0, 3.0])
                 sol = Trajectories.VectorFieldTrajectory(fake_result)
-                
+
                 ts, states = CTFlowsPlots._sol_to_arrays(sol)
                 Test.@test ts == [0.0, 1.0]
                 Test.@test states == reshape([1.0, 3.0], 2, 1)
@@ -117,9 +119,11 @@ function test_plots_extension()
             Test.@testset "uses semantic accessors" begin
                 # Behavioral test: verify _sol_to_arrays works correctly
                 # The implementation detail (using state) is verified by code review
-                fake_result = FakePlotIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
+                fake_result = FakePlotIntegrationResult(
+                    [0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]]
+                )
                 sol = Trajectories.VectorFieldTrajectory(fake_result)
-                
+
                 ts, states = CTFlowsPlots._sol_to_arrays(sol)
                 Test.@test length(ts) == 3
                 Test.@test size(states) == (3, 1)
@@ -132,7 +136,9 @@ function test_plots_extension()
 
         Test.@testset "VectorFieldTrajectory Plotting" begin
             Test.@testset "plot accepts VectorFieldTrajectory" begin
-                fake_result = FakePlotIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
+                fake_result = FakePlotIntegrationResult(
+                    [0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]]
+                )
                 sol = Trajectories.VectorFieldTrajectory(fake_result)
 
                 # Test that plot accepts the solution (may not actually plot without display)
@@ -141,7 +147,9 @@ function test_plots_extension()
             end
 
             Test.@testset "plot! accepts VectorFieldTrajectory" begin
-                fake_result = FakePlotIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
+                fake_result = FakePlotIntegrationResult(
+                    [0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]]
+                )
                 sol = Trajectories.VectorFieldTrajectory(fake_result)
 
                 # Create a plot and plot! onto it
@@ -150,7 +158,9 @@ function test_plots_extension()
             end
 
             Test.@testset "plot!(p, sol) accepts VectorFieldTrajectory" begin
-                fake_result = FakePlotIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
+                fake_result = FakePlotIntegrationResult(
+                    [0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]]
+                )
                 sol = Trajectories.VectorFieldTrajectory(fake_result)
 
                 # Create a plot and plot! onto it with explicit plot object
@@ -166,11 +176,7 @@ function test_plots_extension()
         Test.@testset "Internal Helper _ham_sol_to_arrays" begin
             Test.@testset "scalar state and costate" begin
                 fake_result = FakeHamiltonianPlotResult(
-                    [0.0, 1.0],
-                    [
-                        [1.0, 5.0],
-                        [3.0, 7.0],
-                    ],
+                    [0.0, 1.0], [[1.0, 5.0], [3.0, 7.0]]
                 )
                 x0 = 1.0  # initial state
                 sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, fake_result)
@@ -185,11 +191,7 @@ function test_plots_extension()
 
             Test.@testset "vector state and costate" begin
                 fake_result = FakeHamiltonianPlotResult(
-                    [0.0, 1.0],
-                    [
-                        [1.0, 2.0, 5.0, 6.0],
-                        [3.0, 4.0, 7.0, 8.0],
-                    ],
+                    [0.0, 1.0], [[1.0, 2.0, 5.0, 6.0], [3.0, 4.0, 7.0, 8.0]]
                 )
                 x0 = [1.0, 2.0]  # initial state
                 sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, fake_result)
@@ -210,12 +212,7 @@ function test_plots_extension()
         Test.@testset "HamiltonianVectorFieldTrajectory Plotting" begin
             Test.@testset "plot accepts HamiltonianVectorFieldTrajectory" begin
                 fake_result = FakeHamiltonianPlotResult(
-                    [0.0, 0.5, 1.0],
-                    [
-                        [1.0, 2.0],
-                        [0.5, 1.0],
-                        [0.25, 0.5],
-                    ],
+                    [0.0, 0.5, 1.0], [[1.0, 2.0], [0.5, 1.0], [0.25, 0.5]]
                 )
                 x0 = 1.0  # initial state
                 sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, fake_result)
@@ -225,12 +222,7 @@ function test_plots_extension()
 
             Test.@testset "plot! accepts HamiltonianVectorFieldTrajectory" begin
                 fake_result = FakeHamiltonianPlotResult(
-                    [0.0, 0.5, 1.0],
-                    [
-                        [1.0, 2.0],
-                        [0.5, 1.0],
-                        [0.25, 0.5],
-                    ],
+                    [0.0, 0.5, 1.0], [[1.0, 2.0], [0.5, 1.0], [0.25, 0.5]]
                 )
                 x0 = 1.0  # initial state
                 sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, fake_result)
@@ -241,12 +233,7 @@ function test_plots_extension()
 
             Test.@testset "plot!(p, sol) accepts HamiltonianVectorFieldTrajectory" begin
                 fake_result = FakeHamiltonianPlotResult(
-                    [0.0, 0.5, 1.0],
-                    [
-                        [1.0, 2.0],
-                        [0.5, 1.0],
-                        [0.25, 0.5],
-                    ],
+                    [0.0, 0.5, 1.0], [[1.0, 2.0], [0.5, 1.0], [0.25, 0.5]]
                 )
                 x0 = 1.0  # initial state
                 sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, fake_result)

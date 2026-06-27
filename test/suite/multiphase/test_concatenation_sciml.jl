@@ -1,6 +1,6 @@
 module TestConcatenationSciML
 
-import Test
+using Test: Test
 import CTFlows.MultiPhase
 import CTFlows.Systems
 import CTFlows.Integrators
@@ -35,7 +35,9 @@ function test_concatenation_sciml()
 
             mpf = flow1 * (0.5, flow2)
 
-            t0 = 0.0; tf = 1.0; x0 = [1.0]
+            t0 = 0.0;
+            tf = 1.0;
+            x0 = [1.0]
             xf = mpf(t0, x0, tf)
 
             Test.@test xf[1] ≈ exp(-1.0) atol = 1e-3
@@ -242,7 +244,6 @@ function test_concatenation_sciml()
             xf = Integrators.final_state(sol)
             Test.@test xf[1] ≈ exp(-1.0) atol=1e-4
         end
-
     end
 end
 

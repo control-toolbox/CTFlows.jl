@@ -1,6 +1,6 @@
 module TestSciMLBaseFunctionSystem
 
-import Test
+using Test: Test
 import CTBase.Core
 import CTBase.Exceptions: Exceptions
 import CTBase.Strategies: Strategies
@@ -118,7 +118,9 @@ function test_scimlbase_function_system()
             Test.@testset "get_oop_rhs on in-place returns oop wrapper (cross-adapter)" begin
                 f = ODEFunction((du, u, p, t) -> du .= -u)
                 sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
-                rhs_oop_fn = Test.@test_logs (:warn, r"InPlace SciMLFunction") Systems.get_oop_rhs(sys, dummy_config)
+                rhs_oop_fn = Test.@test_logs (:warn, r"InPlace SciMLFunction") Systems.get_oop_rhs(
+                    sys, dummy_config
+                )
                 Test.@test rhs_oop_fn isa Systems.AbstractOoPRHS
                 # Should return a wrapper that allocates a buffer
                 u = [1.0, 2.0]
@@ -209,15 +211,18 @@ function test_scimlbase_function_system()
         Test.@testset "Integration: iip + SVector u0 (cross-adapter finalize path)" begin
             f = ODEFunction((du, u, p, t) -> du .= -p .* u)
             flow = Flows.Flow(f; reltol=1e-10)
-            xf = Test.@test_logs (:warn, r"InPlace SciMLFunction") flow(0.0, SA[1.0], 1.0; variable=2.0)
+            xf = Test.@test_logs (:warn, r"InPlace SciMLFunction") flow(
+                0.0, SA[1.0], 1.0; variable=2.0
+            )
             Test.@test xf isa SVector
             Test.@test xf[1] ≈ exp(-2.0) rtol=1e-6
         end
-
     end
 end
 
 end # module
 
 # CRITICAL: Redefine in outer scope for TestRunner
-test_scimlbase_function_system() = TestSciMLBaseFunctionSystem.test_scimlbase_function_system()
+function test_scimlbase_function_system()
+    return TestSciMLBaseFunctionSystem.test_scimlbase_function_system()
+end

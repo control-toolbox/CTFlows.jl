@@ -18,7 +18,7 @@ For point configurations, extracts the initial and final times from the
 
 See also: [`CTFlows.Configs.AbstractEndPointConfig`](@ref), [`CTFlows.Configs.tspan`](@ref).
 """
-function tspan(c::AbstractEndPointConfig)::Tuple{Real, Real}
+function tspan(c::AbstractEndPointConfig)::Tuple{Real,Real}
     return (c.t0, c.tf)
 end
 
@@ -37,7 +37,7 @@ For trajectory configurations, returns the stored `tspan` field directly.
 
 See also: [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref), [`CTFlows.Configs.tspan`](@ref).
 """
-function tspan(c::AbstractTrajectoryConfig)::Tuple{Real, Real}
+function tspan(c::AbstractTrajectoryConfig)::Tuple{Real,Real}
     return c.tspan
 end
 
@@ -133,7 +133,7 @@ maintain consistent vector-based ODE problem construction.
 
 See also: [`CTFlows.Configs.AbstractStateConfig`](@ref), [`CTFlows.Configs.initial_condition`](@ref).
 """
-function initial_condition(c::AbstractStateConfig{<:Number, M}) where {M}
+function initial_condition(c::AbstractStateConfig{<:Number,M}) where {M}
     return [c.x0]
 end
 
@@ -213,12 +213,14 @@ defined for Hamiltonian configurations.
 See also: [`CTFlows.Configs.AbstractStateConfig`](@ref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref), [`CTFlows.Configs.initial_costate`](@ref).
 """
 function initial_costate(c::AbstractStateConfig)
-    throw(Exceptions.PreconditionError(
-        "initial_costate is only defined for Hamiltonian configs";
-        context = "initial_costate - requires Hamiltonian config",
-        reason = "config type $(typeof(c)) does not have a costate field",
-        suggestion = "use HamiltonianEndPointConfig or HamiltonianTrajectoryConfig instead",
-    ))
+    return throw(
+        Exceptions.PreconditionError(
+            "initial_costate is only defined for Hamiltonian configs";
+            context="initial_costate - requires Hamiltonian config",
+            reason="config type $(typeof(c)) does not have a costate field",
+            suggestion="use HamiltonianEndPointConfig or HamiltonianTrajectoryConfig instead",
+        ),
+    )
 end
 
 """

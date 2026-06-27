@@ -27,7 +27,7 @@ function build_trajectory(
     ::Type{Traits.EndPointMode},
     ::Type{Traits.StateDynamics},
     config::Configs.AbstractConfig,
-    result::Integrators.AbstractIntegrationResult, 
+    result::Integrators.AbstractIntegrationResult,
 )
     return Core.make_coerce(Configs.initial_state(config))(Integrators.final_state(result))
 end
@@ -53,7 +53,7 @@ function build_trajectory(
     ::Type{Traits.TrajectoryMode},
     ::Type{Traits.StateDynamics},
     config::Configs.AbstractConfig,
-    result::Integrators.AbstractIntegrationResult, 
+    result::Integrators.AbstractIntegrationResult,
 )
     return VectorFieldTrajectory(result)
 end
@@ -61,7 +61,6 @@ end
 # =============================================================================
 # Internal helpers for Hamiltonian solution splitting
 # =============================================================================
-
 
 """
 $(TYPEDSIGNATURES)
@@ -86,8 +85,8 @@ function _aug_split_solution(u, x0, pv0)
     n = length(x0)
     return (
         Core.make_coerce(x0)(u[1:n]),
-        Core.make_coerce(x0)(u[n+1:2n]),
-        Core.make_coerce(pv0)(u[2n+1:end]),
+        Core.make_coerce(x0)(u[(n + 1):2n]),
+        Core.make_coerce(pv0)(u[(2n + 1):end]),
     )
 end
 
@@ -122,7 +121,7 @@ function build_trajectory(
     ::Type{Traits.HamiltonianDynamics},
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
-    )
+)
     u = Integrators.final_state(result)
     x0 = Configs.initial_state(config)
     x, p = _ham_split_solution(u, x0)
@@ -152,7 +151,7 @@ function build_trajectory(
     ::Type{Traits.HamiltonianDynamics},
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
-    )
+)
     x0 = Configs.initial_state(config)
     return HamiltonianVectorFieldTrajectory(x0, result)
 end
@@ -191,5 +190,9 @@ function build_trajectory(
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
 )
-    return _aug_split_solution(Integrators.final_state(result), Configs.initial_state(config), Configs.initial_variable_costate(config))
+    return _aug_split_solution(
+        Integrators.final_state(result),
+        Configs.initial_state(config),
+        Configs.initial_variable_costate(config),
+    )
 end

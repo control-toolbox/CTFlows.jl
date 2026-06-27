@@ -20,8 +20,7 @@ See also: [`_route_flow_options`](@ref), [`flow_registry`](@ref)
 """
 function _flow_families()
     return (
-        backend    = Differentiation.AbstractADBackend,
-        integrator = Integrators.AbstractIntegrator,
+        backend=Differentiation.AbstractADBackend, integrator=Integrators.AbstractIntegrator
     )
 end
 
@@ -89,7 +88,7 @@ function _route_flow_options(kwargs)
         Options.OptionDefinition[],
         (; kwargs...),
         flow_registry();
-        source_mode = :description,
+        source_mode=:description,
     )
 end
 
@@ -122,16 +121,12 @@ See also: [`_route_flow_options`](@ref), [`flow_registry`](@ref),
 """
 function _build_flow_components(routed)
     families = _flow_families()
-    resolved = Orchestration.resolve_method(
-        _FLOW_DESCRIPTION, families, flow_registry()
-    )
+    resolved = Orchestration.resolve_method(_FLOW_DESCRIPTION, families, flow_registry())
     backend = Orchestration.build_strategy_from_resolved(
-        resolved, :backend, families, flow_registry();
-        routed.strategies.backend...
+        resolved, :backend, families, flow_registry(); routed.strategies.backend...
     )
     integrator = Orchestration.build_strategy_from_resolved(
-        resolved, :integrator, families, flow_registry();
-        routed.strategies.integrator...
+        resolved, :integrator, families, flow_registry(); routed.strategies.integrator...
     )
-    return (backend = backend, integrator = integrator)
+    return (backend=backend, integrator=integrator)
 end

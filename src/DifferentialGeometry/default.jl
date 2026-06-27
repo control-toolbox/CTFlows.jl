@@ -40,7 +40,7 @@ This `Ref` holds the current AD backend that is used by [`CTFlows.DifferentialGe
 See also: [`CTFlows.DifferentialGeometry.dg_ad_backend`](@ref), [`CTFlows.DifferentialGeometry.dg_ad_backend!`](@ref), [`CTFlows.DifferentialGeometry.__dg_ad_backend`](@ref).
 """
 const DG_AD_BACKEND = Ref{Differentiation.AbstractADBackend}(
-    Differentiation.build_ad_backend()   # AutoForwardDiff via CTBase.Differentiation.__ad_backend()
+    Differentiation.build_ad_backend(),   # AutoForwardDiff via CTBase.Differentiation.__ad_backend()
 )
 
 """
@@ -91,7 +91,7 @@ dg_ad_backend!(AutoForwardDiff())
 See also: [`CTFlows.DifferentialGeometry.dg_ad_backend`](@ref), [`CTFlows.DifferentialGeometry.ad`](@ref), [`CTFlows.DifferentialGeometry.Poisson`](@ref), [`CTFlows.DifferentialGeometry.∂ₜ`](@ref)
 """
 function dg_ad_backend!(ad_backend::ADTypes.AbstractADType)
-    DG_AD_BACKEND[] = Differentiation.build_ad_backend(; ad_backend = ad_backend)
+    DG_AD_BACKEND[] = Differentiation.build_ad_backend(; ad_backend=ad_backend)
     return nothing
 end
 
@@ -110,5 +110,6 @@ builds a fresh backend from the ADType.
 - `Differentiation.AbstractADBackend`: The resolved backend.
 """
 _resolve_backend(::Core.NotProvidedType) = DG_AD_BACKEND[]
-_resolve_backend(ad_backend::ADTypes.AbstractADType) = Differentiation.build_ad_backend(; ad_backend = ad_backend)
-
+function _resolve_backend(ad_backend::ADTypes.AbstractADType)
+    return Differentiation.build_ad_backend(; ad_backend=ad_backend)
+end
