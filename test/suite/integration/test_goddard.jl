@@ -2,15 +2,14 @@ module TestGoddard
 
 import Test
 import CTBase.Data
-import CTFlows.DifferentialGeometry
+import CTLie: CTLie
 import CTFlows.Flows
 import CTFlows.Trajectories
 import DifferentiationInterface
 using OrdinaryDiffEqTsit5
 using NonlinearSolve: NonlinearSolve, NonlinearProblem, SimpleNewtonRaphson, solve
 
-import CTBase: CTBase # For generated code by the @Lie macro
-import CTFlows: CTFlows # For generated code by the @Lie macro
+import CTBase: CTBase # For generated code by the @Lie macro (CTBase.Traits.*)
 
 const VERBOSE    = isdefined(Main, :TestData) ? Main.TestData.VERBOSE    : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
@@ -48,11 +47,11 @@ function test_goddard()
         # Build Hamiltonians (requires extensions to be loaded)
         # ======================================================================
 
-        H0 = DifferentialGeometry.Lift(_godd_F0)                   # H0(x, p) = p' * F0(x)
-        H1 = DifferentialGeometry.Lift(_godd_F1)                   # H1(x, p) = p' * F1(x)
-        H01  = DifferentialGeometry.@Lie {H0, H1}
-        H001 = DifferentialGeometry.@Lie {H0, H01}
-        H101 = DifferentialGeometry.@Lie {H1, H01}
+        H0 = CTLie.Lift(_godd_F0)                   # H0(x, p) = p' * F0(x)
+        H1 = CTLie.Lift(_godd_F1)                   # H1(x, p) = p' * F1(x)
+        H01  = CTLie.@Lie {H0, H1}
+        H001 = CTLie.@Lie {H0, H01}
+        H101 = CTLie.@Lie {H1, H01}
 
         # ======================================================================
         # Control laws and pseudo-Hamiltonians
@@ -60,8 +59,8 @@ function test_goddard()
 
         us(x, p) = -H001(x, p) / H101(x, p)          # singular control
         g(x) = _GODD_vmax - x[2]                     # state constraint v ≤ vmax
-        ub(x) = -DifferentialGeometry.ad(_godd_F0, g)(x) / DifferentialGeometry.ad(_godd_F1, g)(x)          # boundary control
-        μ(x, p) = H01(x, p) / (DifferentialGeometry.ad(_godd_F1, g)(x))         # multiplier
+        ub(x) = -CTLie.ad(_godd_F0, g)(x) / CTLie.ad(_godd_F1, g)(x)          # boundary control
+        μ(x, p) = H01(x, p) / (CTLie.ad(_godd_F1, g)(x))         # multiplier
 
         # Pseudo-Hamiltonian
         H(x, p, u) = (p' * _godd_F0(x) + u * p' * _godd_F1(x))
