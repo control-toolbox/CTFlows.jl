@@ -16,8 +16,8 @@ Non-autonomous reference (ẋ=t·x, autonomous=false, fixed):
 
 module TestOptimalControlFlow
 
-import Test
-import CTModels
+using Test: Test
+using CTModels: CTModels
 import CTBase: CTBase
 import CTBase.Exceptions: Exceptions
 import CTFlows: CTFlows
@@ -34,7 +34,9 @@ using ADTypes: ADTypes
 using DifferentiationInterface: DifferentiationInterface as DI
 
 const CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
-const CTBaseDifferentiationInterface = Base.get_extension(CTBase, :CTBaseDifferentiationInterface)
+const CTBaseDifferentiationInterface = Base.get_extension(
+    CTBase, :CTBaseDifferentiationInterface
+)
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
@@ -45,8 +47,10 @@ const ATOL = 1e-4
 # =============================================================================
 
 const λ_TEST = 2.0
-const INTEG  = Integrators.SciML(; alg=Tsit5())
-const DI_BACKEND = Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff())
+const INTEG = Integrators.SciML(; alg=Tsit5())
+const DI_BACKEND = Differentiation.DifferentiationInterface(;
+    ad_backend=ADTypes.AutoForwardDiff()
+)
 
 # =============================================================================
 # OCP fixtures (module top-level)
@@ -57,7 +61,7 @@ function _build_ocp_auton_fixed_mayer()
     CTModels.Building.time_dependence!(pre; autonomous=true)
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, _, x, _, _) -> (r[1] = λ_TEST * x[1]; nothing))
+    CTModels.Building.dynamics!(pre, (r, _, x, _, _) -> (r[1]=λ_TEST * x[1]; nothing))
     CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf[1])
     return CTModels.Building.build(pre)
 end
@@ -67,7 +71,7 @@ function _build_ocp_auton_fixed_lagrange()
     CTModels.Building.time_dependence!(pre; autonomous=true)
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, _, x, _, _) -> (r[1] = λ_TEST * x[1]; nothing))
+    CTModels.Building.dynamics!(pre, (r, _, x, _, _) -> (r[1]=λ_TEST * x[1]; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(_, x, _, _) -> x[1]^2)
     return CTModels.Building.build(pre)
 end
@@ -77,10 +81,10 @@ function _build_ocp_auton_fixed_bolza()
     CTModels.Building.time_dependence!(pre; autonomous=true)
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, _, x, _, _) -> (r[1] = λ_TEST * x[1]; nothing))
-    CTModels.Building.objective!(pre, :min;
-        mayer=(x0, xf, v) -> xf[1],
-        lagrange=(_, x, _, _) -> x[1]^2)
+    CTModels.Building.dynamics!(pre, (r, _, x, _, _) -> (r[1]=λ_TEST * x[1]; nothing))
+    CTModels.Building.objective!(
+        pre, :min; mayer=(x0, xf, v) -> xf[1], lagrange=(_, x, _, _) -> x[1]^2
+    )
     return CTModels.Building.build(pre)
 end
 
@@ -90,7 +94,7 @@ function _build_ocp_auton_nonfixed_mayer()
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.variable!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, _, x, _, v) -> (r[1] = v[1] * x[1]; nothing))
+    CTModels.Building.dynamics!(pre, (r, _, x, _, v) -> (r[1]=v[1] * x[1]; nothing))
     CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf[1])
     return CTModels.Building.build(pre)
 end
@@ -100,43 +104,43 @@ function _build_ocp_nonauton_fixed_mayer()
     CTModels.Building.time_dependence!(pre; autonomous=false)
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, _, _) -> (r[1] = t * x[1]; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, _, _) -> (r[1]=t * x[1]; nothing))
     CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf[1])
     return CTModels.Building.build(pre)
 end
 
-const OCP_AF_MAYER   = _build_ocp_auton_fixed_mayer()
-const OCP_AF_LAG     = _build_ocp_auton_fixed_lagrange()
-const OCP_AF_BOLZA   = _build_ocp_auton_fixed_bolza()
-const OCP_ANF_MAYER  = _build_ocp_auton_nonfixed_mayer()
-const OCP_NAF_MAYER  = _build_ocp_nonauton_fixed_mayer()
+const OCP_AF_MAYER = _build_ocp_auton_fixed_mayer()
+const OCP_AF_LAG = _build_ocp_auton_fixed_lagrange()
+const OCP_AF_BOLZA = _build_ocp_auton_fixed_bolza()
+const OCP_ANF_MAYER = _build_ocp_auton_nonfixed_mayer()
+const OCP_NAF_MAYER = _build_ocp_nonauton_fixed_mayer()
 
 # Pre-built flows (all via generic HamiltonianSystem — OCP rides the generic path)
-const FLOW_AF    = Flows.build_flow(
-    Systems.build_system(Flows._ocp_hamiltonian(OCP_AF_MAYER), DI_BACKEND),
-    INTEG)
-const FLOW_ANF   = Flows.build_flow(
-    Systems.build_system(Flows._ocp_hamiltonian(OCP_ANF_MAYER), DI_BACKEND),
-    INTEG)
-const FLOW_NAF   = Flows.build_flow(
-    Systems.build_system(Flows._ocp_hamiltonian(OCP_NAF_MAYER), DI_BACKEND),
-    INTEG)
+const FLOW_AF = Flows.build_flow(
+    Systems.build_system(Flows._ocp_hamiltonian(OCP_AF_MAYER), DI_BACKEND), INTEG
+)
+const FLOW_ANF = Flows.build_flow(
+    Systems.build_system(Flows._ocp_hamiltonian(OCP_ANF_MAYER), DI_BACKEND), INTEG
+)
+const FLOW_NAF = Flows.build_flow(
+    Systems.build_system(Flows._ocp_hamiltonian(OCP_NAF_MAYER), DI_BACKEND), INTEG
+)
 
 # OptimalControlFlow wrappers (for trajectory call → CTModels.Solution)
 const OCF_AF_MAYER = Flows.OptimalControlFlow(FLOW_AF, OCP_AF_MAYER)
-const OCF_ANF      = Flows.OptimalControlFlow(FLOW_ANF, OCP_ANF_MAYER)
+const OCF_ANF = Flows.OptimalControlFlow(FLOW_ANF, OCP_ANF_MAYER)
 
 # =============================================================================
 # Analytic references
 # =============================================================================
 
-_x_ref(t, t0, x0)       = x0 * exp(λ_TEST * (t - t0))
-_p_ref(t, t0, p0)       = p0 * exp(-λ_TEST * (t - t0))
+_x_ref(t, t0, x0) = x0 * exp(λ_TEST * (t - t0))
+_p_ref(t, t0, p0) = p0 * exp(-λ_TEST * (t - t0))
 _pv_ref(tf, t0, x0, p0) = -p0 * x0 * (tf - t0)   # ℓ=0, ẋ=λx, H=pλx
-_lag_obj(T, x0)          = x0^2 * (exp(2λ_TEST * T) - 1) / (2λ_TEST)
-_may_obj(T, x0)          = x0 * exp(λ_TEST * T)
+_lag_obj(T, x0) = x0^2 * (exp(2λ_TEST * T) - 1) / (2λ_TEST)
+_may_obj(T, x0) = x0 * exp(λ_TEST * T)
 
-_xna_ref(t, t0, x0)     = x0 * exp((t^2 - t0^2) / 2)  # ẋ=t·x
+_xna_ref(t, t0, x0) = x0 * exp((t^2 - t0^2) / 2)  # ẋ=t·x
 
 # =============================================================================
 
@@ -152,7 +156,7 @@ function test_optimal_control_flow()
 
         Test.@testset "Construction: system/integrator accessors" begin
             f = Flows.Flow(OCP_AF_MAYER; alg=Tsit5())
-            Test.@test Flows.system(f)     isa Systems.HamiltonianSystem
+            Test.@test Flows.system(f) isa Systems.HamiltonianSystem
             Test.@test Flows.integrator(f) isa Integrators.AbstractIntegrator
         end
 
@@ -221,14 +225,16 @@ function test_optimal_control_flow()
             x0, p0 = 1.0, 0.5
             v = [λ_TEST]
             xf, pf, pvf = FLOW_ANF(t0, x0, p0, tf; variable=v, variable_costate=true)
-            Test.@test xf    ≈ _x_ref(tf, t0, x0) atol=ATOL
-            Test.@test pf    ≈ _p_ref(tf, t0, p0) atol=ATOL
+            Test.@test xf ≈ _x_ref(tf, t0, x0) atol=ATOL
+            Test.@test pf ≈ _p_ref(tf, t0, p0) atol=ATOL
             Test.@test pvf[1] ≈ _pv_ref(tf, t0, x0, p0) atol=ATOL
         end
 
         Test.@testset "Unit: pvf shape — vector variable → AbstractVector" begin
             t0, tf = 0.0, 0.5
-            xf, pf, pvf = FLOW_ANF(t0, 1.0, 1.0, tf; variable=[λ_TEST], variable_costate=true)
+            xf, pf, pvf = FLOW_ANF(
+                t0, 1.0, 1.0, tf; variable=[λ_TEST], variable_costate=true
+            )
             Test.@test pvf isa AbstractVector
             Test.@test length(pvf) == 1
         end
@@ -243,7 +249,7 @@ function test_optimal_control_flow()
             t0, tf = 0.0, 1.0
             x0, p0 = 1.0, 0.5
             _, _, pvf1 = FLOW_ANF(t0, x0, p0, tf; variable=[λ_TEST], variable_costate=true)
-            _, _, pvf2 = FLOW_ANF(t0, x0, p0, tf; variable=λ_TEST,   variable_costate=true)
+            _, _, pvf2 = FLOW_ANF(t0, x0, p0, tf; variable=λ_TEST, variable_costate=true)
             Test.@test pvf1[1] ≈ pvf2 atol=ATOL
         end
 
@@ -297,8 +303,8 @@ function test_optimal_control_flow()
 
         Test.@testset "Integration: Lagrange objective ≈ analytic" begin
             flow_lag = Flows.build_flow(
-                Systems.build_system(Flows._ocp_hamiltonian(OCP_AF_LAG), DI_BACKEND),
-                INTEG)
+                Systems.build_system(Flows._ocp_hamiltonian(OCP_AF_LAG), DI_BACKEND), INTEG
+            )
             ocf_lag = Flows.OptimalControlFlow(flow_lag, OCP_AF_LAG)
             t0, tf = 0.0, 1.0
             x0, p0 = 1.0, 1.0
@@ -309,7 +315,8 @@ function test_optimal_control_flow()
         Test.@testset "Integration: Bolza objective ≈ Mayer + Lagrange" begin
             flow_bolza = Flows.build_flow(
                 Systems.build_system(Flows._ocp_hamiltonian(OCP_AF_BOLZA), DI_BACKEND),
-                INTEG)
+                INTEG,
+            )
             ocf_bolza = Flows.OptimalControlFlow(flow_bolza, OCP_AF_BOLZA)
             t0, tf = 0.0, 1.0
             x0, p0 = 1.0, 1.0
@@ -323,8 +330,8 @@ function test_optimal_control_flow()
         Test.@testset "Integration: cross-check vs generic HamiltonianSystem" begin
             # H = p·λx = generic autonomous/fixed Hamiltonian — now same path, regression guard
             h_generic = Data.Hamiltonian(
-                (x, p) -> p[1] * λ_TEST * x[1];
-                is_autonomous=true, is_variable=false)
+                (x, p) -> p[1] * λ_TEST * x[1]; is_autonomous=true, is_variable=false
+            )
             sys_gen = Systems.HamiltonianSystem(h_generic, DI_BACKEND)
             flow_gen = Flows.build_flow(sys_gen, INTEG)
 
@@ -341,7 +348,9 @@ function test_optimal_control_flow()
         # ── error guards ──────────────────────────────────────────────────────
 
         Test.@testset "Error: Fixed model + variable= kwarg" begin
-            Test.@test_throws Exceptions.PreconditionError FLOW_AF(0.0, 1.0, 0.5, 1.0; variable=1.0)
+            Test.@test_throws Exceptions.PreconditionError FLOW_AF(
+                0.0, 1.0, 0.5, 1.0; variable=1.0
+            )
         end
 
         Test.@testset "Error: NonFixed model + variable omitted" begin
@@ -349,7 +358,9 @@ function test_optimal_control_flow()
         end
 
         Test.@testset "Error: variable_costate=true on Fixed system" begin
-            Test.@test_throws Exceptions.PreconditionError FLOW_AF(0.0, 1.0, 0.5, 1.0; variable_costate=true)
+            Test.@test_throws Exceptions.PreconditionError FLOW_AF(
+                0.0, 1.0, 0.5, 1.0; variable_costate=true
+            )
         end
 
         Test.@testset "Error: Flow(ocp, u) — control-free guard" begin
@@ -364,9 +375,10 @@ function test_optimal_control_flow()
         end
 
         Test.@testset "Error: Flow(ocp, g, μ) — control-free guard (extra args)" begin
-            Test.@test_throws Exceptions.PreconditionError Flows.Flow(OCP_AF_MAYER, identity, identity; alg=Tsit5())
+            Test.@test_throws Exceptions.PreconditionError Flows.Flow(
+                OCP_AF_MAYER, identity, identity; alg=Tsit5()
+            )
         end
-
     end
 end
 

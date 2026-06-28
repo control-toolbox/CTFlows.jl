@@ -54,9 +54,9 @@ Type-stable split of a `SVector` into state and costate components.
 - This method provides type stability for SciML's out-of-place ODE solvers when using `StaticArrays`.
 - Used automatically when the `CTFlowsStaticArrays` extension is loaded.
 """
-function _ham_split(u::SVector{NN, T}, N::Int) where {NN, T}
-    x  = SVector{N, T}(ntuple(i -> u[i],   Val(N)))
-    pk = SVector{N, T}(ntuple(i -> u[N+i], Val(N)))
+function _ham_split(u::SVector{NN,T}, N::Int) where {NN,T}
+    x = SVector{N,T}(ntuple(i -> u[i], Val(N)))
+    pk = SVector{N,T}(ntuple(i -> u[N + i], Val(N)))
     return (x, pk)
 end
 
@@ -77,10 +77,10 @@ Type-stable split of a `SMatrix` into state and costate components.
   row = `(k-1) % N + 1`, col = `(k-1) ÷ N + 1`.
 - Used automatically when the `CTFlowsStaticArrays` extension is loaded.
 """
-function _ham_split(u::SMatrix{NN, M, T}, N::Int) where {NN, M, T}
+function _ham_split(u::SMatrix{NN,M,T}, N::Int) where {NN,M,T}
     # Enumerate result elements in column-major order via single index k
-    X = SMatrix{N, M, T}(ntuple(k -> u[(k-1) % N + 1,     (k-1) ÷ N + 1], Val(N*M)))
-    P = SMatrix{N, M, T}(ntuple(k -> u[N + (k-1) % N + 1, (k-1) ÷ N + 1], Val(N*M)))
+    X = SMatrix{N,M,T}(ntuple(k -> u[(k - 1) % N + 1, (k - 1) ÷ N + 1], Val(N*M)))
+    P = SMatrix{N,M,T}(ntuple(k -> u[N + (k - 1) % N + 1, (k - 1) ÷ N + 1], Val(N*M)))
     return (X, P)
 end
 

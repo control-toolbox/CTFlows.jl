@@ -23,12 +23,14 @@ increasing order (i.e., if any `switches[i] >= switches[i+1]`).
 function _check_switching_times_order(switches::Vector{<:Real})
     for i in 1:(length(switches) - 1)
         if switches[i] >= switches[i + 1]
-            throw(Exceptions.PreconditionError(
-                "Switching times must be strictly increasing";
-                context = "flow concatenation",
-                reason = "found non-increasing sequence: $switches",
-                suggestion = "ensure all switching times are in strictly increasing order",
-            ))
+            throw(
+                Exceptions.PreconditionError(
+                    "Switching times must be strictly increasing";
+                    context="flow concatenation",
+                    reason="found non-increasing sequence: $switches",
+                    suggestion="ensure all switching times are in strictly increasing order",
+                ),
+            )
         end
     end
 end
@@ -56,7 +58,9 @@ mpf = flow1 * (1.0, flow2)
 
 See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
 """
-function Base.:*(f1::Flows.AbstractStateFlow, (t_switch, f2)::Tuple{Real, Flows.AbstractStateFlow})
+function Base.:*(
+    f1::Flows.AbstractStateFlow, (t_switch, f2)::Tuple{Real,Flows.AbstractStateFlow}
+)
     flows = (get_flows(f1)..., get_flows(f2)...)
     switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
     _check_switching_times_order(switches)
@@ -88,7 +92,10 @@ mpf = flow1 * (1.0, jump, flow2)
 
 See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
 """
-function Base.:*(f1::Flows.AbstractStateFlow, (t_switch, jump, f2)::Tuple{Real, Any, Flows.AbstractStateFlow})
+function Base.:*(
+    f1::Flows.AbstractStateFlow,
+    (t_switch, jump, f2)::Tuple{Real,Any,Flows.AbstractStateFlow},
+)
     flows = (get_flows(f1)..., get_flows(f2)...)
     switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
     _check_switching_times_order(switches)
@@ -119,7 +126,10 @@ mpf = flow1 * (1.0, flow2)
 
 See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
 """
-function Base.:*(f1::Flows.AbstractHamiltonianFlow, (t_switch, f2)::Tuple{Real, Flows.AbstractHamiltonianFlow})
+function Base.:*(
+    f1::Flows.AbstractHamiltonianFlow,
+    (t_switch, f2)::Tuple{Real,Flows.AbstractHamiltonianFlow},
+)
     flows = (get_flows(f1)..., get_flows(f2)...)
     switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
     _check_switching_times_order(switches)
@@ -151,7 +161,10 @@ mpf = flow1 * (1.0, jump, flow2)
 
 See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
 """
-function Base.:*(f1::Flows.AbstractHamiltonianFlow, (t_switch, jump, f2)::Tuple{Real, Any, Flows.AbstractHamiltonianFlow})
+function Base.:*(
+    f1::Flows.AbstractHamiltonianFlow,
+    (t_switch, jump, f2)::Tuple{Real,Any,Flows.AbstractHamiltonianFlow},
+)
     flows = (get_flows(f1)..., get_flows(f2)...)
     switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
     _check_switching_times_order(switches)
@@ -184,7 +197,10 @@ mpf = flow1 * (1.0, jump_x, jump_p, flow2)
 
 See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
 """
-function Base.:*(f1::Flows.AbstractHamiltonianFlow, (t_switch, jump_x, jump_p, f2)::Tuple{Real, Any, Any, Flows.AbstractHamiltonianFlow})
+function Base.:*(
+    f1::Flows.AbstractHamiltonianFlow,
+    (t_switch, jump_x, jump_p, f2)::Tuple{Real,Any,Any,Flows.AbstractHamiltonianFlow},
+)
     flows = (get_flows(f1)..., get_flows(f2)...)
     switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
     _check_switching_times_order(switches)
@@ -211,13 +227,15 @@ have the same dynamics type.
 # Notes
 This is an internal error method for type safety in flow concatenation.
 """
-function Base.:*(::Flows.AbstractStateFlow, ::Tuple{Real, Flows.AbstractHamiltonianFlow})
-    throw(Exceptions.PreconditionError(
-        "Cannot concatenate a state flow with a Hamiltonian flow";
-        reason  = "both flows must have the same dynamics type (state or Hamiltonian)",
-        suggestion = "ensure all flows in a multi-phase sequence are of the same dynamics type",
-        context = "flow concatenation *",
-    ))
+function Base.:*(::Flows.AbstractStateFlow, ::Tuple{Real,Flows.AbstractHamiltonianFlow})
+    return throw(
+        Exceptions.PreconditionError(
+            "Cannot concatenate a state flow with a Hamiltonian flow";
+            reason="both flows must have the same dynamics type (state or Hamiltonian)",
+            suggestion="ensure all flows in a multi-phase sequence are of the same dynamics type",
+            context="flow concatenation *",
+        ),
+    )
 end
 
 """
@@ -235,13 +253,15 @@ sequence must all have the same dynamics type.
 # Notes
 This is an internal error method for type safety in flow concatenation.
 """
-function Base.:*(::Flows.AbstractStateFlow, ::Tuple{Real, Any, Flows.AbstractHamiltonianFlow})
-    throw(Exceptions.PreconditionError(
-        "Cannot concatenate a state flow with a Hamiltonian flow";
-        reason  = "both flows must have the same dynamics type (state or Hamiltonian)",
-        suggestion = "ensure all flows in a multi-phase sequence are of the same dynamics type",
-        context = "flow concatenation *",
-    ))
+function Base.:*(::Flows.AbstractStateFlow, ::Tuple{Real,Any,Flows.AbstractHamiltonianFlow})
+    return throw(
+        Exceptions.PreconditionError(
+            "Cannot concatenate a state flow with a Hamiltonian flow";
+            reason="both flows must have the same dynamics type (state or Hamiltonian)",
+            suggestion="ensure all flows in a multi-phase sequence are of the same dynamics type",
+            context="flow concatenation *",
+        ),
+    )
 end
 
 """
@@ -259,13 +279,15 @@ have the same dynamics type.
 # Notes
 This is an internal error method for type safety in flow concatenation.
 """
-function Base.:*(::Flows.AbstractHamiltonianFlow, ::Tuple{Real, Flows.AbstractStateFlow})
-    throw(Exceptions.PreconditionError(
-        "Cannot concatenate a Hamiltonian flow with a state flow";
-        reason  = "both flows must have the same dynamics type (state or Hamiltonian)",
-        suggestion = "ensure all flows in a multi-phase sequence are of the same dynamics type",
-        context = "flow concatenation *",
-    ))
+function Base.:*(::Flows.AbstractHamiltonianFlow, ::Tuple{Real,Flows.AbstractStateFlow})
+    return throw(
+        Exceptions.PreconditionError(
+            "Cannot concatenate a Hamiltonian flow with a state flow";
+            reason="both flows must have the same dynamics type (state or Hamiltonian)",
+            suggestion="ensure all flows in a multi-phase sequence are of the same dynamics type",
+            context="flow concatenation *",
+        ),
+    )
 end
 
 """
@@ -283,11 +305,13 @@ sequence must all have the same dynamics type.
 # Notes
 This is an internal error method for type safety in flow concatenation.
 """
-function Base.:*(::Flows.AbstractHamiltonianFlow, ::Tuple{Real, Any, Flows.AbstractStateFlow})
-    throw(Exceptions.PreconditionError(
-        "Cannot concatenate a Hamiltonian flow with a state flow";
-        reason  = "both flows must have the same dynamics type (state or Hamiltonian)",
-        suggestion = "ensure all flows in a multi-phase sequence are of the same dynamics type",
-        context = "flow concatenation *",
-    ))
+function Base.:*(::Flows.AbstractHamiltonianFlow, ::Tuple{Real,Any,Flows.AbstractStateFlow})
+    return throw(
+        Exceptions.PreconditionError(
+            "Cannot concatenate a Hamiltonian flow with a state flow";
+            reason="both flows must have the same dynamics type (state or Hamiltonian)",
+            suggestion="ensure all flows in a multi-phase sequence are of the same dynamics type",
+            context="flow concatenation *",
+        ),
+    )
 end

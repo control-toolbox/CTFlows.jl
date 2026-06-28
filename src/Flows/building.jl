@@ -111,9 +111,9 @@ See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.build_syste
 [`_route_flow_options`](@ref), [`_build_flow_components`](@ref)
 """
 function Flow(h::Data.AbstractHamiltonian; kwargs...)
-    routed     = _route_flow_options(kwargs)
+    routed = _route_flow_options(kwargs)
     components = _build_flow_components(routed)
-    sys        = Systems.build_system(h, components.backend)
+    sys = Systems.build_system(h, components.backend)
     return build_flow(sys, components.integrator)
 end
 
@@ -139,21 +139,22 @@ computed exactly (no AD), and only ṗ = −∂H/∂x uses automatic differentia
 See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), [`CTFlows.Flows.Flow`](@ref).
 """
 function Flow(ocp::CTModels.Models.Model; kwargs...)
-    routed     = _route_flow_options(kwargs)
+    routed = _route_flow_options(kwargs)
     components = _build_flow_components(routed)
-    h          = _ocp_hamiltonian(ocp)
-    sys        = Systems.build_system(h, components.backend)
-    inner      = build_flow(sys, components.integrator)
+    h = _ocp_hamiltonian(ocp)
+    sys = Systems.build_system(h, components.backend)
+    inner = build_flow(sys, components.integrator)
     return OptimalControlFlow(inner, ocp)
 end
 
 function Flow(::CTModels.Models.Model, ::Any, args...; kwargs...)
-    throw(Exceptions.PreconditionError(
-        "Flow(ocp, …) with extra positional arguments is not supported for control-free OCPs";
-        reason     = "this OCP is control-free (EmptyControlModel); passing a control law, " *
-                     "state constraint or multiplier is not handled by this path",
-        suggestion = "call Flow(ocp; kwargs…) — the control-free flow takes no control argument",
-        context    = "Flow(ocp::CTModels.Models.Model) — control-free guard",
-    ))
+    return throw(
+        Exceptions.PreconditionError(
+            "Flow(ocp, …) with extra positional arguments is not supported for control-free OCPs";
+            reason="this OCP is control-free (EmptyControlModel); passing a control law, " *
+                   "state constraint or multiplier is not handled by this path",
+            suggestion="call Flow(ocp; kwargs…) — the control-free flow takes no control argument",
+            context="Flow(ocp::CTModels.Models.Model) — control-free guard",
+        ),
+    )
 end
-

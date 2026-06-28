@@ -15,7 +15,7 @@ These functions extend the fallback implementations in `CTFlows.Common` to suppo
 CTFlowsForwardDiff
 
 import DocStringExtensions: TYPEDSIGNATURES
-import ForwardDiff
+using ForwardDiff: ForwardDiff
 
 using CTFlows: CTFlows
 using CTFlows.Common: Common

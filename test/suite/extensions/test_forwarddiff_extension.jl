@@ -1,6 +1,6 @@
 module TestForwardDiffExtension
 
-import Test
+using Test: Test
 import CTFlows: CTFlows
 import CTFlows.Common: Common
 import CTBase.Data: Data
@@ -23,7 +23,7 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 function test_forwarddiff_extension()
     Test.@testset "ForwardDiff Extension Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
-        
+
         # ====================================================================
         # Extension availability check
         # ====================================================================
@@ -44,7 +44,7 @@ function test_forwarddiff_extension()
 
         # Skip ForwardDiff-specific tests if extension is not loaded
         if isnothing(CTFlowsForwardDiff)
-            return
+            return nothing
         end
 
         # ====================================================================
@@ -107,13 +107,27 @@ function test_forwarddiff_extension()
 
             # Integration with real numbers
             prob_real = ODEProblem(f!, u0_real, (0.0, 1.0), nothing)
-            sol_real = SciMLBase.solve(prob_real, Tsit5(); reltol=1e-8, abstol=1e-8, dense=false, save_everystep=true)
+            sol_real = SciMLBase.solve(
+                prob_real,
+                Tsit5();
+                reltol=1e-8,
+                abstol=1e-8,
+                dense=false,
+                save_everystep=true,
+            )
 
             # Integration with Dual (Jacobian w.r.t. u0) using DiffEqBase.ODE_DEFAULT_NORM
             function integrate_dual_default(x0)
                 prob = ODEProblem(f!, x0, (0.0, 1.0), nothing)
-                return SciMLBase.solve(prob, Tsit5(); reltol=1e-8, abstol=1e-8, dense=false,
-                    internalnorm=DiffEqBase.ODE_DEFAULT_NORM, save_everystep=true)
+                return SciMLBase.solve(
+                    prob,
+                    Tsit5();
+                    reltol=1e-8,
+                    abstol=1e-8,
+                    dense=false,
+                    internalnorm=DiffEqBase.ODE_DEFAULT_NORM,
+                    save_everystep=true,
+                )
             end
             u0_dual = ForwardDiff.Dual{:T}.([1.0], [1.0])
             sol_dual = integrate_dual_default(u0_dual)
@@ -129,15 +143,27 @@ function test_forwarddiff_extension()
             u0_real = [1.0]
 
             prob_real = ODEProblem(f!, u0_real, (0.0, 1.0), nothing)
-            sol_real = SciMLBase.solve(prob_real, Tsit5();
-                reltol=1e-8, abstol=1e-8, dense=false,
-                internalnorm=Common.real_norm, save_everystep=true)
+            sol_real = SciMLBase.solve(
+                prob_real,
+                Tsit5();
+                reltol=1e-8,
+                abstol=1e-8,
+                dense=false,
+                internalnorm=Common.real_norm,
+                save_everystep=true,
+            )
 
             function integrate_dual_with_norm(x0)
                 prob = ODEProblem(f!, x0, (0.0, 1.0), nothing)
-                return SciMLBase.solve(prob, Tsit5();
-                    reltol=1e-8, abstol=1e-8, dense=false,
-                    internalnorm=Common.real_norm, save_everystep=true)
+                return SciMLBase.solve(
+                    prob,
+                    Tsit5();
+                    reltol=1e-8,
+                    abstol=1e-8,
+                    dense=false,
+                    internalnorm=Common.real_norm,
+                    save_everystep=true,
+                )
             end
             u0_dual = ForwardDiff.Dual{:T}.([1.0], [1.0])
             sol_dual = integrate_dual_with_norm(u0_dual)

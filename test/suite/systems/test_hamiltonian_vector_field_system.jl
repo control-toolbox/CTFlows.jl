@@ -1,6 +1,6 @@
 module TestHamiltonianVectorFieldSystem
 
-import Test
+using Test: Test
 import CTBase.Exceptions
 import CTBase.Data: Data
 import CTFlows.Common: Common
@@ -15,48 +15,57 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 function test_hamiltonian_vector_field_system()
     Test.@testset "Hamiltonian Vector Field System Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
-        
+
         # ====================================================================
         # UNIT TESTS - Construction
         # ====================================================================
-        
+
         Test.@testset "Construction" begin
             # From HamiltonianVectorField (lazy, no dimension)
-            hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+            hvf = Data.HamiltonianVectorField(
+                (x, p) -> (x, -p); is_autonomous=true, is_variable=false
+            )
             sys = Systems.HamiltonianVectorFieldSystem(hvf)
             Test.@test sys isa Systems.HamiltonianVectorFieldSystem
             Test.@test sys isa Systems.AbstractHamiltonianSystem
 
             # Hierarchy check: supertype (2-param alias, AD via ad_trait)
-            Test.@test sys isa Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed}
+            Test.@test sys isa
+                Systems.AbstractHamiltonianSystem{Traits.Autonomous,Traits.Fixed}
         end
 
         Test.@testset "ad_trait" begin
-            hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+            hvf = Data.HamiltonianVectorField(
+                (x, p) -> (x, -p); is_autonomous=true, is_variable=false
+            )
             sys = Systems.HamiltonianVectorFieldSystem(hvf)
 
             Test.@test Traits.ad_trait(sys) === Traits.WithoutAD
             Test.@test Test.@inferred Traits.ad_trait(sys) === Traits.WithoutAD
         end
-        
+
         # ====================================================================
         # UNIT TESTS - build_system
         # ====================================================================
-        
+
         Test.@testset "build_system" begin
-            hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
-            
+            hvf = Data.HamiltonianVectorField(
+                (x, p) -> (x, -p); is_autonomous=true, is_variable=false
+            )
+
             # Build system without state_dimension (lazy inference)
             sys = Systems.build_system(hvf)
             Test.@test sys isa Systems.HamiltonianVectorFieldSystem
         end
-        
+
         # ====================================================================
         # UNIT TESTS - get_ip_rhs (lazy in-place)
         # ====================================================================
 
         Test.@testset "get_ip_rhs" begin
-            hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+            hvf = Data.HamiltonianVectorField(
+                (x, p) -> (x, -p); is_autonomous=true, is_variable=false
+            )
             sys = Systems.HamiltonianVectorFieldSystem(hvf)
 
             x0 = [1.0, 2.0]
@@ -83,15 +92,17 @@ function test_hamiltonian_vector_field_system()
             u_mat = [1.0 2.0; 3.0 4.0; 5.0 6.0; 7.0 8.0]  # x = [1 2; 3 4], p = [5 6; 7 8]
             du_mat = zeros(4, 2)
             rhs_mat(du_mat, u_mat, p, 0.0)
-            Test.@test du_mat ≈ [1.0 2.0; 3.0 4.0; -5.0 -6.0; -7.0 -8.0]  atol=1e-10
+            Test.@test du_mat ≈ [1.0 2.0; 3.0 4.0; -5.0 -6.0; -7.0 -8.0] atol=1e-10
         end
-        
+
         # ====================================================================
         # UNIT TESTS - get_oop_rhs (lazy out-of-place)
         # ====================================================================
 
         Test.@testset "get_oop_rhs" begin
-            hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+            hvf = Data.HamiltonianVectorField(
+                (x, p) -> (x, -p); is_autonomous=true, is_variable=false
+            )
             sys = Systems.HamiltonianVectorFieldSystem(hvf)
 
             x0 = [1.0, 2.0]
@@ -116,15 +127,17 @@ function test_hamiltonian_vector_field_system()
             rhs_oop_mat = Systems.get_oop_rhs(sys, config_mat)
             u_mat = [1.0 2.0; 3.0 4.0; 5.0 6.0; 7.0 8.0]  # x = [1 2; 3 4], p = [5 6; 7 8]
             du_mat = rhs_oop_mat(u_mat, p, 0.0)
-            Test.@test du_mat ≈ [1.0 2.0; 3.0 4.0; -5.0 -6.0; -7.0 -8.0]  atol=1e-10
+            Test.@test du_mat ≈ [1.0 2.0; 3.0 4.0; -5.0 -6.0; -7.0 -8.0] atol=1e-10
         end
-        
+
         # ====================================================================
         # UNIT TESTS - Complex numbers
         # ====================================================================
 
         Test.@testset "Complex numbers" begin
-            hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+            hvf = Data.HamiltonianVectorField(
+                (x, p) -> (x, -p); is_autonomous=true, is_variable=false
+            )
             sys = Systems.HamiltonianVectorFieldSystem(hvf)
             p_param = Common.ODEParameters(nothing)
 
@@ -134,10 +147,10 @@ function test_hamiltonian_vector_field_system()
                 config = Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0)
                 rhs = Systems.get_ip_rhs(sys, config)
                 # x = [1+2im], p = [3+4im]  →  dx = x, dp = -p
-                u  = [1.0+2.0im, 3.0+4.0im]
+                u = [1.0+2.0im, 3.0+4.0im]
                 du = zeros(ComplexF64, 2)
                 rhs(du, u, p_param, 0.0)
-                Test.@test du ≈ [1.0+2.0im, -3.0-4.0im]  atol=1e-10
+                Test.@test du ≈ [1.0+2.0im, -3.0-4.0im] atol=1e-10
             end
 
             Test.@testset "get_oop_rhs - complex vector" begin
@@ -145,32 +158,32 @@ function test_hamiltonian_vector_field_system()
                 p0 = [3.0+4.0im]
                 config = Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0)
                 rhs_oop = Systems.get_oop_rhs(sys, config)
-                u  = [1.0+2.0im, 3.0+4.0im]
+                u = [1.0+2.0im, 3.0+4.0im]
                 du = rhs_oop(u, p_param, 0.0)
-                Test.@test du ≈ [1.0+2.0im, -3.0-4.0im]  atol=1e-10
+                Test.@test du ≈ [1.0+2.0im, -3.0-4.0im] atol=1e-10
             end
 
             Test.@testset "get_ip_rhs - complex matrix" begin
-                x0 = [1.0+2.0im  5.0+6.0im]
-                p0 = [3.0+4.0im  7.0+8.0im]
+                x0 = [1.0+2.0im 5.0+6.0im]
+                p0 = [3.0+4.0im 7.0+8.0im]
                 config = Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0)
                 rhs = Systems.get_ip_rhs(sys, config)
                 # x = [1+2im  5+6im], p = [3+4im  7+8im]
-                u  = [1.0+2.0im  5.0+6.0im; 3.0+4.0im  7.0+8.0im]
+                u = [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im]
                 du = zeros(ComplexF64, 2, 2)
                 rhs(du, u, p_param, 0.0)
                 # dx = x = rows 1, dp = -p = rows 2 negated
-                Test.@test du ≈ [1.0+2.0im  5.0+6.0im; -3.0-4.0im  -7.0-8.0im]  atol=1e-10
+                Test.@test du ≈ [1.0+2.0im 5.0+6.0im; -3.0-4.0im -7.0-8.0im] atol=1e-10
             end
 
             Test.@testset "get_oop_rhs - complex matrix" begin
-                x0 = [1.0+2.0im  5.0+6.0im]
-                p0 = [3.0+4.0im  7.0+8.0im]
+                x0 = [1.0+2.0im 5.0+6.0im]
+                p0 = [3.0+4.0im 7.0+8.0im]
                 config = Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0)
                 rhs_oop = Systems.get_oop_rhs(sys, config)
-                u  = [1.0+2.0im  5.0+6.0im; 3.0+4.0im  7.0+8.0im]
+                u = [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im]
                 du = rhs_oop(u, p_param, 0.0)
-                Test.@test du ≈ [1.0+2.0im  5.0+6.0im; -3.0-4.0im  -7.0-8.0im]  atol=1e-10
+                Test.@test du ≈ [1.0+2.0im 5.0+6.0im; -3.0-4.0im -7.0-8.0im] atol=1e-10
             end
         end
 
@@ -179,7 +192,9 @@ function test_hamiltonian_vector_field_system()
         # ====================================================================
 
         Test.@testset "SVector unit" begin
-            hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+            hvf = Data.HamiltonianVectorField(
+                (x, p) -> (x, -p); is_autonomous=true, is_variable=false
+            )
 
             # Call hvf with SVector
             x = SA[1.0, 2.0]
@@ -189,11 +204,11 @@ function test_hamiltonian_vector_field_system()
             Test.@test dp == SA[-3.0, -4.0]
 
             # Call hvf with complex SVector
-            x_c = SA[1.0+2.0im, 3.0+4.0im]
-            p_c = SA[5.0+6.0im, 7.0+8.0im]
+            x_c = SA[1.0 + 2.0im, 3.0 + 4.0im]
+            p_c = SA[5.0 + 6.0im, 7.0 + 8.0im]
             dx_c, dp_c = hvf(x_c, p_c)
-            Test.@test dx_c == SA[1.0+2.0im, 3.0+4.0im]
-            Test.@test dp_c == SA[-5.0-6.0im, -7.0-8.0im]
+            Test.@test dx_c == SA[1.0 + 2.0im, 3.0 + 4.0im]
+            Test.@test dp_c == SA[-5.0 - 6.0im, -7.0 - 8.0im]
 
             # Call get_oop_rhs with SVector (lazy builder)
             sys = Systems.HamiltonianVectorFieldSystem(hvf)
@@ -278,14 +293,19 @@ function test_hamiltonian_vector_field_system()
 
         Test.@testset "variable_costate_trait" begin
             # Fixed HVFSystem -> NoVariableCostate
-            hvf_fixed = Data.HamiltonianVectorField((x, p) -> (p, -x); is_autonomous=true, is_variable=false)
+            hvf_fixed = Data.HamiltonianVectorField(
+                (x, p) -> (p, -x); is_autonomous=true, is_variable=false
+            )
             sys_fixed = Systems.HamiltonianVectorFieldSystem(hvf_fixed)
             Test.@test Traits.variable_costate_trait(sys_fixed) === Traits.NoVariableCostate
 
             # NonFixed HVFSystem -> SupportsVariableCostate
-            hvf_nonfixed = Data.HamiltonianVectorField((x, p, v) -> (p ./ sum(v), -x); is_autonomous=true, is_variable=true)
+            hvf_nonfixed = Data.HamiltonianVectorField(
+                (x, p, v) -> (p ./ sum(v), -x); is_autonomous=true, is_variable=true
+            )
             sys_nonfixed = Systems.HamiltonianVectorFieldSystem(hvf_nonfixed)
-            Test.@test Traits.variable_costate_trait(sys_nonfixed) === Traits.SupportsVariableCostate
+            Test.@test Traits.variable_costate_trait(sys_nonfixed) ===
+                Traits.SupportsVariableCostate
         end
 
         # ====================================================================
@@ -334,7 +354,9 @@ function test_hamiltonian_vector_field_system()
             # Simple test: just verify the function builds and can be called
             # without error. Full integration testing is done in test_variable_costate_flows.jl
             # OOP: signature is (x, p, v) for autonomous, (t, x, p, v) for non-autonomous
-            hvf = Data.HamiltonianVectorField((x, p, v) -> (p, -x); is_autonomous=true, is_variable=true)
+            hvf = Data.HamiltonianVectorField(
+                (x, p, v) -> (p, -x); is_autonomous=true, is_variable=true
+            )
             sys = Systems.HamiltonianVectorFieldSystem(hvf)
 
             Test.@testset "OOP builds" begin
@@ -348,7 +370,12 @@ function test_hamiltonian_vector_field_system()
 
             Test.@testset "IP builds" begin
                 # IP: signature is (dx, dp, x, p, v) for autonomous, (dx, dp, t, x, p, v) for non-autonomous
-                hvf_ip = Data.HamiltonianVectorField((dx, dp, x, p, v; dpv=nothing, variable_costate::Bool=false) -> nothing; is_autonomous=true, is_variable=true, is_inplace=true)
+                hvf_ip = Data.HamiltonianVectorField(
+                    (dx, dp, x, p, v; dpv=nothing, variable_costate::Bool=false) -> nothing;
+                    is_autonomous=true,
+                    is_variable=true,
+                    is_inplace=true,
+                )
                 sys_ip = Systems.HamiltonianVectorFieldSystem(hvf_ip)
                 n_x, n_v = 2, 1
                 x0, p0 = [1.0, 2.0], [3.0, 4.0]
@@ -358,11 +385,12 @@ function test_hamiltonian_vector_field_system()
                 Test.@test rhs_aug_ip isa Systems.AbstractIPHVFRHS
             end
         end
-
     end
 end
 
 end # module
 
 # CRITICAL: Redefine in outer scope for TestRunner
-test_hamiltonian_vector_field_system() = TestHamiltonianVectorFieldSystem.test_hamiltonian_vector_field_system()
+function test_hamiltonian_vector_field_system()
+    return TestHamiltonianVectorFieldSystem.test_hamiltonian_vector_field_system()
+end

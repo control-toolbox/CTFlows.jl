@@ -18,12 +18,14 @@ See also: [`CTFlows.Integrators.solve_problem`](@ref).
 """
 function _check_retcode(sol, unsafe)
     if !unsafe && !SciMLBase.successful_retcode(sol.retcode)
-        throw(Exceptions.SolverFailure(
-            "ODE integration failed";
-            retcode = string(sol.retcode),
-            suggestion = "Try tightening tolerances (reltol, abstol) or changing the solver algorithm.",
-            context = "SciML solve_problem",
-        ))
+        throw(
+            Exceptions.SolverFailure(
+                "ODE integration failed";
+                retcode=string(sol.retcode),
+                suggestion="Try tightening tolerances (reltol, abstol) or changing the solver algorithm.",
+                context="SciML solve_problem",
+            ),
+        )
     end
 end
 
@@ -32,15 +34,25 @@ end
 # =============================================================================
 
 _check_dyn_config(::Type{Traits.StateDynamics}, ::Configs.AbstractConfig) = nothing
-_check_dyn_config(::Type{Traits.HamiltonianDynamics}, ::Configs.AbstractHamiltonianConfig) = nothing
-_check_dyn_config(::Type{Traits.HamiltonianDynamics}, ::Configs.AbstractAugmentedHamiltonianConfig) = nothing
+function _check_dyn_config(
+    ::Type{Traits.HamiltonianDynamics}, ::Configs.AbstractHamiltonianConfig
+)
+    return nothing
+end
+function _check_dyn_config(
+    ::Type{Traits.HamiltonianDynamics}, ::Configs.AbstractAugmentedHamiltonianConfig
+)
+    return nothing
+end
 function _check_dyn_config(D, C)
-    throw(Exceptions.PreconditionError(
-        "incompatible system dynamics and config types";
-        reason    = "dynamics trait = $D, config type = $(typeof(C))",
-        context   = "Integrators.build_problem",
-        suggestion = "Use a Hamiltonian config with a Hamiltonian system, or a state config with a state system.",
-    ))
+    return throw(
+        Exceptions.PreconditionError(
+            "incompatible system dynamics and config types";
+            reason="dynamics trait = $D, config type = $(typeof(C))",
+            context="Integrators.build_problem",
+            suggestion="Use a Hamiltonian config with a Hamiltonian system, or a state config with a state system.",
+        ),
+    )
 end
 
 # =============================================================================
@@ -126,7 +138,7 @@ function Integrators.build_problem(
 )
     _check_dyn_config(Traits.dynamics_trait(system), config)
     u0 = Configs.initial_condition(config)
-    λ  = Common.ODEParameters(variable)
+    λ = Common.ODEParameters(variable)
     f! = Systems.get_ip_rhs_augmented(system, config)
     return ODEProblem(f!, u0, Configs.tspan(config), λ)
 end
@@ -153,7 +165,12 @@ Returns a `SciMLIntegrationResult` wrapping the raw `ODESolution`.
 # Throws
 - `CTBase.Exceptions.SolverFailure`: If the ODE solver returns an unsuccessful retcode and `unsafe=false`.
 """
-function Integrators.solve_problem(::Integrators.SciML, prob::SciMLBase.AbstractODEProblem, options::Dict{Symbol,<:Any}; unsafe=Common.__unsafe())
+function Integrators.solve_problem(
+    ::Integrators.SciML,
+    prob::SciMLBase.AbstractODEProblem,
+    options::Dict{Symbol,<:Any};
+    unsafe=Common.__unsafe(),
+)
     ode_sol = SciMLBase.solve(prob; options...)
     _check_retcode(ode_sol, unsafe)
     return SciMLIntegrationResult(ode_sol)

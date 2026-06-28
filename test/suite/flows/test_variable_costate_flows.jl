@@ -6,7 +6,7 @@ integration of the augmented state `[x; p; pv]` where `pv` is the costate of the
 """
 module TestVariableCostateFlows
 
-import Test
+using Test: Test
 import CTBase: CTBase
 import CTBase.Core
 import CTBase.Data: Data
@@ -26,11 +26,13 @@ using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 using StaticArrays: SA, SVector, MVector
 using ADTypes: ADTypes
 using DifferentiationInterface: DifferentiationInterface as DI
-import ForwardDiff
+using ForwardDiff: ForwardDiff
 
 # Load extensions for testing
 const CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
-const CTBaseDifferentiationInterface = Base.get_extension(CTBase, :CTBaseDifferentiationInterface)
+const CTBaseDifferentiationInterface = Base.get_extension(
+    CTBase, :CTBaseDifferentiationInterface
+)
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
@@ -51,18 +53,14 @@ Integrators.final_state(r::FakeIntegrationResult) = r.u_final
 struct FakeVariableHarmonicADBackend <: Differentiation.AbstractADBackend end
 
 function Differentiation.hamiltonian_gradient(
-    backend::FakeVariableHarmonicADBackend,
-    h::Data.AbstractHamiltonian,
-    t, x, p, v,
+    backend::FakeVariableHarmonicADBackend, h::Data.AbstractHamiltonian, t, x, p, v
 )
     sv = sum(v)
     return (zero(x), p ./ sv)
 end
 
 function Differentiation.variable_gradient(
-    backend::FakeVariableHarmonicADBackend,
-    h::Data.AbstractHamiltonian,
-    t, x, p, v,
+    backend::FakeVariableHarmonicADBackend, h::Data.AbstractHamiltonian, t, x, p, v
 )
     sv = sum(v)
     sp2 = sum(abs2, p)
@@ -79,11 +77,11 @@ end
 H_LINEAR(x, p, v) = sum(abs2, p) / (2 * sum(v))
 function solve_linear(t, t0, x0, p0, v)
     pv0 = Core.make_coerce(v)(zeros(length(v)))
-    dt  = t - t0
-    sv  = sum(v)
-    x   = x0 .+ p0 .* (dt / sv)
-    p   = p0
-    pv  = pv0 .+ sum(abs2, p0) / (2 * sv^2) .* dt
+    dt = t - t0
+    sv = sum(v)
+    x = x0 .+ p0 .* (dt / sv)
+    p = p0
+    pv = pv0 .+ sum(abs2, p0) / (2 * sv^2) .* dt
     return x, p, pv
 end
 const H_LINEAR_VAR = Data.Hamiltonian(H_LINEAR; is_autonomous=true, is_variable=true)
@@ -91,8 +89,10 @@ const BACKEND_FAKE = FakeVariableHarmonicADBackend()
 const HSYS_FAKE = Systems.HamiltonianSystem(H_LINEAR_VAR, BACKEND_FAKE)
 
 # DifferentiationInterface backend
-const DI_BACKEND   = Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff())
-const HSYS_DI      = Systems.HamiltonianSystem(H_LINEAR_VAR, DI_BACKEND)
+const DI_BACKEND = Differentiation.DifferentiationInterface(;
+    ad_backend=ADTypes.AutoForwardDiff()
+)
+const HSYS_DI = Systems.HamiltonianSystem(H_LINEAR_VAR, DI_BACKEND)
 
 # Scalar-only Hamiltonian with variable: H = x³/3 - log(p) + v³/3
 # This will fail if x, p, or v are treated as vectors
@@ -131,10 +131,7 @@ function test_variable_costate_flows()
             result = FakeIntegrationResult(u_final)
 
             xf, pf, pvf = Trajectories.build_trajectory(
-                Configs.mode_trait(config),
-                Configs.dynamics_trait(config),
-                config,
-                result,
+                Configs.mode_trait(config), Configs.dynamics_trait(config), config, result
             )
 
             Test.@test xf == [1.0, 2.0]
@@ -143,14 +140,16 @@ function test_variable_costate_flows()
         end
 
         Test.@testset "Unit: trait type hierarchy" begin
-            Test.@test Traits.SupportsVariableCostate <: Traits.AbstractVariableCostateCapability
+            Test.@test Traits.SupportsVariableCostate <:
+                Traits.AbstractVariableCostateCapability
             Test.@test Traits.NoVariableCostate <: Traits.AbstractVariableCostateCapability
             Test.@test Traits.AbstractVariableCostateCapability <: Traits.AbstractTrait
         end
 
         Test.@testset "Unit: variable_costate_trait default" begin
             Test.@test Traits.variable_costate_trait(42) === Traits.NoVariableCostate
-            Test.@test Traits.variable_costate_trait("anything") === Traits.NoVariableCostate
+            Test.@test Traits.variable_costate_trait("anything") ===
+                Traits.NoVariableCostate
             Test.@test Traits.variable_costate_trait(nothing) === Traits.NoVariableCostate
         end
 
@@ -166,17 +165,25 @@ function test_variable_costate_flows()
 
         Test.@testset "Integration: variable_costate_trait on systems" begin
             # Fixed HamiltonianSystem -> NoVariableCostate
-            h_fixed = Data.Hamiltonian((x, p) -> 0.5*(sum(abs2, x) + sum(abs2, p)); is_autonomous=true, is_variable=false)
+            h_fixed = Data.Hamiltonian(
+                (x, p) -> 0.5*(sum(abs2, x) + sum(abs2, p));
+                is_autonomous=true,
+                is_variable=false,
+            )
             sys_fixed = Systems.HamiltonianSystem(h_fixed, BACKEND_FAKE)
             Test.@test Traits.variable_costate_trait(sys_fixed) === Traits.NoVariableCostate
 
             # NonFixed HamiltonianSystem -> SupportsVariableCostate
-            Test.@test Traits.variable_costate_trait(HSYS_FAKE) === Traits.SupportsVariableCostate
-            Test.@test Traits.variable_costate_trait(HSYS_FAKE) === Traits.SupportsVariableCostate
+            Test.@test Traits.variable_costate_trait(HSYS_FAKE) ===
+                Traits.SupportsVariableCostate
+            Test.@test Traits.variable_costate_trait(HSYS_FAKE) ===
+                Traits.SupportsVariableCostate
 
             # DI backends also support variable costate
-            Test.@test Traits.variable_costate_trait(HSYS_DI) === Traits.SupportsVariableCostate
-            Test.@test Traits.variable_costate_trait(HSYS_DI) === Traits.SupportsVariableCostate
+            Test.@test Traits.variable_costate_trait(HSYS_DI) ===
+                Traits.SupportsVariableCostate
+            Test.@test Traits.variable_costate_trait(HSYS_DI) ===
+                Traits.SupportsVariableCostate
         end
 
         Test.@testset "Integration: ad_trait on systems" begin
@@ -206,9 +213,9 @@ function test_variable_costate_flows()
                 Test.@test xf isa Real
                 Test.@test pf isa Real
                 Test.@test pvf isa Real
-                Test.@test xf ≈ xf_ref  atol=ATOL
-                Test.@test pf ≈ pf_ref  atol=ATOL
-                Test.@test pvf ≈ pvf_ref  atol=ATOL
+                Test.@test xf ≈ xf_ref atol=ATOL
+                Test.@test pf ≈ pf_ref atol=ATOL
+                Test.@test pvf ≈ pvf_ref atol=ATOL
             end
 
             Test.@testset "scalar with variable_costate=false (default)" begin
@@ -223,8 +230,8 @@ function test_variable_costate_flows()
 
                 Test.@test xf isa Real
                 Test.@test pf isa Real
-                Test.@test xf ≈ xf_ref  atol=ATOL
-                Test.@test pf ≈ pf_ref  atol=ATOL
+                Test.@test xf ≈ xf_ref atol=ATOL
+                Test.@test pf ≈ pf_ref atol=ATOL
             end
 
             Test.@testset "vector with variable_costate=true" begin
@@ -241,9 +248,9 @@ function test_variable_costate_flows()
                 Test.@test xf isa AbstractVector && length(xf) == 2
                 Test.@test pf isa AbstractVector && length(pf) == 2
                 Test.@test pvf isa AbstractVector && length(pvf) == 2
-                Test.@test xf ≈ xf_ref  atol=ATOL
-                Test.@test pf ≈ pf_ref  atol=ATOL
-                Test.@test pvf ≈ pvf_ref  atol=ATOL
+                Test.@test xf ≈ xf_ref atol=ATOL
+                Test.@test pf ≈ pf_ref atol=ATOL
+                Test.@test pvf ≈ pvf_ref atol=ATOL
             end
 
             Test.@testset "SVector with variable_costate=true" begin
@@ -263,9 +270,9 @@ function test_variable_costate_flows()
                 Test.@test length(xf) == 2
                 Test.@test length(pf) == 2
                 Test.@test length(pvf) == 2
-                Test.@test xf ≈ xf_ref  atol=ATOL
-                Test.@test pf ≈ pf_ref  atol=ATOL
-                Test.@test pvf ≈ pvf_ref  atol=ATOL
+                Test.@test xf ≈ xf_ref atol=ATOL
+                Test.@test pf ≈ pf_ref atol=ATOL
+                Test.@test pvf ≈ pvf_ref atol=ATOL
             end
         end
 
@@ -283,9 +290,9 @@ function test_variable_costate_flows()
                 Test.@test xf isa Real
                 Test.@test pf isa Real
                 Test.@test pvf isa Real
-                Test.@test xf ≈ xf_ref  atol=ATOL
-                Test.@test pf ≈ pf_ref  atol=ATOL
-                Test.@test pvf ≈ pvf_ref  atol=ATOL
+                Test.@test xf ≈ xf_ref atol=ATOL
+                Test.@test pf ≈ pf_ref atol=ATOL
+                Test.@test pvf ≈ pvf_ref atol=ATOL
             end
 
             Test.@testset "scalar vector-v with variable_costate=true" begin
@@ -301,9 +308,9 @@ function test_variable_costate_flows()
                 Test.@test xf isa Real
                 Test.@test pf isa Real
                 # Test.@test pvf isa Real
-                Test.@test xf ≈ xf_ref  atol=ATOL
-                Test.@test pf ≈ pf_ref  atol=ATOL
-                Test.@test pvf ≈ pvf_ref  atol=ATOL
+                Test.@test xf ≈ xf_ref atol=ATOL
+                Test.@test pf ≈ pf_ref atol=ATOL
+                Test.@test pvf ≈ pvf_ref atol=ATOL
             end
 
             Test.@testset "vector with variable_costate=true" begin
@@ -320,26 +327,30 @@ function test_variable_costate_flows()
                 Test.@test xf isa AbstractVector && length(xf) == 2
                 Test.@test pf isa AbstractVector && length(pf) == 2
                 Test.@test pvf isa AbstractVector && length(pvf) == 2
-                Test.@test xf ≈ xf_ref  atol=ATOL
-                Test.@test pf ≈ pf_ref  atol=ATOL
-                Test.@test pvf ≈ pvf_ref  atol=ATOL
+                Test.@test xf ≈ xf_ref atol=ATOL
+                Test.@test pf ≈ pf_ref atol=ATOL
+                Test.@test pvf ≈ pvf_ref atol=ATOL
             end
 
             Test.@testset "comparison FakeADBackend vs DI" begin
                 # Both should give the same numerical result
                 hflow_fake = Flows.build_flow(HSYS_FAKE, INTEG)
-                hflow_di   = Flows.build_flow(HSYS_DI, INTEG)
+                hflow_di = Flows.build_flow(HSYS_DI, INTEG)
 
                 t0, tf = 0.0, 1.0
                 x0, p0 = 1.0, 2.0
                 v = 3.0
 
-                xf_f, pf_f, pvf_f = hflow_fake(t0, x0, p0, tf; variable=v, variable_costate=true)
-                xf_d, pf_d, pvf_d = hflow_di(t0, x0, p0, tf; variable=v, variable_costate=true)
+                xf_f, pf_f, pvf_f = hflow_fake(
+                    t0, x0, p0, tf; variable=v, variable_costate=true
+                )
+                xf_d, pf_d, pvf_d = hflow_di(
+                    t0, x0, p0, tf; variable=v, variable_costate=true
+                )
 
-                Test.@test xf_f ≈ xf_d  atol=ATOL
-                Test.@test pf_f ≈ pf_d  atol=ATOL
-                Test.@test pvf_f ≈ pvf_d  atol=ATOL
+                Test.@test xf_f ≈ xf_d atol=ATOL
+                Test.@test pf_f ≈ pf_d atol=ATOL
+                Test.@test pvf_f ≈ pvf_d atol=ATOL
             end
         end
 
@@ -356,8 +367,8 @@ function test_variable_costate_flows()
 
                 Test.@test xf isa Real
                 Test.@test pf isa Real
-                Test.@test xf ≈ xf_ref  atol=ATOL
-                Test.@test pf ≈ pf_ref  atol=ATOL
+                Test.@test xf ≈ xf_ref atol=ATOL
+                Test.@test pf ≈ pf_ref atol=ATOL
             end
         end
 
@@ -387,23 +398,35 @@ function test_variable_costate_flows()
         # ====================================================================
 
         Test.@testset "Error: variable_costate=true on Fixed system" begin
-            h_fixed = Data.Hamiltonian((x, p) -> 0.5*(sum(abs2, x) + sum(abs2, p)); is_autonomous=true, is_variable=false)
+            h_fixed = Data.Hamiltonian(
+                (x, p) -> 0.5*(sum(abs2, x) + sum(abs2, p));
+                is_autonomous=true,
+                is_variable=false,
+            )
             sys_fixed = Systems.HamiltonianSystem(h_fixed, BACKEND_FAKE)
             hflow = Flows.build_flow(sys_fixed, INTEG)
-            Test.@test_throws Exceptions.PreconditionError hflow(0.0, 1.0, 0.0, 1.0; variable_costate=true)
+            Test.@test_throws Exceptions.PreconditionError hflow(
+                0.0, 1.0, 0.0, 1.0; variable_costate=true
+            )
         end
 
         Test.@testset "Error: variable_costate=true without variable on NonFixed" begin
             hflow = Flows.build_flow(HSYS_FAKE, INTEG)
-            Test.@test_throws Exceptions.PreconditionError hflow(0.0, 1.0, 0.0, 1.0; variable_costate=true)
+            Test.@test_throws Exceptions.PreconditionError hflow(
+                0.0, 1.0, 0.0, 1.0; variable_costate=true
+            )
         end
 
         Test.@testset "Error: HamiltonianVectorFieldSystem with variable_costate" begin
             # HamiltonianVectorFieldSystem has NoVariableCostate (Fixed only)
-            hvf = Data.HamiltonianVectorField((x, p) -> (p, -x); is_autonomous=true, is_variable=false)
+            hvf = Data.HamiltonianVectorField(
+                (x, p) -> (p, -x); is_autonomous=true, is_variable=false
+            )
             sys_hvf = Systems.HamiltonianVectorFieldSystem(hvf)
             hflow = Flows.build_flow(sys_hvf, INTEG)
-            Test.@test_throws Exceptions.PreconditionError hflow(0.0, 1.0, 0.0, 1.0; variable_costate=true)
+            Test.@test_throws Exceptions.PreconditionError hflow(
+                0.0, 1.0, 0.0, 1.0; variable_costate=true
+            )
         end
 
         Test.@testset "Error: variable_costate=true with trajectory config" begin
@@ -411,9 +434,10 @@ function test_variable_costate_flows()
             t0, tf = 0.0, 1.0
             x0, p0 = 1.0, 2.0
             v = 3.0
-            Test.@test_throws Exceptions.PreconditionError hflow((t0, tf), x0, p0; variable=v, variable_costate=true)
+            Test.@test_throws Exceptions.PreconditionError hflow(
+                (t0, tf), x0, p0; variable=v, variable_costate=true
+            )
         end
-
     end
 end
 

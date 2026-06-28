@@ -61,7 +61,7 @@ end
 
 function (f::IPVFOoPRHS)(du, u, λ, t)
     du .= f.vf(t, u, Common.variable(λ))
-    nothing
+    return nothing
 end
 
 """
@@ -84,7 +84,7 @@ end
 
 function (f::IPVFIpRHS)(du, u, λ, t)
     f.vf(du, t, u, Common.variable(λ))
-    nothing
+    return nothing
 end
 
 """
@@ -106,7 +106,7 @@ struct OoPVFOoPRHS{F,TD,VD} <: AbstractOoPRHS
 end
 
 function (f::OoPVFOoPRHS)(u, λ, t)
-    f.vf(t, u, Common.variable(λ))
+    return f.vf(t, u, Common.variable(λ))
 end
 
 """
@@ -130,7 +130,7 @@ end
 function (f::OoPVFIpRHS)(u, λ, t)
     dx = similar(u)
     f.vf(dx, t, u, Common.variable(λ))
-    dx
+    return dx
 end
 
 """
@@ -154,7 +154,7 @@ end
 function (f::OoPVFIpFinalizeRHS)(u, λ, t)
     dx = similar(u)
     f.vf(dx, t, u, Common.variable(λ))
-    typeof(u)(dx)
+    return typeof(u)(dx)
 end
 
 # =============================================================================
@@ -165,7 +165,9 @@ _rhs_conversion_label(f::IPVFOoPRHS) = "out-of-place VF → in-place interface"
 _rhs_conversion_label(f::IPVFIpRHS) = "in-place VF → in-place interface"
 _rhs_conversion_label(f::OoPVFOoPRHS) = "out-of-place VF → out-of-place interface"
 _rhs_conversion_label(f::OoPVFIpRHS) = "in-place VF → out-of-place interface"
-_rhs_conversion_label(f::OoPVFIpFinalizeRHS) = "in-place VF → out-of-place interface + finalize"
+function _rhs_conversion_label(f::OoPVFIpFinalizeRHS)
+    return "in-place VF → out-of-place interface + finalize"
+end
 
 function Base.show(io::IO, f::AbstractRHS)
     println(io, nameof(typeof(f)))
@@ -174,9 +176,9 @@ function Base.show(io::IO, f::AbstractRHS)
     md = Traits.mutability(f.vf)
     wraps = "VectorField: $(Data._td_label(td)), $(Data._vd_label(vd)), $(Data._md_label(md))"
     println(io, "  wraps: ", wraps)
-    print(io, "  converts: ", _rhs_conversion_label(f))
+    return print(io, "  converts: ", _rhs_conversion_label(f))
 end
 
 function Base.show(io::IO, ::MIME"text/plain", f::AbstractRHS)
-    show(io, f)
+    return show(io, f)
 end

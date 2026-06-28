@@ -38,12 +38,14 @@ Return the final state vector from the integration result.
 See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Integrators.times`](@ref), [`CTFlows.Integrators.evaluate_at`](@ref).
 """
 function final_state(r::AbstractIntegrationResult)
-    throw(Exceptions.NotImplemented(
-        "final_state not implemented";
-        required_method = "final_state(r::$(typeof(r)))",
-        suggestion = "Implement final_state(r) for your integration result type.",
-        context = "AbstractIntegrationResult - final_state implementation",
-    ))
+    return throw(
+        Exceptions.NotImplemented(
+            "final_state not implemented";
+            required_method="final_state(r::$(typeof(r)))",
+            suggestion="Implement final_state(r) for your integration result type.",
+            context="AbstractIntegrationResult - final_state implementation",
+        ),
+    )
 end
 
 """
@@ -60,12 +62,14 @@ Return the vector of time points from the integration result.
 See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Integrators.final_state`](@ref), [`CTFlows.Integrators.evaluate_at`](@ref).
 """
 function times(r::AbstractIntegrationResult)
-    throw(Exceptions.NotImplemented(
-        "times not implemented";
-        required_method = "times(r::$(typeof(r)))",
-        suggestion = "Implement times(r) for your integration result type.",
-        context = "AbstractIntegrationResult - times implementation",
-    ))
+    return throw(
+        Exceptions.NotImplemented(
+            "times not implemented";
+            required_method="times(r::$(typeof(r)))",
+            suggestion="Implement times(r) for your integration result type.",
+            context="AbstractIntegrationResult - times implementation",
+        ),
+    )
 end
 
 """
@@ -83,10 +87,12 @@ Evaluate the integration result at a specific time `t`.
 See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Integrators.final_state`](@ref), [`CTFlows.Integrators.times`](@ref).
 """
 function evaluate_at(r::AbstractIntegrationResult, t::Real)
-    throw(Exceptions.NotImplemented(
-        "evaluate_at not implemented";
-        required_method = "evaluate_at(r::$(typeof(r)), t::Real)",
-        suggestion = "Implement evaluate_at(r, t) for your integration result type.",
-        context = "AbstractIntegrationResult - evaluate_at implementation",
-    ))
+    return throw(
+        Exceptions.NotImplemented(
+            "evaluate_at not implemented";
+            required_method="evaluate_at(r::$(typeof(r)), t::Real)",
+            suggestion="Implement evaluate_at(r, t) for your integration result type.",
+            context="AbstractIntegrationResult - evaluate_at implementation",
+        ),
+    )
 end

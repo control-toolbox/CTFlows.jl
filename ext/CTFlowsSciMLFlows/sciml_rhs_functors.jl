@@ -28,7 +28,7 @@ end
 
 function (r::IPSciMLIpRHS)(du, u, λ, t)
     r.f(du, u, Common.variable(λ), t)
-    nothing
+    return nothing
 end
 
 """
@@ -54,7 +54,7 @@ end
 function (r::OoPSciMLIpRHS)(u, λ, t)
     dx = similar(u)
     r.f(dx, u, Common.variable(λ), t)
-    dx
+    return dx
 end
 
 """
@@ -73,14 +73,15 @@ that converts the result to match the input type (e.g., Vector → SVector).
 
 See also: [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@ref).
 """
-struct OoPSciMLIpFinalizeRHS{F<:SciMLBase.AbstractODEFunction{true}} <: Systems.AbstractOoPRHS
+struct OoPSciMLIpFinalizeRHS{F<:SciMLBase.AbstractODEFunction{true}} <:
+       Systems.AbstractOoPRHS
     f::F
 end
 
 function (r::OoPSciMLIpFinalizeRHS)(u, λ, t)
     dx = similar(u)
     r.f(dx, u, Common.variable(λ), t)
-    typeof(u)(dx)
+    return typeof(u)(dx)
 end
 
 """
@@ -105,7 +106,7 @@ end
 
 function (r::IPSciMLOoPRHS)(du, u, λ, t)
     du .= r.f(u, Common.variable(λ), t)
-    nothing
+    return nothing
 end
 
 """
@@ -129,7 +130,7 @@ struct OoPSciMLOoPRHS{F<:SciMLBase.AbstractODEFunction{false}} <: Systems.Abstra
 end
 
 function (r::OoPSciMLOoPRHS)(u, λ, t)
-    r.f(u, Common.variable(λ), t)
+    return r.f(u, Common.variable(λ), t)
 end
 
 # =============================================================================
@@ -159,7 +160,9 @@ See also: [`_AnySciMLRHS`](@ref).
 """
 _rhs_sciml_label(::IPSciMLIpRHS) = "in-place SciML → in-place interface"
 _rhs_sciml_label(::OoPSciMLIpRHS) = "in-place SciML → out-of-place interface"
-_rhs_sciml_label(::OoPSciMLIpFinalizeRHS) = "in-place SciML → out-of-place interface + finalize"
+function _rhs_sciml_label(::OoPSciMLIpFinalizeRHS)
+    return "in-place SciML → out-of-place interface + finalize"
+end
 _rhs_sciml_label(::IPSciMLOoPRHS) = "out-of-place SciML → in-place interface"
 _rhs_sciml_label(::OoPSciMLOoPRHS) = "out-of-place SciML → out-of-place interface"
 
@@ -174,8 +177,9 @@ Union type of all SciML RHS functors.
 
 See also: [`_rhs_sciml_label`](@ref), [`IPSciMLIpRHS`](@ref), [`OoPSciMLIpRHS`](@ref), [`OoPSciMLIpFinalizeRHS`](@ref), [`IPSciMLOoPRHS`](@ref), [`OoPSciMLOoPRHS`](@ref).
 """
-const _AnySciMLRHS = Union{IPSciMLIpRHS, OoPSciMLIpRHS, OoPSciMLIpFinalizeRHS,
-                           IPSciMLOoPRHS, OoPSciMLOoPRHS}
+const _AnySciMLRHS = Union{
+    IPSciMLIpRHS,OoPSciMLIpRHS,OoPSciMLIpFinalizeRHS,IPSciMLOoPRHS,OoPSciMLOoPRHS
+}
 
 """
 $(TYPEDSIGNATURES)
@@ -195,7 +199,7 @@ function Base.show(io::IO, r::_AnySciMLRHS)
     println(io, nameof(typeof(r)))
     iip = SciMLBase.isinplace(r.f)
     println(io, "  wraps: ODEFunction: ", iip ? "in-place" : "out-of-place")
-    print(io,   "  converts: ", _rhs_sciml_label(r))
+    return print(io, "  converts: ", _rhs_sciml_label(r))
 end
 
 """
@@ -213,5 +217,5 @@ Delegates to the compact show method.
 See also: [`CTFlowsSciMLFlows._AnySciMLRHS`](@ref).
 """
 function Base.show(io::IO, ::MIME"text/plain", r::_AnySciMLRHS)
-    show(io, r)
+    return show(io, r)
 end

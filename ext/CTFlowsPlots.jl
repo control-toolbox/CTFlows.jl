@@ -94,12 +94,15 @@ See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Integr
 """
 function Plots.plot(sol::Trajectories.VectorFieldTrajectory; kwargs...)
     ts, states = _sol_to_arrays(sol)
-    return Plots.plot(ts, states; 
-        xlabel="time", 
-        xguidefontsize=_PLOT_LABEL_FONT_SIZE, 
-        yguidefontsize=_PLOT_LABEL_FONT_SIZE, 
-        titlefont=_PLOT_TITLE_FONT, 
-        kwargs...)
+    return Plots.plot(
+        ts,
+        states;
+        xlabel="time",
+        xguidefontsize=_PLOT_LABEL_FONT_SIZE,
+        yguidefontsize=_PLOT_LABEL_FONT_SIZE,
+        titlefont=_PLOT_TITLE_FONT,
+        kwargs...,
+    )
 end
 
 """
@@ -120,12 +123,15 @@ See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Integr
 """
 function Plots.plot!(sol::Trajectories.VectorFieldTrajectory; kwargs...)
     ts, states = _sol_to_arrays(sol)
-    return Plots.plot!(ts, states; 
-        xlabel="time", 
-        xguidefontsize=_PLOT_LABEL_FONT_SIZE, 
-        yguidefontsize=_PLOT_LABEL_FONT_SIZE, 
-        titlefont=_PLOT_TITLE_FONT, 
-        kwargs...)
+    return Plots.plot!(
+        ts,
+        states;
+        xlabel="time",
+        xguidefontsize=_PLOT_LABEL_FONT_SIZE,
+        yguidefontsize=_PLOT_LABEL_FONT_SIZE,
+        titlefont=_PLOT_TITLE_FONT,
+        kwargs...,
+    )
 end
 
 """
@@ -147,12 +153,16 @@ See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Integr
 """
 function Plots.plot!(p::Plots.Plot, sol::Trajectories.VectorFieldTrajectory; kwargs...)
     ts, states = _sol_to_arrays(sol)
-    return Plots.plot!(p, ts, states; 
-        xlabel="time", 
-        xguidefontsize=_PLOT_LABEL_FONT_SIZE, 
-        yguidefontsize=_PLOT_LABEL_FONT_SIZE, 
-        titlefont=_PLOT_TITLE_FONT, 
-        kwargs...)
+    return Plots.plot!(
+        p,
+        ts,
+        states;
+        xlabel="time",
+        xguidefontsize=_PLOT_LABEL_FONT_SIZE,
+        yguidefontsize=_PLOT_LABEL_FONT_SIZE,
+        titlefont=_PLOT_TITLE_FONT,
+        kwargs...,
+    )
 end
 
 # =============================================================================
@@ -201,14 +211,17 @@ See also: [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTF
 """
 function Plots.plot(sol::Trajectories.HamiltonianVectorFieldTrajectory; kwargs...)
     ts, states, costates = _ham_sol_to_arrays(sol)
-    return Plots.plot(ts, [states costates]; 
-        layout=(1, 2), 
-        xlabel=["time" "time"], 
-        title=["state" "costate"], 
-        xguidefontsize=_PLOT_LABEL_FONT_SIZE, 
-        yguidefontsize=_PLOT_LABEL_FONT_SIZE, 
-        titlefont=_PLOT_TITLE_FONT, 
-        kwargs...)
+    return Plots.plot(
+        ts,
+        [states costates];
+        layout=(1, 2),
+        xlabel=["time" "time"],
+        title=["state" "costate"],
+        xguidefontsize=_PLOT_LABEL_FONT_SIZE,
+        yguidefontsize=_PLOT_LABEL_FONT_SIZE,
+        titlefont=_PLOT_TITLE_FONT,
+        kwargs...,
+    )
 end
 
 """
@@ -230,14 +243,17 @@ See also: [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTF
 """
 function Plots.plot!(sol::Trajectories.HamiltonianVectorFieldTrajectory; kwargs...)
     ts, states, costates = _ham_sol_to_arrays(sol)
-    return Plots.plot!(ts, [states costates]; 
-        layout=(1, 2), 
-        xlabel=["time" "time"], 
-        title=["state" "costate"], 
-        xguidefontsize=_PLOT_LABEL_FONT_SIZE, 
-        yguidefontsize=_PLOT_LABEL_FONT_SIZE, 
-        titlefont=_PLOT_TITLE_FONT, 
-        kwargs...)
+    return Plots.plot!(
+        ts,
+        [states costates];
+        layout=(1, 2),
+        xlabel=["time" "time"],
+        title=["state" "costate"],
+        xguidefontsize=_PLOT_LABEL_FONT_SIZE,
+        yguidefontsize=_PLOT_LABEL_FONT_SIZE,
+        titlefont=_PLOT_TITLE_FONT,
+        kwargs...,
+    )
 end
 
 """
@@ -258,16 +274,22 @@ Uses default `xlabel=["time" "time"]` for both subplots, `title=["state" "costat
 
 See also: [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTFlows.Integrators.times`](), [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.costate`](@ref).
 """
-function Plots.plot!(p::Plots.Plot, sol::Trajectories.HamiltonianVectorFieldTrajectory; kwargs...)
+function Plots.plot!(
+    p::Plots.Plot, sol::Trajectories.HamiltonianVectorFieldTrajectory; kwargs...
+)
     ts, states, costates = _ham_sol_to_arrays(sol)
-    return Plots.plot!(p, ts, [states costates]; 
-        layout=(1, 2), 
-        xlabel=["time" "time"], 
-        title=["state" "costate"], 
-        xguidefontsize=_PLOT_LABEL_FONT_SIZE, 
-        yguidefontsize=_PLOT_LABEL_FONT_SIZE, 
+    return Plots.plot!(
+        p,
+        ts,
+        [states costates];
+        layout=(1, 2),
+        xlabel=["time" "time"],
+        title=["state" "costate"],
+        xguidefontsize=_PLOT_LABEL_FONT_SIZE,
+        yguidefontsize=_PLOT_LABEL_FONT_SIZE,
         titlefont=_PLOT_TITLE_FONT,
-        kwargs...)
+        kwargs...,
+    )
 end
 
 end # module CTFlowsPlots

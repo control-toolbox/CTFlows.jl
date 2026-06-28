@@ -1,6 +1,6 @@
 module TestImplementationsConfigs
 
-import Test
+using Test: Test
 import CTBase.Exceptions
 import CTFlows.Configs
 import CTBase.Traits
@@ -19,14 +19,14 @@ function test_implementations_configs()
             Test.@testset "AbstractEndPointConfig tspan returns tuple" begin
                 config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
                 ts = Configs.tspan(config)
-                Test.@test ts isa Tuple{Real, Real}
+                Test.@test ts isa Tuple{Real,Real}
                 Test.@test ts == (0.0, 1.0)
             end
 
             Test.@testset "AbstractTrajectoryConfig tspan returns tuple" begin
                 config = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
                 ts = Configs.tspan(config)
-                Test.@test ts isa Tuple{Real, Real}
+                Test.@test ts isa Tuple{Real,Real}
                 Test.@test ts == (0.0, 1.0)
             end
         end
@@ -110,7 +110,9 @@ function test_implementations_configs()
             end
 
             Test.@testset "initial_state for HamiltonianTrajectoryConfig" begin
-                config = Configs.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
+                config = Configs.HamiltonianTrajectoryConfig(
+                    (0.0, 1.0), [1.0, 0.0], [0.5, 0.3]
+                )
                 Test.@test Configs.initial_state(config) == [1.0, 0.0]
             end
         end
@@ -122,7 +124,9 @@ function test_implementations_configs()
         Test.@testset "ERROR TESTS - initial_costate Implementations" begin
             Test.@testset "initial_costate throws PreconditionError for state configs" begin
                 config = Configs.StateEndPointConfig(0.0, [1.0], 1.0)
-                Test.@test_throws Exceptions.PreconditionError Configs.initial_costate(config)
+                Test.@test_throws Exceptions.PreconditionError Configs.initial_costate(
+                    config
+                )
             end
 
             Test.@testset "PreconditionError message quality" begin
@@ -143,7 +147,9 @@ function test_implementations_configs()
             end
 
             Test.@testset "initial_costate for HamiltonianTrajectoryConfig" begin
-                config = Configs.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
+                config = Configs.HamiltonianTrajectoryConfig(
+                    (0.0, 1.0), [1.0, 0.0], [0.5, 0.3]
+                )
                 Test.@test Configs.initial_costate(config) == [0.5, 0.3]
             end
         end

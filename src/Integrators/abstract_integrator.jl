@@ -57,13 +57,21 @@ Build the ODE problem representation from a system and configuration.
 
 See also: [`CTFlows.Integrators.AbstractIntegrator`](@ref), [`CTFlows.Integrators.solve_problem`](@ref).
 """
-function build_problem(integrator::AbstractIntegrator, system::Systems.AbstractSystem, config::Configs.AbstractConfig; variable, cache)
-    throw(Exceptions.NotImplemented(
-        "AbstractIntegrator problem building not implemented";
-        required_method = "build_problem(integrator::$(typeof(integrator)), system::Systems.AbstractSystem, config::Configs.AbstractConfig; variable, cache)",
-        suggestion = "Implement build_problem(i::YourIntegrator, system, config; variable, cache) returning an ODE problem representation.",
-        context = "AbstractIntegrator problem building - required method implementation",
-    ))
+function build_problem(
+    integrator::AbstractIntegrator,
+    system::Systems.AbstractSystem,
+    config::Configs.AbstractConfig;
+    variable,
+    cache,
+)
+    return throw(
+        Exceptions.NotImplemented(
+            "AbstractIntegrator problem building not implemented";
+            required_method="build_problem(integrator::$(typeof(integrator)), system::Systems.AbstractSystem, config::Configs.AbstractConfig; variable, cache)",
+            suggestion="Implement build_problem(i::YourIntegrator, system, config; variable, cache) returning an ODE problem representation.",
+            context="AbstractIntegrator problem building - required method implementation",
+        ),
+    )
 end
 
 """
@@ -85,13 +93,20 @@ Solve the given ODE problem with resolved options.
 
 See also: [`CTFlows.Integrators.AbstractIntegrator`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.build_options`](@ref).
 """
-function solve_problem(integrator::AbstractIntegrator, prob, options::Dict{Symbol,<:Any}; unsafe=Common.__unsafe())
-    throw(Exceptions.NotImplemented(
-        "AbstractIntegrator solve_problem not implemented";
-        required_method = "solve_problem(integrator::$(typeof(integrator)), prob, options::Dict{Symbol,Any}; unsafe=false)",
-        suggestion = "Implement solve_problem(i::YourIntegrator, prob, options::Dict; unsafe=false) returning an AbstractIntegrationResult.",
-        context = "AbstractIntegrator solve_problem - required method implementation",
-    ))
+function solve_problem(
+    integrator::AbstractIntegrator,
+    prob,
+    options::Dict{Symbol,<:Any};
+    unsafe=Common.__unsafe(),
+)
+    return throw(
+        Exceptions.NotImplemented(
+            "AbstractIntegrator solve_problem not implemented";
+            required_method="solve_problem(integrator::$(typeof(integrator)), prob, options::Dict{Symbol,Any}; unsafe=false)",
+            suggestion="Implement solve_problem(i::YourIntegrator, prob, options::Dict; unsafe=false) returning an AbstractIntegrationResult.",
+            context="AbstractIntegrator solve_problem - required method implementation",
+        ),
+    )
 end
 
 """
@@ -111,13 +126,17 @@ Build solver options dict for the given configuration.
 
 See also: [`CTFlows.Integrators.AbstractIntegrator`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref).
 """
-function build_options(integrator::AbstractIntegrator, config::Union{Configs.AbstractConfig, Nothing})
-    throw(Exceptions.NotImplemented(
-        "AbstractIntegrator build_options not implemented";
-        required_method = "build_options(integrator::$(typeof(integrator)), config::Union{Configs.AbstractConfig, Nothing})",
-        suggestion = "Implement build_options(i::YourIntegrator, config) returning a Dict{Symbol,Any} of resolved solver options.",
-        context = "AbstractIntegrator build_options - required method implementation",
-    ))
+function build_options(
+    integrator::AbstractIntegrator, config::Union{Configs.AbstractConfig,Nothing}
+)
+    return throw(
+        Exceptions.NotImplemented(
+            "AbstractIntegrator build_options not implemented";
+            required_method="build_options(integrator::$(typeof(integrator)), config::Union{Configs.AbstractConfig, Nothing})",
+            suggestion="Implement build_options(i::YourIntegrator, config) returning a Dict{Symbol,Any} of resolved solver options.",
+            context="AbstractIntegrator build_options - required method implementation",
+        ),
+    )
 end
 
 """
@@ -140,10 +159,12 @@ should implement this method for their specific result types.
 See also: [`CTFlows.Integrators.AbstractIntegrator`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
 """
 function merge(segments::AbstractVector{T}) where {T<:Integrators.AbstractIntegrationResult}
-    throw(Exceptions.NotImplemented(
-        "AbstractIntegrator merge not implemented";
-        required_method = "merge(segments::Vector{<:$(T)})",
-        suggestion = "Implement merge(segments::Vector{<:YourIntegrationResult}) returning a merged YourIntegrationResult.",
-        context = "AbstractIntegrator merge - required method implementation for multi-phase trajectories",
-    ))
+    return throw(
+        Exceptions.NotImplemented(
+            "AbstractIntegrator merge not implemented";
+            required_method="merge(segments::Vector{<:$(T)})",
+            suggestion="Implement merge(segments::Vector{<:YourIntegrationResult}) returning a merged YourIntegrationResult.",
+            context="AbstractIntegrator merge - required method implementation for multi-phase trajectories",
+        ),
+    )
 end
