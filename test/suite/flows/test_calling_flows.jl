@@ -13,6 +13,7 @@ import CTFlows.Configs
 import CTBase.Traits
 import ADTypes
 import DifferentiationInterface
+import ForwardDiff  # triggers DifferentiationInterfaceForwardDiff (provides PushforwardFast)
 import CTBase.Exceptions
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true

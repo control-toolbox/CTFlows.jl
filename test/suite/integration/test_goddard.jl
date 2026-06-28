@@ -6,6 +6,7 @@ import CTLie: CTLie
 import CTFlows.Flows
 import CTFlows.Trajectories
 import DifferentiationInterface
+import ForwardDiff  # triggers DifferentiationInterfaceForwardDiff (provides PushforwardFast)
 using OrdinaryDiffEqTsit5
 using NonlinearSolve: NonlinearSolve, NonlinearProblem, SimpleNewtonRaphson, solve
 

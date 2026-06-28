@@ -351,6 +351,29 @@ function _invoke_flow(::Type{Traits.Fixed}, ::Type{VT}, flow, config; unsafe, va
     ))
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Catch-all fallback for an unforeseen `VariableDependence` trait value.
+
+The four overloads above form a dispatch table that is exhaustive for the closed set
+`{Fixed, NonFixed}`. This fallback exists only so a hypothetical third tag fails with a
+clean [`CTBase.Exceptions.PreconditionError`](@extref) instead of a raw `MethodError`.
+
+# Throws
+- [`CTBase.Exceptions.PreconditionError`](@extref): Always.
+"""
+function _invoke_flow(
+    VD::Type{<:Traits.VariableDependence}, ::Type{VT}, flow, config; unsafe, variable
+) where {VT}
+    throw(Exceptions.PreconditionError(
+        "unsupported variable-dependence trait $(VD)";
+        reason     = "the flow reports a variable-dependence trait outside the supported set {Fixed, NonFixed}",
+        suggestion = "build the flow from a system whose variable_dependence is Fixed or NonFixed",
+        context    = "call — unknown VariableDependence tag",
+    ))
+end
+
 # ==============================================================================
 # _invoke_flow_variable_costate — augmented Hamiltonian integration
 # ==============================================================================
@@ -502,5 +525,32 @@ function _invoke_flow_variable_costate(
         reason     = "Variable costate computation is only implemented for point configurations, not full trajectories",
         suggestion = "Use variable_costate=true with a point configuration (t0, x0, p0, tf) instead of a trajectory configuration (tspan, x0, p0)",
         context    = "HamiltonianFlow call with variable_costate=true and HamiltonianTrajectoryConfig",
+    ))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Catch-all fallback for an unforeseen variable-costate capability trait value.
+
+The overloads above form a dispatch table that is exhaustive for the closed set
+`{SupportsVariableCostate, NoVariableCostate}`. This fallback exists only so a
+hypothetical third capability tag fails with a clean
+[`CTBase.Exceptions.PreconditionError`](@extref) instead of a raw `MethodError`.
+
+# Throws
+- [`CTBase.Exceptions.PreconditionError`](@extref): Always.
+"""
+function _invoke_flow_variable_costate(
+    cap::Type{<:Traits.AbstractVariableCostateCapability},
+    ::Type{VT},
+    flow::AbstractHamiltonianFlow,
+    config::Configs.AbstractHamiltonianConfig; variable, unsafe
+) where {VT}
+    throw(Exceptions.PreconditionError(
+        "unsupported variable-costate capability trait $(cap)";
+        reason     = "the flow reports a variable-costate capability outside the supported set {SupportsVariableCostate, NoVariableCostate}",
+        suggestion = "build the flow from a Hamiltonian system whose variable_costate_trait is one of the supported values",
+        context    = "HamiltonianFlow call with variable_costate=true — unknown capability tag",
     ))
 end
