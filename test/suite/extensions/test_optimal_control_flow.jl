@@ -24,6 +24,7 @@ import CTFlows: CTFlows
 import CTFlows.Flows: Flows
 import CTFlows.Systems: Systems
 import CTFlows.Integrators: Integrators
+import CTFlows.Configs: Configs
 import CTBase.Differentiation
 import CTBase.Data: Data
 import CTBase.Traits: Traits
@@ -32,6 +33,7 @@ using SciMLBase: SciMLBase
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 using ADTypes: ADTypes
 using DifferentiationInterface: DifferentiationInterface as DI
+import ForwardDiff  # triggers DifferentiationInterfaceForwardDiff (provides PushforwardFast)
 
 const CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
 const CTBaseDifferentiationInterface = Base.get_extension(CTBase, :CTBaseDifferentiationInterface)
@@ -105,11 +107,28 @@ function _build_ocp_nonauton_fixed_mayer()
     return CTModels.Building.build(pre)
 end
 
+# with-control OCP (control! called) → WithControl trait, unsupported by Flow(ocp)
+function _build_ocp_with_control()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, 1)
+    CTModels.Building.control!(pre, 1)
+    CTModels.Building.dynamics!(pre, (r, _, x, u, _) -> (r[1] = u[1]; nothing))
+    CTModels.Building.objective!(pre, :min; lagrange=(_, x, u, _) -> u[1]^2)
+    return CTModels.Building.build(pre)
+end
+
+# Fake closed-set trait tags for catch-all fallback tests (module top-level)
+struct FakeVariableDependence <: Traits.VariableDependence end
+struct FakeCostateCapability <: Traits.AbstractVariableCostateCapability end
+
 const OCP_AF_MAYER   = _build_ocp_auton_fixed_mayer()
 const OCP_AF_LAG     = _build_ocp_auton_fixed_lagrange()
 const OCP_AF_BOLZA   = _build_ocp_auton_fixed_bolza()
 const OCP_ANF_MAYER  = _build_ocp_auton_nonfixed_mayer()
 const OCP_NAF_MAYER  = _build_ocp_nonauton_fixed_mayer()
+const OCP_WITH_CTRL  = _build_ocp_with_control()
 
 # Pre-built flows (all via generic HamiltonianSystem — OCP rides the generic path)
 const FLOW_AF    = Flows.build_flow(
@@ -360,11 +379,51 @@ function test_optimal_control_flow()
                 err = e
             end
             Test.@test err isa Exceptions.PreconditionError
-            Test.@test occursin("control-free", err.msg)
+            Test.@test occursin("positional argument", err.msg)
         end
 
-        Test.@testset "Error: Flow(ocp, g, μ) — control-free guard (extra args)" begin
+        Test.@testset "Error: Flow(ocp, g, μ) — positional-arg guard (extra args)" begin
             Test.@test_throws Exceptions.PreconditionError Flows.Flow(OCP_AF_MAYER, identity, identity; alg=Tsit5())
+        end
+
+        # =====================================================================
+        # Control-dependence dispatch
+        # =====================================================================
+
+        Test.@testset "Dispatch: control-free OCP is ControlFree" begin
+            Test.@test Traits.control_dependence(OCP_AF_MAYER) === Traits.ControlFree
+            Test.@test Flows.Flow(OCP_AF_MAYER; alg=Tsit5()) isa Flows.OptimalControlFlow
+        end
+
+        Test.@testset "Error: Flow(with-control OCP) → PreconditionError" begin
+            Test.@test Traits.control_dependence(OCP_WITH_CTRL) === Traits.WithControl
+            err = nothing
+            try
+                Flows.Flow(OCP_WITH_CTRL; alg=Tsit5())
+            catch e
+                err = e
+            end
+            Test.@test err isa Exceptions.PreconditionError
+            Test.@test occursin("with-control", err.msg)
+        end
+
+        # =====================================================================
+        # Closed dispatch-table catch-all fallbacks
+        # =====================================================================
+
+        Test.@testset "Error: unknown VariableDependence tag → PreconditionError" begin
+            Test.@test_throws Exceptions.PreconditionError Flows._invoke_flow(
+                FakeVariableDependence, Nothing, nothing, nothing;
+                unsafe=false, variable=nothing,
+            )
+        end
+
+        Test.@testset "Error: unknown variable-costate capability tag → PreconditionError" begin
+            config = Configs.HamiltonianEndPointConfig(0.0, [1.0], [0.5], 1.0)
+            Test.@test_throws Exceptions.PreconditionError Flows._invoke_flow_variable_costate(
+                FakeCostateCapability, Nothing, FLOW_AF, config;
+                variable=nothing, unsafe=false,
+            )
         end
 
     end

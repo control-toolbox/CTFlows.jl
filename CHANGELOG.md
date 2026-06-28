@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0-beta] - 2026-06-28
+
+### Fixed
+
+- **`Flow(ocp::CTModels.Models.Model)` now dispatches on control dependence.** Previously the
+  constructor matched *any* model and silently built a Hamiltonian flow even for problems with a
+  control input (ignoring the control — a latent correctness bug). It now re-dispatches on the
+  `CTBase.Traits.ControlDependence` trait: a control-free OCP builds the flow as before, while a
+  with-control OCP throws a descriptive `CTBase.Exceptions.PreconditionError` (the control-law /
+  PMP path is not built here).
+
+### Changed
+
+- **Hardened the closed dispatch tables in `Flows/calling.jl`.** Added catch-all fallbacks for
+  unforeseen `VariableDependence` and variable-costate capability trait values, so an unexpected
+  tag yields a clean `PreconditionError` instead of a raw `MethodError`.
+
+### Tests
+
+- Added with-control and catch-all fallback tests.
+- **Made the AD extension trigger explicit:** added `import ForwardDiff` to the test files that use
+  an `AutoForwardDiff` backend (so `DifferentiationInterfaceForwardDiff`, which provides the fast
+  pushforward path, loads when a file is run in isolation rather than relying on test-run order).
+
+### Dependencies
+
+- Bump CTBase compat to `0.26` (adds the `ControlDependence` trait family) and CTModels compat to
+  `0.14` (implements the trait on `Model`). Requires CTLie ≥ `0.1.1` (widened CTBase compat).
+
 ## [0.9.4-beta] - 2026-06-26
 
 ### Changed
