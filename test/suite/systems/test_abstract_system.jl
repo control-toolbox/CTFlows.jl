@@ -1,6 +1,6 @@
 module TestAbstractSystem
 
-import Test
+using Test: Test
 import CTBase.Exceptions
 import CTFlows.Systems
 import CTFlows.Common
@@ -19,7 +19,8 @@ Fake system for testing the AbstractSystem contract.
 This minimal implementation provides the required contract methods to test
 routing and default behavior without full system complexity.
 """
-struct FakeSystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
+struct FakeSystem <:
+       Systems.AbstractSystem{Traits.Autonomous,Traits.Fixed,Traits.StateDynamics}
     data::Vector{Float64}
 end
 
@@ -29,7 +30,7 @@ function Systems.get_ip_rhs(sys::FakeSystem, _)
 end
 
 # Fake subtypes for hierarchy testing
-struct FakeStateSystem <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
+struct FakeStateSystem <: Systems.AbstractStateSystem{Traits.Autonomous,Traits.Fixed}
     data::Vector{Float64}
 end
 
@@ -37,7 +38,8 @@ function Systems.get_ip_rhs(sys::FakeStateSystem, _)
     return (du, u, p, t) -> du .= sys.data .* u
 end
 
-struct FakeHamiltonianSystem <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed}
+struct FakeHamiltonianSystem <:
+       Systems.AbstractHamiltonianSystem{Traits.Autonomous,Traits.Fixed}
     data::Vector{Float64}
 end
 
@@ -48,7 +50,8 @@ end
 """
 Minimal system that does not implement the contract (for error testing).
 """
-struct MinimalSystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
+struct MinimalSystem <:
+       Systems.AbstractSystem{Traits.Autonomous,Traits.Fixed,Traits.StateDynamics}
     state_dim::Int
 end
 
@@ -71,7 +74,8 @@ function test_abstract_system()
         Test.@testset "Hierarchy" begin
             Test.@test FakeStateSystem([1.0, 2.0]) isa Systems.AbstractStateSystem
             Test.@test FakeStateSystem([1.0, 2.0]) isa Systems.AbstractSystem
-            Test.@test FakeHamiltonianSystem([1.0, 2.0]) isa Systems.AbstractHamiltonianSystem
+            Test.@test FakeHamiltonianSystem([1.0, 2.0]) isa
+                Systems.AbstractHamiltonianSystem
             Test.@test FakeHamiltonianSystem([1.0, 2.0]) isa Systems.AbstractSystem
             # Verify the two subtypes are not related to each other
             Test.@test !(FakeStateSystem([1.0, 2.0]) isa Systems.AbstractHamiltonianSystem)

@@ -33,8 +33,16 @@ VectorFieldSystem
 
 See also: [`CTBase.Data.VectorField`](@ref), `TimeDependence`, [`CTBase.Traits.VariableDependence`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
 """
-struct VectorFieldSystem{F<:Function, TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, MD<:Traits.AbstractMutabilityTrait, RHS<:AbstractIPRHS, OOPROHS<:AbstractOoPRHS, FINRHS} <: AbstractStateSystem{TD, VD}
-    vf::Data.VectorField{F, TD, VD, MD}
+struct VectorFieldSystem{
+    F<:Function,
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    MD<:Traits.AbstractMutabilityTrait,
+    RHS<:AbstractIPRHS,
+    OOPROHS<:AbstractOoPRHS,
+    FINRHS,
+} <: AbstractStateSystem{TD,VD}
+    vf::Data.VectorField{F,TD,VD,MD}
     rhs::RHS
     rhs_oop::OOPROHS
     rhs_oop_finalize::FINRHS
@@ -44,18 +52,24 @@ end
 # Constructors
 # =============================================================================
 
-function VectorFieldSystem(vf::Data.VectorField{F, TD, VD, Traits.OutOfPlace}) where {F, TD, VD}
-    rhs              = IPVFOoPRHS(vf)
-    rhs_oop          = OoPVFOoPRHS(vf)
+function VectorFieldSystem(vf::Data.VectorField{F,TD,VD,Traits.OutOfPlace}) where {F,TD,VD}
+    rhs = IPVFOoPRHS(vf)
+    rhs_oop = OoPVFOoPRHS(vf)
     rhs_oop_finalize = nothing
-    return VectorFieldSystem{F, TD, VD, Traits.OutOfPlace, typeof(rhs), typeof(rhs_oop), Nothing}(vf, rhs, rhs_oop, rhs_oop_finalize)
+    return VectorFieldSystem{F,TD,VD,Traits.OutOfPlace,typeof(rhs),typeof(rhs_oop),Nothing}(
+        vf, rhs, rhs_oop, rhs_oop_finalize
+    )
 end
 
-function VectorFieldSystem(vf::Data.VectorField{F, TD, VD, Traits.InPlace}) where {F, TD, VD}
-    rhs              = IPVFIpRHS(vf)
-    rhs_oop          = OoPVFIpRHS(vf)
+function VectorFieldSystem(vf::Data.VectorField{F,TD,VD,Traits.InPlace}) where {F,TD,VD}
+    rhs = IPVFIpRHS(vf)
+    rhs_oop = OoPVFIpRHS(vf)
     rhs_oop_finalize = OoPVFIpFinalizeRHS(vf)
-    return VectorFieldSystem{F, TD, VD, Traits.InPlace, typeof(rhs), typeof(rhs_oop), typeof(rhs_oop_finalize)}(vf, rhs, rhs_oop, rhs_oop_finalize)
+    return VectorFieldSystem{
+        F,TD,VD,Traits.InPlace,typeof(rhs),typeof(rhs_oop),typeof(rhs_oop_finalize)
+    }(
+        vf, rhs, rhs_oop, rhs_oop_finalize
+    )
 end
 
 # =============================================================================
@@ -75,16 +89,19 @@ This combination is unsupported because in-place functions require mutable array
 # Throws
 - `ArgumentError` if `sys` is in-place and `u0` is a scalar.
 """
-function _check_vf_scalar_inplace(sys::VectorFieldSystem{F, TD, VD, Traits.InPlace}, u0::Number) where {F, TD, VD}
-    throw(ArgumentError(
-        "InPlace VectorField with scalar u0 is unsupported. " *
-        "Scalar initial conditions require out-of-place vector fields. " *
-        "Consider using an out-of-place VectorField or a vector-valued initial condition."
-    ))
+function _check_vf_scalar_inplace(
+    sys::VectorFieldSystem{F,TD,VD,Traits.InPlace}, u0::Number
+) where {F,TD,VD}
+    return throw(
+        ArgumentError(
+            "InPlace VectorField with scalar u0 is unsupported. " *
+            "Scalar initial conditions require out-of-place vector fields. " *
+            "Consider using an out-of-place VectorField or a vector-valued initial condition.",
+        ),
+    )
 end
 
 _check_vf_scalar_inplace(::AbstractSystem, ::Any) = nothing
-
 
 """
 $(TYPEDSIGNATURES)
@@ -162,7 +179,9 @@ For `InPlace` systems, returns `rhs_oop_finalize` (the finalize path) since
 
 See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
-function get_oop_rhs(sys::VectorFieldSystem{F, TD, VD, Traits.OutOfPlace, RHS, OOPROHS, Nothing}, _) where {F, TD, VD, RHS, OOPROHS}
+function get_oop_rhs(
+    sys::VectorFieldSystem{F,TD,VD,Traits.OutOfPlace,RHS,OOPROHS,Nothing}, _
+) where {F,TD,VD,RHS,OOPROHS}
     return sys.rhs_oop
 end
 
@@ -186,7 +205,9 @@ This method is called when `!ismutable(u0)`, so we always return `rhs_oop_finali
 
 See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
-function get_oop_rhs(sys::VectorFieldSystem{F, TD, VD, Traits.InPlace, RHS, OOPROHS, FINRHS}, _) where {F, TD, VD, RHS, OOPROHS, FINRHS}
+function get_oop_rhs(
+    sys::VectorFieldSystem{F,TD,VD,Traits.InPlace,RHS,OOPROHS,FINRHS}, _
+) where {F,TD,VD,RHS,OOPROHS,FINRHS}
     @warn "InPlace VectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
     return sys.rhs_oop_finalize
 end
@@ -208,11 +229,15 @@ Shows the type name and the wrapped VectorField with its traits.
 
 See also: [`CTFlows.Systems.VectorFieldSystem`](@ref).
 """
-function Base.show(io::IO, sys::VectorFieldSystem{F, TD, VD, MD, RHS, OOPROHS, FINRHS}) where {F, TD, VD, MD, RHS, OOPROHS, FINRHS}
+function Base.show(
+    io::IO, sys::VectorFieldSystem{F,TD,VD,MD,RHS,OOPROHS,FINRHS}
+) where {F,TD,VD,MD,RHS,OOPROHS,FINRHS}
     println(io, "VectorFieldSystem")
     wraps = "VectorField: $(Data._td_label(TD)), $(Data._vd_label(VD)), $(Data._md_label(MD))"
     println(io, "  wraps: ", wraps)
-    print(io, "  rhs:   ", nameof(typeof(sys.rhs)), " (", _rhs_conversion_label(sys.rhs), ")")
+    return print(
+        io, "  rhs:   ", nameof(typeof(sys.rhs)), " (", _rhs_conversion_label(sys.rhs), ")"
+    )
 end
 
 """
@@ -230,5 +255,5 @@ Delegates to the compact show method.
 See also: [`CTFlows.Systems.VectorFieldSystem`](@ref).
 """
 function Base.show(io::IO, ::MIME"text/plain", sys::VectorFieldSystem)
-    show(io, sys)
+    return show(io, sys)
 end

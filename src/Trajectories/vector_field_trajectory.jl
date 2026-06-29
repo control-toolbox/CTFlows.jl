@@ -37,7 +37,8 @@ x(0.5)                    # evaluate at t = 0.5
 
 See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.AbstractVectorFieldTrajectory`](@ref).
 """
-struct VectorFieldTrajectory{R<:Integrators.AbstractIntegrationResult} <: AbstractVectorFieldTrajectory
+struct VectorFieldTrajectory{R<:Integrators.AbstractIntegrationResult} <:
+       AbstractVectorFieldTrajectory
     result::R
 end
 
@@ -186,20 +187,22 @@ See also: [`CTFlows.Integrators.merge`](@ref), [`CTFlows.Integrators.AbstractInt
 """
 function Integrators.merge(segments::AbstractVector{<:VectorFieldTrajectory})
     if isempty(segments)
-        throw(Exceptions.IncorrectArgument(
-            "Cannot merge empty sequence of VectorFieldTrajectory";
-            got = "0 segments",
-            expected = "at least 1 segment",
-            context = "VectorFieldTrajectory merge",
-        ))
+        throw(
+            Exceptions.IncorrectArgument(
+                "Cannot merge empty sequence of VectorFieldTrajectory";
+                got="0 segments",
+                expected="at least 1 segment",
+                context="VectorFieldTrajectory merge",
+            ),
+        )
     end
-    
+
     # Extract internal results
     internal_results = [sol.result for sol in segments]
-    
+
     # Merge the internal results
     merged_result = Integrators.merge(internal_results)
-    
+
     # Wrap in VectorFieldTrajectory
     return VectorFieldTrajectory(merged_result)
 end
@@ -223,12 +226,12 @@ Plot stub — throws error if Plots extension not loaded.
 See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.AbstractVectorFieldTrajectory`](@ref).
 """
 function RecipesBase.plot(sol::AbstractVectorFieldTrajectory; kwargs...)
-    throw(
+    return throw(
         Exceptions.ExtensionError(
             :Plots;
-            message = "to plot solutions",
-            feature = "Plotting via Plots.jl",
-            context = "Load Plots extension first: using Plots",
+            message="to plot solutions",
+            feature="Plotting via Plots.jl",
+            context="Load Plots extension first: using Plots",
         ),
     )
 end
@@ -250,7 +253,7 @@ Display the `VectorFieldTrajectory` in a readable text/plain format.
 function Base.show(io::IO, ::MIME"text/plain", sol::VectorFieldTrajectory)
     print(io, "VectorFieldTrajectory")
     print(io, "\n  result: ", nameof(typeof(sol.result)))
-    
+
     try
         ts = times(sol)
         if !isempty(ts)
@@ -274,7 +277,7 @@ function Base.show(io::IO, sol::VectorFieldTrajectory)
     print(io, "VectorFieldTrajectory(")
     parts = String[]
     push!(parts, "result=$(nameof(typeof(sol.result)))")
-    
+
     try
         ts = times(sol)
         if !isempty(ts)
@@ -283,7 +286,7 @@ function Base.show(io::IO, sol::VectorFieldTrajectory)
         end
     catch
     end
-    
+
     print(io, join(parts, ", "))
-    print(io, ")")
+    return print(io, ")")
 end

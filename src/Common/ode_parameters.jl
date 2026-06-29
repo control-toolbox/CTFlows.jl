@@ -44,7 +44,6 @@ struct ODEParameters{V}
     variable::V
 end
 
-
 """
 $(TYPEDSIGNATURES)
 

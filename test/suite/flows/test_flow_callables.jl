@@ -1,6 +1,6 @@
 module TestFlowCallables
 
-import Test
+using Test: Test
 import CTFlows.Systems
 import CTFlows.Flows
 import CTFlows.Integrators
@@ -19,11 +19,11 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # Fake types for testing flow callables
 # ==============================================================================
 
-struct FakeStateSystemFC <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
+struct FakeStateSystemFC <: Systems.AbstractStateSystem{Traits.Autonomous,Traits.Fixed}
     n::Int
 end
 
-struct FakeHamSysFC <: Systems.AbstractHamiltonianSystem{Traits.Autonomous, Traits.Fixed}
+struct FakeHamSysFC <: Systems.AbstractHamiltonianSystem{Traits.Autonomous,Traits.Fixed}
     n::Int
 end
 Traits.ad_trait(::FakeHamSysFC) = Traits.WithoutAD
@@ -40,32 +40,62 @@ function FakeIntegFC()
     return FakeIntegFC(nothing)
 end
 
-function Integrators.build_problem(integ::FakeIntegFC, sys::Systems.AbstractSystem, config::Configs.AbstractConfig; variable=nothing, cache=nothing)
+function Integrators.build_problem(
+    integ::FakeIntegFC,
+    sys::Systems.AbstractSystem,
+    config::Configs.AbstractConfig;
+    variable=nothing,
+    cache=nothing,
+)
     integ.last_config = config
     return :fake_prob
 end
 
-function Integrators.build_options(integ::FakeIntegFC, config::Union{Configs.AbstractConfig, Nothing})
+function Integrators.build_options(
+    integ::FakeIntegFC, config::Union{Configs.AbstractConfig,Nothing}
+)
     return Dict{Symbol,Any}()
 end
 
-function Integrators.solve_problem(integ::FakeIntegFC, prob, options::Dict{Symbol,Any}; unsafe=false)
+function Integrators.solve_problem(
+    integ::FakeIntegFC, prob, options::Dict{Symbol,Any}; unsafe=false
+)
     return FakeResultFC()
 end
 
-function Trajectories.build_trajectory(::Type{Traits.EndPointMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Trajectories.build_trajectory(
+    ::Type{Traits.EndPointMode},
+    ::Type{Traits.StateDynamics},
+    config::Configs.AbstractConfig,
+    result::FakeResultFC,
+)
     return :state_point_sol
 end
 
-function Trajectories.build_trajectory(::Type{Traits.TrajectoryMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Trajectories.build_trajectory(
+    ::Type{Traits.TrajectoryMode},
+    ::Type{Traits.StateDynamics},
+    config::Configs.AbstractConfig,
+    result::FakeResultFC,
+)
     return :state_traj_sol
 end
 
-function Trajectories.build_trajectory(::Type{Traits.EndPointMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Trajectories.build_trajectory(
+    ::Type{Traits.EndPointMode},
+    ::Type{Traits.HamiltonianDynamics},
+    config::Configs.AbstractConfig,
+    result::FakeResultFC,
+)
     return :ham_point_sol
 end
 
-function Trajectories.build_trajectory(::Type{Traits.TrajectoryMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::FakeResultFC)
+function Trajectories.build_trajectory(
+    ::Type{Traits.TrajectoryMode},
+    ::Type{Traits.HamiltonianDynamics},
+    config::Configs.AbstractConfig,
+    result::FakeResultFC,
+)
     return :ham_traj_sol
 end
 
@@ -251,7 +281,9 @@ function test_flow_callables()
                 sys = FakeStateSystemFC(2)
                 flow = Flows.StateFlow(sys, integ)
                 # Fixed flows must not receive a variable parameter
-                Test.@test_throws Exceptions.PreconditionError flow(0.0, [1.0, 0.0], 1.0; variable=0.5, unsafe=true)
+                Test.@test_throws Exceptions.PreconditionError flow(
+                    0.0, [1.0, 0.0], 1.0; variable=0.5, unsafe=true
+                )
             end
 
             Test.@testset "HamiltonianFlow with variable kwarg → PreconditionError" begin
@@ -259,7 +291,9 @@ function test_flow_callables()
                 sys = FakeHamSysFC(2)
                 flow = Flows.HamiltonianFlow(sys, integ)
                 # Fixed flows must not receive a variable parameter
-                Test.@test_throws Exceptions.PreconditionError flow(0.0, [1.0, 0.0], [0.0, 1.0], 1.0; variable=0.5, unsafe=true)
+                Test.@test_throws Exceptions.PreconditionError flow(
+                    0.0, [1.0, 0.0], [0.0, 1.0], 1.0; variable=0.5, unsafe=true
+                )
             end
         end
 

@@ -1,6 +1,6 @@
 module TestSciMLExtension
 
-import Test
+using Test: Test
 import CTBase.Core: Core
 import CTBase.Data: Data
 import CTBase.Exceptions: Exceptions
@@ -21,7 +21,7 @@ using SciMLBase: SciMLBase, ODEProblem
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 import StaticArrays: SA
 const CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
-const CTFlowsSciMLFlows      = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
+const CTFlowsSciMLFlows = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
 const CTFlowsOrdinaryDiffEqTsit5 = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5)
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
@@ -155,43 +155,65 @@ function test_sciml_extension()
         Test.@testset "Validation Error Throws" begin
             Test.@testset "reltol must be positive" begin
                 redirect_stderr(devnull) do
-                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(reltol=-1.0)
-                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(reltol=0.0)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(
+                        reltol=-1.0
+                    )
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(
+                        reltol=0.0
+                    )
                 end
             end
-            
+
             Test.@testset "abstol must be positive" begin
                 redirect_stderr(devnull) do
-                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(abstol=-1.0)
-                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(abstol=0.0)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(
+                        abstol=-1.0
+                    )
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(
+                        abstol=0.0
+                    )
                 end
             end
-            
+
             Test.@testset "maxiters must be positive" begin
                 redirect_stderr(devnull) do
-                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(maxiters=-1)
-                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(maxiters=0)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(
+                        maxiters=-1
+                    )
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(
+                        maxiters=0
+                    )
                 end
             end
-            
+
             Test.@testset "dt must be positive" begin
                 redirect_stderr(devnull) do
-                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dt=-0.1)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(
+                        dt=-0.1
+                    )
                     Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dt=0.0)
                 end
             end
-            
+
             Test.@testset "dtmax must be positive" begin
                 redirect_stderr(devnull) do
-                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dtmax=-0.1)
-                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dtmax=0.0)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(
+                        dtmax=-0.1
+                    )
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(
+                        dtmax=0.0
+                    )
                 end
             end
-            
+
             Test.@testset "dtmin must be positive" begin
                 redirect_stderr(devnull) do
-                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dtmin=-1e-5)
-                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(dtmin=0.0)
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(
+                        dtmin=-1e-5
+                    )
+                    Test.@test_throws Exceptions.IncorrectArgument Integrators.SciML(
+                        dtmin=0.0
+                    )
                 end
             end
         end
@@ -217,7 +239,7 @@ function test_sciml_extension()
                 Test.@test prob.p isa Common.ODEParameters
                 Test.@test Common.variable(prob.p) === nothing
             end
-            
+
             Test.@testset "builds ODEProblem with variable parameter" begin
                 # Create a simple system that takes a variable
                 sys = Systems.VectorFieldSystem(
@@ -228,7 +250,7 @@ function test_sciml_extension()
                 integ = Integrators.SciML()
 
                 # Build ODE problem with variable
-                prob = Integrators.build_problem(integ, sys, config; variable=0.5, )
+                prob = Integrators.build_problem(integ, sys, config; variable=0.5)
 
                 Test.@test prob isa SciMLBase.AbstractODEProblem
                 Test.@test prob.p isa Common.ODEParameters
@@ -271,7 +293,9 @@ function test_sciml_extension()
                 opts = Integrators.build_options(integ, config)
 
                 # Test that solve_problem throws SolverFailure when unsafe=false
-                Test.@test_throws Exceptions.SolverFailure Integrators.solve_problem(integ, prob, opts; unsafe=false)
+                Test.@test_throws Exceptions.SolverFailure Integrators.solve_problem(
+                    integ, prob, opts; unsafe=false
+                )
 
                 # Test the exception contains correct fields
                 try
@@ -316,7 +340,7 @@ function test_sciml_extension()
 
             Test.@test Integrators.final_state(result) isa Vector{Float64}
             Test.@test length(Integrators.final_state(result)) == 2
-            
+
             ts = Integrators.times(result)
             Test.@test ts isa Vector{Float64}
             Test.@test ts[1] == 0.0
@@ -348,7 +372,12 @@ function test_sciml_extension()
                 result = Integrators.solve_problem(integ, prob, opts)
 
                 # Build solution
-                flow_sol = Trajectories.build_trajectory(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
+                flow_sol = Trajectories.build_trajectory(
+                    Configs.mode_trait(config),
+                    Configs.dynamics_trait(config),
+                    config,
+                    result,
+                )
 
                 Test.@test flow_sol isa Number
             end
@@ -371,7 +400,12 @@ function test_sciml_extension()
                 result = Integrators.solve_problem(integ, prob, opts)
 
                 # Build solution
-                flow_sol = Trajectories.build_trajectory(Configs.mode_trait(config), Configs.dynamics_trait(config), config, result)
+                flow_sol = Trajectories.build_trajectory(
+                    Configs.mode_trait(config),
+                    Configs.dynamics_trait(config),
+                    config,
+                    result,
+                )
 
                 Test.@test flow_sol isa Trajectories.VectorFieldTrajectory
             end
@@ -386,51 +420,57 @@ function test_sciml_extension()
             # ODE: dx/dt = -x  →  x(t) = x₀ · e^{-t}
 
             Test.@testset "OOP VF + mutable Vector u0" begin
-                vf  = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                u0  = [1.0, 2.0]
+                u0 = [1.0, 2.0]
                 config = Configs.StateEndPointConfig(0.0, u0, 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 xf = Integrators.final_state(result)
-                Test.@test xf ≈ exp(-1.0) .* [1.0, 2.0]  atol=1e-5
+                Test.@test xf ≈ exp(-1.0) .* [1.0, 2.0] atol=1e-5
             end
 
             Test.@testset "OOP VF + SVector u0" begin
-                vf  = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                u0  = SA[1.0, 2.0]
+                u0 = SA[1.0, 2.0]
                 config = Configs.StateEndPointConfig(0.0, u0, 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 xf = Integrators.final_state(result)
-                Test.@test xf ≈ exp(-1.0) .* [1.0, 2.0]  atol=1e-5
+                Test.@test xf ≈ exp(-1.0) .* [1.0, 2.0] atol=1e-5
             end
 
             Test.@testset "IP VF + mutable Vector u0" begin
-                vf  = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(
+                    (du, x) -> (du .= -x); is_autonomous=true, is_variable=false
+                )
                 sys = Systems.VectorFieldSystem(vf)
-                u0  = [1.0, 2.0]
+                u0 = [1.0, 2.0]
                 config = Configs.StateEndPointConfig(0.0, u0, 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 xf = Integrators.final_state(result)
-                Test.@test xf ≈ exp(-1.0) .* [1.0, 2.0]  atol=1e-5
+                Test.@test xf ≈ exp(-1.0) .* [1.0, 2.0] atol=1e-5
             end
 
             Test.@testset "IP VF + SVector u0 (warns, uses rhs_oop_finalize)" begin
-                vf  = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
+                vf = Data.VectorField(
+                    (du, x) -> (du .= -x); is_autonomous=true, is_variable=false
+                )
                 sys = Systems.VectorFieldSystem(vf)
-                u0  = SA[1.0, 2.0]
+                u0 = SA[1.0, 2.0]
                 config = Configs.StateEndPointConfig(0.0, u0, 1.0)
-                prob = Test.@test_logs (:warn, r"InPlace VectorField") Integrators.build_problem(integ, sys, config; variable=nothing)
+                prob = Test.@test_logs (:warn, r"InPlace VectorField") Integrators.build_problem(
+                    integ, sys, config; variable=nothing
+                )
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 xf = Integrators.final_state(result)
-                Test.@test xf ≈ exp(-1.0) .* [1.0, 2.0]  atol=1e-5
+                Test.@test xf ≈ exp(-1.0) .* [1.0, 2.0] atol=1e-5
             end
         end
 
@@ -443,59 +483,73 @@ function test_sciml_extension()
             # ODE: dx/dt = x, dp/dt = -p  →  x(t)=x₀·eᵗ, p(t)=p₀·e^{-t}
 
             Test.@testset "OOP HVF + mutable Vector u0" begin
-                hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+                hvf = Data.HamiltonianVectorField(
+                    (x, p) -> (x, -p); is_autonomous=true, is_variable=false
+                )
                 sys = Systems.HamiltonianVectorFieldSystem(hvf)
-                x0  = 1.0
-                p0  = 0.5
+                x0 = 1.0
+                p0 = 0.5
                 config = Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 xf = Integrators.final_state(result)
-                Test.@test xf[1] ≈ exp(1.0)       atol=1e-5
-                Test.@test xf[2] ≈ 0.5*exp(-1.0)  atol=1e-5
+                Test.@test xf[1] ≈ exp(1.0) atol=1e-5
+                Test.@test xf[2] ≈ 0.5*exp(-1.0) atol=1e-5
             end
 
             Test.@testset "OOP HVF + SVector u0" begin
-                hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+                hvf = Data.HamiltonianVectorField(
+                    (x, p) -> (x, -p); is_autonomous=true, is_variable=false
+                )
                 sys = Systems.HamiltonianVectorFieldSystem(hvf)
-                x0  = SA[1.0]
-                p0  = SA[0.5]
+                x0 = SA[1.0]
+                p0 = SA[0.5]
                 config = Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 xf = Integrators.final_state(result)
-                Test.@test xf[1] ≈ exp(1.0)       atol=1e-5
-                Test.@test xf[2] ≈ 0.5*exp(-1.0)  atol=1e-5
+                Test.@test xf[1] ≈ exp(1.0) atol=1e-5
+                Test.@test xf[2] ≈ 0.5*exp(-1.0) atol=1e-5
             end
 
             Test.@testset "IP HVF + mutable Vector u0" begin
-                hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
+                hvf = Data.HamiltonianVectorField(
+                    (dx, dp, x, p) -> (dx.=x; dp.=(-p));
+                    is_autonomous=true,
+                    is_variable=false,
+                )
                 sys = Systems.HamiltonianVectorFieldSystem(hvf)
-                x0  = 1.0
-                p0  = 0.5
+                x0 = 1.0
+                p0 = 0.5
                 config = Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0)
                 prob = Integrators.build_problem(integ, sys, config; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 xf = Integrators.final_state(result)
-                Test.@test xf[1] ≈ exp(1.0)       atol=1e-5
-                Test.@test xf[2] ≈ 0.5*exp(-1.0)  atol=1e-5
+                Test.@test xf[1] ≈ exp(1.0) atol=1e-5
+                Test.@test xf[2] ≈ 0.5*exp(-1.0) atol=1e-5
             end
 
             Test.@testset "IP HVF + SVector u0" begin
-                hvf = Data.HamiltonianVectorField((dx, dp, x, p) -> (dx .= x; dp .= -p); is_autonomous=true, is_variable=false)
+                hvf = Data.HamiltonianVectorField(
+                    (dx, dp, x, p) -> (dx.=x; dp.=(-p));
+                    is_autonomous=true,
+                    is_variable=false,
+                )
                 sys = Systems.HamiltonianVectorFieldSystem(hvf)
-                x0  = SA[1.0]
-                p0  = SA[0.5]
+                x0 = SA[1.0]
+                p0 = SA[0.5]
                 config = Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0)
-                prob = Test.@test_logs (:warn, r"InPlace HamiltonianVectorField") Integrators.build_problem(integ, sys, config; variable=nothing)
+                prob = Test.@test_logs (:warn, r"InPlace HamiltonianVectorField") Integrators.build_problem(
+                    integ, sys, config; variable=nothing
+                )
                 opts = Integrators.build_options(integ, config)
                 result = Integrators.solve_problem(integ, prob, opts)
                 xf = Integrators.final_state(result)
-                Test.@test xf[1] ≈ exp(1.0)       atol=1e-5
-                Test.@test xf[2] ≈ 0.5*exp(-1.0)  atol=1e-5
+                Test.@test xf[1] ≈ exp(1.0) atol=1e-5
+                Test.@test xf[2] ≈ 0.5*exp(-1.0) atol=1e-5
             end
         end
 
@@ -523,7 +577,9 @@ function test_sciml_extension()
             end
 
             Test.@testset "explicit values override auto" begin
-                integ_explicit = Integrators.SciML(dense=false, save_everystep=true, save_start=false)
+                integ_explicit = Integrators.SciML(
+                    dense=false, save_everystep=true, save_start=false
+                )
                 opts = Integrators.build_options(integ_explicit, config_traj)
                 Test.@test opts[:dense] === false
                 Test.@test opts[:save_everystep] === true
@@ -562,20 +618,20 @@ function test_sciml_extension()
                     Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 )
                 integ = Integrators.SciML(reltol=1e-8)
-                
+
                 # First segment: [0, 0.5]
                 config1 = Configs.StateEndPointConfig(0.0, [1.0], 0.5)
                 prob1 = Integrators.build_problem(integ, sys, config1; variable=nothing)
                 opts1 = Integrators.build_options(integ, config1)
                 result1 = Integrators.solve_problem(integ, prob1, opts1)
-                
+
                 # Second segment: [0.5, 1.0]
                 xf1 = Integrators.final_state(result1)
                 config2 = Configs.StateEndPointConfig(0.5, xf1, 1.0)
                 prob2 = Integrators.build_problem(integ, sys, config2; variable=nothing)
                 opts2 = Integrators.build_options(integ, config2)
                 result2 = Integrators.solve_problem(integ, prob2, opts2)
-                
+
                 merged = Integrators.merge([result1, result2])
                 Test.@test length(merged.ode_sol.t) > 1
                 xf_merged = Integrators.final_state(merged)
@@ -583,7 +639,9 @@ function test_sciml_extension()
             end
 
             Test.@testset "merge of empty vector throws IncorrectArgument" begin
-                Test.@test_throws Exceptions.IncorrectArgument Integrators.merge(CTFlowsSciMLIntegrator.SciMLIntegrationResult[])
+                Test.@test_throws Exceptions.IncorrectArgument Integrators.merge(
+                    CTFlowsSciMLIntegrator.SciMLIntegrationResult[]
+                )
             end
         end
     end

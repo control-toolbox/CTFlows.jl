@@ -28,13 +28,11 @@ julia> sol = flow(0.0, [1.0, 0.0], 1.0)
 See also: [`CTFlows.Configs.StateEndPointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
 """
 function (f::AbstractStateFlow)(
-    t0::Real,
-    x0,
-    tf::Real;
-    variable=Common.__variable(),
-    unsafe=Common.__unsafe(),
+    t0::Real, x0, tf::Real; variable=Common.__variable(), unsafe=Common.__unsafe()
 )
-    return _invoke_flow(f, Configs.StateEndPointConfig(t0, x0, tf); variable=variable, unsafe=unsafe)
+    return _invoke_flow(
+        f, Configs.StateEndPointConfig(t0, x0, tf); variable=variable, unsafe=unsafe
+    )
 end
 
 """
@@ -77,7 +75,8 @@ function (f::AbstractHamiltonianFlow)(
     variable_costate::Bool=Common.__variable_costate(),
 )
     config = Configs.HamiltonianEndPointConfig(t0, x0, p0, tf)
-    variable_costate && return _invoke_flow_variable_costate(f, config; variable=variable, unsafe=unsafe)
+    variable_costate &&
+        return _invoke_flow_variable_costate(f, config; variable=variable, unsafe=unsafe)
     return _invoke_flow(f, config; variable=variable, unsafe=unsafe)
 end
 
@@ -110,12 +109,11 @@ julia> sol = flow((0.0, 1.0), [1.0, 0.0])
 See also: [`CTFlows.Configs.StateTrajectoryConfig`](@ref), [`CTFlows.Flows.call`](@ref).
 """
 function (f::AbstractStateFlow)(
-    tspan::Tuple{Real, Real},
-    x0;
-    variable=Common.__variable(),
-    unsafe=Common.__unsafe(),
+    tspan::Tuple{Real,Real}, x0; variable=Common.__variable(), unsafe=Common.__unsafe()
 )
-    return _invoke_flow(f, Configs.StateTrajectoryConfig(tspan, x0); variable=variable, unsafe=unsafe)
+    return _invoke_flow(
+        f, Configs.StateTrajectoryConfig(tspan, x0); variable=variable, unsafe=unsafe
+    )
 end
 
 """
@@ -148,7 +146,7 @@ julia> sol = flow((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
 See also: [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Flows.call`](@ref).
 """
 function (f::AbstractHamiltonianFlow)(
-    tspan::Tuple{Real, Real},
+    tspan::Tuple{Real,Real},
     x0,
     p0;
     variable=Common.__variable(),
@@ -156,7 +154,8 @@ function (f::AbstractHamiltonianFlow)(
     variable_costate::Bool=Common.__variable_costate(),
 )
     config = Configs.HamiltonianTrajectoryConfig(tspan, x0, p0)
-    variable_costate && return _invoke_flow_variable_costate(f, config; variable=variable, unsafe=unsafe)
+    variable_costate &&
+        return _invoke_flow_variable_costate(f, config; variable=variable, unsafe=unsafe)
     return _invoke_flow(f, config; variable=variable, unsafe=unsafe)
 end
 
@@ -201,9 +200,13 @@ sol = _invoke_flow(flow_nonfixed, config; variable=0.5, unsafe=false)  # OK, var
 
 See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTBase.Traits.VariableDependence`](), [`CTBase.Core.NotProvided`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Trajectories.build_trajectory`](@ref).
 """
-function _invoke_flow(flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe)
+function _invoke_flow(
+    flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe
+)
     VD = Traits.variable_dependence(flow)
-    return _invoke_flow(VD, typeof(variable), flow, config; variable=variable, unsafe=unsafe)
+    return _invoke_flow(
+        VD, typeof(variable), flow, config; variable=variable, unsafe=unsafe
+    )
 end
 
 # =============================================================================
@@ -235,7 +238,9 @@ Users should call the public `_invoke_flow` function instead.
 
 See also: [`_invoke_flow`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Trajectories.build_trajectory`](@ref).
 """
-function _core_invoke_flow(flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe)
+function _core_invoke_flow(
+    flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe
+)
 
     # get system and integrator
     sys = system(flow)
@@ -252,10 +257,7 @@ function _core_invoke_flow(flow::Flows.AbstractFlow, config::Configs.AbstractCon
 
     # build flow solution
     flow_sol = Trajectories.build_trajectory(
-        Configs.mode_trait(config),
-        Configs.dynamics_trait(config),
-        config,
-        result,
+        Configs.mode_trait(config), Configs.dynamics_trait(config), config, result
     )
 
     return flow_sol
@@ -280,13 +282,17 @@ the contract that NonFixed systems must receive a variable parameter.
 # See also
 [`CTBase.Traits.NonFixed`](), [`CTBase.Core.NotProvided`](@ref).
 """
-function _invoke_flow(::Type{Traits.NonFixed}, ::Type{Core.NotProvidedType}, flow, config; unsafe, variable)
-    throw(Exceptions.PreconditionError(
-        "variable not provided for a NonFixed flow";
-        reason    = "flow depends on an extra variable parameter but none was given",
-        suggestion = "Pass `variable=v` when calling the flow",
-        context   = "call — NonFixed flow with missing variable",
-    ))
+function _invoke_flow(
+    ::Type{Traits.NonFixed}, ::Type{Core.NotProvidedType}, flow, config; unsafe, variable
+)
+    return throw(
+        Exceptions.PreconditionError(
+            "variable not provided for a NonFixed flow";
+            reason="flow depends on an extra variable parameter but none was given",
+            suggestion="Pass `variable=v` when calling the flow",
+            context="call — NonFixed flow with missing variable",
+        ),
+    )
 end
 
 """
@@ -304,7 +310,9 @@ forwards to `_core_invoke_flow` with `variable=nothing`.
 # See also
 [`CTBase.Traits.Fixed`](), [`CTBase.Core.NotProvided`](@ref), [`_core_invoke_flow`](@ref).
 """
-function _invoke_flow(::Type{Traits.Fixed}, ::Type{Core.NotProvidedType}, flow, config; unsafe, variable)
+function _invoke_flow(
+    ::Type{Traits.Fixed}, ::Type{Core.NotProvidedType}, flow, config; unsafe, variable
+)
     return _core_invoke_flow(flow, config; variable=nothing, unsafe=unsafe)
 end
 
@@ -323,7 +331,9 @@ to `_core_invoke_flow` with the provided variable value.
 # See also
 [`CTBase.Traits.NonFixed`](), [`_core_invoke_flow`](@ref).
 """
-function _invoke_flow(::Type{Traits.NonFixed}, ::Type{VT}, flow, config; unsafe, variable) where {VT}
+function _invoke_flow(
+    ::Type{Traits.NonFixed}, ::Type{VT}, flow, config; unsafe, variable
+) where {VT}
     return _core_invoke_flow(flow, config; variable=variable, unsafe=unsafe)
 end
 
@@ -342,13 +352,17 @@ receive a variable parameter, so it throws a `PreconditionError`.
 # See also
 [`CTBase.Traits.Fixed`]().
 """
-function _invoke_flow(::Type{Traits.Fixed}, ::Type{VT}, flow, config; unsafe, variable) where {VT}
-    throw(Exceptions.PreconditionError(
-        "variable provided for a Fixed flow";
-        reason    = "flow does not depend on any variable parameter",
-        suggestion = "Remove the `variable` keyword argument when calling this flow",
-        context   = "call — Fixed flow with unexpected variable",
-    ))
+function _invoke_flow(
+    ::Type{Traits.Fixed}, ::Type{VT}, flow, config; unsafe, variable
+) where {VT}
+    return throw(
+        Exceptions.PreconditionError(
+            "variable provided for a Fixed flow";
+            reason="flow does not depend on any variable parameter",
+            suggestion="Remove the `variable` keyword argument when calling this flow",
+            context="call — Fixed flow with unexpected variable",
+        ),
+    )
 end
 
 """
@@ -366,12 +380,14 @@ clean [`CTBase.Exceptions.PreconditionError`](@extref) instead of a raw `MethodE
 function _invoke_flow(
     VD::Type{<:Traits.VariableDependence}, ::Type{VT}, flow, config; unsafe, variable
 ) where {VT}
-    throw(Exceptions.PreconditionError(
-        "unsupported variable-dependence trait $(VD)";
-        reason     = "the flow reports a variable-dependence trait outside the supported set {Fixed, NonFixed}",
-        suggestion = "build the flow from a system whose variable_dependence is Fixed or NonFixed",
-        context    = "call — unknown VariableDependence tag",
-    ))
+    return throw(
+        Exceptions.PreconditionError(
+            "unsupported variable-dependence trait $(VD)";
+            reason="the flow reports a variable-dependence trait outside the supported set {Fixed, NonFixed}",
+            suggestion="build the flow from a system whose variable_dependence is Fixed or NonFixed",
+            context="call — unknown VariableDependence tag",
+        ),
+    )
 end
 
 # ==============================================================================
@@ -402,12 +418,17 @@ See also: [`CTBase.Traits.variable_costate_trait`](@ref), [`CTBase.Traits.Suppor
 """
 function _invoke_flow_variable_costate(
     flow::AbstractHamiltonianFlow,
-    config::Configs.AbstractHamiltonianConfig; variable, unsafe
+    config::Configs.AbstractHamiltonianConfig;
+    variable,
+    unsafe,
 )
     return _invoke_flow_variable_costate(
         Traits.variable_costate_trait(flow),
         typeof(variable),
-        flow, config; variable=variable, unsafe=unsafe
+        flow,
+        config;
+        variable=variable,
+        unsafe=unsafe,
     )
 end
 
@@ -428,14 +449,18 @@ function _invoke_flow_variable_costate(
     ::Type{Traits.NoVariableCostate},
     ::Type{VT},
     flow::AbstractHamiltonianFlow,
-    config::Configs.HamiltonianEndPointConfig; variable, unsafe
+    config::Configs.HamiltonianEndPointConfig;
+    variable,
+    unsafe,
 ) where {VT}
-    throw(Exceptions.PreconditionError(
-        "variable_costate=true is not supported on this flow";
-        reason     = "Only flows built from a variable-dependent scalar Hamiltonian support it",
-        suggestion = "Use a Hamiltonian with is_variable=true and an AD backend",
-        context    = "HamiltonianFlow call with variable_costate=true",
-    ))
+    return throw(
+        Exceptions.PreconditionError(
+            "variable_costate=true is not supported on this flow";
+            reason="Only flows built from a variable-dependent scalar Hamiltonian support it",
+            suggestion="Use a Hamiltonian with is_variable=true and an AD backend",
+            context="HamiltonianFlow call with variable_costate=true",
+        ),
+    )
 end
 
 """
@@ -462,13 +487,15 @@ function _invoke_flow_variable_costate(
     ::Type{Traits.SupportsVariableCostate},
     ::Type{VT},
     flow::AbstractHamiltonianFlow,
-    config::Configs.HamiltonianEndPointConfig; variable, unsafe
+    config::Configs.HamiltonianEndPointConfig;
+    variable,
+    unsafe,
 ) where {VT}
-    t0  = Configs.initial_time(config) 
-    x0  = Configs.initial_state(config)
-    p0  = Configs.initial_costate(config)
+    t0 = Configs.initial_time(config)
+    x0 = Configs.initial_state(config)
+    p0 = Configs.initial_costate(config)
     pv0 = Core.make_coerce(variable)(zeros(eltype(x0), length(variable)))
-    tf  = Configs.final_time(config)
+    tf = Configs.final_time(config)
     config_aug = Configs.AugmentedHamiltonianEndPointConfig(t0, x0, p0, pv0, tf)
     return _invoke_flow(flow, config_aug; variable=variable, unsafe=unsafe)
 end
@@ -490,14 +517,18 @@ function _invoke_flow_variable_costate(
     ::Type{Traits.SupportsVariableCostate},
     ::Type{Core.NotProvidedType},
     flow::AbstractHamiltonianFlow,
-    config::Configs.HamiltonianEndPointConfig; variable, unsafe
+    config::Configs.HamiltonianEndPointConfig;
+    variable,
+    unsafe,
 )
-    throw(Exceptions.PreconditionError(
-        "variable must be provided when variable_costate=true";
-        reason     = "The system supports variable costate computation, which requires the variable parameter",
-        suggestion = "Provide the variable parameter, e.g., flow(t0, x0, p0, tf; variable=v, variable_costate=true)",
-        context    = "HamiltonianFlow call with variable_costate=true but no variable provided",
-    ))
+    return throw(
+        Exceptions.PreconditionError(
+            "variable must be provided when variable_costate=true";
+            reason="The system supports variable costate computation, which requires the variable parameter",
+            suggestion="Provide the variable parameter, e.g., flow(t0, x0, p0, tf; variable=v, variable_costate=true)",
+            context="HamiltonianFlow call with variable_costate=true but no variable provided",
+        ),
+    )
 end
 
 """
@@ -518,14 +549,18 @@ function _invoke_flow_variable_costate(
     ::Type{Traits.SupportsVariableCostate},
     ::Type{VT},
     flow::AbstractHamiltonianFlow,
-    config::Configs.HamiltonianTrajectoryConfig; variable, unsafe
+    config::Configs.HamiltonianTrajectoryConfig;
+    variable,
+    unsafe,
 ) where {VT}
-    throw(Exceptions.PreconditionError(
-        "variable_costate=true is not supported for trajectory configurations";
-        reason     = "Variable costate computation is only implemented for point configurations, not full trajectories",
-        suggestion = "Use variable_costate=true with a point configuration (t0, x0, p0, tf) instead of a trajectory configuration (tspan, x0, p0)",
-        context    = "HamiltonianFlow call with variable_costate=true and HamiltonianTrajectoryConfig",
-    ))
+    return throw(
+        Exceptions.PreconditionError(
+            "variable_costate=true is not supported for trajectory configurations";
+            reason="Variable costate computation is only implemented for point configurations, not full trajectories",
+            suggestion="Use variable_costate=true with a point configuration (t0, x0, p0, tf) instead of a trajectory configuration (tspan, x0, p0)",
+            context="HamiltonianFlow call with variable_costate=true and HamiltonianTrajectoryConfig",
+        ),
+    )
 end
 
 """
@@ -545,12 +580,16 @@ function _invoke_flow_variable_costate(
     cap::Type{<:Traits.AbstractVariableCostateCapability},
     ::Type{VT},
     flow::AbstractHamiltonianFlow,
-    config::Configs.AbstractHamiltonianConfig; variable, unsafe
+    config::Configs.AbstractHamiltonianConfig;
+    variable,
+    unsafe,
 ) where {VT}
-    throw(Exceptions.PreconditionError(
-        "unsupported variable-costate capability trait $(cap)";
-        reason     = "the flow reports a variable-costate capability outside the supported set {SupportsVariableCostate, NoVariableCostate}",
-        suggestion = "build the flow from a Hamiltonian system whose variable_costate_trait is one of the supported values",
-        context    = "HamiltonianFlow call with variable_costate=true — unknown capability tag",
-    ))
+    return throw(
+        Exceptions.PreconditionError(
+            "unsupported variable-costate capability trait $(cap)";
+            reason="the flow reports a variable-costate capability outside the supported set {SupportsVariableCostate, NoVariableCostate}",
+            suggestion="build the flow from a Hamiltonian system whose variable_costate_trait is one of the supported values",
+            context="HamiltonianFlow call with variable_costate=true — unknown capability tag",
+        ),
+    )
 end

@@ -21,7 +21,7 @@ import CTBase.Strategies
 import CTBase.Options
 import CTBase.Orchestration
 import CTBase.Traits
-import CTModels
+using CTModels: CTModels
 
 # ==============================================================================
 # Internal sibling-submodule imports
@@ -49,7 +49,8 @@ include(joinpath(@__DIR__, "calling.jl"))
 # Module exports
 # ==============================================================================
 
-export AbstractFlow, AbstractStateFlow, AbstractHamiltonianFlow, Flow, StateFlow, HamiltonianFlow
+export AbstractFlow,
+    AbstractStateFlow, AbstractHamiltonianFlow, Flow, StateFlow, HamiltonianFlow
 export OptimalControlFlow
 export system, integrator
 export build_flow

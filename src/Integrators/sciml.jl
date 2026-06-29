@@ -62,7 +62,8 @@ To activate the extension, load any of:
 - `options_point::Dict{Symbol, Any}`: Pre-computed options for StateEndPointConfig.
 - `options_trajectory::Dict{Symbol, Any}`: Pre-computed options for StateTrajectoryConfig.
 """
-struct SciML{O<:Strategies.StrategyOptions, OP<:Dict{Symbol, Any}, OT<:Dict{Symbol, Any}} <: AbstractSciMLIntegrator
+struct SciML{O<:Strategies.StrategyOptions,OP<:Dict{Symbol,Any},OT<:Dict{Symbol,Any}} <:
+       AbstractSciMLIntegrator
     options::O
     options_point::OP
     options_trajectory::OT
@@ -85,9 +86,9 @@ $(TYPEDSIGNATURES)
 Return the description for the SciML integrator.
 """
 function Strategies.description(::Type{<:SciML})
-    "SciML ODE integrator.\n" *
-    "See: https://docs.sciml.ai/DiffEqDocs\n" *
-    "Solver options: https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/"
+    return "SciML ODE integrator.\n" *
+           "See: https://docs.sciml.ai/DiffEqDocs\n" *
+           "Solver options: https://docs.sciml.ai/DiffEqDocs/stable/basics/common_solver_opts/"
 end
 
 # ============================================================================
@@ -108,8 +109,8 @@ is overridden by the `CTFlowsSciMLIntegrator` package extension.
 
 See also: `SciML`, `build_sciml_integrator`.
 """
-function SciML(; mode::Symbol = :strict, kwargs...)
-    return build_sciml_integrator(SciMLTag; mode = mode, kwargs...)
+function SciML(; mode::Symbol=:strict, kwargs...)
+    return build_sciml_integrator(SciMLTag; mode=mode, kwargs...)
 end
 
 """
@@ -120,12 +121,12 @@ Stub builder for `SciML`. The real implementation is provided by
 is loaded.
 """
 function build_sciml_integrator(::Type{<:Core.AbstractTag}; kwargs...)
-    throw(
+    return throw(
         Exceptions.ExtensionError(
             :OrdinaryDiffEqTsit5;
-            message = "to construct a SciML",
-            feature = "ODE integration via SciML",
-            context = "Load OrdinaryDiffEqTsit5, OrdinaryDiffEq, or DifferentialEquations to activate the CTFlowsSciMLIntegrator extension.",
+            message="to construct a SciML",
+            feature="ODE integration via SciML",
+            context="Load OrdinaryDiffEqTsit5, OrdinaryDiffEq, or DifferentialEquations to activate the CTFlowsSciMLIntegrator extension.",
         ),
     )
 end
@@ -143,7 +144,7 @@ See also: `SciML`, `CTBase.Strategies.StrategyMetadata`.
 """
 function Strategies.metadata(::Type{<:AbstractSciMLIntegrator})
     # Extension is missing
-    throw(
+    return throw(
         Exceptions.ExtensionError(
             :OrdinaryDiffEqTsit5;
             message="to access SciML options metadata",

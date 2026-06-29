@@ -1,6 +1,6 @@
 module TestHamRHSFunctors
 
-import Test
+using Test: Test
 import CTBase.Exceptions
 import CTFlows.Common: Common
 import CTBase.Data: Data
@@ -15,23 +15,27 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # Fake Hamiltonian and backend for testing (top-level)
 # =============================================================================
 
-const FakeHamiltonian = Data.Hamiltonian((x, p) -> 0.5 * (x[1]^2 + x[2]^2) + 0.5 * (p[1]^2 + p[2]^2); is_autonomous=true, is_variable=false)
-const FakeHamiltonianNF = Data.Hamiltonian((x, p, v) -> 0.5 * (x[1]^2 + x[2]^2) + 0.5 * (p[1]^2 + p[2]^2) + 0.5 * v^2; is_autonomous=true, is_variable=true)
+const FakeHamiltonian = Data.Hamiltonian(
+    (x, p) -> 0.5 * (x[1]^2 + x[2]^2) + 0.5 * (p[1]^2 + p[2]^2);
+    is_autonomous=true,
+    is_variable=false,
+)
+const FakeHamiltonianNF = Data.Hamiltonian(
+    (x, p, v) -> 0.5 * (x[1]^2 + x[2]^2) + 0.5 * (p[1]^2 + p[2]^2) + 0.5 * v^2;
+    is_autonomous=true,
+    is_variable=true,
+)
 
 struct FakeADBackend <: Differentiation.AbstractADBackend end
 
 function Differentiation.hamiltonian_gradient(
-    backend::FakeADBackend,
-    h::Data.AbstractHamiltonian,
-    t, x, p, v,
+    backend::FakeADBackend, h::Data.AbstractHamiltonian, t, x, p, v
 )
     return (x, p)
 end
 
 function Differentiation.variable_gradient(
-    backend::FakeADBackend,
-    h::Data.AbstractHamiltonian,
-    t, x, p, v,
+    backend::FakeADBackend, h::Data.AbstractHamiltonian, t, x, p, v
 )
     return zeros(length(v))
 end
@@ -166,7 +170,9 @@ function test_ham_rhs_functors()
             # Incompatible matrices
             u2 = [1.0 2.0; 3.0 4.0]
             v2 = [0.5 0.6 0.7]
-            Test.@test_throws Exceptions.PreconditionError Systems._check_aug_batch_compat(u2, v2)
+            Test.@test_throws Exceptions.PreconditionError Systems._check_aug_batch_compat(
+                u2, v2
+            )
 
             # Non-matrix cases (no-op)
             u3 = [1.0, 2.0, 3.0]
@@ -196,7 +202,7 @@ function test_ham_rhs_functors()
 
             Test.@inferred ip_rhs(du, u, λ, t)
             Test.@inferred oop_rhs(u, λ, t)
-            
+
             # Note: HamIpAugRHS type stability not tested due to batch mode complexity
         end
 
@@ -215,11 +221,14 @@ function test_ham_rhs_functors()
             Test.@test occursin("HamIpRHS", sprint(show, ip_rhs))
             Test.@test occursin("Hamiltonian AD → in-place interface", sprint(show, ip_rhs))
             Test.@test occursin("HamOoPRHS", sprint(show, oop_rhs))
-            Test.@test occursin("Hamiltonian AD → out-of-place interface", sprint(show, oop_rhs))
+            Test.@test occursin(
+                "Hamiltonian AD → out-of-place interface", sprint(show, oop_rhs)
+            )
             Test.@test occursin("HamIpAugRHS", sprint(show, aug_rhs))
-            Test.@test occursin("Hamiltonian AD → in-place augmented interface", sprint(show, aug_rhs))
+            Test.@test occursin(
+                "Hamiltonian AD → in-place augmented interface", sprint(show, aug_rhs)
+            )
         end
-
     end
 end
 

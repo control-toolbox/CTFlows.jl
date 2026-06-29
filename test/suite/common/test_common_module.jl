@@ -13,8 +13,8 @@
 
 module TestCommonModule
 
-import Test
-import CTFlows
+using Test: Test
+using CTFlows: CTFlows
 import CTFlows.Common
 using CTFlows.Common  # For testing exported symbols
 
@@ -29,9 +29,7 @@ const CurrentModule = TestCommonModule
 # These lists define the expected public API of the Common module.
 # For other modules, create similar lists with their specific exports.
 
-const EXPORTED_TYPES = (
-    :ODEParameters,
-)
+const EXPORTED_TYPES = (:ODEParameters,)
 
 const EXPORTED_FUNCTIONS = (
     :variable,

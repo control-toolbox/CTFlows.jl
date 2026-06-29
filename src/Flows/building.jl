@@ -111,9 +111,9 @@ See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.build_syste
 [`_route_flow_options`](@ref), [`_build_flow_components`](@ref)
 """
 function Flow(h::Data.AbstractHamiltonian; kwargs...)
-    routed     = _route_flow_options(kwargs)
+    routed = _route_flow_options(kwargs)
     components = _build_flow_components(routed)
-    sys        = Systems.build_system(h, components.backend)
+    sys = Systems.build_system(h, components.backend)
     return build_flow(sys, components.integrator)
 end
 
@@ -153,34 +153,37 @@ end
 
 # control-free OCP → build the Hamiltonian flow directly
 function _flow_from_ocp(::Type{Traits.ControlFree}, ocp::CTModels.Models.Model; kwargs...)
-    routed     = _route_flow_options(kwargs)
+    routed = _route_flow_options(kwargs)
     components = _build_flow_components(routed)
-    h          = _ocp_hamiltonian(ocp)
-    sys        = Systems.build_system(h, components.backend)
-    inner      = build_flow(sys, components.integrator)
+    h = _ocp_hamiltonian(ocp)
+    sys = Systems.build_system(h, components.backend)
+    inner = build_flow(sys, components.integrator)
     return OptimalControlFlow(inner, ocp)
 end
 
 # with-control OCP → not supported on this path
 function _flow_from_ocp(::Type{Traits.WithControl}, ::CTModels.Models.Model; kwargs...)
-    throw(Exceptions.PreconditionError(
-        "Flow from a with-control OCP is not supported";
-        reason     = "this path builds the flow from the OCP structure assuming no control " *
-                     "(ẋ = f(t,x,∅,v)); a problem with a control input would require a control " *
-                     "law u(t,x,p) from the maximisation of the pseudo-Hamiltonian",
-        suggestion = "build the Hamiltonian flow yourself from a control law, e.g. " *
-                     "Flow(Hamiltonian(...)), or use a control-free OCP",
-        context    = "Flow(ocp::CTModels.Models.Model) — control-dependence dispatch",
-    ))
+    return throw(
+        Exceptions.PreconditionError(
+            "Flow from a with-control OCP is not supported";
+            reason="this path builds the flow from the OCP structure assuming no control " *
+                   "(ẋ = f(t,x,∅,v)); a problem with a control input would require a control " *
+                   "law u(t,x,p) from the maximisation of the pseudo-Hamiltonian",
+            suggestion="build the Hamiltonian flow yourself from a control law, e.g. " *
+                       "Flow(Hamiltonian(...)), or use a control-free OCP",
+            context="Flow(ocp::CTModels.Models.Model) — control-dependence dispatch",
+        ),
+    )
 end
 
 function Flow(::CTModels.Models.Model, ::Any, args...; kwargs...)
-    throw(Exceptions.PreconditionError(
-        "Flow(ocp, …) with extra positional arguments is not supported";
-        reason     = "passing a control law, state constraint or multiplier as a positional " *
-                     "argument is not handled by the OCP flow constructor",
-        suggestion = "call Flow(ocp; kwargs…) — the OCP flow takes no positional argument beyond the model",
-        context    = "Flow(ocp::CTModels.Models.Model) — positional-argument guard",
-    ))
+    return throw(
+        Exceptions.PreconditionError(
+            "Flow(ocp, …) with extra positional arguments is not supported";
+            reason="passing a control law, state constraint or multiplier as a positional " *
+                   "argument is not handled by the OCP flow constructor",
+            suggestion="call Flow(ocp; kwargs…) — the OCP flow takes no positional argument beyond the model",
+            context="Flow(ocp::CTModels.Models.Model) — positional-argument guard",
+        ),
+    )
 end
-

@@ -1,6 +1,6 @@
 module TestIntegrationResult
 
-import Test
+using Test: Test
 import CTFlows.Integrators
 import CTBase.Exceptions
 
@@ -27,20 +27,22 @@ function test_integration_result()
         Test.@testset "AbstractIntegrationResult" begin
             Test.@testset "final_state throws NotImplemented on abstract type" begin
                 result = FakeResult()
-                
+
                 Test.@test_throws Exceptions.NotImplemented Integrators.final_state(result)
             end
 
             Test.@testset "times throws NotImplemented on abstract type" begin
                 result = FakeResult()
-                
+
                 Test.@test_throws Exceptions.NotImplemented Integrators.times(result)
             end
 
             Test.@testset "evaluate_at throws NotImplemented on abstract type" begin
                 result = FakeResult()
-                
-                Test.@test_throws Exceptions.NotImplemented Integrators.evaluate_at(result, 0.0)
+
+                Test.@test_throws Exceptions.NotImplemented Integrators.evaluate_at(
+                    result, 0.0
+                )
             end
         end
 

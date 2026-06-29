@@ -1,6 +1,6 @@
 module TestHamiltonianVectorFieldTrajectory
 
-import Test
+using Test: Test
 import CTFlows.Integrators: Integrators
 import CTFlows.Trajectories: Trajectories
 import CTBase.Exceptions
@@ -22,7 +22,8 @@ end
 # Fake HamiltonianVectorFieldTrajectory for testing plot stub
 # =============================================================================
 
-struct FakeHamiltonianVectorFieldTrajectory <: Trajectories.AbstractHamiltonianVectorFieldTrajectory
+struct FakeHamiltonianVectorFieldTrajectory <:
+       Trajectories.AbstractHamiltonianVectorFieldTrajectory
     data::String
 end
 
@@ -39,12 +40,14 @@ end
 # Implement merge for FakeHamiltonianResult to support merge tests
 function Integrators.merge(results::AbstractVector{<:FakeHamiltonianResult})
     if isempty(results)
-        throw(Exceptions.IncorrectArgument(
-            "Cannot merge empty sequence of FakeHamiltonianResult";
-            got = "0 results",
-            expected = "at least 1 result",
-            context = "FakeHamiltonianResult merge",
-        ))
+        throw(
+            Exceptions.IncorrectArgument(
+                "Cannot merge empty sequence of FakeHamiltonianResult";
+                got="0 results",
+                expected="at least 1 result",
+                context="FakeHamiltonianResult merge",
+            ),
+        )
     end
     # Combine times and states from all results
     all_ts = vcat([r.ts for r in results]...)
@@ -56,25 +59,33 @@ end
 
 function test_hamiltonian_vector_field_trajectory()
     Test.@testset "Hamiltonian Vector Field Solution Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
-        
+
         # ====================================================================
         # UNIT TESTS - Construction
         # ====================================================================
-        
+
         Test.@testset "Construction" begin
-            result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
+            result = FakeHamiltonianResult(
+                [1.0, 2.0, 3.0, 4.0],
+                [0.0, 0.5, 1.0],
+                [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]],
+            )
             x0 = [1.0, 2.0]  # initial state
             sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, result)
             Test.@test sol isa Trajectories.HamiltonianVectorFieldTrajectory
             Test.@test sol isa Trajectories.AbstractHamiltonianVectorFieldTrajectory
         end
-        
+
         # ====================================================================
         # UNIT TESTS - sol(t) returns tuple
         # ====================================================================
-        
+
         Test.@testset "sol(t) returns tuple" begin
-            result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
+            result = FakeHamiltonianResult(
+                [1.0, 2.0, 3.0, 4.0],
+                [0.0, 0.5, 1.0],
+                [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]],
+            )
             x0 = [1.0, 2.0]  # initial state
             sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, result)
 
@@ -90,13 +101,17 @@ function test_hamiltonian_vector_field_trajectory()
             Test.@test x == [2.0, 3.0]
             Test.@test p == [4.0, 5.0]
         end
-        
+
         # ====================================================================
         # UNIT TESTS - state and costate accessors
         # ====================================================================
-        
+
         Test.@testset "state and costate accessors" begin
-            result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
+            result = FakeHamiltonianResult(
+                [1.0, 2.0, 3.0, 4.0],
+                [0.0, 0.5, 1.0],
+                [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]],
+            )
             x0 = [1.0, 2.0]  # initial state
             sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, result)
 
@@ -108,13 +123,17 @@ function test_hamiltonian_vector_field_trajectory()
             Test.@test p_func isa Function
             Test.@test p_func(0.0) == [3.0, 4.0]
         end
-        
+
         # ====================================================================
         # UNIT TESTS - final_state
         # ====================================================================
-        
+
         Test.@testset "final_state" begin
-            result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
+            result = FakeHamiltonianResult(
+                [1.0, 2.0, 3.0, 4.0],
+                [0.0, 0.5, 1.0],
+                [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]],
+            )
             x0 = [1.0, 2.0]  # initial state
             sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, result)
 
@@ -122,37 +141,49 @@ function test_hamiltonian_vector_field_trajectory()
             Test.@test x == [1.0, 2.0]
             Test.@test p == [3.0, 4.0]
         end
-        
+
         # ====================================================================
         # UNIT TESTS - time_grid
         # ====================================================================
-        
+
         Test.@testset "time_grid" begin
-            result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
+            result = FakeHamiltonianResult(
+                [1.0, 2.0, 3.0, 4.0],
+                [0.0, 0.5, 1.0],
+                [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]],
+            )
             x0 = [1.0, 2.0]  # initial state
             sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, result)
 
             tg = Trajectories.time_grid(sol)
             Test.@test tg == [0.0, 0.5, 1.0]
         end
-        
+
         # ====================================================================
         # UNIT TESTS - Integrators.merge
         # ====================================================================
-        
+
         Test.@testset "Integrators.merge" begin
             Test.@testset "merge single segment" begin
-                result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
+                result = FakeHamiltonianResult(
+                    [1.0, 2.0, 3.0, 4.0],
+                    [0.0, 0.5, 1.0],
+                    [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]],
+                )
                 x0 = [1.0, 2.0]  # initial state
                 sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, result)
 
                 merged = Integrators.merge([sol])
                 Test.@test merged isa Trajectories.HamiltonianVectorFieldTrajectory
             end
-            
+
             Test.@testset "merge multiple segments" begin
-                result1 = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5]])
-                result2 = FakeHamiltonianResult([1.5, 2.5, 3.5, 4.5], [0.5, 1.0], [[2, 3, 4, 5], [2.5, 3.5, 4.5, 5.5]])
+                result1 = FakeHamiltonianResult(
+                    [1.0, 2.0, 3.0, 4.0], [0.0, 0.5], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5]]
+                )
+                result2 = FakeHamiltonianResult(
+                    [1.5, 2.5, 3.5, 4.5], [0.5, 1.0], [[2, 3, 4, 5], [2.5, 3.5, 4.5, 5.5]]
+                )
                 x0 = [1.0, 2.0]  # initial state
                 sol1 = Trajectories.HamiltonianVectorFieldTrajectory(x0, result1)
                 sol2 = Trajectories.HamiltonianVectorFieldTrajectory(x0, result2)
@@ -160,19 +191,25 @@ function test_hamiltonian_vector_field_trajectory()
                 merged = Integrators.merge([sol1, sol2])
                 Test.@test merged isa Trajectories.HamiltonianVectorFieldTrajectory
             end
-            
+
             Test.@testset "merge throws on empty sequence" begin
-                Test.@test_throws Exceptions.IncorrectArgument Integrators.merge(Trajectories.HamiltonianVectorFieldTrajectory[])
+                Test.@test_throws Exceptions.IncorrectArgument Integrators.merge(
+                    Trajectories.HamiltonianVectorFieldTrajectory[]
+                )
             end
         end
-        
+
         # ====================================================================
         # UNIT TESTS - Base.show
         # ====================================================================
-        
+
         Test.@testset "Base.show" begin
             Test.@testset "text/plain format" begin
-                result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
+                result = FakeHamiltonianResult(
+                    [1.0, 2.0, 3.0, 4.0],
+                    [0.0, 0.5, 1.0],
+                    [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]],
+                )
                 x0 = [1.0, 2.0]  # initial state
                 sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, result)
 
@@ -181,9 +218,13 @@ function test_hamiltonian_vector_field_trajectory()
                 output = String(take!(io))
                 Test.@test occursin("HamiltonianVectorFieldTrajectory", output)
             end
-            
+
             Test.@testset "compact format" begin
-                result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
+                result = FakeHamiltonianResult(
+                    [1.0, 2.0, 3.0, 4.0],
+                    [0.0, 0.5, 1.0],
+                    [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]],
+                )
                 x0 = [1.0, 2.0]  # initial state
                 sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, result)
 
@@ -192,9 +233,11 @@ function test_hamiltonian_vector_field_trajectory()
                 output = String(take!(io))
                 Test.@test occursin("HamiltonianVectorFieldTrajectory", output)
             end
-            
+
             Test.@testset "show handles empty times gracefully" begin
-                result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], Float64[], Vector{Vector{Float64}}[])
+                result = FakeHamiltonianResult(
+                    [1.0, 2.0, 3.0, 4.0], Float64[], Vector{Vector{Float64}}[]
+                )
                 x0 = [1.0, 2.0]  # initial state
                 sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, result)
 
@@ -204,7 +247,7 @@ function test_hamiltonian_vector_field_trajectory()
                 Test.@test occursin("HamiltonianVectorFieldTrajectory", output)
             end
         end
-        
+
         # ====================================================================
         # UNIT TESTS - Plot stub
         # ====================================================================
@@ -271,7 +314,11 @@ function test_hamiltonian_vector_field_trajectory()
         # ====================================================================
 
         Test.@testset "Type stability" begin
-            result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
+            result = FakeHamiltonianResult(
+                [1.0, 2.0, 3.0, 4.0],
+                [0.0, 0.5, 1.0],
+                [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]],
+            )
             x0 = [1.0, 2.0]
             sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, result)
 
@@ -305,14 +352,20 @@ function test_hamiltonian_vector_field_trajectory()
         # ====================================================================
 
         Test.@testset "Allocation: functor adds no overhead vs direct call" begin
-            result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
+            result = FakeHamiltonianResult(
+                [1.0, 2.0, 3.0, 4.0],
+                [0.0, 0.5, 1.0],
+                [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]],
+            )
             x0 = [1.0, 2.0]
             sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, result)
 
             x_func = Trajectories.state(sol)
             p_func = Trajectories.costate(sol)
             # warm-up (force compilation)
-            x_func(0.0); p_func(0.0); sol(0.0)
+            x_func(0.0);
+            p_func(0.0);
+            sol(0.0)
 
             Test.@testset "StateProjection matches direct sol(t)[1]" begin
                 Test.@test (@allocated x_func(0.0)) == (@allocated sol(0.0)[1])
@@ -329,7 +382,11 @@ function test_hamiltonian_vector_field_trajectory()
 
         Test.@testset "Edge cases" begin
             Test.@testset "time beyond grid returns last point" begin
-                result = FakeHamiltonianResult([1.0, 2.0, 3.0, 4.0], [0.0, 0.5, 1.0], [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]])
+                result = FakeHamiltonianResult(
+                    [1.0, 2.0, 3.0, 4.0],
+                    [0.0, 0.5, 1.0],
+                    [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]],
+                )
                 x0 = [1.0, 2.0]
                 sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, result)
 
@@ -339,7 +396,9 @@ function test_hamiltonian_vector_field_trajectory()
             end
 
             Test.@testset "scalar initial state" begin
-                result = FakeHamiltonianResult([1.0, 2.0], [0.0, 0.5, 1.0], [[1.0, 2.0], [1.5, 2.5], [2.0, 3.0]])
+                result = FakeHamiltonianResult(
+                    [1.0, 2.0], [0.0, 0.5, 1.0], [[1.0, 2.0], [1.5, 2.5], [2.0, 3.0]]
+                )
                 x0 = 1.0
                 sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, result)
 
@@ -356,4 +415,6 @@ end
 end # module
 
 # CRITICAL: Redefine in outer scope for TestRunner
-test_hamiltonian_vector_field_trajectory() = TestHamiltonianVectorFieldTrajectory.test_hamiltonian_vector_field_trajectory()
+function test_hamiltonian_vector_field_trajectory()
+    return TestHamiltonianVectorFieldTrajectory.test_hamiltonian_vector_field_trajectory()
+end
