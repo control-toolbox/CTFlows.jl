@@ -11,6 +11,7 @@ import CTFlows.Common
 import CTBase.Core
 import CTFlows.Configs
 import CTBase.Traits
+import CommonSolve
 import ADTypes
 import DifferentiationInterface
 import ForwardDiff  # triggers DifferentiationInterfaceForwardDiff (provides PushforwardFast)
@@ -80,7 +81,7 @@ Tracks which methods were called.
 mutable struct FakeIntegratorForCalling <: Integrators.AbstractIntegrator
     build_problem_called::Bool
     build_options_called::Bool
-    solve_problem_called::Bool
+    solve_called::Bool
     problem_result::Any
     ode_solution::Any
 end
@@ -89,8 +90,8 @@ function FakeIntegratorForCalling()
     return FakeIntegratorForCalling(false, false, false, nothing, nothing)
 end
 
-# Implement named functions instead of callables
-function Integrators.build_problem(integ::FakeIntegratorForCalling, system::Systems.AbstractSystem, config::Configs.AbstractConfig; variable=nothing)
+# Implement the CTFlows glue generics and CommonSolve.solve (problem-first)
+function Integrators.build_problem(system::Systems.AbstractSystem, config::Configs.AbstractConfig, integ::FakeIntegratorForCalling; variable=nothing)
     integ.build_problem_called = true
     p = Common.ODEParameters(variable)
     integ.problem_result = :fake_ode_problem
@@ -102,8 +103,8 @@ function Integrators.build_options(integ::FakeIntegratorForCalling, config::Unio
     return Dict{Symbol,Any}()
 end
 
-function Integrators.solve_problem(integ::FakeIntegratorForCalling, prob, options::Dict{Symbol,Any}; unsafe=false)
-    integ.solve_problem_called = true
+function CommonSolve.solve(prob, integ::FakeIntegratorForCalling; options=Dict{Symbol,Any}(), unsafe=false)
+    integ.solve_called = true
     integ.ode_solution = FakeIntegrationResultForCalling()
     return integ.ode_solution
 end
@@ -189,7 +190,7 @@ function test_calling_flows()
                 # Verify all steps were called
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
-                Test.@test integ.solve_problem_called === true
+                Test.@test integ.solve_called === true
                 
                 # Verify result - for StateEndPointConfig it unwraps the vector
                 Test.@test result == :fake_flow_solution
@@ -215,7 +216,7 @@ function test_calling_flows()
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
-                Test.@test integ.solve_problem_called === true
+                Test.@test integ.solve_called === true
                 Test.@test result === :fake_vector_field_solution
             end
 
@@ -230,7 +231,7 @@ function test_calling_flows()
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
-                Test.@test integ.solve_problem_called === true
+                Test.@test integ.solve_called === true
                 Test.@test result == :fake_flow_solution
             end
 
@@ -244,7 +245,7 @@ function test_calling_flows()
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
-                Test.@test integ.solve_problem_called === true
+                Test.@test integ.solve_called === true
                 Test.@test result == (:fake_xf, :fake_pf)
             end
 
@@ -258,7 +259,7 @@ function test_calling_flows()
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
-                Test.@test integ.solve_problem_called === true
+                Test.@test integ.solve_called === true
                 Test.@test result === :fake_hamiltonian_solution
             end
         end
@@ -278,7 +279,7 @@ function test_calling_flows()
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
-                Test.@test integ.solve_problem_called === true
+                Test.@test integ.solve_called === true
                 Test.@test result == (:fake_xf, :fake_pf)
             end
 
@@ -294,7 +295,7 @@ function test_calling_flows()
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
-                Test.@test integ.solve_problem_called === true
+                Test.@test integ.solve_called === true
                 Test.@test result == (:fake_xf, :fake_pf)
             end
 
@@ -308,7 +309,7 @@ function test_calling_flows()
 
                 Test.@test integ.build_problem_called === true
                 Test.@test integ.build_options_called === true
-                Test.@test integ.solve_problem_called === true
+                Test.@test integ.solve_called === true
                 Test.@test result == :fake_flow_solution
             end
 
@@ -328,7 +329,7 @@ function test_calling_flows()
 
             Test.@test integ.build_problem_called === true
             Test.@test integ.build_options_called === true
-            Test.@test integ.solve_problem_called === true
+            Test.@test integ.solve_called === true
             Test.@test result == :fake_flow_solution
         end
 
@@ -351,7 +352,7 @@ function test_calling_flows()
 
             Test.@test integ.build_problem_called === true
             Test.@test integ.build_options_called === true
-            Test.@test integ.solve_problem_called === true
+            Test.@test integ.solve_called === true
             Test.@test result == :fake_flow_solution
         end
 

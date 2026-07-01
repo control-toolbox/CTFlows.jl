@@ -10,9 +10,7 @@ import CTFlows.Flows: Flows, AbstractFlow
 # Get extension to access SciML integrator
 using SciMLBase: SciMLBase, ODEProblem, ODEFunction
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
-const CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
 const CTFlowsSciMLFlows      = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
-const CTFlowsOrdinaryDiffEqTsit5 = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5)
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
@@ -112,7 +110,7 @@ function test_scimlbase_problem_flow()
                 integ = Integrators.SciML()
                 flow = CTFlowsSciMLFlows.SciMLProblemFlow(prob, integ)
                 result = flow(; unsafe=false)
-                Test.@test result isa CTFlowsSciMLIntegrator.SciMLIntegrationResult
+                Test.@test result isa Integrators.AbstractIntegrationResult
                 xf = Integrators.final_state(result)
                 Test.@test xf isa Vector
                 Test.@test length(xf) == 1
@@ -164,13 +162,13 @@ function test_scimlbase_problem_flow()
         # ====================================================================
 
         Test.@testset "Integration: Trajectory Call" begin
-            Test.@testset "trajectory call returns SciMLIntegrationResult" begin
+            Test.@testset "trajectory call returns an AbstractIntegrationResult" begin
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
                 prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
                 integ = Integrators.SciML()
                 flow = CTFlowsSciMLFlows.SciMLProblemFlow(prob, integ)
                 result = flow((0.0, 1.0), [1.0]; unsafe=false)
-                Test.@test result isa CTFlowsSciMLIntegrator.SciMLIntegrationResult
+                Test.@test result isa Integrators.AbstractIntegrationResult
                 xf = Integrators.final_state(result)
                 Test.@test xf isa Vector
                 Test.@test length(xf) == 1
@@ -226,7 +224,7 @@ function test_scimlbase_problem_flow()
                 flow = CTFlowsSciMLFlows.SciMLProblemFlow(prob, integ)
                 # This should not throw even if integration fails
                 result = flow((0.0, 10.0), [1.0]; unsafe=true)
-                Test.@test result isa CTFlowsSciMLIntegrator.SciMLIntegrationResult
+                Test.@test result isa Integrators.AbstractIntegrationResult
             end
         end
     end

@@ -3,11 +3,14 @@
 
 Shared utilities and types for CTFlows.
 
-This module provides fallback implementations for grid invariance (IND) support:
-- `deepvalue(x::Real)` — Base case for extracting primal values
-- `real_norm(u::Real, t)` — Base case for internal norm computation
+This module provides:
+- `ODEParameters` and its `variable` accessor — the wrapper transiting in SciML's parameter
+  slot, read by the system right-hand-side functors;
+- package-local default values for flow-call keyword arguments (`__variable`, `__unsafe`,
+  `__hvf_inplace`, `__variable_costate`).
 
-ForwardDiff-specific implementations are provided in `CTFlowsForwardDiff` when ForwardDiff is loaded.
+The grid-invariance helpers (`deepvalue`/`real_norm`) now live in
+[`CTSolvers.Integrators`](@extref) and are no longer part of this module.
 """
 module Common
 # ==============================================================================
@@ -23,7 +26,6 @@ import CTBase.Core
 
 include(joinpath(@__DIR__, "ode_parameters.jl"))
 include(joinpath(@__DIR__, "default.jl"))
-include(joinpath(@__DIR__, "internal_norm.jl"))
 
 # ==============================================================================
 # Module exports
@@ -31,6 +33,5 @@ include(joinpath(@__DIR__, "internal_norm.jl"))
 
 export ODEParameters, variable
 export __variable, __unsafe, __hvf_inplace, __variable_costate
-export deepvalue, real_norm
 
 end # module Common

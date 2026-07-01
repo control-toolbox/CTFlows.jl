@@ -22,6 +22,7 @@ import CTBase.Options
 import CTBase.Orchestration
 import CTBase.Traits
 import CTModels
+import CommonSolve: CommonSolve
 
 # ==============================================================================
 # Internal sibling-submodule imports

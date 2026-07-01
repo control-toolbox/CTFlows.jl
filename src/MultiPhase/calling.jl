@@ -94,7 +94,7 @@ Iterates through all phases sequentially, collecting segment results and applyin
 # Returns
 - Merged trajectory solution after all phases.
 
-See also: [`CTFlows.Integrators.merge`](@ref), [`CTFlows.MultiPhase._evaluate_phase`](@ref), [`CTFlows.MultiPhase._apply_jump`](@ref).
+See also: [`CTSolvers.Integrators.merge`](@extref), [`CTFlows.MultiPhase._evaluate_phase`](@ref), [`CTFlows.MultiPhase._apply_jump`](@ref).
 """
 function _evaluate_multiphase(mpf, config::Configs.AbstractTrajectoryConfig; variable, unsafe)
     t0, tf = Configs.tspan(config)

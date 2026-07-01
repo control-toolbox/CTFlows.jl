@@ -21,7 +21,6 @@ using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 using StaticArrays: SA, SVector
 
 const CTFlowsSciMLFlows = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
-const CTFlowsOrdinaryDiffEqTsit5 = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5)
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
@@ -138,7 +137,7 @@ function test_scimlbase_function_system()
                 sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
                 integ = Integrators.SciML()
                 config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
-                prob = Integrators.build_problem(integ, sys, config; variable=2.0)
+                prob = Integrators.build_problem(sys, config, integ; variable=2.0)
                 Test.@test prob isa SciMLBase.ODEProblem
                 Test.@test prob.p isa Common.ODEParameters
                 Test.@test prob.p.variable == 2.0
@@ -149,7 +148,7 @@ function test_scimlbase_function_system()
                 sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
                 integ = Integrators.SciML()
                 config = Configs.StateEndPointConfig(0.0, [1.0], 1.0)
-                prob = Integrators.build_problem(integ, sys, config; variable=3.5)
+                prob = Integrators.build_problem(sys, config, integ; variable=3.5)
                 Test.@test prob.p isa Common.ODEParameters
                 Test.@test prob.p.variable == 3.5
             end

@@ -30,7 +30,7 @@ julia> MyFlow <: Flows.AbstractFlow
 true
 \`\`\`
 
-See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref).
+See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTSolvers.Integrators.AbstractIntegrator`](@extref).
 """
 abstract type AbstractFlow{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, D<:Traits.AbstractDynamicsTrait} end
 
@@ -264,7 +264,7 @@ Return the associated `AbstractIntegrator` for the flow.
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
 
-See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTSolvers.Integrators.AbstractIntegrator`](@extref).
 """
 function integrator(flow::AbstractFlow)
     throw(Exceptions.NotImplemented(

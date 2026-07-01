@@ -9,6 +9,7 @@ import CTFlows.Common
 import CTFlows.Configs
 import CTBase.Traits
 import CTBase.Exceptions
+import CommonSolve
 
 using StaticArrays: SA
 
@@ -40,7 +41,7 @@ function FakeIntegFC()
     return FakeIntegFC(nothing)
 end
 
-function Integrators.build_problem(integ::FakeIntegFC, sys::Systems.AbstractSystem, config::Configs.AbstractConfig; variable=nothing, cache=nothing)
+function Integrators.build_problem(sys::Systems.AbstractSystem, config::Configs.AbstractConfig, integ::FakeIntegFC; variable=nothing)
     integ.last_config = config
     return :fake_prob
 end
@@ -49,7 +50,7 @@ function Integrators.build_options(integ::FakeIntegFC, config::Union{Configs.Abs
     return Dict{Symbol,Any}()
 end
 
-function Integrators.solve_problem(integ::FakeIntegFC, prob, options::Dict{Symbol,Any}; unsafe=false)
+function CommonSolve.solve(prob, integ::FakeIntegFC; options=Dict{Symbol,Any}(), unsafe=false)
     return FakeResultFC()
 end
 

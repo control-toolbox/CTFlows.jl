@@ -5,7 +5,7 @@ Abstract supertype for vector field solution containers.
 
 This type defines the interface for all solution types that wrap ODE integration results.
 
-See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
+See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref).
 """
 abstract type AbstractVectorFieldTrajectory end
 
@@ -35,7 +35,7 @@ x = state(sol)            # callable state function
 x(0.5)                    # evaluate at t = 0.5
 \`\`\`
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.AbstractVectorFieldTrajectory`](@ref).
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.AbstractVectorFieldTrajectory`](@ref).
 """
 struct VectorFieldTrajectory{R<:Integrators.AbstractIntegrationResult} <: AbstractVectorFieldTrajectory
     result::R
@@ -58,7 +58,7 @@ Delegates to `Integrators.times(sol.result)`.
 # Returns
 - `AbstractVector`: The vector of time points.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Integrators.evaluate_at`](@ref).
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTSolvers.Integrators.evaluate_at`](@extref).
 """
 function Integrators.times(sol::VectorFieldTrajectory)
     return Integrators.times(sol.result)
@@ -94,7 +94,7 @@ x.(0.0:0.1:1.0)   # broadcast over time grid
   `state(sol)`, `costate(sol)`, `control(sol)` when extended to Hamiltonian systems.
 - No allocation occurs — returns `sol` directly.
 
-See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Integrators.evaluate_at`](@ref), [`CTFlows.Trajectories.time_grid`](@ref).
+See also: [`CTSolvers.Integrators.times`](@extref), [`CTSolvers.Integrators.evaluate_at`](@extref), [`CTFlows.Trajectories.time_grid`](@ref).
 """
 function state(sol::VectorFieldTrajectory)
     return sol
@@ -127,7 +127,7 @@ tg = time_grid(sol)  # same as times(sol)
 - Use `time_grid` when "grid" terminology is clearer in context.
 - Use `times` for brevity in everyday use.
 
-See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Trajectories.state`](@ref).
+See also: [`CTSolvers.Integrators.times`](@extref), [`CTFlows.Trajectories.state`](@ref).
 """
 function time_grid(sol::VectorFieldTrajectory)
     return Integrators.times(sol)
@@ -145,7 +145,7 @@ Evaluate the solution at a given time by delegating to the integration result.
 # Returns
 - The solution state at time `t`.
 
-See also: [`CTFlows.Integrators.evaluate_at`](@ref), [`CTFlows.Integrators.times`](@ref).
+See also: [`CTSolvers.Integrators.evaluate_at`](@extref), [`CTSolvers.Integrators.times`](@extref).
 """
 function (sol::VectorFieldTrajectory)(t::Real)
     return Integrators.evaluate_at(sol.result, t)
@@ -162,7 +162,7 @@ Return the final state from the solution by delegating to the integration result
 # Returns
 - The final state from the integration result.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Integrators.final_state`](@ref).
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTSolvers.Integrators.final_state`](@extref).
 """
 function Integrators.final_state(sol::VectorFieldTrajectory)
     return Integrators.final_state(sol.result)
@@ -182,7 +182,7 @@ in a new VectorFieldTrajectory.
 # Returns
 - `VectorFieldTrajectory`: A merged vector field solution containing the merged integration result.
 
-See also: [`CTFlows.Integrators.merge`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
+See also: [`CTSolvers.Integrators.merge`](@extref), [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref).
 """
 function Integrators.merge(segments::AbstractVector{<:VectorFieldTrajectory})
     if isempty(segments)

@@ -6,7 +6,7 @@ Abstract supertype for Hamiltonian vector field solution containers.
 This type defines the interface for all solution types that wrap ODE integration
 results for Hamiltonian systems.
 
-See also: [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
+See also: [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref).
 """
 abstract type AbstractHamiltonianVectorFieldTrajectory end
 
@@ -39,7 +39,7 @@ x(0.5), p(0.5)           # evaluate at t = 0.5
 x0, p0 = sol(0.0)        # returns tuple (x(0), p(0))
 ```
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.AbstractHamiltonianVectorFieldTrajectory`](@ref).
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.AbstractHamiltonianVectorFieldTrajectory`](@ref).
 """
 struct HamiltonianVectorFieldTrajectory{X0, R<:Integrators.AbstractIntegrationResult} <: AbstractHamiltonianVectorFieldTrajectory
     x0::X0
@@ -85,7 +85,7 @@ Delegates to `Integrators.times(sol.result)`.
 # Returns
 - `AbstractVector`: The vector of time points.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Integrators.evaluate_at`](@ref).
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTSolvers.Integrators.evaluate_at`](@extref).
 """
 function Integrators.times(sol::HamiltonianVectorFieldTrajectory)
     return Integrators.times(sol.result)
@@ -105,7 +105,7 @@ where "time grid" is the standard terminology.
 # Returns
 - `AbstractVector`: The vector of time points.
 
-See also: [`CTFlows.Integrators.times`](@ref), [`CTFlows.Trajectories.state`](@ref).
+See also: [`CTSolvers.Integrators.times`](@extref), [`CTFlows.Trajectories.state`](@ref).
 """
 function time_grid(sol::HamiltonianVectorFieldTrajectory)
     return Integrators.times(sol)
@@ -125,7 +125,7 @@ Splits the combined state vector into state and costate halves.
 # Returns
 - `Tuple{AbstractVector, AbstractVector}`: The state `x(t)` and costate `p(t)` at time `t`.
 
-See also: [`CTFlows.Integrators.evaluate_at`](@ref), [`CTFlows.Integrators.times`](@ref).
+See also: [`CTSolvers.Integrators.evaluate_at`](@extref), [`CTSolvers.Integrators.times`](@extref).
 """
 function (sol::HamiltonianVectorFieldTrajectory)(t::Real)
     u = Integrators.evaluate_at(sol.result, t)
@@ -181,7 +181,7 @@ x(0.0)            # initial state
 x(0.5)            # interpolated state at t = 0.5
 ```
 
-See also: [`CTFlows.Trajectories.costate`](@ref), [`CTFlows.Integrators.times`](@ref).
+See also: [`CTFlows.Trajectories.costate`](@ref), [`CTSolvers.Integrators.times`](@extref).
 """
 function state(sol::HamiltonianVectorFieldTrajectory)
     return StateProjection(sol)
@@ -210,7 +210,7 @@ p(0.0)            # initial costate
 p(0.5)            # interpolated costate at t = 0.5
 ```
 
-See also: [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Integrators.times`](@ref).
+See also: [`CTFlows.Trajectories.state`](@ref), [`CTSolvers.Integrators.times`](@extref).
 """
 function costate(sol::HamiltonianVectorFieldTrajectory)
     return CostateProjection(sol)
@@ -230,7 +230,7 @@ Callers that need the split form should use `_ham_split_solution` explicitly.
 # Returns
 - `AbstractVector`: The concatenated final state `[xf; pf]`.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Integrators.final_state`](@ref).
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTSolvers.Integrators.final_state`](@extref).
 """
 function Integrators.final_state(sol::HamiltonianVectorFieldTrajectory)
     u = Integrators.final_state(sol.result)
@@ -251,7 +251,7 @@ in a new HamiltonianVectorFieldTrajectory.
 # Returns
 - `HamiltonianVectorFieldTrajectory`: A merged Hamiltonian vector field solution containing the merged integration result.
 
-See also: [`CTFlows.Integrators.merge`](@ref), [`CTFlows.Integrators.AbstractIntegrationResult`](@ref).
+See also: [`CTSolvers.Integrators.merge`](@extref), [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref).
 """
 function Integrators.merge(segments::AbstractVector{<:HamiltonianVectorFieldTrajectory})
     if isempty(segments)

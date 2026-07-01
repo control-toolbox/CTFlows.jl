@@ -199,7 +199,7 @@ flow_nonfixed = Flow(system_nonfixed, integrator)
 sol = _invoke_flow(flow_nonfixed, config; variable=0.5, unsafe=false)  # OK, variable provided
 \`\`\`
 
-See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTBase.Traits.VariableDependence`](), [`CTBase.Core.NotProvided`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Trajectories.build_trajectory`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTBase.Traits.VariableDependence`](), [`CTBase.Core.NotProvided`](@ref), [`CTFlows.Integrators.build_problem`](@ref), `CommonSolve.solve`, [`CTFlows.Trajectories.build_trajectory`](@ref).
 """
 function _invoke_flow(flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe)
     VD = Traits.variable_dependence(flow)
@@ -233,7 +233,7 @@ and constructs the solution.
 This is an internal function called by the trait-dispatch overloads of `_invoke_flow`.
 Users should call the public `_invoke_flow` function instead.
 
-See also: [`_invoke_flow`](@ref), [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.solve_problem`](@ref), [`CTFlows.Trajectories.build_trajectory`](@ref).
+See also: [`_invoke_flow`](@ref), [`CTFlows.Integrators.build_problem`](@ref), `CommonSolve.solve`, [`CTFlows.Trajectories.build_trajectory`](@ref).
 """
 function _core_invoke_flow(flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe)
 
@@ -242,13 +242,13 @@ function _core_invoke_flow(flow::Flows.AbstractFlow, config::Configs.AbstractCon
     int = integrator(flow)
 
     # build ode problem
-    prob = Integrators.build_problem(int, sys, config; variable=variable)
+    prob = Integrators.build_problem(sys, config, int; variable=variable)
 
     # build config-specific options
     opts = Integrators.build_options(int, config)
 
     # integrate ode problem
-    result = Integrators.solve_problem(int, prob, opts; unsafe=unsafe)
+    result = CommonSolve.solve(prob, int; options=opts, unsafe=unsafe)
 
     # build flow solution
     flow_sol = Trajectories.build_trajectory(

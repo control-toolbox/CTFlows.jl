@@ -71,7 +71,7 @@ See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@ref), [`CTFlows.Integrators.bu
 """
 function (f::SciMLProblemFlow)(; unsafe = Common.__unsafe())
     opts = Integrators.build_options(f.integrator, nothing)
-    return Integrators.solve_problem(f.integrator, f.prob, opts; unsafe)
+    return CommonSolve.solve(f.prob, f.integrator; options = opts, unsafe)
 end
 
 """
@@ -110,7 +110,7 @@ function (f::SciMLProblemFlow)(
     prob   = SciMLBase.remake(f.prob; kw...)
     config = Configs.StateEndPointConfig(t0, x0, tf)
     opts   = Integrators.build_options(f.integrator, config)
-    result = Integrators.solve_problem(f.integrator, prob, opts; unsafe)
+    result = CommonSolve.solve(prob, f.integrator; options = opts, unsafe)
     return Integrators.final_state(result)
 end
 
@@ -153,7 +153,7 @@ function (f::SciMLProblemFlow)(
     prob   = SciMLBase.remake(f.prob; kw...)
     config = Configs.StateTrajectoryConfig(tspan, x0)
     opts   = Integrators.build_options(f.integrator, config)
-    return Integrators.solve_problem(f.integrator, prob, opts; unsafe)
+    return CommonSolve.solve(prob, f.integrator; options = opts, unsafe)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", f::SciMLProblemFlow)

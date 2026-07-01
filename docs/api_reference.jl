@@ -60,7 +60,6 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                     joinpath("Common", "abstract_tag.jl"),
                     joinpath("Common", "default.jl"),
                     joinpath("Common", "helpers.jl"),
-                    joinpath("Common", "internal_norm.jl"),
                     joinpath("Common", "ode_parameters.jl"),
                 ),
             ],
@@ -105,10 +104,6 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             primary_modules=[
                 CTFlows.Integrators => src(
                     joinpath("Integrators", "Integrators.jl"),
-                    joinpath("Integrators", "abstract_integrator.jl"),
-                    joinpath("Integrators", "building.jl"),
-                    joinpath("Integrators", "integration_result.jl"),
-                    joinpath("Integrators", "sciml.jl"),
                 ),
             ],
             exclude=EXCLUDE_BASE,
@@ -187,36 +182,6 @@ function generate_api_reference(src_dir::String, ext_dir::String)
     # Extensions
     # ───────────────────────────────────────────────────────────────────
 
-    CTFlowsForwardDiff = Base.get_extension(CTFlows, :CTFlowsForwardDiff)
-    if !isnothing(CTFlowsForwardDiff)
-        push!(pages, CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[CTFlowsForwardDiff => ext("CTFlowsForwardDiff.jl")],
-            external_modules_to_document=[CTFlows],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
-            title="ForwardDiff Extension",
-            title_in_menu="ForwardDiff",
-            filename="ext_forwarddiff",
-        ))
-    end
-
-    CTFlowsOrdinaryDiffEqTsit5 = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5)
-    if !isnothing(CTFlowsOrdinaryDiffEqTsit5)
-        push!(pages, CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[CTFlowsOrdinaryDiffEqTsit5 => ext("CTFlowsOrdinaryDiffEqTsit5.jl")],
-            external_modules_to_document=[CTFlows],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
-            title="OrdinaryDiffEqTsit5 Extension",
-            title_in_menu="OrdinaryDiffEqTsit5",
-            filename="ext_ordinary_diffeq_tsit5",
-        ))
-    end
-
     CTFlowsPlots = Base.get_extension(CTFlows, :CTFlowsPlots)
     if !isnothing(CTFlowsPlots)
         push!(pages, CTBase.automatic_reference_documentation(;
@@ -239,10 +204,8 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             primary_modules=[
                 CTFlowsSciMLIntegrator => ext(
                     joinpath("CTFlowsSciMLIntegrator", "CTFlowsSciMLIntegrator.jl"),
-                    joinpath("CTFlowsSciMLIntegrator", "real_norm.jl"),
-                    joinpath("CTFlowsSciMLIntegrator", "strategies.jl"),
-                    joinpath("CTFlowsSciMLIntegrator", "integration_result.jl"),
-                    joinpath("CTFlowsSciMLIntegrator", "build_and_solve.jl"),
+                    joinpath("CTFlowsSciMLIntegrator", "build_options.jl"),
+                    joinpath("CTFlowsSciMLIntegrator", "build_problem.jl"),
                 ),
             ],
             external_modules_to_document=[CTFlows],

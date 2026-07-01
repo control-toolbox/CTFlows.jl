@@ -11,7 +11,7 @@ This module provides:
 - `state`, `time_grid`: Semantic accessors for VectorFieldTrajectory
 - `plot`: Plotting functionality for trajectories
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.build_trajectory`](@ref), `plot`.
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.build_trajectory`](@ref), `plot`.
 """
 module Trajectories
 

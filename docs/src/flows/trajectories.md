@@ -135,5 +135,5 @@ These are used internally by the solution wrappers and normally not called direc
 
 - [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref) — solution container types.
 - [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.costate`](@ref) — trajectory accessors.
-- [`CTFlows.Trajectories.time_grid`](@ref), [`CTFlows.Integrators.times`](@ref) — time grid accessors.
-- [`CTFlows.Integrators.final_state`](@ref), [`CTFlows.Integrators.evaluate_at`](@ref) — low-level result accessors.
+- [`CTFlows.Trajectories.time_grid`](@ref), [`CTSolvers.Integrators.times`](@extref) — time grid accessors.
+- [`CTSolvers.Integrators.final_state`](@extref), [`CTSolvers.Integrators.evaluate_at`](@extref) — low-level result accessors.
