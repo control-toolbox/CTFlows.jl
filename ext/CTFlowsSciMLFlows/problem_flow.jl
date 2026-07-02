@@ -62,14 +62,14 @@ the complete integration result with trajectory data.
 
 # Arguments
 - `f::SciMLProblemFlow`: The SciML problem flow to solve.
-- `unsafe=Common.__unsafe()`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+- `unsafe=Flows.__unsafe()`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
 
 # Returns
 - `AbstractIntegrationResult`: The complete integration result with trajectory data.
 
 See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@ref), [`CTFlows.Integrators.build_options`](@ref).
 """
-function (f::SciMLProblemFlow)(; unsafe = Common.__unsafe())
+function (f::SciMLProblemFlow)(; unsafe = Flows.__unsafe())
     opts = Integrators.build_options(f.integrator, nothing)
     return CommonSolve.solve(f.prob, f.integrator; options = opts, unsafe)
 end
@@ -88,8 +88,8 @@ final state, not the full trajectory.
 - `t0::Real`: Initial time.
 - `x0`: Initial state vector.
 - `tf::Real`: Final time.
-- `variable=Common.__variable()`: The variable parameter value (optional, passed to remake).
-- `unsafe=Common.__unsafe()`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+- `variable=Flows.__variable()`: The variable parameter value (optional, passed to remake).
+- `unsafe=Flows.__unsafe()`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
 
 # Returns
 - The final state vector.
@@ -100,8 +100,8 @@ function (f::SciMLProblemFlow)(
     t0::Real,
     x0,
     tf::Real;
-    variable = Common.__variable(),
-    unsafe = Common.__unsafe(),
+    variable = Flows.__variable(),
+    unsafe = Flows.__unsafe(),
 )
     kw = (; u0 = x0, tspan = (t0, tf))
     if !(variable isa Core.NotProvidedType)
@@ -143,8 +143,8 @@ sol = flow((0.0, 1.0), [1.0])
 function (f::SciMLProblemFlow)(
     tspan::Tuple{Real, Real},
     x0;
-    variable = Common.__variable(),
-    unsafe = Common.__unsafe(),
+    variable = Flows.__variable(),
+    unsafe = Flows.__unsafe(),
 )
     kw = (; u0 = x0, tspan = tspan)
     if !(variable isa Core.NotProvidedType)

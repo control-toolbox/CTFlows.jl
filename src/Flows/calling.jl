@@ -31,8 +31,8 @@ function (f::AbstractStateFlow)(
     t0::Real,
     x0,
     tf::Real;
-    variable=Common.__variable(),
-    unsafe=Common.__unsafe(),
+    variable=__variable(),
+    unsafe=__unsafe(),
 )
     return _invoke_flow(f, Configs.StateEndPointConfig(t0, x0, tf); variable=variable, unsafe=unsafe)
 end
@@ -72,9 +72,9 @@ function (f::AbstractHamiltonianFlow)(
     x0,
     p0,
     tf::Real;
-    variable=Common.__variable(),
-    unsafe=Common.__unsafe(),
-    variable_costate::Bool=Common.__variable_costate(),
+    variable=__variable(),
+    unsafe=__unsafe(),
+    variable_costate::Bool=__variable_costate(),
 )
     config = Configs.HamiltonianEndPointConfig(t0, x0, p0, tf)
     variable_costate && return _invoke_flow_variable_costate(f, config; variable=variable, unsafe=unsafe)
@@ -112,8 +112,8 @@ See also: [`CTFlows.Configs.StateTrajectoryConfig`](@ref), [`CTFlows.Flows.call`
 function (f::AbstractStateFlow)(
     tspan::Tuple{Real, Real},
     x0;
-    variable=Common.__variable(),
-    unsafe=Common.__unsafe(),
+    variable=__variable(),
+    unsafe=__unsafe(),
 )
     return _invoke_flow(f, Configs.StateTrajectoryConfig(tspan, x0); variable=variable, unsafe=unsafe)
 end
@@ -151,9 +151,9 @@ function (f::AbstractHamiltonianFlow)(
     tspan::Tuple{Real, Real},
     x0,
     p0;
-    variable=Common.__variable(),
-    unsafe=Common.__unsafe(),
-    variable_costate::Bool=Common.__variable_costate(),
+    variable=__variable(),
+    unsafe=__unsafe(),
+    variable_costate::Bool=__variable_costate(),
 )
     config = Configs.HamiltonianTrajectoryConfig(tspan, x0, p0)
     variable_costate && return _invoke_flow_variable_costate(f, config; variable=variable, unsafe=unsafe)

@@ -2,7 +2,8 @@ module TestDefault
 
 import Test
 import CTBase.Data
-import CTFlows.Common
+import CTFlows.Flows
+import CTFlows.Systems
 import CTBase.Core
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
@@ -29,31 +30,31 @@ function test_default()
             end
 
             Test.@testset "__variable returns NotProvided" begin
-                Test.@test Common.__variable() isa Core.NotProvidedType
+                Test.@test Flows.__variable() isa Core.NotProvidedType
             end
 
             Test.@testset "__unsafe returns false" begin
-                Test.@test Common.__unsafe() === false
+                Test.@test Flows.__unsafe() === false
             end
 
             Test.@testset "__hvf_inplace returns false" begin
-                Test.@test Common.__hvf_inplace() === false
+                Test.@test Systems.__hvf_inplace() === false
             end
 
             Test.@testset "_variable_costate returns false" begin
-                Test.@test Common.__variable_costate() === false
+                Test.@test Flows.__variable_costate() === false
             end
         end
 
         Test.@testset "NotProvided sentinel (lives in CTBase.Core)" begin
             Test.@test Core.NotProvidedType <: Any
             Test.@test isdefined(Core, :NotProvided)
-            Test.@test !isdefined(Common, :NotProvided)
+            Test.@test !isdefined(Flows, :NotProvided)
         end
 
         Test.@testset "__variable_costate export" begin
             Test.@testset "__variable_costate is exported" begin
-                Test.@test isdefined(Common, :__variable_costate)
+                Test.@test isdefined(Flows, :__variable_costate)
             end
         end
     end

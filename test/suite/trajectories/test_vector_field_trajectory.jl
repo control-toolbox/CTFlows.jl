@@ -3,7 +3,6 @@ module TestVectorFieldTrajectory
 import Test
 import CTFlows.Trajectories
 import CTBase.Exceptions
-import CTFlows.Common
 import CTFlows.Integrators
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true

@@ -3,7 +3,6 @@ module TestAbstractSystem
 import Test
 import CTBase.Exceptions
 import CTFlows.Systems
-import CTFlows.Common
 import CTBase.Traits
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true

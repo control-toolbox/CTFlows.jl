@@ -314,7 +314,7 @@ with the correct signature based on the Hamiltonian's time and variable dependen
 # Arguments
 - `h::Data.Hamiltonian{F, TD, VD}`: The scalar Hamiltonian function with traits `TD` (time dependence) and `VD` (variable dependence).
 - `ad_backend`: AD backend type (default: `Differentiation.__ad_backend()` = `AutoForwardDiff()`) or an `AbstractADBackend` instance.
-- `inplace::Bool`: Whether to return an in-place closure (default: `Common.__hvf_inplace()` = `false`).
+- `inplace::Bool`: Whether to return an in-place closure (default: `__hvf_inplace()` = `false`).
 
 # Returns
 - `Data.HamiltonianVectorField`: The Hamiltonian vector field with correct traits matching the input Hamiltonian.
@@ -332,7 +332,7 @@ See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.Hamilto
 function hamiltonian_vector_field(
     h::Data.Hamiltonian{F, TD, VD};
     ad_backend = Differentiation.__ad_backend(),
-    inplace::Bool = Common.__hvf_inplace(),
+    inplace::Bool = __hvf_inplace(),
 ) where {F, TD, VD}
     # If ad_backend is an AbstractADBackend instance, use it directly; otherwise wrap it
     backend = if ad_backend isa Differentiation.AbstractADBackend
@@ -369,7 +369,7 @@ No computation is performed since the vector field is already constructed.
 
 See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTBase.Data.HamiltonianVectorField`](@ref)
 """
-function hamiltonian_vector_field(sys::HamiltonianVectorFieldSystem; inplace::Bool = Common.__hvf_inplace())
+function hamiltonian_vector_field(sys::HamiltonianVectorFieldSystem; inplace::Bool = __hvf_inplace())
     return sys.hvf
 end
 
@@ -383,7 +383,7 @@ Hamiltonian overload to compute the vector field via automatic differentiation.
 
 # Arguments
 - `sys::HamiltonianSystem`: The system containing a Hamiltonian and AD backend.
-- `inplace::Bool`: Whether to return an in-place closure (default: `Common.__hvf_inplace()` = `false`).
+- `inplace::Bool`: Whether to return an in-place closure (default: `__hvf_inplace()` = `false`).
 
 # Returns
 - `Data.HamiltonianVectorField`: The Hamiltonian vector field with correct traits matching the system's Hamiltonian.
@@ -395,7 +395,7 @@ Hamiltonian overload to compute the vector field via automatic differentiation.
 
 See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTBase.Data.Hamiltonian`](@ref), [`CTBase.Differentiation.AbstractADBackend`](@ref)
 """
-function hamiltonian_vector_field(sys::HamiltonianSystem; inplace::Bool = Common.__hvf_inplace())
+function hamiltonian_vector_field(sys::HamiltonianSystem; inplace::Bool = __hvf_inplace())
     ad_backend = Differentiation.ad_backend(sys.backend)
     return hamiltonian_vector_field(sys.h; ad_backend=ad_backend, inplace=inplace)
 end
@@ -412,14 +412,14 @@ Get the Hamiltonian vector field from any `AbstractHamiltonianSystem`, dispatchi
 
 See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
 """
-function hamiltonian_vector_field(sys::AbstractHamiltonianSystem; inplace::Bool = Common.__hvf_inplace(), kwargs...)
+function hamiltonian_vector_field(sys::AbstractHamiltonianSystem; inplace::Bool = __hvf_inplace(), kwargs...)
     return _hamiltonian_vector_field_by_ad(Traits.ad_trait(sys), sys; inplace=inplace)
 end
 
 function _hamiltonian_vector_field_by_ad(
     ::Type{Traits.WithAD},
     sys::AbstractHamiltonianSystem;
-    inplace::Bool = Common.__hvf_inplace(),
+    inplace::Bool = __hvf_inplace(),
 )
     ad_backend = Differentiation.ad_backend(backend(sys))
     return hamiltonian_vector_field(hamiltonian(sys); ad_backend=ad_backend, inplace=inplace)

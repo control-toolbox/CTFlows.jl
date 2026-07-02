@@ -6,7 +6,6 @@ import CTFlows.MultiPhase
 import CTFlows.Systems
 import CTFlows.Integrators
 import CTFlows.Flows
-import CTFlows.Common
 import CTBase.Traits
 import CTBase.Strategies
 import CTBase.Options

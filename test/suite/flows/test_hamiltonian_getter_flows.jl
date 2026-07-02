@@ -4,7 +4,6 @@ import Test
 import ADTypes
 import DifferentiationInterface
 import ForwardDiff  # triggers DifferentiationInterfaceForwardDiff (provides PushforwardFast)
-import CTFlows.Common
 import CTBase.Traits
 import CTBase.Data
 import CTFlows.Systems

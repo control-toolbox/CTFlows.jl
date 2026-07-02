@@ -5,7 +5,6 @@ import CTBase.Exceptions
 import CTBase.Strategies
 import CTFlows.Systems
 import CTFlows.Flows
-import CTFlows.Common
 import CTFlows.Configs
 import CTBase.Traits
 import CTFlows.Integrators

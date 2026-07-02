@@ -3,7 +3,6 @@ module TestBuildingSystems
 import Test
 import CTFlows.Systems
 import CTBase.Data
-import CTFlows.Common
 import CTBase.Traits
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
@@ -75,7 +74,7 @@ function test_building_systems()
                 sys = Systems.build_system(vf)
                 rhs = Systems.get_ip_rhs(sys, dummy_config)
                 du = zeros(2)
-                p = Common.ODEParameters(nothing)
+                p = Systems.ODEParameters(nothing)
                 rhs(du, [1.0, 2.0], p, 0.0)
                 Test.@test du ≈ [2.0, 4.0] atol=1e-10
             end

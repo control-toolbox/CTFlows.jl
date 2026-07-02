@@ -3,7 +3,6 @@ module TestBuildingTrajectories
 import Test
 import CTFlows.Trajectories
 import CTFlows.Systems
-import CTFlows.Common
 import CTFlows.Configs
 import CTBase.Data
 import CTFlows.Integrators

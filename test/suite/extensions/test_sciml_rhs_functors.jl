@@ -2,7 +2,6 @@ module TestSciMLRHSFunctors
 
 import Test
 import CTFlows: CTFlows
-import CTFlows.Common: Common
 import CTBase.Traits: Traits
 import CTFlows.Systems: Systems
 import SciMLBase: SciMLBase, ODEFunction
@@ -60,7 +59,7 @@ function test_sciml_rhs_functors()
 
             du = zeros(2)
             u = [1.0, 2.0]
-            λ = Common.ODEParameters(2.0)
+            λ = Systems.ODEParameters(2.0)
             t = 0.0
 
             r(du, u, λ, t)
@@ -76,7 +75,7 @@ function test_sciml_rhs_functors()
             r = CTFlowsSciMLFlows.OoPSciMLIpRHS(f)
 
             u = [1.0, 2.0]
-            λ = Common.ODEParameters(2.0)
+            λ = Systems.ODEParameters(2.0)
             t = 0.0
 
             result = r(u, λ, t)
@@ -93,7 +92,7 @@ function test_sciml_rhs_functors()
             r = CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS(f)
 
             u = SA[1.0, 2.0]
-            λ = Common.ODEParameters(2.0)
+            λ = Systems.ODEParameters(2.0)
             t = 0.0
 
             result = r(u, λ, t)
@@ -111,7 +110,7 @@ function test_sciml_rhs_functors()
 
             du = zeros(2)
             u = [1.0, 2.0]
-            λ = Common.ODEParameters(2.0)
+            λ = Systems.ODEParameters(2.0)
             t = 0.0
 
             r(du, u, λ, t)
@@ -127,7 +126,7 @@ function test_sciml_rhs_functors()
             r = CTFlowsSciMLFlows.OoPSciMLOoPRHS(f)
 
             u = [1.0, 2.0]
-            λ = Common.ODEParameters(2.0)
+            λ = Systems.ODEParameters(2.0)
             t = 0.0
 
             result = r(u, λ, t)
@@ -151,7 +150,7 @@ function test_sciml_rhs_functors()
             du = zeros(2)
             u = [1.0, 2.0]
             u_svec = SA[1.0, 2.0]
-            λ = Common.ODEParameters(2.0)
+            λ = Systems.ODEParameters(2.0)
             t = 0.0
 
             Test.@inferred ip_ip(du, u, λ, t)

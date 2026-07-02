@@ -116,7 +116,7 @@ end
 function (f::HamIpRHS{F,TD,VD,B,CX,CP})(du, u, λ, t) where {F,TD,VD,B,CX,CP}
     x, p = _ham_split(u, f.N)
     ∂x, ∂p = Differentiation.hamiltonian_gradient(
-        f.backend, f.h, t, f.cx(x), f.cp(p), Common.variable(λ))
+        f.backend, f.h, t, f.cx(x), f.cp(p), variable(λ))
     _ham_assign!(du, ∂p, -∂x, f.N)
     return nothing
 end
@@ -169,7 +169,7 @@ end
 function (f::HamOoPRHS{F,TD,VD,B,CX,CP})(u, λ, t) where {F,TD,VD,B,CX,CP}
     x, p = _ham_split(u, f.N)
     ∂x, ∂p = Differentiation.hamiltonian_gradient(
-        f.backend, f.h, t, f.cx(x), f.cp(p), Common.variable(λ))
+        f.backend, f.h, t, f.cx(x), f.cp(p), variable(λ))
     return vcat(∂p, -∂x)
 end
 
@@ -276,7 +276,7 @@ struct HamIpAugRHS{F,TD,VD,B,CX,CP} <: AbstractIPHamRHS
 end
 
 function (f::HamIpAugRHS{F,TD,VD,B,CX,CP})(du, u, λ, t) where {F,TD,VD,B,CX,CP}
-    v = Common.variable(λ)
+    v = variable(λ)
     _check_aug_batch_compat(u, v)
     x, p, _ = _aug_split(u, f.n_x, f.n_v)
     ∂x, ∂p = Differentiation.hamiltonian_gradient(f.backend, f.h, t, f.cx(x), f.cp(p), v)

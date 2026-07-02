@@ -18,7 +18,7 @@ This constructor builds a complete flow by:
 
 # Example
 \`\`\`julia
-using CTBase.Data, CTFlows.Flows, CTFlows.Common
+using CTBase.Data, CTFlows.Flows, CTFlows.Flows
 
 vf = Data.VectorField((t, x, v) -> x, Traits.Autonomous(), Traits.Fixed())
 flow = Flows.Flow(vf; reltol=1e-8)

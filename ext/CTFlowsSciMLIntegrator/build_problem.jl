@@ -42,7 +42,7 @@ Covers both state systems (`AbstractStateSystem`) and non-augmented Hamiltonian 
 # Throws
 - `CTBase.Exceptions.PreconditionError`: If the system dynamics trait is incompatible with the config type.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Systems.ODEParameters`](@ref).
 """
 function Integrators.build_problem(
     system::Systems.AbstractSystem,
@@ -53,7 +53,7 @@ function Integrators.build_problem(
     _check_dyn_config(Traits.dynamics_trait(system), config)
     u0 = Configs.initial_condition(config)
     Systems._check_vf_scalar_inplace(system, u0)
-    λ = Common.ODEParameters(variable)
+    λ = Systems.ODEParameters(variable)
     if ismutable(u0)
         f! = Systems.get_ip_rhs(system, config)
         return ODEProblem(f!, u0, Configs.tspan(config), λ)
@@ -97,7 +97,7 @@ function Integrators.build_problem(
 )
     _check_dyn_config(Traits.dynamics_trait(system), config)
     u0 = Configs.initial_condition(config)
-    λ  = Common.ODEParameters(variable)
+    λ  = Systems.ODEParameters(variable)
     f! = Systems.get_ip_rhs_augmented(system, config)
     return ODEProblem(f!, u0, Configs.tspan(config), λ)
 end

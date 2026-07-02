@@ -3,7 +3,6 @@ module TestVectorFieldSystem
 import Test
 import CTFlows.Systems
 import CTBase.Data
-import CTFlows.Common
 import CTBase.Traits
 import StaticArrays: SA, StaticArrays
 
@@ -90,7 +89,7 @@ function test_vector_field_system()
                 rhs = Systems.get_ip_rhs(sys, dummy_config)
                 du = zeros(2)
                 u = [1.0, 2.0]
-                p = Common.ODEParameters(nothing)
+                p = Systems.ODEParameters(nothing)
                 t = 0.0
                 # Should not throw - signature is correct
                 rhs(du, u, p, t)
@@ -102,7 +101,7 @@ function test_vector_field_system()
                 sys = Systems.VectorFieldSystem(vf)
                 rhs = Systems.get_ip_rhs(sys, dummy_config)
                 du = zeros(2)
-                p = Common.ODEParameters(nothing)
+                p = Systems.ODEParameters(nothing)
                 rhs(du, [1.0, 2.0], p, 0.0)
                 Test.@test du ≈ [-1.0, -2.0] atol=1e-10
             end
@@ -116,7 +115,7 @@ function test_vector_field_system()
                 rhs2 = Systems.get_ip_rhs(sys2, dummy_config)
                 du1 = zeros(2)
                 du2 = zeros(2)
-                p = Common.ODEParameters(nothing)
+                p = Systems.ODEParameters(nothing)
                 rhs1(du1, [1.0, 1.0], p, 0.0)
                 rhs2(du2, [1.0, 1.0], p, 0.0)
                 Test.@test du1 ≈ [2.0, 2.0] atol=1e-10
@@ -135,7 +134,7 @@ function test_vector_field_system()
                 sys = Systems.VectorFieldSystem(vf)
                 rhs_oop = Systems.get_oop_rhs(sys, dummy_config)
                 u = [1.0, 2.0]
-                p = Common.ODEParameters(nothing)
+                p = Systems.ODEParameters(nothing)
                 t = 0.0
                 du = rhs_oop(u, p, t)
                 Test.@test du ≈ [-1.0, -2.0] atol=1e-10
@@ -154,7 +153,7 @@ function test_vector_field_system()
                 rhs = Systems.get_ip_rhs(sys, dummy_config)
                 du = zeros(2, 3)
                 u = [1.0 2.0 3.0; 4.0 5.0 6.0]
-                p = Common.ODEParameters(nothing)
+                p = Systems.ODEParameters(nothing)
                 rhs(du, u, p, 0.0)
                 Test.@test du ≈ -u  atol=1e-10
             end
@@ -164,7 +163,7 @@ function test_vector_field_system()
                 sys = Systems.VectorFieldSystem(vf)
                 rhs_oop = Systems.get_oop_rhs(sys, dummy_config)
                 u = [1.0 2.0 3.0; 4.0 5.0 6.0]
-                p = Common.ODEParameters(nothing)
+                p = Systems.ODEParameters(nothing)
                 du = rhs_oop(u, p, 0.0)
                 Test.@test du ≈ -u  atol=1e-10
             end
@@ -180,7 +179,7 @@ function test_vector_field_system()
             sys = Systems.VectorFieldSystem(vf)
             rhs     = Systems.get_ip_rhs(sys, dummy_config)
             rhs_oop = Systems.get_oop_rhs(sys, dummy_config)
-            p = Common.ODEParameters(nothing)
+            p = Systems.ODEParameters(nothing)
 
             Test.@testset "get_ip_rhs - complex vector" begin
                 u  = [1.0 + 2.0im, 3.0 + 4.0im]
@@ -220,7 +219,7 @@ function test_vector_field_system()
                 sys = Systems.VectorFieldSystem(vf)
                 rhs_oop = Systems.get_oop_rhs(sys, dummy_config)
                 u = SA[1.0, 2.0]
-                p = Common.ODEParameters(nothing)
+                p = Systems.ODEParameters(nothing)
                 du = rhs_oop(u, p, 0.0)
                 Test.@test du == SA[-1.0, -2.0]
             end
@@ -230,7 +229,7 @@ function test_vector_field_system()
                 sys = Systems.VectorFieldSystem(vf)
                 rhs_oop = Systems.get_oop_rhs(sys, dummy_config)
                 u = SA[1.0+2.0im, 3.0+4.0im]
-                p = Common.ODEParameters(nothing)
+                p = Systems.ODEParameters(nothing)
                 du = rhs_oop(u, p, 0.0)
                 Test.@test du == SA[-1.0-2.0im, -3.0-4.0im]
             end
@@ -258,7 +257,7 @@ function test_vector_field_system()
                 vf  = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
                 du  = zeros(2)
-                p   = Common.ODEParameters(nothing)
+                p   = Systems.ODEParameters(nothing)
                 Systems.get_ip_rhs(sys, dummy_config)(du, [1.0, 2.0], p, 0.0)
                 Test.@test du ≈ [-1.0, -2.0]
             end
@@ -275,7 +274,7 @@ function test_vector_field_system()
                 sys = Systems.VectorFieldSystem(vf)
                 f   = sys.rhs_oop_finalize
                 u   = SA[1.0, 2.0]
-                p   = Common.ODEParameters(nothing)
+                p   = Systems.ODEParameters(nothing)
                 du  = f(u, p, 0.0)
                 Test.@test du ≈ SA[-1.0, -2.0]
                 Test.@test du isa StaticArrays.SVector

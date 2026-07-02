@@ -29,9 +29,6 @@ module CTFlows
 include(joinpath(@__DIR__, "Configs", "Configs.jl"))
 using .Configs
 
-include(joinpath(@__DIR__, "Common", "Common.jl"))
-using .Common
-
 include(joinpath(@__DIR__, "Systems", "Systems.jl"))
 using .Systems
 

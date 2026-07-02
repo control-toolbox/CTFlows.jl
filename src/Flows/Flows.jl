@@ -28,7 +28,6 @@ import CommonSolve: CommonSolve
 # Internal sibling-submodule imports
 # ==============================================================================
 
-import ..Common: Common
 import ..Configs: Configs
 import ..Systems: Systems, hamiltonian_vector_field
 import ..Integrators: Integrators
@@ -38,6 +37,7 @@ import ..Trajectories: Trajectories
 # Include files
 # ==============================================================================
 
+include(joinpath(@__DIR__, "defaults.jl"))
 include(joinpath(@__DIR__, "abstract_flow.jl"))
 include(joinpath(@__DIR__, "flow.jl"))
 include(joinpath(@__DIR__, "registry.jl"))
@@ -50,6 +50,7 @@ include(joinpath(@__DIR__, "calling.jl"))
 # Module exports
 # ==============================================================================
 
+export __variable, __unsafe, __variable_costate
 export AbstractFlow, AbstractStateFlow, AbstractHamiltonianFlow, Flow, StateFlow, HamiltonianFlow
 export OptimalControlFlow
 export system, integrator

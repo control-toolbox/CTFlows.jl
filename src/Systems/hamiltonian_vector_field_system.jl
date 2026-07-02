@@ -19,7 +19,7 @@ inputs with consistent output shapes.
 
 # Example
 ```julia-repl
-julia> using CTFlows.Systems, CTFlows.Common
+julia> using CTFlows.Systems
 
 julia> hvf = HamiltonianVectorField((x, p) -> (x, -p); autonomous=true, variable=false)
 HamiltonianVectorField

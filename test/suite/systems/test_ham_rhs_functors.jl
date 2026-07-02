@@ -2,7 +2,6 @@ module TestHamRHSFunctors
 
 import Test
 import CTBase.Exceptions
-import CTFlows.Common: Common
 import CTBase.Data: Data
 import CTFlows.Systems: Systems
 import CTBase.Traits: Traits
@@ -70,7 +69,7 @@ function test_ham_rhs_functors()
 
             du = zeros(4)
             u = [1.0, 2.0, 3.0, 4.0]
-            λ = Common.ODEParameters(nothing)
+            λ = Systems.ODEParameters(nothing)
             t = 0.0
 
             rhs(du, u, λ, t)
@@ -87,7 +86,7 @@ function test_ham_rhs_functors()
 
             du = zeros(4)
             u = [1.0, 2.0, 3.0, 4.0]
-            λ = Common.ODEParameters(0.5)
+            λ = Systems.ODEParameters(0.5)
             t = 0.0
 
             rhs(du, u, λ, t)
@@ -107,7 +106,7 @@ function test_ham_rhs_functors()
             rhs = Systems.HamOoPRHS(h, backend, 2, identity, identity)
 
             u = [1.0, 2.0, 3.0, 4.0]
-            λ = Common.ODEParameters(nothing)
+            λ = Systems.ODEParameters(nothing)
             t = 0.0
 
             result = rhs(u, λ, t)
@@ -123,7 +122,7 @@ function test_ham_rhs_functors()
             rhs = Systems.HamOoPRHS(h, backend, 2, identity, identity)
 
             u = [1.0, 2.0, 3.0, 4.0]
-            λ = Common.ODEParameters(0.5)
+            λ = Systems.ODEParameters(0.5)
             t = 0.0
 
             result = rhs(u, λ, t)
@@ -144,7 +143,7 @@ function test_ham_rhs_functors()
 
             du = zeros(5)
             u = [1.0, 2.0, 3.0, 4.0, 0.0]
-            λ = Common.ODEParameters(0.5)
+            λ = Systems.ODEParameters(0.5)
             t = 0.0
 
             rhs(du, u, λ, t)
@@ -191,7 +190,7 @@ function test_ham_rhs_functors()
 
             du = zeros(4)
             u = [1.0, 2.0, 3.0, 4.0]
-            λ = Common.ODEParameters(nothing)
+            λ = Systems.ODEParameters(nothing)
             t = 0.0
 
             Test.@inferred ip_rhs(du, u, λ, t)

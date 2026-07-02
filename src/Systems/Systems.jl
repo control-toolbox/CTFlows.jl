@@ -23,13 +23,14 @@ import CTBase.Traits
 # Internal sibling-submodule imports
 # ==============================================================================
 
-import ..Common: Common
 import ..Configs: Configs
 
 # ==============================================================================
 # Include files
 # ==============================================================================
 
+include(joinpath(@__DIR__, "ode_parameters.jl"))
+include(joinpath(@__DIR__, "defaults.jl"))
 include(joinpath(@__DIR__, "abstract_system.jl"))
 include(joinpath(@__DIR__, "rhs_functors.jl"))
 include(joinpath(@__DIR__, "hvf_rhs_functors.jl"))
@@ -44,6 +45,7 @@ include(joinpath(@__DIR__, "hamiltonian_getter.jl"))
 # Module exports
 # ==============================================================================
 
+export ODEParameters, variable, __hvf_inplace
 export AbstractSystem, AbstractStateSystem, AbstractHamiltonianSystem
 export AbstractRHS, AbstractIPRHS, AbstractOoPRHS
 export AbstractHVFRHS, AbstractIPHVFRHS, AbstractOoPHVFRHS

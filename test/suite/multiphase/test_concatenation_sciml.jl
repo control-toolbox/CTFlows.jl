@@ -6,7 +6,6 @@ import CTFlows.Systems
 import CTFlows.Integrators
 import CTFlows.Flows
 import CTBase.Data
-import CTFlows.Common
 import CTFlows.Trajectories
 
 using OrdinaryDiffEqTsit5

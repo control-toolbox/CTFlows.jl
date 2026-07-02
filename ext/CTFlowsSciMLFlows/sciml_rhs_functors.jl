@@ -27,7 +27,7 @@ struct IPSciMLIpRHS{F<:SciMLBase.AbstractODEFunction{true}} <: Systems.AbstractI
 end
 
 function (r::IPSciMLIpRHS)(du, u, λ, t)
-    r.f(du, u, Common.variable(λ), t)
+    r.f(du, u, Systems.variable(λ), t)
     nothing
 end
 
@@ -53,7 +53,7 @@ end
 
 function (r::OoPSciMLIpRHS)(u, λ, t)
     dx = similar(u)
-    r.f(dx, u, Common.variable(λ), t)
+    r.f(dx, u, Systems.variable(λ), t)
     dx
 end
 
@@ -79,7 +79,7 @@ end
 
 function (r::OoPSciMLIpFinalizeRHS)(u, λ, t)
     dx = similar(u)
-    r.f(dx, u, Common.variable(λ), t)
+    r.f(dx, u, Systems.variable(λ), t)
     typeof(u)(dx)
 end
 
@@ -104,7 +104,7 @@ struct IPSciMLOoPRHS{F<:SciMLBase.AbstractODEFunction{false}} <: Systems.Abstrac
 end
 
 function (r::IPSciMLOoPRHS)(du, u, λ, t)
-    du .= r.f(u, Common.variable(λ), t)
+    du .= r.f(u, Systems.variable(λ), t)
     nothing
 end
 
@@ -129,7 +129,7 @@ struct OoPSciMLOoPRHS{F<:SciMLBase.AbstractODEFunction{false}} <: Systems.Abstra
 end
 
 function (r::OoPSciMLOoPRHS)(u, λ, t)
-    r.f(u, Common.variable(λ), t)
+    r.f(u, Systems.variable(λ), t)
 end
 
 # =============================================================================

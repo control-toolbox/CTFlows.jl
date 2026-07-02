@@ -1,7 +1,6 @@
 module TestHVFRHSFunctors
 
 import Test
-import CTFlows.Common: Common
 import CTBase.Data: Data
 import CTFlows.Systems: Systems
 import CTBase.Traits: Traits
@@ -79,7 +78,7 @@ function test_hvf_rhs_functors()
 
             du = zeros(4)
             u = [1.0, 2.0, 3.0, 4.0]
-            λ = Common.ODEParameters(nothing)
+            λ = Systems.ODEParameters(nothing)
             t = 0.0
 
             r(du, u, λ, t)
@@ -97,7 +96,7 @@ function test_hvf_rhs_functors()
 
             du = zeros(4)
             u = [1.0, 2.0, 3.0, 4.0]
-            λ = Common.ODEParameters(nothing)
+            λ = Systems.ODEParameters(nothing)
             t = 0.0
 
             r(du, u, λ, t)
@@ -114,7 +113,7 @@ function test_hvf_rhs_functors()
             r = Systems.OoPHVFOoPRHS(hvf, 2, identity, identity)
 
             u = [1.0, 2.0, 3.0, 4.0]
-            λ = Common.ODEParameters(nothing)
+            λ = Systems.ODEParameters(nothing)
             t = 0.0
 
             result = r(u, λ, t)
@@ -131,7 +130,7 @@ function test_hvf_rhs_functors()
             r = Systems.OoPHVFIpRHS(hvf, 2, identity, identity)
 
             u = [1.0, 2.0, 3.0, 4.0]
-            λ = Common.ODEParameters(nothing)
+            λ = Systems.ODEParameters(nothing)
             t = 0.0
 
             result = r(u, λ, t)
@@ -148,7 +147,7 @@ function test_hvf_rhs_functors()
             r = Systems.OoPHVFIpFinalizeRHS(hvf, 2, identity, identity)
 
             u = SA[1.0, 2.0, 3.0, 4.0]
-            λ = Common.ODEParameters(nothing)
+            λ = Systems.ODEParameters(nothing)
             t = 0.0
 
             result = r(u, λ, t)
@@ -168,7 +167,7 @@ function test_hvf_rhs_functors()
 
             du = zeros(5)
             u = [1.0, 2.0, 3.0, 4.0, 0.0]
-            λ = Common.ODEParameters(0.5)
+            λ = Systems.ODEParameters(0.5)
             t = 0.0
 
             r(du, u, λ, t)
@@ -194,7 +193,7 @@ function test_hvf_rhs_functors()
 
             du = zeros(5)
             u = [1.0, 2.0, 3.0, 4.0, 0.0]
-            λ = Common.ODEParameters(0.5)
+            λ = Systems.ODEParameters(0.5)
             t = 0.0
 
             r(du, u, λ, t)
@@ -227,7 +226,7 @@ function test_hvf_rhs_functors()
             du = zeros(4)
             u = [1.0, 2.0, 3.0, 4.0]
             u_svec = SA[1.0, 2.0, 3.0, 4.0]
-            λ = Common.ODEParameters(nothing)
+            λ = Systems.ODEParameters(nothing)
             t = 0.0
 
             Test.@inferred ip_hvf_oop(du, u, λ, t)
