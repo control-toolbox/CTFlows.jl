@@ -60,7 +60,7 @@ struct IPVFOoPRHS{F,TD,VD} <: AbstractIPRHS
 end
 
 function (f::IPVFOoPRHS)(du, u, λ, t)
-    du .= f.vf(t, u, Common.variable(λ))
+    du .= f.vf(t, u, variable(λ))
     nothing
 end
 
@@ -83,7 +83,7 @@ struct IPVFIpRHS{F,TD,VD} <: AbstractIPRHS
 end
 
 function (f::IPVFIpRHS)(du, u, λ, t)
-    f.vf(du, t, u, Common.variable(λ))
+    f.vf(du, t, u, variable(λ))
     nothing
 end
 
@@ -106,7 +106,7 @@ struct OoPVFOoPRHS{F,TD,VD} <: AbstractOoPRHS
 end
 
 function (f::OoPVFOoPRHS)(u, λ, t)
-    f.vf(t, u, Common.variable(λ))
+    f.vf(t, u, variable(λ))
 end
 
 """
@@ -129,7 +129,7 @@ end
 
 function (f::OoPVFIpRHS)(u, λ, t)
     dx = similar(u)
-    f.vf(dx, t, u, Common.variable(λ))
+    f.vf(dx, t, u, variable(λ))
     dx
 end
 
@@ -153,7 +153,7 @@ end
 
 function (f::OoPVFIpFinalizeRHS)(u, λ, t)
     dx = similar(u)
-    f.vf(dx, t, u, Common.variable(λ))
+    f.vf(dx, t, u, variable(λ))
     typeof(u)(dx)
 end
 

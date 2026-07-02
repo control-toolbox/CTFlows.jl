@@ -21,7 +21,7 @@ can be added later (callbacks, extra data) without breaking existing code.
 
 # Example
 \`\`\`julia
-using CTFlows.Common
+using CTFlows.Systems
 
 # Fixed system: variable is nothing
 params_fixed = ODEParameters(nothing)
@@ -62,7 +62,7 @@ the actual variable value (scalar or vector).
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Common
+julia> using CTFlows.Systems
 
 julia> params_fixed = ODEParameters(nothing)
 ODEParameters{Nothing}(nothing)
@@ -77,7 +77,7 @@ julia> variable(params_nonfixed)
 0.5
 \`\`\`
 
-See also: [`CTFlows.Common.ODEParameters`](@ref), [`CTBase.Traits.VariableDependence`](@ref).
+See also: [`CTFlows.Systems.ODEParameters`](@ref), [`CTBase.Traits.VariableDependence`](@ref).
 """
 function variable(p::ODEParameters)
     return p.variable

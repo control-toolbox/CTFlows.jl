@@ -3,7 +3,6 @@ module TestHamiltonianSystem
 import Test
 import CTBase.Exceptions
 import CTBase.Data: Data
-import CTFlows.Common: Common
 import CTBase.Traits: Traits
 import CTFlows.Systems: Systems
 import CTBase.Differentiation
@@ -78,7 +77,7 @@ function test_hamiltonian_system()
             # Test RHS call with vector
             u = [1.0, 2.0, 3.0, 4.0]  # x = [1, 2], p = [3, 4]
             du = zeros(4)
-            p = Common.ODEParameters(nothing)
+            p = Systems.ODEParameters(nothing)
             rhs(du, u, p, 0.0)
 
             # ∂H/∂x = x = [1, 2], ∂H/∂p = p = [3, 4], so du = [∂p, -∂x] = [3, 4, -1, -2]
@@ -113,7 +112,7 @@ function test_hamiltonian_system()
 
             # Test OOP call with vector
             u = [1.0, 2.0, 3.0, 4.0]  # x = [1, 2], p = [3, 4]
-            p = Common.ODEParameters(nothing)
+            p = Systems.ODEParameters(nothing)
             du = rhs_oop(u, p, 0.0)
 
             # ∂H/∂x = x = [1, 2], ∂H/∂p = p = [3, 4], so du = vcat(∂p, -∂x) = [3, 4, -1, -2]
@@ -141,7 +140,7 @@ function test_hamiltonian_system()
 
             u = [1.0, 2.0, 3.0, 4.0, 0.5]  # x = [1, 2], p = [3, 4], pv = [0.5]
             du = zeros(5)
-            p = Common.ODEParameters(variable)
+            p = Systems.ODEParameters(variable)
             rhs_aug(du, u, p, 0.0)
 
             # ∂H/∂x = x = [1, 2], ∂H/∂p = p = [3, 4], ∂H/∂v = v = 0.5
@@ -159,7 +158,7 @@ function test_hamiltonian_system()
             rhs_aug_mat = Systems.get_ip_rhs_augmented(sys, config_mat)
             u_mat = [1.0 2.0 3.0; 4.0 5.0 6.0; 7.0 8.0 9.0; 10.0 11.0 12.0; 0.5 0.6 0.7]
             du_mat = zeros(5, 3)
-            p_mat = Common.ODEParameters(variable_mat)
+            p_mat = Systems.ODEParameters(variable_mat)
             rhs_aug_mat(du_mat, u_mat, p_mat, 0.0)
             Test.@test size(du_mat, 2) == 3  # no error, compatible
 
@@ -172,7 +171,7 @@ function test_hamiltonian_system()
             rhs_aug_mat2 = Systems.get_ip_rhs_augmented(sys, config_mat2)
             u_mat2 = [1.0 2.0; 4.0 5.0; 7.0 8.0; 10.0 11.0; 0.5 0.6]
             du_mat2 = zeros(5, 2)
-            p_mat2 = Common.ODEParameters(variable_mat2)
+            p_mat2 = Systems.ODEParameters(variable_mat2)
             Test.@test_throws Exceptions.PreconditionError rhs_aug_mat2(du_mat2, u_mat2, p_mat2, 0.0)
 
             # u Matrix, v Vector (no-op check)
@@ -184,7 +183,7 @@ function test_hamiltonian_system()
             rhs_aug_mat3 = Systems.get_ip_rhs_augmented(sys, config_mat3)
             u_mat3 = [1.0 2.0; 4.0 5.0; 7.0 8.0; 10.0 11.0; 0.5 0.6]
             du_mat3 = zeros(5, 2)
-            p_vec = Common.ODEParameters(variable_vec)
+            p_vec = Systems.ODEParameters(variable_vec)
             rhs_aug_mat3(du_mat3, u_mat3, p_vec, 0.0)  # no error, no-op check
         end
 

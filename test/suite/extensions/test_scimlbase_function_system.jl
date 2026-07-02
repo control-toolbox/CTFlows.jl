@@ -5,7 +5,6 @@ import CTBase.Core
 import CTBase.Exceptions: Exceptions
 import CTBase.Strategies: Strategies
 import CTFlows: CTFlows
-import CTFlows.Common: Common
 import CTFlows.Configs: Configs
 import CTFlows.Systems: Systems
 import CTFlows.Integrators: Integrators
@@ -83,7 +82,7 @@ function test_scimlbase_function_system()
                 # Test that the wrapper works
                 du = zeros(2)
                 u = [1.0, 2.0]
-                p = Common.ODEParameters(2.0)
+                p = Systems.ODEParameters(2.0)
                 rhs_fn(du, u, p, 0.0)
                 Test.@test du ≈ [-1.0, -2.0]
             end
@@ -96,7 +95,7 @@ function test_scimlbase_function_system()
                 Test.@test rhs_oop_fn isa Systems.AbstractOoPRHS
                 # Test that the wrapper works
                 u = [1.0, 2.0]
-                p = Common.ODEParameters(2.0)
+                p = Systems.ODEParameters(2.0)
                 du = rhs_oop_fn(u, p, 0.0)
                 Test.@test du ≈ [-1.0, -2.0]
             end
@@ -109,7 +108,7 @@ function test_scimlbase_function_system()
                 # Should return a wrapper that makes the oop function iip
                 du = zeros(2)
                 u = [1.0, 2.0]
-                p = Common.ODEParameters(2.0)
+                p = Systems.ODEParameters(2.0)
                 rhs_fn(du, u, p, 0.0)
                 Test.@test du ≈ [-1.0, -2.0]
             end
@@ -121,7 +120,7 @@ function test_scimlbase_function_system()
                 Test.@test rhs_oop_fn isa Systems.AbstractOoPRHS
                 # Should return a wrapper that allocates a buffer
                 u = [1.0, 2.0]
-                p = Common.ODEParameters(2.0)
+                p = Systems.ODEParameters(2.0)
                 du = rhs_oop_fn(u, p, 0.0)
                 Test.@test du ≈ [-1.0, -2.0]
             end
@@ -139,7 +138,7 @@ function test_scimlbase_function_system()
                 config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
                 prob = Integrators.build_problem(sys, config, integ; variable=2.0)
                 Test.@test prob isa SciMLBase.ODEProblem
-                Test.@test prob.p isa Common.ODEParameters
+                Test.@test prob.p isa Systems.ODEParameters
                 Test.@test prob.p.variable == 2.0
             end
 
@@ -149,7 +148,7 @@ function test_scimlbase_function_system()
                 integ = Integrators.SciML()
                 config = Configs.StateEndPointConfig(0.0, [1.0], 1.0)
                 prob = Integrators.build_problem(sys, config, integ; variable=3.5)
-                Test.@test prob.p isa Common.ODEParameters
+                Test.@test prob.p isa Systems.ODEParameters
                 Test.@test prob.p.variable == 3.5
             end
         end

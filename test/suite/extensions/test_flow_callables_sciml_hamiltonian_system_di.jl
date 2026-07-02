@@ -7,7 +7,6 @@ module TestFlowCallablesSciMLHamiltonianSystemDI
 import Test
 import CTBase.Exceptions
 import CTBase.Data: Data
-import CTFlows.Common: Common
 import CTFlows.Systems: Systems
 import CTFlows.Flows: Flows
 import CTFlows.Integrators: Integrators

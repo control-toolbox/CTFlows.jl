@@ -15,7 +15,7 @@ with flow integration pipelines.
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Systems, CTFlows.Common
+julia> using CTFlows.Systems
 
 julia> vf = VectorField(x -> -x; autonomous=true, variable=false)
 VectorField
@@ -52,7 +52,7 @@ RHS closures are built lazily based on actual initial condition types during flo
 
 # Example
 ```julia-repl
-julia> using CTFlows.Systems, CTFlows.Common
+julia> using CTFlows.Systems
 
 julia> hvf = HamiltonianVectorField((x, p) -> (x, -p); autonomous=true, variable=false)
 HamiltonianVectorField
@@ -90,7 +90,7 @@ RHS closures are built lazily based on actual initial condition types during flo
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Systems, CTFlows.Common, CTBase.Data
+julia> using CTFlows.Systems, CTBase.Data
 
 julia> h = Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); autonomous=true, variable=false)
 Hamiltonian{var"#1", Autonomous, Fixed}

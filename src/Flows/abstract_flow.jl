@@ -115,7 +115,6 @@ Extract the time dependence trait from an `AbstractFlow`.
 # Example
 \`\`\`julia
 using CTFlows.Flows
-using CTFlows.Common
 
 struct MyFlow <: Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
     data::Vector{Float64}
@@ -141,7 +140,6 @@ Extract the variable dependence trait from an `AbstractFlow`.
 # Example
 \`\`\`julia
 using CTFlows.Flows
-using CTFlows.Common
 
 struct MyFlow <: Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
     data::Vector{Float64}
@@ -196,7 +194,7 @@ Return the automatic differentiation capability trait of a Hamiltonian flow.
 - `Type{<:AbstractADTrait}`: The AD capability trait from the flow's system.
 
 # Notes
-- Delegates to the system's AD trait via `Common.ad_trait(system(flow))`
+- Delegates to the system's AD trait via `ad_trait(system(flow))`
 - This enables dispatch based on whether the flow was built from a scalar Hamiltonian or a vector field
 
 See also: [`CTBase.Traits.AbstractADTrait`](@ref), [`CTBase.Traits.ad_trait`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
@@ -230,7 +228,7 @@ Return the variable costate capability trait of a Hamiltonian flow.
 - `Type{<:AbstractVariableCostateCapability}`: The capability trait from the flow's system.
 
 # Notes
-- Delegates to the system's variable costate trait via `Common.variable_costate_trait(system(flow))`
+- Delegates to the system's variable costate trait via `variable_costate_trait(system(flow))`
 - This enables dispatch based on whether the flow's system can compute ∂H/∂v
 
 See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@ref), [`CTBase.Traits.variable_costate_trait`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).

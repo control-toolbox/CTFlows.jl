@@ -124,7 +124,7 @@ See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.Hamiltonian
 """
 function Systems.hamiltonian_vector_field(
     flow::HamiltonianFlow{TD, VD, <:Systems.HamiltonianSystem, <:Integrators.AbstractIntegrator};
-    inplace::Bool = Common.__hvf_inplace(),
+    inplace::Bool = Systems.__hvf_inplace(),
 ) where {TD, VD}
     return Systems.hamiltonian_vector_field(flow.system; inplace=inplace)
 end

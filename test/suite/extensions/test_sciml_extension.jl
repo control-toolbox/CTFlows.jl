@@ -3,7 +3,6 @@ module TestSciMLExtension
 import Test
 import CTBase.Data: Data
 import CTFlows: CTFlows
-import CTFlows.Common: Common
 import CTFlows.Configs: Configs
 import CTFlows.Systems: Systems
 import CTFlows.Integrators: Integrators
@@ -59,8 +58,8 @@ function test_sciml_extension()
                 prob = Integrators.build_problem(sys, config, integ; variable=nothing)
 
                 Test.@test prob isa SciMLBase.AbstractODEProblem
-                Test.@test prob.p isa Common.ODEParameters
-                Test.@test Common.variable(prob.p) === nothing
+                Test.@test prob.p isa Systems.ODEParameters
+                Test.@test Systems.variable(prob.p) === nothing
             end
 
             Test.@testset "builds ODEProblem with variable parameter" begin
@@ -73,8 +72,8 @@ function test_sciml_extension()
                 prob = Integrators.build_problem(sys, config, integ; variable=0.5)
 
                 Test.@test prob isa SciMLBase.AbstractODEProblem
-                Test.@test prob.p isa Common.ODEParameters
-                Test.@test Common.variable(prob.p) == 0.5
+                Test.@test prob.p isa Systems.ODEParameters
+                Test.@test Systems.variable(prob.p) == 0.5
             end
         end
 

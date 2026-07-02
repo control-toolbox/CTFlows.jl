@@ -7,7 +7,6 @@ import CTBase.Differentiation
 import CTFlows.Flows
 import CTFlows.Integrators
 import CTFlows.Trajectories
-import CTFlows.Common
 import CTBase.Core
 import CTFlows.Configs
 import CTBase.Traits
@@ -93,7 +92,7 @@ end
 # Implement the CTFlows glue generics and CommonSolve.solve (problem-first)
 function Integrators.build_problem(system::Systems.AbstractSystem, config::Configs.AbstractConfig, integ::FakeIntegratorForCalling; variable=nothing)
     integ.build_problem_called = true
-    p = Common.ODEParameters(variable)
+    p = Systems.ODEParameters(variable)
     integ.problem_result = :fake_ode_problem
     return integ.problem_result
 end

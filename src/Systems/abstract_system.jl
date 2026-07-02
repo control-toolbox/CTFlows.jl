@@ -16,7 +16,6 @@ All subtypes must implement:
 
 \`\`\`julia
 using CTFlows.Systems
-using CTFlows.Common
 
 # Define a concrete system
 struct MySystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
@@ -93,7 +92,6 @@ Concrete subtypes must implement `time_dependence` to return the specific trait 
 
 \`\`\`julia
 using CTFlows.Systems
-using CTFlows.Common
 
 struct MySystem <: Systems.AbstractSystem end
 
@@ -122,7 +120,6 @@ Concrete subtypes must implement `variable_dependence` to return the specific tr
 
 \`\`\`julia
 using CTFlows.Systems
-using CTFlows.Common
 
 struct MySystem <: Systems.AbstractSystem end
 
@@ -150,7 +147,6 @@ Extract the time dependence trait from an `AbstractSystem`.
 # Example
 \`\`\`julia
 using CTFlows.Systems
-using CTFlows.Common
 
 struct MySystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
     data::Vector{Float64}
@@ -176,7 +172,6 @@ Extract the variable dependence trait from an `AbstractSystem`.
 # Example
 \`\`\`julia
 using CTFlows.Systems
-using CTFlows.Common
 
 struct MySystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
     data::Vector{Float64}

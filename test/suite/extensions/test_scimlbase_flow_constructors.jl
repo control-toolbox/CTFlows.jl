@@ -3,7 +3,6 @@ module TestSciMLBaseFlowConstructors
 import Test
 import CTBase.Exceptions: Exceptions
 import CTFlows: CTFlows
-import CTFlows.Common: Common
 import CTFlows.Systems: Systems
 import CTFlows.Integrators: Integrators
 import CTFlows.Flows: Flows, AbstractFlow, StateFlow, build_flow

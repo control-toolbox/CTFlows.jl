@@ -4,7 +4,7 @@ $(TYPEDEF)
 Concrete `AbstractSystem` wrapping a `VectorField`. The variable for
 `NonFixed` vector fields is **not** stored here; it is passed at flow-call
 time via the `variable` kwarg and threaded through `ODEProblem`'s `p` slot
-wrapped in a `Common.ODEParameters` struct.
+wrapped in a `Systems.ODEParameters` struct.
 
 # Fields
 - `vf::VectorField{F, TD, VD, MD}`: the underlying vector field.
@@ -14,7 +14,7 @@ wrapped in a `Common.ODEParameters` struct.
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Systems, CTFlows.Common
+julia> using CTFlows.Systems
 
 julia> vf = VectorField(x -> -x; autonomous=true, variable=false)
 VectorField
@@ -31,7 +31,7 @@ VectorFieldSystem
   vector_field: VectorField{var"#1", Autonomous, Fixed, OutOfPlace}
 \`\`\`
 
-See also: [`CTBase.Data.VectorField`](@ref), `TimeDependence`, [`CTBase.Traits.VariableDependence`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
+See also: [`CTBase.Data.VectorField`](@ref), `TimeDependence`, [`CTBase.Traits.VariableDependence`](@ref), [`CTFlows.Systems.ODEParameters`](@ref).
 """
 struct VectorFieldSystem{F<:Function, TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, MD<:Traits.AbstractMutabilityTrait, RHS<:AbstractIPRHS, OOPROHS<:AbstractOoPRHS, FINRHS} <: AbstractStateSystem{TD, VD}
     vf::Data.VectorField{F, TD, VD, MD}
@@ -92,7 +92,7 @@ $(TYPEDSIGNATURES)
 In-place right-hand side for a `VectorFieldSystem`. Returns the pre-computed
 closure stored in the system, which has signature `(du, u, p, t) -> nothing` and
 uses the uniform `(t, x, v)` call on the underlying `VectorField`, where `p`
-is a `Common.ODEParameters` wrapper containing the variable (or `nothing`
+is a `Systems.ODEParameters` wrapper containing the variable (or `nothing`
 for `Fixed` systems).
 
 # Arguments
@@ -103,7 +103,7 @@ for `Fixed` systems).
 
 # Example
 \`\`\`julia
-using CTFlows.Systems, CTFlows.Common
+using CTFlows.Systems
 
 vf = VectorField(x -> -x; autonomous=true, variable=false)
 sys = VectorFieldSystem(vf)
@@ -111,7 +111,7 @@ rhs = Systems.get_ip_rhs(sys, config)
 
 du = zeros(2)
 u = [1.0, 2.0]
-p = Common.ODEParameters(nothing)
+p = Systems.ODEParameters(nothing)
 rhs(du, u, p, 0.0)
 # du is now [-1.0, -2.0]
 \`\`\`
@@ -121,7 +121,7 @@ rhs(du, u, p, 0.0)
 - Multiple calls to `get_ip_rhs` return the same function object.
 - The closure reads `variable(p)` to access the actual variable value.
 
-See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Common.ODEParameters`](@ref).
+See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Systems.ODEParameters`](@ref).
 """
 
 """

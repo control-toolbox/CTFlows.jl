@@ -63,7 +63,7 @@ end
 
 function (f::IPHVFOoPRHS{F,TD,VD,CX,CP})(du, u, λ, t) where {F,TD,VD,CX,CP}
     x, p = _ham_split(u, f.N)
-    dx, dp = f.hvf(t, f.cx(x), f.cp(p), Common.variable(λ); variable_costate=false)
+    dx, dp = f.hvf(t, f.cx(x), f.cp(p), variable(λ); variable_costate=false)
     _ham_assign!(du, dx, dp, f.N)
     return nothing
 end
@@ -95,7 +95,7 @@ end
 function (f::IPHVFIpRHS{F,TD,VD,CX,CP})(du, u, λ, t) where {F,TD,VD,CX,CP}
     x, p   = _ham_split(u,  f.N)
     dx, dp = _ham_split(du, f.N)
-    f.hvf(dx, dp, t, f.cx(x), f.cp(p), Common.variable(λ); variable_costate=false)
+    f.hvf(dx, dp, t, f.cx(x), f.cp(p), variable(λ); variable_costate=false)
     return nothing
 end
 
@@ -125,7 +125,7 @@ end
 
 function (f::OoPHVFOoPRHS{F,TD,VD,CX,CP})(u, λ, t) where {F,TD,VD,CX,CP}
     x, p = _ham_split(u, f.N)
-    dx, dp = f.hvf(t, f.cx(x), f.cp(p), Common.variable(λ); variable_costate=false)
+    dx, dp = f.hvf(t, f.cx(x), f.cp(p), variable(λ); variable_costate=false)
     return vcat(dx, dp)
 end
 
@@ -156,7 +156,7 @@ end
 function (f::OoPHVFIpRHS{F,TD,VD,CX,CP})(u, λ, t) where {F,TD,VD,CX,CP}
     x, p = _ham_split(u, f.N)
     dx, dp = similar(x), similar(p)
-    f.hvf(dx, dp, t, f.cx(x), f.cp(p), Common.variable(λ); variable_costate=false)
+    f.hvf(dx, dp, t, f.cx(x), f.cp(p), variable(λ); variable_costate=false)
     return vcat(dx, dp)
 end
 
@@ -187,7 +187,7 @@ end
 function (f::OoPHVFIpFinalizeRHS{F,TD,VD,CX,CP})(u, λ, t) where {F,TD,VD,CX,CP}
     x, p = _ham_split(u, f.N)
     dx, dp = similar(x), similar(p)
-    f.hvf(dx, dp, t, f.cx(x), f.cp(p), Common.variable(λ); variable_costate=false)
+    f.hvf(dx, dp, t, f.cx(x), f.cp(p), variable(λ); variable_costate=false)
     return typeof(u)(vcat(dx, dp))
 end
 
@@ -220,7 +220,7 @@ struct IPHVFOoPAugRHS{F,TD,VD,CX,CP} <: AbstractIPHVFRHS
 end
 
 function (f::IPHVFOoPAugRHS{F,TD,VD,CX,CP})(du, u, λ, t) where {F,TD,VD,CX,CP}
-    v = Common.variable(λ)
+    v = variable(λ)
     x, p, _ = _aug_split(u, f.n_x, f.n_v)
     dx, dp, dpv = f.hvf(t, f.cx(x), f.cp(p), v; variable_costate=true)
     _aug_assign!(du, dx, dp, dpv, f.n_x, f.n_v)
@@ -252,7 +252,7 @@ struct IPHVFIpAugRHS{F,TD,VD,CX,CP} <: AbstractIPHVFRHS
 end
 
 function (f::IPHVFIpAugRHS{F,TD,VD,CX,CP})(du, u, λ, t) where {F,TD,VD,CX,CP}
-    v = Common.variable(λ)
+    v = variable(λ)
     x, p, _ = _aug_split(u,  f.n_x, f.n_v)
     dx, dp, _ = _aug_split(du, f.n_x, f.n_v)
     dpv = similar(u[end-f.n_v+1:end])

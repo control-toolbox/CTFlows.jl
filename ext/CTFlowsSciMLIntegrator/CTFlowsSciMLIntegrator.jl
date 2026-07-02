@@ -22,7 +22,6 @@ import DocStringExtensions: TYPEDSIGNATURES
 import CTBase.Exceptions
 
 using CTFlows: CTFlows
-using CTFlows.Common: Common
 using CTFlows.Configs: Configs
 using CTFlows.Systems: Systems
 using CTBase.Traits: Traits

@@ -3,7 +3,6 @@ module TestHamiltonianVectorFieldSystem
 import Test
 import CTBase.Exceptions
 import CTBase.Data: Data
-import CTFlows.Common: Common
 import CTBase.Traits: Traits
 import CTFlows.Systems: Systems
 import CTFlows.Configs: Configs
@@ -68,7 +67,7 @@ function test_hamiltonian_vector_field_system()
             # Test RHS call with vector
             u = [1.0, 2.0, 3.0, 4.0]  # x = [1, 2], p = [3, 4]
             du = zeros(4)
-            p = Common.ODEParameters(nothing)
+            p = Systems.ODEParameters(nothing)
             rhs(du, u, p, 0.0)
 
             # dx = x = [1, 2], dp = -p = [-3, -4]
@@ -102,7 +101,7 @@ function test_hamiltonian_vector_field_system()
 
             # Test RHS OOP call with vector
             u = [1.0, 2.0, 3.0, 4.0]  # x = [1, 2], p = [3, 4]
-            p = Common.ODEParameters(nothing)
+            p = Systems.ODEParameters(nothing)
             du = rhs_oop(u, p, 0.0)
 
             # dx = x = [1, 2], dp = -p = [-3, -4]
@@ -126,7 +125,7 @@ function test_hamiltonian_vector_field_system()
         Test.@testset "Complex numbers" begin
             hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
             sys = Systems.HamiltonianVectorFieldSystem(hvf)
-            p_param = Common.ODEParameters(nothing)
+            p_param = Systems.ODEParameters(nothing)
 
             Test.@testset "get_ip_rhs - complex vector" begin
                 x0 = [1.0+2.0im]
@@ -202,7 +201,7 @@ function test_hamiltonian_vector_field_system()
             config = Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0)
             rhs_oop = Systems.get_oop_rhs(sys, config)
             u = SA[1.0, 2.0, 3.0, 4.0]
-            p_param = Common.ODEParameters(nothing)
+            p_param = Systems.ODEParameters(nothing)
             du = rhs_oop(u, p_param, 0.0)
             Test.@test du == SA[1.0, 2.0, -3.0, -4.0]
             Test.@test du isa StaticArrays.SVector

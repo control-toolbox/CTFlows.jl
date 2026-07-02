@@ -6,7 +6,6 @@ import CTBase.Data
 import CTFlows.Flows
 import CTFlows.Systems
 import CTFlows.Integrators
-import CTFlows.Common
 import CTBase.Traits
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true

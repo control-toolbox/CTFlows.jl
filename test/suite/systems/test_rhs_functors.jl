@@ -1,7 +1,6 @@
 module TestRhsFunctors
 
 import Test
-import CTFlows.Common
 import CTBase.Data
 import CTFlows.Systems
 import CTBase.Traits
@@ -59,7 +58,7 @@ function test_rhs_functors()
 
             du = zeros(2)
             u = [1.0, 2.0]
-            λ = Common.ODEParameters(nothing)
+            λ = Systems.ODEParameters(nothing)
             t = 0.0
 
             f(du, u, λ, t)
@@ -76,7 +75,7 @@ function test_rhs_functors()
 
             du = zeros(2)
             u = [1.0, 2.0]
-            λ = Common.ODEParameters(nothing)
+            λ = Systems.ODEParameters(nothing)
             t = 0.0
 
             f(du, u, λ, t)
@@ -92,7 +91,7 @@ function test_rhs_functors()
             f = Systems.OoPVFOoPRHS(vf)
 
             u = [1.0, 2.0]
-            λ = Common.ODEParameters(nothing)
+            λ = Systems.ODEParameters(nothing)
             t = 0.0
 
             result = f(u, λ, t)
@@ -108,7 +107,7 @@ function test_rhs_functors()
             f = Systems.OoPVFIpRHS(vf)
 
             u = [1.0, 2.0]
-            λ = Common.ODEParameters(nothing)
+            λ = Systems.ODEParameters(nothing)
             t = 0.0
 
             result = f(u, λ, t)
@@ -125,7 +124,7 @@ function test_rhs_functors()
             f = Systems.OoPVFIpFinalizeRHS(vf)
 
             u = StaticArrays.SA[1.0, 2.0]
-            λ = Common.ODEParameters(nothing)
+            λ = Systems.ODEParameters(nothing)
             t = 0.0
 
             result = f(u, λ, t)
@@ -149,7 +148,7 @@ function test_rhs_functors()
 
             du = zeros(2)
             u = [1.0, 2.0]
-            λ = Common.ODEParameters(nothing)
+            λ = Systems.ODEParameters(nothing)
             t = 0.0
 
             Test.@inferred f_ip_vf_oop(du, u, λ, t)
