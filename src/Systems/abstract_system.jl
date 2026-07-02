@@ -4,13 +4,17 @@ $(TYPEDEF)
 Abstract type for all systems in CTFlows.
 
 An `AbstractSystem` represents a fully assembled object that can be integrated.
-It embeds its own `rhs`, dimensional metadata, and solution-building logic.
+It embeds its own right-hand side, dimensional metadata, and solution-building logic.
 
 # Contract
 
 All subtypes must implement:
 
-- `rhs(system::AbstractSystem)`: Returns a function `(du, u, p, t) -> nothing` that fills `du` in place.
+- `get_ip_rhs(system::AbstractSystem, config)`: Returns a function `(du, u, p, t) -> nothing` that fills `du` in place.
+- `get_oop_rhs(system::AbstractSystem, config)`: Returns a function `(u, p, t) -> du` that returns the derivative.
+
+Hamiltonian systems supporting variable-costate integration additionally implement
+`get_ip_rhs_augmented(system::AbstractHamiltonianSystem, config)`.
 
 # Example
 
@@ -22,13 +26,17 @@ struct MySystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, Trait
     data::Vector{Float64}
 end
 
-# Implement required contract method
-function Systems.rhs(sys::MySystem)
+# Implement required contract methods
+function Systems.get_ip_rhs(sys::MySystem, config)
     return (du, u, p, t) -> du .= sys.data .* u
+end
+
+function Systems.get_oop_rhs(sys::MySystem, config)
+    return (u, p, t) -> sys.data .* u
 end
 \`\`\`
 
-See also: [`CTFlows.Systems.rhs`](@ref), [`CTBase.Traits.time_dependence`](@ref), [`CTBase.Traits.variable_dependence`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Systems.get_ip_rhs_augmented`](@ref), [`CTBase.Traits.time_dependence`](@ref), [`CTBase.Traits.variable_dependence`](@ref).
 """
 abstract type AbstractSystem{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, D<:Traits.AbstractDynamicsTrait} end
 

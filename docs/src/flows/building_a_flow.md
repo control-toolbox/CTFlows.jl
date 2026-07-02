@@ -77,7 +77,8 @@ hsys = Systems.build_system(hvf)
 ```
 
 A system exposes:
-- `Systems.rhs(sys)` — the ODE right-hand side function `(du, u, p, t) -> …`
+- `Systems.get_ip_rhs(sys, config)` — the in-place ODE right-hand side `(du, u, p, t) -> nothing`
+- `Systems.get_oop_rhs(sys, config)` — the out-of-place variant `(u, p, t) -> du`
 - `Traits.time_dependence(sys)`, `Traits.variable_dependence(sys)` — delegated from the data
 
 ### Step 2 — Build the integrator
@@ -123,7 +124,14 @@ Traits.variable_dependence(flow)  # Fixed
 
 Any concrete system must implement:
 
-- `rhs(system)` — returns an ODE function `(du, u, p, t) -> nothing`
+- `get_ip_rhs(system, config)` — returns the in-place ODE function `(du, u, p, t) -> nothing`
+- `get_oop_rhs(system, config)` — returns the out-of-place ODE function `(u, p, t) -> du`
+
+Hamiltonian systems supporting variable-costate integration additionally implement
+`get_ip_rhs_augmented(system, config)`. Eager systems (e.g. `VectorFieldSystem`)
+ignore `config` and return pre-computed closures; lazy systems (e.g.
+`HamiltonianSystem`) read the initial conditions from `config` to build
+type-specific closures.
 
 Traits are propagated automatically from the data layer:
 
@@ -167,4 +175,4 @@ hvf_ad = Flows.hamiltonian_vector_field(hflow_ad)
 - [`CTFlows.Flows.build_flow`](@ref), [`CTFlows.Systems.build_system`](@ref), [`CTSolvers.Integrators.build_integrator`](@extref) — pipeline builders.
 - [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractStateFlow`](@ref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@ref) — abstract supertypes.
 - [`CTFlows.Flows.system`](@ref), [`CTFlows.Flows.integrator`](@ref) — flow accessors.
-- [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Systems.rhs`](@ref) — system contract.
+- [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref) — system contract.

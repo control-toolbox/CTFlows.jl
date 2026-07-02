@@ -1,17 +1,19 @@
-# to run the documentation generation:
-# julia --project=. docs/make.jl
+# to run the documentation generation: julia --project=. docs/make.jl
+# to serve the documentation (option 1 — handles clean URLs natively):
+#   npx serve docs/build/1 --listen 5173
+# to serve the documentation (option 2 — Julia only):
+#   julia --project=docs -e 'using LiveServer; LiveServer.serve(dir="docs/build/1", single_page=true)'
+# note: single_page=true is required so that reloading /getting-started serves the correct HTML
 pushfirst!(LOAD_PATH, joinpath(@__DIR__))
 pushfirst!(LOAD_PATH, joinpath(@__DIR__, ".."))
 
-# control-toolbox packages
+using Documenter
+using DocumenterVitepress
+using DocumenterInterLinks
 using CTFlows
 using CTBase
 using CTModels
 using CTSolvers
-
-# documentation
-using DocumenterInterLinks
-using Documenter
 using Markdown
 using MarkdownAST: MarkdownAST
 
@@ -31,50 +33,41 @@ for _ext_sym in (:CTFlowsPlots,
     isnothing(_m) || @eval Main const $_ext_sym = $_m
 end
 
-#
+# ═══════════════════════════════════════════════════════════════════════════════
+# Configuration
+# ═══════════════════════════════════════════════════════════════════════════════
+draft = false # Draft mode: if true, @example blocks in markdown are not executed
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Cross-package links (InterLinks)
+# ═══════════════════════════════════════════════════════════════════════════════
 links = InterLinks(
     "CTBase" => (
-        "https://control-toolbox.org/CTBase.jl/stable/",
-        "https://control-toolbox.org/CTBase.jl/stable/objects.inv",
-        joinpath(@__DIR__, "inventories", "CTBase.toml"),
+        "https://control-toolbox.org/CTBase.jl/dev/",
+        "https://control-toolbox.org/CTBase.jl/dev/objects.inv",
     ),
     "CTModels" => (
-        "https://control-toolbox.org/CTModels.jl/stable/",
-        "https://control-toolbox.org/CTModels.jl/stable/objects.inv",
-        joinpath(@__DIR__, "inventories", "CTModels.toml"),
+        "https://control-toolbox.org/CTModels.jl/dev/",
+        "https://control-toolbox.org/CTModels.jl/dev/objects.inv",
     ),
     "CTSolvers" => (
-        "https://control-toolbox.org/CTSolvers.jl/stable/",
-        "https://control-toolbox.org/CTSolvers.jl/stable/objects.inv",
-        joinpath(@__DIR__, "inventories", "CTSolvers.toml"),
+        "https://control-toolbox.org/CTSolvers.jl/dev/",
+        "https://control-toolbox.org/CTSolvers.jl/dev/objects.inv",
     ),
 )
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Configuration
+# Extensions
 # ═══════════════════════════════════════════════════════════════════════════════
-# if draft is true, then the julia code from .md is not executed
-# to disable the draft mode in a specific markdown file, use the following:
-#=
-```@meta
-Draft = false
-```
-=#
-draft = false  # Draft mode: if true, @example blocks in markdown are not executed
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Load extensions
-# ══════════════════════════════════════════════════════════════════════════════
-
 const DocumenterReference = Base.get_extension(CTBase, :DocumenterReference)
 
 if !isnothing(DocumenterReference)
     DocumenterReference.reset_config!()
 end
 
-# ══════════════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════════
 # Paths
-# ══════════════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════════
 repo_url = "github.com/control-toolbox/CTFlows.jl"
 src_dir = abspath(joinpath(@__DIR__, "..", "src"))
 ext_dir = abspath(joinpath(@__DIR__, "..", "ext"))
@@ -82,33 +75,29 @@ ext_dir = abspath(joinpath(@__DIR__, "..", "ext"))
 # Include the API reference manager
 include("api_reference.jl")
 
-# ══════════════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════════
 # Build documentation
-# ══════════════════════════════════════════════════════════════════════════════
-
+# ═══════════════════════════════════════════════════════════════════════════════
 with_api_reference(src_dir, ext_dir) do api_pages
-    makedocs(;
+    return makedocs(;
         draft=draft,
-        remotes=nothing, # Disable remote links. Needed for DocumenterReference
-        warnonly=true,
+        remotes=nothing,
+        warnonly=[:cross_references, :external_cross_references],
         sitename="CTFlows.jl",
-        format=Documenter.HTML(;
-            repolink="https://" * repo_url,
-            prettyurls=false,
-            assets=[
-                asset("https://control-toolbox.org/assets/css/documentation.css"),
-                asset("https://control-toolbox.org/assets/js/documentation.js"),
-            ],
-            size_threshold_ignore=String[],
+        format=DocumenterVitepress.MarkdownVitepress(;
+            repo=repo_url, devbranch="main", devurl="dev", sidebar_drawer=true
         ),
         pages=[
-            "Introduction" => "index.md",
+            # index.md is the VitePress root — not listed here
+            "Getting Started" => "getting-started.md",
             "Flows" => [
-                "Overview"           => "flows/index.md",
-                "Building a flow"    => "flows/building_a_flow.md",
-                "Integrating"        => "flows/integrating.md",
-                "Trajectories"       => "flows/trajectories.md",
-                "Multi-phase flows"  => "flows/multiphase.md",
+                "Overview"          => "flows/index.md",
+                "Building a flow"   => "flows/building_a_flow.md",
+                "Integrating"       => "flows/integrating.md",
+                "Trajectories"      => "flows/trajectories.md",
+                "Multi-phase flows" => "flows/multiphase.md",
+                "Optimal control"   => "flows/optimal_control.md",
+                "SciML flows"       => "flows/sciml.md",
             ],
             "API Reference" => api_pages,
         ],
@@ -116,6 +105,14 @@ with_api_reference(src_dir, ext_dir) do api_pages
     )
 end
 
-# ══════════════════════════════════════════════════════════════════════════════
-
-deploydocs(; repo=repo_url * ".git", devbranch="main")
+# ═══════════════════════════════════════════════════════════════════════════════
+# Deploy documentation to GitHub Pages
+# ═══════════════════════════════════════════════════════════════════════════════
+bases_file = joinpath(@__DIR__, "build", "bases.txt")
+if isfile(bases_file)
+    DocumenterVitepress.deploydocs(;
+        repo=repo_url * ".git", devbranch="main", push_preview=true
+    )
+else
+    @info "Skipping deployment: no bases were built (prerelease with existing higher stable release)."
+end
