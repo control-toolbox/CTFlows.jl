@@ -115,7 +115,7 @@ derive the vector field — see [Building a flow](flows/building_a_flow.md).
 
 ## Where to go next
 
-- [Flows overview](flows/index.md) — the full pipeline and the mathematical setting.
+- [Flows overview](flows/overview.md) — the full pipeline and the mathematical setting.
 - [Integrating](flows/integrating.md) — call styles, variable parameters, solver options.
 - [Multi-phase flows](flows/multiphase.md) — concatenation with switching times and jumps.
 - [Optimal control](flows/optimal_control.md) — flows built directly from a `CTModels` problem.

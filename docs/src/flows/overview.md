@@ -44,7 +44,7 @@ The **data layer** (wrapping functions as `VectorField`, `Hamiltonian`,
 
 CTFlows exports nothing at the package level. Bring submodules into scope explicitly:
 
-```@example flows_index
+```@example flows_overview
 using CTFlows
 using CTFlows.Flows        # StateFlow, HamiltonianFlow, Flow, build_flow
 using CTBase.Data         # VectorField, Hamiltonian, HamiltonianVectorField
@@ -61,7 +61,7 @@ nothing # hide
 
 The fastest path from a function to an integrated trajectory:
 
-```@example flows_index
+```@example flows_overview
 # 1. Wrap the dynamics as a VectorField
 #    The function x -> -x is autonomous (no t) and fixed (no variable parameter)
 vf = Data.VectorField(x -> -x)

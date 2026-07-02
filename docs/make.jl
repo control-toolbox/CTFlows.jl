@@ -91,7 +91,7 @@ with_api_reference(src_dir, ext_dir) do api_pages
             # index.md is the VitePress root — not listed here
             "Getting Started" => "getting-started.md",
             "Flows" => [
-                "Overview"          => "flows/index.md",
+                "Overview"          => "flows/overview.md",
                 "Building a flow"   => "flows/building_a_flow.md",
                 "Integrating"       => "flows/integrating.md",
                 "Trajectories"      => "flows/trajectories.md",

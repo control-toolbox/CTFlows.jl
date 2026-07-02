@@ -64,8 +64,7 @@ Data → Systems → Integrators → Flows → Trajectories
 | Trajectories | [`CTFlows.Trajectories`](@ref CTFlows.Trajectories) | `VectorFieldTrajectory`, `HamiltonianVectorFieldTrajectory` |
 | Multi-phase | [`CTFlows.MultiPhase`](@ref CTFlows.MultiPhase) | `MultiPhaseStateFlow` |
 
-The data layer (`VectorField`, `Hamiltonian`, `HamiltonianVectorField` and the
-trait system) lives in [`CTBase.Data`](@extref CTBase.Data); the ODE integrator
+The data layer (`VectorField`, `Hamiltonian`, `HamiltonianVectorField`) lives in [`CTBase.Data`](@extref CTBase.Data); the ODE integrator
 strategy is provided by
 [`CTSolvers.Integrators`](@extref CTSolvers.Integrators) and re-exported through
 [`CTFlows.Integrators`](@ref CTFlows.Integrators).
@@ -79,7 +78,7 @@ gives full control over each step.
 | Guide | Contents |
 |---|---|
 | [Getting Started](getting-started.md) | Installation, mental model, 5-minute walkthrough |
-| [Flows](flows/index.md) | End-to-end pipeline: data → systems → flows → trajectories, multi-phase |
+| [Flows](flows/overview.md) | End-to-end pipeline: data → systems → flows → trajectories, multi-phase |
 | [Building a flow](flows/building_a_flow.md) | Shortcut and explicit constructors |
 | [Integrating](flows/integrating.md) | Call styles, configuration objects, integrator options |
 | [Trajectories](flows/trajectories.md) | Reading the result: `state`, `costate`, `time_grid`, plotting |
