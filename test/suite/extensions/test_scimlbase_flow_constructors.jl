@@ -12,9 +12,7 @@ import SciMLBase: SciMLBase, ODEProblem, ODEFunction
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 using StaticArrays: SA, SVector
 
-const CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
 const CTFlowsSciMLFlows      = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
-const CTFlowsOrdinaryDiffEqTsit5 = Base.get_extension(CTFlows, :CTFlowsOrdinaryDiffEqTsit5)
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
@@ -123,7 +121,7 @@ function test_scimlbase_flow_constructors()
                 prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
                 flow = Flows.Flow(prob; reltol=1e-10)
                 result = flow((0.0, 1.0), [1.0]; variable=3.0)
-                Test.@test result isa CTFlowsSciMLIntegrator.SciMLIntegrationResult
+                Test.@test result isa Integrators.AbstractIntegrationResult
                 xf = Integrators.final_state(result)
                 Test.@test xf isa Vector
                 Test.@test length(xf) == 1

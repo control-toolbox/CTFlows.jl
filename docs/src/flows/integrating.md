@@ -146,10 +146,14 @@ handle failures gracefully instead of relying on exceptions.
 
 ## SciML integrator internals
 
-The `SciML` strategy wraps SciML's `solve` under the
-[`CTSolvers`](https://github.com/control-toolbox/CTSolvers.jl) option system. The
-`build_problem` / `solve_problem` separation lets the same problem definition be
-re-solved with different parameters efficiently.
+The `SciML` integrator strategy itself — its options, construction, and the
+`CommonSolve.solve` method that wraps SciML's `solve` — is provided by
+[`CTSolvers.Integrators`](https://github.com/control-toolbox/CTSolvers.jl). CTFlows
+contributes only the *glue*: `Integrators.build_problem` turns a system and a
+configuration into a SciML `ODEProblem`, and `Integrators.build_options` selects the
+integrator's cached option bundle for the configuration. Integration is then
+`CommonSolve.solve(prob, integ)`. Keeping `build_problem` separate from the solve step
+lets the same problem definition be re-solved with different parameters efficiently.
 
 ```@example flows_integrating
 integ = Integrators.build_integrator(; reltol=1e-8)
@@ -163,4 +167,5 @@ typeof(integ)
 - [`CTFlows.Configs.StateEndPointConfig`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref) — state configuration objects.
 - [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref) — Hamiltonian configuration objects.
 - [`CTFlows.Configs.tspan`](@ref), [`CTFlows.Configs.initial_state`](@ref), [`CTFlows.Configs.initial_costate`](@ref) — configuration accessors.
-- [`CTFlows.Integrators.SciML`](@ref), [`CTFlows.Integrators.build_integrator`](@ref), [`CTFlows.Integrators.AbstractIntegrator`](@ref) — integrator types.
+- [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.build_options`](@ref) — the CTFlows-side integrator glue.
+- [`CTSolvers.Integrators.SciML`](@extref), [`CTSolvers.Integrators.build_integrator`](@extref), [`CTSolvers.Integrators.AbstractIntegrator`](@extref) — the integrator strategy (provided by CTSolvers).

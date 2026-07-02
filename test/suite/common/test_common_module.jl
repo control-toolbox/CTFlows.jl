@@ -8,7 +8,6 @@
 #
 # Functionality tests are in separate files:
 # - test_ode_parameters.jl for ODEParameters
-# - test_internal_norm.jl for deepvalue/real_norm
 """
 
 module TestCommonModule
@@ -35,8 +34,6 @@ const EXPORTED_TYPES = (
 
 const EXPORTED_FUNCTIONS = (
     :variable,
-    :deepvalue,
-    :real_norm,
     # Shared default values (exported for use across modules)
     :__variable,
     :__unsafe,

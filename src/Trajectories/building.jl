@@ -21,7 +21,7 @@ This uses compile-time dispatch on the initial state type to avoid runtime type 
 # Returns
 - `Number`: The unwrapped scalar final state.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTBase.Traits.EndPointMode`](@ref), [`CTBase.Traits.StateDynamics`](@ref).
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTBase.Traits.EndPointMode`](@ref), [`CTBase.Traits.StateDynamics`](@ref).
 """
 function build_trajectory(
     ::Type{Traits.EndPointMode},
@@ -47,7 +47,7 @@ in a `VectorFieldTrajectory` for future extensibility.
 # Returns
 - `VectorFieldTrajectory`: The wrapped integration result.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTBase.Traits.TrajectoryMode`](), [`CTBase.Traits.StateDynamics`]().
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTBase.Traits.TrajectoryMode`](), [`CTBase.Traits.StateDynamics`]().
 """
 function build_trajectory(
     ::Type{Traits.TrajectoryMode},
@@ -115,7 +115,7 @@ type of the initial state to handle scalar, vector, and matrix cases.
   - `Tuple{AbstractVector, AbstractVector}` for vector inputs
   - `Tuple{AbstractMatrix, AbstractMatrix}` for matrix inputs
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTBase.Traits.EndPointMode`](@ref), [`CTBase.Traits.HamiltonianDynamics`]().
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTBase.Traits.EndPointMode`](@ref), [`CTBase.Traits.HamiltonianDynamics`]().
 """
 function build_trajectory(
     ::Type{Traits.EndPointMode},
@@ -145,7 +145,7 @@ Wraps the integration result in a `HamiltonianVectorFieldTrajectory` for future 
 # Returns
 - `HamiltonianVectorFieldTrajectory`: The wrapped integration result.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTBase.Traits.TrajectoryMode`](), [`CTBase.Traits.HamiltonianDynamics`]().
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTBase.Traits.TrajectoryMode`](), [`CTBase.Traits.HamiltonianDynamics`]().
 """
 function build_trajectory(
     ::Type{Traits.TrajectoryMode},
@@ -183,7 +183,7 @@ splits using only the state dimension `n = length(initial_state)`.
 - Uses `_aug_split_solution` helper to split the augmented final state.
 - Assumes `n_p = n_x` invariant for Hamiltonian systems.
 
-See also: [`CTFlows.Integrators.AbstractIntegrationResult`](@ref), [`CTBase.Traits.EndPointMode`](@ref), [`CTBase.Traits.AugmentedHamiltonianDynamics`]().
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTBase.Traits.EndPointMode`](@ref), [`CTBase.Traits.AugmentedHamiltonianDynamics`]().
 """
 function build_trajectory(
     ::Type{Traits.EndPointMode},

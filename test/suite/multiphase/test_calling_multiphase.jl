@@ -9,6 +9,7 @@ import CTFlows.Common
 import CTFlows.Configs
 import CTBase.Traits
 import CTFlows.Trajectories
+import CommonSolve
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
@@ -77,25 +78,25 @@ Strategies.options(integ::MockIntegrator) = Options.StrategyOptions()
 # Mock Integrator Interface Implementation
 # ==============================================================================
 
-function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Configs.StateEndPointConfig; variable)
+function Integrators.build_problem(sys::Systems.AbstractSystem, config::Configs.StateEndPointConfig, integ::MockIntegrator; variable)
     x0 = Configs.initial_state(config)
     tspan = Configs.tspan(config)
     return MockODEProblem(x0, tspan)
 end
 
-function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Configs.StateTrajectoryConfig; variable)
+function Integrators.build_problem(sys::Systems.AbstractSystem, config::Configs.StateTrajectoryConfig, integ::MockIntegrator; variable)
     x0 = Configs.initial_state(config)
     tspan = Configs.tspan(config)
     return MockODEProblem(x0, tspan)
 end
 
-function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Configs.HamiltonianEndPointConfig; variable)
+function Integrators.build_problem(sys::Systems.AbstractSystem, config::Configs.HamiltonianEndPointConfig, integ::MockIntegrator; variable)
     x0, p0 = Configs.initial_state(config), Configs.initial_costate(config)
     tspan = Configs.tspan(config)
     return MockODEProblem(vcat(x0, p0), tspan)
 end
 
-function Integrators.build_problem(integ::MockIntegrator, sys::Systems.AbstractSystem, config::Configs.HamiltonianTrajectoryConfig; variable)
+function Integrators.build_problem(sys::Systems.AbstractSystem, config::Configs.HamiltonianTrajectoryConfig, integ::MockIntegrator; variable)
     x0, p0 = Configs.initial_state(config), Configs.initial_costate(config)
     tspan = Configs.tspan(config)
     return MockODEProblem(vcat(x0, p0), tspan)
@@ -117,7 +118,7 @@ function Integrators.build_options(integ::MockIntegrator, config::Configs.Hamilt
     return Dict{Symbol, Any}()
 end
 
-function Integrators.solve_problem(integ::MockIntegrator, prob::MockODEProblem, opts::Dict{Symbol, Any}; unsafe=Common.__unsafe())
+function CommonSolve.solve(prob::MockODEProblem, integ::MockIntegrator; options=Dict{Symbol, Any}(), unsafe=Common.__unsafe())
     multiplier = integ.multiplier
     t0, tf = prob.tspan
     u_final = prob.u0 * multiplier

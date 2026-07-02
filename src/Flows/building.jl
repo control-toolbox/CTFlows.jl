@@ -24,7 +24,7 @@ vf = Data.VectorField((t, x, v) -> x, Traits.Autonomous(), Traits.Fixed())
 flow = Flows.Flow(vf; reltol=1e-8)
 \`\`\`
 
-See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.build_system`](@ref), [`CTFlows.Integrators.build_integrator`](@ref).
+See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.build_system`](@ref), [`CTSolvers.Integrators.build_integrator`](@extref).
 """
 function Flow(data::Data.VectorField; opts...)
     system = Systems.build_system(data)
@@ -58,7 +58,7 @@ hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_vari
 flow = Flows.Flow(hvf; reltol=1e-8)
 ```
 
-See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.build_system`](@ref), [`CTFlows.Integrators.build_integrator`](@ref).
+See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.build_system`](@ref), [`CTSolvers.Integrators.build_integrator`](@extref).
 """
 function Flow(data::Data.HamiltonianVectorField; opts...)
     system = Systems.build_system(data)
