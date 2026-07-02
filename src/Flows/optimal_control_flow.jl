@@ -78,6 +78,30 @@ end
 # This wrapper exists solely so the trajectory call can build a CTModels.Solution.
 # =============================================================================
 
+"""
+$(TYPEDEF)
+
+Flow of the Hamiltonian system associated with a (control-free) optimal control
+problem, built by [`CTFlows.Flows.Flow`](@ref) from a
+[`CTModels.Models.Model`](@extref).
+
+It is a thin [`CTFlows.Flows.AbstractFlow`](@ref) wrapper around an inner
+`HamiltonianFlow`: point evaluation delegates to the inner flow (returning the
+final state–costate pair), while a trajectory call integrates the system and
+rebuilds a full [`CTModels.Solutions.Solution`](@extref) from the problem.
+
+# Type Parameters
+- `TD <: TimeDependence`: time-dependence trait, inherited from the problem.
+- `VD <: VariableDependence`: variable-dependence trait, inherited from the problem.
+- `IF`: type of the inner `HamiltonianFlow`.
+- `M`: type of the wrapped optimal control problem model.
+
+# Fields
+- `flow::IF`: the inner Hamiltonian flow doing the integration.
+- `ocp::M`: the optimal control problem, kept so trajectory calls can build a solution.
+
+See also: [`CTFlows.Flows.Flow`](@ref), [`CTModels.Solutions.Solution`](@extref).
+"""
 struct OptimalControlFlow{
     TD <: Traits.TimeDependence,
     VD <: Traits.VariableDependence,

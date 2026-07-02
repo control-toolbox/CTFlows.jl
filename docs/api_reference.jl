@@ -1,14 +1,10 @@
 # ==============================================================================
 # CTFlows API Reference Manager
 #
-# Generates API reference pages via CTBase.automatic_reference_documentation,
-# one section per CTFlows submodule. Generated .md files are cleaned up after
-# the build.
-#
-# The per-submodule file lists below mirror the actual source tree under
-# `src/<Submodule>/` and `ext/`. Keep them in sync when files are
-# added/removed/renamed, otherwise docstrings silently drop out of the
-# reference and internal `@ref` links break.
+# One CTBase.automatic_reference_documentation call per documented page.
+# Keep the file lists in sync with src/<Submodule>/ and ext/ when files
+# are added, removed, or renamed, otherwise docstrings silently drop out of
+# the reference and internal `@ref` links break.
 # ==============================================================================
 
 """
@@ -18,243 +14,200 @@ Generate the API reference documentation for CTFlows.
 Returns the list of pages.
 """
 function generate_api_reference(src_dir::String, ext_dir::String)
-    # Helper to build absolute paths
     src(files...) = [abspath(joinpath(src_dir, f)) for f in files]
     ext(files...) = [abspath(joinpath(ext_dir, f)) for f in files]
 
-    # Base exclusion list for all core modules
-    EXCLUDE_BASE = Symbol[:include, :eval]
-    
-    pages = [
-        # ───────────────────────────────────────────────────────────────────
-        # Configs
-        # ───────────────────────────────────────────────────────────────────
-        CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[
-                CTFlows.Configs => src(
-                    joinpath("Configs", "Configs.jl"),
-                    joinpath("Configs", "abstract.jl"),
-                    joinpath("Configs", "concrete.jl"),
-                    joinpath("Configs", "implementations.jl"),
-                    joinpath("Configs", "interface.jl"),
-                    joinpath("Configs", "show.jl"),
-                ),
-            ],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
+    EXCLUDE_SYMBOLS = Symbol[:include, :eval]
+    EXCLUDE_INTERNALS = vcat(
+        EXCLUDE_SYMBOLS,
+        Symbol[:DOCTYPE_ABSTRACT_TYPE, :DOCTYPE_CONSTANT, :DOCTYPE_FUNCTION,
+               :DOCTYPE_MACRO, :DOCTYPE_MODULE, :DOCTYPE_STRUCT],
+    )
+
+    # ── Shared config: one entry per submodule ────────────────────────────────
+    modules_config = [
+        (
+            mod=CTFlows.Configs,
             title="Configs",
-            title_in_menu="Configs",
-            filename="api_configs",
+            filename="configs",
+            files=src(
+                joinpath("Configs", "Configs.jl"),
+                joinpath("Configs", "abstract.jl"),
+                joinpath("Configs", "interface.jl"),
+                joinpath("Configs", "implementations.jl"),
+                joinpath("Configs", "concrete.jl"),
+                joinpath("Configs", "show.jl"),
+            ),
         ),
-        # ───────────────────────────────────────────────────────────────────
-        # Common
-        # ───────────────────────────────────────────────────────────────────
-        CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[
-                CTFlows.Common => src(
-                    joinpath("Common", "Common.jl"),
-                    joinpath("Common", "abstract_cache.jl"),
-                    joinpath("Common", "abstract_tag.jl"),
-                    joinpath("Common", "default.jl"),
-                    joinpath("Common", "helpers.jl"),
-                    joinpath("Common", "ode_parameters.jl"),
-                ),
-            ],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
-            title="Common",
-            title_in_menu="Common",
-            filename="api_common",
-        ),
-        # ───────────────────────────────────────────────────────────────────
-        # Systems
-        # ───────────────────────────────────────────────────────────────────
-        CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[
-                CTFlows.Systems => src(
-                    joinpath("Systems", "Systems.jl"),
-                    joinpath("Systems", "abstract_system.jl"),
-                    joinpath("Systems", "building.jl"),
-                    joinpath("Systems", "rhs_functors.jl"),
-                    joinpath("Systems", "vector_field_system.jl"),
-                    joinpath("Systems", "hamiltonian_getter.jl"),
-                    joinpath("Systems", "hamiltonian_rhs_functors.jl"),
-                    joinpath("Systems", "hamiltonian_system.jl"),
-                    joinpath("Systems", "hvf_rhs_functors.jl"),
-                    joinpath("Systems", "hamiltonian_vector_field_system.jl"),
-                ),
-            ],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
+        (
+            mod=CTFlows.Systems,
             title="Systems",
-            title_in_menu="Systems",
-            filename="api_systems",
+            filename="systems",
+            files=src(
+                joinpath("Systems", "Systems.jl"),
+                joinpath("Systems", "ode_parameters.jl"),
+                joinpath("Systems", "defaults.jl"),
+                joinpath("Systems", "abstract_system.jl"),
+                joinpath("Systems", "rhs_functors.jl"),
+                joinpath("Systems", "hvf_rhs_functors.jl"),
+                joinpath("Systems", "hamiltonian_rhs_functors.jl"),
+                joinpath("Systems", "vector_field_system.jl"),
+                joinpath("Systems", "hamiltonian_vector_field_system.jl"),
+                joinpath("Systems", "hamiltonian_system.jl"),
+                joinpath("Systems", "building.jl"),
+                joinpath("Systems", "hamiltonian_getter.jl"),
+            ),
         ),
-        # ───────────────────────────────────────────────────────────────────
-        # Integrators
-        # ───────────────────────────────────────────────────────────────────
-        CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[
-                CTFlows.Integrators => src(
-                    joinpath("Integrators", "Integrators.jl"),
-                ),
-            ],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
+        (
+            mod=CTFlows.Integrators,
             title="Integrators",
-            title_in_menu="Integrators",
-            filename="api_integrators",
+            filename="integrators",
+            files=src(joinpath("Integrators", "Integrators.jl")),
         ),
-        # ───────────────────────────────────────────────────────────────────
-        # Flows
-        # ───────────────────────────────────────────────────────────────────
-        CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[
-                CTFlows.Flows => src(
-                    joinpath("Flows", "Flows.jl"),
-                    joinpath("Flows", "abstract_flow.jl"),
-                    joinpath("Flows", "building.jl"),
-                    joinpath("Flows", "calling.jl"),
-                    joinpath("Flows", "flow.jl"),
-                    joinpath("Flows", "flow_routing.jl"),
-                    joinpath("Flows", "registry.jl"),
-                ),
-            ],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
-            title="Flows",
-            title_in_menu="Flows",
-            filename="api_flows",
-        ),
-        # ───────────────────────────────────────────────────────────────────
-        # Trajectories
-        # ───────────────────────────────────────────────────────────────────
-        CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[
-                CTFlows.Trajectories => src(
-                    joinpath("Trajectories", "Trajectories.jl"),
-                    joinpath("Trajectories", "building.jl"),
-                    joinpath("Trajectories", "vector_field_trajectory.jl"),
-                    joinpath("Trajectories", "hamiltonian_vector_field_trajectory.jl"),
-                ),
-            ],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
+        (
+            mod=CTFlows.Trajectories,
             title="Trajectories",
-            title_in_menu="Trajectories",
-            filename="api_trajectories",
+            filename="trajectories",
+            files=src(
+                joinpath("Trajectories", "Trajectories.jl"),
+                joinpath("Trajectories", "vector_field_trajectory.jl"),
+                joinpath("Trajectories", "hamiltonian_vector_field_trajectory.jl"),
+                joinpath("Trajectories", "building.jl"),
+            ),
         ),
-        # ───────────────────────────────────────────────────────────────────
-        # MultiPhase
-        # ───────────────────────────────────────────────────────────────────
-        CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[
-                CTFlows.MultiPhase => src(
-                    joinpath("MultiPhase", "MultiPhase.jl"),
-                    joinpath("MultiPhase", "calling.jl"),
-                    joinpath("MultiPhase", "concatenation.jl"),
-                    joinpath("MultiPhase", "multiphase_flow.jl"),
-                ),
-            ],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
+        (
+            mod=CTFlows.Flows,
+            title="Flows",
+            filename="flows",
+            files=src(
+                joinpath("Flows", "Flows.jl"),
+                joinpath("Flows", "defaults.jl"),
+                joinpath("Flows", "abstract_flow.jl"),
+                joinpath("Flows", "flow.jl"),
+                joinpath("Flows", "registry.jl"),
+                joinpath("Flows", "flow_routing.jl"),
+                joinpath("Flows", "optimal_control_flow.jl"),
+                joinpath("Flows", "building.jl"),
+                joinpath("Flows", "calling.jl"),
+            ),
+            # Flows re-exports `hamiltonian_vector_field` from Systems; documenting it
+            # here too would duplicate the Systems-page docstring (same canonical binding).
+            exclude=vcat(EXCLUDE_SYMBOLS, [:hamiltonian_vector_field]),
+        ),
+        (
+            mod=CTFlows.MultiPhase,
             title="MultiPhase",
-            title_in_menu="MultiPhase",
-            filename="api_multiphase",
+            filename="multiphase",
+            files=src(
+                joinpath("MultiPhase", "MultiPhase.jl"),
+                joinpath("MultiPhase", "multiphase_flow.jl"),
+                joinpath("MultiPhase", "concatenation.jl"),
+                joinpath("MultiPhase", "calling.jl"),
+            ),
         ),
     ]
 
-    # ───────────────────────────────────────────────────────────────────
-    # Extensions
-    # ───────────────────────────────────────────────────────────────────
-
-    CTFlowsPlots = Base.get_extension(CTFlows, :CTFlowsPlots)
-    if !isnothing(CTFlowsPlots)
-        push!(pages, CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[CTFlowsPlots => ext("CTFlowsPlots.jl")],
-            external_modules_to_document=[CTFlows],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
+    # ── Extensions: one entry per extension module (loaded conditionally) ─────
+    extensions_config = [
+        (
+            sym=:CTFlowsPlots,
             title="Plots Extension",
             title_in_menu="Plots",
             filename="ext_plots",
-        ))
-    end
-
-    CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
-    if !isnothing(CTFlowsSciMLIntegrator)
-        push!(pages, CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[
-                CTFlowsSciMLIntegrator => ext(
-                    joinpath("CTFlowsSciMLIntegrator", "CTFlowsSciMLIntegrator.jl"),
-                    joinpath("CTFlowsSciMLIntegrator", "build_options.jl"),
-                    joinpath("CTFlowsSciMLIntegrator", "build_problem.jl"),
-                ),
-            ],
-            external_modules_to_document=[CTFlows],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
+            files=ext("CTFlowsPlots.jl"),
+        ),
+        (
+            sym=:CTFlowsSciMLIntegrator,
             title="SciML Integrator Extension",
             title_in_menu="SciML Integrator",
             filename="ext_sciml_integrator",
-        ))
-    end
-
-    CTFlowsSciMLFlows = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
-    if !isnothing(CTFlowsSciMLFlows)
-        push!(pages, CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[
-                CTFlowsSciMLFlows => ext(
-                    joinpath("CTFlowsSciMLFlows", "CTFlowsSciMLFlows.jl"),
-                    joinpath("CTFlowsSciMLFlows", "sciml_rhs_functors.jl"),
-                    joinpath("CTFlowsSciMLFlows", "sciml_function_system.jl"),
-                    joinpath("CTFlowsSciMLFlows", "problem_flow.jl"),
-                    joinpath("CTFlowsSciMLFlows", "flow_constructors.jl"),
-                ),
-            ],
-            external_modules_to_document=[CTFlows],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
+            files=ext(
+                joinpath("CTFlowsSciMLIntegrator", "CTFlowsSciMLIntegrator.jl"),
+                joinpath("CTFlowsSciMLIntegrator", "build_problem.jl"),
+                joinpath("CTFlowsSciMLIntegrator", "build_options.jl"),
+            ),
+        ),
+        (
+            sym=:CTFlowsSciMLFlows,
             title="SciML Flows Extension",
             title_in_menu="SciML Flows",
             filename="ext_sciml_flows",
-        ))
-    end
-
-    CTFlowsStaticArrays = Base.get_extension(CTFlows, :CTFlowsStaticArrays)
-    if !isnothing(CTFlowsStaticArrays)
-        push!(pages, CTBase.automatic_reference_documentation(;
-            subdirectory="api",
-            primary_modules=[CTFlowsStaticArrays => ext("CTFlowsStaticArrays.jl")],
-            external_modules_to_document=[CTFlows],
-            exclude=EXCLUDE_BASE,
-            public=true,
-            private=true,
+            files=ext(
+                joinpath("CTFlowsSciMLFlows", "CTFlowsSciMLFlows.jl"),
+                joinpath("CTFlowsSciMLFlows", "sciml_rhs_functors.jl"),
+                joinpath("CTFlowsSciMLFlows", "sciml_function_system.jl"),
+                joinpath("CTFlowsSciMLFlows", "problem_flow.jl"),
+                joinpath("CTFlowsSciMLFlows", "flow_constructors.jl"),
+            ),
+        ),
+        (
+            sym=:CTFlowsStaticArrays,
             title="StaticArrays Extension",
             title_in_menu="StaticArrays",
             filename="ext_static_arrays",
-        ))
+            files=ext("CTFlowsStaticArrays.jl"),
+        ),
+    ]
+    loaded_extensions = [
+        (cfg=cfg, mod=Base.get_extension(CTFlows, cfg.sym))
+        for cfg in extensions_config
+        if !isnothing(Base.get_extension(CTFlows, cfg.sym))
+    ]
+
+    # ── Public pages: one flat page per submodule ─────────────────────────────
+    # No external_modules_to_document here: submodules re-export some symbols at
+    # the CTFlows level, and scanning CTFlows would document them a second time
+    # (e.g. `hamiltonian_vector_field`), triggering a duplicate-docs error.
+    pages = [
+        CTBase.automatic_reference_documentation(;
+            subdirectory="api",
+            primary_modules=[cfg.mod => cfg.files],
+            exclude=hasproperty(cfg, :exclude) ? cfg.exclude : EXCLUDE_SYMBOLS,
+            public=true,
+            private=false,
+            title=cfg.title,
+            title_in_menu=cfg.title,
+            filename=cfg.filename,
+        ) for cfg in modules_config
+    ]
+
+    # ── Public pages: one per loaded extension ────────────────────────────────
+    for entry in loaded_extensions
+        push!(
+            pages,
+            CTBase.automatic_reference_documentation(;
+                subdirectory="api",
+                primary_modules=[entry.mod => entry.cfg.files],
+                external_modules_to_document=[CTFlows],
+                exclude=EXCLUDE_SYMBOLS,
+                public=true,
+                private=false,
+                title=entry.cfg.title,
+                title_in_menu=entry.cfg.title_in_menu,
+                filename=entry.cfg.filename,
+            ),
+        )
     end
+
+    # ── Internals: all private symbols in one page, sections by module ────────
+    internals_modules = Any[cfg.mod => cfg.files for cfg in modules_config]
+    for entry in loaded_extensions
+        push!(internals_modules, entry.mod => entry.cfg.files)
+    end
+
+    push!(
+        pages,
+        CTBase.automatic_reference_documentation(;
+            subdirectory="api",
+            primary_modules=internals_modules,
+            exclude=EXCLUDE_INTERNALS,
+            public=false,
+            private=true,
+            title="Internals",
+            title_in_menu="Internals",
+            filename="internals",
+        ),
+    )
 
     return pages
 end
@@ -262,7 +215,7 @@ end
 """
     with_api_reference(f::Function, src_dir::String, ext_dir::String)
 
-Generate the API reference, execute `f(pages)`, then clean up generated `.md` files.
+Generates the API reference, executes `f(pages)`, and cleans up generated files.
 """
 function with_api_reference(f::Function, src_dir::String, ext_dir::String)
     pages = generate_api_reference(src_dir, ext_dir)
@@ -270,21 +223,18 @@ function with_api_reference(f::Function, src_dir::String, ext_dir::String)
         f(pages)
     finally
         docs_src = abspath(joinpath(@__DIR__, "src"))
-        _cleanup_pages(docs_src, pages)
-    end
-end
-
-function _cleanup_pages(docs_src::String, pages)
-    for p in pages
-        content = last(p)
-        if content isa AbstractString
-            fname = endswith(content, ".md") ? content : content * ".md"
-            full_path = joinpath(docs_src, fname)
-            if isfile(full_path)
-                rm(full_path)
+        function cleanup(pages)
+            for p in pages
+                content = last(p)
+                if content isa AbstractString
+                    fname = endswith(content, ".md") ? content : content * ".md"
+                    full_path = joinpath(docs_src, fname)
+                    isfile(full_path) && rm(full_path)
+                elseif content isa Vector
+                    cleanup(content)
+                end
             end
-        elseif content isa Vector
-            _cleanup_pages(docs_src, content)
         end
+        cleanup(pages)
     end
 end

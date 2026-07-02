@@ -13,8 +13,10 @@ time, with a pluggable ODE solver and optional automatic differentiation.
 !!! info "CTFlows in the ecosystem"
     **CTFlows** handles **integration**. For **modelling** optimal control problems see
     [CTModels.jl](https://github.com/control-toolbox/CTModels.jl); for **solving NLPs**
-    see [CTSolvers.jl](https://github.com/control-toolbox/CTSolvers.jl); the umbrella
-    package is [OptimalControl.jl](https://github.com/control-toolbox/OptimalControl.jl).
+    see [CTSolvers.jl](https://github.com/control-toolbox/CTSolvers.jl); for
+    **differential-geometric tools** (Lie brackets, Poisson brackets, lifts) see
+    [CTLie.jl](https://github.com/control-toolbox/CTLie); the umbrella package is
+    [OptimalControl.jl](https://github.com/control-toolbox/OptimalControl.jl).
 
 ## Quick start
 
@@ -35,7 +37,7 @@ xf = flow(0.0, [1.0, 0.0], 1.0)
 # 4. Integrate — trajectory form (full history)
 sol = flow((0.0, 1.0), [1.0, 0.0])
 t   = Trajectories.time_grid(sol)
-x   = Trajectories.state(sol)              # callable: x(t) → state at time t
+x   = Trajectories.state(sol)           # callable: x(t) → state at time t
 x(0.5)                                  # interpolate
 ```
 
@@ -46,7 +48,7 @@ x(0.5)                                  # interpolate
 
 ## Architecture
 
-CTFlows is organised as a four-layer pipeline:
+CTFlows is organised as a pipeline:
 
 ```
 Data → Systems → Integrators → Flows → Trajectories
@@ -54,12 +56,18 @@ Data → Systems → Integrators → Flows → Trajectories
 
 | Layer | Submodule | Key types |
 |---|---|---|
-| Data | [`CTBase.Data`](@ref CTBase.Data) | `VectorField`, `Hamiltonian`, `HamiltonianVectorField` |
+| Data | [`CTBase.Data`](@extref CTBase.Data) | `VectorField`, `Hamiltonian`, `HamiltonianVectorField` |
+| Configs | [`CTFlows.Configs`](@ref CTFlows.Configs) | `StateEndPointConfig`, `HamiltonianTrajectoryConfig` |
 | Systems | [`CTFlows.Systems`](@ref CTFlows.Systems) | `VectorFieldSystem`, `HamiltonianSystem` |
 | Integrators | [`CTFlows.Integrators`](@ref CTFlows.Integrators) | `SciML` |
-| Flows | [`CTFlows.Flows`](@ref CTFlows.Flows) | `StateFlow`, `HamiltonianFlow` |
+| Flows | [`CTFlows.Flows`](@ref CTFlows.Flows) | `StateFlow`, `HamiltonianFlow`, `OptimalControlFlow` |
 | Trajectories | [`CTFlows.Trajectories`](@ref CTFlows.Trajectories) | `VectorFieldTrajectory`, `HamiltonianVectorFieldTrajectory` |
 | Multi-phase | [`CTFlows.MultiPhase`](@ref CTFlows.MultiPhase) | `MultiPhaseStateFlow` |
+
+The data layer (`VectorField`, `Hamiltonian`, `HamiltonianVectorField`) lives in [`CTBase.Data`](@extref CTBase.Data); the ODE integrator
+strategy is provided by
+[`CTSolvers.Integrators`](@extref CTSolvers.Integrators) and re-exported through
+[`CTFlows.Integrators`](@ref CTFlows.Integrators).
 
 The shortcut `Flows.Flow(data; opts...)` collapses all pipeline steps into a single
 call. The explicit pipeline (`build_system` → `build_integrator` → `build_flow`)
@@ -69,5 +77,11 @@ gives full control over each step.
 
 | Guide | Contents |
 |---|---|
-| [Flows](flows/index.md) | End-to-end pipeline: data → systems → flows → solutions, traits, multi-phase |
-| [Differential Geometry](differential_geometry/index.md) | Hamiltonian lift, Lie bracket, Poisson bracket, `@Lie` macro |
+| [Getting Started](getting-started.md) | Installation, mental model, 5-minute walkthrough |
+| [Flows](flows/overview.md) | End-to-end pipeline: data → systems → flows → trajectories, multi-phase |
+| [Building a flow](flows/building_a_flow.md) | Shortcut and explicit constructors |
+| [Integrating](flows/integrating.md) | Call styles, configuration objects, integrator options |
+| [Trajectories](flows/trajectories.md) | Reading the result: `state`, `costate`, `time_grid`, plotting |
+| [Multi-phase flows](flows/multiphase.md) | Concatenating flows with switching times and jumps |
+| [Optimal control](flows/optimal_control.md) | Flows from optimal control problems (`Flow(ocp)`) |
+| [SciML flows](flows/sciml.md) | Flows from `ODEFunction` / `ODEProblem` (SciML extension) |

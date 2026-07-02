@@ -18,7 +18,7 @@ Each layer has a single responsibility:
 
 | Layer | Submodule | What it produces |
 |---|---|---|
-| **Data** | [`Data`](@ref CTBase.Data) | Typed function wrappers (`VectorField`, `Hamiltonian`, `HamiltonianVectorField`) |
+| **Data** | [`CTBase.Data`](@extref CTBase.Data) | Typed function wrappers (`VectorField`, `Hamiltonian`, `HamiltonianVectorField`) |
 | **Systems** | [`Systems`](@ref CTFlows.Systems) | ODE right-hand side + traits (`VectorFieldSystem`, `HamiltonianSystem`, …) |
 | **Integrators** | [`Integrators`](@ref CTFlows.Integrators) | ODE solver strategy (`SciML`) |
 | **Flows** | [`Flows`](@ref CTFlows.Flows) | Callable integration object (`StateFlow`, `HamiltonianFlow`) |
@@ -28,18 +28,23 @@ Each layer has a single responsibility:
 
 | Page | Topic | Key types |
 |---|---|---|
-| [Traits](traits.md) | The three trait axes shared by every layer | `Autonomous`, `Fixed`, `InPlace` |
-| [Data structures](data.md) | Wrapping your functions | `VectorField`, `Hamiltonian`, `HamiltonianVectorField` |
 | [Building a flow](building_a_flow.md) | Assembling the pipeline | `build_system`, `build_flow`, `Flow` |
 | [Integrating](integrating.md) | Calling a flow, configuration objects, integrator options | `StateEndPointConfig`, `StateTrajectoryConfig` |
 | [Trajectories](trajectories.md) | Reading the result | `state`, `costate`, `time_grid`, `plot` |
 | [Multi-phase flows](multiphase.md) | Concatenating flows with switching times | `MultiPhaseStateFlow`, `*` |
+| [Optimal control](optimal_control.md) | Flows from optimal control problems | `OptimalControlFlow`, `Flow(ocp)` |
+| [SciML flows](sciml.md) | Flows from SciML functions and problems | `Flow(::ODEFunction)`, `SciMLProblemFlow` |
+
+The **data layer** (wrapping functions as `VectorField`, `Hamiltonian`,
+`HamiltonianVectorField`) and the **trait system** (`Autonomous`, `Fixed`,
+`InPlace`, …) live in CTBase — see [`CTBase.Data`](@extref CTBase.Data) and
+[`CTBase.Traits`](@extref CTBase.Traits) in the CTBase documentation.
 
 ## Qualified access
 
 CTFlows exports nothing at the package level. Bring submodules into scope explicitly:
 
-```@example flows_index
+```@example flows_overview
 using CTFlows
 using CTFlows.Flows        # StateFlow, HamiltonianFlow, Flow, build_flow
 using CTBase.Data         # VectorField, Hamiltonian, HamiltonianVectorField
@@ -56,7 +61,7 @@ nothing # hide
 
 The fastest path from a function to an integrated trajectory:
 
-```@example flows_index
+```@example flows_overview
 # 1. Wrap the dynamics as a VectorField
 #    The function x -> -x is autonomous (no t) and fixed (no variable parameter)
 vf = Data.VectorField(x -> -x)
@@ -93,4 +98,4 @@ We work on a state space ``\mathcal{X} \subseteq \mathbb{R}^n``.
   ``(x, p) \mapsto (\partial_p H, -\partial_x H)``.
 
 Which extra arguments appear (``t``, ``v``) is encoded by the **trait system** —
-see [Traits](traits.md).
+see [`CTBase.Traits`](@extref CTBase.Traits).
