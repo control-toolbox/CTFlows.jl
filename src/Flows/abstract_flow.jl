@@ -115,7 +115,6 @@ Extract the time dependence trait from an `AbstractFlow`.
 # Example
 \`\`\`julia
 using CTFlows.Flows
-using CTFlows.Flows
 
 struct MyFlow <: Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
     data::Vector{Float64}
@@ -140,7 +139,6 @@ Extract the variable dependence trait from an `AbstractFlow`.
 
 # Example
 \`\`\`julia
-using CTFlows.Flows
 using CTFlows.Flows
 
 struct MyFlow <: Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
