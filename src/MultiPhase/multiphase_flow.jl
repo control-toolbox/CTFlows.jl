@@ -247,6 +247,15 @@ end
 # Base.show
 # ==============================================================================
 
+"""
+Return a human-readable display name for a `MultiPhaseFlow`, dispatching on the dynamics trait.
+
+- `StateDynamics` → `"MultiPhaseStateFlow"`
+- `HamiltonianDynamics` → `"MultiPhaseHamiltonianFlow"`
+- Fallback → `string(nameof(typeof(mpf)))`
+
+See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@ref).
+"""
 function _multiphase_display_name(::MultiPhaseFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.StateDynamics})
     return "MultiPhaseStateFlow"
 end

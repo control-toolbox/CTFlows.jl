@@ -30,7 +30,7 @@ VectorFieldSystem
   vector_field: VectorField{var"#1", Autonomous, Fixed}
 \`\`\`
 
-See also: [`CTBase.Data.VectorField`](@ref), [`CTFlows.Systems.VectorFieldSystem`](@ref).
+See also: [`CTBase.Data.VectorField`](@extref), [`CTFlows.Systems.VectorFieldSystem`](@ref).
 """
 function build_system(vf::Data.AbstractVectorField)
     return VectorFieldSystem(vf)
@@ -67,7 +67,7 @@ HamiltonianVectorFieldSystem
   hamiltonian_vector_field: HamiltonianVectorField{var"#1", Autonomous, Fixed}
 ```
 
-See also: [`CTBase.Data.HamiltonianVectorField`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
+See also: [`CTBase.Data.HamiltonianVectorField`](@extref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
 """
 function build_system(hvf::Data.AbstractHamiltonianVectorField)
     return HamiltonianVectorFieldSystem(hvf)
@@ -107,7 +107,7 @@ HamiltonianSystem
 - The AD backend is used to compute Hamiltonian gradients `∂H/∂x` and `∂H/∂p` automatically during integration.
 - This overload is for scalar Hamiltonian functions where gradients are computed via AD. For explicit vector fields, use [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref) instead.
 
-See also: [`CTBase.Data.Hamiltonian`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTBase.Differentiation.AbstractADBackend`](@ref).
+See also: [`CTBase.Data.Hamiltonian`](@extref), [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTBase.Differentiation.AbstractADBackend`](@extref).
 """
 function build_system(h::Data.AbstractHamiltonian, backend::Differentiation.AbstractADBackend)
     return HamiltonianSystem(h, backend)

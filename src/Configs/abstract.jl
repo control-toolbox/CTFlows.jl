@@ -97,7 +97,7 @@ config = Configs.HamiltonianEndPointConfig(0.0, [1.0], [0.5], 1.0)
 Configs.mode_trait(config) === Traits.EndPointMode  # true
 \`\`\`
 
-See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@ref), [`CTBase.Traits.EndPointMode`](@ref), [`CTBase.Traits.TrajectoryMode`](@ref), [`CTFlows.Configs.dynamics_trait`](@ref).
+See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@ref), [`CTBase.Traits.EndPointMode`](@extref), [`CTBase.Traits.TrajectoryMode`](@extref), [`CTFlows.Configs.dynamics_trait`](@ref).
 """
 function mode_trait(::AbstractConfigWithMaC{X0, Mode, Dyn}) where {X0, Mode, Dyn}
     return Mode
@@ -123,7 +123,7 @@ config = Configs.HamiltonianEndPointConfig(0.0, [1.0], [0.5], 1.0)
 Configs.dynamics_trait(config) === Traits.HamiltonianDynamics  # true
 \`\`\`
 
-See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@ref), [`CTBase.Traits.StateDynamics`](@ref), [`CTBase.Traits.HamiltonianDynamics`](@ref), [`CTBase.Traits.AugmentedHamiltonianDynamics`](@ref), [`CTFlows.Configs.mode_trait`](@ref).
+See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@ref), [`CTBase.Traits.StateDynamics`](@extref), [`CTBase.Traits.HamiltonianDynamics`](@extref), [`CTBase.Traits.AugmentedHamiltonianDynamics`](@extref), [`CTFlows.Configs.mode_trait`](@ref).
 """
 function dynamics_trait(::AbstractConfigWithMaC{X0, Mode, Dyn}) where {X0, Mode, Dyn}
     return Dyn
@@ -177,9 +177,9 @@ Type alias for augmented Hamiltonian configurations, which include state, costat
 # Notes
 - Augmented Hamiltonian configurations are used for systems where the Hamiltonian depends on an additional variable (e.g., a control parameter or optimization variable).
 - The initial condition typically has the form `vcat(x0, p0, pv0)` where `x0` is the initial state, `p0` is the initial costate, and `pv0` is the initial augmented variable.
-- Subtypes [`CTFlows.Configs.AbstractConfigWithMaC`](@ref) with [`CTBase.Traits.AugmentedHamiltonianDynamics`](@ref).
+- Subtypes [`CTFlows.Configs.AbstractConfigWithMaC`](@ref) with [`CTBase.Traits.AugmentedHamiltonianDynamics`](@extref).
 - Used in conjunction with [`CTFlows.Systems.HamiltonianSystem`](@ref) for automatic differentiation-based Hamiltonian integration.
 
-See also: [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref), [`CTBase.Traits.AugmentedHamiltonianDynamics`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref).
+See also: [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref), [`CTBase.Traits.AugmentedHamiltonianDynamics`](@extref), [`CTFlows.Systems.HamiltonianSystem`](@ref).
 """
 const AbstractAugmentedHamiltonianConfig{X0, M} = AbstractConfigWithMaC{X0, M, Traits.AugmentedHamiltonianDynamics}

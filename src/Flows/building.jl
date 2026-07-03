@@ -151,7 +151,16 @@ function Flow(ocp::CTModels.Models.Model; kwargs...)
     return _flow_from_ocp(Traits.control_dependence(ocp), ocp; kwargs...)
 end
 
-# control-free OCP → build the Hamiltonian flow directly
+"""
+$(TYPEDSIGNATURES)
+
+Build an `OptimalControlFlow` from a control-free OCP.
+
+Constructs the OCP Hamiltonian, builds the Hamiltonian system with the chosen AD
+backend, and wraps the resulting flow together with the OCP reference.
+
+See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), [`CTFlows.Flows.Flow`](@ref), `_ocp_hamiltonian`.
+"""
 function _flow_from_ocp(::Type{Traits.ControlFree}, ocp::CTModels.Models.Model; kwargs...)
     routed     = _route_flow_options(kwargs)
     components = _build_flow_components(routed)
@@ -161,7 +170,16 @@ function _flow_from_ocp(::Type{Traits.ControlFree}, ocp::CTModels.Models.Model; 
     return OptimalControlFlow(inner, ocp)
 end
 
-# with-control OCP → not supported on this path
+"""
+$(TYPEDSIGNATURES)
+
+Reject `Flow` construction from a with-control OCP.
+
+Throws `PreconditionError` because this path assumes no control input. A control
+law `u(t,x,p)` is required to build the Hamiltonian flow from a with-control OCP.
+
+See also: [`CTFlows.Flows.Flow`](@ref), `_ocp_hamiltonian`.
+"""
 function _flow_from_ocp(::Type{Traits.WithControl}, ::CTModels.Models.Model; kwargs...)
     throw(Exceptions.PreconditionError(
         "Flow from a with-control OCP is not supported";

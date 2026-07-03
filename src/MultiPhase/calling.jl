@@ -235,7 +235,7 @@ Extract the final state from a segment result for state flows.
 # Returns
 - Final state from the segment.
 
-See also: [`CTFlows.Integrators.final_state`]().
+See also: [`CTSolvers.Integrators.final_state`](@extref).
 """
 function _extract_final_state(mpf::MultiPhaseFlow, segment, current_state)
     return _extract_final_state(Traits.dynamics_trait(mpf), segment, current_state)

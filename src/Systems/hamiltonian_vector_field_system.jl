@@ -36,7 +36,7 @@ HamiltonianVectorFieldSystem
   hamiltonian_vector_field: HamiltonianVectorField{var"#1", Autonomous, Fixed, OutOfPlace}
 ```
 
-See also: [`CTBase.Data.HamiltonianVectorField`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), `TimeDependence`, [`CTBase.Traits.VariableDependence`](@ref), [`CTFlows.Systems.build_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
+See also: [`CTBase.Data.HamiltonianVectorField`](@extref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), `TimeDependence`, [`CTBase.Traits.VariableDependence`](@extref), `build_rhs`, `build_oop_rhs`.
 """
 struct HamiltonianVectorFieldSystem{F<:Function, TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, MD<:Traits.AbstractMutabilityTrait} <: AbstractHamiltonianSystem{TD, VD}
     hvf::Data.HamiltonianVectorField{F, TD, VD, MD}

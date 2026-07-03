@@ -37,7 +37,7 @@ HamiltonianSystem
   backend: AutoForwardDiff()
 ```
 
-See also: [`CTBase.Data.Hamiltonian`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), [`CTBase.Traits.AbstractADTrait`](@ref), [`CTFlows.Systems.build_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
+See also: [`CTBase.Data.Hamiltonian`](@extref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), [`CTBase.Traits.AbstractADTrait`](@extref), `build_rhs`, `build_oop_rhs`.
 """
 struct HamiltonianSystem{
     F<:Function,
@@ -228,7 +228,7 @@ Return the variable costate capability trait of a variable-dependent Hamiltonian
 - This is because only variable-dependent systems have a variable `v` to differentiate against
 - This trait enables the `variable_costate=true` kwarg in Hamiltonian flow calls
 
-See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@ref), [`CTBase.Traits.SupportsVariableCostate`](@ref), [`CTBase.Traits.NoVariableCostate`](@ref).
+See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@extref), [`CTBase.Traits.SupportsVariableCostate`](@extref), [`CTBase.Traits.NoVariableCostate`](@extref).
 """
 function Traits.variable_costate_trait(
     ::HamiltonianSystem{F, TD, Traits.NonFixed, B}

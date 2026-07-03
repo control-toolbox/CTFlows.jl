@@ -31,7 +31,7 @@ VectorFieldSystem
   vector_field: VectorField{var"#1", Autonomous, Fixed, OutOfPlace}
 \`\`\`
 
-See also: [`CTBase.Data.VectorField`](@ref), `TimeDependence`, [`CTBase.Traits.VariableDependence`](@ref), [`CTFlows.Systems.ODEParameters`](@ref).
+See also: [`CTBase.Data.VectorField`](@extref), `TimeDependence`, [`CTBase.Traits.VariableDependence`](@extref), [`CTFlows.Systems.ODEParameters`](@ref).
 """
 struct VectorFieldSystem{F<:Function, TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, MD<:Traits.AbstractMutabilityTrait, RHS<:AbstractIPRHS, OOPROHS<:AbstractOoPRHS, FINRHS} <: AbstractStateSystem{TD, VD}
     vf::Data.VectorField{F, TD, VD, MD}
@@ -138,7 +138,7 @@ Eager implementation: ignores the config and returns the pre-computed closure.
 # Returns
 - `Function`: The pre-computed in-place closure with signature `(du, u, p, t) -> nothing`.
 
-See also: [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Systems.rhs`](@ref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref), `rhs`.
 """
 function get_ip_rhs(sys::VectorFieldSystem, _)
     return sys.rhs
