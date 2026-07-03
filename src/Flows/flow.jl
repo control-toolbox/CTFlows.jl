@@ -36,9 +36,9 @@ struct Flow{
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
     D<:Traits.AbstractDynamicsTrait,
-    S<:Systems.AbstractSystem{TD, VD, D},
+    S<:Systems.AbstractSystem{TD,VD,D},
     I<:Integrators.AbstractIntegrator,
-} <: AbstractFlow{TD, VD, D}
+} <: AbstractFlow{TD,VD,D}
     system::S
     integrator::I
 end
@@ -50,13 +50,12 @@ Alias for state flows: `Flow{TD, VD, StateDynamics, S, I}`.
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref).
 """
-const StateFlow{TD, VD, S, I} = Flow{TD, VD, Traits.StateDynamics, S, I}
+const StateFlow{TD,VD,S,I} = Flow{TD,VD,Traits.StateDynamics,S,I}
 
 function StateFlow(
-    system::S,
-    integrator::I,
-) where {TD, VD, S<:Systems.AbstractStateSystem{TD,VD}, I<:Integrators.AbstractIntegrator}
-    return Flow{TD, VD, Traits.StateDynamics, S, I}(system, integrator)
+    system::S, integrator::I
+) where {TD,VD,S<:Systems.AbstractStateSystem{TD,VD},I<:Integrators.AbstractIntegrator}
+    return Flow{TD,VD,Traits.StateDynamics,S,I}(system, integrator)
 end
 
 """
@@ -66,13 +65,14 @@ Alias for Hamiltonian flows: `Flow{TD, VD, HamiltonianDynamics, S, I}`.
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.StateFlow`](@ref).
 """
-const HamiltonianFlow{TD, VD, S, I} = Flow{TD, VD, Traits.HamiltonianDynamics, S, I}
+const HamiltonianFlow{TD,VD,S,I} = Flow{TD,VD,Traits.HamiltonianDynamics,S,I}
 
 function HamiltonianFlow(
-    system::S,
-    integrator::I,
-) where {TD, VD, S<:Systems.AbstractHamiltonianSystem{TD,VD}, I<:Integrators.AbstractIntegrator}
-    return Flow{TD, VD, Traits.HamiltonianDynamics, S, I}(system, integrator)
+    system::S, integrator::I
+) where {
+    TD,VD,S<:Systems.AbstractHamiltonianSystem{TD,VD},I<:Integrators.AbstractIntegrator
+}
+    return Flow{TD,VD,Traits.HamiltonianDynamics,S,I}(system, integrator)
 end
 
 """
@@ -82,7 +82,9 @@ Build a `Flow` from a system and an integrator.
 
 See also: [`CTFlows.Flows.Flow`](@ref).
 """
-function build_flow(system::S, integrator::I) where {S<:Systems.AbstractSystem, I<:Integrators.AbstractIntegrator}
+function build_flow(
+    system::S, integrator::I
+) where {S<:Systems.AbstractSystem,I<:Integrators.AbstractIntegrator}
     return Flow(system, integrator)
 end
 
@@ -93,7 +95,7 @@ Return the system associated with a `Flow`.
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.integrator`](@ref).
 """
-function system(f::Flow{TD, VD, D, S, I})::S where {TD, VD, D, S, I}
+function system(f::Flow{TD,VD,D,S,I})::S where {TD,VD,D,S,I}
     return f.system
 end
 
@@ -104,7 +106,7 @@ Return the integrator associated with a `Flow`.
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.system`](@ref).
 """
-function integrator(f::Flow{TD, VD, D, S, I})::I where {TD, VD, D, S, I}
+function integrator(f::Flow{TD,VD,D,S,I})::I where {TD,VD,D,S,I}
     return f.integrator
 end
 
@@ -123,9 +125,11 @@ the returned closure writes results in-place.
 See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref)
 """
 function Systems.hamiltonian_vector_field(
-    flow::HamiltonianFlow{TD, VD, <:Systems.HamiltonianSystem, <:Integrators.AbstractIntegrator};
-    inplace::Bool = Systems.__hvf_inplace(),
-) where {TD, VD}
+    flow::HamiltonianFlow{
+        TD,VD,<:Systems.HamiltonianSystem,<:Integrators.AbstractIntegrator
+    };
+    inplace::Bool=Systems.__hvf_inplace(),
+) where {TD,VD}
     return Systems.hamiltonian_vector_field(flow.system; inplace=inplace)
 end
 
@@ -140,7 +144,9 @@ any recomputation.
 See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref)
 """
 function Systems.hamiltonian_vector_field(
-    flow::HamiltonianFlow{TD, VD, <:Systems.HamiltonianVectorFieldSystem, <:Integrators.AbstractIntegrator},
-) where {TD, VD}
+    flow::HamiltonianFlow{
+        TD,VD,<:Systems.HamiltonianVectorFieldSystem,<:Integrators.AbstractIntegrator
+    },
+) where {TD,VD}
     return Systems.hamiltonian_vector_field(flow.system)
 end

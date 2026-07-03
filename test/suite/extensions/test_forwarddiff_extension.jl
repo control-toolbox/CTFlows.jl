@@ -1,6 +1,6 @@
 module TestForwardDiffExtension
 
-import Test
+using Test: Test
 import CTFlows: CTFlows
 import CTBase.Data: Data
 import CTFlows.Integrators: Integrators
@@ -27,7 +27,6 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 function test_forwarddiff_extension()
     Test.@testset "ForwardDiff Extension Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
-
         Test.@testset "Extension availability" begin
             Test.@test !isnothing(CTFlowsSciMLFlows)
             Test.@test CTFlowsSciMLFlows isa Module

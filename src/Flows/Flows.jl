@@ -21,7 +21,7 @@ import CTBase.Strategies
 import CTBase.Options
 import CTBase.Orchestration
 import CTBase.Traits
-import CTModels
+using CTModels: CTModels
 import CommonSolve: CommonSolve
 
 # ==============================================================================
@@ -51,7 +51,8 @@ include(joinpath(@__DIR__, "calling.jl"))
 # ==============================================================================
 
 export __variable, __unsafe, __variable_costate
-export AbstractFlow, AbstractStateFlow, AbstractHamiltonianFlow, Flow, StateFlow, HamiltonianFlow
+export AbstractFlow,
+    AbstractStateFlow, AbstractHamiltonianFlow, Flow, StateFlow, HamiltonianFlow
 export OptimalControlFlow
 export system, integrator
 export build_flow

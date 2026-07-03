@@ -44,8 +44,8 @@ struct HamiltonianSystem{
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
     BACKEND<:Differentiation.AbstractADBackend,
-} <: AbstractHamiltonianSystem{TD, VD}
-    h::Data.Hamiltonian{F, TD, VD}
+} <: AbstractHamiltonianSystem{TD,VD}
+    h::Data.Hamiltonian{F,TD,VD}
     backend::BACKEND
 end
 
@@ -89,8 +89,10 @@ end
 # Constructors
 # =============================================================================
 
-function HamiltonianSystem(h::Data.Hamiltonian{F,TD,VD}, backend::Differentiation.AbstractADBackend) where {F,TD,VD}
-    return HamiltonianSystem{F, TD, VD, typeof(backend)}(h, backend)
+function HamiltonianSystem(
+    h::Data.Hamiltonian{F,TD,VD}, backend::Differentiation.AbstractADBackend
+) where {F,TD,VD}
+    return HamiltonianSystem{F,TD,VD,typeof(backend)}(h, backend)
 end
 
 # =============================================================================
@@ -169,7 +171,9 @@ Lazy implementation: reads `x0`/`p0`/`pv0` from the config to build the augmente
 
 See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
-function get_ip_rhs_augmented(sys::HamiltonianSystem, config::Configs.AbstractAugmentedHamiltonianConfig)
+function get_ip_rhs_augmented(
+    sys::HamiltonianSystem, config::Configs.AbstractAugmentedHamiltonianConfig
+)
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
     n_x = _state_dim(x0)
@@ -203,7 +207,7 @@ function Base.show(io::IO, sys::HamiltonianSystem)
     println(io, "  time_dependence: ", Traits.time_dependence(sys))
     println(io, "  variable_dependence: ", Traits.variable_dependence(sys))
     println(io, "  hamiltonian: ", sys.h)
-    println(io, "  backend: ", sys.backend)
+    return println(io, "  backend: ", sys.backend)
 end
 
 # =============================================================================
@@ -230,7 +234,7 @@ Return the variable costate capability trait of a variable-dependent Hamiltonian
 See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@ref), [`CTBase.Traits.SupportsVariableCostate`](@ref), [`CTBase.Traits.NoVariableCostate`](@ref).
 """
 function Traits.variable_costate_trait(
-    ::HamiltonianSystem{F, TD, Traits.NonFixed, B}
-) where {F, TD, B}
+    ::HamiltonianSystem{F,TD,Traits.NonFixed,B}
+) where {F,TD,B}
     return Traits.SupportsVariableCostate
 end

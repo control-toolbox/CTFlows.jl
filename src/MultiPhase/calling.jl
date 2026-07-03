@@ -59,14 +59,22 @@ function _evaluate_multiphase(mpf, config::Configs.AbstractEndPointConfig; varia
     current_state = _extract_initial_state(config)
     current_t = t0
     n_ph = n_phases(mpf)
-    
+
     for i in 1:n_ph
         t_end = (i < n_ph) ? get_switching_time(mpf, i) : tf
-        
-        current_state = _evaluate_phase(get_flow(mpf, i), current_t, t_end, current_state, config; variable=variable, unsafe=unsafe)
-        
+
+        current_state = _evaluate_phase(
+            get_flow(mpf, i),
+            current_t,
+            t_end,
+            current_state,
+            config;
+            variable=variable,
+            unsafe=unsafe,
+        )
+
         current_t = t_end
-        
+
         if i < n_ph
             jump = get_jump(mpf, i)
             if !isnothing(jump)
@@ -74,7 +82,7 @@ function _evaluate_multiphase(mpf, config::Configs.AbstractEndPointConfig; varia
             end
         end
     end
-    
+
     return _format_final_output(mpf, current_state)
 end
 
@@ -96,23 +104,33 @@ Iterates through all phases sequentially, collecting segment results and applyin
 
 See also: [`CTSolvers.Integrators.merge`](@extref), [`CTFlows.MultiPhase._evaluate_phase`](@ref), [`CTFlows.MultiPhase._apply_jump`](@ref).
 """
-function _evaluate_multiphase(mpf, config::Configs.AbstractTrajectoryConfig; variable, unsafe)
+function _evaluate_multiphase(
+    mpf, config::Configs.AbstractTrajectoryConfig; variable, unsafe
+)
     t0, tf = Configs.tspan(config)
     current_state = _extract_initial_state(config)
     current_t = t0
     n_ph = n_phases(mpf)
-    
+
     results = nothing
-    
+
     for i in 1:n_ph
         t_end = (i < n_ph) ? get_switching_time(mpf, i) : tf
-        
-        segment_result = _evaluate_phase(get_flow(mpf, i), current_t, t_end, current_state, config; variable=variable, unsafe=unsafe)
+
+        segment_result = _evaluate_phase(
+            get_flow(mpf, i),
+            current_t,
+            t_end,
+            current_state,
+            config;
+            variable=variable,
+            unsafe=unsafe,
+        )
         results = isnothing(results) ? [segment_result] : push!(results, segment_result)
-        
+
         current_state = _extract_final_state(mpf, segment_result, current_state)
         current_t = t_end
-        
+
         if i < n_ph
             jump = get_jump(mpf, i)
             if !isnothing(jump)
@@ -120,7 +138,7 @@ function _evaluate_multiphase(mpf, config::Configs.AbstractTrajectoryConfig; var
             end
         end
     end
-    
+
     return Integrators.merge(results)
 end
 
@@ -147,7 +165,9 @@ Evaluate a single phase for a state flow with point configuration.
 
 See also: [`CTFlows.Flows.StateFlow`](@ref).
 """
-function _evaluate_phase(flow::Flows.StateFlow, t0, tf, x, ::Configs.AbstractEndPointConfig; variable, unsafe)
+function _evaluate_phase(
+    flow::Flows.StateFlow, t0, tf, x, ::Configs.AbstractEndPointConfig; variable, unsafe
+)
     return flow(t0, x, tf; variable=variable, unsafe=unsafe)
 end
 
@@ -170,7 +190,9 @@ Evaluate a single phase for a state flow with trajectory configuration.
 
 See also: [`CTFlows.Flows.StateFlow`](@ref).
 """
-function _evaluate_phase(flow::Flows.StateFlow, t0, tf, x, ::Configs.AbstractTrajectoryConfig; variable, unsafe)
+function _evaluate_phase(
+    flow::Flows.StateFlow, t0, tf, x, ::Configs.AbstractTrajectoryConfig; variable, unsafe
+)
     return flow((t0, tf), x; variable=variable, unsafe=unsafe)
 end
 
@@ -193,7 +215,15 @@ Evaluate a single phase for a Hamiltonian flow with point configuration.
 
 See also: [`CTFlows.Flows.HamiltonianFlow`](@ref).
 """
-function _evaluate_phase(flow::Flows.HamiltonianFlow, t0, tf, state_tuple, ::Configs.AbstractEndPointConfig; variable, unsafe)
+function _evaluate_phase(
+    flow::Flows.HamiltonianFlow,
+    t0,
+    tf,
+    state_tuple,
+    ::Configs.AbstractEndPointConfig;
+    variable,
+    unsafe,
+)
     x, p = state_tuple
     return flow(t0, x, p, tf; variable=variable, unsafe=unsafe)
 end
@@ -217,7 +247,15 @@ Evaluate a single phase for a Hamiltonian flow with trajectory configuration.
 
 See also: [`CTFlows.Flows.HamiltonianFlow`](@ref).
 """
-function _evaluate_phase(flow::Flows.HamiltonianFlow, t0, tf, state_tuple, ::Configs.AbstractTrajectoryConfig; variable, unsafe)
+function _evaluate_phase(
+    flow::Flows.HamiltonianFlow,
+    t0,
+    tf,
+    state_tuple,
+    ::Configs.AbstractTrajectoryConfig;
+    variable,
+    unsafe,
+)
     x, p = state_tuple
     return flow((t0, tf), x, p; variable=variable, unsafe=unsafe)
 end
@@ -280,10 +318,14 @@ This is an internal dispatch method for the `_extract_final_state` function.
 function _extract_final_state(::Type{Traits.HamiltonianDynamics}, segment, current_state)
     final = Integrators.final_state(segment)
     nx = length(current_state[1])
-    return (final[1:nx], final[nx+1:end])
+    return (final[1:nx], final[(nx + 1):end])
 end
 
-function _extract_final_state(::Type{Traits.HamiltonianDynamics}, segment::Trajectories.HamiltonianVectorFieldTrajectory, _)
+function _extract_final_state(
+    ::Type{Traits.HamiltonianDynamics},
+    segment::Trajectories.HamiltonianVectorFieldTrajectory,
+    _,
+)
     return Integrators.final_state(segment)
 end
 
@@ -475,13 +517,9 @@ sol = mpf(0.0, [1.0, 0.0], 3.0)
 
 See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Configs.StateEndPointConfig`](@ref).
 """
-function (mpf::MultiPhaseFlow{TD, VD, Traits.StateDynamics})(
-    t0::Real,
-    x0,
-    tf::Real;
-    variable=Flows.__variable(),
-    unsafe=Flows.__unsafe(),
-) where {TD, VD}
+function (mpf::MultiPhaseFlow{TD,VD,Traits.StateDynamics})(
+    t0::Real, x0, tf::Real; variable=Flows.__variable(), unsafe=Flows.__unsafe()
+) where {TD,VD}
     config = Configs.StateEndPointConfig(t0, x0, tf)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
@@ -514,12 +552,9 @@ sol = mpf((0.0, 3.0), [1.0, 0.0])
 
 See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref).
 """
-function (mpf::MultiPhaseFlow{TD, VD, Traits.StateDynamics})(
-    tspan::Tuple{Real, Real},
-    x0;
-    variable=Flows.__variable(),
-    unsafe=Flows.__unsafe(),
-) where {TD, VD}
+function (mpf::MultiPhaseFlow{TD,VD,Traits.StateDynamics})(
+    tspan::Tuple{Real,Real}, x0; variable=Flows.__variable(), unsafe=Flows.__unsafe()
+) where {TD,VD}
     config = Configs.StateTrajectoryConfig(tspan, x0)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
@@ -553,14 +588,9 @@ sol = mpf(0.0, [1.0, 0.0], [0.5, 0.3], 3.0)
 
 See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref).
 """
-function (mpf::MultiPhaseFlow{TD, VD, Traits.HamiltonianDynamics})(
-    t0::Real,
-    x0,
-    p0,
-    tf::Real;
-    variable=Flows.__variable(),
-    unsafe=Flows.__unsafe(),
-) where {TD, VD}
+function (mpf::MultiPhaseFlow{TD,VD,Traits.HamiltonianDynamics})(
+    t0::Real, x0, p0, tf::Real; variable=Flows.__variable(), unsafe=Flows.__unsafe()
+) where {TD,VD}
     config = Configs.HamiltonianEndPointConfig(t0, x0, p0, tf)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
@@ -594,13 +624,9 @@ sol = mpf((0.0, 3.0), [1.0, 0.0], [0.5, 0.3])
 
 See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref).
 """
-function (mpf::MultiPhaseFlow{TD, VD, Traits.HamiltonianDynamics})(
-    tspan::Tuple{Real, Real},
-    x0,
-    p0;
-    variable=Flows.__variable(),
-    unsafe=Flows.__unsafe(),
-) where {TD, VD}
+function (mpf::MultiPhaseFlow{TD,VD,Traits.HamiltonianDynamics})(
+    tspan::Tuple{Real,Real}, x0, p0; variable=Flows.__variable(), unsafe=Flows.__unsafe()
+) where {TD,VD}
     config = Configs.HamiltonianTrajectoryConfig(tspan, x0, p0)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end

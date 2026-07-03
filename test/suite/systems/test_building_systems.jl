@@ -1,6 +1,6 @@
 module TestBuildingSystems
 
-import Test
+using Test: Test
 import CTFlows.Systems
 import CTBase.Data
 import CTBase.Traits
@@ -35,21 +35,27 @@ function test_building_systems()
             end
 
             Test.@testset "build_system preserves traits - NonAutonomous Fixed" begin
-                vf = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
+                vf = Data.VectorField(
+                    (t, x) -> t .* x; is_autonomous=false, is_variable=false
+                )
                 sys = Systems.build_system(vf)
                 Test.@test Traits.time_dependence(sys) === Traits.NonAutonomous
                 Test.@test Traits.variable_dependence(sys) === Traits.Fixed
             end
 
             Test.@testset "build_system preserves traits - Autonomous NonFixed" begin
-                vf = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
+                vf = Data.VectorField(
+                    (x, v) -> x .+ v; is_autonomous=true, is_variable=true
+                )
                 sys = Systems.build_system(vf)
                 Test.@test Traits.time_dependence(sys) === Traits.Autonomous
                 Test.@test Traits.variable_dependence(sys) === Traits.NonFixed
             end
 
             Test.@testset "build_system preserves traits - NonAutonomous NonFixed" begin
-                vf = Data.VectorField((t, x, v) -> t .* x .+ v; is_autonomous=false, is_variable=true)
+                vf = Data.VectorField(
+                    (t, x, v) -> t .* x .+ v; is_autonomous=false, is_variable=true
+                )
                 sys = Systems.build_system(vf)
                 Test.@test Traits.time_dependence(sys) === Traits.NonAutonomous
                 Test.@test Traits.variable_dependence(sys) === Traits.NonFixed

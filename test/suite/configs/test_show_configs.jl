@@ -1,6 +1,6 @@
 module TestShowConfigs
 
-import Test
+using Test: Test
 import CTFlows.Configs
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
@@ -103,7 +103,9 @@ function test_show_configs()
             end
 
             Test.@testset "AugmentedHamiltonianEndPointConfig show methods" begin
-                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0], [0.5], [0.0], 1.0)
+                config = Configs.AugmentedHamiltonianEndPointConfig(
+                    0.0, [1.0], [0.5], [0.0], 1.0
+                )
                 io = IOBuffer()
                 show(io, config)
                 output = String(take!(io))
@@ -116,7 +118,9 @@ function test_show_configs()
             end
 
             Test.@testset "AugmentedHamiltonianEndPointConfig text/plain show method" begin
-                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0], [0.5], [0.0], 1.0)
+                config = Configs.AugmentedHamiltonianEndPointConfig(
+                    0.0, [1.0], [0.5], [0.0], 1.0
+                )
                 io = IOBuffer()
                 show(io, MIME("text/plain"), config)
                 output = String(take!(io))

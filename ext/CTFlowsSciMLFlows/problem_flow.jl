@@ -42,9 +42,8 @@ sol = flow((0.5, 2.0), [2.0]; variable=3.0, unsafe=false)
 ```
 """
 struct SciMLProblemFlow{
-    P <: SciMLBase.AbstractODEProblem,
-    I <: Integrators.AbstractIntegrator
-} <: AbstractFlow{Traits.NonAutonomous, Traits.NonFixed, Traits.StateDynamics}
+    P<:SciMLBase.AbstractODEProblem,I<:Integrators.AbstractIntegrator
+} <: AbstractFlow{Traits.NonAutonomous,Traits.NonFixed,Traits.StateDynamics}
     prob::P
     integrator::I
 end
@@ -69,9 +68,9 @@ the complete integration result with trajectory data.
 
 See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@ref), [`CTFlows.Integrators.build_options`](@ref).
 """
-function (f::SciMLProblemFlow)(; unsafe = Flows.__unsafe())
+function (f::SciMLProblemFlow)(; unsafe=Flows.__unsafe())
     opts = Integrators.build_options(f.integrator, nothing)
-    return CommonSolve.solve(f.prob, f.integrator; options = opts, unsafe)
+    return CommonSolve.solve(f.prob, f.integrator; options=opts, unsafe)
 end
 
 """
@@ -97,20 +96,16 @@ final state, not the full trajectory.
 See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@ref), [`CTFlows.Configs.StateEndPointConfig`](@ref).
 """
 function (f::SciMLProblemFlow)(
-    t0::Real,
-    x0,
-    tf::Real;
-    variable = Flows.__variable(),
-    unsafe = Flows.__unsafe(),
+    t0::Real, x0, tf::Real; variable=Flows.__variable(), unsafe=Flows.__unsafe()
 )
-    kw = (; u0 = x0, tspan = (t0, tf))
+    kw = (; u0=x0, tspan=(t0, tf))
     if !(variable isa Core.NotProvidedType)
-        kw = merge(kw, (; p = variable))
+        kw = merge(kw, (; p=variable))
     end
-    prob   = SciMLBase.remake(f.prob; kw...)
+    prob = SciMLBase.remake(f.prob; kw...)
     config = Configs.StateEndPointConfig(t0, x0, tf)
-    opts   = Integrators.build_options(f.integrator, config)
-    result = CommonSolve.solve(prob, f.integrator; options = opts, unsafe)
+    opts = Integrators.build_options(f.integrator, config)
+    result = CommonSolve.solve(prob, f.integrator; options=opts, unsafe)
     return Integrators.final_state(result)
 end
 
@@ -141,19 +136,16 @@ sol = flow((0.0, 1.0), [1.0])
 ```
 """
 function (f::SciMLProblemFlow)(
-    tspan::Tuple{Real, Real},
-    x0;
-    variable = Flows.__variable(),
-    unsafe = Flows.__unsafe(),
+    tspan::Tuple{Real,Real}, x0; variable=Flows.__variable(), unsafe=Flows.__unsafe()
 )
-    kw = (; u0 = x0, tspan = tspan)
+    kw = (; u0=x0, tspan=tspan)
     if !(variable isa Core.NotProvidedType)
-        kw = merge(kw, (; p = variable))
+        kw = merge(kw, (; p=variable))
     end
-    prob   = SciMLBase.remake(f.prob; kw...)
+    prob = SciMLBase.remake(f.prob; kw...)
     config = Configs.StateTrajectoryConfig(tspan, x0)
-    opts   = Integrators.build_options(f.integrator, config)
-    return CommonSolve.solve(prob, f.integrator; options = opts, unsafe)
+    opts = Integrators.build_options(f.integrator, config)
+    return CommonSolve.solve(prob, f.integrator; options=opts, unsafe)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", f::SciMLProblemFlow)
@@ -163,7 +155,7 @@ function Base.show(io::IO, ::MIME"text/plain", f::SciMLProblemFlow)
     print(io, "  integrator: ")
     show(io, f.integrator)
     println(io)
-    Flows._print_user_options(io, f.integrator)
+    return Flows._print_user_options(io, f.integrator)
 end
 
 """
@@ -180,5 +172,5 @@ Shows the time span, initial condition, and integrator information.
 See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@ref).
 """
 function Base.show(io::IO, f::SciMLProblemFlow)
-    print(io, "SciMLProblemFlow(tspan=", f.prob.tspan, ")")
+    return print(io, "SciMLProblemFlow(tspan=", f.prob.tspan, ")")
 end

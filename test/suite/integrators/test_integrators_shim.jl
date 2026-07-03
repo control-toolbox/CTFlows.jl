@@ -1,6 +1,6 @@
 module TestIntegratorsShim
 
-import Test
+using Test: Test
 import CTFlows.Integrators: Integrators
 import CTSolvers.Integrators as CTSI
 
@@ -15,11 +15,11 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 function test_integrators_shim()
     Test.@testset "Integrators shim" verbose=VERBOSE showtiming=SHOWTIMING begin
-
         Test.@testset "re-exported types resolve to CTSolvers" begin
             Test.@test Integrators.AbstractIntegrator === CTSI.AbstractIntegrator
             Test.@test Integrators.SciML === CTSI.SciML
-            Test.@test Integrators.AbstractIntegrationResult === CTSI.AbstractIntegrationResult
+            Test.@test Integrators.AbstractIntegrationResult ===
+                CTSI.AbstractIntegrationResult
         end
 
         Test.@testset "re-exported functions resolve to CTSolvers" begin

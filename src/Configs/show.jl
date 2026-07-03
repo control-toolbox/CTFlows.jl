@@ -11,7 +11,7 @@ function Base.show(io::IO, c::StateEndPointConfig)
     println(io, "StateEndPointConfig")
     println(io, "  t0: ", c.t0)
     println(io, "  x0: ", c.x0)
-    print(io, "  tf: ", c.tf)
+    return print(io, "  tf: ", c.tf)
 end
 
 """
@@ -20,7 +20,7 @@ $(TYPEDSIGNATURES)
 Display the `StateEndPointConfig` in REPL format.
 """
 function Base.show(io::IO, ::MIME"text/plain", c::StateEndPointConfig)
-    show(io, c)
+    return show(io, c)
 end
 
 """
@@ -31,7 +31,7 @@ Display the `StateTrajectoryConfig` in tree-style format.
 function Base.show(io::IO, c::StateTrajectoryConfig)
     println(io, "StateTrajectoryConfig")
     println(io, "  tspan: ", c.tspan)
-    print(io, "  x0: ", c.x0)
+    return print(io, "  x0: ", c.x0)
 end
 
 """
@@ -40,7 +40,7 @@ $(TYPEDSIGNATURES)
 Display the `StateTrajectoryConfig` in REPL format.
 """
 function Base.show(io::IO, ::MIME"text/plain", c::StateTrajectoryConfig)
-    show(io, c)
+    return show(io, c)
 end
 
 """
@@ -53,7 +53,7 @@ function Base.show(io::IO, c::HamiltonianEndPointConfig)
     println(io, "  t0: ", c.t0)
     println(io, "  x0: ", c.x0)
     println(io, "  p0: ", c.p0)
-    print(io, "  tf: ", c.tf)
+    return print(io, "  tf: ", c.tf)
 end
 
 """
@@ -62,7 +62,7 @@ $(TYPEDSIGNATURES)
 Display the `HamiltonianEndPointConfig` in REPL format.
 """
 function Base.show(io::IO, ::MIME"text/plain", c::HamiltonianEndPointConfig)
-    show(io, c)
+    return show(io, c)
 end
 
 """
@@ -74,7 +74,7 @@ function Base.show(io::IO, c::HamiltonianTrajectoryConfig)
     println(io, "HamiltonianTrajectoryConfig")
     println(io, "  tspan: ", c.tspan)
     println(io, "  x0: ", c.x0)
-    print(io, "  p0: ", c.p0)
+    return print(io, "  p0: ", c.p0)
 end
 
 """
@@ -83,7 +83,7 @@ $(TYPEDSIGNATURES)
 Display the `HamiltonianTrajectoryConfig` in REPL format.
 """
 function Base.show(io::IO, ::MIME"text/plain", c::HamiltonianTrajectoryConfig)
-    show(io, c)
+    return show(io, c)
 end
 
 """
@@ -97,7 +97,7 @@ function Base.show(io::IO, c::AugmentedHamiltonianEndPointConfig)
     println(io, "  x0: ", c.x0)
     println(io, "  p0: ", c.p0)
     println(io, "  pv0: ", c.pv0)
-    print(io, "  tf: ", c.tf)
+    return print(io, "  tf: ", c.tf)
 end
 
 """
@@ -106,5 +106,5 @@ $(TYPEDSIGNATURES)
 Display the `AugmentedHamiltonianEndPointConfig` in REPL format.
 """
 function Base.show(io::IO, ::MIME"text/plain", c::AugmentedHamiltonianEndPointConfig)
-    show(io, c)
+    return show(io, c)
 end

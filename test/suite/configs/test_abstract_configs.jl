@@ -1,6 +1,6 @@
 module TestAbstractConfigs
 
-import Test
+using Test: Test
 import CTFlows.Configs
 import CTBase.Traits
 
@@ -14,7 +14,8 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 """
 Fake config type for testing the AbstractConfig contract.
 """
-struct FakeConfig{X0} <: Configs.AbstractConfigWithMaC{X0, Traits.EndPointMode, Traits.StateDynamics}
+struct FakeConfig{X0} <:
+       Configs.AbstractConfigWithMaC{X0,Traits.EndPointMode,Traits.StateDynamics}
     x0::X0
 end
 
@@ -75,24 +76,35 @@ function test_abstract_configs()
                 end
 
                 Test.@testset "HamiltonianEndPointConfig subtypes" begin
-                    Test.@test Configs.HamiltonianEndPointConfig <: Configs.AbstractEndPointConfig
-                    Test.@test Configs.HamiltonianEndPointConfig <: Configs.AbstractHamiltonianConfig
+                    Test.@test Configs.HamiltonianEndPointConfig <:
+                        Configs.AbstractEndPointConfig
+                    Test.@test Configs.HamiltonianEndPointConfig <:
+                        Configs.AbstractHamiltonianConfig
                 end
 
                 Test.@testset "StateTrajectoryConfig subtypes" begin
-                    Test.@test Configs.StateTrajectoryConfig <: Configs.AbstractTrajectoryConfig
+                    Test.@test Configs.StateTrajectoryConfig <:
+                        Configs.AbstractTrajectoryConfig
                     Test.@test Configs.StateTrajectoryConfig <: Configs.AbstractStateConfig
                 end
 
                 Test.@testset "HamiltonianTrajectoryConfig subtypes" begin
-                    Test.@test Configs.HamiltonianTrajectoryConfig <: Configs.AbstractTrajectoryConfig
-                    Test.@test Configs.HamiltonianTrajectoryConfig <: Configs.AbstractHamiltonianConfig
+                    Test.@test Configs.HamiltonianTrajectoryConfig <:
+                        Configs.AbstractTrajectoryConfig
+                    Test.@test Configs.HamiltonianTrajectoryConfig <:
+                        Configs.AbstractHamiltonianConfig
                 end
 
                 Test.@testset "Negative checks" begin
-                    Test.@test !(Configs.StateEndPointConfig <: Configs.AbstractHamiltonianConfig)
-                    Test.@test !(Configs.HamiltonianEndPointConfig <: Configs.AbstractStateConfig)
-                    Test.@test !(Configs.StateEndPointConfig <: Configs.AbstractTrajectoryConfig)
+                    Test.@test !(
+                        Configs.StateEndPointConfig <: Configs.AbstractHamiltonianConfig
+                    )
+                    Test.@test !(
+                        Configs.HamiltonianEndPointConfig <: Configs.AbstractStateConfig
+                    )
+                    Test.@test !(
+                        Configs.StateEndPointConfig <: Configs.AbstractTrajectoryConfig
+                    )
                 end
             end
         end

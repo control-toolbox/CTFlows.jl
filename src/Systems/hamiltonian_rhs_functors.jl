@@ -116,7 +116,8 @@ end
 function (f::HamIpRHS{F,TD,VD,B,CX,CP})(du, u, λ, t) where {F,TD,VD,B,CX,CP}
     x, p = _ham_split(u, f.N)
     ∂x, ∂p = Differentiation.hamiltonian_gradient(
-        f.backend, f.h, t, f.cx(x), f.cp(p), variable(λ))
+        f.backend, f.h, t, f.cx(x), f.cp(p), variable(λ)
+    )
     _ham_assign!(du, ∂p, -∂x, f.N)
     return nothing
 end
@@ -169,7 +170,8 @@ end
 function (f::HamOoPRHS{F,TD,VD,B,CX,CP})(u, λ, t) where {F,TD,VD,B,CX,CP}
     x, p = _ham_split(u, f.N)
     ∂x, ∂p = Differentiation.hamiltonian_gradient(
-        f.backend, f.h, t, f.cx(x), f.cp(p), variable(λ))
+        f.backend, f.h, t, f.cx(x), f.cp(p), variable(λ)
+    )
     return vcat(∂p, -∂x)
 end
 
@@ -201,12 +203,14 @@ See also: [`CTFlows.Systems.HamIpAugRHS`](@ref), [`CTFlows.Systems._aug_split`](
 """
 function _check_aug_batch_compat(u::AbstractMatrix, v::AbstractMatrix)
     if size(u, 2) != size(v, 2)
-        throw(Exceptions.PreconditionError(
-            "batch size mismatch in augmented Hamiltonian RHS";
-            reason    = "size(u, 2) = $(size(u, 2)) ≠ size(v, 2) = $(size(v, 2))",
-            context   = "HamIpAugRHS — matrix batch mode",
-            suggestion = "variable v must have the same number of columns as the state u",
-        ))
+        throw(
+            Exceptions.PreconditionError(
+                "batch size mismatch in augmented Hamiltonian RHS";
+                reason="size(u, 2) = $(size(u, 2)) ≠ size(v, 2) = $(size(v, 2))",
+                context="HamIpAugRHS — matrix batch mode",
+                suggestion="variable v must have the same number of columns as the state u",
+            ),
+        )
     end
     return nothing
 end
@@ -313,9 +317,9 @@ function Base.show(io::IO, f::AbstractHamRHS)
     td = Traits.time_dependence(f.h)
     vd = Traits.variable_dependence(f.h)
     println(io, "  wraps: Hamiltonian: $(Data._td_label(td)), $(Data._vd_label(vd))")
-    print(io,   "  converts: ", _rhs_conversion_label(f))
+    return print(io, "  converts: ", _rhs_conversion_label(f))
 end
 
 function Base.show(io::IO, ::MIME"text/plain", f::AbstractHamRHS)
-    show(io, f)
+    return show(io, f)
 end

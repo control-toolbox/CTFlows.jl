@@ -83,12 +83,12 @@ function build_problem(
     integrator::AbstractIntegrator;
     kwargs...,
 )
-    throw(
+    return throw(
         Exceptions.ExtensionError(
             :SciMLBase;
-            message = "to build an ODE problem for a SciML integrator",
-            feature = "ODE problem building via SciML",
-            context = "Load SciMLBase (e.g. via OrdinaryDiffEqTsit5) to activate the CTFlowsSciMLIntegrator extension.",
+            message="to build an ODE problem for a SciML integrator",
+            feature="ODE problem building via SciML",
+            context="Load SciMLBase (e.g. via OrdinaryDiffEqTsit5) to activate the CTFlowsSciMLIntegrator extension.",
         ),
     )
 end
@@ -118,12 +118,12 @@ until it is loaded.
 See also: [`build_problem`](@ref), [`CTSolvers.Integrators.options_trajectory`](@extref).
 """
 function build_options(integrator::AbstractIntegrator, config)
-    throw(
+    return throw(
         Exceptions.ExtensionError(
             :SciMLBase;
-            message = "to build integrator options",
-            feature = "SciML integrator options",
-            context = "Load SciMLBase (e.g. via OrdinaryDiffEqTsit5) to activate the CTFlowsSciMLIntegrator extension.",
+            message="to build integrator options",
+            feature="SciML integrator options",
+            context="Load SciMLBase (e.g. via OrdinaryDiffEqTsit5) to activate the CTFlowsSciMLIntegrator extension.",
         ),
     )
 end

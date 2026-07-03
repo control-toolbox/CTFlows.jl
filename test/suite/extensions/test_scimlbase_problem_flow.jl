@@ -1,6 +1,6 @@
 module TestSciMLBaseProblemFlow
 
-import Test
+using Test: Test
 import CTBase.Exceptions: Exceptions
 import CTFlows: CTFlows
 import CTFlows.Integrators: Integrators
@@ -9,7 +9,7 @@ import CTFlows.Flows: Flows, AbstractFlow
 # Get extension to access SciML integrator
 using SciMLBase: SciMLBase, ODEProblem, ODEFunction
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
-const CTFlowsSciMLFlows      = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
+const CTFlowsSciMLFlows = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
