@@ -318,8 +318,8 @@ function test_flow()
                 Test.@test occursin("Flow", output)
                 Test.@test occursin("system", output)
                 Test.@test occursin("integrator", output)
-                Test.@test occursin("  system:     ", output)
-                Test.@test occursin("  integrator: ", output)
+                Test.@test occursin("system:", output)
+                Test.@test occursin("integrator:", output)
             end
 
             Test.@testset "compact" begin

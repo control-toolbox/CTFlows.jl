@@ -113,6 +113,7 @@ function Trajectories.build_trajectory(
     ::Type{Traits.StateDynamics},
     config::Configs.AbstractConfig,
     result::FakeIntegrationResultForCalling,
+    variable=nothing,
 )
     return Integrators.final_state(result)
 end
@@ -122,6 +123,7 @@ function Trajectories.build_trajectory(
     ::Type{Traits.StateDynamics},
     config::Configs.AbstractConfig,
     result::FakeIntegrationResultForCalling,
+    variable=nothing,
 )
     return :fake_vector_field_solution
 end
@@ -131,6 +133,7 @@ function Trajectories.build_trajectory(
     ::Type{Traits.HamiltonianDynamics},
     config::Configs.AbstractConfig,
     result::FakeIntegrationResultForCalling,
+    variable=nothing,
 )
     return (:fake_xf, :fake_pf)
 end
@@ -140,6 +143,7 @@ function Trajectories.build_trajectory(
     ::Type{Traits.HamiltonianDynamics},
     config::Configs.AbstractConfig,
     result::FakeIntegrationResultForCalling,
+    variable=nothing,
 )
     return :fake_hamiltonian_solution
 end

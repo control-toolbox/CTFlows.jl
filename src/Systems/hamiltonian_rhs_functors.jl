@@ -309,11 +309,13 @@ _rhs_conversion_label(::HamOoPRHS) = "Hamiltonian AD → out-of-place interface"
 _rhs_conversion_label(::HamIpAugRHS) = "Hamiltonian AD → in-place augmented interface"
 
 function Base.show(io::IO, f::AbstractHamRHS)
-    println(io, nameof(typeof(f)))
+    fmt = Display.format_codes(io)
     td = Traits.time_dependence(f.h)
     vd = Traits.variable_dependence(f.h)
-    println(io, "  wraps: Hamiltonian: $(Data._td_label(td)), $(Data._vd_label(vd))")
-    print(io,   "  converts: ", _rhs_conversion_label(f))
+    wraps = "Hamiltonian: $(Data._td_label(td)), $(Data._vd_label(vd))"
+    Display.print_header(io, nameof(typeof(f)); fmt = fmt)
+    Display.print_field(io, "wraps", wraps; fmt = fmt, value_style = "")
+    Display.print_field(io, "converts", _rhs_conversion_label(f); last = true, fmt = fmt, value_style = "")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", f::AbstractHamRHS)

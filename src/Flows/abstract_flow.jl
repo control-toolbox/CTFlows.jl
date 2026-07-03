@@ -290,21 +290,21 @@ StateFlow
 ```
 """
 function Base.show(io::IO, ::MIME"text/plain", flow::AbstractFlow)
+    fmt   = Display.format_codes(io)
     sys   = system(flow)
     integ = integrator(flow)
 
-    # "system:" and "integrator:" padded to the same width for column alignment
-    lbl_sys  = "  system:     "
-    lbl_int  = "  integrator: "
+    Display.print_header(io, nameof(typeof(flow)); fmt = fmt)
 
-    # Capture system display; indent continuation lines to sit under the first
-    sys_str = sprint(show, sys)
-    sys_display = _indent_continuation(sys_str, length(lbl_sys))
+    # Nest the system's own (styled, possibly multi-line) display under the `system` branch.
+    Display.print_field(io, "system", sys; fmt = fmt, value_style = "")
 
-    println(io, nameof(typeof(flow)))
-    println(io, lbl_sys, sys_display)
-    print(io,   lbl_int, nameof(typeof(integ)))
-    _print_user_options(io, integ)
+    # Integrator name followed by user-supplied options, nested under the last branch.
+    int_str = sprint(integ; context = IOContext(io, :color => get(io, :color, false))) do io2, i
+        print(io2, fmt.value, nameof(typeof(i)), fmt.reset)
+        _print_user_options(io2, i)
+    end
+    Display.print_field(io, "integrator", int_str; last = true, fmt = fmt, value_style = "")
 end
 
 """
@@ -321,9 +321,10 @@ Flow(system=FakeSystem(n_x=2, n_p=2), integrator=FakeIntegrator)
 ```
 """
 function Base.show(io::IO, flow::AbstractFlow)
+    fmt = Display.format_codes(io)
     sys = system(flow)
     integ = integrator(flow)
-    print(io, nameof(typeof(flow)), "(")
+    print(io, fmt.name, nameof(typeof(flow)), fmt.reset, "(")
     parts = String[]
     push!(parts, "system=$(sys)")
     push!(parts, "integrator=$(nameof(typeof(integ)))")
@@ -334,29 +335,6 @@ end
 # =============================================================================
 # Internal helpers for show
 # =============================================================================
-
-"""
-    _indent_continuation(s::String, n::Int) -> String
-
-Indent every line of a multiline string by `n` spaces, except the first line.
-
-# Arguments
-- `s::String`: The multiline string to indent.
-- `n::Int`: Number of spaces to indent continuation lines.
-
-# Returns
-- `String`: The indented string.
-
-# Example
-\`\`\`julia
-_indent_continuation("line1\\nline2\\nline3", 4)  # Returns "line1\\n    line2\\n    line3"
-\`\`\`
-"""
-function _indent_continuation(s::String, n::Int)
-    pad   = " " ^ n
-    lines = split(s, "\n")
-    return join((i == 1 ? l : pad * l for (i, l) in enumerate(lines)), "\n")
-end
 
 """
     _print_user_options(io::IO, integ::Integrators.AbstractIntegrator)

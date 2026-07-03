@@ -199,11 +199,12 @@ Display a Hamiltonian system in a human-readable format.
 - Used by the REPL for interactive display.
 """
 function Base.show(io::IO, sys::HamiltonianSystem)
-    println(io, "HamiltonianSystem")
-    println(io, "  time_dependence: ", Traits.time_dependence(sys))
-    println(io, "  variable_dependence: ", Traits.variable_dependence(sys))
-    println(io, "  hamiltonian: ", sys.h)
-    println(io, "  backend: ", sys.backend)
+    fmt = Display.format_codes(io)
+    Display.print_header(io, "HamiltonianSystem"; fmt = fmt)
+    Display.print_field(io, "time_dependence", Traits.time_dependence(sys); fmt = fmt, value_style = fmt.type)
+    Display.print_field(io, "variable_dependence", Traits.variable_dependence(sys); fmt = fmt, value_style = fmt.type)
+    Display.print_field(io, "hamiltonian", sys.h; fmt = fmt, value_style = "")
+    Display.print_field(io, "backend", sys.backend; last = true, fmt = fmt, value_style = "")
 end
 
 # =============================================================================

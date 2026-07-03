@@ -368,9 +368,10 @@ Shows the type name and the wrapped HamiltonianVectorField with its traits.
 See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
 """
 function Base.show(io::IO, sys::HamiltonianVectorFieldSystem{F, TD, VD, MD}) where {F, TD, VD, MD}
-    println(io, "HamiltonianVectorFieldSystem")
+    fmt = Display.format_codes(io)
     wraps = "HamiltonianVectorField: $(Data._td_label(TD)), $(Data._vd_label(VD)), $(Data._md_label(MD))"
-    print(io, "  wraps: ", wraps)
+    Display.print_header(io, "HamiltonianVectorFieldSystem"; fmt = fmt)
+    Display.print_field(io, "wraps", wraps; last = true, fmt = fmt, value_style = "")
 end
 
 """

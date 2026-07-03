@@ -209,10 +209,12 @@ Shows the type name and the wrapped VectorField with its traits.
 See also: [`CTFlows.Systems.VectorFieldSystem`](@ref).
 """
 function Base.show(io::IO, sys::VectorFieldSystem{F, TD, VD, MD, RHS, OOPROHS, FINRHS}) where {F, TD, VD, MD, RHS, OOPROHS, FINRHS}
-    println(io, "VectorFieldSystem")
+    fmt = Display.format_codes(io)
     wraps = "VectorField: $(Data._td_label(TD)), $(Data._vd_label(VD)), $(Data._md_label(MD))"
-    println(io, "  wraps: ", wraps)
-    print(io, "  rhs:   ", nameof(typeof(sys.rhs)), " (", _rhs_conversion_label(sys.rhs), ")")
+    rhs = "$(nameof(typeof(sys.rhs))) ($(_rhs_conversion_label(sys.rhs)))"
+    Display.print_header(io, "VectorFieldSystem"; fmt = fmt)
+    Display.print_field(io, "wraps", wraps; fmt = fmt, value_style = "")
+    Display.print_field(io, "rhs", rhs; last = true, fmt = fmt, value_style = "")
 end
 
 """

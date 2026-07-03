@@ -28,6 +28,7 @@ import CommonSolve: CommonSolve
 # Internal sibling-submodule imports
 # ==============================================================================
 
+import ..Display: Display
 import ..Configs: Configs
 import ..Systems: Systems, hamiltonian_vector_field
 import ..Integrators: Integrators

@@ -26,6 +26,9 @@ module CTFlows
 # ==============================================================================
 # Include submodules in topological order
 # ==============================================================================
+include(joinpath(@__DIR__, "Display", "Display.jl"))
+using .Display
+
 include(joinpath(@__DIR__, "Configs", "Configs.jl"))
 using .Configs
 

@@ -191,10 +191,13 @@ Shows the type name, the wrapped ODE function type, and its mutability trait.
 See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref).
 """
 function Base.show(io::IO, sys::SciMLFunctionSystem{F}) where F
-    println(io, "SciMLFunctionSystem")
+    fmt = Display.format_codes(io)
     iip = SciMLBase.isinplace(sys.f)
-    println(io, "  wraps: ODEFunction: non-autonomous, variable, ", iip ? "in-place" : "out-of-place")
-    print(io,   "  rhs:   ", nameof(typeof(sys.rhs_fn)), " (", _rhs_sciml_label(sys.rhs_fn), ")")
+    wraps = "ODEFunction: non-autonomous, variable, " * (iip ? "in-place" : "out-of-place")
+    rhs = "$(nameof(typeof(sys.rhs_fn))) ($(_rhs_sciml_label(sys.rhs_fn)))"
+    Display.print_header(io, "SciMLFunctionSystem"; fmt = fmt)
+    Display.print_field(io, "wraps", wraps; fmt = fmt, value_style = "")
+    Display.print_field(io, "rhs", rhs; last = true, fmt = fmt, value_style = "")
 end
 
 """

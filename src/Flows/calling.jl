@@ -256,6 +256,7 @@ function _core_invoke_flow(flow::Flows.AbstractFlow, config::Configs.AbstractCon
         Configs.dynamics_trait(config),
         config,
         result,
+        variable,
     )
 
     return flow_sol

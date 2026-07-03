@@ -29,6 +29,7 @@ import RecipesBase: RecipesBase, plot
 # Internal submodule imports
 # ==============================================================================
 
+import ..Display: Display
 import ..Configs: Configs
 import ..Systems: Systems
 import ..Integrators: Integrators

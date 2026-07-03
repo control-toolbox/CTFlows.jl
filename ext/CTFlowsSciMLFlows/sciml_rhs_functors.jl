@@ -192,10 +192,11 @@ and the conversion strategy label.
 See also: [`CTFlowsSciMLFlows._rhs_sciml_label`](@ref), [`CTFlowsSciMLFlows._AnySciMLRHS`](@ref).
 """
 function Base.show(io::IO, r::_AnySciMLRHS)
-    println(io, nameof(typeof(r)))
+    fmt = Display.format_codes(io)
     iip = SciMLBase.isinplace(r.f)
-    println(io, "  wraps: ODEFunction: ", iip ? "in-place" : "out-of-place")
-    print(io,   "  converts: ", _rhs_sciml_label(r))
+    Display.print_header(io, nameof(typeof(r)); fmt = fmt)
+    Display.print_field(io, "wraps", "ODEFunction: " * (iip ? "in-place" : "out-of-place"); fmt = fmt, value_style = "")
+    Display.print_field(io, "converts", _rhs_sciml_label(r); last = true, fmt = fmt, value_style = "")
 end
 
 """

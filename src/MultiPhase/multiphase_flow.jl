@@ -272,18 +272,21 @@ Display a multi-phase flow in a human-readable format.
 - Used by the REPL for interactive display.
 """
 function Base.show(io::IO, ::MIME"text/plain", mpf::MultiPhaseFlow)
-    print(io, _multiphase_display_name(mpf))
-    print(io, "\n  phases: ", length(mpf.flows))
+    fmt = Display.format_codes(io)
+    Display.print_header(io, _multiphase_display_name(mpf); fmt = fmt)
+    Display.print_field(io, "phases", length(mpf.flows); fmt = fmt, value_style = fmt.count)
     sys = Flows.system(mpf)
     if !isempty(sys)
-        print(io, "\n  systems: ", join(map(s -> string(nameof(typeof(s))), sys), ", "))
+        Display.print_field(io, "systems",
+            join(map(s -> string(nameof(typeof(s))), sys), ", "); fmt = fmt)
     end
     integ = Flows.integrator(mpf)
     if !isempty(integ)
-        print(io, "\n  integrators: ", join(map(i -> string(nameof(typeof(i))), integ), ", "))
+        Display.print_field(io, "integrators",
+            join(map(i -> string(nameof(typeof(i))), integ), ", "); fmt = fmt)
     end
-    print(io, "\n  switching_times: ", mpf.switching_times)
-    print(io, "\n  jumps: ", mpf.jumps)
+    Display.print_field(io, "switching_times", mpf.switching_times; fmt = fmt)
+    Display.print_field(io, "jumps", mpf.jumps; last = true, fmt = fmt)
 end
 
 """
@@ -300,7 +303,8 @@ Display a multi-phase flow in a compact single-line format.
 - Used when the flow is embedded in other output.
 """
 function Base.show(io::IO, mpf::MultiPhaseFlow)
-    print(io, _multiphase_display_name(mpf), "(")
+    fmt = Display.format_codes(io)
+    print(io, fmt.name, _multiphase_display_name(mpf), fmt.reset, "(")
     parts = String[]
     push!(parts, "phases=$(length(mpf.flows))")
     push!(parts, "switching_times=$(mpf.switching_times)")

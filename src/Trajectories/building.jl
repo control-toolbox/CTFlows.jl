@@ -27,7 +27,8 @@ function build_trajectory(
     ::Type{Traits.EndPointMode},
     ::Type{Traits.StateDynamics},
     config::Configs.AbstractConfig,
-    result::Integrators.AbstractIntegrationResult, 
+    result::Integrators.AbstractIntegrationResult,
+    variable = Core.NotProvided,
 )
     return Core.make_coerce(Configs.initial_state(config))(Integrators.final_state(result))
 end
@@ -53,9 +54,10 @@ function build_trajectory(
     ::Type{Traits.TrajectoryMode},
     ::Type{Traits.StateDynamics},
     config::Configs.AbstractConfig,
-    result::Integrators.AbstractIntegrationResult, 
+    result::Integrators.AbstractIntegrationResult,
+    variable = Core.NotProvided,
 )
-    return VectorFieldTrajectory(result)
+    return VectorFieldTrajectory(result, variable)
 end
 
 # =============================================================================
@@ -122,6 +124,7 @@ function build_trajectory(
     ::Type{Traits.HamiltonianDynamics},
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
+    variable = Core.NotProvided,
     )
     u = Integrators.final_state(result)
     x0 = Configs.initial_state(config)
@@ -152,9 +155,10 @@ function build_trajectory(
     ::Type{Traits.HamiltonianDynamics},
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
+    variable = Core.NotProvided,
     )
     x0 = Configs.initial_state(config)
-    return HamiltonianVectorFieldTrajectory(x0, result)
+    return HamiltonianVectorFieldTrajectory(x0, result, variable)
 end
 
 # =============================================================================
@@ -190,6 +194,7 @@ function build_trajectory(
     ::Type{Traits.AugmentedHamiltonianDynamics},
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
+    variable = Core.NotProvided,
 )
     return _aug_split_solution(Integrators.final_state(result), Configs.initial_state(config), Configs.initial_variable_costate(config))
 end

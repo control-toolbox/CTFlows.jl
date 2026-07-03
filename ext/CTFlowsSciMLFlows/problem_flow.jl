@@ -157,13 +157,15 @@ function (f::SciMLProblemFlow)(
 end
 
 function Base.show(io::IO, ::MIME"text/plain", f::SciMLProblemFlow)
-    println(io, "SciMLProblemFlow")
-    println(io, "  tspan: ", f.prob.tspan)
-    println(io, "  u0: ", f.prob.u0)
-    print(io, "  integrator: ")
-    show(io, f.integrator)
-    println(io)
-    Flows._print_user_options(io, f.integrator)
+    fmt = Display.format_codes(io)
+    Display.print_header(io, "SciMLProblemFlow"; fmt = fmt)
+    Display.print_field(io, "tspan", f.prob.tspan; fmt = fmt)
+    Display.print_field(io, "u0", f.prob.u0; fmt = fmt)
+    int_str = sprint(f.integrator; context = IOContext(io, :color => get(io, :color, false))) do io2, i
+        print(io2, fmt.value, nameof(typeof(i)), fmt.reset)
+        Flows._print_user_options(io2, i)
+    end
+    Display.print_field(io, "integrator", int_str; last = true, fmt = fmt, value_style = "")
 end
 
 """
@@ -180,5 +182,6 @@ Shows the time span, initial condition, and integrator information.
 See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@ref).
 """
 function Base.show(io::IO, f::SciMLProblemFlow)
-    print(io, "SciMLProblemFlow(tspan=", f.prob.tspan, ")")
+    fmt = Display.format_codes(io)
+    print(io, fmt.name, "SciMLProblemFlow", fmt.reset, "(tspan=", f.prob.tspan, ")")
 end

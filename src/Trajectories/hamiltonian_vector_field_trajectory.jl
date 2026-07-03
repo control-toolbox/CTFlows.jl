@@ -41,10 +41,19 @@ x0, p0 = sol(0.0)        # returns tuple (x(0), p(0))
 
 See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.AbstractHamiltonianVectorFieldTrajectory`](@ref).
 """
-struct HamiltonianVectorFieldTrajectory{X0, R<:Integrators.AbstractIntegrationResult} <: AbstractHamiltonianVectorFieldTrajectory
+struct HamiltonianVectorFieldTrajectory{X0, R<:Integrators.AbstractIntegrationResult, V} <: AbstractHamiltonianVectorFieldTrajectory
     x0::X0
     result::R
+    variable::V
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Construct a `HamiltonianVectorFieldTrajectory` with no variable (`Core.NotProvided`).
+"""
+HamiltonianVectorFieldTrajectory(x0, result::Integrators.AbstractIntegrationResult) =
+    HamiltonianVectorFieldTrajectory(x0, result, Core.NotProvided)
 
 # =============================================================================
 # Internal helper for splitting solutions based on initial state shape
@@ -265,7 +274,7 @@ function Integrators.merge(segments::AbstractVector{<:HamiltonianVectorFieldTraj
     
     internal_results = [sol.result for sol in segments]
     merged_result = Integrators.merge(internal_results)
-    return HamiltonianVectorFieldTrajectory(segments[1].x0, merged_result)
+    return HamiltonianVectorFieldTrajectory(segments[1].x0, merged_result, segments[1].variable)
 end
 
 # =============================================================================
@@ -312,17 +321,27 @@ Display the `HamiltonianVectorFieldTrajectory` in a readable text/plain format.
 - `sol::HamiltonianVectorFieldTrajectory`: The solution to display.
 """
 function Base.show(io::IO, ::MIME"text/plain", sol::HamiltonianVectorFieldTrajectory)
-    print(io, "HamiltonianVectorFieldTrajectory")
-    print(io, "\n  result: ", nameof(typeof(sol.result)))
-    
+    fmt = Display.format_codes(io)
+    Display.print_header(io, "HamiltonianVectorFieldTrajectory"; fmt = fmt)
+    fields = Any[("result", nameof(typeof(sol.result)), "")]
     try
-        ts = times(sol)
+        ts = Integrators.times(sol)
         if !isempty(ts)
-            print(io, "\n  time span: (", first(ts), ", ", last(ts), ")")
-            print(io, "\n  time points: ", length(ts))
+            push!(fields, ("tspan", (first(ts), last(ts)), fmt.value))
+            push!(fields, ("time points", length(ts), fmt.count))
         end
     catch
     end
+    try
+        xf, pf = Integrators.final_state(sol)
+        push!(fields, ("final state", xf, fmt.value))
+        push!(fields, ("final costate", pf, fmt.value))
+    catch
+    end
+    if _show_variable(sol.variable)
+        push!(fields, ("variable", sol.variable, fmt.value))
+    end
+    Display.print_fields(io, fields; fmt = fmt)
 end
 
 """
@@ -335,19 +354,24 @@ Display the `HamiltonianVectorFieldTrajectory` in a compact one-line format.
 - `sol::HamiltonianVectorFieldTrajectory`: The solution to display.
 """
 function Base.show(io::IO, sol::HamiltonianVectorFieldTrajectory)
-    print(io, "HamiltonianVectorFieldTrajectory(")
+    fmt = Display.format_codes(io)
+    print(io, fmt.name, "HamiltonianVectorFieldTrajectory", fmt.reset, "(")
     parts = String[]
     push!(parts, "result=$(nameof(typeof(sol.result)))")
-    
+
     try
-        ts = times(sol)
+        ts = Integrators.times(sol)
         if !isempty(ts)
             push!(parts, "tspan=($(first(ts)), $(last(ts)))")
             push!(parts, "n=$(length(ts))")
         end
     catch
     end
-    
+
+    if _show_variable(sol.variable)
+        push!(parts, "variable=$(sol.variable)")
+    end
+
     print(io, join(parts, ", "))
     print(io, ")")
 end
