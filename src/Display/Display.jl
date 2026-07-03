@@ -81,11 +81,12 @@ function print_field(
     valstr = value isa AbstractString ? value :
         sprint(print, value; context = IOContext(io, :color => get(io, :color, false)))
     lines = split(valstr, "\n")
-    print(io, "\n", fmt.muted, prefix, fmt.reset, fmt.label, label, fmt.reset, ": ",
-        style, lines[1], reset)
+    print(io, "\n", fmt.muted, prefix, fmt.reset)
+    isempty(string(label)) || print(io, fmt.label, label, fmt.reset, ": ")
+    print(io, style, lines[1], reset)
     if length(lines) > 1
         cont = last ? "   " : string(fmt.muted, "│", fmt.reset, "  ")
-        pad = " "^(length(string(label)) + 2)   # label + ": "
+        pad = isempty(string(label)) ? "" : " "^(length(string(label)) + 2)   # label + ": "
         for l in @view lines[2:end]
             print(io, "\n", cont, pad, style, l, reset)
         end

@@ -201,9 +201,9 @@ Display a Hamiltonian system in a human-readable format.
 function Base.show(io::IO, sys::HamiltonianSystem)
     fmt = Display.format_codes(io)
     Display.print_header(io, "HamiltonianSystem"; fmt = fmt)
-    Display.print_field(io, "time_dependence", Traits.time_dependence(sys); fmt = fmt, value_style = fmt.type)
-    Display.print_field(io, "variable_dependence", Traits.variable_dependence(sys); fmt = fmt, value_style = fmt.type)
-    Display.print_field(io, "hamiltonian", sys.h; fmt = fmt, value_style = "")
+    Display.print_field(io, "time_dependence", nameof(typeof(Traits.time_dependence(sys))); fmt = fmt, value_style = fmt.type)
+    Display.print_field(io, "variable_dependence", nameof(typeof(Traits.variable_dependence(sys))); fmt = fmt, value_style = fmt.type)
+    Display.print_field(io, "", sys.h; fmt = fmt, value_style = "")
     Display.print_field(io, "backend", sys.backend; last = true, fmt = fmt, value_style = "")
 end
 
