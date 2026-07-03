@@ -168,13 +168,14 @@ _rhs_conversion_label(f::OoPVFIpRHS) = "in-place VF → out-of-place interface"
 _rhs_conversion_label(f::OoPVFIpFinalizeRHS) = "in-place VF → out-of-place interface + finalize"
 
 function Base.show(io::IO, f::AbstractRHS)
-    println(io, nameof(typeof(f)))
+    fmt = Display.format_codes(io)
     td = Traits.time_dependence(f.vf)
     vd = Traits.variable_dependence(f.vf)
     md = Traits.mutability(f.vf)
     wraps = "VectorField: $(Data._td_label(td)), $(Data._vd_label(vd)), $(Data._md_label(md))"
-    println(io, "  wraps: ", wraps)
-    print(io, "  converts: ", _rhs_conversion_label(f))
+    Display.print_header(io, nameof(typeof(f)); fmt = fmt)
+    Display.print_field(io, "wraps", wraps; fmt = fmt, value_style = "")
+    Display.print_field(io, "converts", _rhs_conversion_label(f); last = true, fmt = fmt, value_style = "")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", f::AbstractRHS)

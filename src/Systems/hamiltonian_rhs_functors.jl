@@ -26,7 +26,7 @@ All subtypes must implement a callable interface:
 
 # Notes
 - Subtypes include [`CTFlows.Systems.AbstractIPHamRHS`](@ref) and [`CTFlows.Systems.AbstractOoPHamRHS`](@ref).
-- These functors are created by [`CTFlows.Systems.build_rhs`](@ref) and related functions.
+- These functors are created by `build_rhs` and related functions.
 
 See also: [`CTFlows.Systems.AbstractRHS`](@ref), [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamOoPRHS`](@ref).
 """
@@ -101,7 +101,7 @@ gradient in-place, following the canonical Hamiltonian equations:
 
 # Notes
 - The AD cache is embedded in the functor for better composability.
-- This functor is created by [`CTFlows.Systems.build_rhs`](@ref) for Hamiltonian systems.
+- This functor is created by `build_rhs` for Hamiltonian systems.
 
 See also: [`CTFlows.Systems.HamOoPRHS`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
 """
@@ -154,7 +154,7 @@ gradient out-of-place, following the canonical Hamiltonian equations:
 
 # Notes
 - The AD cache is embedded in the functor for better composability.
-- This functor is created by [`CTFlows.Systems.build_oop_rhs`](@ref) for Hamiltonian systems.
+- This functor is created by `build_oop_rhs` for Hamiltonian systems.
 
 See also: [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
 """
@@ -262,7 +262,7 @@ The state vector is augmented as `[x; p; v]` where `v` is the variable costate.
 # Notes
 - Supports batch mode with matrix inputs (checks batch size compatibility).
 - The AD cache is embedded in the functor for better composability.
-- This functor is created by [`CTFlows.Systems.build_rhs_augmented`](@ref) for Hamiltonian systems.
+- This functor is created by `build_rhs_augmented` for Hamiltonian systems.
 
 See also: [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamOoPRHS`](@ref).
 """
@@ -309,11 +309,13 @@ _rhs_conversion_label(::HamOoPRHS) = "Hamiltonian AD → out-of-place interface"
 _rhs_conversion_label(::HamIpAugRHS) = "Hamiltonian AD → in-place augmented interface"
 
 function Base.show(io::IO, f::AbstractHamRHS)
-    println(io, nameof(typeof(f)))
+    fmt = Display.format_codes(io)
     td = Traits.time_dependence(f.h)
     vd = Traits.variable_dependence(f.h)
-    println(io, "  wraps: Hamiltonian: $(Data._td_label(td)), $(Data._vd_label(vd))")
-    print(io,   "  converts: ", _rhs_conversion_label(f))
+    wraps = "Hamiltonian: $(Data._td_label(td)), $(Data._vd_label(vd))"
+    Display.print_header(io, nameof(typeof(f)); fmt = fmt)
+    Display.print_field(io, "wraps", wraps; fmt = fmt, value_style = "")
+    Display.print_field(io, "converts", _rhs_conversion_label(f); last = true, fmt = fmt, value_style = "")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", f::AbstractHamRHS)

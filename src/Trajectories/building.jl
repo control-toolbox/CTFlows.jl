@@ -21,13 +21,14 @@ This uses compile-time dispatch on the initial state type to avoid runtime type 
 # Returns
 - `Number`: The unwrapped scalar final state.
 
-See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTBase.Traits.EndPointMode`](@ref), [`CTBase.Traits.StateDynamics`](@ref).
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTBase.Traits.EndPointMode`](@extref), [`CTBase.Traits.StateDynamics`](@extref).
 """
 function build_trajectory(
     ::Type{Traits.EndPointMode},
     ::Type{Traits.StateDynamics},
     config::Configs.AbstractConfig,
-    result::Integrators.AbstractIntegrationResult, 
+    result::Integrators.AbstractIntegrationResult,
+    variable = Core.NotProvided,
 )
     return Core.make_coerce(Configs.initial_state(config))(Integrators.final_state(result))
 end
@@ -47,15 +48,16 @@ in a `VectorFieldTrajectory` for future extensibility.
 # Returns
 - `VectorFieldTrajectory`: The wrapped integration result.
 
-See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTBase.Traits.TrajectoryMode`](), [`CTBase.Traits.StateDynamics`]().
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTBase.Traits.TrajectoryMode`](@extref), [`CTBase.Traits.StateDynamics`](@extref).
 """
 function build_trajectory(
     ::Type{Traits.TrajectoryMode},
     ::Type{Traits.StateDynamics},
     config::Configs.AbstractConfig,
-    result::Integrators.AbstractIntegrationResult, 
+    result::Integrators.AbstractIntegrationResult,
+    variable = Core.NotProvided,
 )
-    return VectorFieldTrajectory(result)
+    return VectorFieldTrajectory(result, variable)
 end
 
 # =============================================================================
@@ -115,13 +117,14 @@ type of the initial state to handle scalar, vector, and matrix cases.
   - `Tuple{AbstractVector, AbstractVector}` for vector inputs
   - `Tuple{AbstractMatrix, AbstractMatrix}` for matrix inputs
 
-See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTBase.Traits.EndPointMode`](@ref), [`CTBase.Traits.HamiltonianDynamics`]().
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTBase.Traits.EndPointMode`](@extref), [`CTBase.Traits.HamiltonianDynamics`](@extref).
 """
 function build_trajectory(
     ::Type{Traits.EndPointMode},
     ::Type{Traits.HamiltonianDynamics},
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
+    variable = Core.NotProvided,
     )
     u = Integrators.final_state(result)
     x0 = Configs.initial_state(config)
@@ -145,16 +148,17 @@ Wraps the integration result in a `HamiltonianVectorFieldTrajectory` for future 
 # Returns
 - `HamiltonianVectorFieldTrajectory`: The wrapped integration result.
 
-See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTBase.Traits.TrajectoryMode`](), [`CTBase.Traits.HamiltonianDynamics`]().
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTBase.Traits.TrajectoryMode`](@extref), [`CTBase.Traits.HamiltonianDynamics`](@extref).
 """
 function build_trajectory(
     ::Type{Traits.TrajectoryMode},
     ::Type{Traits.HamiltonianDynamics},
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
+    variable = Core.NotProvided,
     )
     x0 = Configs.initial_state(config)
-    return HamiltonianVectorFieldTrajectory(x0, result)
+    return HamiltonianVectorFieldTrajectory(x0, result, variable)
 end
 
 # =============================================================================
@@ -183,13 +187,14 @@ splits using only the state dimension `n = length(initial_state)`.
 - Uses `_aug_split_solution` helper to split the augmented final state.
 - Assumes `n_p = n_x` invariant for Hamiltonian systems.
 
-See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTBase.Traits.EndPointMode`](@ref), [`CTBase.Traits.AugmentedHamiltonianDynamics`]().
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTBase.Traits.EndPointMode`](@extref), [`CTBase.Traits.AugmentedHamiltonianDynamics`](@extref).
 """
 function build_trajectory(
     ::Type{Traits.EndPointMode},
     ::Type{Traits.AugmentedHamiltonianDynamics},
     config::Configs.AbstractConfig,
     result::Integrators.AbstractIntegrationResult,
+    variable = Core.NotProvided,
 )
     return _aug_split_solution(Integrators.final_state(result), Configs.initial_state(config), Configs.initial_variable_costate(config))
 end

@@ -37,7 +37,7 @@ HamiltonianSystem
   backend: AutoForwardDiff()
 ```
 
-See also: [`CTBase.Data.Hamiltonian`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), [`CTBase.Traits.AbstractADTrait`](@ref), [`CTFlows.Systems.build_rhs`](@ref), [`CTFlows.Systems.build_oop_rhs`](@ref).
+See also: [`CTBase.Data.Hamiltonian`](@extref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), [`CTBase.Traits.AbstractADTrait`](@extref), `build_rhs`, `build_oop_rhs`.
 """
 struct HamiltonianSystem{
     F<:Function,
@@ -199,11 +199,12 @@ Display a Hamiltonian system in a human-readable format.
 - Used by the REPL for interactive display.
 """
 function Base.show(io::IO, sys::HamiltonianSystem)
-    println(io, "HamiltonianSystem")
-    println(io, "  time_dependence: ", Traits.time_dependence(sys))
-    println(io, "  variable_dependence: ", Traits.variable_dependence(sys))
-    println(io, "  hamiltonian: ", sys.h)
-    println(io, "  backend: ", sys.backend)
+    fmt = Display.format_codes(io)
+    Display.print_header(io, "HamiltonianSystem"; fmt = fmt)
+    Display.print_field(io, "time_dependence", nameof(Traits.time_dependence(sys)); fmt = fmt, value_style = fmt.type)
+    Display.print_field(io, "variable_dependence", nameof(Traits.variable_dependence(sys)); fmt = fmt, value_style = fmt.type)
+    Display.print_field(io, "", sys.h; fmt = fmt, value_style = "")
+    Display.print_field(io, "backend", sys.backend; last = true, fmt = fmt, value_style = "")
 end
 
 # =============================================================================
@@ -227,7 +228,7 @@ Return the variable costate capability trait of a variable-dependent Hamiltonian
 - This is because only variable-dependent systems have a variable `v` to differentiate against
 - This trait enables the `variable_costate=true` kwarg in Hamiltonian flow calls
 
-See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@ref), [`CTBase.Traits.SupportsVariableCostate`](@ref), [`CTBase.Traits.NoVariableCostate`](@ref).
+See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@extref), [`CTBase.Traits.SupportsVariableCostate`](@extref), [`CTBase.Traits.NoVariableCostate`](@extref).
 """
 function Traits.variable_costate_trait(
     ::HamiltonianSystem{F, TD, Traits.NonFixed, B}

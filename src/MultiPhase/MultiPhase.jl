@@ -19,6 +19,7 @@ import CTBase.Traits
 # Internal sibling-submodule imports
 # ==============================================================================
 
+import ..Display: Display
 import ..Configs: Configs
 import ..Systems: Systems
 import ..Integrators: Integrators

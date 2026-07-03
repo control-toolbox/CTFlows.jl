@@ -274,12 +274,14 @@ _rhs_conversion_label(::IPHVFOoPAugRHS) = "out-of-place HVF → in-place augment
 _rhs_conversion_label(::IPHVFIpAugRHS) = "in-place HVF → in-place augmented interface"
 
 function Base.show(io::IO, f::AbstractHVFRHS)
-    println(io, nameof(typeof(f)))
+    fmt = Display.format_codes(io)
     td = Traits.time_dependence(f.hvf)
     vd = Traits.variable_dependence(f.hvf)
     md = Traits.mutability(f.hvf)
-    println(io, "  wraps: HamiltonianVectorField: $(Data._td_label(td)), $(Data._vd_label(vd)), $(Data._md_label(md))")
-    print(io,   "  converts: ", _rhs_conversion_label(f))
+    wraps = "HamiltonianVectorField: $(Data._td_label(td)), $(Data._vd_label(vd)), $(Data._md_label(md))"
+    Display.print_header(io, nameof(typeof(f)); fmt = fmt)
+    Display.print_field(io, "wraps", wraps; fmt = fmt, value_style = "")
+    Display.print_field(io, "converts", _rhs_conversion_label(f); last = true, fmt = fmt, value_style = "")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", f::AbstractHVFRHS)

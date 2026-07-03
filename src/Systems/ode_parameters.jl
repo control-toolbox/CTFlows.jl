@@ -38,7 +38,7 @@ params_vector = ODEParameters([1.0, 2.0])
   before passing it to `ODEProblem`.
 - The RHS functor reads `variable(p)` to access the actual variable value.
 
-See also: [`CTBase.Traits.VariableDependence`](@ref), [`CTBase.Traits.Fixed`](@ref), [`CTBase.Traits.NonFixed`](@ref).
+See also: [`CTBase.Traits.VariableDependence`](@extref), [`CTBase.Traits.Fixed`](@extref), [`CTBase.Traits.NonFixed`](@extref).
 """
 struct ODEParameters{V}
     variable::V
@@ -77,7 +77,7 @@ julia> variable(params_nonfixed)
 0.5
 \`\`\`
 
-See also: [`CTFlows.Systems.ODEParameters`](@ref), [`CTBase.Traits.VariableDependence`](@ref).
+See also: [`CTFlows.Systems.ODEParameters`](@ref), [`CTBase.Traits.VariableDependence`](@extref).
 """
 function variable(p::ODEParameters)
     return p.variable

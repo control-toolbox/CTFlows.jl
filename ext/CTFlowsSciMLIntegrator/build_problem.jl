@@ -2,6 +2,19 @@
 # _check_dyn_config — compatibility guard between system dynamics and config type
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Compatibility guard between system dynamics and config type.
+
+Validates that the dynamics trait of the system matches the expected config type:
+- `StateDynamics` ↔ `AbstractConfig`
+- `HamiltonianDynamics` ↔ `AbstractHamiltonianConfig` or `AbstractAugmentedHamiltonianConfig`
+
+Throws `PreconditionError` if the pair is incompatible.
+
+See also: [`CTFlows.Configs.AbstractConfig`](@ref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref).
+"""
 _check_dyn_config(::Type{Traits.StateDynamics}, ::Configs.AbstractConfig) = nothing
 _check_dyn_config(::Type{Traits.HamiltonianDynamics}, ::Configs.AbstractHamiltonianConfig) = nothing
 _check_dyn_config(::Type{Traits.HamiltonianDynamics}, ::Configs.AbstractAugmentedHamiltonianConfig) = nothing

@@ -8,10 +8,11 @@ $(TYPEDSIGNATURES)
 Display the `StateEndPointConfig` in tree-style format.
 """
 function Base.show(io::IO, c::StateEndPointConfig)
-    println(io, "StateEndPointConfig")
-    println(io, "  t0: ", c.t0)
-    println(io, "  x0: ", c.x0)
-    print(io, "  tf: ", c.tf)
+    fmt = Display.format_codes(io)
+    Display.print_header(io, "StateEndPointConfig"; fmt = fmt)
+    Display.print_field(io, "t0", c.t0; fmt = fmt)
+    Display.print_field(io, "x0", c.x0; fmt = fmt)
+    Display.print_field(io, "tf", c.tf; last = true, fmt = fmt)
 end
 
 """
@@ -29,9 +30,10 @@ $(TYPEDSIGNATURES)
 Display the `StateTrajectoryConfig` in tree-style format.
 """
 function Base.show(io::IO, c::StateTrajectoryConfig)
-    println(io, "StateTrajectoryConfig")
-    println(io, "  tspan: ", c.tspan)
-    print(io, "  x0: ", c.x0)
+    fmt = Display.format_codes(io)
+    Display.print_header(io, "StateTrajectoryConfig"; fmt = fmt)
+    Display.print_field(io, "tspan", c.tspan; fmt = fmt)
+    Display.print_field(io, "x0", c.x0; last = true, fmt = fmt)
 end
 
 """
@@ -49,11 +51,12 @@ $(TYPEDSIGNATURES)
 Display the `HamiltonianEndPointConfig` in tree-style format.
 """
 function Base.show(io::IO, c::HamiltonianEndPointConfig)
-    println(io, "HamiltonianEndPointConfig")
-    println(io, "  t0: ", c.t0)
-    println(io, "  x0: ", c.x0)
-    println(io, "  p0: ", c.p0)
-    print(io, "  tf: ", c.tf)
+    fmt = Display.format_codes(io)
+    Display.print_header(io, "HamiltonianEndPointConfig"; fmt = fmt)
+    Display.print_field(io, "t0", c.t0; fmt = fmt)
+    Display.print_field(io, "x0", c.x0; fmt = fmt)
+    Display.print_field(io, "p0", c.p0; fmt = fmt)
+    Display.print_field(io, "tf", c.tf; last = true, fmt = fmt)
 end
 
 """
@@ -71,10 +74,11 @@ $(TYPEDSIGNATURES)
 Display the `HamiltonianTrajectoryConfig` in tree-style format.
 """
 function Base.show(io::IO, c::HamiltonianTrajectoryConfig)
-    println(io, "HamiltonianTrajectoryConfig")
-    println(io, "  tspan: ", c.tspan)
-    println(io, "  x0: ", c.x0)
-    print(io, "  p0: ", c.p0)
+    fmt = Display.format_codes(io)
+    Display.print_header(io, "HamiltonianTrajectoryConfig"; fmt = fmt)
+    Display.print_field(io, "tspan", c.tspan; fmt = fmt)
+    Display.print_field(io, "x0", c.x0; fmt = fmt)
+    Display.print_field(io, "p0", c.p0; last = true, fmt = fmt)
 end
 
 """
@@ -92,12 +96,13 @@ $(TYPEDSIGNATURES)
 Display the `AugmentedHamiltonianEndPointConfig` in tree-style format.
 """
 function Base.show(io::IO, c::AugmentedHamiltonianEndPointConfig)
-    println(io, "AugmentedHamiltonianEndPointConfig")
-    println(io, "  t0: ", c.t0)
-    println(io, "  x0: ", c.x0)
-    println(io, "  p0: ", c.p0)
-    println(io, "  pv0: ", c.pv0)
-    print(io, "  tf: ", c.tf)
+    fmt = Display.format_codes(io)
+    Display.print_header(io, "AugmentedHamiltonianEndPointConfig"; fmt = fmt)
+    Display.print_field(io, "t0", c.t0; fmt = fmt)
+    Display.print_field(io, "x0", c.x0; fmt = fmt)
+    Display.print_field(io, "p0", c.p0; fmt = fmt)
+    Display.print_field(io, "pv0", c.pv0; fmt = fmt)
+    Display.print_field(io, "tf", c.tf; last = true, fmt = fmt)
 end
 
 """

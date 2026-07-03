@@ -13,6 +13,30 @@
 # sp0 = s·p⁰ where p⁰=-1: sp0=-1 for :min, sp0=+1 for :max.
 # =============================================================================
 
+"""
+$(TYPEDEF)
+
+Internal callable representing the Hamiltonian of a control-free optimal control problem.
+
+Computes `H(t,x,p,v) = p·f(t,x,∅,v) + sp0·ℓ(t,x,∅,v)` where `sp0 = s·p⁰` with `p⁰=-1`
+(`sp0=-1` for `:min`, `sp0=+1` for `:max`). The time-dependence (`TD`) and
+variable-dependence (`VD`) traits are compile-time parameters so that dispatch
+selects the correct natural-arity call signature without runtime branches.
+
+# Type Parameters
+- `TD`: time-dependence trait (`Autonomous` or `NonAutonomous`).
+- `VD`: variable-dependence trait (`Fixed` or `NonFixed`).
+- `DF`: type of the in-place dynamics function.
+- `LF`: type of the Lagrange cost function (or `Nothing`).
+
+# Fields
+- `dynamics!::DF`: in-place dynamics `f!(r, t, x, u, v)` from the OCP.
+- `lagrange::LF`: Lagrange cost `ℓ(t, x, u, v)` or `nothing` if absent.
+- `sp0::Float64`: sign-weighted multiplier `s·p⁰`.
+- `n::Int`: state dimension.
+
+See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), `_ocp_H`, `_ocp_hamiltonian`.
+"""
 struct OCPHamiltonianFunction{TD, VD, DF, LF} <: Function
     dynamics!::DF
     lagrange::LF
@@ -24,10 +48,28 @@ end
 const _CTM_Auton    = CTModels.Components.Autonomous
 const _CTM_NonAuton = CTModels.Components.NonAutonomous
 
-# Rewrap a scalar to a 1-vector; leave arrays unchanged.
+"""
+Rewrap a scalar to a 1-vector; leave arrays unchanged.
+
+This ensures the always-in-place CTModels dynamics receives the array it expects,
+even when the state or costate is a scalar `Number` (which happens when `n_x=1`).
+
+See also: [`OCPHamiltonianFunction`](@ref), `_ocp_H`.
+"""
 _asvec(z::Number)         = [z]
 _asvec(z::AbstractVector) = z
 
+"""
+$(TYPEDSIGNATURES)
+
+Core computation of the OCP Hamiltonian value `H(t,x,p,v)`.
+
+Rewraps scalar `x` and `p` to 1-vectors via `_asvec`, calls the in-place dynamics,
+and accumulates `p·f + sp0·ℓ`. When `v === nothing` the variable is treated as an
+empty vector (used by `Fixed`-trait call paths).
+
+See also: [`OCPHamiltonianFunction`](@ref), `_asvec`.
+"""
 function _ocp_H(h::OCPHamiltonianFunction, t, x, p, v)
     xv = _asvec(x)
     pv_arg = _asvec(p)
@@ -59,6 +101,19 @@ end
 # _ocp_hamiltonian — builds an OCPHamiltonianFunction wrapped in Data.Hamiltonian
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Build an `OCPHamiltonianFunction` from a control-free OCP and wrap it in a
+`Data.Hamiltonian`.
+
+Extracts the state dimension, dynamics, criterion sign, Lagrange cost, and
+time/variable-dependence traits from the OCP, then constructs a typed
+`OCPHamiltonianFunction` and wraps it so the downstream AD pipeline receives a
+uniform `(t, x, p, v)` interface.
+
+See also: [`OCPHamiltonianFunction`](@ref), [`CTFlows.Flows.OptimalControlFlow`](@ref), [`CTFlows.Flows.Flow`](@ref).
+"""
 function _ocp_hamiltonian(ocp)
     n    = CTModels.Models.state_dimension(ocp)
     dyn! = CTModels.Models.dynamics(ocp)
@@ -148,10 +203,30 @@ end
 # Solution helpers
 # =============================================================================
 
+"""
+Convert a variable argument into a `Vector{Float64}`.
+
+Returns an empty vector when the variable was not provided (`Core.NotProvided`),
+a 1-element vector for scalars, and a copy for vectors.
+
+See also: `_build_ocp_solution`, `_ocp_objective`.
+"""
 _variable_vector(::Core.NotProvidedType)  = Float64[]
 _variable_vector(v::Number)             = [Float64(v)]
 _variable_vector(v::AbstractVector)     = Float64.(v)
 
+"""
+$(TYPEDSIGNATURES)
+
+Compute the objective value (Mayer + Lagrange) of a control-free OCP along a
+trajectory.
+
+The Mayer term is evaluated at the endpoints `x(t0)` and `x(tf)`. The Lagrange
+term is integrated by building a temporary scalar vector field `ℓ̇(t) = ℓ(t, x(t), ∅, v)`
+and flowing it from `t0` to `tf` using the provided integrator.
+
+See also: `_build_ocp_solution`, `_variable_vector`, [`CTFlows.Flows.Flow`](@ref).
+"""
 function _ocp_objective(ocp, x, v, t0, tf, integ)
     obj = 0.0
     if CTModels.Components.has_mayer_cost(ocp)
@@ -174,6 +249,17 @@ function _ocp_objective(ocp, x, v, t0, tf, integ)
     return obj
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Build a `CTModels.Solution` from a `HamiltonianVectorFieldTrajectory`.
+
+Extracts the time grid, state/costate projections, and variable vector from the
+trajectory, computes the objective via `_ocp_objective`, and assembles a full
+`CTModels.Solution` with empty control (control-free OCP).
+
+See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), `_ocp_objective`, `_variable_vector`, [`CTModels.Solutions.Solution`](@extref).
+"""
 function _build_ocp_solution(
     ocp,
     sol::Trajectories.HamiltonianVectorFieldTrajectory,

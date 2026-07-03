@@ -19,6 +19,8 @@ semantic accessors for time grids and state functions.
 
 # Fields
 - `result`: The integration result object (subtype of `AbstractIntegrationResult`).
+- `variable`: The variable value threaded through the flow call, or `Core.NotProvided`
+  when the flow carries no variable.
 
 # Accessors
 - `times(sol)`: Get the time grid (alias: `time_grid(sol)`)
@@ -37,9 +39,30 @@ x(0.5)                    # evaluate at t = 0.5
 
 See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.AbstractVectorFieldTrajectory`](@ref).
 """
-struct VectorFieldTrajectory{R<:Integrators.AbstractIntegrationResult} <: AbstractVectorFieldTrajectory
+struct VectorFieldTrajectory{R<:Integrators.AbstractIntegrationResult, V} <: AbstractVectorFieldTrajectory
     result::R
+    variable::V
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Construct a `VectorFieldTrajectory` with no variable (`Core.NotProvided`).
+"""
+VectorFieldTrajectory(result::Integrators.AbstractIntegrationResult) =
+    VectorFieldTrajectory(result, Core.NotProvided)
+
+# =============================================================================
+# Internal helper for display
+# =============================================================================
+
+"""
+    _show_variable(v) -> Bool
+
+Return `true` when the trajectory variable `v` is worth displaying, i.e. it is neither the
+`Core.NotProvided` sentinel nor `nothing` (the value `Fixed` flows thread through).
+"""
+_show_variable(v) = !(v isa Core.NotProvidedType) && v !== nothing
 
 # =============================================================================
 # Semantic Accessors and Delegation
@@ -199,9 +222,9 @@ function Integrators.merge(segments::AbstractVector{<:VectorFieldTrajectory})
     
     # Merge the internal results
     merged_result = Integrators.merge(internal_results)
-    
-    # Wrap in VectorFieldTrajectory
-    return VectorFieldTrajectory(merged_result)
+
+    # Wrap in VectorFieldTrajectory, preserving the first segment's variable
+    return VectorFieldTrajectory(merged_result, segments[1].variable)
 end
 
 # =============================================================================
@@ -248,17 +271,25 @@ Display the `VectorFieldTrajectory` in a readable text/plain format.
 - `sol::VectorFieldTrajectory`: The solution to display.
 """
 function Base.show(io::IO, ::MIME"text/plain", sol::VectorFieldTrajectory)
-    print(io, "VectorFieldTrajectory")
-    print(io, "\n  result: ", nameof(typeof(sol.result)))
-    
+    fmt = Display.format_codes(io)
+    Display.print_header(io, "VectorFieldTrajectory"; fmt = fmt)
+    fields = Any[("result", nameof(typeof(sol.result)), "")]
     try
-        ts = times(sol)
+        ts = Integrators.times(sol)
         if !isempty(ts)
-            print(io, "\n  time span: (", first(ts), ", ", last(ts), ")")
-            print(io, "\n  time points: ", length(ts))
+            push!(fields, ("tspan", (first(ts), last(ts)), fmt.value))
+            push!(fields, ("time points", length(ts), fmt.count))
         end
     catch
     end
+    try
+        push!(fields, ("final state", Integrators.final_state(sol), fmt.value))
+    catch
+    end
+    if _show_variable(sol.variable)
+        push!(fields, ("variable", sol.variable, fmt.value))
+    end
+    Display.print_fields(io, fields; fmt = fmt)
 end
 
 """
@@ -271,19 +302,24 @@ Display the `VectorFieldTrajectory` in a compact one-line format.
 - `sol::VectorFieldTrajectory`: The solution to display.
 """
 function Base.show(io::IO, sol::VectorFieldTrajectory)
-    print(io, "VectorFieldTrajectory(")
+    fmt = Display.format_codes(io)
+    print(io, fmt.name, "VectorFieldTrajectory", fmt.reset, "(")
     parts = String[]
     push!(parts, "result=$(nameof(typeof(sol.result)))")
-    
+
     try
-        ts = times(sol)
+        ts = Integrators.times(sol)
         if !isempty(ts)
             push!(parts, "tspan=($(first(ts)), $(last(ts)))")
             push!(parts, "n=$(length(ts))")
         end
     catch
     end
-    
+
+    if _show_variable(sol.variable)
+        push!(parts, "variable=$(sol.variable)")
+    end
+
     print(io, join(parts, ", "))
     print(io, ")")
 end

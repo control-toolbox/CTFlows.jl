@@ -88,7 +88,7 @@ Indicate that `AbstractFlow` has the time-dependence trait.
 # Returns
 - `Bool`: Always `true` for `AbstractFlow`.
 
-See also: `TimeDependence`, [`CTBase.Traits.time_dependence`](@ref).
+See also: `TimeDependence`, [`CTBase.Traits.time_dependence`](@extref).
 """
 Traits.has_time_dependence_trait(::AbstractFlow) = true
 
@@ -100,7 +100,7 @@ Indicate that `AbstractFlow` has the variable-dependence trait.
 # Returns
 - `Bool`: Always `true` for `AbstractFlow`.
 
-See also: [`CTBase.Traits.VariableDependence`](@ref), [`CTBase.Traits.variable_dependence`](@ref).
+See also: [`CTBase.Traits.VariableDependence`](@extref), [`CTBase.Traits.variable_dependence`](@extref).
 """
 Traits.has_variable_dependence_trait(::AbstractFlow) = true
 
@@ -123,7 +123,7 @@ end
 Traits.time_dependence(MyFlow)  # Returns Autonomous
 \`\`\`
 
-See also: [`CTBase.Traits.has_time_dependence_trait`](@ref), `is_autonomous`, [`CTFlows.Flows.AbstractFlow`](@ref).
+See also: [`CTBase.Traits.has_time_dependence_trait`](@extref), `is_autonomous`, [`CTFlows.Flows.AbstractFlow`](@ref).
 """
 function Traits.time_dependence(::AbstractFlow{TD, <:Traits.VariableDependence, <:Traits.AbstractDynamicsTrait}) where {TD <: Traits.TimeDependence}
     return TD
@@ -148,7 +148,7 @@ end
 Traits.variable_dependence(MyFlow)  # Returns Fixed
 \`\`\`
 
-See also: [`CTBase.Traits.has_variable_dependence_trait`](@ref), `is_variable`, [`CTFlows.Flows.AbstractFlow`](@ref).
+See also: [`CTBase.Traits.has_variable_dependence_trait`](@extref), `is_variable`, [`CTFlows.Flows.AbstractFlow`](@ref).
 """
 function Traits.variable_dependence(::AbstractFlow{<:Traits.TimeDependence, VD, <:Traits.AbstractDynamicsTrait}) where {VD <: Traits.VariableDependence}
     return VD
@@ -162,7 +162,7 @@ Extract the dynamics trait from an `AbstractFlow`.
 # Returns
 - `Type{<:AbstractDynamicsTrait}`: `StateDynamics` or `HamiltonianDynamics`.
 
-See also: [`CTBase.Traits.AbstractDynamicsTrait`](@ref), [`CTFlows.Flows.AbstractStateFlow`](@ref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@ref).
+See also: [`CTBase.Traits.AbstractDynamicsTrait`](@extref), [`CTFlows.Flows.AbstractStateFlow`](@ref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@ref).
 """
 function Traits.dynamics_trait(::AbstractFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, D}) where {D <: Traits.AbstractDynamicsTrait}
     return D
@@ -181,7 +181,7 @@ Return the automatic differentiation capability trait of a flow.
 - Specialized implementation on `AbstractHamiltonianFlow` delegates to the system's trait
 - This trait is used for dispatch in cache preparation and augmented integration
 
-See also: [`CTBase.Traits.AbstractADTrait`](@ref), [`CTBase.Traits.WithAD`](@ref), [`CTBase.Traits.WithoutAD`](@ref).
+See also: [`CTBase.Traits.AbstractADTrait`](@extref), [`CTBase.Traits.WithAD`](@extref), [`CTBase.Traits.WithoutAD`](@extref).
 """
 Traits.ad_trait(::AbstractFlow) = Traits.WithoutAD
 
@@ -197,7 +197,7 @@ Return the automatic differentiation capability trait of a Hamiltonian flow.
 - Delegates to the system's AD trait via `ad_trait(system(flow))`
 - This enables dispatch based on whether the flow was built from a scalar Hamiltonian or a vector field
 
-See also: [`CTBase.Traits.AbstractADTrait`](@ref), [`CTBase.Traits.ad_trait`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
+See also: [`CTBase.Traits.AbstractADTrait`](@extref), [`CTBase.Traits.ad_trait`](@extref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
 """
 Traits.ad_trait(f::AbstractFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.HamiltonianDynamics}) = Traits.ad_trait(system(f))
 
@@ -215,7 +215,7 @@ Return the variable costate capability trait of a flow.
 - Specialized implementation on `AbstractHamiltonianFlow` delegates to the system's trait
 - This trait is used for dispatch in `_invoke_flow_variable_costate` to determine if augmented integration is possible
 
-See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@ref), [`CTBase.Traits.SupportsVariableCostate`](@ref), [`CTBase.Traits.NoVariableCostate`](@ref).
+See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@extref), [`CTBase.Traits.SupportsVariableCostate`](@extref), [`CTBase.Traits.NoVariableCostate`](@extref).
 """
 Traits.variable_costate_trait(::AbstractFlow) = Traits.NoVariableCostate
 
@@ -231,7 +231,7 @@ Return the variable costate capability trait of a Hamiltonian flow.
 - Delegates to the system's variable costate trait via `variable_costate_trait(system(flow))`
 - This enables dispatch based on whether the flow's system can compute ∂H/∂v
 
-See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@ref), [`CTBase.Traits.variable_costate_trait`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
+See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@extref), [`CTBase.Traits.variable_costate_trait`](@extref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
 """
 Traits.variable_costate_trait(f::AbstractFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.HamiltonianDynamics}) = Traits.variable_costate_trait(system(f))
 
@@ -290,21 +290,21 @@ StateFlow
 ```
 """
 function Base.show(io::IO, ::MIME"text/plain", flow::AbstractFlow)
+    fmt   = Display.format_codes(io)
     sys   = system(flow)
     integ = integrator(flow)
 
-    # "system:" and "integrator:" padded to the same width for column alignment
-    lbl_sys  = "  system:     "
-    lbl_int  = "  integrator: "
+    Display.print_header(io, nameof(typeof(flow)); fmt = fmt)
 
-    # Capture system display; indent continuation lines to sit under the first
-    sys_str = sprint(show, sys)
-    sys_display = _indent_continuation(sys_str, length(lbl_sys))
+    # Nest the system's own (styled, possibly multi-line) display under the `system` branch.
+    Display.print_field(io, "system", sys; fmt = fmt, value_style = "")
 
-    println(io, nameof(typeof(flow)))
-    println(io, lbl_sys, sys_display)
-    print(io,   lbl_int, nameof(typeof(integ)))
-    _print_user_options(io, integ)
+    # Integrator name followed by user-supplied options, nested under the last branch.
+    int_str = sprint(integ; context = IOContext(io, :color => get(io, :color, false))) do io2, i
+        print(io2, fmt.value, nameof(typeof(i)), fmt.reset)
+        _print_user_options(io2, i)
+    end
+    Display.print_field(io, "integrator", int_str; last = true, fmt = fmt, value_style = "")
 end
 
 """
@@ -321,9 +321,10 @@ Flow(system=FakeSystem(n_x=2, n_p=2), integrator=FakeIntegrator)
 ```
 """
 function Base.show(io::IO, flow::AbstractFlow)
+    fmt = Display.format_codes(io)
     sys = system(flow)
     integ = integrator(flow)
-    print(io, nameof(typeof(flow)), "(")
+    print(io, fmt.name, nameof(typeof(flow)), fmt.reset, "(")
     parts = String[]
     push!(parts, "system=$(sys)")
     push!(parts, "integrator=$(nameof(typeof(integ)))")
@@ -334,29 +335,6 @@ end
 # =============================================================================
 # Internal helpers for show
 # =============================================================================
-
-"""
-    _indent_continuation(s::String, n::Int) -> String
-
-Indent every line of a multiline string by `n` spaces, except the first line.
-
-# Arguments
-- `s::String`: The multiline string to indent.
-- `n::Int`: Number of spaces to indent continuation lines.
-
-# Returns
-- `String`: The indented string.
-
-# Example
-\`\`\`julia
-_indent_continuation("line1\\nline2\\nline3", 4)  # Returns "line1\\n    line2\\n    line3"
-\`\`\`
-"""
-function _indent_continuation(s::String, n::Int)
-    pad   = " " ^ n
-    lines = split(s, "\n")
-    return join((i == 1 ? l : pad * l for (i, l) in enumerate(lines)), "\n")
-end
 
 """
     _print_user_options(io::IO, integ::Integrators.AbstractIntegrator)

@@ -21,6 +21,7 @@ import CTBase.Core
 import CommonSolve: CommonSolve
 
 using CTFlows: CTFlows
+using CTFlows.Display: Display
 using CTFlows.Configs: Configs
 using CTBase.Traits: Traits
 using CTFlows.Systems: Systems

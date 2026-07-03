@@ -31,7 +31,7 @@ VectorFieldSystem
   vector_field: VectorField{var"#1", Autonomous, Fixed, OutOfPlace}
 \`\`\`
 
-See also: [`CTBase.Data.VectorField`](@ref), `TimeDependence`, [`CTBase.Traits.VariableDependence`](@ref), [`CTFlows.Systems.ODEParameters`](@ref).
+See also: [`CTBase.Data.VectorField`](@extref), `TimeDependence`, [`CTBase.Traits.VariableDependence`](@extref), [`CTFlows.Systems.ODEParameters`](@ref).
 """
 struct VectorFieldSystem{F<:Function, TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, MD<:Traits.AbstractMutabilityTrait, RHS<:AbstractIPRHS, OOPROHS<:AbstractOoPRHS, FINRHS} <: AbstractStateSystem{TD, VD}
     vf::Data.VectorField{F, TD, VD, MD}
@@ -138,7 +138,7 @@ Eager implementation: ignores the config and returns the pre-computed closure.
 # Returns
 - `Function`: The pre-computed in-place closure with signature `(du, u, p, t) -> nothing`.
 
-See also: [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Systems.rhs`](@ref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref), `rhs`.
 """
 function get_ip_rhs(sys::VectorFieldSystem, _)
     return sys.rhs
@@ -209,10 +209,12 @@ Shows the type name and the wrapped VectorField with its traits.
 See also: [`CTFlows.Systems.VectorFieldSystem`](@ref).
 """
 function Base.show(io::IO, sys::VectorFieldSystem{F, TD, VD, MD, RHS, OOPROHS, FINRHS}) where {F, TD, VD, MD, RHS, OOPROHS, FINRHS}
-    println(io, "VectorFieldSystem")
+    fmt = Display.format_codes(io)
     wraps = "VectorField: $(Data._td_label(TD)), $(Data._vd_label(VD)), $(Data._md_label(MD))"
-    println(io, "  wraps: ", wraps)
-    print(io, "  rhs:   ", nameof(typeof(sys.rhs)), " (", _rhs_conversion_label(sys.rhs), ")")
+    rhs = "$(nameof(typeof(sys.rhs))) ($(_rhs_conversion_label(sys.rhs)))"
+    Display.print_header(io, "VectorFieldSystem"; fmt = fmt)
+    Display.print_field(io, "wraps", wraps; fmt = fmt, value_style = "")
+    Display.print_field(io, "rhs", rhs; last = true, fmt = fmt, value_style = "")
 end
 
 """

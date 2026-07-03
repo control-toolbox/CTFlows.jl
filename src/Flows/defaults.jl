@@ -3,10 +3,10 @@ $(TYPEDSIGNATURES)
 
 Default value for variable parameter in user-facing API calls.
 
-Returns [`CTBase.Core.NotProvided`](@ref) by default, meaning the variable parameter
+Returns `CTBase.Core.NotProvided` by default, meaning the variable parameter
 is optional unless required by the system's trait (e.g., NonFixed systems).
 
-See also: [`CTBase.Traits.VariableDependence`](@ref), [`CTBase.Traits.Fixed`](@ref), [`CTBase.Traits.NonFixed`](@ref).
+See also: [`CTBase.Traits.VariableDependence`](@extref), [`CTBase.Traits.Fixed`](@extref), [`CTBase.Traits.NonFixed`](@extref).
 """
 __variable()::Core.NotProvidedType = Core.NotProvided
 

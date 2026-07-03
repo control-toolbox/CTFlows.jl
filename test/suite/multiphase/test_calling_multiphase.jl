@@ -148,17 +148,17 @@ function Integrators.evaluate_at(result::MockIntegrationResult, t::Real)
     end
 end
 
-function Trajectories.build_trajectory(::Type{Traits.EndPointMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
+function Trajectories.build_trajectory(::Type{Traits.EndPointMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult, variable=nothing)
     # For StateEndPointConfig, return the final state directly (as expected by _evaluate_phase)
     return result.u
 end
 
-function Trajectories.build_trajectory(::Type{Traits.TrajectoryMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
+function Trajectories.build_trajectory(::Type{Traits.TrajectoryMode}, ::Type{Traits.StateDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult, variable=nothing)
     # For StateTrajectoryConfig with StateFlow, return the full result
     return result
 end
 
-function Trajectories.build_trajectory(::Type{Traits.EndPointMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
+function Trajectories.build_trajectory(::Type{Traits.EndPointMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult, variable=nothing)
     # For HamiltonianFlow, return a tuple (x, p) matching _ham_split_solution behavior
     x_len = length(result.u) ÷ 2
     x_part = result.u[1:x_len]
@@ -166,7 +166,7 @@ function Trajectories.build_trajectory(::Type{Traits.EndPointMode}, ::Type{Trait
     return (x_part, p_part)
 end
 
-function Trajectories.build_trajectory(::Type{Traits.TrajectoryMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult)
+function Trajectories.build_trajectory(::Type{Traits.TrajectoryMode}, ::Type{Traits.HamiltonianDynamics}, config::Configs.AbstractConfig, result::MockIntegrationResult, variable=nothing)
     # For HamiltonianTrajectoryConfig, return the full result
     return result
 end
