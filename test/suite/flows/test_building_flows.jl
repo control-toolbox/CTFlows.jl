@@ -1,6 +1,6 @@
 module TestBuildingFlows
 
-import Test
+using Test: Test
 using OrdinaryDiffEqTsit5
 import CTBase.Data
 import CTFlows.Flows
@@ -50,31 +50,37 @@ function test_building_flows()
             Test.@testset "Autonomous Fixed" begin
                 vf = Data.VectorField(x -> x; is_autonomous=true, is_variable=false)
                 flow = Flows.Flow(vf)
-                
+
                 Test.@test Traits.time_dependence(flow) === Traits.Autonomous
                 Test.@test Traits.variable_dependence(flow) === Traits.Fixed
             end
 
             Test.@testset "NonAutonomous Fixed" begin
-                vf = Data.VectorField((t, x) -> t .* x; is_autonomous=false, is_variable=false)
+                vf = Data.VectorField(
+                    (t, x) -> t .* x; is_autonomous=false, is_variable=false
+                )
                 flow = Flows.Flow(vf)
-                
+
                 Test.@test Traits.time_dependence(flow) === Traits.NonAutonomous
                 Test.@test Traits.variable_dependence(flow) === Traits.Fixed
             end
 
             Test.@testset "Autonomous NonFixed" begin
-                vf = Data.VectorField((x, v) -> x .+ v; is_autonomous=true, is_variable=true)
+                vf = Data.VectorField(
+                    (x, v) -> x .+ v; is_autonomous=true, is_variable=true
+                )
                 flow = Flows.Flow(vf)
-                
+
                 Test.@test Traits.time_dependence(flow) === Traits.Autonomous
                 Test.@test Traits.variable_dependence(flow) === Traits.NonFixed
             end
 
             Test.@testset "NonAutonomous NonFixed" begin
-                vf = Data.VectorField((t, x, v) -> t .* x .+ v; is_autonomous=false, is_variable=true)
+                vf = Data.VectorField(
+                    (t, x, v) -> t .* x .+ v; is_autonomous=false, is_variable=true
+                )
                 flow = Flows.Flow(vf)
-                
+
                 Test.@test Traits.time_dependence(flow) === Traits.NonAutonomous
                 Test.@test Traits.variable_dependence(flow) === Traits.NonFixed
             end
@@ -87,12 +93,12 @@ function test_building_flows()
         Test.@testset "System and Integrator access" begin
             vf = Data.VectorField(x -> 2 .* x; is_autonomous=true, is_variable=false)
             flow = Flows.Flow(vf)
-            
+
             Test.@testset "system accessor returns correct system" begin
                 sys = Flows.system(flow)
                 Test.@test sys isa Systems.VectorFieldSystem
             end
-            
+
             Test.@testset "integrator accessor returns correct integrator" begin
                 integ = Flows.integrator(flow)
                 Test.@test integ isa Integrators.AbstractIntegrator
@@ -106,19 +112,21 @@ function test_building_flows()
         Test.@testset "Integration with build_system" begin
             Test.@testset "build_system is called internally" begin
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
-                
+
                 # Build system directly
                 sys_direct = Systems.build_system(vf)
-                
+
                 # Build flow which should use build_system internally
                 flow = Flows.Flow(vf)
                 sys_from_flow = Flows.system(flow)
-                
+
                 # Both should be VectorFieldSystem with same traits
                 Test.@test sys_direct isa Systems.VectorFieldSystem
                 Test.@test sys_from_flow isa Systems.VectorFieldSystem
-                Test.@test Traits.time_dependence(sys_direct) === Traits.time_dependence(sys_from_flow)
-                Test.@test Traits.variable_dependence(sys_direct) === Traits.variable_dependence(sys_from_flow)
+                Test.@test Traits.time_dependence(sys_direct) ===
+                    Traits.time_dependence(sys_from_flow)
+                Test.@test Traits.variable_dependence(sys_direct) ===
+                    Traits.variable_dependence(sys_from_flow)
             end
         end
 
@@ -128,7 +136,9 @@ function test_building_flows()
 
         Test.@testset "HamiltonianFlow constructor from HamiltonianVectorField" begin
             Test.@testset "default constructor" begin
-                hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+                hvf = Data.HamiltonianVectorField(
+                    (x, p) -> (x, -p); is_autonomous=true, is_variable=false
+                )
                 flow = Flows.Flow(hvf)
 
                 Test.@test flow isa Flows.HamiltonianFlow
@@ -138,7 +148,9 @@ function test_building_flows()
             end
 
             Test.@testset "with keyword options" begin
-                hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+                hvf = Data.HamiltonianVectorField(
+                    (x, p) -> (x, -p); is_autonomous=true, is_variable=false
+                )
                 flow = Flows.Flow(hvf; reltol=1e-10)
 
                 Test.@test flow isa Flows.HamiltonianFlow

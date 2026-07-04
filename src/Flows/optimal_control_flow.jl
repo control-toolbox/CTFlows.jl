@@ -37,7 +37,7 @@ selects the correct natural-arity call signature without runtime branches.
 
 See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), `_ocp_H`, `_ocp_hamiltonian`.
 """
-struct OCPHamiltonianFunction{TD, VD, DF, LF} <: Function
+struct OCPHamiltonianFunction{TD,VD,DF,LF} <: Function
     dynamics!::DF
     lagrange::LF
     sp0::Float64
@@ -45,7 +45,7 @@ struct OCPHamiltonianFunction{TD, VD, DF, LF} <: Function
 end
 
 # Aliases to keep method signatures concise
-const _CTM_Auton    = CTModels.Components.Autonomous
+const _CTM_Auton = CTModels.Components.Autonomous
 const _CTM_NonAuton = CTModels.Components.NonAutonomous
 
 """
@@ -56,7 +56,7 @@ even when the state or costate is a scalar `Number` (which happens when `n_x=1`)
 
 See also: [`OCPHamiltonianFunction`](@ref), `_ocp_H`.
 """
-_asvec(z::Number)         = [z]
+_asvec(z::Number) = [z]
 _asvec(z::AbstractVector) = z
 
 """
@@ -74,17 +74,17 @@ function _ocp_H(h::OCPHamiltonianFunction, t, x, p, v)
     xv = _asvec(x)
     pv_arg = _asvec(p)
     if v === nothing
-        T  = eltype(xv)
-        u  = Vector{T}(undef, 0)
-        r  = Vector{T}(undef, h.n)
+        T = eltype(xv)
+        u = Vector{T}(undef, 0)
+        r = Vector{T}(undef, h.n)
         h.dynamics!(r, t, xv, u, u)
         val = sum(pv_arg .* r)
         h.lagrange === nothing || (val += h.sp0 * h.lagrange(t, xv, u, u))
     else
         vv = _asvec(v)
-        T  = Base.promote_op(*, eltype(xv), eltype(vv))
-        u  = Vector{T}(undef, 0)
-        r  = Vector{T}(undef, h.n)
+        T = Base.promote_op(*, eltype(xv), eltype(vv))
+        u = Vector{T}(undef, 0)
+        r = Vector{T}(undef, h.n)
         h.dynamics!(r, t, xv, u, vv)
         val = sum(pv_arg .* r)
         h.lagrange === nothing || (val += h.sp0 * h.lagrange(t, xv, u, vv))
@@ -92,10 +92,24 @@ function _ocp_H(h::OCPHamiltonianFunction, t, x, p, v)
     return val
 end
 
-(h::OCPHamiltonianFunction{_CTM_Auton,    Traits.Fixed,    DF, LF})(x, p)       where {DF, LF} = _ocp_H(h, 0.0, x, p, nothing)
-(h::OCPHamiltonianFunction{_CTM_NonAuton, Traits.Fixed,    DF, LF})(t, x, p)    where {DF, LF} = _ocp_H(h, t,   x, p, nothing)
-(h::OCPHamiltonianFunction{_CTM_Auton,    Traits.NonFixed, DF, LF})(x, p, v)    where {DF, LF} = _ocp_H(h, 0.0, x, p, v)
-(h::OCPHamiltonianFunction{_CTM_NonAuton, Traits.NonFixed, DF, LF})(t, x, p, v) where {DF, LF} = _ocp_H(h, t,   x, p, v)
+function (h::OCPHamiltonianFunction{_CTM_Auton,Traits.Fixed,DF,LF})(x, p) where {DF,LF}
+    return _ocp_H(h, 0.0, x, p, nothing)
+end
+function (h::OCPHamiltonianFunction{_CTM_NonAuton,Traits.Fixed,DF,LF})(
+    t, x, p
+) where {DF,LF}
+    return _ocp_H(h, t, x, p, nothing)
+end
+function (h::OCPHamiltonianFunction{_CTM_Auton,Traits.NonFixed,DF,LF})(
+    x, p, v
+) where {DF,LF}
+    return _ocp_H(h, 0.0, x, p, v)
+end
+function (h::OCPHamiltonianFunction{_CTM_NonAuton,Traits.NonFixed,DF,LF})(
+    t, x, p, v
+) where {DF,LF}
+    return _ocp_H(h, t, x, p, v)
+end
 
 # =============================================================================
 # _ocp_hamiltonian — builds an OCPHamiltonianFunction wrapped in Data.Hamiltonian
@@ -115,14 +129,17 @@ uniform `(t, x, p, v)` interface.
 See also: [`OCPHamiltonianFunction`](@ref), [`CTFlows.Flows.OptimalControlFlow`](@ref), [`CTFlows.Flows.Flow`](@ref).
 """
 function _ocp_hamiltonian(ocp)
-    n    = CTModels.Models.state_dimension(ocp)
+    n = CTModels.Models.state_dimension(ocp)
     dyn! = CTModels.Models.dynamics(ocp)
-    sp0  = CTModels.Components.criterion(ocp) === :min ? -1.0 : 1.0   # s*p⁰, p⁰=-1
-    lag  = CTModels.Components.has_lagrange_cost(ocp) ?
-               CTModels.Components.lagrange(ocp) : nothing
-    TD   = Traits.time_dependence(ocp)       # Traits.Autonomous or NonAutonomous
-    VD   = Traits.variable_dependence(ocp)   # Traits.Fixed or Traits.NonFixed
-    h_raw = OCPHamiltonianFunction{TD, VD, typeof(dyn!), typeof(lag)}(dyn!, lag, sp0, n)
+    sp0 = CTModels.Components.criterion(ocp) === :min ? -1.0 : 1.0   # s*p⁰, p⁰=-1
+    lag = if CTModels.Components.has_lagrange_cost(ocp)
+        CTModels.Components.lagrange(ocp)
+    else
+        nothing
+    end
+    TD = Traits.time_dependence(ocp)       # Traits.Autonomous or NonAutonomous
+    VD = Traits.variable_dependence(ocp)   # Traits.Fixed or Traits.NonFixed
+    h_raw = OCPHamiltonianFunction{TD,VD,typeof(dyn!),typeof(lag)}(dyn!, lag, sp0, n)
     return Data.Hamiltonian(h_raw, TD, VD)   # typed ctor → uniform (t,x,p,v) interface for AD
 end
 
@@ -157,33 +174,29 @@ rebuilds a full [`CTModels.Solutions.Solution`](@extref) from the problem.
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTModels.Solutions.Solution`](@extref).
 """
-struct OptimalControlFlow{
-    TD <: Traits.TimeDependence,
-    VD <: Traits.VariableDependence,
-    IF,
-    M,
-} <: AbstractFlow{TD, VD, Traits.HamiltonianDynamics}
+struct OptimalControlFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,IF,M} <:
+       AbstractFlow{TD,VD,Traits.HamiltonianDynamics}
     flow::IF    # inner HamiltonianFlow
     ocp::M
 end
 
-function OptimalControlFlow(
-    flow::Flow{TD, VD, Traits.HamiltonianDynamics},
-    ocp,
-) where {TD, VD}
-    return OptimalControlFlow{TD, VD, typeof(flow), typeof(ocp)}(flow, ocp)
+function OptimalControlFlow(flow::Flow{TD,VD,Traits.HamiltonianDynamics}, ocp) where {TD,VD}
+    return OptimalControlFlow{TD,VD,typeof(flow),typeof(ocp)}(flow, ocp)
 end
 
-system(F::OptimalControlFlow)     = system(F.flow)
+system(F::OptimalControlFlow) = system(F.flow)
 integrator(F::OptimalControlFlow) = integrator(F.flow)
 
 # ── point eval — pure delegation ────────────────────────────────────────────
 
 function (F::OptimalControlFlow)(
-    t0::Real, x0, p0, tf::Real;
-    variable          = Core.NotProvided,
-    variable_costate::Bool = false,
-    unsafe::Bool           = false,
+    t0::Real,
+    x0,
+    p0,
+    tf::Real;
+    variable=Core.NotProvided,
+    variable_costate::Bool=false,
+    unsafe::Bool=false,
 )
     return F.flow(t0, x0, p0, tf; variable, variable_costate, unsafe)
 end
@@ -191,9 +204,7 @@ end
 # ── trajectory call — builds a CTModels.Solution ────────────────────────────
 
 function (F::OptimalControlFlow)(
-    tspan::Tuple{<:Real, <:Real}, x0, p0;
-    variable = Core.NotProvided,
-    unsafe::Bool = false,
+    tspan::Tuple{<:Real,<:Real}, x0, p0; variable=Core.NotProvided, unsafe::Bool=false
 )
     sol = F.flow(tspan, x0, p0; variable, unsafe)   # HamiltonianVectorFieldTrajectory
     return _build_ocp_solution(F.ocp, sol, variable, integrator(F.flow))
@@ -211,9 +222,9 @@ a 1-element vector for scalars, and a copy for vectors.
 
 See also: `_build_ocp_solution`, `_ocp_objective`.
 """
-_variable_vector(::Core.NotProvidedType)  = Float64[]
-_variable_vector(v::Number)             = [Float64(v)]
-_variable_vector(v::AbstractVector)     = Float64.(v)
+_variable_vector(::Core.NotProvidedType) = Float64[]
+_variable_vector(v::Number) = [Float64(v)]
+_variable_vector(v::AbstractVector) = Float64.(v)
 
 """
 $(TYPEDSIGNATURES)
@@ -234,17 +245,16 @@ function _ocp_objective(ocp, x, v, t0, tf, integ)
         obj += may(x(t0), x(tf), v)
     end
     if CTModels.Components.has_lagrange_cost(ocp)
-        lag      = CTModels.Components.lagrange(ocp)
-        u_empty  = Float64[]
+        lag = CTModels.Components.lagrange(ocp)
+        u_empty = Float64[]
         # Integrate ℓ̇(t) = lag(t, x(t), ∅, v) from t0 to tf.
         # Use a 1-element Vector so SciML always has a mutable in-place buffer.
-        running  = Data.VectorField(
-            (t, ℓ_vec) -> [lag(t, x(t), u_empty, v)];
-            is_autonomous = false, is_variable = false,
+        running = Data.VectorField(
+            (t, ℓ_vec) -> [lag(t, x(t), u_empty, v)]; is_autonomous=false, is_variable=false
         )
         cost_flow = build_flow(Systems.build_system(running), integ)
-        ℓ_tf      = cost_flow(t0, [0.0], tf)   # returns [ℓ(tf)]
-        obj      += ℓ_tf[1]
+        ℓ_tf = cost_flow(t0, [0.0], tf)   # returns [ℓ(tf)]
+        obj += ℓ_tf[1]
     end
     return obj
 end
@@ -261,26 +271,28 @@ trajectory, computes the objective via `_ocp_objective`, and assembles a full
 See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), `_ocp_objective`, `_variable_vector`, [`CTModels.Solutions.Solution`](@extref).
 """
 function _build_ocp_solution(
-    ocp,
-    sol::Trajectories.HamiltonianVectorFieldTrajectory,
-    variable,
-    integ,
+    ocp, sol::Trajectories.HamiltonianVectorFieldTrajectory, variable, integ
 )
-    T      = collect(Float64, Trajectories.time_grid(sol))
-    x      = Trajectories.state(sol)    # callable StateProjection: t -> x(t)
-    p      = Trajectories.costate(sol)  # callable CostateProjection: t -> p(t)
+    T = collect(Float64, Trajectories.time_grid(sol))
+    x = Trajectories.state(sol)    # callable StateProjection: t -> x(t)
+    p = Trajectories.costate(sol)  # callable CostateProjection: t -> p(t)
     t0, tf = first(T), last(T)
-    v      = _variable_vector(variable)
-    u      = _ -> Float64[]          # empty control for control-free OCP
-    obj    = _ocp_objective(ocp, x, v, t0, tf, integ)
+    v = _variable_vector(variable)
+    u = _ -> Float64[]          # empty control for control-free OCP
+    obj = _ocp_objective(ocp, x, v, t0, tf, integ)
     return CTModels.Solutions.build_solution(
-        ocp, T, x, u, v, p;
-        objective             = obj,
-        iterations            = -1,
-        constraints_violation = -1.0,
-        message               = "Solution computed by CTFlows OCP flow",
-        status                = :nostatusmessage,
-        successful            = true,
-        control_interpolation = :linear,
+        ocp,
+        T,
+        x,
+        u,
+        v,
+        p;
+        objective=obj,
+        iterations=-1,
+        constraints_violation=-1.0,
+        message="Solution computed by CTFlows OCP flow",
+        status=:nostatusmessage,
+        successful=true,
+        control_interpolation=:linear,
     )
 end

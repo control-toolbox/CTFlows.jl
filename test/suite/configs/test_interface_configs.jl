@@ -1,6 +1,6 @@
 module TestInterfaceConfigs
 
-import Test
+using Test: Test
 import CTBase.Exceptions
 import CTFlows.Configs
 
@@ -41,7 +41,9 @@ function test_interface_configs()
 
             Test.@testset "initial_condition stub throws NotImplemented" begin
                 config = FakeBareConfig()
-                Test.@test_throws Exceptions.NotImplemented Configs.initial_condition(config)
+                Test.@test_throws Exceptions.NotImplemented Configs.initial_condition(
+                    config
+                )
             end
 
             Test.@testset "initial_state stub throws NotImplemented" begin
@@ -56,7 +58,9 @@ function test_interface_configs()
 
             Test.@testset "initial_variable_costate stub throws NotImplemented" begin
                 config = FakeBareConfig()
-                Test.@test_throws Exceptions.NotImplemented Configs.initial_variable_costate(config)
+                Test.@test_throws Exceptions.NotImplemented Configs.initial_variable_costate(
+                    config
+                )
             end
         end
 

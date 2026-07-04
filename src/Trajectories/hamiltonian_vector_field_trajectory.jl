@@ -41,7 +41,8 @@ x0, p0 = sol(0.0)        # returns tuple (x(0), p(0))
 
 See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.AbstractHamiltonianVectorFieldTrajectory`](@ref).
 """
-struct HamiltonianVectorFieldTrajectory{X0, R<:Integrators.AbstractIntegrationResult, V} <: AbstractHamiltonianVectorFieldTrajectory
+struct HamiltonianVectorFieldTrajectory{X0,R<:Integrators.AbstractIntegrationResult,V} <:
+       AbstractHamiltonianVectorFieldTrajectory
     x0::X0
     result::R
     variable::V
@@ -52,8 +53,9 @@ $(TYPEDSIGNATURES)
 
 Construct a `HamiltonianVectorFieldTrajectory` with no variable (`Core.NotProvided`).
 """
-HamiltonianVectorFieldTrajectory(x0, result::Integrators.AbstractIntegrationResult) =
-    HamiltonianVectorFieldTrajectory(x0, result, Core.NotProvided)
+function HamiltonianVectorFieldTrajectory(x0, result::Integrators.AbstractIntegrationResult)
+    return HamiltonianVectorFieldTrajectory(x0, result, Core.NotProvided)
+end
 
 # =============================================================================
 # Internal helper for splitting solutions based on initial state shape
@@ -70,11 +72,14 @@ For scalar x0, extracts single elements and coerces them back to scalars.
 For vector/matrix x0, extracts views of the appropriate size.
 """
 _ham_split_solution(u::AbstractVector, x0::Number) = (only(u[1:1]), only(u[2:2]))
-_ham_split_solution(u::AbstractVector, x0::AbstractVector) = let n = length(x0)
-    (u[1:n], u[n+1:2n])
-end
-_ham_split_solution(u::AbstractMatrix, x0::AbstractMatrix) = let n = size(x0, 1)
-    (u[1:n, :], u[n+1:2n, :])
+_ham_split_solution(u::AbstractVector, x0::AbstractVector) =
+    let n = length(x0)
+        (u[1:n], u[(n + 1):2n])
+    end
+function _ham_split_solution(u::AbstractMatrix, x0::AbstractMatrix)
+    let n = size(x0, 1)
+        (u[1:n, :], u[(n + 1):2n, :])
+    end
 end
 
 # =============================================================================
@@ -149,7 +154,7 @@ Callable struct returning the state component of a `HamiltonianVectorFieldTrajec
 `StateProjection(sol)(t)` is equivalent to `sol(t)[1]`, but avoids creating a closure
 each time `state(sol)` is called. The solution reference is stored once at construction.
 """
-struct StateProjection{S <: HamiltonianVectorFieldTrajectory} <: Function
+struct StateProjection{S<:HamiltonianVectorFieldTrajectory} <: Function
     sol::S
 end
 (sp::StateProjection)(t::Real) = sp.sol(t)[1]
@@ -162,7 +167,7 @@ Callable struct returning the costate component of a `HamiltonianVectorFieldTraj
 `CostateProjection(sol)(t)` is equivalent to `sol(t)[2]`, but avoids creating a closure
 each time `costate(sol)` is called. The solution reference is stored once at construction.
 """
-struct CostateProjection{S <: HamiltonianVectorFieldTrajectory} <: Function
+struct CostateProjection{S<:HamiltonianVectorFieldTrajectory} <: Function
     sol::S
 end
 (cp::CostateProjection)(t::Real) = cp.sol(t)[2]
@@ -264,17 +269,21 @@ See also: [`CTSolvers.Integrators.merge`](@extref), [`CTSolvers.Integrators.Abst
 """
 function Integrators.merge(segments::AbstractVector{<:HamiltonianVectorFieldTrajectory})
     if isempty(segments)
-        throw(Exceptions.IncorrectArgument(
-            "Cannot merge empty sequence of HamiltonianVectorFieldTrajectory";
-            got = "0 segments",
-            expected = "at least 1 segment",
-            context = "HamiltonianVectorFieldTrajectory merge",
-        ))
+        throw(
+            Exceptions.IncorrectArgument(
+                "Cannot merge empty sequence of HamiltonianVectorFieldTrajectory";
+                got="0 segments",
+                expected="at least 1 segment",
+                context="HamiltonianVectorFieldTrajectory merge",
+            ),
+        )
     end
-    
+
     internal_results = [sol.result for sol in segments]
     merged_result = Integrators.merge(internal_results)
-    return HamiltonianVectorFieldTrajectory(segments[1].x0, merged_result, segments[1].variable)
+    return HamiltonianVectorFieldTrajectory(
+        segments[1].x0, merged_result, segments[1].variable
+    )
 end
 
 # =============================================================================
@@ -296,12 +305,12 @@ Plot stub — throws error if Plots extension not loaded.
 See also: [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.AbstractHamiltonianVectorFieldTrajectory`](@ref).
 """
 function RecipesBase.plot(sol::AbstractHamiltonianVectorFieldTrajectory; kwargs...)
-    throw(
+    return throw(
         Exceptions.ExtensionError(
             :Plots;
-            message = "to plot solutions",
-            feature = "Plotting via Plots.jl",
-            context = "Load Plots extension first: using Plots",
+            message="to plot solutions",
+            feature="Plotting via Plots.jl",
+            context="Load Plots extension first: using Plots",
         ),
     )
 end
@@ -322,7 +331,7 @@ Display the `HamiltonianVectorFieldTrajectory` in a readable text/plain format.
 """
 function Base.show(io::IO, ::MIME"text/plain", sol::HamiltonianVectorFieldTrajectory)
     fmt = Display.format_codes(io)
-    Display.print_header(io, "HamiltonianVectorFieldTrajectory"; fmt = fmt)
+    Display.print_header(io, "HamiltonianVectorFieldTrajectory"; fmt=fmt)
     fields = Any[("result", nameof(typeof(sol.result)), "")]
     try
         ts = Integrators.times(sol)
@@ -341,7 +350,7 @@ function Base.show(io::IO, ::MIME"text/plain", sol::HamiltonianVectorFieldTrajec
     if _show_variable(sol.variable)
         push!(fields, ("variable", sol.variable, fmt.value))
     end
-    Display.print_fields(io, fields; fmt = fmt)
+    return Display.print_fields(io, fields; fmt=fmt)
 end
 
 """
@@ -373,5 +382,5 @@ function Base.show(io::IO, sol::HamiltonianVectorFieldTrajectory)
     end
 
     print(io, join(parts, ", "))
-    print(io, ")")
+    return print(io, ")")
 end

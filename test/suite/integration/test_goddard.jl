@@ -1,29 +1,35 @@
 module TestGoddard
 
-import Test
+using Test: Test
 import CTBase.Data
 import CTLie: CTLie
 import CTFlows.Flows
 import CTFlows.Trajectories
-import DifferentiationInterface
-import ForwardDiff  # triggers DifferentiationInterfaceForwardDiff (provides PushforwardFast)
+using DifferentiationInterface: DifferentiationInterface
+using ForwardDiff: ForwardDiff  # triggers DifferentiationInterfaceForwardDiff (provides PushforwardFast)
 using OrdinaryDiffEqTsit5
 using NonlinearSolve: NonlinearSolve, NonlinearProblem, SimpleNewtonRaphson, solve
 
 import CTBase: CTBase # For generated code by the @Lie macro (CTBase.Traits.*)
 
-const VERBOSE    = isdefined(Main, :TestData) ? Main.TestData.VERBOSE    : true
+const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # ==============================================================================
 # Goddard problem physics constants and dynamics (module-level)
 # ==============================================================================
 
-const _GODD_t0 = 0.0;  const _GODD_r0 = 1.0;  const _GODD_v0 = 0.0
-const _GODD_m0 = 1.0;  const _GODD_vmax = 0.1; const _GODD_mf = 0.6
+const _GODD_t0 = 0.0;
+const _GODD_r0 = 1.0;
+const _GODD_v0 = 0.0
+const _GODD_m0 = 1.0;
+const _GODD_vmax = 0.1;
+const _GODD_mf = 0.6
 const _GODD_x0 = [_GODD_r0, _GODD_v0, _GODD_m0]
-const _GODD_Cd = 310;  const _GODD_Tmax = 3.5;
-const _GODD_β  = 500;  const _GODD_b   = 2
+const _GODD_Cd = 310;
+const _GODD_Tmax = 3.5;
+const _GODD_β = 500;
+const _GODD_b = 2
 
 # Dynamics
 function _godd_F0(x)
@@ -50,7 +56,7 @@ function test_goddard()
 
         H0 = CTLie.Lift(_godd_F0)                   # H0(x, p) = p' * F0(x)
         H1 = CTLie.Lift(_godd_F1)                   # H1(x, p) = p' * F1(x)
-        H01  = CTLie.@Lie {H0, H1}
+        H01 = CTLie.@Lie {H0, H1}
         H001 = CTLie.@Lie {H0, H01}
         H101 = CTLie.@Lie {H1, H01}
 
@@ -154,7 +160,9 @@ function test_goddard()
             shoot!(s, ξ, _) = shoot!(s, ξ[1:3], ξ[4], ξ[5], ξ[6], ξ[7])
 
             prob = NonlinearProblem(shoot!, ξ0)
-            nl_sol = solve(prob, SimpleNewtonRaphson(); abstol=1e-8, reltol=1e-8, show_trace=Val(false))
+            nl_sol = solve(
+                prob, SimpleNewtonRaphson(); abstol=1e-8, reltol=1e-8, show_trace=Val(false)
+            )
 
             # Check convergence
             ξ_opt = nl_sol.u
@@ -162,7 +170,6 @@ function test_goddard()
             shoot!(s_converged, ξ_opt[1:3], ξ_opt[4], ξ_opt[5], ξ_opt[6], ξ_opt[7])
             Test.@test sqrt(sum(abs2, s_converged)) < 1e-7
         end
-
     end
 end
 

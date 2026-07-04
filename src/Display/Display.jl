@@ -49,7 +49,7 @@ Print the styled type-name header (no trailing newline).
 
 The `name` is rendered with the `name` palette role (bold blue by default).
 """
-function print_header(io::IO, name; fmt = format_codes(io))
+function print_header(io::IO, name; fmt=format_codes(io))
     print(io, fmt.name, name, fmt.reset)
     return nothing
 end
@@ -72,14 +72,16 @@ ecosystem. `value` is rendered through `print` (so strings/symbols keep their pl
 objects use their own `show`), preserving colour from `io`.
 """
 function print_field(
-    io::IO, label, value;
-    last::Bool = false, fmt = format_codes(io), value_style = nothing,
+    io::IO, label, value; last::Bool=false, fmt=format_codes(io), value_style=nothing
 )
     style = value_style === nothing ? fmt.value : value_style
     reset = isempty(style) ? "" : fmt.reset
     prefix = last ? BRANCH_END : BRANCH_MID
-    valstr = value isa AbstractString ? value :
-        sprint(print, value; context = IOContext(io, :color => get(io, :color, false)))
+    valstr = if value isa AbstractString
+        value
+    else
+        sprint(print, value; context=IOContext(io, :color => get(io, :color, false)))
+    end
     lines = split(valstr, "\n")
     print(io, "\n", fmt.muted, prefix, fmt.reset)
     isempty(string(label)) || print(io, fmt.label, label, fmt.reset, ": ")
@@ -104,11 +106,11 @@ optional third element overrides the value style for that field (pass `""` for p
 is convenient when some fields are appended conditionally and the "last" field is only known
 at runtime.
 """
-function print_fields(io::IO, fields; fmt = format_codes(io))
+function print_fields(io::IO, fields; fmt=format_codes(io))
     n = length(fields)
     for (i, f) in enumerate(fields)
         style = length(f) >= 3 ? f[3] : nothing
-        print_field(io, f[1], f[2]; last = (i == n), fmt = fmt, value_style = style)
+        print_field(io, f[1], f[2]; last=(i == n), fmt=fmt, value_style=style)
     end
     return nothing
 end

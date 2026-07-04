@@ -27,8 +27,8 @@ using StaticArrays
 
 # Make extension modules available in Main so that @docs blocks can resolve
 # qualified bindings like CTFlowsSciMLIntegrator.SciMLIntegrationResult.
-for _ext_sym in (:CTFlowsPlots,
-                 :CTFlowsSciMLIntegrator, :CTFlowsSciMLFlows, :CTFlowsStaticArrays)
+for _ext_sym in
+    (:CTFlowsPlots, :CTFlowsSciMLIntegrator, :CTFlowsSciMLFlows, :CTFlowsStaticArrays)
     _m = Base.get_extension(CTFlows, _ext_sym)
     isnothing(_m) || @eval Main const $_ext_sym = $_m
 end
@@ -91,13 +91,13 @@ with_api_reference(src_dir, ext_dir) do api_pages
             # index.md is the VitePress root — not listed here
             "Getting Started" => "getting-started.md",
             "Flows" => [
-                "Overview"          => "flows/overview.md",
-                "Building a flow"   => "flows/building_a_flow.md",
-                "Integrating"       => "flows/integrating.md",
-                "Trajectories"      => "flows/trajectories.md",
+                "Overview" => "flows/overview.md",
+                "Building a flow" => "flows/building_a_flow.md",
+                "Integrating" => "flows/integrating.md",
+                "Trajectories" => "flows/trajectories.md",
                 "Multi-phase flows" => "flows/multiphase.md",
-                "Optimal control"   => "flows/optimal_control.md",
-                "SciML flows"       => "flows/sciml.md",
+                "Optimal control" => "flows/optimal_control.md",
+                "SciML flows" => "flows/sciml.md",
             ],
             "API Reference" => api_pages,
         ],

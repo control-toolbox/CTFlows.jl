@@ -1,6 +1,6 @@
 module TestHamiltonianSystem
 
-import Test
+using Test: Test
 import CTBase.Exceptions
 import CTBase.Data: Data
 import CTBase.Traits: Traits
@@ -15,17 +15,13 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 struct FakeADBackend <: Differentiation.AbstractADBackend end
 
 function Differentiation.hamiltonian_gradient(
-    backend::FakeADBackend,
-    h::Data.AbstractHamiltonian,
-    t, x, p, v,
+    backend::FakeADBackend, h::Data.AbstractHamiltonian, t, x, p, v
 )
     return (x, p)
 end
 
 function Differentiation.variable_gradient(
-    backend::FakeADBackend,
-    h::Data.AbstractHamiltonian,
-    t, x, p, v,
+    backend::FakeADBackend, h::Data.AbstractHamiltonian, t, x, p, v
 )
     return v === nothing ? 0.0 : v
 end
@@ -38,7 +34,11 @@ function test_hamiltonian_system()
         # ====================================================================
 
         Test.@testset "Construction" begin
-            h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); is_autonomous=true, is_variable=false)
+            h = Data.Hamiltonian(
+                (t, x, p, v) -> 0.5 * sum(x .^ 2) + sum(p .^ 2);
+                is_autonomous=true,
+                is_variable=false,
+            )
             backend = FakeADBackend()
 
             # Build system without state_dimension (lazy inference)
@@ -52,7 +52,11 @@ function test_hamiltonian_system()
         # ====================================================================
 
         Test.@testset "ad_trait" begin
-            h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); is_autonomous=true, is_variable=false)
+            h = Data.Hamiltonian(
+                (t, x, p, v) -> 0.5 * sum(x .^ 2) + sum(p .^ 2);
+                is_autonomous=true,
+                is_variable=false,
+            )
             backend = FakeADBackend()
             sys = Systems.HamiltonianSystem(h, backend)
 
@@ -64,7 +68,11 @@ function test_hamiltonian_system()
         # ====================================================================
 
         Test.@testset "get_ip_rhs" begin
-            h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); is_autonomous=true, is_variable=false)
+            h = Data.Hamiltonian(
+                (t, x, p, v) -> 0.5 * sum(x .^ 2) + sum(p .^ 2);
+                is_autonomous=true,
+                is_variable=false,
+            )
             backend = FakeADBackend()
             sys = Systems.HamiltonianSystem(h, backend)
 
@@ -100,7 +108,11 @@ function test_hamiltonian_system()
         # ====================================================================
 
         Test.@testset "get_oop_rhs" begin
-            h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); is_autonomous=true, is_variable=false)
+            h = Data.Hamiltonian(
+                (t, x, p, v) -> 0.5 * sum(x .^ 2) + sum(p .^ 2);
+                is_autonomous=true,
+                is_variable=false,
+            )
             backend = FakeADBackend()
             sys = Systems.HamiltonianSystem(h, backend)
 
@@ -124,7 +136,11 @@ function test_hamiltonian_system()
         # ====================================================================
 
         Test.@testset "get_ip_rhs_augmented" begin
-            h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2) + 0.5 * v^2; is_autonomous=true, is_variable=false)
+            h = Data.Hamiltonian(
+                (t, x, p, v) -> 0.5 * sum(x .^ 2) + sum(p .^ 2) + 0.5 * v^2;
+                is_autonomous=true,
+                is_variable=false,
+            )
             backend = FakeADBackend()
             sys = Systems.HamiltonianSystem(h, backend)
 
@@ -154,7 +170,9 @@ function test_hamiltonian_system()
             p0_mat = [7.0 8.0 9.0; 10.0 11.0 12.0]
             pv0_mat = [0.5 0.6 0.7]
             variable_mat = [0.5 0.6 0.7]
-            config_mat = Configs.AugmentedHamiltonianEndPointConfig(0.0, x0_mat, p0_mat, pv0_mat, 1.0)
+            config_mat = Configs.AugmentedHamiltonianEndPointConfig(
+                0.0, x0_mat, p0_mat, pv0_mat, 1.0
+            )
             rhs_aug_mat = Systems.get_ip_rhs_augmented(sys, config_mat)
             u_mat = [1.0 2.0 3.0; 4.0 5.0 6.0; 7.0 8.0 9.0; 10.0 11.0 12.0; 0.5 0.6 0.7]
             du_mat = zeros(5, 3)
@@ -167,19 +185,25 @@ function test_hamiltonian_system()
             p0_mat2 = [7.0 8.0; 10.0 11.0]
             pv0_mat2 = [0.5 0.6]
             variable_mat2 = [0.5 0.6 0.7]
-            config_mat2 = Configs.AugmentedHamiltonianEndPointConfig(0.0, x0_mat2, p0_mat2, pv0_mat2, 1.0)
+            config_mat2 = Configs.AugmentedHamiltonianEndPointConfig(
+                0.0, x0_mat2, p0_mat2, pv0_mat2, 1.0
+            )
             rhs_aug_mat2 = Systems.get_ip_rhs_augmented(sys, config_mat2)
             u_mat2 = [1.0 2.0; 4.0 5.0; 7.0 8.0; 10.0 11.0; 0.5 0.6]
             du_mat2 = zeros(5, 2)
             p_mat2 = Systems.ODEParameters(variable_mat2)
-            Test.@test_throws Exceptions.PreconditionError rhs_aug_mat2(du_mat2, u_mat2, p_mat2, 0.0)
+            Test.@test_throws Exceptions.PreconditionError rhs_aug_mat2(
+                du_mat2, u_mat2, p_mat2, 0.0
+            )
 
             # u Matrix, v Vector (no-op check)
             x0_mat3 = [1.0 2.0; 4.0 5.0]
             p0_mat3 = [7.0 8.0; 10.0 11.0]
             pv0_mat3 = [0.5 0.6]
             variable_vec = 0.5
-            config_mat3 = Configs.AugmentedHamiltonianEndPointConfig(0.0, x0_mat3, p0_mat3, pv0_mat3, 1.0)
+            config_mat3 = Configs.AugmentedHamiltonianEndPointConfig(
+                0.0, x0_mat3, p0_mat3, pv0_mat3, 1.0
+            )
             rhs_aug_mat3 = Systems.get_ip_rhs_augmented(sys, config_mat3)
             u_mat3 = [1.0 2.0; 4.0 5.0; 7.0 8.0; 10.0 11.0; 0.5 0.6]
             du_mat3 = zeros(5, 2)
@@ -220,7 +244,9 @@ function test_hamiltonian_system()
             # Incompatible matrices
             u2 = [1.0 2.0; 3.0 4.0]
             v2 = [0.5 0.6 0.7]
-            Test.@test_throws Exceptions.PreconditionError Systems._check_aug_batch_compat(u2, v2)
+            Test.@test_throws Exceptions.PreconditionError Systems._check_aug_batch_compat(
+                u2, v2
+            )
 
             # Non-matrix cases (no-op)
             u3 = [1.0, 2.0, 3.0]
@@ -237,7 +263,11 @@ function test_hamiltonian_system()
         # ====================================================================
 
         Test.@testset "build_system" begin
-            h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); is_autonomous=true, is_variable=false)
+            h = Data.Hamiltonian(
+                (t, x, p, v) -> 0.5 * sum(x .^ 2) + sum(p .^ 2);
+                is_autonomous=true,
+                is_variable=false,
+            )
             backend = FakeADBackend()
 
             # Build system without state_dimension (lazy inference)
@@ -250,7 +280,11 @@ function test_hamiltonian_system()
         # ====================================================================
 
         Test.@testset "Type Stability" begin
-            h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); is_autonomous=true, is_variable=false)
+            h = Data.Hamiltonian(
+                (t, x, p, v) -> 0.5 * sum(x .^ 2) + sum(p .^ 2);
+                is_autonomous=true,
+                is_variable=false,
+            )
             backend = FakeADBackend()
 
             sys = Systems.HamiltonianSystem(h, backend)
@@ -262,7 +296,9 @@ function test_hamiltonian_system()
         # ====================================================================
 
         Test.@testset "Regression: HamiltonianVectorFieldSystem" begin
-            hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
+            hvf = Data.HamiltonianVectorField(
+                (x, p) -> (x, -p); is_autonomous=true, is_variable=false
+            )
             sys = Systems.HamiltonianVectorFieldSystem(hvf)
             Test.@test sys isa Systems.HamiltonianVectorFieldSystem
             Test.@test sys isa Systems.AbstractHamiltonianSystem

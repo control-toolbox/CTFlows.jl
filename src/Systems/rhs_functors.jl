@@ -61,7 +61,7 @@ end
 
 function (f::IPVFOoPRHS)(du, u, λ, t)
     du .= f.vf(t, u, variable(λ))
-    nothing
+    return nothing
 end
 
 """
@@ -84,7 +84,7 @@ end
 
 function (f::IPVFIpRHS)(du, u, λ, t)
     f.vf(du, t, u, variable(λ))
-    nothing
+    return nothing
 end
 
 """
@@ -106,7 +106,7 @@ struct OoPVFOoPRHS{F,TD,VD} <: AbstractOoPRHS
 end
 
 function (f::OoPVFOoPRHS)(u, λ, t)
-    f.vf(t, u, variable(λ))
+    return f.vf(t, u, variable(λ))
 end
 
 """
@@ -130,7 +130,7 @@ end
 function (f::OoPVFIpRHS)(u, λ, t)
     dx = similar(u)
     f.vf(dx, t, u, variable(λ))
-    dx
+    return dx
 end
 
 """
@@ -154,7 +154,7 @@ end
 function (f::OoPVFIpFinalizeRHS)(u, λ, t)
     dx = similar(u)
     f.vf(dx, t, u, variable(λ))
-    typeof(u)(dx)
+    return typeof(u)(dx)
 end
 
 # =============================================================================
@@ -165,7 +165,9 @@ _rhs_conversion_label(f::IPVFOoPRHS) = "out-of-place VF → in-place interface"
 _rhs_conversion_label(f::IPVFIpRHS) = "in-place VF → in-place interface"
 _rhs_conversion_label(f::OoPVFOoPRHS) = "out-of-place VF → out-of-place interface"
 _rhs_conversion_label(f::OoPVFIpRHS) = "in-place VF → out-of-place interface"
-_rhs_conversion_label(f::OoPVFIpFinalizeRHS) = "in-place VF → out-of-place interface + finalize"
+function _rhs_conversion_label(f::OoPVFIpFinalizeRHS)
+    return "in-place VF → out-of-place interface + finalize"
+end
 
 function Base.show(io::IO, f::AbstractRHS)
     fmt = Display.format_codes(io)
@@ -173,11 +175,13 @@ function Base.show(io::IO, f::AbstractRHS)
     vd = Traits.variable_dependence(f.vf)
     md = Traits.mutability(f.vf)
     wraps = "VectorField: $(Data._td_label(td)), $(Data._vd_label(vd)), $(Data._md_label(md))"
-    Display.print_header(io, nameof(typeof(f)); fmt = fmt)
-    Display.print_field(io, "wraps", wraps; fmt = fmt, value_style = "")
-    Display.print_field(io, "converts", _rhs_conversion_label(f); last = true, fmt = fmt, value_style = "")
+    Display.print_header(io, nameof(typeof(f)); fmt=fmt)
+    Display.print_field(io, "wraps", wraps; fmt=fmt, value_style="")
+    return Display.print_field(
+        io, "converts", _rhs_conversion_label(f); last=true, fmt=fmt, value_style=""
+    )
 end
 
 function Base.show(io::IO, ::MIME"text/plain", f::AbstractRHS)
-    show(io, f)
+    return show(io, f)
 end

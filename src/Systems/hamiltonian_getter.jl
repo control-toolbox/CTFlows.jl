@@ -241,10 +241,12 @@ function _make_ip_hvf(h, backend, ::Type{Traits.Autonomous}, ::Type{Traits.NonFi
         dx .= ∂p
         dp .= .-∂x
         if variable_costate
-            dpv === nothing && throw(Exceptions.PreconditionError(
-                "dpv buffer must be provided when variable_costate=true";
-                context = "hamiltonian_vector_field IP Autonomous/NonFixed",
-            ))
+            dpv === nothing && throw(
+                Exceptions.PreconditionError(
+                    "dpv buffer must be provided when variable_costate=true";
+                    context="hamiltonian_vector_field IP Autonomous/NonFixed",
+                ),
+            )
             ∂v = Differentiation.variable_gradient(backend, h, nothing, x, p, v)
             dpv .= .-∂v
         end
@@ -287,10 +289,12 @@ function _make_ip_hvf(h, backend, ::Type{Traits.NonAutonomous}, ::Type{Traits.No
         dx .= ∂p
         dp .= .-∂x
         if variable_costate
-            dpv === nothing && throw(Exceptions.PreconditionError(
-                "dpv buffer must be provided when variable_costate=true";
-                context = "hamiltonian_vector_field IP NonAutonomous/NonFixed",
-            ))
+            dpv === nothing && throw(
+                Exceptions.PreconditionError(
+                    "dpv buffer must be provided when variable_costate=true";
+                    context="hamiltonian_vector_field IP NonAutonomous/NonFixed",
+                ),
+            )
             ∂v = Differentiation.variable_gradient(backend, h, t, x, p, v)
             dpv .= .-∂v
         end
@@ -330,10 +334,10 @@ with the correct signature based on the Hamiltonian's time and variable dependen
 See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTBase.Data.HamiltonianVectorField`](@extref)
 """
 function hamiltonian_vector_field(
-    h::Data.Hamiltonian{F, TD, VD};
-    ad_backend = Differentiation.__ad_backend(),
-    inplace::Bool = __hvf_inplace(),
-) where {F, TD, VD}
+    h::Data.Hamiltonian{F,TD,VD};
+    ad_backend=Differentiation.__ad_backend(),
+    inplace::Bool=__hvf_inplace(),
+) where {F,TD,VD}
     # If ad_backend is an AbstractADBackend instance, use it directly; otherwise wrap it
     backend = if ad_backend isa Differentiation.AbstractADBackend
         ad_backend
@@ -341,10 +345,11 @@ function hamiltonian_vector_field(
         Differentiation.build_ad_backend(; ad_backend=ad_backend)
     end
     f = inplace ? _make_ip_hvf(h, backend, TD, VD) : _make_oop_hvf(h, backend, TD, VD)
-    return Data.HamiltonianVectorField(f;
-        is_autonomous = TD <: Traits.Autonomous,
-        is_variable   = VD <: Traits.NonFixed,
-        is_inplace    = inplace,
+    return Data.HamiltonianVectorField(
+        f;
+        is_autonomous=TD <: Traits.Autonomous,
+        is_variable=VD <: Traits.NonFixed,
+        is_inplace=inplace,
     )
 end
 
@@ -369,7 +374,9 @@ No computation is performed since the vector field is already constructed.
 
 See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTBase.Data.HamiltonianVectorField`](@extref)
 """
-function hamiltonian_vector_field(sys::HamiltonianVectorFieldSystem; inplace::Bool = __hvf_inplace())
+function hamiltonian_vector_field(
+    sys::HamiltonianVectorFieldSystem; inplace::Bool=__hvf_inplace()
+)
     return sys.hvf
 end
 
@@ -395,7 +402,7 @@ Hamiltonian overload to compute the vector field via automatic differentiation.
 
 See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTBase.Data.Hamiltonian`](@extref), [`CTBase.Differentiation.AbstractADBackend`](@extref)
 """
-function hamiltonian_vector_field(sys::HamiltonianSystem; inplace::Bool = __hvf_inplace())
+function hamiltonian_vector_field(sys::HamiltonianSystem; inplace::Bool=__hvf_inplace())
     ad_backend = Differentiation.ad_backend(sys.backend)
     return hamiltonian_vector_field(sys.h; ad_backend=ad_backend, inplace=inplace)
 end
@@ -412,7 +419,9 @@ Get the Hamiltonian vector field from any `AbstractHamiltonianSystem`, dispatchi
 
 See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
 """
-function hamiltonian_vector_field(sys::AbstractHamiltonianSystem; inplace::Bool = __hvf_inplace(), kwargs...)
+function hamiltonian_vector_field(
+    sys::AbstractHamiltonianSystem; inplace::Bool=__hvf_inplace(), kwargs...
+)
     return _hamiltonian_vector_field_by_ad(Traits.ad_trait(sys), sys; inplace=inplace)
 end
 
@@ -427,23 +436,23 @@ stored in the system.
 See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref).
 """
 function _hamiltonian_vector_field_by_ad(
-    ::Type{Traits.WithAD},
-    sys::AbstractHamiltonianSystem;
-    inplace::Bool = __hvf_inplace(),
+    ::Type{Traits.WithAD}, sys::AbstractHamiltonianSystem; inplace::Bool=__hvf_inplace()
 )
     ad_backend = Differentiation.ad_backend(backend(sys))
-    return hamiltonian_vector_field(hamiltonian(sys); ad_backend=ad_backend, inplace=inplace)
+    return hamiltonian_vector_field(
+        hamiltonian(sys); ad_backend=ad_backend, inplace=inplace
+    )
 end
 
 function _hamiltonian_vector_field_by_ad(
-    ::Type{Traits.WithoutAD},
-    sys::AbstractHamiltonianSystem;
-    kwargs...,
+    ::Type{Traits.WithoutAD}, sys::AbstractHamiltonianSystem; kwargs...
 )
-    throw(Exceptions.NotImplemented(
-        "hamiltonian_vector_field not implemented for this WithoutAD system type";
-        required_method = "hamiltonian_vector_field(sys::$(typeof(sys)))",
-        suggestion = "Implement hamiltonian_vector_field for your system type, or use HamiltonianVectorFieldSystem",
-        context = "hamiltonian_vector_field getter",
-    ))
+    return throw(
+        Exceptions.NotImplemented(
+            "hamiltonian_vector_field not implemented for this WithoutAD system type";
+            required_method="hamiltonian_vector_field(sys::$(typeof(sys)))",
+            suggestion="Implement hamiltonian_vector_field for your system type, or use HamiltonianVectorFieldSystem",
+            context="hamiltonian_vector_field getter",
+        ),
+    )
 end

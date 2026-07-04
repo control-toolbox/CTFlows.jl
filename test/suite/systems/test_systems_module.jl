@@ -20,8 +20,8 @@
 
 module TestSystemsModule
 
-import Test
-import CTFlows
+using Test: Test
+using CTFlows: CTFlows
 import CTFlows.Systems
 using CTFlows.Systems  # For testing exported symbols
 
@@ -51,9 +51,7 @@ const EXPORTED_ABSTRACT_TYPES = (
 )
 
 const EXPORTED_CONCRETE_TYPES = (
-    :VectorFieldSystem,
-    :HamiltonianVectorFieldSystem,
-    :HamiltonianSystem,
+    :VectorFieldSystem, :HamiltonianVectorFieldSystem, :HamiltonianSystem
 )
 
 const EXPORTED_FUNCTIONS = (
@@ -167,7 +165,8 @@ function test_systems_module()
             Test.@testset "Concrete types inherit from abstract types" begin
                 Test.@test Systems.VectorFieldSystem <: Systems.AbstractStateSystem
                 Test.@test Systems.VectorFieldSystem <: Systems.AbstractSystem
-                Test.@test Systems.HamiltonianVectorFieldSystem <: Systems.AbstractHamiltonianSystem
+                Test.@test Systems.HamiltonianVectorFieldSystem <:
+                    Systems.AbstractHamiltonianSystem
                 Test.@test Systems.HamiltonianVectorFieldSystem <: Systems.AbstractSystem
                 Test.@test Systems.HamiltonianSystem <: Systems.AbstractHamiltonianSystem
                 Test.@test Systems.HamiltonianSystem <: Systems.AbstractSystem

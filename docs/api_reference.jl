@@ -20,8 +20,14 @@ function generate_api_reference(src_dir::String, ext_dir::String)
     EXCLUDE_SYMBOLS = Symbol[:include, :eval]
     EXCLUDE_INTERNALS = vcat(
         EXCLUDE_SYMBOLS,
-        Symbol[:DOCTYPE_ABSTRACT_TYPE, :DOCTYPE_CONSTANT, :DOCTYPE_FUNCTION,
-               :DOCTYPE_MACRO, :DOCTYPE_MODULE, :DOCTYPE_STRUCT],
+        Symbol[
+            :DOCTYPE_ABSTRACT_TYPE,
+            :DOCTYPE_CONSTANT,
+            :DOCTYPE_FUNCTION,
+            :DOCTYPE_MACRO,
+            :DOCTYPE_MODULE,
+            :DOCTYPE_STRUCT,
+        ],
     )
 
     # ── Shared config: one entry per submodule ────────────────────────────────
@@ -149,9 +155,8 @@ function generate_api_reference(src_dir::String, ext_dir::String)
         ),
     ]
     loaded_extensions = [
-        (cfg=cfg, mod=Base.get_extension(CTFlows, cfg.sym))
-        for cfg in extensions_config
-        if !isnothing(Base.get_extension(CTFlows, cfg.sym))
+        (cfg=cfg, mod=Base.get_extension(CTFlows, cfg.sym)) for
+        cfg in extensions_config if !isnothing(Base.get_extension(CTFlows, cfg.sym))
     ]
 
     # ── Public pages: one flat page per submodule ─────────────────────────────

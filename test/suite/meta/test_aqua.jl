@@ -1,17 +1,18 @@
 module TestAqua
 
-import Aqua
-import Test
-import CTFlows
+using Aqua: Aqua
+using Test: Test
+using CTFlows: CTFlows
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 function test_aqua()
     Test.@testset "Aqua Quality Checks" verbose=VERBOSE showtiming=SHOWTIMING begin
-
         Test.@testset "Aqua" begin
-            Aqua.test_all(CTFlows; ambiguities=false, unbound_args=false, undefined_exports=false)
+            Aqua.test_all(
+                CTFlows; ambiguities=false, unbound_args=false, undefined_exports=false
+            )
         end
 
         Test.@testset "Ambiguities" begin

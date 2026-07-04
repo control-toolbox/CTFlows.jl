@@ -12,8 +12,8 @@
 
 module TestTrajectoriesModule
 
-import Test
-import CTFlows
+using Test: Test
+using CTFlows: CTFlows
 import CTFlows.Trajectories
 using CTFlows.Trajectories  # For testing exported symbols
 
@@ -28,22 +28,12 @@ const CurrentModule = TestTrajectoriesModule
 # These lists define the expected public API of the Solutions module.
 
 const EXPORTED_ABSTRACT_TYPES = (
-    :AbstractVectorFieldTrajectory,
-    :AbstractHamiltonianVectorFieldTrajectory,
+    :AbstractVectorFieldTrajectory, :AbstractHamiltonianVectorFieldTrajectory
 )
 
-const EXPORTED_CONCRETE_TYPES = (
-    :VectorFieldTrajectory,
-    :HamiltonianVectorFieldTrajectory,
-)
+const EXPORTED_CONCRETE_TYPES = (:VectorFieldTrajectory, :HamiltonianVectorFieldTrajectory)
 
-const EXPORTED_FUNCTIONS = (
-    :state,
-    :time_grid,
-    :costate,
-    :build_trajectory,
-    :plot,
-)
+const EXPORTED_FUNCTIONS = (:state, :time_grid, :costate, :build_trajectory, :plot)
 
 # Note: Solutions module has no private symbols (after filtering Julia internals)
 # All symbols are exported
@@ -130,12 +120,16 @@ function test_trajectories_module()
         Test.@testset "Type hierarchy" begin
             Test.@testset "Abstract types are abstract" begin
                 Test.@test isabstracttype(Trajectories.AbstractVectorFieldTrajectory)
-                Test.@test isabstracttype(Trajectories.AbstractHamiltonianVectorFieldTrajectory)
+                Test.@test isabstracttype(
+                    Trajectories.AbstractHamiltonianVectorFieldTrajectory
+                )
             end
 
             Test.@testset "Concrete types inherit from abstract types" begin
-                Test.@test Trajectories.VectorFieldTrajectory <: Trajectories.AbstractVectorFieldTrajectory
-                Test.@test Trajectories.HamiltonianVectorFieldTrajectory <: Trajectories.AbstractHamiltonianVectorFieldTrajectory
+                Test.@test Trajectories.VectorFieldTrajectory <:
+                    Trajectories.AbstractVectorFieldTrajectory
+                Test.@test Trajectories.HamiltonianVectorFieldTrajectory <:
+                    Trajectories.AbstractHamiltonianVectorFieldTrajectory
             end
         end
     end
