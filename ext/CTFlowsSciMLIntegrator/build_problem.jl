@@ -16,15 +16,25 @@ Throws `PreconditionError` if the pair is incompatible.
 See also: [`CTFlows.Configs.AbstractConfig`](@ref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref).
 """
 _check_dyn_config(::Type{Traits.StateDynamics}, ::Configs.AbstractConfig) = nothing
-_check_dyn_config(::Type{Traits.HamiltonianDynamics}, ::Configs.AbstractHamiltonianConfig) = nothing
-_check_dyn_config(::Type{Traits.HamiltonianDynamics}, ::Configs.AbstractAugmentedHamiltonianConfig) = nothing
+function _check_dyn_config(
+    ::Type{Traits.HamiltonianDynamics}, ::Configs.AbstractHamiltonianConfig
+)
+    return nothing
+end
+function _check_dyn_config(
+    ::Type{Traits.HamiltonianDynamics}, ::Configs.AbstractAugmentedHamiltonianConfig
+)
+    return nothing
+end
 function _check_dyn_config(D, C)
-    throw(Exceptions.PreconditionError(
-        "incompatible system dynamics and config types";
-        reason    = "dynamics trait = $D, config type = $(typeof(C))",
-        context   = "Integrators.build_problem",
-        suggestion = "Use a Hamiltonian config with a Hamiltonian system, or a state config with a state system.",
-    ))
+    return throw(
+        Exceptions.PreconditionError(
+            "incompatible system dynamics and config types";
+            reason="dynamics trait = $D, config type = $(typeof(C))",
+            context="Integrators.build_problem",
+            suggestion="Use a Hamiltonian config with a Hamiltonian system, or a state config with a state system.",
+        ),
+    )
 end
 
 # =============================================================================
@@ -110,7 +120,7 @@ function Integrators.build_problem(
 )
     _check_dyn_config(Traits.dynamics_trait(system), config)
     u0 = Configs.initial_condition(config)
-    λ  = Systems.ODEParameters(variable)
+    λ = Systems.ODEParameters(variable)
     f! = Systems.get_ip_rhs_augmented(system, config)
     return ODEProblem(f!, u0, Configs.tspan(config), λ)
 end

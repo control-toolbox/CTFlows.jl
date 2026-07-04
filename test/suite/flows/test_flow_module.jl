@@ -18,8 +18,8 @@
 
 module TestFlowModule
 
-import Test
-import CTFlows
+using Test: Test
+using CTFlows: CTFlows
 import CTFlows.Flows
 using CTFlows.Flows  # For testing exported symbols
 
@@ -34,23 +34,13 @@ const CurrentModule = TestFlowModule
 # These lists define the expected public API of the Flows module.
 
 const EXPORTED_ABSTRACT_TYPES = (
-    :AbstractFlow,
-    :AbstractStateFlow,
-    :AbstractHamiltonianFlow,
+    :AbstractFlow, :AbstractStateFlow, :AbstractHamiltonianFlow
 )
 
-const EXPORTED_CONCRETE_TYPES = (
-    :Flow,
-    :StateFlow,
-    :HamiltonianFlow,
-)
+const EXPORTED_CONCRETE_TYPES = (:Flow, :StateFlow, :HamiltonianFlow)
 
 const EXPORTED_FUNCTIONS = (
-    :system,
-    :integrator,
-    :build_flow,
-    :hamiltonian_vector_field,
-    :flow_registry,
+    :system, :integrator, :build_flow, :hamiltonian_vector_field, :flow_registry
 )
 
 # Note: Flows module has no private symbols (after filtering Julia internals)

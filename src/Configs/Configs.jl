@@ -65,7 +65,8 @@ export AbstractConfig, AbstractConfigWithMaC
 export AbstractEndPointConfig, AbstractTrajectoryConfig
 export AbstractStateConfig, AbstractHamiltonianConfig, AbstractAugmentedHamiltonianConfig
 export StateEndPointConfig, StateTrajectoryConfig
-export HamiltonianEndPointConfig, HamiltonianTrajectoryConfig, AugmentedHamiltonianEndPointConfig
+export HamiltonianEndPointConfig,
+    HamiltonianTrajectoryConfig, AugmentedHamiltonianEndPointConfig
 export tspan, initial_condition, initial_state, initial_costate, initial_variable_costate
 export initial_time, final_time, mode_trait, dynamics_trait
 

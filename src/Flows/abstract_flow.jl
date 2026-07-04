@@ -32,7 +32,9 @@ true
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTSolvers.Integrators.AbstractIntegrator`](@extref).
 """
-abstract type AbstractFlow{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, D<:Traits.AbstractDynamicsTrait} end
+abstract type AbstractFlow{
+    TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,D<:Traits.AbstractDynamicsTrait
+} end
 
 """
 $(TYPEDEF)
@@ -55,7 +57,7 @@ true
 
 See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@ref).
 """
-const AbstractStateFlow{TD, VD} = AbstractFlow{TD, VD, Traits.StateDynamics}
+const AbstractStateFlow{TD,VD} = AbstractFlow{TD,VD,Traits.StateDynamics}
 
 """
 $(TYPEDEF)
@@ -78,7 +80,7 @@ true
 
 See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractStateFlow`](@ref).
 """
-const AbstractHamiltonianFlow{TD, VD} = AbstractFlow{TD, VD, Traits.HamiltonianDynamics}
+const AbstractHamiltonianFlow{TD,VD} = AbstractFlow{TD,VD,Traits.HamiltonianDynamics}
 
 """
 $(TYPEDSIGNATURES)
@@ -125,7 +127,9 @@ Traits.time_dependence(MyFlow)  # Returns Autonomous
 
 See also: [`CTBase.Traits.has_time_dependence_trait`](@extref), `is_autonomous`, [`CTFlows.Flows.AbstractFlow`](@ref).
 """
-function Traits.time_dependence(::AbstractFlow{TD, <:Traits.VariableDependence, <:Traits.AbstractDynamicsTrait}) where {TD <: Traits.TimeDependence}
+function Traits.time_dependence(
+    ::AbstractFlow{TD,<:Traits.VariableDependence,<:Traits.AbstractDynamicsTrait}
+) where {TD<:Traits.TimeDependence}
     return TD
 end
 
@@ -150,7 +154,9 @@ Traits.variable_dependence(MyFlow)  # Returns Fixed
 
 See also: [`CTBase.Traits.has_variable_dependence_trait`](@extref), `is_variable`, [`CTFlows.Flows.AbstractFlow`](@ref).
 """
-function Traits.variable_dependence(::AbstractFlow{<:Traits.TimeDependence, VD, <:Traits.AbstractDynamicsTrait}) where {VD <: Traits.VariableDependence}
+function Traits.variable_dependence(
+    ::AbstractFlow{<:Traits.TimeDependence,VD,<:Traits.AbstractDynamicsTrait}
+) where {VD<:Traits.VariableDependence}
     return VD
 end
 
@@ -164,7 +170,9 @@ Extract the dynamics trait from an `AbstractFlow`.
 
 See also: [`CTBase.Traits.AbstractDynamicsTrait`](@extref), [`CTFlows.Flows.AbstractStateFlow`](@ref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@ref).
 """
-function Traits.dynamics_trait(::AbstractFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, D}) where {D <: Traits.AbstractDynamicsTrait}
+function Traits.dynamics_trait(
+    ::AbstractFlow{<:Traits.TimeDependence,<:Traits.VariableDependence,D}
+) where {D<:Traits.AbstractDynamicsTrait}
     return D
 end
 
@@ -199,7 +207,13 @@ Return the automatic differentiation capability trait of a Hamiltonian flow.
 
 See also: [`CTBase.Traits.AbstractADTrait`](@extref), [`CTBase.Traits.ad_trait`](@extref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
 """
-Traits.ad_trait(f::AbstractFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.HamiltonianDynamics}) = Traits.ad_trait(system(f))
+function Traits.ad_trait(
+    f::AbstractFlow{
+        <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.HamiltonianDynamics
+    },
+)
+    return Traits.ad_trait(system(f))
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -233,7 +247,13 @@ Return the variable costate capability trait of a Hamiltonian flow.
 
 See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@extref), [`CTBase.Traits.variable_costate_trait`](@extref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
 """
-Traits.variable_costate_trait(f::AbstractFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.HamiltonianDynamics}) = Traits.variable_costate_trait(system(f))
+function Traits.variable_costate_trait(
+    f::AbstractFlow{
+        <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.HamiltonianDynamics
+    },
+)
+    return Traits.variable_costate_trait(system(f))
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -246,12 +266,14 @@ Return the associated `AbstractSystem` for the flow.
 See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
 """
 function system(flow::AbstractFlow)
-    throw(Exceptions.NotImplemented(
-        "AbstractFlow system method not implemented";
-        required_method = "system(flow::$(typeof(flow)))",
-        suggestion = "Return the AbstractSystem associated with this flow.",
-        context = "AbstractFlow.system - required method implementation",
-    ))
+    return throw(
+        Exceptions.NotImplemented(
+            "AbstractFlow system method not implemented";
+            required_method="system(flow::$(typeof(flow)))",
+            suggestion="Return the AbstractSystem associated with this flow.",
+            context="AbstractFlow.system - required method implementation",
+        ),
+    )
 end
 
 """
@@ -265,12 +287,14 @@ Return the associated `AbstractIntegrator` for the flow.
 See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTSolvers.Integrators.AbstractIntegrator`](@extref).
 """
 function integrator(flow::AbstractFlow)
-    throw(Exceptions.NotImplemented(
-        "AbstractFlow integrator method not implemented";
-        required_method = "integrator(flow::$(typeof(flow)))",
-        suggestion = "Return the AbstractIntegrator associated with this flow.",
-        context = "AbstractFlow.integrator - required method implementation",
-    ))
+    return throw(
+        Exceptions.NotImplemented(
+            "AbstractFlow integrator method not implemented";
+            required_method="integrator(flow::$(typeof(flow)))",
+            suggestion="Return the AbstractIntegrator associated with this flow.",
+            context="AbstractFlow.integrator - required method implementation",
+        ),
+    )
 end
 
 """
@@ -290,21 +314,25 @@ StateFlow
 ```
 """
 function Base.show(io::IO, ::MIME"text/plain", flow::AbstractFlow)
-    fmt   = Display.format_codes(io)
-    sys   = system(flow)
+    fmt = Display.format_codes(io)
+    sys = system(flow)
     integ = integrator(flow)
 
-    Display.print_header(io, nameof(typeof(flow)); fmt = fmt)
+    Display.print_header(io, nameof(typeof(flow)); fmt=fmt)
 
     # Nest the system's own (styled, possibly multi-line) display under the `system` branch.
-    Display.print_field(io, "system", sys; fmt = fmt, value_style = "")
+    Display.print_field(io, "system", sys; fmt=fmt, value_style="")
 
     # Integrator name followed by user-supplied options, nested under the last branch.
-    int_str = sprint(integ; context = IOContext(io, :color => get(io, :color, false))) do io2, i
+    int_str = sprint(
+        integ; context=IOContext(io, :color => get(io, :color, false))
+    ) do io2, i
         print(io2, fmt.value, nameof(typeof(i)), fmt.reset)
-        _print_user_options(io2, i)
+        return _print_user_options(io2, i)
     end
-    Display.print_field(io, "integrator", int_str; last = true, fmt = fmt, value_style = "")
+    return Display.print_field(
+        io, "integrator", int_str; last=true, fmt=fmt, value_style=""
+    )
 end
 
 """
@@ -329,7 +357,7 @@ function Base.show(io::IO, flow::AbstractFlow)
     push!(parts, "system=$(sys)")
     push!(parts, "integrator=$(nameof(typeof(integ)))")
     print(io, join(parts, ", "))
-    print(io, ")")
+    return print(io, ")")
 end
 
 # =============================================================================
@@ -353,17 +381,19 @@ Silently does nothing when no user options are set.
 \`\`\`
 """
 function _print_user_options(io::IO, integ::Integrators.AbstractIntegrator)
-    opts      = Strategies.options(integ)
+    opts = Strategies.options(integ)
     user_opts = sort!(
-        [(k, Options.value(v)) for (k, v) in pairs(opts.options)
-         if Options.is_user(opts, k)];
-        by = x -> string(x[1]),
+        [
+            (k, Options.value(v)) for
+            (k, v) in pairs(opts.options) if Options.is_user(opts, k)
+        ];
+        by=x -> string(x[1]),
     )
-    isempty(user_opts) && return
+    isempty(user_opts) && return nothing
     print(io, " (")
     for (i, (k, v)) in enumerate(user_opts)
         i > 1 && print(io, ", ")
         print(io, k, " = ", v)
     end
-    print(io, ")")
+    return print(io, ")")
 end

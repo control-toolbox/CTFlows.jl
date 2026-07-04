@@ -109,7 +109,8 @@ HamiltonianSystem
 
 See also: [`CTBase.Data.Hamiltonian`](@extref), [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTBase.Differentiation.AbstractADBackend`](@extref).
 """
-function build_system(h::Data.AbstractHamiltonian, backend::Differentiation.AbstractADBackend)
+function build_system(
+    h::Data.AbstractHamiltonian, backend::Differentiation.AbstractADBackend
+)
     return HamiltonianSystem(h, backend)
 end
-

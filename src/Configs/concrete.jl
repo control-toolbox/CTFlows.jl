@@ -28,16 +28,19 @@ StateEndPointConfig
 
 See also: [`CTFlows.Configs.StateTrajectoryConfig`](@ref)
 """
-struct StateEndPointConfig{T0<:Real, X0, TF<:Real} <: AbstractConfigWithMaC{X0, Traits.EndPointMode, Traits.StateDynamics}
+struct StateEndPointConfig{T0<:Real,X0,TF<:Real} <:
+       AbstractConfigWithMaC{X0,Traits.EndPointMode,Traits.StateDynamics}
     t0::T0
     x0::X0
     tf::TF
-    StateEndPointConfig{T0, X0, TF}(t0, x0, tf) where {T0<:Real, X0, TF<:Real} = new{T0, X0, TF}(t0, x0, tf)
+    function StateEndPointConfig{T0,X0,TF}(t0, x0, tf) where {T0<:Real,X0,TF<:Real}
+        return new{T0,X0,TF}(t0, x0, tf)
+    end
     function StateEndPointConfig(t0::Real, x0, tf::Real)
         t = float(t0)
         X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
         T = float(tf)
-        new{typeof(t), typeof(X), typeof(T)}(t, X, T)
+        return new{typeof(t),typeof(X),typeof(T)}(t, X, T)
     end
 end
 
@@ -65,17 +68,19 @@ StateTrajectoryConfig
 
 See also: [`CTFlows.Configs.StateEndPointConfig`](@ref)
 """
-struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0} <: AbstractConfigWithMaC{X0, Traits.TrajectoryMode, Traits.StateDynamics}
+struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real},X0} <:
+       AbstractConfigWithMaC{X0,Traits.TrajectoryMode,Traits.StateDynamics}
     tspan::TS
     x0::X0
-    StateTrajectoryConfig{TS, X0}(tspan, x0) where {TS<:Tuple{<:Real,<:Real}, X0} = new{TS, X0}(tspan, x0)
+    function StateTrajectoryConfig{TS,X0}(tspan, x0) where {TS<:Tuple{<:Real,<:Real},X0}
+        return new{TS,X0}(tspan, x0)
+    end
     function StateTrajectoryConfig(tspan::Tuple{<:Real,<:Real}, x0)
         TS = float.(tspan)
         X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
-        new{typeof(TS), typeof(X)}(TS, X)
+        return new{typeof(TS),typeof(X)}(TS, X)
     end
 end
-
 
 """
 $(TYPEDEF)
@@ -106,18 +111,23 @@ HamiltonianEndPointConfig
 
 See also: [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Configs.StateEndPointConfig`](@ref).
 """
-struct HamiltonianEndPointConfig{T0<:Real, X0, P0, TF<:Real} <: AbstractConfigWithMaC{X0, Traits.EndPointMode, Traits.HamiltonianDynamics}
+struct HamiltonianEndPointConfig{T0<:Real,X0,P0,TF<:Real} <:
+       AbstractConfigWithMaC{X0,Traits.EndPointMode,Traits.HamiltonianDynamics}
     t0::T0
     x0::X0
     p0::P0
     tf::TF
-    HamiltonianEndPointConfig{T0, X0, P0, TF}(t0, x0, p0, tf) where {T0<:Real, X0, P0, TF<:Real} = new{T0, X0, P0, TF}(t0, x0, p0, tf)
+    function HamiltonianEndPointConfig{T0,X0,P0,TF}(
+        t0, x0, p0, tf
+    ) where {T0<:Real,X0,P0,TF<:Real}
+        return new{T0,X0,P0,TF}(t0, x0, p0, tf)
+    end
     function HamiltonianEndPointConfig(t0::Real, x0, p0, tf::Real)
         t = float(t0)
         X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
         P = eltype(p0) <: AbstractFloat ? p0 : float.(p0)
         T = float(tf)
-        new{typeof(t), typeof(X), typeof(P), typeof(T)}(t, X, P, T)
+        return new{typeof(t),typeof(X),typeof(P),typeof(T)}(t, X, P, T)
     end
 end
 
@@ -148,16 +158,21 @@ HamiltonianTrajectoryConfig
 
 See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref).
 """
-struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real}, X0, P0} <: AbstractConfigWithMaC{X0, Traits.TrajectoryMode, Traits.HamiltonianDynamics}
+struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real},X0,P0} <:
+       AbstractConfigWithMaC{X0,Traits.TrajectoryMode,Traits.HamiltonianDynamics}
     tspan::TS
     x0::X0
     p0::P0
-    HamiltonianTrajectoryConfig{TS, X0, P0}(tspan, x0, p0) where {TS<:Tuple{<:Real,<:Real}, X0, P0} = new{TS, X0, P0}(tspan, x0, p0)
+    function HamiltonianTrajectoryConfig{TS,X0,P0}(
+        tspan, x0, p0
+    ) where {TS<:Tuple{<:Real,<:Real},X0,P0}
+        return new{TS,X0,P0}(tspan, x0, p0)
+    end
     function HamiltonianTrajectoryConfig(tspan::Tuple{<:Real,<:Real}, x0, p0)
         TS = float.(tspan)
         X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
         P = eltype(p0) <: AbstractFloat ? p0 : float.(p0)
-        new{typeof(TS), typeof(X), typeof(P)}(TS, X, P)
+        return new{typeof(TS),typeof(X),typeof(P)}(TS, X, P)
     end
 end
 
@@ -192,20 +207,25 @@ AugmentedHamiltonianEndPointConfig
 
 See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref), [`CTBase.Traits.AugmentedHamiltonianDynamics`](@extref).
 """
-struct AugmentedHamiltonianEndPointConfig{T0<:Real, X0, P0, PV0, TF<:Real} <: AbstractAugmentedHamiltonianConfig{X0, Traits.EndPointMode}
+struct AugmentedHamiltonianEndPointConfig{T0<:Real,X0,P0,PV0,TF<:Real} <:
+       AbstractAugmentedHamiltonianConfig{X0,Traits.EndPointMode}
     t0::T0
     x0::X0
     p0::P0
     pv0::PV0
     tf::TF
-    AugmentedHamiltonianEndPointConfig{T0, X0, P0, PV0, TF}(t0, x0, p0, pv0, tf) where {T0<:Real, X0, P0, PV0, TF<:Real} = new{T0, X0, P0, PV0, TF}(t0, x0, p0, pv0, tf)
+    function AugmentedHamiltonianEndPointConfig{T0,X0,P0,PV0,TF}(
+        t0, x0, p0, pv0, tf
+    ) where {T0<:Real,X0,P0,PV0,TF<:Real}
+        return new{T0,X0,P0,PV0,TF}(t0, x0, p0, pv0, tf)
+    end
     function AugmentedHamiltonianEndPointConfig(t0::Real, x0, p0, pv0, tf::Real)
         t = float(t0)
         X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
         P = eltype(p0) <: AbstractFloat ? p0 : float.(p0)
         PV = eltype(pv0) <: AbstractFloat ? pv0 : float.(pv0)
         T = float(tf)
-        new{typeof(t), typeof(X), typeof(P), typeof(PV), typeof(T)}(t, X, P, PV, T)
+        return new{typeof(t),typeof(X),typeof(P),typeof(PV),typeof(T)}(t, X, P, PV, T)
     end
 end
 

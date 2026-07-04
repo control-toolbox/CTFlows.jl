@@ -42,11 +42,11 @@ sys = SciMLFunctionSystem(f)
 ```
 """
 struct SciMLFunctionSystem{
-    F <: SciMLBase.AbstractODEFunction,
+    F<:SciMLBase.AbstractODEFunction,
     RHS<:Systems.AbstractIPRHS,
     OOPROHS<:Systems.AbstractOoPRHS,
-    FINRHS
-} <: Systems.AbstractStateSystem{Traits.NonAutonomous, Traits.NonFixed}
+    FINRHS,
+} <: Systems.AbstractStateSystem{Traits.NonAutonomous,Traits.NonFixed}
     f::F
     rhs_fn::RHS
     rhs_oop_fn::OOPROHS
@@ -74,10 +74,12 @@ and out-of-place with type conversion for immutable arrays.
 See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@ref).
 """
 function SciMLFunctionSystem(f::SciMLBase.AbstractODEFunction{true})
-    rhs_fn              = IPSciMLIpRHS(f)
-    rhs_oop_fn          = OoPSciMLIpRHS(f)
+    rhs_fn = IPSciMLIpRHS(f)
+    rhs_oop_fn = OoPSciMLIpRHS(f)
     rhs_oop_finalize_fn = OoPSciMLIpFinalizeRHS(f)
-    return SciMLFunctionSystem{typeof(f), typeof(rhs_fn), typeof(rhs_oop_fn), typeof(rhs_oop_finalize_fn)}(
+    return SciMLFunctionSystem{
+        typeof(f),typeof(rhs_fn),typeof(rhs_oop_fn),typeof(rhs_oop_finalize_fn)
+    }(
         f, rhs_fn, rhs_oop_fn, rhs_oop_finalize_fn
     )
 end
@@ -99,9 +101,9 @@ since the function is already out-of-place.
 See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@ref).
 """
 function SciMLFunctionSystem(f::SciMLBase.AbstractODEFunction{false})
-    rhs_fn     = IPSciMLOoPRHS(f)
+    rhs_fn = IPSciMLOoPRHS(f)
     rhs_oop_fn = OoPSciMLOoPRHS(f)
-    return SciMLFunctionSystem{typeof(f), typeof(rhs_fn), typeof(rhs_oop_fn), Nothing}(
+    return SciMLFunctionSystem{typeof(f),typeof(rhs_fn),typeof(rhs_oop_fn),Nothing}(
         f, rhs_fn, rhs_oop_fn, nothing
     )
 end
@@ -144,7 +146,9 @@ Eager implementation: ignores the config and returns the pre-computed closure.
 
 See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
-function Systems.get_oop_rhs(sys::SciMLFunctionSystem{F, RHS, OOPROHS, Nothing}, _) where {F, RHS, OOPROHS}
+function Systems.get_oop_rhs(
+    sys::SciMLFunctionSystem{F,RHS,OOPROHS,Nothing}, _
+) where {F,RHS,OOPROHS}
     return sys.rhs_oop_fn
 end
 
@@ -168,7 +172,9 @@ This method is called when `!ismutable(u0)`, so always returns `rhs_oop_finalize
 
 See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
-function Systems.get_oop_rhs(sys::SciMLFunctionSystem{F, RHS, OOPROHS, FINRHS}, _) where {F, RHS, OOPROHS, FINRHS}
+function Systems.get_oop_rhs(
+    sys::SciMLFunctionSystem{F,RHS,OOPROHS,FINRHS}, _
+) where {F,RHS,OOPROHS,FINRHS}
     @warn "InPlace SciMLFunction with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
     return sys.rhs_oop_finalize_fn
 end
@@ -190,14 +196,14 @@ Shows the type name, the wrapped ODE function type, and its mutability trait.
 
 See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref).
 """
-function Base.show(io::IO, sys::SciMLFunctionSystem{F}) where F
+function Base.show(io::IO, sys::SciMLFunctionSystem{F}) where {F}
     fmt = Display.format_codes(io)
     iip = SciMLBase.isinplace(sys.f)
     wraps = "ODEFunction: non-autonomous, variable, " * (iip ? "in-place" : "out-of-place")
     rhs = "$(nameof(typeof(sys.rhs_fn))) ($(_rhs_sciml_label(sys.rhs_fn)))"
-    Display.print_header(io, "SciMLFunctionSystem"; fmt = fmt)
-    Display.print_field(io, "wraps", wraps; fmt = fmt, value_style = "")
-    Display.print_field(io, "rhs", rhs; last = true, fmt = fmt, value_style = "")
+    Display.print_header(io, "SciMLFunctionSystem"; fmt=fmt)
+    Display.print_field(io, "wraps", wraps; fmt=fmt, value_style="")
+    return Display.print_field(io, "rhs", rhs; last=true, fmt=fmt, value_style="")
 end
 
 """
@@ -215,5 +221,5 @@ Delegates to the compact show method.
 See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref).
 """
 function Base.show(io::IO, ::MIME"text/plain", sys::SciMLFunctionSystem)
-    show(io, sys)
+    return show(io, sys)
 end

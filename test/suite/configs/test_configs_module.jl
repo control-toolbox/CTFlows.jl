@@ -16,8 +16,8 @@
 
 module TestConfigsModule
 
-import Test
-import CTFlows
+using Test: Test
+using CTFlows: CTFlows
 import CTFlows.Configs
 using CTFlows.Configs  # For testing exported symbols
 
@@ -159,12 +159,18 @@ function test_configs_module()
                 Test.@test Configs.StateEndPointConfig <: Configs.AbstractStateConfig
                 Test.@test Configs.StateTrajectoryConfig <: Configs.AbstractTrajectoryConfig
                 Test.@test Configs.StateTrajectoryConfig <: Configs.AbstractStateConfig
-                Test.@test Configs.HamiltonianEndPointConfig <: Configs.AbstractEndPointConfig
-                Test.@test Configs.HamiltonianEndPointConfig <: Configs.AbstractHamiltonianConfig
-                Test.@test Configs.HamiltonianTrajectoryConfig <: Configs.AbstractTrajectoryConfig
-                Test.@test Configs.HamiltonianTrajectoryConfig <: Configs.AbstractHamiltonianConfig
-                Test.@test Configs.AugmentedHamiltonianEndPointConfig <: Configs.AbstractEndPointConfig
-                Test.@test Configs.AugmentedHamiltonianEndPointConfig <: Configs.AbstractAugmentedHamiltonianConfig
+                Test.@test Configs.HamiltonianEndPointConfig <:
+                    Configs.AbstractEndPointConfig
+                Test.@test Configs.HamiltonianEndPointConfig <:
+                    Configs.AbstractHamiltonianConfig
+                Test.@test Configs.HamiltonianTrajectoryConfig <:
+                    Configs.AbstractTrajectoryConfig
+                Test.@test Configs.HamiltonianTrajectoryConfig <:
+                    Configs.AbstractHamiltonianConfig
+                Test.@test Configs.AugmentedHamiltonianEndPointConfig <:
+                    Configs.AbstractEndPointConfig
+                Test.@test Configs.AugmentedHamiltonianEndPointConfig <:
+                    Configs.AbstractAugmentedHamiltonianConfig
             end
         end
     end

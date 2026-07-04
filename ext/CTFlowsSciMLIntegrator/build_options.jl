@@ -21,7 +21,9 @@ the final state is needed.
 
 See also: [`CTFlows.Integrators.build_options`](@ref), [`CTFlows.Configs.AbstractEndPointConfig`](@ref).
 """
-function Integrators.build_options(integ::Integrators.SciML, config::Configs.AbstractEndPointConfig)
+function Integrators.build_options(
+    integ::Integrators.SciML, config::Configs.AbstractEndPointConfig
+)
     return Integrators.options_point(integ)
 end
 
@@ -43,7 +45,9 @@ storage and interpolation.
 
 See also: [`CTFlows.Integrators.build_options`](@ref), [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref).
 """
-function Integrators.build_options(integ::Integrators.SciML, config::Configs.AbstractTrajectoryConfig)
+function Integrators.build_options(
+    integ::Integrators.SciML, config::Configs.AbstractTrajectoryConfig
+)
     return Integrators.options_trajectory(integ)
 end
 

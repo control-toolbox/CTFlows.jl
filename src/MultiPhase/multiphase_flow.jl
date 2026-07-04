@@ -28,12 +28,13 @@ See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref),
 [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Flows.Flow`](@ref).
 """
 struct MultiPhaseFlow{
-        TD<:Traits.TimeDependence,
-        VD<:Traits.VariableDependence,
-        D<:Traits.AbstractDynamicsTrait,
-        FS<:Tuple,
-        ST<:Vector{<:Real},
-        J<:Vector{<:Any}} <: Flows.AbstractFlow{TD, VD, D}
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    D<:Traits.AbstractDynamicsTrait,
+    FS<:Tuple,
+    ST<:Vector{<:Real},
+    J<:Vector{<:Any},
+} <: Flows.AbstractFlow{TD,VD,D}
     flows::FS
     switching_times::ST
     jumps::J
@@ -46,8 +47,9 @@ Alias for state multi-phase flows: `MultiPhaseFlow{TD,VD,StateDynamics,FS,ST,J}`
 
 See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@ref), [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref).
 """
-const MultiPhaseStateFlow{TD, VD, FS, ST, J} =
-    MultiPhaseFlow{TD, VD, Traits.StateDynamics, FS, ST, J}
+const MultiPhaseStateFlow{TD,VD,FS,ST,J} = MultiPhaseFlow{
+    TD,VD,Traits.StateDynamics,FS,ST,J
+}
 
 """
 $(TYPEDEF)
@@ -56,27 +58,40 @@ Alias for Hamiltonian multi-phase flows: `MultiPhaseFlow{TD,VD,HamiltonianDynami
 
 See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@ref), [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref).
 """
-const MultiPhaseHamiltonianFlow{TD, VD, FS, ST, J} =
-    MultiPhaseFlow{TD, VD, Traits.HamiltonianDynamics, FS, ST, J}
+const MultiPhaseHamiltonianFlow{TD,VD,FS,ST,J} = MultiPhaseFlow{
+    TD,VD,Traits.HamiltonianDynamics,FS,ST,J
+}
 
-function MultiPhaseStateFlow(flows::FS, switching_times::ST, jumps::J) where {FS<:Tuple, ST, J}
+function MultiPhaseStateFlow(
+    flows::FS, switching_times::ST, jumps::J
+) where {FS<:Tuple,ST,J}
     f1 = flows[1]
     return MultiPhaseFlow{
         Traits.time_dependence(f1),
         Traits.variable_dependence(f1),
         Traits.StateDynamics,
-        FS, ST, J,
-    }(flows, switching_times, jumps)
+        FS,
+        ST,
+        J,
+    }(
+        flows, switching_times, jumps
+    )
 end
 
-function MultiPhaseHamiltonianFlow(flows::FS, switching_times::ST, jumps::J) where {FS<:Tuple, ST, J}
+function MultiPhaseHamiltonianFlow(
+    flows::FS, switching_times::ST, jumps::J
+) where {FS<:Tuple,ST,J}
     f1 = flows[1]
     return MultiPhaseFlow{
         Traits.time_dependence(f1),
         Traits.variable_dependence(f1),
         Traits.HamiltonianDynamics,
-        FS, ST, J,
-    }(flows, switching_times, jumps)
+        FS,
+        ST,
+        J,
+    }(
+        flows, switching_times, jumps
+    )
 end
 
 """
@@ -256,10 +271,18 @@ Return a human-readable display name for a `MultiPhaseFlow`, dispatching on the 
 
 See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@ref).
 """
-function _multiphase_display_name(::MultiPhaseFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.StateDynamics})
+function _multiphase_display_name(
+    ::MultiPhaseFlow{
+        <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.StateDynamics
+    },
+)
     return "MultiPhaseStateFlow"
 end
-function _multiphase_display_name(::MultiPhaseFlow{<:Traits.TimeDependence, <:Traits.VariableDependence, Traits.HamiltonianDynamics})
+function _multiphase_display_name(
+    ::MultiPhaseFlow{
+        <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.HamiltonianDynamics
+    },
+)
     return "MultiPhaseHamiltonianFlow"
 end
 function _multiphase_display_name(mpf::MultiPhaseFlow)
@@ -282,20 +305,25 @@ Display a multi-phase flow in a human-readable format.
 """
 function Base.show(io::IO, ::MIME"text/plain", mpf::MultiPhaseFlow)
     fmt = Display.format_codes(io)
-    Display.print_header(io, _multiphase_display_name(mpf); fmt = fmt)
-    Display.print_field(io, "phases", length(mpf.flows); fmt = fmt, value_style = fmt.count)
+    Display.print_header(io, _multiphase_display_name(mpf); fmt=fmt)
+    Display.print_field(io, "phases", length(mpf.flows); fmt=fmt, value_style=fmt.count)
     sys = Flows.system(mpf)
     if !isempty(sys)
-        Display.print_field(io, "systems",
-            join(map(s -> string(nameof(typeof(s))), sys), ", "); fmt = fmt)
+        Display.print_field(
+            io, "systems", join(map(s -> string(nameof(typeof(s))), sys), ", "); fmt=fmt
+        )
     end
     integ = Flows.integrator(mpf)
     if !isempty(integ)
-        Display.print_field(io, "integrators",
-            join(map(i -> string(nameof(typeof(i))), integ), ", "); fmt = fmt)
+        Display.print_field(
+            io,
+            "integrators",
+            join(map(i -> string(nameof(typeof(i))), integ), ", ");
+            fmt=fmt,
+        )
     end
-    Display.print_field(io, "switching_times", mpf.switching_times; fmt = fmt)
-    Display.print_field(io, "jumps", mpf.jumps; last = true, fmt = fmt)
+    Display.print_field(io, "switching_times", mpf.switching_times; fmt=fmt)
+    return Display.print_field(io, "jumps", mpf.jumps; last=true, fmt=fmt)
 end
 
 """
@@ -318,5 +346,5 @@ function Base.show(io::IO, mpf::MultiPhaseFlow)
     push!(parts, "phases=$(length(mpf.flows))")
     push!(parts, "switching_times=$(mpf.switching_times)")
     print(io, join(parts, ", "))
-    print(io, ")")
+    return print(io, ")")
 end

@@ -38,7 +38,9 @@ end
 
 See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Systems.get_ip_rhs_augmented`](@ref), [`CTBase.Traits.time_dependence`](@extref), [`CTBase.Traits.variable_dependence`](@extref).
 """
-abstract type AbstractSystem{TD<:Traits.TimeDependence, VD<:Traits.VariableDependence, D<:Traits.AbstractDynamicsTrait} end
+abstract type AbstractSystem{
+    TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,D<:Traits.AbstractDynamicsTrait
+} end
 
 """
 $(TYPEDEF)
@@ -61,7 +63,7 @@ true
 
 See also: [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
 """
-const AbstractStateSystem{TD, VD} = AbstractSystem{TD, VD, Traits.StateDynamics}
+const AbstractStateSystem{TD,VD} = AbstractSystem{TD,VD,Traits.StateDynamics}
 
 """
 $(TYPEDEF)
@@ -86,7 +88,7 @@ true
 
 See also: [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Systems.AbstractStateSystem`](@ref).
 """
-const AbstractHamiltonianSystem{TD, VD} = AbstractSystem{TD, VD, Traits.HamiltonianDynamics}
+const AbstractHamiltonianSystem{TD,VD} = AbstractSystem{TD,VD,Traits.HamiltonianDynamics}
 
 """
 $(TYPEDSIGNATURES)
@@ -165,7 +167,9 @@ Traits.time_dependence(MySystem)  # Returns Autonomous
 
 See also: [`CTBase.Traits.has_time_dependence_trait`](@extref), `is_autonomous`, [`CTFlows.Systems.AbstractSystem`](@ref).
 """
-function Traits.time_dependence(::AbstractSystem{TD, <:Traits.VariableDependence, <:Traits.AbstractDynamicsTrait}) where {TD <: Traits.TimeDependence}
+function Traits.time_dependence(
+    ::AbstractSystem{TD,<:Traits.VariableDependence,<:Traits.AbstractDynamicsTrait}
+) where {TD<:Traits.TimeDependence}
     return TD
 end
 
@@ -190,7 +194,9 @@ Traits.variable_dependence(MySystem)  # Returns Fixed
 
 See also: [`CTBase.Traits.has_variable_dependence_trait`](@extref), `is_variable`, [`CTFlows.Systems.AbstractSystem`](@ref).
 """
-function Traits.variable_dependence(::AbstractSystem{<:Traits.TimeDependence, VD, <:Traits.AbstractDynamicsTrait}) where {VD <: Traits.VariableDependence}
+function Traits.variable_dependence(
+    ::AbstractSystem{<:Traits.TimeDependence,VD,<:Traits.AbstractDynamicsTrait}
+) where {VD<:Traits.VariableDependence}
     return VD
 end
 
@@ -204,7 +210,9 @@ Extract the dynamics trait from an `AbstractSystem`.
 
 See also: [`CTBase.Traits.AbstractDynamicsTrait`](@extref), [`CTFlows.Systems.AbstractStateSystem`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
 """
-function Traits.dynamics_trait(::AbstractSystem{<:Traits.TimeDependence, <:Traits.VariableDependence, D}) where {D <: Traits.AbstractDynamicsTrait}
+function Traits.dynamics_trait(
+    ::AbstractSystem{<:Traits.TimeDependence,<:Traits.VariableDependence,D}
+) where {D<:Traits.AbstractDynamicsTrait}
     return D
 end
 
@@ -253,12 +261,12 @@ Lazy systems (e.g., `HamiltonianSystem`) read `x0`/`p0` from the config to build
 See also: [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Systems.get_ip_rhs_augmented`](@ref).
 """
 function get_ip_rhs(system::AbstractSystem, config)
-    throw(
+    return throw(
         Exceptions.NotImplemented(
             "AbstractSystem get_ip_rhs method not implemented";
-            required_method = "get_ip_rhs(sys::$(typeof(system)), config)",
-            suggestion = "Implement get_ip_rhs for your system type.",
-            context = "AbstractSystem.get_ip_rhs - required method implementation",
+            required_method="get_ip_rhs(sys::$(typeof(system)), config)",
+            suggestion="Implement get_ip_rhs for your system type.",
+            context="AbstractSystem.get_ip_rhs - required method implementation",
         ),
     )
 end
@@ -287,12 +295,12 @@ Lazy systems read `x0`/`p0` from the config to build type-specific closures.
 See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_ip_rhs_augmented`](@ref).
 """
 function get_oop_rhs(system::AbstractSystem, config)
-    throw(
+    return throw(
         Exceptions.NotImplemented(
             "AbstractSystem get_oop_rhs method not implemented";
-            required_method = "get_oop_rhs(sys::$(typeof(system)), config)",
-            suggestion = "Implement get_oop_rhs for your system type.",
-            context = "AbstractSystem.get_oop_rhs - required method implementation",
+            required_method="get_oop_rhs(sys::$(typeof(system)), config)",
+            suggestion="Implement get_oop_rhs for your system type.",
+            context="AbstractSystem.get_oop_rhs - required method implementation",
         ),
     )
 end
@@ -318,12 +326,12 @@ Only applicable to Hamiltonian systems with variable costate support.
 See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
 function get_ip_rhs_augmented(system::AbstractHamiltonianSystem, config)
-    throw(
+    return throw(
         Exceptions.NotImplemented(
             "AbstractHamiltonianSystem get_ip_rhs_augmented method not implemented";
-            required_method = "get_ip_rhs_augmented(sys::$(typeof(system)), config)",
-            suggestion = "Implement get_ip_rhs_augmented for your Hamiltonian system type.",
-            context = "AbstractHamiltonianSystem.get_ip_rhs_augmented - required method implementation",
+            required_method="get_ip_rhs_augmented(sys::$(typeof(system)), config)",
+            suggestion="Implement get_ip_rhs_augmented for your Hamiltonian system type.",
+            context="AbstractHamiltonianSystem.get_ip_rhs_augmented - required method implementation",
         ),
     )
 end

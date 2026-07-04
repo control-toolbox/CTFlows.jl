@@ -13,8 +13,8 @@
 
 module TestMultiPhaseModule
 
-import Test
-import CTFlows
+using Test: Test
+using CTFlows: CTFlows
 import CTFlows.MultiPhase
 using CTFlows.MultiPhase  # For testing exported symbols
 
@@ -31,9 +31,7 @@ const CurrentModule = TestMultiPhaseModule
 const EXPORTED_ABSTRACT_TYPES = ()
 
 const EXPORTED_CONCRETE_TYPES = (
-    :MultiPhaseStateFlow,
-    :MultiPhaseHamiltonianFlow,
-    :AnyMultiPhaseFlow,
+    :MultiPhaseStateFlow, :MultiPhaseHamiltonianFlow, :AnyMultiPhaseFlow
 )
 
 const EXPORTED_FUNCTIONS = (
@@ -138,7 +136,8 @@ function test_multiphase_module()
                 Test.@test isdefined(MultiPhase, :MultiPhaseStateFlow)
                 Test.@test isdefined(MultiPhase, :MultiPhaseHamiltonianFlow)
                 # The two aliases are not the same type
-                Test.@test MultiPhase.MultiPhaseStateFlow !== MultiPhase.MultiPhaseHamiltonianFlow
+                Test.@test MultiPhase.MultiPhaseStateFlow !==
+                    MultiPhase.MultiPhaseHamiltonianFlow
             end
         end
     end

@@ -1,6 +1,6 @@
 module TestODEParameters
 
-import Test
+using Test: Test
 import CTFlows.Systems
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
@@ -18,7 +18,6 @@ function test_ode_parameters()
         # ====================================================================
 
         Test.@testset "Constructor" begin
-
             Test.@testset "accepts nothing for Fixed systems" begin
                 params = Systems.ODEParameters(nothing)
                 Test.@test Systems.variable(params) === nothing
@@ -61,7 +60,6 @@ function test_ode_parameters()
         # ====================================================================
 
         Test.@testset "Type parameters" begin
-
             Test.@testset "infers Nothing type" begin
                 params = Systems.ODEParameters(nothing)
                 Test.@test params isa Systems.ODEParameters{Nothing}

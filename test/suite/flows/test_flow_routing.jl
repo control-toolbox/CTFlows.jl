@@ -4,7 +4,7 @@ Unit and integration tests for flow routing via CTBase.Strategies.
 
 module TestFlowRouting
 
-import Test
+using Test: Test
 import CTBase.Exceptions
 import CTBase.Strategies
 import CTFlows.Flows
@@ -13,7 +13,7 @@ import CTFlows.Integrators
 import CTBase.Data
 import CTFlows.Systems
 import CTBase.Traits
-import ADTypes
+using ADTypes: ADTypes
 using OrdinaryDiffEqTsit5
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
@@ -24,8 +24,7 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # ==============================================================================
 
 const _TEST_H = Data.Hamiltonian(
-    (t, x, p, v) -> 0.5 * (x[1]^2 + p[1]^2);
-    is_autonomous=true, is_variable=false
+    (t, x, p, v) -> 0.5 * (x[1]^2 + p[1]^2); is_autonomous=true, is_variable=false
 )
 
 function test_flow_routing()
@@ -51,9 +50,13 @@ function test_flow_routing()
             registry = Flows.flow_registry()
             Test.@test registry isa Strategies.StrategyRegistry
             # Check that strategies are registered
-            backend_ids = Strategies.strategy_ids(Differentiation.AbstractADBackend, registry)
+            backend_ids = Strategies.strategy_ids(
+                Differentiation.AbstractADBackend, registry
+            )
             Test.@test :di in backend_ids
-            integrator_ids = Strategies.strategy_ids(Integrators.AbstractIntegrator, registry)
+            integrator_ids = Strategies.strategy_ids(
+                Integrators.AbstractIntegrator, registry
+            )
             Test.@test :sciml in integrator_ids
         end
 
@@ -89,7 +92,9 @@ function test_flow_routing()
         # ====================================================================
 
         Test.@testset "Error: _route_flow_options — unknown option" begin
-            Test.@test_throws Exceptions.IncorrectArgument Flows._route_flow_options((; unknown_option=42))
+            Test.@test_throws Exceptions.IncorrectArgument Flows._route_flow_options((;
+                unknown_option=42
+            ))
         end
 
         # ====================================================================
@@ -117,7 +122,6 @@ function test_flow_routing()
             Test.@test Flows.integrator(flow) isa Integrators.AbstractIntegrator
         end
 
-
         Test.@testset "Integration: Flow(h; reltol=1e-9)" begin
             flow = Flows.Flow(_TEST_H; reltol=1e-9)
             Test.@test flow isa Flows.HamiltonianFlow
@@ -133,7 +137,6 @@ function test_flow_routing()
             Test.@test flow isa Flows.HamiltonianFlow
             Test.@test Flows.system(flow) isa Systems.AbstractHamiltonianSystem
         end
-
     end
 end
 

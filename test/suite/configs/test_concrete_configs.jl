@@ -1,6 +1,6 @@
 module TestConcreteConfigs
 
-import Test
+using Test: Test
 import CTFlows.Configs
 import CTBase.Traits
 
@@ -40,7 +40,9 @@ function test_concrete_configs()
             end
 
             Test.@testset "HamiltonianTrajectoryConfig construction" begin
-                config = Configs.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
+                config = Configs.HamiltonianTrajectoryConfig(
+                    (0.0, 1.0), [1.0, 0.0], [0.5, 0.3]
+                )
                 Test.@test config isa Configs.HamiltonianTrajectoryConfig
                 Test.@test config.tspan == (0.0, 1.0)
                 Test.@test config.x0 == [1.0, 0.0]
@@ -48,7 +50,9 @@ function test_concrete_configs()
             end
 
             Test.@testset "AugmentedHamiltonianEndPointConfig construction" begin
-                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+                config = Configs.AugmentedHamiltonianEndPointConfig(
+                    0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0
+                )
                 Test.@test config isa Configs.AugmentedHamiltonianEndPointConfig
                 Test.@test config.t0 === 0.0
                 Test.@test config.x0 == [1.0, 0.0]
@@ -89,8 +93,10 @@ function test_concrete_configs()
                 Test.@test config isa Configs.AbstractEndPointConfig
                 Test.@test config isa Configs.AbstractHamiltonianConfig
                 Test.@test Configs.HamiltonianEndPointConfig <: Configs.AbstractConfig
-                Test.@test Configs.HamiltonianEndPointConfig <: Configs.AbstractEndPointConfig
-                Test.@test Configs.HamiltonianEndPointConfig <: Configs.AbstractHamiltonianConfig
+                Test.@test Configs.HamiltonianEndPointConfig <:
+                    Configs.AbstractEndPointConfig
+                Test.@test Configs.HamiltonianEndPointConfig <:
+                    Configs.AbstractHamiltonianConfig
             end
 
             Test.@testset "HamiltonianTrajectoryConfig subtypes" begin
@@ -99,16 +105,22 @@ function test_concrete_configs()
                 Test.@test config isa Configs.AbstractTrajectoryConfig
                 Test.@test config isa Configs.AbstractHamiltonianConfig
                 Test.@test Configs.HamiltonianTrajectoryConfig <: Configs.AbstractConfig
-                Test.@test Configs.HamiltonianTrajectoryConfig <: Configs.AbstractTrajectoryConfig
-                Test.@test Configs.HamiltonianTrajectoryConfig <: Configs.AbstractHamiltonianConfig
+                Test.@test Configs.HamiltonianTrajectoryConfig <:
+                    Configs.AbstractTrajectoryConfig
+                Test.@test Configs.HamiltonianTrajectoryConfig <:
+                    Configs.AbstractHamiltonianConfig
             end
 
             Test.@testset "AugmentedHamiltonianEndPointConfig subtypes" begin
-                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0], [0.5], [0.0], 1.0)
+                config = Configs.AugmentedHamiltonianEndPointConfig(
+                    0.0, [1.0], [0.5], [0.0], 1.0
+                )
                 Test.@test config isa Configs.AbstractAugmentedHamiltonianConfig
                 Test.@test config isa Configs.AbstractEndPointConfig
-                Test.@test Configs.AugmentedHamiltonianEndPointConfig <: Configs.AbstractAugmentedHamiltonianConfig
-                Test.@test Configs.AugmentedHamiltonianEndPointConfig <: Configs.AbstractEndPointConfig
+                Test.@test Configs.AugmentedHamiltonianEndPointConfig <:
+                    Configs.AbstractAugmentedHamiltonianConfig
+                Test.@test Configs.AugmentedHamiltonianEndPointConfig <:
+                    Configs.AbstractEndPointConfig
             end
         end
 
@@ -118,28 +130,38 @@ function test_concrete_configs()
 
         Test.@testset "UNIT TESTS - AugmentedHamiltonianEndPointConfig Specific Methods" begin
             Test.@testset "AugmentedHamiltonianEndPointConfig initial_condition" begin
-                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+                config = Configs.AugmentedHamiltonianEndPointConfig(
+                    0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0
+                )
                 ic = Configs.initial_condition(config)
                 Test.@test ic == [1.0, 0.0, 0.5, 0.3, 0.0, 0.0]
             end
 
             Test.@testset "AugmentedHamiltonianEndPointConfig initial_state" begin
-                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+                config = Configs.AugmentedHamiltonianEndPointConfig(
+                    0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0
+                )
                 Test.@test Configs.initial_state(config) == [1.0, 0.0]
             end
 
             Test.@testset "AugmentedHamiltonianEndPointConfig initial_costate" begin
-                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+                config = Configs.AugmentedHamiltonianEndPointConfig(
+                    0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0
+                )
                 Test.@test Configs.initial_costate(config) == [0.5, 0.3]
             end
 
             Test.@testset "AugmentedHamiltonianEndPointConfig initial_variable_costate" begin
-                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+                config = Configs.AugmentedHamiltonianEndPointConfig(
+                    0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0
+                )
                 Test.@test Configs.initial_variable_costate(config) == [0.0, 0.0]
             end
 
             Test.@testset "AugmentedHamiltonianEndPointConfig tspan" begin
-                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+                config = Configs.AugmentedHamiltonianEndPointConfig(
+                    0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0
+                )
                 Test.@test Configs.tspan(config) == (0.0, 1.0)
             end
         end
@@ -150,11 +172,18 @@ function test_concrete_configs()
 
         Test.@testset "TYPE STABILITY TESTS" begin
             Test.@testset "Type Stability: AugmentedHamiltonianEndPointConfig getters" begin
-                config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
-                Test.@test_nowarn Test.@inferred(Configs.initial_condition(config)) == [1.0, 0.0, 0.5, 0.3, 0.0, 0.0]
-                Test.@test_nowarn Test.@inferred(Configs.initial_state(config)) == [1.0, 0.0]
-                Test.@test_nowarn Test.@inferred(Configs.initial_costate(config)) == [0.5, 0.3]
-                Test.@test_nowarn Test.@inferred(Configs.initial_variable_costate(config)) == [0.0, 0.0]
+                config = Configs.AugmentedHamiltonianEndPointConfig(
+                    0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0
+                )
+                Test.@test_nowarn Test.@inferred(Configs.initial_condition(config)) ==
+                    [1.0, 0.0, 0.5, 0.3, 0.0, 0.0]
+                Test.@test_nowarn Test.@inferred(Configs.initial_state(config)) ==
+                    [1.0, 0.0]
+                Test.@test_nowarn Test.@inferred(Configs.initial_costate(config)) ==
+                    [0.5, 0.3]
+                Test.@test_nowarn Test.@inferred(
+                    Configs.initial_variable_costate(config)
+                ) == [0.0, 0.0]
                 Test.@test_nowarn Test.@inferred(Configs.tspan(config)) == (0.0, 1.0)
             end
         end

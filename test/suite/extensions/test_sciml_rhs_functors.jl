@@ -1,6 +1,6 @@
 module TestSciMLRHSFunctors
 
-import Test
+using Test: Test
 import CTFlows: CTFlows
 import CTBase.Traits: Traits
 import CTFlows.Systems: Systems
@@ -185,7 +185,6 @@ function test_sciml_rhs_functors()
             Test.@test occursin("OoPSciMLOoPRHS", sprint(show, oop_oop))
             Test.@test occursin("converts:", sprint(show, oop_oop))
         end
-
     end
 end
 

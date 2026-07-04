@@ -1,6 +1,6 @@
 module TestMultiPhaseFlow
 
-import Test
+using Test: Test
 import CTFlows.MultiPhase
 import CTFlows.Systems
 import CTFlows.Integrators
@@ -14,7 +14,7 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # Fake types for testing
 # ==============================================================================
 
-struct FakeStateSystem <: Systems.AbstractStateSystem{Traits.Autonomous, Traits.Fixed}
+struct FakeStateSystem <: Systems.AbstractStateSystem{Traits.Autonomous,Traits.Fixed}
     data::Vector{Float64}
 end
 
@@ -39,7 +39,6 @@ Strategies.options(integ::FakeIntegrator) = Options.StrategyOptions()
 
 function test_multiphase_flow()
     Test.@testset "MultiPhaseFlow Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
-
         Test.@testset "MultiPhaseStateFlow" begin
             sys = FakeStateSystem([1.0, 2.0])
             integ = FakeIntegrator(:fake_result)
@@ -133,7 +132,8 @@ function test_multiphase_flow()
                 result = MultiPhase.get_switching_times(flow)
                 Test.@test result isa Vector{Real}
                 Test.@test length(result) == 0
-                Test.@test Test.@inferred(MultiPhase.get_switching_times(flow)) isa Vector{Real}
+                Test.@test Test.@inferred(MultiPhase.get_switching_times(flow)) isa
+                    Vector{Real}
             end
 
             Test.@testset "get_jumps returns empty Any vector" begin
