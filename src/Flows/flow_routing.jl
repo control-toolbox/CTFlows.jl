@@ -20,7 +20,8 @@ See also: [`_route_flow_options`](@ref), [`flow_registry`](@ref)
 """
 function _flow_families()
     return (
-        backend=Differentiation.AbstractADBackend, integrator=Integrators.AbstractIntegrator
+        backend = Differentiation.AbstractADBackend,
+        integrator = Integrators.AbstractIntegrator,
     )
 end
 
@@ -81,16 +82,52 @@ routed = Flows._route_flow_options((; reltol=1e-8, ad_backend=ADTypes.AutoForwar
 See also: [`_flow_families`](@ref), [`_build_flow_components`](@ref),
 [`CTBase.Orchestration.route_all_options`](@extref)
 """
-function _route_flow_options(kwargs)
+function _route_flow_options(
+    kwargs;
+    action_defs::Vector{<:Options.OptionDefinition} = Options.OptionDefinition[],
+)
     return Orchestration.route_all_options(
         _FLOW_DESCRIPTION,
         _flow_families(),
-        Options.OptionDefinition[],
+        action_defs,
         (; kwargs...),
         flow_registry();
-        source_mode=:description,
+        source_mode = :description,
     )
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the action-level option definitions for control flows. Currently a single
+option, `hamiltonian_type` (`:total` or `:partial`), routed as a first-class action
+option so it is accepted only where meaningful (the control-law flow constructors) and
+rejected as an unknown option elsewhere.
+
+See also: [`_route_flow_options`](@ref), [`_unwrap_option`](@ref).
+"""
+function _flow_action_defs()
+    return [
+        Options.OptionDefinition(;
+            name = :hamiltonian_type,
+            aliases = (),
+            type = Symbol,
+            default = :total,
+            description = "Hamiltonian type for DynClosedLoop flows: :total or :partial",
+        ),
+    ]
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Read an action option value from a routed `action` NamedTuple entry: unwrap an
+[`CTBase.Options.OptionValue`](@extref), or fall back when the entry is `nothing`.
+
+See also: [`_flow_action_defs`](@ref), [`_route_flow_options`](@ref).
+"""
+_unwrap_option(opt::Options.OptionValue, fallback) = opt.value
+_unwrap_option(opt, fallback) = opt === nothing ? fallback : opt
 
 """
 $(TYPEDSIGNATURES)
@@ -123,10 +160,18 @@ function _build_flow_components(routed)
     families = _flow_families()
     resolved = Orchestration.resolve_method(_FLOW_DESCRIPTION, families, flow_registry())
     backend = Orchestration.build_strategy_from_resolved(
-        resolved, :backend, families, flow_registry(); routed.strategies.backend...
+        resolved,
+        :backend,
+        families,
+        flow_registry();
+        routed.strategies.backend...,
     )
     integrator = Orchestration.build_strategy_from_resolved(
-        resolved, :integrator, families, flow_registry(); routed.strategies.integrator...
+        resolved,
+        :integrator,
+        families,
+        flow_registry();
+        routed.strategies.integrator...,
     )
-    return (backend=backend, integrator=integrator)
+    return (backend = backend, integrator = integrator)
 end
