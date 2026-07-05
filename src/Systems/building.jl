@@ -110,7 +110,33 @@ HamiltonianSystem
 See also: [`CTBase.Data.Hamiltonian`](@extref), [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTBase.Differentiation.AbstractADBackend`](@extref).
 """
 function build_system(
-    h::Data.AbstractHamiltonian, backend::Differentiation.AbstractADBackend
+    h::Data.AbstractHamiltonian,
+    backend::Differentiation.AbstractADBackend,
 )
     return HamiltonianSystem(h, backend)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Build a [`CTFlows.Systems.PseudoHamiltonianSystem`](@ref) from a pseudo-Hamiltonian
+`H̃(t,x,p,u,v)`, a dynamic closed-loop control law `u(t,x,p,v)`, and an AD backend.
+
+The resulting system integrates `ẋ = ∂H̃/∂p`, `ṗ = -∂H̃/∂x` with the control held fixed
+at the feedback value `u = u(t,x,p,v)` during differentiation (the `:partial` mode).
+
+# Arguments
+- `h̃::Data.PseudoHamiltonian`: the pseudo-Hamiltonian.
+- `law::Data.ControlLaw`: the control law; must carry `DynClosedLoopFeedback`.
+- `backend::Differentiation.AbstractADBackend`: the AD backend.
+
+See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@ref),
+[`CTBase.Data.PseudoHamiltonian`](@extref), [`CTBase.Data.ComposedHamiltonian`](@extref).
+"""
+function build_system(
+    h̃::Data.PseudoHamiltonian,
+    law::Data.ControlLaw{<:Function,Traits.DynClosedLoopFeedback},
+    backend::Differentiation.AbstractADBackend,
+)
+    return PseudoHamiltonianSystem(h̃, law, backend)
 end
