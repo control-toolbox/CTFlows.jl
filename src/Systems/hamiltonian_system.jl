@@ -123,8 +123,8 @@ function get_ip_rhs(sys::HamiltonianSystem, config::Configs.AbstractHamiltonianC
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
     N = _state_dim(x0)
-    cx = Core.make_coerce(x0)
-    cp = Core.make_coerce(p0)
+    cx = _coerce_state(x0)
+    cp = _coerce_state(p0)
     h, backend = sys.h, sys.backend
     return HamIpRHS(h, backend, N, cx, cp)
 end
@@ -149,8 +149,8 @@ function get_oop_rhs(sys::HamiltonianSystem, config::Configs.AbstractHamiltonian
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
     N = _state_dim(x0)
-    cx = Core.make_coerce(x0)
-    cp = Core.make_coerce(p0)
+    cx = _coerce_state(x0)
+    cp = _coerce_state(p0)
     h, backend = sys.h, sys.backend
     return HamOoPRHS(h, backend, N, cx, cp)
 end
@@ -179,8 +179,8 @@ function get_ip_rhs_augmented(
     n_x = _state_dim(x0)
     pv0 = Configs.initial_variable_costate(config)
     n_v = _state_dim(pv0)
-    cx = Core.make_coerce(x0)
-    cp = Core.make_coerce(p0)
+    cx = _coerce_state(x0)
+    cp = _coerce_state(p0)
     h, backend = sys.h, sys.backend
     return HamIpAugRHS(h, backend, n_x, n_v, cx, cp)
 end

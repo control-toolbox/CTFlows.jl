@@ -75,7 +75,9 @@ end
 # Analytical solution: x(t) = x0 + p0 * (t-t0) / sum(v), p(t) = p0, pv(t) = pv0 - sum(p0^2) * (t-t0) / (2 * sum(v)^2)
 H_LINEAR(x, p, v) = sum(abs2, p) / (2 * sum(v))
 function solve_linear(t, t0, x0, p0, v)
-    pv0 = Core.make_coerce(v)(zeros(length(v)))
+    # Align the reference costate shape with the "1-D = scalar" convention:
+    # a length-1 variable yields a scalar variable costate (like the flow).
+    pv0 = Systems._coerce_state(v)(zeros(length(v)))
     dt = t - t0
     sv = sum(v)
     x = x0 .+ p0 .* (dt / sv)
@@ -298,7 +300,7 @@ function test_variable_costate_flows()
                 hflow = Flows.build_flow(HSYS_DI, INTEG)
                 t0, tf = 0.0, 1.0
                 x0, p0 = 1.0, 2.0
-                v = [3.0] # TODO: should work with a scalar.
+                v = [3.0] # length-1 variable → scalar variable costate (1-D = scalar)
                 xf, pf, pvf = hflow(t0, x0, p0, tf; variable=v, variable_costate=true)
 
                 # Analytical solution
@@ -306,7 +308,7 @@ function test_variable_costate_flows()
 
                 Test.@test xf isa Real
                 Test.@test pf isa Real
-                # Test.@test pvf isa Real
+                Test.@test pvf isa Real
                 Test.@test xf ≈ xf_ref atol=ATOL
                 Test.@test pf ≈ pf_ref atol=ATOL
                 Test.@test pvf ≈ pvf_ref atol=ATOL

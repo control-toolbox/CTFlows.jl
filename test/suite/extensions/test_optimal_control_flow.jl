@@ -204,16 +204,16 @@ function test_optimal_control_flow()
             Test.@test pf isa Number
         end
 
-        Test.@testset "Unit: xf/pf shape — vector inputs → AbstractVector" begin
+        Test.@testset "Unit: xf/pf shape — length-1 vector inputs → Number" begin
+            # 1-D = scalar: a length-1 vector initial condition collapses to a scalar
+            # output (via `only`), regardless of how the user supplied it.
             t0, tf = 0.0, 0.5
             x0, p0 = [1.0], [1.0]
             xf, pf = FLOW_AF(t0, x0, p0, tf)
-            Test.@test xf isa AbstractVector
-            Test.@test length(xf) == 1
-            Test.@test pf isa AbstractVector
-            Test.@test length(pf) == 1
-            Test.@test xf[1] ≈ _x_ref(tf, t0, x0[1]) atol=ATOL
-            Test.@test pf[1] ≈ _p_ref(tf, t0, p0[1]) atol=ATOL
+            Test.@test xf isa Number
+            Test.@test pf isa Number
+            Test.@test xf ≈ _x_ref(tf, t0, x0[1]) atol=ATOL
+            Test.@test pf ≈ _p_ref(tf, t0, p0[1]) atol=ATOL
         end
 
         # ── point eval, NonFixed/Autonomous ──────────────────────────────────
@@ -249,13 +249,13 @@ function test_optimal_control_flow()
             Test.@test pvf[1] ≈ _pv_ref(tf, t0, x0, p0) atol=ATOL
         end
 
-        Test.@testset "Unit: pvf shape — vector variable → AbstractVector" begin
+        Test.@testset "Unit: pvf shape — length-1 vector variable → Number" begin
+            # 1-D = scalar: a length-1 variable yields a scalar variable costate.
             t0, tf = 0.0, 0.5
             xf, pf, pvf = FLOW_ANF(
                 t0, 1.0, 1.0, tf; variable=[λ_TEST], variable_costate=true
             )
-            Test.@test pvf isa AbstractVector
-            Test.@test length(pvf) == 1
+            Test.@test pvf isa Number
         end
 
         Test.@testset "Unit: pvf shape — scalar variable → Number" begin

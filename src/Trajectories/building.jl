@@ -30,6 +30,10 @@ function build_trajectory(
     result::Integrators.AbstractIntegrationResult,
     variable=Core.NotProvided,
 )
+    # State-only flows (bare VectorField, SciMLBase ODE adapters) are shape-preserving:
+    # the user's array is the contract, so a length-1 vector round-trips as a length-1
+    # vector (`make_coerce`). The "1-D = scalar" collapse applies only to Hamiltonian/OCP
+    # flows (costate/control semantics), handled by the HamiltonianDynamics methods below.
     return Core.make_coerce(Configs.initial_state(config))(Integrators.final_state(result))
 end
 
@@ -86,9 +90,9 @@ For Hamiltonian systems, `n_p = n_x` always, so the augmented state is `[x; p; p
 function _aug_split_solution(u, x0, pv0)
     n = length(x0)
     return (
-        Core.make_coerce(x0)(u[1:n]),
-        Core.make_coerce(x0)(u[(n + 1):2n]),
-        Core.make_coerce(pv0)(u[(2n + 1):end]),
+        Systems._coerce_state(x0)(u[1:n]),
+        Systems._coerce_state(x0)(u[(n + 1):2n]),
+        Systems._coerce_state(pv0)(u[(2n + 1):end]),
     )
 end
 
@@ -128,7 +132,7 @@ function build_trajectory(
     u = Integrators.final_state(result)
     x0 = Configs.initial_state(config)
     x, p = _ham_split_solution(u, x0)
-    return (Core.make_coerce(x0)(x), Core.make_coerce(x0)(p))
+    return (Systems._coerce_state(x0)(x), Systems._coerce_state(x0)(p))
 end
 
 """
