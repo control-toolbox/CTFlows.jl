@@ -494,7 +494,7 @@ function _invoke_flow_variable_costate(
     t0 = Configs.initial_time(config)
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
-    pv0 = Core.make_coerce(variable)(zeros(eltype(x0), length(variable)))
+    pv0 = Systems._coerce_state(variable)(zeros(eltype(x0), length(variable)))
     tf = Configs.final_time(config)
     config_aug = Configs.AugmentedHamiltonianEndPointConfig(t0, x0, p0, pv0, tf)
     return _invoke_flow(flow, config_aug; variable=variable, unsafe=unsafe)

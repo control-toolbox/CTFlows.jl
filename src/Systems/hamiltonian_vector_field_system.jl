@@ -74,6 +74,34 @@ _state_dim(::Number) = 1
 _state_dim(x::AbstractVector) = length(x)
 _state_dim(x::AbstractMatrix) = size(x, 1)
 
+"""
+    _coerce_state(::Number) = only
+    _coerce_state(::AbstractMatrix) = identity
+    _coerce_state(x::AbstractVector) = length(x) == 1 ? only : identity
+
+Return the coercion applied to a 1-D quantity (state, costate, variable costate)
+of a **Hamiltonian/OCP flow** so that it is represented as a **scalar** when it has
+length 1, and left untouched otherwise.
+
+This enforces the ecosystem convention *"a 1-dimensional quantity is a scalar"* for
+the control-theoretic layer: both `2.0` and `[2.0]` collapse to the scalar `2.0`
+via `only`, regardless of how the user supplied the initial condition. Vectors of
+length ≥ 2 and matrices (batch mode) are left untouched via `identity`.
+
+Scope: applied only on Hamiltonian paths (`HamiltonianSystem`,
+`HamiltonianVectorFieldSystem`, augmented variable-costate, and the
+`HamiltonianDynamics` trajectory builders). **State-only flows** (bare
+`VectorField`, SciMLBase ODE adapters) stay shape-preserving via
+`CTBase.Core.make_coerce`, because a raw ODE state carries no 1-D control
+convention — the user's array is the contract there.
+
+Differs from `CTBase.Core.make_coerce` only in that a length-1 vector collapses to
+a scalar (`only`) instead of being kept as a 1-vector (`identity`).
+"""
+_coerce_state(::Number) = only
+_coerce_state(::AbstractMatrix) = identity
+_coerce_state(x::AbstractVector) = length(x) == 1 ? only : identity
+
 # =============================================================================
 # Internal helpers for split/assign (dispatch on array type)
 # =============================================================================
@@ -230,7 +258,7 @@ function get_ip_rhs(
 ) where {F,TD,VD}
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
-    return IPHVFOoPRHS(sys.hvf, _state_dim(x0), Core.make_coerce(x0), Core.make_coerce(p0))
+    return IPHVFOoPRHS(sys.hvf, _state_dim(x0), _coerce_state(x0), _coerce_state(p0))
 end
 
 """
@@ -255,7 +283,7 @@ function get_ip_rhs(
 ) where {F,TD,VD}
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
-    return IPHVFIpRHS(sys.hvf, _state_dim(x0), Core.make_coerce(x0), Core.make_coerce(p0))
+    return IPHVFIpRHS(sys.hvf, _state_dim(x0), _coerce_state(x0), _coerce_state(p0))
 end
 
 """
@@ -280,7 +308,7 @@ function get_oop_rhs(
 ) where {F,TD,VD}
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
-    return OoPHVFOoPRHS(sys.hvf, _state_dim(x0), Core.make_coerce(x0), Core.make_coerce(p0))
+    return OoPHVFOoPRHS(sys.hvf, _state_dim(x0), _coerce_state(x0), _coerce_state(p0))
 end
 
 """
@@ -312,10 +340,10 @@ function get_oop_rhs(
     if !ismutable(x0)
         @warn "InPlace HamiltonianVectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
         return OoPHVFIpFinalizeRHS(
-            sys.hvf, _state_dim(x0), Core.make_coerce(x0), Core.make_coerce(p0)
+            sys.hvf, _state_dim(x0), _coerce_state(x0), _coerce_state(p0)
         )
     end
-    return OoPHVFIpRHS(sys.hvf, _state_dim(x0), Core.make_coerce(x0), Core.make_coerce(p0))
+    return OoPHVFIpRHS(sys.hvf, _state_dim(x0), _coerce_state(x0), _coerce_state(p0))
 end
 
 """
@@ -343,7 +371,7 @@ function get_ip_rhs_augmented(
     n_x = _state_dim(x0)
     pv0 = Configs.initial_variable_costate(config)
     n_v = _state_dim(pv0)
-    return IPHVFOoPAugRHS(sys.hvf, n_x, n_v, Core.make_coerce(x0), Core.make_coerce(p0))
+    return IPHVFOoPAugRHS(sys.hvf, n_x, n_v, _coerce_state(x0), _coerce_state(p0))
 end
 
 """
@@ -371,7 +399,7 @@ function get_ip_rhs_augmented(
     n_x = _state_dim(x0)
     pv0 = Configs.initial_variable_costate(config)
     n_v = _state_dim(pv0)
-    return IPHVFIpAugRHS(sys.hvf, n_x, n_v, Core.make_coerce(x0), Core.make_coerce(p0))
+    return IPHVFIpAugRHS(sys.hvf, n_x, n_v, _coerce_state(x0), _coerce_state(p0))
 end
 
 # =============================================================================
