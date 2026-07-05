@@ -36,9 +36,11 @@ include(joinpath(@__DIR__, "abstract_system.jl"))
 include(joinpath(@__DIR__, "rhs_functors.jl"))
 include(joinpath(@__DIR__, "hvf_rhs_functors.jl"))
 include(joinpath(@__DIR__, "hamiltonian_rhs_functors.jl"))
+include(joinpath(@__DIR__, "pseudo_hamiltonian_rhs_functors.jl"))
 include(joinpath(@__DIR__, "vector_field_system.jl"))
 include(joinpath(@__DIR__, "hamiltonian_vector_field_system.jl"))
 include(joinpath(@__DIR__, "hamiltonian_system.jl"))
+include(joinpath(@__DIR__, "pseudo_hamiltonian_system.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 include(joinpath(@__DIR__, "hamiltonian_getter.jl"))
 
@@ -51,6 +53,8 @@ export AbstractSystem, AbstractStateSystem, AbstractHamiltonianSystem
 export AbstractRHS, AbstractIPRHS, AbstractOoPRHS
 export AbstractHVFRHS, AbstractIPHVFRHS, AbstractOoPHVFRHS
 export AbstractHamRHS, AbstractIPHamRHS, AbstractOoPHamRHS
+export AbstractPseudoHamRHS, AbstractIPPseudoHamRHS, AbstractOoPPseudoHamRHS
+export PseudoHamIpRHS, PseudoHamOoPRHS, PseudoHamIpAugRHS
 export get_ip_rhs
 export get_oop_rhs
 export get_ip_rhs_augmented
@@ -58,7 +62,9 @@ export hamiltonian_vector_field
 export VectorFieldSystem
 export HamiltonianVectorFieldSystem
 export HamiltonianSystem
+export PseudoHamiltonianSystem
 export build_system
 export hamiltonian, backend
+export pseudo_hamiltonian, control_law
 
 end # module Systems

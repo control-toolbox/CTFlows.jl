@@ -82,7 +82,7 @@ gradient in-place, following the canonical Hamiltonian equations:
 ```
 
 # Fields
-- `h::Data.Hamiltonian{F,TD,VD}`: The Hamiltonian function.
+- `h::H`: The Hamiltonian function (any `Data.AbstractHamiltonian`).
 - `backend::B`: The AD backend for gradient computation.
 - `N::Int`: State dimension (number of state variables).
 - `cx::CX`: State conversion function.
@@ -105,18 +105,23 @@ gradient in-place, following the canonical Hamiltonian equations:
 
 See also: [`CTFlows.Systems.HamOoPRHS`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
 """
-struct HamIpRHS{F,TD,VD,B,CX,CP} <: AbstractIPHamRHS
-    h::Data.Hamiltonian{F,TD,VD}
+struct HamIpRHS{H<:Data.AbstractHamiltonian,B,CX,CP} <: AbstractIPHamRHS
+    h::H
     backend::B
     N::Int
     cx::CX
     cp::CP
 end
 
-function (f::HamIpRHS{F,TD,VD,B,CX,CP})(du, u, λ, t) where {F,TD,VD,B,CX,CP}
+function (f::HamIpRHS)(du, u, λ, t)
     x, p = _ham_split(u, f.N)
     ∂x, ∂p = Differentiation.hamiltonian_gradient(
-        f.backend, f.h, t, f.cx(x), f.cp(p), variable(λ)
+        f.backend,
+        f.h,
+        t,
+        f.cx(x),
+        f.cp(p),
+        variable(λ),
     )
     _ham_assign!(du, ∂p, -∂x, f.N)
     return nothing
@@ -136,7 +141,7 @@ gradient out-of-place, following the canonical Hamiltonian equations:
 ```
 
 # Fields
-- `h::Data.Hamiltonian{F,TD,VD}`: The Hamiltonian function.
+- `h::H`: The Hamiltonian function (any `Data.AbstractHamiltonian`).
 - `backend::B`: The AD backend for gradient computation.
 - `N::Int`: State dimension (number of state variables).
 - `cx::CX`: State conversion function.
@@ -159,18 +164,23 @@ gradient out-of-place, following the canonical Hamiltonian equations:
 
 See also: [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
 """
-struct HamOoPRHS{F,TD,VD,B,CX,CP} <: AbstractOoPHamRHS
-    h::Data.Hamiltonian{F,TD,VD}
+struct HamOoPRHS{H<:Data.AbstractHamiltonian,B,CX,CP} <: AbstractOoPHamRHS
+    h::H
     backend::B
     N::Int
     cx::CX
     cp::CP
 end
 
-function (f::HamOoPRHS{F,TD,VD,B,CX,CP})(u, λ, t) where {F,TD,VD,B,CX,CP}
+function (f::HamOoPRHS)(u, λ, t)
     x, p = _ham_split(u, f.N)
     ∂x, ∂p = Differentiation.hamiltonian_gradient(
-        f.backend, f.h, t, f.cx(x), f.cp(p), variable(λ)
+        f.backend,
+        f.h,
+        t,
+        f.cx(x),
+        f.cp(p),
+        variable(λ),
     )
     return vcat(∂p, -∂x)
 end
@@ -206,9 +216,9 @@ function _check_aug_batch_compat(u::AbstractMatrix, v::AbstractMatrix)
         throw(
             Exceptions.PreconditionError(
                 "batch size mismatch in augmented Hamiltonian RHS";
-                reason="size(u, 2) = $(size(u, 2)) ≠ size(v, 2) = $(size(v, 2))",
-                context="HamIpAugRHS — matrix batch mode",
-                suggestion="variable v must have the same number of columns as the state u",
+                reason = "size(u, 2) = $(size(u, 2)) ≠ size(v, 2) = $(size(v, 2))",
+                context = "HamIpAugRHS — matrix batch mode",
+                suggestion = "variable v must have the same number of columns as the state u",
             ),
         )
     end
@@ -247,7 +257,7 @@ costate evolution, used in sensitivity analysis and optimal control:
 The state vector is augmented as `[x; p; v]` where `v` is the variable costate.
 
 # Fields
-- `h::Data.Hamiltonian{F,TD,VD}`: The Hamiltonian function.
+- `h::H`: The Hamiltonian function (any `Data.AbstractHamiltonian`).
 - `backend::B`: The AD backend for gradient computation.
 - `n_x::Int`: State dimension (number of state variables).
 - `n_v::Int`: Variable dimension.
@@ -270,8 +280,8 @@ The state vector is augmented as `[x; p; v]` where `v` is the variable costate.
 
 See also: [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamOoPRHS`](@ref).
 """
-struct HamIpAugRHS{F,TD,VD,B,CX,CP} <: AbstractIPHamRHS
-    h::Data.Hamiltonian{F,TD,VD}
+struct HamIpAugRHS{H<:Data.AbstractHamiltonian,B,CX,CP} <: AbstractIPHamRHS
+    h::H
     backend::B
     n_x::Int
     n_v::Int
@@ -279,7 +289,7 @@ struct HamIpAugRHS{F,TD,VD,B,CX,CP} <: AbstractIPHamRHS
     cp::CP
 end
 
-function (f::HamIpAugRHS{F,TD,VD,B,CX,CP})(du, u, λ, t) where {F,TD,VD,B,CX,CP}
+function (f::HamIpAugRHS)(du, u, λ, t)
     v = variable(λ)
     _check_aug_batch_compat(u, v)
     x, p, _ = _aug_split(u, f.n_x, f.n_v)
@@ -317,10 +327,15 @@ function Base.show(io::IO, f::AbstractHamRHS)
     td = Traits.time_dependence(f.h)
     vd = Traits.variable_dependence(f.h)
     wraps = "Hamiltonian: $(Data._td_label(td)), $(Data._vd_label(vd))"
-    Display.print_header(io, nameof(typeof(f)); fmt=fmt)
-    Display.print_field(io, "wraps", wraps; fmt=fmt, value_style="")
+    Display.print_header(io, nameof(typeof(f)); fmt = fmt)
+    Display.print_field(io, "wraps", wraps; fmt = fmt, value_style = "")
     return Display.print_field(
-        io, "converts", _rhs_conversion_label(f); last=true, fmt=fmt, value_style=""
+        io,
+        "converts",
+        _rhs_conversion_label(f);
+        last = true,
+        fmt = fmt,
+        value_style = "",
     )
 end
 

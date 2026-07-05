@@ -13,13 +13,16 @@ types, ensuring correct handling of scalar, vector (including length-1), and mat
 inputs with consistent output shapes.
 
 # Type Parameters
-- `F`: concrete type of the wrapped Hamiltonian function.
 - `TD <: TimeDependence`: `Autonomous` or `NonAutonomous`.
 - `VD <: VariableDependence`: `Fixed` or `NonFixed`.
+- `H <: AbstractHamiltonian{TD, VD}`: concrete Hamiltonian type. Any
+  `CTBase.Data.AbstractHamiltonian` is accepted, including a
+  `CTBase.Data.ComposedHamiltonian` (a pseudo-Hamiltonian composed with a control law),
+  so the AD path differentiates *through* the control law.
 - `BACKEND <: AbstractADBackend`: concrete AD backend type.
 
 # Fields
-- `h::Hamiltonian{F, TD, VD}`: the underlying scalar Hamiltonian function.
+- `h::H`: the underlying scalar Hamiltonian function.
 - `backend::BACKEND`: the AD backend for gradient computation.
 
 # Example
@@ -40,12 +43,12 @@ HamiltonianSystem
 See also: [`CTBase.Data.Hamiltonian`](@extref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), [`CTBase.Traits.AbstractADTrait`](@extref), `build_rhs`, `build_oop_rhs`.
 """
 struct HamiltonianSystem{
-    F<:Function,
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
+    H<:Data.AbstractHamiltonian{TD,VD},
     BACKEND<:Differentiation.AbstractADBackend,
 } <: AbstractHamiltonianSystem{TD,VD}
-    h::Data.Hamiltonian{F,TD,VD}
+    h::H
     backend::BACKEND
 end
 
@@ -90,9 +93,10 @@ end
 # =============================================================================
 
 function HamiltonianSystem(
-    h::Data.Hamiltonian{F,TD,VD}, backend::Differentiation.AbstractADBackend
-) where {F,TD,VD}
-    return HamiltonianSystem{F,TD,VD,typeof(backend)}(h, backend)
+    h::Data.AbstractHamiltonian{TD,VD},
+    backend::Differentiation.AbstractADBackend,
+) where {TD,VD}
+    return HamiltonianSystem{TD,VD,typeof(h),typeof(backend)}(h, backend)
 end
 
 # =============================================================================
@@ -172,7 +176,8 @@ Lazy implementation: reads `x0`/`p0`/`pv0` from the config to build the augmente
 See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
 function get_ip_rhs_augmented(
-    sys::HamiltonianSystem, config::Configs.AbstractAugmentedHamiltonianConfig
+    sys::HamiltonianSystem,
+    config::Configs.AbstractAugmentedHamiltonianConfig,
 )
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
@@ -204,24 +209,29 @@ Display a Hamiltonian system in a human-readable format.
 """
 function Base.show(io::IO, sys::HamiltonianSystem)
     fmt = Display.format_codes(io)
-    Display.print_header(io, "HamiltonianSystem"; fmt=fmt)
+    Display.print_header(io, "HamiltonianSystem"; fmt = fmt)
     Display.print_field(
         io,
         "time_dependence",
         nameof(Traits.time_dependence(sys));
-        fmt=fmt,
-        value_style=fmt.type,
+        fmt = fmt,
+        value_style = fmt.type,
     )
     Display.print_field(
         io,
         "variable_dependence",
         nameof(Traits.variable_dependence(sys));
-        fmt=fmt,
-        value_style=fmt.type,
+        fmt = fmt,
+        value_style = fmt.type,
     )
-    Display.print_field(io, "", sys.h; fmt=fmt, value_style="")
+    Display.print_field(io, "", sys.h; fmt = fmt, value_style = "")
     return Display.print_field(
-        io, "backend", sys.backend; last=true, fmt=fmt, value_style=""
+        io,
+        "backend",
+        sys.backend;
+        last = true,
+        fmt = fmt,
+        value_style = "",
     )
 end
 
@@ -249,7 +259,7 @@ Return the variable costate capability trait of a variable-dependent Hamiltonian
 See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@extref), [`CTBase.Traits.SupportsVariableCostate`](@extref), [`CTBase.Traits.NoVariableCostate`](@extref).
 """
 function Traits.variable_costate_trait(
-    ::HamiltonianSystem{F,TD,Traits.NonFixed,B}
-) where {F,TD,B}
+    ::HamiltonianSystem{TD,Traits.NonFixed,H,B},
+) where {TD,H,B}
     return Traits.SupportsVariableCostate
 end
