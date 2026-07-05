@@ -6,9 +6,10 @@
 # OCPHamiltonianFunction — OCP Hamiltonian H(t,x,p,v) = p·f(t,x,∅,v) + sp0·ℓ(t,x,∅,v)
 #
 # TD/VD are compile-time parameters so dispatch selects the right natural-arity
-# method without runtime branches.  A single _ocp_H core does the work; scalar
-# inputs (x or p as Number when n_x=1) are rewrapped to 1-vectors so the always-
-# in-place CTModels dynamics receives the array it expects.
+# method without runtime branches.  A single _ocp_H core does the work; the state
+# (and variable) are passed to the dynamics as received — scalar for 1-D, vector for
+# n-D — per the "1-D = scalar" convention (CTModels stores the dynamics verbatim and
+# imposes no shape). The derivative buffer r is always a length-n_x vector.
 #
 # sp0 = s·p⁰ where p⁰=-1: sp0=-1 for :min, sp0=+1 for :max.
 # =============================================================================
@@ -49,45 +50,33 @@ const _CTM_Auton = CTModels.Components.Autonomous
 const _CTM_NonAuton = CTModels.Components.NonAutonomous
 
 """
-Rewrap a scalar to a 1-vector; leave arrays unchanged.
-
-This ensures the always-in-place CTModels dynamics receives the array it expects,
-even when the state or costate is a scalar `Number` (which happens when `n_x=1`).
-
-See also: [`OCPHamiltonianFunction`](@ref), `_ocp_H`.
-"""
-_asvec(z::Number) = [z]
-_asvec(z::AbstractVector) = z
-
-"""
 $(TYPEDSIGNATURES)
 
 Core computation of the OCP Hamiltonian value `H(t,x,p,v)`.
 
-Rewraps scalar `x` and `p` to 1-vectors via `_asvec`, calls the in-place dynamics,
-and accumulates `p·f + sp0·ℓ`. When `v === nothing` the variable is treated as an
-empty vector (used by `Fixed`-trait call paths).
+Passes `x` (and the variable `v`) to the in-place dynamics **as received** — a scalar
+for a 1-dimensional quantity, a vector otherwise (the ecosystem "1-D = scalar"
+convention) — and accumulates `p·f + sp0·ℓ`. The derivative buffer `r` is always a
+length-`n_x` vector. When `v === nothing` the variable is an empty vector (used by
+`Fixed`-trait call paths).
 
-See also: [`OCPHamiltonianFunction`](@ref), `_asvec`.
+See also: [`OCPHamiltonianFunction`](@ref).
 """
 function _ocp_H(h::OCPHamiltonianFunction, t, x, p, v)
-    xv = _asvec(x)
-    pv_arg = _asvec(p)
     if v === nothing
-        T = eltype(xv)
-        u = Vector{T}(undef, 0)
+        T = eltype(x)
+        u = Vector{T}(undef, 0)          # empty control (control-free) and variable (Fixed)
         r = Vector{T}(undef, h.n)
-        h.dynamics!(r, t, xv, u, u)
-        val = sum(pv_arg .* r)
-        h.lagrange === nothing || (val += h.sp0 * h.lagrange(t, xv, u, u))
+        h.dynamics!(r, t, x, u, u)       # x passed as-is (scalar for 1-D per convention)
+        val = sum(p .* r)
+        h.lagrange === nothing || (val += h.sp0 * h.lagrange(t, x, u, u))
     else
-        vv = _asvec(v)
-        T = Base.promote_op(*, eltype(xv), eltype(vv))
-        u = Vector{T}(undef, 0)
+        T = Base.promote_op(*, eltype(x), eltype(v))
+        u = Vector{T}(undef, 0)          # empty control (control-free)
         r = Vector{T}(undef, h.n)
-        h.dynamics!(r, t, xv, u, vv)
-        val = sum(pv_arg .* r)
-        h.lagrange === nothing || (val += h.sp0 * h.lagrange(t, xv, u, vv))
+        h.dynamics!(r, t, x, u, v)       # x, v passed as-is
+        val = sum(p .* r)
+        h.lagrange === nothing || (val += h.sp0 * h.lagrange(t, x, u, v))
     end
     return val
 end
@@ -190,27 +179,25 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Core computation of the OCP pseudo-Hamiltonian value `H̃(t,x,p,u,v)`. Rewraps scalar
-`x`, `p`, `u`, `v` to 1-vectors via `_asvec` (CTModels dynamics is always in-place on
-arrays), calls the dynamics, and accumulates `p·f + sp0·ℓ`.
+Core computation of the OCP pseudo-Hamiltonian value `H̃(t,x,p,u,v)`. Passes `x`, `u`
+(and the variable `v`) to the in-place dynamics **as received** — scalar for a
+1-dimensional quantity, vector otherwise ("1-D = scalar" convention) — and accumulates
+`p·f + sp0·ℓ`. The derivative buffer `r` is always a length-`n_x` vector.
 
-See also: [`OCPPseudoHamiltonianFunction`](@ref), `_asvec`.
+See also: [`OCPPseudoHamiltonianFunction`](@ref).
 """
 function _ocp_pseudo_H(h::OCPPseudoHamiltonianFunction, t, x, p, u, v)
-    xv = _asvec(x)
-    pv_arg = _asvec(p)
-    uv = _asvec(u)
     if v === nothing
-        T = Base.promote_op(*, eltype(xv), eltype(uv))
-        vv = Vector{T}(undef, 0)
+        T = Base.promote_op(*, eltype(x), eltype(u))
+        vv = Vector{T}(undef, 0)   # empty variable for Fixed problems
     else
-        vv = _asvec(v)
-        T = Base.promote_op(*, Base.promote_op(*, eltype(xv), eltype(uv)), eltype(vv))
+        T = Base.promote_op(*, Base.promote_op(*, eltype(x), eltype(u)), eltype(v))
+        vv = v
     end
-    r = Vector{T}(undef, h.n)
-    h.dynamics!(r, t, xv, uv, vv)
-    val = sum(pv_arg .* r)
-    h.lagrange === nothing || (val += h.sp0 * h.lagrange(t, xv, uv, vv))
+    r = Vector{T}(undef, h.n)      # in-place derivative buffer (always length n_x)
+    h.dynamics!(r, t, x, u, vv)    # x, u, v passed as-is (scalar for 1-D per convention)
+    val = sum(p .* r)             # p·f — sum handles scalar p (1-D) or vector p (n-D)
+    h.lagrange === nothing || (val += h.sp0 * h.lagrange(t, x, u, vv))
     return val
 end
 
@@ -405,7 +392,7 @@ function _ocp_objective(ocp, x, p, v, t0, tf, integ, law)
         # Integrate ℓ̇(t) = lag(t, x(t), u(t), v) from t0 to tf.
         # Use a 1-element Vector so SciML always has a mutable in-place buffer.
         running = Data.VectorField(
-            (t, ℓ_vec) -> [lag(t, x(t), _asvec(uc(t)), v)];
+            (t, ℓ_vec) -> [lag(t, x(t), uc(t), v)];
             is_autonomous = false,
             is_variable = false,
         )

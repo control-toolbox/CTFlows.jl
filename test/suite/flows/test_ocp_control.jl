@@ -25,14 +25,15 @@ _opts() = (; alg = Tsit5(), reltol = 1e-12, abstol = 1e-12)
 # =============================================================================
 
 # scalar LQR: ẋ = -x + u, ℓ = 0.5u², :min  (autonomous, fixed)
+# 1-D quantities are scalars (no [1] indexing): exercises the "1-D = scalar" convention.
 function _build_lqr()
     pre = CTModels.Building.PreModel()
     CTModels.Building.time_dependence!(pre; autonomous = true)
     CTModels.Building.time!(pre; t0 = 0.0, tf = 1.0)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = -x[1] + u[1]; nothing))
-    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> 0.5 * u[1]^2)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = -x + u; nothing))
+    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> 0.5 * u^2)
     return CTModels.Building.build(pre)
 end
 
@@ -55,11 +56,8 @@ function _build_nonauton()
     CTModels.Building.time!(pre; t0 = 0.0, tf = π / 4)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(
-        pre,
-        (r, t, x, u, v) -> (r[1] = u[1] * (1 + tan(t)); nothing),
-    )
-    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> 0.5 * u[1]^2)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = u * (1 + tan(t)); nothing))
+    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> 0.5 * u^2)
     return CTModels.Building.build(pre)
 end
 
@@ -69,8 +67,62 @@ function _build_control_free()
     CTModels.Building.time_dependence!(pre; autonomous = true)
     CTModels.Building.time!(pre; t0 = 0.0, tf = 1.0)
     CTModels.Building.state!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = x[1]; nothing))
-    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> x[1]^2)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = x; nothing))
+    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> x^2)
+    return CTModels.Building.build(pre)
+end
+
+# Mayer-only control OCP (no Lagrange): ẋ = -x + u, mayer = xf, :min
+function _build_mayer_control()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous = true)
+    CTModels.Building.time!(pre; t0 = 0.0, tf = 1.0)
+    CTModels.Building.state!(pre, 1)
+    CTModels.Building.control!(pre, 1)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = -x + u; nothing))
+    CTModels.Building.objective!(pre, :min; mayer = (x0, xf, v) -> xf)
+    return CTModels.Building.build(pre)
+end
+
+# variable (NonFixed) control OCP: ẋ = v·(-x) + u, ℓ = 0.5u², :min
+function _build_variable_control()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous = true)
+    CTModels.Building.time!(pre; t0 = 0.0, tf = 1.0)
+    CTModels.Building.state!(pre, 1)
+    CTModels.Building.control!(pre, 1)
+    CTModels.Building.variable!(pre, 1)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = v * (-x) + u; nothing))
+    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> 0.5 * u^2)
+    return CTModels.Building.build(pre)
+end
+
+# Type-recording (fake) dynamics: capture the argument types the dynamics is called
+# with, to verify the "1-D = scalar, n-D = vector" boundary convention. `x[1]`/`u[1]`
+# work for both scalars and vectors, so the compute is correct either way.
+const _DYN_SEEN = Ref{Any}(nothing)
+_typed_dyn_1d!(r, t, x, u, v) = (_DYN_SEEN[] = (x, u, v); r[1] = -x[1] + u[1]; nothing)
+_typed_dyn_2d!(r, t, x, u, v) = (_DYN_SEEN[] = (x, u, v); r .= [x[2], u[1]]; nothing)
+
+function _build_typed_1d()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous = true)
+    CTModels.Building.time!(pre; t0 = 0.0, tf = 1.0)
+    CTModels.Building.state!(pre, 1)
+    CTModels.Building.control!(pre, 1)
+    CTModels.Building.dynamics!(pre, _typed_dyn_1d!)
+    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> 0.5 * u[1]^2)
+    return CTModels.Building.build(pre)
+end
+
+function _build_typed_2d()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous = true)
+    CTModels.Building.time!(pre; t0 = 0.0, tf = 1.0)
+    CTModels.Building.state!(pre, 2)
+    CTModels.Building.control!(pre, 1)
+    CTModels.Building.dynamics!(pre, _typed_dyn_2d!)
+    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> 0.5 * u[1]^2)
     return CTModels.Building.build(pre)
 end
 
@@ -78,6 +130,10 @@ const OCP_LQR = _build_lqr()
 const OCP_DI = _build_double_integrator()
 const OCP_NA = _build_nonauton()
 const OCP_CF = _build_control_free()
+const OCP_MAYER = _build_mayer_control()
+const OCP_VAR = _build_variable_control()
+const OCP_TYPED_1D = _build_typed_1d()
+const OCP_TYPED_2D = _build_typed_2d()
 
 function test_ocp_control()
     Test.@testset "OCP control flows" verbose=VERBOSE showtiming=SHOWTIMING begin
@@ -184,6 +240,65 @@ function test_ocp_control()
             # costate ṗ = -∂H̃/∂x = p ⇒ p(tf) = p0 e^{tf}
             _, pf = ft(t0, x0, p0, tf)
             Test.@test pf ≈ p0 * exp(tf) atol = 1e-6
+        end
+
+        # ====================================================================
+        # INTEGRATION — variable (NonFixed) control OCP
+        # ====================================================================
+
+        Test.@testset "Integration: variable (NonFixed) control flow" begin
+            # ẋ = v(-x) + u, ℓ = 0.5u², :min ⇒ ∂H̃/∂u = p - u ; stationary law u = p.
+            law = Data.DynClosedLoop((x, p, v) -> p; is_variable = true)
+            ft = Flows.Flow(OCP_VAR, law; hamiltonian_type = :total, _opts()...)
+            fp = Flows.Flow(OCP_VAR, law; hamiltonian_type = :partial, _opts()...)
+            t0, tf, x0, p0, vval = 0.0, 1.0, 1.0, 0.5, 0.5
+            xt, pt = ft(t0, x0, p0, tf; variable = vval)
+            xp, pp = fp(t0, x0, p0, tf; variable = vval)
+            Test.@test xt ≈ xp atol = ATOL             # agree at stationarity
+            Test.@test pt ≈ pp atol = ATOL
+            # costate: ṗ = -∂H̃/∂x = p·v ⇒ p(tf) = p0·e^{v·tf}
+            Test.@test pt ≈ p0 * exp(vval * tf) atol = 1e-6
+        end
+
+        # ====================================================================
+        # INTEGRATION — Mayer-only control OCP (exercises lagrange === nothing)
+        # ====================================================================
+
+        Test.@testset "Integration: Mayer-only control flow (no Lagrange)" begin
+            # ẋ = -x + u, mayer only ; H̃ = p(-x+u) (no running cost).
+            law = Data.DynClosedLoop((x, p) -> p)
+            f = Flows.Flow(OCP_MAYER, law; _opts()...)
+            t0, tf, x0, p0 = 0.0, 1.0, 1.0, 0.5
+            xf, pf = f(t0, x0, p0, tf)
+            Test.@test xf isa Number && isfinite(xf)
+            Test.@test pf isa Number && isfinite(pf)
+            # ṗ = -∂H̃/∂x = p ⇒ p(tf) = p0·e^{tf}
+            Test.@test pf ≈ p0 * exp(tf) atol = 1e-6
+            # objective is the Mayer term x(tf); solution builds without a Lagrange integral
+            sol = f((t0, tf), x0, p0)
+            Test.@test CTModels.objective(sol) ≈ xf atol = 1e-6
+        end
+
+        # ====================================================================
+        # CONTRACT — the dynamics receives scalars for 1-D, vectors for n-D
+        # ====================================================================
+
+        Test.@testset "Contract: dynamics sees scalar x,u for 1-D" begin
+            _DYN_SEEN[] = nothing
+            f = Flows.Flow(OCP_TYPED_1D, Data.DynClosedLoop((x, p) -> p); _opts()...)
+            f(0.0, 1.0, 0.5, 1.0)
+            xseen, useen, _ = _DYN_SEEN[]
+            Test.@test xseen isa Number   # 1-D state → scalar (Dual during AD, still a Number)
+            Test.@test useen isa Number   # 1-D control → scalar
+        end
+
+        Test.@testset "Contract: dynamics sees vector x for n-D" begin
+            _DYN_SEEN[] = nothing
+            f = Flows.Flow(OCP_TYPED_2D, Data.DynClosedLoop((x, p) -> p[2]); _opts()...)
+            f(0.0, [1.0, 0.0], [1.0, 1.0], 1.0)
+            xseen, useen, _ = _DYN_SEEN[]
+            Test.@test xseen isa AbstractVector && length(xseen) == 2   # 2-D state → vector
+            Test.@test useen isa Number   # 1-D control → scalar even when the state is a vector
         end
 
         # ====================================================================
