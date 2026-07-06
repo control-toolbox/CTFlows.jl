@@ -96,7 +96,7 @@ function (F::ControlledFlow)(
     traj = F.flow(tspan, x0; variable, unsafe)   # VectorFieldTrajectory
     coerce = _controlled_state_coerce(F.ocp, x0)  # precomputed once (only / identity)
     obj = _controlled_objective(F.ocp, traj, F.law, variable, integrator(F.flow), coerce)
-    return Trajectories.ControlledTrajectory(traj, F.law, variable, obj, coerce)
+    return Trajectories.ControlledTrajectory(traj, F.law, variable, obj, coerce, F.ocp)
 end
 
 # State coercion (only for a 1-D state, identity otherwise), precomputed once — from the
