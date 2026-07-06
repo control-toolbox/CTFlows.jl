@@ -323,6 +323,14 @@ function Flow(fc::Data.ControlledVectorField, law::Data.ControlLaw; kwargs...)
     return _flow_from_controlled_vf(Traits.feedback(law), fc, law; kwargs...)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Dispatch helper for [`Flow(fc::ControlledVectorField, law)`](@ref): compose `fc` with an
+`OpenLoop`/`ClosedLoop` law into a [`CTFlows.Flows.ControlledFlow`](@ref) with no OCP.
+
+See also: [`CTFlows.Flows._controlled_flow`](@ref).
+"""
 function _flow_from_controlled_vf(
     ::Type{<:Union{Traits.OpenLoopFeedback,Traits.ClosedLoopFeedback}},
     fc::Data.ControlledVectorField,
@@ -332,6 +340,15 @@ function _flow_from_controlled_vf(
     return _controlled_flow(fc, law, nothing; kwargs...)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Reject a `DynClosedLoop` law in [`Flow(fc::ControlledVectorField, law)`](@ref): a
+dynamic closed-loop law `u(t,x,p,v)` needs the costate `p`, which a state flow of a
+vector field does not have.
+
+See also: [`Flow(h̃::Data.PseudoHamiltonian, law::Data.ControlLaw)`](@ref).
+"""
 function _flow_from_controlled_vf(
     ::Type{Traits.DynClosedLoopFeedback},
     ::Data.ControlledVectorField,
@@ -357,23 +374,28 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build an `OptimalControlFlow` from an OCP and a **control law** (dynamic closed-loop
-feedback `u(t,x,p,v)`).
+Build a flow from an OCP and a **control law**.
 
-Dispatches on the law's [`CTBase.Traits.feedback`](@extref) trait, then on the
-`hamiltonian_type` action option (`:total` default, or `:partial`), the same way as
-[`Flow(h̃::Data.PseudoHamiltonian, law::Data.ControlLaw)`](@ref). The OCP's dynamics and
-cost supply the pseudo-Hamiltonian `H̃(t,x,p,u,v) = p·f + sp0·ℓ`; the trajectory call
-returns a [`CTModels.Solutions.Solution`](@extref) with the control reconstructed from
-the law.
+Dispatches on the law's [`CTBase.Traits.feedback`](@extref) trait:
+- `DynClosedLoop` → an [`CTFlows.Flows.OptimalControlFlow`](@ref) (Hamiltonian flow),
+  using the `hamiltonian_type` action option (`:total` default, or `:partial`), the same
+  way as [`Flow(h̃::Data.PseudoHamiltonian, law::Data.ControlLaw)`](@ref). The OCP's
+  dynamics and cost supply the pseudo-Hamiltonian `H̃(t,x,p,u,v) = p·f + sp0·ℓ`; the
+  trajectory call returns a [`CTModels.Solutions.Solution`](@extref) with the control
+  reconstructed from the law.
+- `OpenLoop`/`ClosedLoop` → a [`CTFlows.Flows.ControlledFlow`](@ref) (state flow): the
+  control is eliminated via a [`CTBase.Data.ComposedVectorField`](@extref) and the OCP
+  dynamics are integrated as a state flow; the trajectory call returns a
+  [`CTFlows.Trajectories.ControlledTrajectory`](@ref).
 
 # Throws
 - [`CTBase.Exceptions.PreconditionError`](@extref): if the OCP is control-free.
-- [`CTBase.Exceptions.NotImplemented`](@extref): if the law is `OpenLoop`/`ClosedLoop`
-  (state-only flows are not wired yet).
+- [`CTBase.Exceptions.PreconditionError`](@extref): if a `DynClosedLoop` law is passed
+  to the state-flow path (should not happen via this constructor).
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): if `hamiltonian_type` is invalid.
 
-See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.OptimalControlFlow`](@ref).
+See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.OptimalControlFlow`](@ref),
+[`CTFlows.Flows.ControlledFlow`](@ref).
 """
 function Flow(ocp::CTModels.Models.Model, law::Data.ControlLaw; kwargs...)
     return _flow_from_ocp_control(Traits.feedback(law), ocp, law; kwargs...)
@@ -406,6 +428,14 @@ function Flow(ocp::CTModels.Models.Model, u::Function; kwargs...)
     return Flow(ocp, law; kwargs...)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Build an [`CTFlows.Flows.OptimalControlFlow`](@ref) from the OCP pseudo-Hamiltonian and
+a `DynClosedLoop` law, dispatching on the `hamiltonian_type` action option.
+
+See also: [`CTFlows.Flows._build_pseudo_flow`](@ref), [`CTFlows.Flows._ocp_pseudo_hamiltonian`](@ref).
+"""
 function _flow_from_ocp_control(
     ::Type{Traits.DynClosedLoopFeedback},
     ocp::CTModels.Models.Model,
@@ -428,6 +458,14 @@ function _flow_from_ocp_control(
     return OptimalControlFlow(inner, ocp, law)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Build a [`CTFlows.Flows.ControlledFlow`](@ref) (state flow) from the OCP controlled
+dynamics and an `OpenLoop`/`ClosedLoop` law.
+
+See also: [`CTFlows.Flows._controlled_flow`](@ref), [`CTFlows.Flows._ocp_controlled_vector_field`](@ref).
+"""
 function _flow_from_ocp_control(
     ::Type{<:Union{Traits.OpenLoopFeedback,Traits.ClosedLoopFeedback}},
     ocp::CTModels.Models.Model,

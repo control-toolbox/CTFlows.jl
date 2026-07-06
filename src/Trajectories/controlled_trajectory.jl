@@ -45,13 +45,29 @@ end
 # =============================================================================
 
 # open-loop u(t, v) ignores the state, closed-loop u(t, x, v) uses it.
+"""
+$(TYPEDSIGNATURES)
+
+Reconstruct the control from an `OpenLoop` law: `u(t, v)` (the state is ignored).
+"""
 function _controlled_u(law::Data.ControlLaw{<:Function,Traits.OpenLoopFeedback}, t, x, v)
     return law(t, v)
 end
+"""
+$(TYPEDSIGNATURES)
+
+Reconstruct the control from a `ClosedLoop` law: `u(t, x, v)`.
+"""
 function _controlled_u(law::Data.ControlLaw{<:Function,Traits.ClosedLoopFeedback}, t, x, v)
     return law(t, x, v)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Unwrap the variable passed to the flow call: return `nothing` when it was not provided
+(`Core.NotProvided`), otherwise return it as-is.
+"""
 _cp_variable(v) = v isa Core.NotProvidedType ? nothing : v
 
 """
@@ -65,6 +81,12 @@ struct ControlledStateProjection{T<:VectorFieldTrajectory,C} <: Function
     traj::T
     coerce::C
 end
+"""
+$(TYPEDSIGNATURES)
+
+Return the (1-D = scalar coerced) state at time `t` from a
+[`CTFlows.Trajectories.ControlledStateProjection`](@ref).
+"""
 (sp::ControlledStateProjection)(t::Real) = sp.coerce(sp.traj(t))
 
 """
@@ -82,6 +104,12 @@ struct ControlProjection{T<:VectorFieldTrajectory,L,V,C} <: Function
     coerce::C
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the reconstructed control at time `t`: `law(t, x(t), v)` with the state coerced
+(1-D = scalar).
+"""
 function (cp::ControlProjection)(t::Real)
     return _controlled_u(cp.law, t, cp.coerce(cp.traj(t)), _cp_variable(cp.variable))
 end
@@ -150,6 +178,14 @@ See also: [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.control`]
 """
 objective(sol::ControlledTrajectory{T,L,V,<:Real}) where {T,L,V} = sol.objective
 
+"""
+$(TYPEDSIGNATURES)
+
+Throw a [`CTBase.Exceptions.PreconditionError`](@extref) when the objective is not
+available (the trajectory was built without an OCP, e.g. from `Flow(fc, law)`).
+
+See also: [`CTFlows.Trajectories.objective`](@ref).
+"""
 function objective(sol::ControlledTrajectory{T,L,V,Nothing}) where {T,L,V}
     return throw(
         Exceptions.PreconditionError(
@@ -189,6 +225,12 @@ end
 # Base.show
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Pretty-print a [`CTFlows.Trajectories.ControlledTrajectory`](@ref) to `io` (multi-line
+format with tspan, time points, final state, variable, and objective when available).
+"""
 function Base.show(io::IO, ::MIME"text/plain", sol::ControlledTrajectory)
     fmt = Display.format_codes(io)
     Display.print_header(io, "ControlledTrajectory"; fmt = fmt)
@@ -214,6 +256,11 @@ function Base.show(io::IO, ::MIME"text/plain", sol::ControlledTrajectory)
     return Display.print_fields(io, fields; fmt = fmt)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Compact one-line representation of a [`CTFlows.Trajectories.ControlledTrajectory`](@ref).
+"""
 function Base.show(io::IO, sol::ControlledTrajectory)
     print(io, "ControlledTrajectory(")
     parts = String[]

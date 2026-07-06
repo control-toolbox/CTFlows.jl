@@ -1,13 +1,13 @@
 """
 $(TYPEDEF)
 
-Concrete `AbstractSystem` wrapping a `VectorField`. The variable for
-`NonFixed` vector fields is **not** stored here; it is passed at flow-call
+Concrete `AbstractSystem` wrapping an [`CTBase.Data.AbstractVectorField`](@extref). The
+variable for `NonFixed` vector fields is **not** stored here; it is passed at flow-call
 time via the `variable` kwarg and threaded through `ODEProblem`'s `p` slot
 wrapped in a `Systems.ODEParameters` struct.
 
 # Fields
-- `vf::VectorField{F, TD, VD, MD}`: the underlying vector field.
+- `vf::F`: the underlying vector field (any `Data.AbstractVectorField{TD,VD,MD}`).
 - `rhs::RHS`: the pre-computed in-place right-hand side closure with signature `(du, u, p, t) -> nothing`.
 - `rhs_oop::OOPROHS`: the pre-computed out-of-place right-hand side closure with signature `(u, p, t) -> du`.
 - `rhs_oop_finalize::FINRHS`: the finalize closure for in-place vector fields with immutable initial conditions, or `nothing` for out-of-place vector fields.

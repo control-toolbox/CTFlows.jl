@@ -42,15 +42,15 @@ abstract type AbstractOoPRHS <: AbstractRHS{Traits.OutOfPlace} end
 # =============================================================================
 
 """
-    IPVFOoPRHS{F,TD,VD} <: AbstractIPRHS
+    IPVFOoPRHS{VF<:Data.AbstractVectorField} <: AbstractIPRHS
 
-In-place RHS functor for an out-of-place VectorField.
+In-place RHS functor for an out-of-place vector field.
 
-Wraps an out-of-place VectorField and provides an in-place interface
-by allocating the result into the pre-allocated `du` buffer.
+Wraps an out-of-place [`CTBase.Data.AbstractVectorField`](@extref) and provides an
+in-place interface by allocating the result into the pre-allocated `du` buffer.
 
 # Fields
-- `vf::Data.VectorField{F,TD,VD,Traits.OutOfPlace}`: The wrapped VectorField
+- `vf::VF`: the wrapped out-of-place vector field (any `Data.AbstractVectorField`).
 
 # Call signature
 `(f::IPVFOoPRHS)(du, u, λ, t) -> nothing`
@@ -88,15 +88,15 @@ function (f::IPVFIpRHS)(du, u, λ, t)
 end
 
 """
-    OoPVFOoPRHS{F,TD,VD} <: AbstractOoPRHS
+    OoPVFOoPRHS{VF<:Data.AbstractVectorField} <: AbstractOoPRHS
 
-Out-of-place RHS functor for an out-of-place VectorField.
+Out-of-place RHS functor for an out-of-place vector field.
 
-Wraps an out-of-place VectorField and provides an out-of-place interface
-by directly calling the VectorField.
+Wraps an out-of-place [`CTBase.Data.AbstractVectorField`](@extref) and provides an
+out-of-place interface by directly calling the vector field.
 
 # Fields
-- `vf::Data.VectorField{F,TD,VD,Traits.OutOfPlace}`: The wrapped VectorField
+- `vf::VF`: the wrapped out-of-place vector field (any `Data.AbstractVectorField`).
 
 # Call signature
 `(f::OoPVFOoPRHS)(u, λ, t) -> du`

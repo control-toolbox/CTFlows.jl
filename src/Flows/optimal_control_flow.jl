@@ -294,11 +294,27 @@ struct OCPControlledVectorFieldFunction{TD,VD,DF,CX,CU,CV} <: Function
 end
 
 # 1-D = scalar: return a scalar when the state is a scalar, a vector otherwise.
+"""
+$(TYPEDSIGNATURES)
+
+Collapse a length-1 result buffer to a scalar (1-D state convention).
+"""
 _finalize_vf(r, ::Number) = only(r)
+"""
+$(TYPEDSIGNATURES)
+
+Return the result buffer as-is for an n-D (vector) state.
+"""
 _finalize_vf(r, ::AbstractVector) = r
 
 # Precomputed coercion from a declared dimension: `only` collapses a 1-D quantity to a
 # scalar (accepting both a scalar and a length-1 vector), `identity` leaves n-D untouched.
+"""
+$(TYPEDSIGNATURES)
+
+Precomputed coercion from a declared dimension: `only` collapses a 1-D quantity to a
+scalar (accepting both a scalar and a length-1 vector), `identity` leaves n-D untouched.
+"""
 _dim_coerce(dim::Int) = dim == 1 ? only : identity
 
 """
@@ -326,6 +342,19 @@ function _ocp_controlled_vf(h::OCPControlledVectorFieldFunction, t, x, u, v)
     return _finalize_vf(r, xs)
 end
 
+"""
+Call operators for [`OCPControlledVectorFieldFunction`](@ref), dispatching on the
+`(TD, VD)` trait pair for the correct arity:
+
+| `TD` / `VD` | Call signature | Effective call |
+|---|---|---|
+| `Auton` / `Fixed` | `fc(x, u)` | `f(0, x, u)` |
+| `NonAuton` / `Fixed` | `fc(t, x, u)` | `f(t, x, u)` |
+| `Auton` / `NonFixed` | `fc(x, u, v)` | `f(0, x, u, v)` |
+| `NonAuton` / `NonFixed` | `fc(t, x, u, v)` | `f(t, x, u, v)` |
+
+See also: [`OCPControlledVectorFieldFunction`](@ref), [`_ocp_controlled_vf`](@ref).
+"""
 function (h::OCPControlledVectorFieldFunction{_CTM_Auton,Traits.Fixed,DF})(x, u) where {DF}
     return _ocp_controlled_vf(h, 0.0, x, u, nothing)
 end

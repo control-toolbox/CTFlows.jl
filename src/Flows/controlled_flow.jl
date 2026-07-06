@@ -36,15 +36,38 @@ struct ControlledFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,IF
     law::L
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Construct a [`CTFlows.Flows.ControlledFlow`](@ref) from an inner state
+[`CTFlows.Flows.Flow`](@ref), an optional OCP (for the objective), and a control law.
+"""
 function ControlledFlow(flow::Flow{TD,VD,Traits.StateDynamics}, ocp, law) where {TD,VD}
     return ControlledFlow{TD,VD,typeof(flow),typeof(ocp),typeof(law)}(flow, ocp, law)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the underlying [`CTFlows.Systems.AbstractSystem`](@ref) of the inner state flow.
+"""
 system(F::ControlledFlow) = system(F.flow)
+"""
+$(TYPEDSIGNATURES)
+
+Return the underlying [`CTFlows.Integrators.AbstractODEIntegrator`](@ref) of the inner
+state flow.
+"""
 integrator(F::ControlledFlow) = integrator(F.flow)
 
 # ── point eval — pure delegation (final state, no costate) ───────────────────
 
+"""
+$(TYPEDSIGNATURES)
+
+Point evaluation: delegate to the inner state flow and return the final state at `tf`
+(no costate — this is a state flow).
+"""
 function (F::ControlledFlow)(
     t0::Real,
     x0,
@@ -57,6 +80,13 @@ end
 
 # ── trajectory call — builds a ControlledTrajectory ──────────────────────────
 
+"""
+$(TYPEDSIGNATURES)
+
+Trajectory call: integrate the inner state flow over `tspan` and build a
+[`CTFlows.Trajectories.ControlledTrajectory`](@ref) (state + reconstructed control,
+plus objective when built from an OCP).
+"""
 function (F::ControlledFlow)(
     tspan::Tuple{<:Real,<:Real},
     x0;
@@ -71,7 +101,19 @@ end
 
 # State coercion (only for a 1-D state, identity otherwise), precomputed once — from the
 # OCP's declared state dimension, or from `x0` when there is no OCP (Flow(fc, law)).
+"""
+$(TYPEDSIGNATURES)
+
+Precomputed state coercion (`only` for a 1-D state, `identity` otherwise) from the
+OCP's declared state dimension.
+"""
 _controlled_state_coerce(ocp, x0) = _dim_coerce(CTModels.Models.state_dimension(ocp))
+"""
+$(TYPEDSIGNATURES)
+
+Precomputed state coercion (`only` for a 1-D state, `identity` otherwise) inferred from
+`x0` when there is no OCP (`Flow(fc, law)`).
+"""
 _controlled_state_coerce(::Nothing, x0) = _dim_coerce(length(x0))
 
 # =============================================================================
@@ -79,6 +121,8 @@ _controlled_state_coerce(::Nothing, x0) = _dim_coerce(length(x0))
 # =============================================================================
 
 """
+$(TYPEDSIGNATURES)
+
 No objective when the controlled flow was not built from an OCP (e.g. `Flow(fc, law)`).
 """
 _controlled_objective(::Nothing, traj, law, variable, integ, coerce) = nothing
