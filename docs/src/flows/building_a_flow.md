@@ -111,8 +111,18 @@ typeof(flow_explicit) == typeof(flow)
 | `VectorField` | `StateFlow` |
 | `HamiltonianVectorField` | `HamiltonianFlow` |
 | `Hamiltonian` (with AD) | `HamiltonianFlow` |
+| `PseudoHamiltonian` + `DynClosedLoop` law | `HamiltonianFlow` |
+| `ControlledVectorField` + `OpenLoop`/`ClosedLoop` law | `ControlledFlow` |
+| OCP (control-free) | `OptimalControlFlow` |
+| OCP (with control) + `DynClosedLoop` law | `OptimalControlFlow` |
+| OCP (with control) + `OpenLoop`/`ClosedLoop` law | `ControlledFlow` |
+| OCP (with control) + `u::Function` | `OptimalControlFlow` (auto `DynClosedLoop`) |
 
 Both `StateFlow` and `HamiltonianFlow` are concrete subtypes of `AbstractFlow`.
+`ControlledFlow` is a state-flow wrapper carrying a control law (see
+[Control laws](control_laws.md)).
+`OptimalControlFlow` wraps a `HamiltonianFlow` with the OCP reference (see
+[Optimal control](optimal_control.md)).
 Their trait parameters mirror the underlying data:
 
 ```@example flows_building

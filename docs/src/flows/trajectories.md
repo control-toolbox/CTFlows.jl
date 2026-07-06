@@ -34,6 +34,7 @@ hsol = hflow((0.0, 1.0), x0, p0)
 |---|---|---|
 | `VectorFieldTrajectory` | `StateFlow` trajectory call | state trajectory |
 | `HamiltonianVectorFieldTrajectory` | `HamiltonianFlow` trajectory call | state + costate trajectories |
+| `ControlledTrajectory` | `ControlledFlow` trajectory call | state + reconstructed control (+ objective when from OCP) |
 
 ---
 
@@ -104,6 +105,31 @@ x_h(0.5), p_h(0.5)
 
 ---
 
+## ControlledTrajectory
+
+A `ControlledTrajectory` is produced by a trajectory call on a
+`ControlledFlow` (see [Control laws](control_laws.md)). It wraps a state
+trajectory with a reconstructed control and an optional objective.
+
+### Accessors
+
+| Accessor | Returns | Notes |
+|---|---|---|
+| `state(sol)` | callable `x(t)` | state trajectory (scalar coercion for 1-D) |
+| `control(sol)` | callable `u(t)` | reconstructed from the law: `u(t) = law(t, x(t), v)` |
+| `objective(sol)` | `Real` or `nothing` | Mayer + Lagrange (only when built from an OCP) |
+| `time_grid(sol)` | vector of time points | |
+| `costate(sol)` | — | **errors**: a state flow has no costate |
+
+```julia
+# Example (see Control laws page for full setup)
+x = Trajectories.state(sol)     # x(t)
+u = Trajectories.control(sol)   # u(t)
+obj = Trajectories.objective(sol)
+```
+
+---
+
 ## Plotting
 
 Load `Plots` (or any Plots-compatible backend) to unlock `plot` on solution objects:
@@ -133,7 +159,7 @@ These are used internally by the solution wrappers and normally not called direc
 
 ## See also
 
-- [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref) — solution container types.
-- [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.costate`](@ref) — trajectory accessors.
+- [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.ControlledTrajectory`](@ref) — solution container types.
+- [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.costate`](@ref), [`CTFlows.Trajectories.control`](@ref), [`CTFlows.Trajectories.objective`](@ref) — trajectory accessors.
 - [`CTFlows.Trajectories.time_grid`](@ref), [`CTSolvers.Integrators.times`](@extref) — time grid accessors.
 - [`CTSolvers.Integrators.final_state`](@extref), [`CTSolvers.Integrators.evaluate_at`](@extref) — low-level result accessors.

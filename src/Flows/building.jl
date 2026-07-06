@@ -127,10 +127,10 @@ Dispatches on the problem's [`CTBase.Traits.ControlDependence`](@extref) trait:
 - **control-free** (`ControlFree`): builds a Hamiltonian flow directly from the OCP,
   exploiting the structure — the state equation `ẋ = f(t,x,∅,v)` is computed exactly
   (no AD) and only `ṗ = −∂H/∂x` uses automatic differentiation.
-- **with control** (`WithControl`): currently unsupported — throws a
-  [`CTBase.Exceptions.PreconditionError`](@extref). Closing the loop would require a
-  control law `u(t,x,p)` from the maximisation of the pseudo-Hamiltonian, which this
-  path does not build.
+- **with control** (`WithControl`): throws a
+  [`CTBase.Exceptions.PreconditionError`](@extref). Use `Flow(ocp, law)` instead,
+  passing a control law to close the loop — see
+  [`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.ControlLaw)`](@ref).
 
 # Arguments
 - `ocp::CTModels.Models.Model`: The optimal control problem model.
@@ -143,7 +143,8 @@ Dispatches on the problem's [`CTBase.Traits.ControlDependence`](@extref) trait:
   - Trajectory: `f((t0,tf), x0, p0; variable)` → `CTModels.Solution`
 
 # Throws
-- [`CTBase.Exceptions.PreconditionError`](@extref): If the OCP carries a control input.
+- [`CTBase.Exceptions.PreconditionError`](@extref): If the OCP carries a control input
+  (use `Flow(ocp, law)` instead).
 
 See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), [`CTFlows.Flows.Flow`](@ref).
 """
@@ -173,10 +174,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Reject `Flow` construction from a with-control OCP.
+Reject `Flow(ocp)` construction from a with-control OCP.
 
-Throws `PreconditionError` because this path assumes no control input. A control
-law `u(t,x,p)` is required to build the Hamiltonian flow from a with-control OCP.
+Throws `PreconditionError` because this path assumes no control input. Use
+`Flow(ocp, law)` to pass a control law that closes the loop.
 
 See also: [`CTFlows.Flows.Flow`](@ref), `CTFlows.Flows._ocp_hamiltonian`.
 """
@@ -187,8 +188,7 @@ function _flow_from_ocp(::Type{Traits.WithControl}, ::CTModels.Models.Model; kwa
             reason = "this path builds the flow from the OCP structure assuming no control " *
                      "(ẋ = f(t,x,∅,v)); a problem with a control input would require a control " *
                      "law u(t,x,p) from the maximisation of the pseudo-Hamiltonian",
-            suggestion = "build the Hamiltonian flow yourself from a control law, e.g. " *
-                         "Flow(Hamiltonian(...)), or use a control-free OCP",
+            suggestion = "use Flow(ocp, law) to pass a control law, or use a control-free OCP",
             context = "Flow(ocp::CTModels.Models.Model) — control-dependence dispatch",
         ),
     )

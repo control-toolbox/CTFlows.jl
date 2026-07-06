@@ -119,4 +119,5 @@ derive the vector field — see [Building a flow](flows/building_a_flow.md).
 - [Integrating](flows/integrating.md) — call styles, variable parameters, solver options.
 - [Multi-phase flows](flows/multiphase.md) — concatenation with switching times and jumps.
 - [Optimal control](flows/optimal_control.md) — flows built directly from a `CTModels` problem.
+- [Control laws](flows/control_laws.md) — `Flow(ocp, law)`, `OpenLoop` / `ClosedLoop` / `DynClosedLoop`.
 - [SciML flows](flows/sciml.md) — wrap an existing `ODEFunction` or `ODEProblem`.

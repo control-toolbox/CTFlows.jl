@@ -56,12 +56,12 @@ Data → Systems → Integrators → Flows → Trajectories
 
 | Layer | Submodule | Key types |
 |---|---|---|
-| Data | [`CTBase.Data`](@extref CTBase.Data) | `VectorField`, `Hamiltonian`, `HamiltonianVectorField` |
-| Configs | [`CTFlows.Configs`](@ref CTFlows.Configs) | `StateEndPointConfig`, `HamiltonianTrajectoryConfig` |
-| Systems | [`CTFlows.Systems`](@ref CTFlows.Systems) | `VectorFieldSystem`, `HamiltonianSystem` |
+| Data | [`CTBase.Data`](@extref CTBase.Data) | `VectorField`, `Hamiltonian`, `HamiltonianVectorField`, `PseudoHamiltonian`, `ControlledVectorField`, `OpenLoop`, `ClosedLoop`, `DynClosedLoop` |
+| Configs | [`CTFlows.Configs`](@ref CTFlows.Configs) | `StateEndPointConfig`, `HamiltonianTrajectoryConfig`, `AugmentedHamiltonianEndPointConfig` |
+| Systems | [`CTFlows.Systems`](@ref CTFlows.Systems) | `VectorFieldSystem`, `HamiltonianSystem`, `PseudoHamiltonianSystem` |
 | Integrators | [`CTFlows.Integrators`](@ref CTFlows.Integrators) | `SciML` |
-| Flows | [`CTFlows.Flows`](@ref CTFlows.Flows) | `StateFlow`, `HamiltonianFlow`, `OptimalControlFlow` |
-| Trajectories | [`CTFlows.Trajectories`](@ref CTFlows.Trajectories) | `VectorFieldTrajectory`, `HamiltonianVectorFieldTrajectory` |
+| Flows | [`CTFlows.Flows`](@ref CTFlows.Flows) | `StateFlow`, `HamiltonianFlow`, `OptimalControlFlow`, `ControlledFlow` |
+| Trajectories | [`CTFlows.Trajectories`](@ref CTFlows.Trajectories) | `VectorFieldTrajectory`, `HamiltonianVectorFieldTrajectory`, `ControlledTrajectory` |
 | Multi-phase | [`CTFlows.MultiPhase`](@ref CTFlows.MultiPhase) | `MultiPhaseStateFlow` |
 
 The data layer (`VectorField`, `Hamiltonian`, `HamiltonianVectorField`) lives in [`CTBase.Data`](@extref CTBase.Data); the ODE integrator
@@ -84,4 +84,5 @@ gives full control over each step.
 | [Trajectories](flows/trajectories.md) | Reading the result: `state`, `costate`, `time_grid`, plotting |
 | [Multi-phase flows](flows/multiphase.md) | Concatenating flows with switching times and jumps |
 | [Optimal control](flows/optimal_control.md) | Flows from optimal control problems (`Flow(ocp)`) |
+| [Control laws](flows/control_laws.md) | `Flow(ocp, law)`, `Flow(h̃, law)`, `Flow(fc, law)` — `OpenLoop`, `ClosedLoop`, `DynClosedLoop` |
 | [SciML flows](flows/sciml.md) | Flows from `ODEFunction` / `ODEProblem` (SciML extension) |

@@ -21,8 +21,8 @@ Each layer has a single responsibility:
 | **Data** | [`CTBase.Data`](@extref CTBase.Data) | Typed function wrappers (`VectorField`, `Hamiltonian`, `HamiltonianVectorField`) |
 | **Systems** | [`Systems`](@ref CTFlows.Systems) | ODE right-hand side + traits (`VectorFieldSystem`, `HamiltonianSystem`, …) |
 | **Integrators** | [`Integrators`](@ref CTFlows.Integrators) | ODE solver strategy (`SciML`) |
-| **Flows** | [`Flows`](@ref CTFlows.Flows) | Callable integration object (`StateFlow`, `HamiltonianFlow`) |
-| **Trajectories** | [`Trajectories`](@ref CTFlows.Trajectories) | Result container with semantic accessors (`state`, `costate`, `time_grid`) |
+| **Flows** | [`Flows`](@ref CTFlows.Flows) | Callable integration object (`StateFlow`, `HamiltonianFlow`, `OptimalControlFlow`, `ControlledFlow`) |
+| **Trajectories** | [`Trajectories`](@ref CTFlows.Trajectories) | Result container with semantic accessors (`state`, `costate`, `control`, `time_grid`) |
 
 ## Reading order
 
@@ -33,6 +33,7 @@ Each layer has a single responsibility:
 | [Trajectories](trajectories.md) | Reading the result | `state`, `costate`, `time_grid`, `plot` |
 | [Multi-phase flows](multiphase.md) | Concatenating flows with switching times | `MultiPhaseStateFlow`, `*` |
 | [Optimal control](optimal_control.md) | Flows from optimal control problems | `OptimalControlFlow`, `Flow(ocp)` |
+| [Control laws](control_laws.md) | Flows with control laws | `ControlledFlow`, `Flow(ocp, law)`, `OpenLoop`, `ClosedLoop`, `DynClosedLoop` |
 | [SciML flows](sciml.md) | Flows from SciML functions and problems | `Flow(::ODEFunction)`, `SciMLProblemFlow` |
 
 The **data layer** (wrapping functions as `VectorField`, `Hamiltonian`,

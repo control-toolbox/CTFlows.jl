@@ -55,7 +55,7 @@ include(joinpath(@__DIR__, "calling.jl"))
 export __variable, __unsafe, __variable_costate
 export AbstractFlow,
     AbstractStateFlow, AbstractHamiltonianFlow, Flow, StateFlow, HamiltonianFlow
-export OptimalControlFlow
+export OptimalControlFlow, ControlledFlow
 export system, integrator
 export build_flow
 export hamiltonian_vector_field

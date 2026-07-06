@@ -97,6 +97,7 @@ with_api_reference(src_dir, ext_dir) do api_pages
                 "Trajectories" => "flows/trajectories.md",
                 "Multi-phase flows" => "flows/multiphase.md",
                 "Optimal control" => "flows/optimal_control.md",
+                "Control laws" => "flows/control_laws.md",
                 "SciML flows" => "flows/sciml.md",
             ],
             "API Reference" => api_pages,

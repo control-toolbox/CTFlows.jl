@@ -92,6 +92,7 @@ pass them to `Flows._invoke_flow`:
 | `StateTrajectoryConfig` | state full trajectory | `(tspan, x0)` |
 | `HamiltonianEndPointConfig` | state+costate final value | `(t0, x0, p0, tf)` |
 | `HamiltonianTrajectoryConfig` | state+costate trajectory | `(tspan, x0, p0)` |
+| `AugmentedHamiltonianEndPointConfig` | state+costate+variable-costate final value | `(t0, x0, p0, pv0, tf)` |
 
 ```@example flows_integrating
 cfg = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])

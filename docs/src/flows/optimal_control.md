@@ -22,9 +22,9 @@ import DifferentiationInterface, ForwardDiff
 
 ---
 
-## Control-free problems only
+## Control-free problems
 
-The constructor dispatches on the problem's
+The no-law constructor `Flow(ocp)` dispatches on the problem's
 [`CTBase.Traits.ControlDependence`](@extref) trait:
 
 - **Control-free** (`ControlFree`): the pseudo-Hamiltonian reduces to
@@ -32,11 +32,9 @@ The constructor dispatches on the problem's
   ``p^0 = -1`` and ``s = 1`` for `:min`, ``s = -1`` for `:max`). The state
   equation ``\dot{x} = \partial_p H = f`` is computed **exactly** — no AD — and
   only ``\dot{p} = -\partial_x H`` uses automatic differentiation.
-- **With control** (`WithControl`): unsupported — a `PreconditionError` is thrown.
-  Closing the loop would require a control law ``u(t, x, p)`` obtained from the
-  maximisation of the pseudo-Hamiltonian, which this path does not build. In that
-  case, build the Hamiltonian yourself and call `Flows.Flow(h)` — see
-  [Building a flow](building_a_flow.md).
+- **With control** (`WithControl`): a `PreconditionError` is thrown. Use
+  `Flow(ocp, law)` to pass a control law — see
+  [Control laws](control_laws.md).
 
 ---
 
@@ -128,4 +126,5 @@ Traits.time_dependence(f)
 - [`CTFlows.Flows.OptimalControlFlow`](@ref) — the wrapper type.
 - [`CTFlows.Flows.Flow`](@ref) — the constructor family, including `Flow(ocp)`.
 - [`CTModels.Solutions.Solution`](@extref), [`CTModels.Components.objective`](@extref) — the trajectory-call result and its accessors.
-- [Building a flow](building_a_flow.md) — AD-backed Hamiltonian flows, for problems with a control law.
+- [Control laws](control_laws.md) — `Flow(ocp, law)` for with-control problems.
+- [Building a flow](building_a_flow.md) — AD-backed Hamiltonian flows.
