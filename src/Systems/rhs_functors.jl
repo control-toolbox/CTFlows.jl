@@ -42,21 +42,21 @@ abstract type AbstractOoPRHS <: AbstractRHS{Traits.OutOfPlace} end
 # =============================================================================
 
 """
-    IPVFOoPRHS{F,TD,VD} <: AbstractIPRHS
+    IPVFOoPRHS{VF<:Data.AbstractVectorField} <: AbstractIPRHS
 
-In-place RHS functor for an out-of-place VectorField.
+In-place RHS functor for an out-of-place vector field.
 
-Wraps an out-of-place VectorField and provides an in-place interface
-by allocating the result into the pre-allocated `du` buffer.
+Wraps an out-of-place [`CTBase.Data.AbstractVectorField`](@extref) and provides an
+in-place interface by allocating the result into the pre-allocated `du` buffer.
 
 # Fields
-- `vf::Data.VectorField{F,TD,VD,Traits.OutOfPlace}`: The wrapped VectorField
+- `vf::VF`: the wrapped out-of-place vector field (any `Data.AbstractVectorField`).
 
 # Call signature
 `(f::IPVFOoPRHS)(du, u, λ, t) -> nothing`
 """
-struct IPVFOoPRHS{F,TD,VD} <: AbstractIPRHS
-    vf::Data.VectorField{F,TD,VD,Traits.OutOfPlace}
+struct IPVFOoPRHS{VF<:Data.AbstractVectorField} <: AbstractIPRHS
+    vf::VF
 end
 
 function (f::IPVFOoPRHS)(du, u, λ, t)
@@ -88,21 +88,21 @@ function (f::IPVFIpRHS)(du, u, λ, t)
 end
 
 """
-    OoPVFOoPRHS{F,TD,VD} <: AbstractOoPRHS
+    OoPVFOoPRHS{VF<:Data.AbstractVectorField} <: AbstractOoPRHS
 
-Out-of-place RHS functor for an out-of-place VectorField.
+Out-of-place RHS functor for an out-of-place vector field.
 
-Wraps an out-of-place VectorField and provides an out-of-place interface
-by directly calling the VectorField.
+Wraps an out-of-place [`CTBase.Data.AbstractVectorField`](@extref) and provides an
+out-of-place interface by directly calling the vector field.
 
 # Fields
-- `vf::Data.VectorField{F,TD,VD,Traits.OutOfPlace}`: The wrapped VectorField
+- `vf::VF`: the wrapped out-of-place vector field (any `Data.AbstractVectorField`).
 
 # Call signature
 `(f::OoPVFOoPRHS)(u, λ, t) -> du`
 """
-struct OoPVFOoPRHS{F,TD,VD} <: AbstractOoPRHS
-    vf::Data.VectorField{F,TD,VD,Traits.OutOfPlace}
+struct OoPVFOoPRHS{VF<:Data.AbstractVectorField} <: AbstractOoPRHS
+    vf::VF
 end
 
 function (f::OoPVFOoPRHS)(u, λ, t)
@@ -175,10 +175,15 @@ function Base.show(io::IO, f::AbstractRHS)
     vd = Traits.variable_dependence(f.vf)
     md = Traits.mutability(f.vf)
     wraps = "VectorField: $(Data._td_label(td)), $(Data._vd_label(vd)), $(Data._md_label(md))"
-    Display.print_header(io, nameof(typeof(f)); fmt=fmt)
-    Display.print_field(io, "wraps", wraps; fmt=fmt, value_style="")
+    Display.print_header(io, nameof(typeof(f)); fmt = fmt)
+    Display.print_field(io, "wraps", wraps; fmt = fmt, value_style = "")
     return Display.print_field(
-        io, "converts", _rhs_conversion_label(f); last=true, fmt=fmt, value_style=""
+        io,
+        "converts",
+        _rhs_conversion_label(f);
+        last = true,
+        fmt = fmt,
+        value_style = "",
     )
 end
 

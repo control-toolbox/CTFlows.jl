@@ -36,11 +36,11 @@ for automatic differentiation backends and ODE integrators.
   and `:sciml` (SciML) strategies registered.
 
 # Notes
-- This registry is used by [`_route_flow_options`](@ref) to resolve and build
+- This registry is used by [`CTFlows.Flows._route_flow_options`](@ref) to resolve and build
   concrete strategy instances from keyword arguments.
 - The registry is precomputed and cached in `_FLOW_REGISTRY` for performance.
 
-See also: [`_route_flow_options`](@ref), [`_build_flow_components`](@ref),
+See also: [`CTFlows.Flows._route_flow_options`](@ref), [`CTFlows.Flows._build_flow_components`](@ref),
 [`CTBase.Strategies.create_registry`](@extref)
 """
 function flow_registry()

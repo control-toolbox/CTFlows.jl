@@ -177,7 +177,7 @@ $(TYPEDSIGNATURES)
 
 Return the solution as a state function of time `x(t)`.
 
-Returns a [`StateProjection`](@ref) wrapping the solution, callable as `x(t)`.
+Returns a [`CTFlows.Trajectories.StateProjection`](@ref) wrapping the solution, callable as `x(t)`.
 
 # Arguments
 - `sol::HamiltonianVectorFieldTrajectory`: The Hamiltonian vector field solution.
@@ -206,7 +206,7 @@ $(TYPEDSIGNATURES)
 
 Return the solution as a costate function of time `p(t)`.
 
-Returns a [`CostateProjection`](@ref) wrapping the solution, callable as `p(t)`.
+Returns a [`CTFlows.Trajectories.CostateProjection`](@ref) wrapping the solution, callable as `p(t)`.
 
 # Arguments
 - `sol::HamiltonianVectorFieldTrajectory`: The Hamiltonian vector field solution.
