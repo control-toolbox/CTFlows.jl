@@ -19,6 +19,9 @@ costate** (the underlying flow is a state flow) and no objective.
   when the trajectory was built from an OCP, or `nothing` (e.g. from `Flow(fc, law)`).
 - `state_coerce::C`: the state coercion (`only` for a 1-D state, `identity` otherwise),
   precomputed once so the state/control projections never test a length at run time.
+- `ocp::M`: the OCP model the controlled flow was built from — the source of the
+  component names (state/control) and the time name for plotting — or `nothing`
+  (e.g. from `Flow(fc, law)`).
 
 # Accessors
 - `state(sol)`: callable state function `x(t)`.
@@ -31,13 +34,14 @@ costate** (the underlying flow is a state flow) and no objective.
 See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref),
 [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.control`](@ref).
 """
-struct ControlledTrajectory{T<:VectorFieldTrajectory,L,V,O,C} <:
+struct ControlledTrajectory{T<:VectorFieldTrajectory,L,V,O,C,M} <:
        AbstractVectorFieldTrajectory
     traj::T
     law::L
     variable::V
     objective::O
     state_coerce::C
+    ocp::M
 end
 
 # =============================================================================
