@@ -133,7 +133,7 @@ $(TYPEDSIGNATURES)
 Compute the objective (Mayer + Lagrange) of an OCP along a controlled state trajectory,
 reconstructing the control `u(t) = law(t, x(t), v)` for the Lagrange integrand.
 
-See also: [`CTFlows.Trajectories.ControlledTrajectory`](@ref), `_ocp_objective`.
+See also: [`CTFlows.Trajectories.ControlledTrajectory`](@ref), `CTFlows.Flows._ocp_objective`.
 """
 function _controlled_objective(ocp, traj, law, variable, integ, coerce)
     x = Trajectories.ControlledStateProjection(traj, coerce)   # callable x(t), scalar for 1-D

@@ -13,21 +13,21 @@ scenarios including:
 Configuration types encode these choices as type parameters for compile-time dispatch.
 
 # Main Types
-- [`AbstractConfig`](@ref): Base configuration type
-- [`AbstractConfigWithMaC`](@ref): Configuration with mode and content traits
-- [`StateEndPointConfig`](@ref): Point-to-point state integration
-- [`StateTrajectoryConfig`](@ref): Trajectory state integration
-- [`HamiltonianEndPointConfig`](@ref): Point-to-point Hamiltonian integration
-- [`HamiltonianTrajectoryConfig`](@ref): Trajectory Hamiltonian integration
-- [`AugmentedHamiltonianEndPointConfig`](@ref): Augmented Hamiltonian for variable costate
+- [`CTFlows.Configs.AbstractConfig`](@ref): Base configuration type
+- [`CTFlows.Configs.AbstractConfigWithMaC`](@ref): Configuration with mode and content traits
+- [`CTFlows.Configs.StateEndPointConfig`](@ref): Point-to-point state integration
+- [`CTFlows.Configs.StateTrajectoryConfig`](@ref): Trajectory state integration
+- [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref): Point-to-point Hamiltonian integration
+- [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref): Trajectory Hamiltonian integration
+- [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@ref): Augmented Hamiltonian for variable costate
 
 # Accessors
-- [`tspan`](@ref): Time span `(t0, tf)`
-- [`initial_state`](@ref): Initial state
-- [`initial_costate`](@ref): Initial costate (Hamiltonian configs)
-- [`initial_variable_costate`](@ref): Initial variable costate (augmented configs)
-- [`mode_trait`](@ref): Integration mode trait
-- [`dynamics_trait`](@ref): Dynamics trait
+- [`CTFlows.Configs.tspan`](@ref): Time span `(t0, tf)`
+- [`CTFlows.Configs.initial_state`](@ref): Initial state
+- [`CTFlows.Configs.initial_costate`](@ref): Initial costate (Hamiltonian configs)
+- [`CTFlows.Configs.initial_variable_costate`](@ref): Initial variable costate (augmented configs)
+- [`CTFlows.Configs.mode_trait`](@ref): Integration mode trait
+- [`CTFlows.Configs.dynamics_trait`](@ref): Dynamics trait
 
 See also: [`CTFlows.Flows.build_flow`](@ref), [`CTFlows.Trajectories.build_trajectory`](@ref).
 """

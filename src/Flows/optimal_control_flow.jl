@@ -36,7 +36,7 @@ selects the correct natural-arity call signature without runtime branches.
 - `sp0::Float64`: sign-weighted multiplier `s·p⁰`.
 - `n::Int`: state dimension.
 
-See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), `_ocp_H`, `_ocp_hamiltonian`.
+See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), `CTFlows.Flows._ocp_H`, `CTFlows.Flows._ocp_hamiltonian`.
 """
 struct OCPHamiltonianFunction{TD,VD,DF,LF} <: Function
     dynamics!::DF
@@ -60,7 +60,7 @@ convention) — and accumulates `p·f + sp0·ℓ`. The derivative buffer `r` is 
 length-`n_x` vector. When `v === nothing` the variable is an empty vector (used by
 `Fixed`-trait call paths).
 
-See also: [`OCPHamiltonianFunction`](@ref).
+See also: [`CTFlows.Flows.OCPHamiltonianFunction`](@ref).
 """
 function _ocp_H(h::OCPHamiltonianFunction, t, x, p, v)
     if v === nothing
@@ -122,7 +122,7 @@ time/variable-dependence traits from the OCP, then constructs a typed
 `OCPHamiltonianFunction` and wraps it so the downstream AD pipeline receives a
 uniform `(t, x, p, v)` interface.
 
-See also: [`OCPHamiltonianFunction`](@ref), [`CTFlows.Flows.OptimalControlFlow`](@ref), [`CTFlows.Flows.Flow`](@ref).
+See also: [`CTFlows.Flows.OCPHamiltonianFunction`](@ref), [`CTFlows.Flows.OptimalControlFlow`](@ref), [`CTFlows.Flows.Flow`](@ref).
 """
 function _ocp_hamiltonian(ocp)
     n = CTModels.Models.state_dimension(ocp)
@@ -166,7 +166,7 @@ Internal callable representing the pseudo-Hamiltonian of an optimal control prob
 - `sp0::Float64`: sign-weighted multiplier `s·p⁰`.
 - `n::Int`: state dimension.
 
-See also: [`OCPHamiltonianFunction`](@ref), `_ocp_pseudo_hamiltonian`,
+See also: [`CTFlows.Flows.OCPHamiltonianFunction`](@ref), `CTFlows.Flows._ocp_pseudo_hamiltonian`,
 [`CTBase.Data.PseudoHamiltonian`](@extref).
 """
 struct OCPPseudoHamiltonianFunction{TD,VD,DF,LF} <: Function
@@ -184,7 +184,7 @@ Core computation of the OCP pseudo-Hamiltonian value `H̃(t,x,p,u,v)`. Passes `x
 1-dimensional quantity, vector otherwise ("1-D = scalar" convention) — and accumulates
 `p·f + sp0·ℓ`. The derivative buffer `r` is always a length-`n_x` vector.
 
-See also: [`OCPPseudoHamiltonianFunction`](@ref).
+See also: [`CTFlows.Flows.OCPPseudoHamiltonianFunction`](@ref).
 """
 function _ocp_pseudo_H(h::OCPPseudoHamiltonianFunction, t, x, p, u, v)
     if v === nothing
@@ -237,11 +237,11 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build an [`OCPPseudoHamiltonianFunction`](@ref) from an OCP and wrap it in a
+Build an [`CTFlows.Flows.OCPPseudoHamiltonianFunction`](@ref) from an OCP and wrap it in a
 [`CTBase.Data.PseudoHamiltonian`](@extref), giving the uniform `(t,x,p,u,v)` interface
 used by the pseudo-Hamiltonian AD pipeline.
 
-See also: [`OCPPseudoHamiltonianFunction`](@ref), `_ocp_hamiltonian`.
+See also: [`CTFlows.Flows.OCPPseudoHamiltonianFunction`](@ref), `CTFlows.Flows._ocp_hamiltonian`.
 """
 function _ocp_pseudo_hamiltonian(ocp)
     n = CTModels.Models.state_dimension(ocp)
@@ -324,7 +324,7 @@ Core computation of the OCP controlled dynamics `fc(t,x,u,v)`: coerce `x`/`u`/`v
 the precomputed per-dimension coercions (scalar for 1-D), fill a length-`n_x` buffer with
 the in-place dynamics, and return it (scalar for a 1-D state).
 
-See also: [`OCPControlledVectorFieldFunction`](@ref).
+See also: [`CTFlows.Flows.OCPControlledVectorFieldFunction`](@ref).
 """
 function _ocp_controlled_vf(h::OCPControlledVectorFieldFunction, t, x, u, v)
     xs = h.cx(x)
@@ -343,7 +343,7 @@ function _ocp_controlled_vf(h::OCPControlledVectorFieldFunction, t, x, u, v)
 end
 
 """
-Call operators for [`OCPControlledVectorFieldFunction`](@ref), dispatching on the
+Call operators for [`CTFlows.Flows.OCPControlledVectorFieldFunction`](@ref), dispatching on the
 `(TD, VD)` trait pair for the correct arity:
 
 | `TD` / `VD` | Call signature | Effective call |
@@ -353,7 +353,7 @@ Call operators for [`OCPControlledVectorFieldFunction`](@ref), dispatching on th
 | `Auton` / `NonFixed` | `fc(x, u, v)` | `f(0, x, u, v)` |
 | `NonAuton` / `NonFixed` | `fc(t, x, u, v)` | `f(t, x, u, v)` |
 
-See also: [`OCPControlledVectorFieldFunction`](@ref), [`_ocp_controlled_vf`](@ref).
+See also: [`CTFlows.Flows.OCPControlledVectorFieldFunction`](@ref), [`CTFlows.Flows._ocp_controlled_vf`](@ref).
 """
 function (h::OCPControlledVectorFieldFunction{_CTM_Auton,Traits.Fixed,DF})(x, u) where {DF}
     return _ocp_controlled_vf(h, 0.0, x, u, nothing)
@@ -384,10 +384,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build an [`OCPControlledVectorFieldFunction`](@ref) from an OCP and wrap it in a
+Build an [`CTFlows.Flows.OCPControlledVectorFieldFunction`](@ref) from an OCP and wrap it in a
 [`CTBase.Data.ControlledVectorField`](@extref).
 
-See also: [`OCPControlledVectorFieldFunction`](@ref), `_ocp_pseudo_hamiltonian`.
+See also: [`CTFlows.Flows.OCPControlledVectorFieldFunction`](@ref), `CTFlows.Flows._ocp_pseudo_hamiltonian`.
 """
 function _ocp_controlled_vector_field(ocp)
     n = CTModels.Models.state_dimension(ocp)
@@ -534,7 +534,7 @@ The Mayer term is evaluated at the endpoints `x(t0)` and `x(tf)`. The Lagrange t
 integrated by flowing `ℓ̇(t) = ℓ(t, x(t), u(t), v)` from `t0` to `tf`, where `u(t)` is
 reconstructed from the control law (empty for a control-free OCP).
 
-See also: `_build_ocp_solution`, `_control_of`, `_variable_vector`, [`CTFlows.Flows.Flow`](@ref).
+See also: `CTFlows.Flows._build_ocp_solution`, `CTFlows.Flows._control_of`, `CTFlows.Flows._variable_vector`, [`CTFlows.Flows.Flow`](@ref).
 """
 function _ocp_objective(ocp, x, p, v, t0, tf, integ, law)
     obj = 0.0
@@ -565,10 +565,10 @@ $(TYPEDSIGNATURES)
 Build a `CTModels.Solution` from a `HamiltonianVectorFieldTrajectory`.
 
 Extracts the time grid, state/costate projections, and variable vector from the
-trajectory, computes the objective via `_ocp_objective`, and assembles a full
+trajectory, computes the objective via `CTFlows.Flows._ocp_objective`, and assembles a full
 `CTModels.Solution` with empty control (control-free OCP).
 
-See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), `_ocp_objective`, `_variable_vector`, [`CTModels.Solutions.Solution`](@extref).
+See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), `CTFlows.Flows._ocp_objective`, `CTFlows.Flows._variable_vector`, [`CTModels.Solutions.Solution`](@extref).
 """
 function _build_ocp_solution(
     ocp,

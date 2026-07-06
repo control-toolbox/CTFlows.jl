@@ -10,9 +10,9 @@ part of that surface consumed inside CTFlows so that existing `Integrators.<symb
 sites keep resolving, and it **owns** the two domain-specific glue functions that must stay in
 CTFlows because they are typed on CTFlows' own `Systems`/`Configs`/`Traits`:
 
-- [`build_problem`](@ref) — build a SciML `ODEProblem` from a `Systems.AbstractSystem` and a
+- [`CTFlows.Integrators.build_problem`](@ref) — build a SciML `ODEProblem` from a `Systems.AbstractSystem` and a
   `Configs.AbstractConfig`;
-- [`build_options`](@ref) — select the integrator's cached option bundle for a given config.
+- [`CTFlows.Integrators.build_options`](@ref) — select the integrator's cached option bundle for a given config.
 
 Their concrete methods are provided by the `CTFlowsSciMLIntegrator` package extension (loaded
 with `SciMLBase`); the stubs here throw `CTBase.Exceptions.ExtensionError` until it is active.

@@ -108,7 +108,7 @@ flow = Flows.Flow(h; reltol=1e-8, ad_backend=ADTypes.AutoForwardDiff())
 - Requires the `CTFlowsSciMLIntegrator` extension to be loaded for integrator options.
 
 See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.build_system`](@ref),
-[`_route_flow_options`](@ref), [`_build_flow_components`](@ref)
+[`CTFlows.Flows._route_flow_options`](@ref), [`CTFlows.Flows._build_flow_components`](@ref)
 """
 function Flow(h::Data.AbstractHamiltonian; kwargs...)
     routed = _route_flow_options(kwargs)
@@ -159,7 +159,7 @@ Build an `OptimalControlFlow` from a control-free OCP.
 Constructs the OCP Hamiltonian, builds the Hamiltonian system with the chosen AD
 backend, and wraps the resulting flow together with the OCP reference.
 
-See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), [`CTFlows.Flows.Flow`](@ref), `_ocp_hamiltonian`.
+See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), [`CTFlows.Flows.Flow`](@ref), `CTFlows.Flows._ocp_hamiltonian`.
 """
 function _flow_from_ocp(::Type{Traits.ControlFree}, ocp::CTModels.Models.Model; kwargs...)
     routed = _route_flow_options(kwargs)
@@ -178,7 +178,7 @@ Reject `Flow` construction from a with-control OCP.
 Throws `PreconditionError` because this path assumes no control input. A control
 law `u(t,x,p)` is required to build the Hamiltonian flow from a with-control OCP.
 
-See also: [`CTFlows.Flows.Flow`](@ref), `_ocp_hamiltonian`.
+See also: [`CTFlows.Flows.Flow`](@ref), `CTFlows.Flows._ocp_hamiltonian`.
 """
 function _flow_from_ocp(::Type{Traits.WithControl}, ::CTModels.Models.Model; kwargs...)
     return throw(
@@ -233,6 +233,15 @@ function Flow(h̃::Data.PseudoHamiltonian, law::Data.ControlLaw; kwargs...)
     return _flow_from_pseudo_hamiltonian(Traits.feedback(law), h̃, law; kwargs...)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Dispatch helper for [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@ref): build a
+Hamiltonian flow from a `DynClosedLoop` law, routing on the `hamiltonian_type` action
+option.
+
+See also: [`CTFlows.Flows._build_pseudo_flow`](@ref).
+"""
 function _flow_from_pseudo_hamiltonian(
     ::Type{Traits.DynClosedLoopFeedback},
     h̃::Data.PseudoHamiltonian,
@@ -245,6 +254,15 @@ function _flow_from_pseudo_hamiltonian(
     return _build_pseudo_flow(Val(ht), h̃, law, components)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Reject `OpenLoop`/`ClosedLoop` laws in [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@ref):
+a pseudo-Hamiltonian `H̃(t,x,p,u,v)` depends on the costate `p`, which `OpenLoop`/`ClosedLoop`
+laws do not provide.
+
+See also: [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@ref).
+"""
 function _flow_from_pseudo_hamiltonian(
     ::Type{<:Union{Traits.OpenLoopFeedback,Traits.ClosedLoopFeedback}},
     ::Data.PseudoHamiltonian,
@@ -315,7 +333,7 @@ objective — there is no OCP).
 
 # Throws
 - [`CTBase.Exceptions.PreconditionError`](@extref): if the law is `DynClosedLoop` (that
-  needs the costate; use [`Flow(h̃::Data.PseudoHamiltonian, law::Data.ControlLaw)`](@ref)).
+  needs the costate; use [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@ref)).
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTBase.Data.ControlledVectorField`](@extref).
 """
@@ -326,8 +344,9 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Dispatch helper for [`Flow(fc::ControlledVectorField, law)`](@ref): compose `fc` with an
-`OpenLoop`/`ClosedLoop` law into a [`CTFlows.Flows.ControlledFlow`](@ref) with no OCP.
+Dispatch helper for [`CTFlows.Flows.Flow(fc::CTBase.Data.ControlledVectorField, law::CTBase.Data.ControlLaw)`](@ref):
+compose `fc` with an `OpenLoop`/`ClosedLoop` law into a [`CTFlows.Flows.ControlledFlow`](@ref)
+with no OCP.
 
 See also: [`CTFlows.Flows._controlled_flow`](@ref).
 """
@@ -343,11 +362,11 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Reject a `DynClosedLoop` law in [`Flow(fc::ControlledVectorField, law)`](@ref): a
-dynamic closed-loop law `u(t,x,p,v)` needs the costate `p`, which a state flow of a
+Reject a `DynClosedLoop` law in [`CTFlows.Flows.Flow(fc::CTBase.Data.ControlledVectorField, law::CTBase.Data.ControlLaw)`](@ref):
+a dynamic closed-loop law `u(t,x,p,v)` needs the costate `p`, which a state flow of a
 vector field does not have.
 
-See also: [`Flow(h̃::Data.PseudoHamiltonian, law::Data.ControlLaw)`](@ref).
+See also: [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@ref).
 """
 function _flow_from_controlled_vf(
     ::Type{Traits.DynClosedLoopFeedback},
@@ -379,7 +398,7 @@ Build a flow from an OCP and a **control law**.
 Dispatches on the law's [`CTBase.Traits.feedback`](@extref) trait:
 - `DynClosedLoop` → an [`CTFlows.Flows.OptimalControlFlow`](@ref) (Hamiltonian flow),
   using the `hamiltonian_type` action option (`:total` default, or `:partial`), the same
-  way as [`Flow(h̃::Data.PseudoHamiltonian, law::Data.ControlLaw)`](@ref). The OCP's
+  way as [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@ref). The OCP's
   dynamics and cost supply the pseudo-Hamiltonian `H̃(t,x,p,u,v) = p·f + sp0·ℓ`; the
   trajectory call returns a [`CTModels.Solutions.Solution`](@extref) with the control
   reconstructed from the law.
@@ -406,7 +425,7 @@ $(TYPEDSIGNATURES)
 
 Convenience constructor: wrap a raw control function `u` in a
 [`CTBase.Data.DynClosedLoop`](@extref) control law and delegate to
-[`Flow(ocp::CTModels.Models.Model, law::Data.ControlLaw)`](@ref).
+[`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.ControlLaw)`](@ref).
 
 The control law is given **the same time/variable dependence as the OCP**
 (`is_autonomous(ocp)`, `is_variable(ocp)`), so `u` **must** have the matching natural
@@ -415,9 +434,9 @@ autonomous/fixed, non-autonomous/fixed, autonomous/non-fixed, non-autonomous/non
 respectively. To use a control law whose traits differ from the OCP's (e.g. a
 time-varying feedback on an autonomous OCP), build the
 [`CTBase.Data.DynClosedLoop`](@extref) explicitly and call
-[`Flow(ocp::CTModels.Models.Model, law::Data.ControlLaw)`](@ref).
+[`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.ControlLaw)`](@ref).
 
-See also: [`Flow(ocp::CTModels.Models.Model, law::Data.ControlLaw)`](@ref).
+See also: [`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.ControlLaw)`](@ref).
 """
 function Flow(ocp::CTModels.Models.Model, u::Function; kwargs...)
     law = Data.DynClosedLoop(
