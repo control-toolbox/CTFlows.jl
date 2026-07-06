@@ -183,15 +183,10 @@ function Base.show(io::IO, f::AbstractPseudoHamRHS)
     td = Traits.time_dependence(f.h̃)
     vd = Traits.variable_dependence(f.h̃)
     wraps = "PseudoHamiltonian: $(Data._td_label(td)), $(Data._vd_label(vd))"
-    Display.print_header(io, nameof(typeof(f)); fmt = fmt)
-    Display.print_field(io, "wraps", wraps; fmt = fmt, value_style = "")
+    Display.print_header(io, nameof(typeof(f)); fmt=fmt)
+    Display.print_field(io, "wraps", wraps; fmt=fmt, value_style="")
     return Display.print_field(
-        io,
-        "converts",
-        _rhs_conversion_label(f);
-        last = true,
-        fmt = fmt,
-        value_style = "",
+        io, "converts", _rhs_conversion_label(f); last=true, fmt=fmt, value_style=""
     )
 end
 

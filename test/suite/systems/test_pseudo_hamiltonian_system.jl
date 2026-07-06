@@ -12,8 +12,9 @@ using ForwardDiff: ForwardDiff
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
-_backend() =
-    Differentiation.DifferentiationInterface(; ad_backend = ADTypes.AutoForwardDiff())
+function _backend()
+    return Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff())
+end
 
 function test_pseudo_hamiltonian_system()
     Test.@testset "PseudoHamiltonianSystem Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
@@ -80,10 +81,9 @@ function test_pseudo_hamiltonian_system()
         Test.@testset "Unit: PseudoHamIpAugRHS ṗv = -∂H̃/∂v (u fixed)" begin
             # H̃(x,p,u,v) = p*(-x+u) + 0.5u² + 0.5 v² x ; law u(x,p,v) = -p
             h̃ = Data.PseudoHamiltonian(
-                (x, p, u, v) -> p * (-x + u) + 0.5 * u^2 + 0.5 * v^2 * x;
-                is_variable = true,
+                (x, p, u, v) -> p * (-x + u) + 0.5 * u^2 + 0.5 * v^2 * x; is_variable=true
             )
-            law = Data.DynClosedLoop((x, p, v) -> -p; is_variable = true)
+            law = Data.DynClosedLoop((x, p, v) -> -p; is_variable=true)
             be = _backend()
             aug = Systems.PseudoHamIpAugRHS(h̃, law, be, 1, 1, only, only)
             du = zeros(3)
@@ -105,13 +105,13 @@ function test_pseudo_hamiltonian_system()
                 be,
             )
             nonfixed = Systems.build_system(
-                Data.PseudoHamiltonian((x, p, u, v) -> p * u + v; is_variable = true),
-                Data.DynClosedLoop((x, p, v) -> -p; is_variable = true),
+                Data.PseudoHamiltonian((x, p, u, v) -> p * u + v; is_variable=true),
+                Data.DynClosedLoop((x, p, v) -> -p; is_variable=true),
                 be,
             )
             Test.@test Traits.variable_costate_trait(fixed) === Traits.NoVariableCostate
             Test.@test Traits.variable_costate_trait(nonfixed) ===
-                       Traits.SupportsVariableCostate
+                Traits.SupportsVariableCostate
         end
 
         # ====================================================================
@@ -123,9 +123,7 @@ function test_pseudo_hamiltonian_system()
             law = Data.DynClosedLoop((x, p) -> -p)
             oop = Systems.PseudoHamOoPRHS(h̃, law, _backend(), 1, only, only)
             Test.@test_nowarn Test.@inferred oop(
-                [1.0, 2.0],
-                Systems.ODEParameters(nothing),
-                0.0,
+                [1.0, 2.0], Systems.ODEParameters(nothing), 0.0
             )
         end
 
@@ -137,14 +135,10 @@ function test_pseudo_hamiltonian_system()
             h̃ = Data.PseudoHamiltonian((x, p, u) -> p * u)
             be = _backend()
             Test.@test_throws MethodError Systems.build_system(
-                h̃,
-                Data.OpenLoop(() -> 1.0),
-                be,
+                h̃, Data.OpenLoop(() -> 1.0), be
             )
             Test.@test_throws MethodError Systems.build_system(
-                h̃,
-                Data.ClosedLoop(x -> -x),
-                be,
+                h̃, Data.ClosedLoop(x -> -x), be
             )
         end
     end
@@ -152,5 +146,6 @@ end
 
 end # module
 
-test_pseudo_hamiltonian_system() =
-    TestPseudoHamiltonianSystem.test_pseudo_hamiltonian_system()
+function test_pseudo_hamiltonian_system()
+    return TestPseudoHamiltonianSystem.test_pseudo_hamiltonian_system()
+end

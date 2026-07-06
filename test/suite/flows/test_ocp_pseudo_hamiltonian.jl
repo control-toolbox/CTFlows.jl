@@ -27,10 +27,10 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 const λ_TEST = 2.0
 
 # f(t,x,u,v) for each (TD, VD); all depend on the control u
-_dyn_af!(r, _, x, u, _) = (r[1] = λ_TEST * x[1] + u[1]; nothing)
-_dyn_naf!(r, t, x, u, _) = (r[1] = t * x[1] + u[1]; nothing)
-_dyn_anf!(r, _, x, u, v) = (r[1] = v[1] * x[1] + u[1]; nothing)
-_dyn_nanf!(r, t, x, u, v) = (r[1] = t * v[1] * x[1] + u[1]; nothing)
+_dyn_af!(r, _, x, u, _) = (r[1]=λ_TEST * x[1] + u[1]; nothing)
+_dyn_naf!(r, t, x, u, _) = (r[1]=t * x[1] + u[1]; nothing)
+_dyn_anf!(r, _, x, u, v) = (r[1]=v[1] * x[1] + u[1]; nothing)
+_dyn_nanf!(r, t, x, u, v) = (r[1]=t * v[1] * x[1] + u[1]; nothing)
 
 # ℓ(t,x,u,v) — depends on both x and u
 _lag(_, x, u, _) = x[1]^2 + u[1]^2
@@ -42,74 +42,63 @@ const _NA = CTModels.Components.NonAutonomous
 # OCPPseudoHamiltonianFunction fixtures (module top-level)
 # =============================================================================
 
-const HT_AF_NL =
-    Flows.OCPPseudoHamiltonianFunction{_AU,Traits.Fixed,typeof(_dyn_af!),Nothing}(
-        _dyn_af!,
-        nothing,
-        -1.0,
-        1,
-    )
-const HT_AF_LAG_MIN =
-    Flows.OCPPseudoHamiltonianFunction{_AU,Traits.Fixed,typeof(_dyn_af!),typeof(_lag)}(
-        _dyn_af!,
-        _lag,
-        -1.0,
-        1,
-    )
-const HT_AF_LAG_MAX =
-    Flows.OCPPseudoHamiltonianFunction{_AU,Traits.Fixed,typeof(_dyn_af!),typeof(_lag)}(
-        _dyn_af!,
-        _lag,
-        +1.0,
-        1,
-    )
-const HT_NAF_NL =
-    Flows.OCPPseudoHamiltonianFunction{_NA,Traits.Fixed,typeof(_dyn_naf!),Nothing}(
-        _dyn_naf!,
-        nothing,
-        -1.0,
-        1,
-    )
-const HT_ANF_NL =
-    Flows.OCPPseudoHamiltonianFunction{_AU,Traits.NonFixed,typeof(_dyn_anf!),Nothing}(
-        _dyn_anf!,
-        nothing,
-        -1.0,
-        1,
-    )
-const HT_NANF_NL =
-    Flows.OCPPseudoHamiltonianFunction{_NA,Traits.NonFixed,typeof(_dyn_nanf!),Nothing}(
-        _dyn_nanf!,
-        nothing,
-        -1.0,
-        1,
-    )
+const HT_AF_NL = Flows.OCPPseudoHamiltonianFunction{
+    _AU,Traits.Fixed,typeof(_dyn_af!),Nothing
+}(
+    _dyn_af!, nothing, -1.0, 1
+)
+const HT_AF_LAG_MIN = Flows.OCPPseudoHamiltonianFunction{
+    _AU,Traits.Fixed,typeof(_dyn_af!),typeof(_lag)
+}(
+    _dyn_af!, _lag, -1.0, 1
+)
+const HT_AF_LAG_MAX = Flows.OCPPseudoHamiltonianFunction{
+    _AU,Traits.Fixed,typeof(_dyn_af!),typeof(_lag)
+}(
+    _dyn_af!, _lag, +1.0, 1
+)
+const HT_NAF_NL = Flows.OCPPseudoHamiltonianFunction{
+    _NA,Traits.Fixed,typeof(_dyn_naf!),Nothing
+}(
+    _dyn_naf!, nothing, -1.0, 1
+)
+const HT_ANF_NL = Flows.OCPPseudoHamiltonianFunction{
+    _AU,Traits.NonFixed,typeof(_dyn_anf!),Nothing
+}(
+    _dyn_anf!, nothing, -1.0, 1
+)
+const HT_NANF_NL = Flows.OCPPseudoHamiltonianFunction{
+    _NA,Traits.NonFixed,typeof(_dyn_nanf!),Nothing
+}(
+    _dyn_nanf!, nothing, -1.0, 1
+)
 
 # =============================================================================
 # OCP fixtures for _ocp_pseudo_hamiltonian
 # =============================================================================
 
-function _build_ocp(criterion; autonomous = true, variable = false, lagrange = nothing)
+function _build_ocp(criterion; autonomous=true, variable=false, lagrange=nothing)
     pre = CTModels.Building.PreModel()
-    CTModels.Building.time_dependence!(pre; autonomous = autonomous)
-    CTModels.Building.time!(pre; t0 = 0.0, tf = 1.0)
+    CTModels.Building.time_dependence!(pre; autonomous=autonomous)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
     variable && CTModels.Building.variable!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = x[1] + u[1]; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=x[1] + u[1]; nothing))
     if lagrange === nothing
-        CTModels.Building.objective!(pre, criterion; mayer = (x0, xf, v) -> xf[1])
+        CTModels.Building.objective!(pre, criterion; mayer=(x0, xf, v) -> xf[1])
     else
-        CTModels.Building.objective!(pre, criterion; lagrange = lagrange)
+        CTModels.Building.objective!(pre, criterion; lagrange=lagrange)
     end
     return CTModels.Building.build(pre)
 end
 
-const OCP_MIN_LAG = _build_ocp(:min; lagrange = (t, x, u, v) -> 0.5 * u[1]^2)
-const OCP_MAX_LAG = _build_ocp(:max; lagrange = (t, x, u, v) -> 0.5 * u[1]^2)
+const OCP_MIN_LAG = _build_ocp(:min; lagrange=(t, x, u, v) -> 0.5 * u[1]^2)
+const OCP_MAX_LAG = _build_ocp(:max; lagrange=(t, x, u, v) -> 0.5 * u[1]^2)
 const OCP_MIN_MAYER = _build_ocp(:min)
-const OCP_NANF =
-    _build_ocp(:min; autonomous = false, variable = true, lagrange = (t, x, u, v) -> u[1]^2)
+const OCP_NANF = _build_ocp(
+    :min; autonomous=false, variable=true, lagrange=(t, x, u, v) -> u[1]^2
+)
 
 function test_ocp_pseudo_hamiltonian()
     Test.@testset "OCP PseudoHamiltonian Function" verbose=VERBOSE showtiming=SHOWTIMING begin
@@ -155,7 +144,7 @@ function test_ocp_pseudo_hamiltonian()
             p = [3.0];
             u = [4.0]
             Test.@test HT_AF_LAG_MIN(x, p, u) ≈
-                       p[1] * (λ_TEST * x[1] + u[1]) - (x[1]^2 + u[1]^2)
+                p[1] * (λ_TEST * x[1] + u[1]) - (x[1]^2 + u[1]^2)
         end
 
         Test.@testset "Unit: max criterion ⇒ sp0 = +1" begin
@@ -163,7 +152,7 @@ function test_ocp_pseudo_hamiltonian()
             p = [3.0];
             u = [4.0]
             Test.@test HT_AF_LAG_MAX(x, p, u) ≈
-                       p[1] * (λ_TEST * x[1] + u[1]) + (x[1]^2 + u[1]^2)
+                p[1] * (λ_TEST * x[1] + u[1]) + (x[1]^2 + u[1]^2)
         end
 
         Test.@testset "Unit: lagrange === nothing ⇒ H̃ = p·f exactly" begin
@@ -189,16 +178,14 @@ function test_ocp_pseudo_hamiltonian()
             h̃ = Flows._ocp_pseudo_hamiltonian(OCP_MIN_LAG)
             Test.@test h̃ isa Data.PseudoHamiltonian
             Test.@test h̃ isa Data.AbstractPseudoHamiltonian{
-                CTModels.Components.Autonomous,
-                Traits.Fixed,
+                CTModels.Components.Autonomous,Traits.Fixed
             }
         end
 
         Test.@testset "Unit: _ocp_pseudo_hamiltonian TD/VD match OCP (NonAuton/NonFixed)" begin
             h̃ = Flows._ocp_pseudo_hamiltonian(OCP_NANF)
             Test.@test h̃ isa Data.AbstractPseudoHamiltonian{
-                CTModels.Components.NonAutonomous,
-                Traits.NonFixed,
+                CTModels.Components.NonAutonomous,Traits.NonFixed
             }
         end
 
@@ -250,9 +237,7 @@ function test_ocp_pseudo_hamiltonian()
             # ℓ=u², :min ⇒ H̃(t,x,p,u,v)=p(x+u)-u² ; law u(t,x,p,v)=v·p
             h̃ = Flows._ocp_pseudo_hamiltonian(OCP_NANF)
             law = Data.DynClosedLoop(
-                (t, x, p, v) -> v[1] * p;
-                is_autonomous = false,
-                is_variable = true,
+                (t, x, p, v) -> v[1] * p; is_autonomous=false, is_variable=true
             )
             H = Data.ComposedHamiltonian(h̃, law)
             t = 0.7;
@@ -267,5 +252,6 @@ end
 
 end # module
 
-test_ocp_pseudo_hamiltonian() =
-    TestOCPPseudoHamiltonianFunction.test_ocp_pseudo_hamiltonian()
+function test_ocp_pseudo_hamiltonian()
+    return TestOCPPseudoHamiltonianFunction.test_ocp_pseudo_hamiltonian()
+end

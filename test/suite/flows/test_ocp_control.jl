@@ -18,7 +18,7 @@ const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 const ATOL = 1e-8
-_opts() = (; alg = Tsit5(), reltol = 1e-12, abstol = 1e-12)
+_opts() = (; alg=Tsit5(), reltol=1e-12, abstol=1e-12)
 
 # =============================================================================
 # OCP fixtures at module top-level
@@ -28,72 +28,72 @@ _opts() = (; alg = Tsit5(), reltol = 1e-12, abstol = 1e-12)
 # 1-D quantities are scalars (no [1] indexing): exercises the "1-D = scalar" convention.
 function _build_lqr()
     pre = CTModels.Building.PreModel()
-    CTModels.Building.time_dependence!(pre; autonomous = true)
-    CTModels.Building.time!(pre; t0 = 0.0, tf = 1.0)
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = -x + u; nothing))
-    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> 0.5 * u^2)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=(-x + u); nothing))
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2)
     return CTModels.Building.build(pre)
 end
 
 # double integrator energy: ẋ = [x₂, u], ℓ = 0.5u², :min  (autonomous, fixed)
 function _build_double_integrator()
     pre = CTModels.Building.PreModel()
-    CTModels.Building.time_dependence!(pre; autonomous = true)
-    CTModels.Building.time!(pre; t0 = 0.0, tf = 1.0)
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 2)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= [x[2], u[1]]; nothing))
-    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> 0.5 * u[1]^2)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r.=[x[2], u[1]]; nothing))
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u[1]^2)
     return CTModels.Building.build(pre)
 end
 
 # non-autonomous: ẋ = u(1 + tan t), ℓ = 0.5u², :min  (non-autonomous, fixed)
 function _build_nonauton()
     pre = CTModels.Building.PreModel()
-    CTModels.Building.time_dependence!(pre; autonomous = false)
-    CTModels.Building.time!(pre; t0 = 0.0, tf = π / 4)
+    CTModels.Building.time_dependence!(pre; autonomous=false)
+    CTModels.Building.time!(pre; t0=0.0, tf=π / 4)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = u * (1 + tan(t)); nothing))
-    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> 0.5 * u^2)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=u * (1 + tan(t)); nothing))
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2)
     return CTModels.Building.build(pre)
 end
 
 # control-free OCP (for the guard test)
 function _build_control_free()
     pre = CTModels.Building.PreModel()
-    CTModels.Building.time_dependence!(pre; autonomous = true)
-    CTModels.Building.time!(pre; t0 = 0.0, tf = 1.0)
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = x; nothing))
-    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> x^2)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=x; nothing))
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> x^2)
     return CTModels.Building.build(pre)
 end
 
 # Mayer-only control OCP (no Lagrange): ẋ = -x + u, mayer = xf, :min
 function _build_mayer_control()
     pre = CTModels.Building.PreModel()
-    CTModels.Building.time_dependence!(pre; autonomous = true)
-    CTModels.Building.time!(pre; t0 = 0.0, tf = 1.0)
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = -x + u; nothing))
-    CTModels.Building.objective!(pre, :min; mayer = (x0, xf, v) -> xf)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=(-x + u); nothing))
+    CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf)
     return CTModels.Building.build(pre)
 end
 
 # variable (NonFixed) control OCP: ẋ = v·(-x) + u, ℓ = 0.5u², :min
 function _build_variable_control()
     pre = CTModels.Building.PreModel()
-    CTModels.Building.time_dependence!(pre; autonomous = true)
-    CTModels.Building.time!(pre; t0 = 0.0, tf = 1.0)
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
     CTModels.Building.variable!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = v * (-x) + u; nothing))
-    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> 0.5 * u^2)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=v * (-x) + u; nothing))
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2)
     return CTModels.Building.build(pre)
 end
 
@@ -101,28 +101,28 @@ end
 # with, to verify the "1-D = scalar, n-D = vector" boundary convention. `x[1]`/`u[1]`
 # work for both scalars and vectors, so the compute is correct either way.
 const _DYN_SEEN = Ref{Any}(nothing)
-_typed_dyn_1d!(r, t, x, u, v) = (_DYN_SEEN[] = (x, u, v); r[1] = -x[1] + u[1]; nothing)
-_typed_dyn_2d!(r, t, x, u, v) = (_DYN_SEEN[] = (x, u, v); r .= [x[2], u[1]]; nothing)
+_typed_dyn_1d!(r, t, x, u, v) = (_DYN_SEEN[]=(x, u, v); r[1]=(-x[1] + u[1]); nothing)
+_typed_dyn_2d!(r, t, x, u, v) = (_DYN_SEEN[]=(x, u, v); r.=[x[2], u[1]]; nothing)
 
 function _build_typed_1d()
     pre = CTModels.Building.PreModel()
-    CTModels.Building.time_dependence!(pre; autonomous = true)
-    CTModels.Building.time!(pre; t0 = 0.0, tf = 1.0)
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
     CTModels.Building.dynamics!(pre, _typed_dyn_1d!)
-    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> 0.5 * u[1]^2)
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u[1]^2)
     return CTModels.Building.build(pre)
 end
 
 function _build_typed_2d()
     pre = CTModels.Building.PreModel()
-    CTModels.Building.time_dependence!(pre; autonomous = true)
-    CTModels.Building.time!(pre; t0 = 0.0, tf = 1.0)
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 2)
     CTModels.Building.control!(pre, 1)
     CTModels.Building.dynamics!(pre, _typed_dyn_2d!)
-    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> 0.5 * u[1]^2)
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u[1]^2)
     return CTModels.Building.build(pre)
 end
 
@@ -144,8 +144,8 @@ function test_ocp_control()
 
         Test.@testset "Integration: LQR — :total and :partial agree (stationary)" begin
             law = Data.DynClosedLoop((x, p) -> p)
-            ft = Flows.Flow(OCP_LQR, law; hamiltonian_type = :total, _opts()...)
-            fp = Flows.Flow(OCP_LQR, law; hamiltonian_type = :partial, _opts()...)
+            ft = Flows.Flow(OCP_LQR, law; hamiltonian_type=:total, _opts()...)
+            fp = Flows.Flow(OCP_LQR, law; hamiltonian_type=:partial, _opts()...)
             t0, tf, x0, p0 = 0.0, 1.0, 1.0, 0.5
             xt, pt = ft(t0, x0, p0, tf)
             xp, pp = fp(t0, x0, p0, tf)
@@ -171,7 +171,7 @@ function test_ocp_control()
             Test.@test xf isa AbstractVector && length(xf) == 2
             Test.@test xf ≈ [0.0, 0.0] atol = 1e-6
 
-            fp = Flows.Flow(OCP_DI, law; hamiltonian_type = :partial, _opts()...)
+            fp = Flows.Flow(OCP_DI, law; hamiltonian_type=:partial, _opts()...)
             xfp, pfp = fp(t0, x0, p0, tf)
             Test.@test xf ≈ xfp atol = ATOL   # agree at stationarity
         end
@@ -197,12 +197,12 @@ function test_ocp_control()
         Test.@testset "Integration: non-stationary law separates :total and :partial" begin
             # double integrator, stationary law is u = p[2]; use u = p[2] + 1.
             law = Data.DynClosedLoop((x, p) -> p[2] + 1.0)
-            ft = Flows.Flow(OCP_DI, law; hamiltonian_type = :total, _opts()...)
-            fp = Flows.Flow(OCP_DI, law; hamiltonian_type = :partial, _opts()...)
+            ft = Flows.Flow(OCP_DI, law; hamiltonian_type=:total, _opts()...)
+            fp = Flows.Flow(OCP_DI, law; hamiltonian_type=:partial, _opts()...)
             t0, tf, x0, p0 = 0.0, 1.0, [-1.0, 0.0], [12.0, 6.0]
             xt, pt = ft(t0, x0, p0, tf)
             xp, pp = fp(t0, x0, p0, tf)
-            Test.@test !isapprox(xt, xp; atol = 1e-4)   # genuinely different flows
+            Test.@test !isapprox(xt, xp; atol=1e-4)   # genuinely different flows
         end
 
         # ====================================================================
@@ -220,7 +220,7 @@ function test_ocp_control()
             u = CTModels.control(sol)
             Test.@test u(t0) isa Union{Number,AbstractVector}
             # :total and :partial give the same objective at stationarity
-            fp = Flows.Flow(OCP_DI, law; hamiltonian_type = :partial, _opts()...)
+            fp = Flows.Flow(OCP_DI, law; hamiltonian_type=:partial, _opts()...)
             solp = fp((t0, tf), x0, p0)
             Test.@test obj ≈ CTModels.objective(solp) atol = 1e-6
         end
@@ -233,10 +233,10 @@ function test_ocp_control()
             # H̃(x,p,u) = p(-x+u) + 0.5u² ; law u = -p (stationary for this h̃)
             h̃ = Data.PseudoHamiltonian((x, p, u) -> p * (-x + u) + 0.5 * u^2)
             law = Data.DynClosedLoop((x, p) -> -p)
-            ft = Flows.Flow(h̃, law; hamiltonian_type = :total, _opts()...)
-            fp = Flows.Flow(h̃, law; hamiltonian_type = :partial, _opts()...)
+            ft = Flows.Flow(h̃, law; hamiltonian_type=:total, _opts()...)
+            fp = Flows.Flow(h̃, law; hamiltonian_type=:partial, _opts()...)
             t0, tf, x0, p0 = 0.0, 1.0, 1.0, 0.5
-            Test.@test all(isapprox.(ft(t0, x0, p0, tf), fp(t0, x0, p0, tf); atol = ATOL))
+            Test.@test all(isapprox.(ft(t0, x0, p0, tf), fp(t0, x0, p0, tf); atol=ATOL))
             # costate ṗ = -∂H̃/∂x = p ⇒ p(tf) = p0 e^{tf}
             _, pf = ft(t0, x0, p0, tf)
             Test.@test pf ≈ p0 * exp(tf) atol = 1e-6
@@ -248,12 +248,12 @@ function test_ocp_control()
 
         Test.@testset "Integration: variable (NonFixed) control flow" begin
             # ẋ = v(-x) + u, ℓ = 0.5u², :min ⇒ ∂H̃/∂u = p - u ; stationary law u = p.
-            law = Data.DynClosedLoop((x, p, v) -> p; is_variable = true)
-            ft = Flows.Flow(OCP_VAR, law; hamiltonian_type = :total, _opts()...)
-            fp = Flows.Flow(OCP_VAR, law; hamiltonian_type = :partial, _opts()...)
+            law = Data.DynClosedLoop((x, p, v) -> p; is_variable=true)
+            ft = Flows.Flow(OCP_VAR, law; hamiltonian_type=:total, _opts()...)
+            fp = Flows.Flow(OCP_VAR, law; hamiltonian_type=:partial, _opts()...)
             t0, tf, x0, p0, vval = 0.0, 1.0, 1.0, 0.5, 0.5
-            xt, pt = ft(t0, x0, p0, tf; variable = vval)
-            xp, pp = fp(t0, x0, p0, tf; variable = vval)
+            xt, pt = ft(t0, x0, p0, tf; variable=vval)
+            xp, pp = fp(t0, x0, p0, tf; variable=vval)
             Test.@test xt ≈ xp atol = ATOL             # agree at stationarity
             Test.@test pt ≈ pp atol = ATOL
             # costate: ṗ = -∂H̃/∂x = p·v ⇒ p(tf) = p0·e^{v·tf}
@@ -308,36 +308,27 @@ function test_ocp_control()
         Test.@testset "Error: invalid hamiltonian_type" begin
             law = Data.DynClosedLoop((x, p) -> p)
             Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
-                OCP_LQR,
-                law;
-                hamiltonian_type = :foo,
-                _opts()...,
+                OCP_LQR, law; hamiltonian_type=:foo, _opts()...
             )
         end
 
         Test.@testset "Error: control-free OCP with a law" begin
             law = Data.DynClosedLoop((x, p) -> p)
             Test.@test_throws Exceptions.PreconditionError Flows.Flow(
-                OCP_CF,
-                law;
-                _opts()...,
+                OCP_CF, law; _opts()...
             )
         end
 
         Test.@testset "Error: OpenLoop/ClosedLoop law into Flow(ocp, law) → NotImplemented" begin
             Test.@test_throws Exceptions.NotImplemented Flows.Flow(
-                OCP_LQR,
-                Data.ClosedLoop(x -> -x[1]);
-                _opts()...,
+                OCP_LQR, Data.ClosedLoop(x -> -x[1]); _opts()...
             )
         end
 
         Test.@testset "Error: OpenLoop law into Flow(h̃, law) → PreconditionError" begin
             h̃ = Data.PseudoHamiltonian((x, p, u) -> p * u)
             Test.@test_throws Exceptions.PreconditionError Flows.Flow(
-                h̃,
-                Data.OpenLoop(() -> 1.0);
-                _opts()...,
+                h̃, Data.OpenLoop(() -> 1.0); _opts()...
             )
         end
     end

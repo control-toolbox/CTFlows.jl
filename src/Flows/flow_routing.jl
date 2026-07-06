@@ -20,8 +20,7 @@ See also: [`_route_flow_options`](@ref), [`flow_registry`](@ref)
 """
 function _flow_families()
     return (
-        backend = Differentiation.AbstractADBackend,
-        integrator = Integrators.AbstractIntegrator,
+        backend=Differentiation.AbstractADBackend, integrator=Integrators.AbstractIntegrator
     )
 end
 
@@ -83,8 +82,7 @@ See also: [`_flow_families`](@ref), [`_build_flow_components`](@ref),
 [`CTBase.Orchestration.route_all_options`](@extref)
 """
 function _route_flow_options(
-    kwargs;
-    action_defs::Vector{<:Options.OptionDefinition} = Options.OptionDefinition[],
+    kwargs; action_defs::Vector{<:Options.OptionDefinition}=Options.OptionDefinition[]
 )
     return Orchestration.route_all_options(
         _FLOW_DESCRIPTION,
@@ -92,7 +90,7 @@ function _route_flow_options(
         action_defs,
         (; kwargs...),
         flow_registry();
-        source_mode = :description,
+        source_mode=:description,
     )
 end
 
@@ -109,11 +107,11 @@ See also: [`_route_flow_options`](@ref), [`_unwrap_option`](@ref).
 function _flow_action_defs()
     return [
         Options.OptionDefinition(;
-            name = :hamiltonian_type,
-            aliases = (),
-            type = Symbol,
-            default = :total,
-            description = "Hamiltonian type for DynClosedLoop flows: :total or :partial",
+            name=:hamiltonian_type,
+            aliases=(),
+            type=Symbol,
+            default=:total,
+            description="Hamiltonian type for DynClosedLoop flows: :total or :partial",
         ),
     ]
 end
@@ -160,18 +158,10 @@ function _build_flow_components(routed)
     families = _flow_families()
     resolved = Orchestration.resolve_method(_FLOW_DESCRIPTION, families, flow_registry())
     backend = Orchestration.build_strategy_from_resolved(
-        resolved,
-        :backend,
-        families,
-        flow_registry();
-        routed.strategies.backend...,
+        resolved, :backend, families, flow_registry(); routed.strategies.backend...
     )
     integrator = Orchestration.build_strategy_from_resolved(
-        resolved,
-        :integrator,
-        families,
-        flow_registry();
-        routed.strategies.integrator...,
+        resolved, :integrator, families, flow_registry(); routed.strategies.integrator...
     )
-    return (backend = backend, integrator = integrator)
+    return (backend=backend, integrator=integrator)
 end
