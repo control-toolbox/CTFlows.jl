@@ -259,6 +259,133 @@ function _ocp_pseudo_hamiltonian(ocp)
 end
 
 # =============================================================================
+# OCPControlledVectorFieldFunction — OCP controlled dynamics fc(t,x,u,v) = f(t,x,u,v)
+#
+# Out-of-place wrapper of the OCP in-place dynamics, for the OpenLoop/ClosedLoop
+# (state-flow) path. Returns the state derivative (scalar for 1-D per convention).
+# =============================================================================
+
+"""
+$(TYPEDEF)
+
+Internal callable representing the controlled dynamics of an OCP, out-of-place:
+`fc(t,x,u,v) = f(t,x,u,v)`. Wraps the OCP in-place dynamics; used (composed with an
+open-loop or closed-loop control law) to build the state flow of the closed-loop system.
+
+# Type Parameters
+- `TD`, `VD`: time- and variable-dependence traits (compile-time dispatch on arity).
+- `DF`: type of the in-place dynamics function.
+
+# Fields
+- `dynamics!::DF`: in-place dynamics `f!(r, t, x, u, v)` from the OCP.
+- `n::Int`: state dimension.
+- `cx::CX`, `cu::CU`, `cv::CV`: state / control / variable coercions (`only` for a 1-D
+  quantity, `identity` otherwise), **precomputed once** from the OCP dimensions so the
+  hot RHS path never tests a length at run time.
+
+See also: [`CTBase.Data.ControlledVectorField`](@extref), `_ocp_controlled_vector_field`.
+"""
+struct OCPControlledVectorFieldFunction{TD,VD,DF,CX,CU,CV} <: Function
+    dynamics!::DF
+    n::Int
+    cx::CX
+    cu::CU
+    cv::CV
+end
+
+# 1-D = scalar: return a scalar when the state is a scalar, a vector otherwise.
+_finalize_vf(r, ::Number) = only(r)
+_finalize_vf(r, ::AbstractVector) = r
+
+# Precomputed coercion from a declared dimension: `only` collapses a 1-D quantity to a
+# scalar (accepting both a scalar and a length-1 vector), `identity` leaves n-D untouched.
+_dim_coerce(dim::Int) = dim == 1 ? only : identity
+
+"""
+$(TYPEDSIGNATURES)
+
+Core computation of the OCP controlled dynamics `fc(t,x,u,v)`: coerce `x`/`u`/`v` with
+the precomputed per-dimension coercions (scalar for 1-D), fill a length-`n_x` buffer with
+the in-place dynamics, and return it (scalar for a 1-D state).
+
+See also: [`OCPControlledVectorFieldFunction`](@ref).
+"""
+function _ocp_controlled_vf(h::OCPControlledVectorFieldFunction, t, x, u, v)
+    xs = h.cx(x)
+    us = h.cu(u)
+    if v === nothing
+        T = Base.promote_op(*, eltype(xs), eltype(us))
+        vv = Vector{T}(undef, 0)
+    else
+        vs = h.cv(v)
+        T = Base.promote_op(*, Base.promote_op(*, eltype(xs), eltype(us)), eltype(vs))
+        vv = vs
+    end
+    r = Vector{T}(undef, h.n)
+    h.dynamics!(r, t, xs, us, vv)
+    return _finalize_vf(r, xs)
+end
+
+function (h::OCPControlledVectorFieldFunction{_CTM_Auton,Traits.Fixed,DF})(x, u) where {DF}
+    return _ocp_controlled_vf(h, 0.0, x, u, nothing)
+end
+function (h::OCPControlledVectorFieldFunction{_CTM_NonAuton,Traits.Fixed,DF})(
+    t,
+    x,
+    u,
+) where {DF}
+    return _ocp_controlled_vf(h, t, x, u, nothing)
+end
+function (h::OCPControlledVectorFieldFunction{_CTM_Auton,Traits.NonFixed,DF})(
+    x,
+    u,
+    v,
+) where {DF}
+    return _ocp_controlled_vf(h, 0.0, x, u, v)
+end
+function (h::OCPControlledVectorFieldFunction{_CTM_NonAuton,Traits.NonFixed,DF})(
+    t,
+    x,
+    u,
+    v,
+) where {DF}
+    return _ocp_controlled_vf(h, t, x, u, v)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Build an [`OCPControlledVectorFieldFunction`](@ref) from an OCP and wrap it in a
+[`CTBase.Data.ControlledVectorField`](@extref).
+
+See also: [`OCPControlledVectorFieldFunction`](@ref), `_ocp_pseudo_hamiltonian`.
+"""
+function _ocp_controlled_vector_field(ocp)
+    n = CTModels.Models.state_dimension(ocp)
+    dyn! = CTModels.Models.dynamics(ocp)
+    cx = _dim_coerce(n)                                        # precomputed once
+    cu = _dim_coerce(CTModels.Models.control_dimension(ocp))
+    cv = _dim_coerce(CTModels.Models.variable_dimension(ocp))
+    TD = Traits.time_dependence(ocp)
+    VD = Traits.variable_dependence(ocp)
+    fc_raw = OCPControlledVectorFieldFunction{
+        TD,
+        VD,
+        typeof(dyn!),
+        typeof(cx),
+        typeof(cu),
+        typeof(cv),
+    }(
+        dyn!,
+        n,
+        cx,
+        cu,
+        cv,
+    )
+    return Data.ControlledVectorField(fc_raw, TD, VD)
+end
+
+# =============================================================================
 # OptimalControlFlow — thin AbstractFlow wrapper that carries the ocp reference
 #
 # The inner HamiltonianFlow handles all point-eval + variable_costate logic.

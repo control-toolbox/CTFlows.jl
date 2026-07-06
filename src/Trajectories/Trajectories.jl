@@ -21,6 +21,7 @@ module Trajectories
 
 import DocStringExtensions: TYPEDSIGNATURES, TYPEDEF
 import CTBase.Core
+import CTBase.Data
 import CTBase.Exceptions
 import CTBase.Traits
 import RecipesBase: RecipesBase, plot
@@ -40,6 +41,7 @@ import ..Integrators: Integrators
 
 include(joinpath(@__DIR__, "vector_field_trajectory.jl"))
 include(joinpath(@__DIR__, "hamiltonian_vector_field_trajectory.jl"))
+include(joinpath(@__DIR__, "controlled_trajectory.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 
 # ==============================================================================
@@ -48,9 +50,11 @@ include(joinpath(@__DIR__, "building.jl"))
 
 export AbstractVectorFieldTrajectory, VectorFieldTrajectory
 export AbstractHamiltonianVectorFieldTrajectory, HamiltonianVectorFieldTrajectory
+export ControlledTrajectory, ControlProjection
 export StateProjection, CostateProjection
 export state, time_grid
 export costate
+export control, objective
 export build_trajectory
 export plot
 

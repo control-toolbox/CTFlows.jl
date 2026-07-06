@@ -55,8 +55,8 @@ by allocating the result into the pre-allocated `du` buffer.
 # Call signature
 `(f::IPVFOoPRHS)(du, u, λ, t) -> nothing`
 """
-struct IPVFOoPRHS{F,TD,VD} <: AbstractIPRHS
-    vf::Data.VectorField{F,TD,VD,Traits.OutOfPlace}
+struct IPVFOoPRHS{VF<:Data.AbstractVectorField} <: AbstractIPRHS
+    vf::VF
 end
 
 function (f::IPVFOoPRHS)(du, u, λ, t)
@@ -101,8 +101,8 @@ by directly calling the VectorField.
 # Call signature
 `(f::OoPVFOoPRHS)(u, λ, t) -> du`
 """
-struct OoPVFOoPRHS{F,TD,VD} <: AbstractOoPRHS
-    vf::Data.VectorField{F,TD,VD,Traits.OutOfPlace}
+struct OoPVFOoPRHS{VF<:Data.AbstractVectorField} <: AbstractOoPRHS
+    vf::VF
 end
 
 function (f::OoPVFOoPRHS)(u, λ, t)
@@ -175,10 +175,15 @@ function Base.show(io::IO, f::AbstractRHS)
     vd = Traits.variable_dependence(f.vf)
     md = Traits.mutability(f.vf)
     wraps = "VectorField: $(Data._td_label(td)), $(Data._vd_label(vd)), $(Data._md_label(md))"
-    Display.print_header(io, nameof(typeof(f)); fmt=fmt)
-    Display.print_field(io, "wraps", wraps; fmt=fmt, value_style="")
+    Display.print_header(io, nameof(typeof(f)); fmt = fmt)
+    Display.print_field(io, "wraps", wraps; fmt = fmt, value_style = "")
     return Display.print_field(
-        io, "converts", _rhs_conversion_label(f); last=true, fmt=fmt, value_style=""
+        io,
+        "converts",
+        _rhs_conversion_label(f);
+        last = true,
+        fmt = fmt,
+        value_style = "",
     )
 end
 

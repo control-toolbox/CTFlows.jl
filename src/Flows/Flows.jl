@@ -44,6 +44,7 @@ include(joinpath(@__DIR__, "flow.jl"))
 include(joinpath(@__DIR__, "registry.jl"))
 include(joinpath(@__DIR__, "flow_routing.jl"))
 include(joinpath(@__DIR__, "optimal_control_flow.jl"))
+include(joinpath(@__DIR__, "controlled_flow.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 include(joinpath(@__DIR__, "calling.jl"))
 

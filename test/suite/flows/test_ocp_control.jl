@@ -324,12 +324,10 @@ function test_ocp_control()
             )
         end
 
-        Test.@testset "Error: OpenLoop/ClosedLoop law into Flow(ocp, law) → NotImplemented" begin
-            Test.@test_throws Exceptions.NotImplemented Flows.Flow(
-                OCP_LQR,
-                Data.ClosedLoop(x -> -x[1]);
-                _opts()...,
-            )
+        Test.@testset "OpenLoop/ClosedLoop law into Flow(ocp, law) → ControlledFlow (state)" begin
+            # OpenLoop/ClosedLoop laws now build a state flow (see test_state_control_flows.jl).
+            f = Flows.Flow(OCP_LQR, Data.ClosedLoop(x -> -x); _opts()...)
+            Test.@test f isa Flows.ControlledFlow
         end
 
         Test.@testset "Error: OpenLoop law into Flow(h̃, law) → PreconditionError" begin

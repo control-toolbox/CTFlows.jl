@@ -298,6 +298,59 @@ function _build_pseudo_flow(::Val{ht}, h̃, law, components) where {ht}
 end
 
 # =============================================================================
+# Flow from a controlled vector field and a control law (intermediate constructor)
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Build a [`CTFlows.Flows.ControlledFlow`](@ref) directly from a controlled vector field
+`fc(t,x,u,v)` and an **open-loop** or **closed-loop** control law, without an OCP.
+
+Dispatches on the law's [`CTBase.Traits.feedback`](@extref) trait: the control is
+eliminated via a [`CTBase.Data.ComposedVectorField`](@extref) `g(t,x,v)=fc(t,x,u(...),v)`,
+integrated as a state flow. A trajectory call returns a
+[`CTFlows.Trajectories.ControlledTrajectory`](@ref) (state + reconstructed control, no
+objective — there is no OCP).
+
+# Throws
+- [`CTBase.Exceptions.PreconditionError`](@extref): if the law is `DynClosedLoop` (that
+  needs the costate; use [`Flow(h̃::Data.PseudoHamiltonian, law::Data.ControlLaw)`](@ref)).
+
+See also: [`CTFlows.Flows.Flow`](@ref), [`CTBase.Data.ControlledVectorField`](@extref).
+"""
+function Flow(fc::Data.ControlledVectorField, law::Data.ControlLaw; kwargs...)
+    return _flow_from_controlled_vf(Traits.feedback(law), fc, law; kwargs...)
+end
+
+function _flow_from_controlled_vf(
+    ::Type{<:Union{Traits.OpenLoopFeedback,Traits.ClosedLoopFeedback}},
+    fc::Data.ControlledVectorField,
+    law::Data.ControlLaw;
+    kwargs...,
+)
+    return _controlled_flow(fc, law, nothing; kwargs...)
+end
+
+function _flow_from_controlled_vf(
+    ::Type{Traits.DynClosedLoopFeedback},
+    ::Data.ControlledVectorField,
+    ::Data.ControlLaw;
+    kwargs...,
+)
+    return throw(
+        Exceptions.PreconditionError(
+            "Flow(fc, law) requires an OpenLoop or ClosedLoop control law";
+            reason = "a DynClosedLoop law u(t,x,p,v) needs the costate p, which a state " *
+                     "flow of a vector field does not have",
+            suggestion = "use OpenLoop(u) or ClosedLoop(u); for a DynClosedLoop law use " *
+                         "Flow(h̃, law) or Flow(ocp, law)",
+            context = "Flow(fc::ControlledVectorField, law::ControlLaw) — feedback dispatch",
+        ),
+    )
+end
+
+# =============================================================================
 # Flow from an OCP and a control law
 # =============================================================================
 
@@ -377,18 +430,40 @@ end
 
 function _flow_from_ocp_control(
     ::Type{<:Union{Traits.OpenLoopFeedback,Traits.ClosedLoopFeedback}},
-    ::CTModels.Models.Model,
-    ::Data.ControlLaw;
+    ocp::CTModels.Models.Model,
+    law::Data.ControlLaw;
     kwargs...,
 )
-    return throw(
-        Exceptions.NotImplemented(
-            "Flow(ocp, law) with an OpenLoop/ClosedLoop control law is not implemented yet";
-            required_method = "Flow(ocp, law::ControlLaw{…,OpenLoopFeedback/ClosedLoopFeedback,…})",
-            suggestion = "use a DynClosedLoop control law u(t,x,p,v); state-only flows will be wired later",
-            context = "Flow(ocp, law::ControlLaw) — feedback dispatch",
+    Traits.control_dependence(ocp) === Traits.WithControl || throw(
+        Exceptions.PreconditionError(
+            "Flow(ocp, law) requires a with-control OCP";
+            reason = "the OCP is control-free (no control input), so a control law cannot be applied",
+            suggestion = "use Flow(ocp; kwargs…) for a control-free OCP",
+            context = "Flow(ocp, law::ControlLaw) — control-dependence check",
         ),
     )
+    fc = _ocp_controlled_vector_field(ocp)
+    return _controlled_flow(fc, law, ocp; kwargs...)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Build a [`CTFlows.Flows.ControlledFlow`](@ref) from a controlled vector field, an
+open-loop/closed-loop control law, and an optional OCP (for the objective): compose into
+a [`CTBase.Data.ComposedVectorField`](@extref), build a `VectorFieldSystem`, and wrap the
+resulting state flow together with the OCP reference (or `nothing`) and the law.
+"""
+function _controlled_flow(
+    fc::Data.ControlledVectorField,
+    law::Data.ControlLaw,
+    ocp;
+    kwargs...,
+)
+    g = Data.ComposedVectorField(fc, law)
+    system = Systems.build_system(g)
+    integrator = Integrators.build_integrator(; kwargs...)
+    return ControlledFlow(build_flow(system, integrator), ocp, law)
 end
 
 function Flow(::CTModels.Models.Model, ::Any, args...; kwargs...)
