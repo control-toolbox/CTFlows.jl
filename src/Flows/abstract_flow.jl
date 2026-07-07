@@ -258,6 +258,156 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Return the Hamiltonian `H(t, x, p, v)` underlying a Hamiltonian flow.
+
+Delegates to the system-level getter [`CTFlows.Systems.hamiltonian`](@ref). The
+returned object is callable as a scalar function of `(t, x, p, v)` (or the shorter
+signatures allowed by the flow's time/variable dependence). It is available for flows
+built from a scalar Hamiltonian — `HamiltonianSystem` (including the `:total` mode of
+an OCP-with-control flow) and `PseudoHamiltonianSystem` (the `:partial` mode, where it
+reconstructs the composed Hamiltonian). Flows built from a raw Hamiltonian vector field
+carry no scalar Hamiltonian and are not supported.
+
+This is the getter to use when writing a transversality condition on a free time in a
+shooting method: with `v = t0` and/or `tf` a variable, the augmented flow integrates the
+naive adjoint `ṗv = -∂H/∂v` (initialized at `0`), and the mitigated transversality
+conditions read `p_{t0}(tf) = -H(t0, x0, p0, v)` and `p_{tf}(tf) = H(tf, xf, pf, v)`.
+
+# Example
+\`\`\`julia
+H = CTFlows.Systems.hamiltonian(flow)
+xf, pf, pvf = flow(t0, x0, p0, tf; variable = v, variable_costate = true)
+s = pvf[idx_tf] - H(tf, xf, pf, v)   # transversality for free final time
+\`\`\`
+
+See also: [`CTFlows.Systems.hamiltonian`](@ref), [`CTFlows.Flows.system`](@ref).
+"""
+function Systems.hamiltonian(
+    f::AbstractFlow{
+        <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.HamiltonianDynamics
+    },
+)
+    return Systems.hamiltonian(system(f))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the pseudo-Hamiltonian `H̃(t, x, p, u, v)` underlying a Hamiltonian flow, when
+available — i.e. when the flow was built from a pseudo-Hamiltonian (or an OCP) and a
+control law, in either the `:partial` or the `:total` mode. Delegates to
+[`CTFlows.Systems.pseudo_hamiltonian`](@ref).
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: for a flow that carries no control law.
+
+See also: [`CTFlows.Flows.hamiltonian`](@ref), [`CTFlows.Flows.control_law`](@ref).
+"""
+function Systems.pseudo_hamiltonian(
+    f::AbstractFlow{
+        <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.HamiltonianDynamics
+    },
+)
+    return Systems.pseudo_hamiltonian(system(f))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the control law `u(t, x, p, v)` carried by a Hamiltonian flow built from a
+control law. Delegates to [`CTFlows.Systems.control_law`](@ref).
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: for a flow that carries no control law.
+
+See also: [`CTFlows.Flows.pseudo_hamiltonian`](@ref).
+"""
+function Systems.control_law(
+    f::AbstractFlow{
+        <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.HamiltonianDynamics
+    },
+)
+    return Systems.control_law(system(f))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return a callable `(t, x, p, v) -> (∂H/∂x, ∂H/∂p)` for the true Hamiltonian of a
+Hamiltonian flow. Delegates to [`CTFlows.Systems.hamiltonian_gradient`](@ref); the
+`ad_backend` keyword (default: the system's backend) selects the AD backend.
+
+See also: [`CTFlows.Flows.hamiltonian`](@ref), [`CTFlows.Flows.variable_gradient`](@ref).
+"""
+function Systems.hamiltonian_gradient(
+    f::AbstractFlow{
+        <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.HamiltonianDynamics
+    };
+    kwargs...,
+)
+    return Systems.hamiltonian_gradient(system(f); kwargs...)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return a callable `(t, x, p, v) -> ∂H/∂v` for the true Hamiltonian of a Hamiltonian
+flow — the quantity (before negation) driving `ṗv = -∂H/∂v`. Delegates to
+[`CTFlows.Systems.variable_gradient`](@ref); the `ad_backend` keyword (default: the
+system's backend) selects the AD backend.
+
+See also: [`CTFlows.Flows.hamiltonian_gradient`](@ref).
+"""
+function Systems.variable_gradient(
+    f::AbstractFlow{
+        <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.HamiltonianDynamics
+    };
+    kwargs...,
+)
+    return Systems.variable_gradient(system(f); kwargs...)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return a callable `(t, x, p, u, v) -> (∂H̃/∂x, ∂H̃/∂p)` for the pseudo-Hamiltonian of a
+Hamiltonian flow (differentiated at fixed control), when available. Delegates to
+[`CTFlows.Systems.pseudo_hamiltonian_gradient`](@ref); the `ad_backend` keyword
+(default: the system's backend) selects the AD backend.
+
+See also: [`CTFlows.Flows.pseudo_hamiltonian`](@ref), [`CTFlows.Flows.pseudo_variable_gradient`](@ref).
+"""
+function Systems.pseudo_hamiltonian_gradient(
+    f::AbstractFlow{
+        <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.HamiltonianDynamics
+    };
+    kwargs...,
+)
+    return Systems.pseudo_hamiltonian_gradient(system(f); kwargs...)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return a callable `(t, x, p, u, v) -> ∂H̃/∂v` for the pseudo-Hamiltonian of a
+Hamiltonian flow (differentiated at fixed control), when available. Delegates to
+[`CTFlows.Systems.pseudo_variable_gradient`](@ref); the `ad_backend` keyword
+(default: the system's backend) selects the AD backend.
+
+See also: [`CTFlows.Flows.pseudo_hamiltonian_gradient`](@ref).
+"""
+function Systems.pseudo_variable_gradient(
+    f::AbstractFlow{
+        <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.HamiltonianDynamics
+    };
+    kwargs...,
+)
+    return Systems.pseudo_variable_gradient(system(f); kwargs...)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Return the associated `AbstractSystem` for the flow.
 
 # Throws

@@ -17,6 +17,7 @@ using CTFlows.Flows
 using CTFlows.Trajectories
 using CTFlows.Configs
 import OrdinaryDiffEqTsit5
+import ForwardDiff  # triggers the DifferentiationInterface ForwardDiff extension
 
 vf = Data.VectorField(x -> -x)
 flow = Flows.Flow(vf; reltol=1e-8)
@@ -77,6 +78,63 @@ xf_v = flow_v(0.0, [1.0, 0.0], 1.0; variable=[2.0])
 
 The `variable` argument is required when `is_variable(flow)` is `true`, and silently
 ignored for `Fixed` flows.
+
+---
+
+## Variable costate
+
+For a `NonFixed` `HamiltonianFlow`, pass `variable_costate=true` to also integrate the
+augmented adjoint ``\dot{p}_v = -\partial H/\partial v`` (initialized at
+``p_v(t_0) = 0``) alongside the state and costate. The point call then returns a triple
+`(xf, pf, pvf)` instead of `(xf, pf)`:
+
+```@example flows_integrating
+h_v = Data.Hamiltonian((x, p, v) -> v[1] * p^2 / 2; is_variable=true)
+hflow_v = Flows.Flow(h_v)
+
+xf, pf, pvf = hflow_v(0.0, 1.0, 0.5, 1.0; variable=[2.0], variable_costate=true)
+(xf, pf, pvf)
+```
+
+This is only available for point evaluation, and only when `variable` is provided
+(`NonFixed` flows require it).
+
+### Free times (issues [#231](https://github.com/control-toolbox/CTFlows.jl/issues/231), [#183](https://github.com/control-toolbox/CTFlows.jl/issues/183))
+
+The positional `tf` argument is the **evaluation time**; it is independent of the
+`variable` value, even when a variable component *represents* a free initial or final
+time. Passing `flow(t0, x0, p0, t1; variable=v)` with `t1 ≠ v` is valid.
+
+When a variable component is a free time, the flow keeps integrating the same naive
+adjoint — no special-casing. The free-time transversality condition is instead written
+by hand in the shooting method, as a **mitigated** condition that lets you initialize
+the corresponding costate at zero:
+
+```math
+p_{t_0}(t_f) = -H(t_0, x_0, p_0, v), \qquad p_{t_f}(t_f) = H(t_f, x_f, p_f, v),
+```
+
+where `H` is obtained from [`CTFlows.Systems.hamiltonian`](@ref)`(flow)`. See the
+Goddard problem tests (`test/suite/integration/test_goddard.jl`) for a shooting method
+using a free final time this way.
+
+---
+
+## Hamiltonian / pseudo-Hamiltonian getters
+
+Any Hamiltonian flow exposes its underlying Hamiltonian and — when the flow was built
+from a control law — its pseudo-Hamiltonian, control law, and their gradients:
+
+```@example flows_integrating
+Systems.hamiltonian(hflow_v)              # the callable H(t, x, p, v)
+Systems.hamiltonian_gradient(hflow_v)      # functor: (t, x, p, v) -> (∂H/∂x, ∂H/∂p)
+Systems.variable_gradient(hflow_v)         # functor: (t, x, p, v) -> ∂H/∂v
+```
+
+`Systems.pseudo_hamiltonian`, `Systems.control_law`, `Systems.pseudo_hamiltonian_gradient`
+and `Systems.pseudo_variable_gradient` are available on flows built from a
+pseudo-Hamiltonian (or an OCP) and a control law — see [Control laws](control_laws.md).
+Calling them on a flow with no associated control law throws `IncorrectArgument`.
 
 ---
 

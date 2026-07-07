@@ -47,12 +47,30 @@ Builds a `HamiltonianEndPointConfig` internally and calls the flow with it.
 - `t0::Real`: Initial time.
 - `x0`: Initial state vector.
 - `p0`: Initial costate vector.
-- `tf::Real`: Final time.
-- `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
-- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+- `tf::Real`: Final time — the time the state/costate are integrated to. This is the
+  **evaluation time**; it is independent of the `variable` value even when the variable
+  represents a free time (see below).
+- `variable`: The variable parameter value (required for NonFixed systems, optional for
+  Fixed systems).
+- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw
+  `SolverFailure` on integration failure.
+- `variable_costate`: If `true` (NonFixed only), also integrate the augmented adjoint
+  `ṗv = -∂H/∂v` (initialised at `pv(t0) = 0`) and return `(xf, pf, pvf)`.
+
+# Free times (issues #231, #183)
+
+The evaluation time `tf` and the `variable` value are **separate**: passing
+`flow(t0, x0, p0, t1; variable = tf)` with `t1 ≠ tf` is allowed and integrates to `t1`
+while using `tf` as the variable value. When the variable is a free time, the flow still
+integrates the naive `ṗv = -∂H/∂v`; the boundary term is a *mitigated transversality
+condition* written in the shooting method, not by the flow:
+
+    p_{t0}(tf) = -H(t0, x0, p0, v),   p_{tf}(tf) = H(tf, xf, pf, v),
+
+with `H` obtained from [`CTFlows.Systems.hamiltonian`](@ref).
 
 # Returns
-- The integrated solution (type varies by system).
+- The integrated solution `(xf, pf)`, or `(xf, pf, pvf)` when `variable_costate = true`.
 
 # Example
 \`\`\`julia-repl
@@ -63,7 +81,7 @@ julia> flow = HamiltonianFlow(system, integrator)
 julia> sol = flow(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 \`\`\`
 
-See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref), [`CTFlows.Systems.hamiltonian`](@ref).
 """
 function (f::AbstractHamiltonianFlow)(
     t0::Real,

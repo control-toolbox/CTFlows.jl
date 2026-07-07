@@ -278,6 +278,60 @@ function test_optimal_control_flow()
             Test.@test pvf1[1] ≈ pvf2 atol=ATOL
         end
 
+        # ── OptimalControlFlow wrapper delegates variable_costate ─────────────
+
+        Test.@testset "Integration: OCF wrapper delegates variable_costate" begin
+            # OCF_ANF wraps FLOW_ANF; the point-eval call must forward variable_costate
+            # down to the inner HamiltonianFlow and return the same (xf, pf, pvf).
+            t0, tf = 0.0, 1.0
+            x0, p0 = 1.0, 0.5
+            v = [λ_TEST]
+            xf, pf, pvf = OCF_ANF(t0, x0, p0, tf; variable = v, variable_costate = true)
+            Test.@test xf ≈ _x_ref(tf, t0, x0) atol=ATOL
+            Test.@test pf ≈ _p_ref(tf, t0, p0) atol=ATOL
+            Test.@test pvf[1] ≈ _pv_ref(tf, t0, x0, p0) atol=ATOL
+        end
+
+        Test.@testset "Integration: OCF wrapper agrees with inner flow (pvf)" begin
+            t0, tf = 0.0, 1.0
+            x0, p0 = 1.0, 0.5
+            v = [λ_TEST]
+            _, _, pvf_ocf = OCF_ANF(t0, x0, p0, tf; variable = v, variable_costate = true)
+            _, _, pvf_inner =
+                FLOW_ANF(t0, x0, p0, tf; variable = v, variable_costate = true)
+            Test.@test pvf_ocf[1] ≈ pvf_inner[1] atol=ATOL
+        end
+
+        # ── Hamiltonian / gradient getters (H = p·v·x for OCP_ANF) ────────────
+
+        Test.@testset "Unit: hamiltonian(flow) evaluates H = p·v·x" begin
+            H = Systems.hamiltonian(FLOW_ANF)
+            Test.@test H isa Data.AbstractHamiltonian
+            # uniform signature (t, x, p, v); autonomous ⇒ t ignored
+            Test.@test H(0.0, 2.0, 0.5, [3.0]) ≈ 0.5 * 3.0 * 2.0 atol=ATOL
+        end
+
+        Test.@testset "Unit: hamiltonian_gradient(flow) → (∂H/∂x, ∂H/∂p)" begin
+            ∇H = Systems.hamiltonian_gradient(FLOW_ANF)
+            ∂x, ∂p = ∇H(0.0, 2.0, 0.5, [3.0])
+            Test.@test ∂x[1] ≈ 0.5 * 3.0 atol=ATOL   # ∂H/∂x = p·v
+            Test.@test ∂p[1] ≈ 3.0 * 2.0 atol=ATOL   # ∂H/∂p = v·x
+        end
+
+        Test.@testset "Unit: variable_gradient(flow) → ∂H/∂v = p·x" begin
+            ∇vH = Systems.variable_gradient(FLOW_ANF)
+            gv = ∇vH(0.0, 2.0, 0.5, [3.0])
+            Test.@test gv[1] ≈ 0.5 * 2.0 atol=ATOL   # ∂H/∂v = p·x
+        end
+
+        Test.@testset "Error: pseudo_hamiltonian(flow) on a control-free flow" begin
+            # FLOW_ANF wraps a plain Hamiltonian (no control law) ⇒ no pseudo-Hamiltonian.
+            Test.@test_throws Exceptions.IncorrectArgument Systems.pseudo_hamiltonian(
+                FLOW_ANF,
+            )
+            Test.@test_throws Exceptions.IncorrectArgument Systems.control_law(FLOW_ANF)
+        end
+
         # ── trajectory → CTModels.Solution ───────────────────────────────────
 
         Test.@testset "Integration: trajectory call returns CTModels.Solution" begin
