@@ -92,6 +92,9 @@ Dispatched on the Hamiltonian's time/variable-dependence traits:
 When `variable_costate=true`, the preallocated buffer `dpv` (matching the shape of `v`)
 is filled with `-∂H/∂v`; it must be provided or a `PreconditionError` is thrown.
 
+# Throws
+- `Exceptions.PreconditionError`: when `variable_costate=true` and `dpv` is `nothing`.
+
 See also: [`CTFlows.Systems.HVFOoPFunctor`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 """
 struct HVFIpFunctor{H<:Data.Hamiltonian,B<:Differentiation.AbstractADBackend} <: Function
@@ -271,6 +274,10 @@ Get the Hamiltonian vector field from any `AbstractHamiltonianSystem`, dispatchi
 - `WithoutAD` systems: throws `NotImplemented` — the system must implement
   `hamiltonian_vector_field` directly (as `HamiltonianVectorFieldSystem` does).
 
+# Throws
+- `Exceptions.NotImplemented`: when the system's AD trait is `WithoutAD` and no
+  specialized `hamiltonian_vector_field` overload exists for the system type.
+
 See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
 """
 function hamiltonian_vector_field(
@@ -298,6 +305,18 @@ function _hamiltonian_vector_field_by_ad(
     )
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Throw `NotImplemented` for a `WithoutAD` system that does not provide a specialized
+`hamiltonian_vector_field` overload.
+
+# Throws
+- `Exceptions.NotImplemented`: always, with a suggestion to implement
+  `hamiltonian_vector_field` for the system type or use `HamiltonianVectorFieldSystem`.
+
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
+"""
 function _hamiltonian_vector_field_by_ad(
     ::Type{Traits.WithoutAD}, sys::AbstractHamiltonianSystem; kwargs...
 )

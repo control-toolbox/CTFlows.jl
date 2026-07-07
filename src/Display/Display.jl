@@ -28,7 +28,18 @@ import CTBase.Core
 # Tree characters (styled with the `muted` palette role at print time)
 # ==============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Tree-branch prefix for a mid-list field (`├─ `), styled with the `muted` palette role at print time.
+"""
 const BRANCH_MID = "├─ "
+
+"""
+$(TYPEDSIGNATURES)
+
+Tree-branch prefix for the last field in a list (`└─ `), styled with the `muted` palette role at print time.
+"""
 const BRANCH_END = "└─ "
 
 """
