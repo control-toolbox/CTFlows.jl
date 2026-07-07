@@ -301,7 +301,7 @@ control law, in either the `:partial` or the `:total` mode. Delegates to
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: for a flow that carries no control law.
 
-See also: [`CTFlows.Flows.hamiltonian`](@ref), [`CTFlows.Flows.control_law`](@ref).
+See also: [`CTFlows.Systems.hamiltonian`](@ref), [`CTFlows.Systems.control_law`](@ref).
 """
 function Systems.pseudo_hamiltonian(
     f::AbstractFlow{
@@ -320,7 +320,7 @@ control law. Delegates to [`CTFlows.Systems.control_law`](@ref).
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: for a flow that carries no control law.
 
-See also: [`CTFlows.Flows.pseudo_hamiltonian`](@ref).
+See also: [`CTFlows.Systems.pseudo_hamiltonian`](@ref).
 """
 function Systems.control_law(
     f::AbstractFlow{
@@ -337,7 +337,7 @@ Return a callable `(t, x, p, v) -> (∂H/∂x, ∂H/∂p)` for the true Hamilton
 Hamiltonian flow. Delegates to [`CTFlows.Systems.hamiltonian_gradient`](@ref); the
 `ad_backend` keyword (default: the system's backend) selects the AD backend.
 
-See also: [`CTFlows.Flows.hamiltonian`](@ref), [`CTFlows.Flows.variable_gradient`](@ref).
+See also: [`CTFlows.Systems.hamiltonian`](@ref), [`CTFlows.Systems.variable_gradient`](@ref).
 """
 function Systems.hamiltonian_gradient(
     f::AbstractFlow{
@@ -356,7 +356,7 @@ flow — the quantity (before negation) driving `ṗv = -∂H/∂v`. Delegates t
 [`CTFlows.Systems.variable_gradient`](@ref); the `ad_backend` keyword (default: the
 system's backend) selects the AD backend.
 
-See also: [`CTFlows.Flows.hamiltonian_gradient`](@ref).
+See also: [`CTFlows.Systems.hamiltonian_gradient`](@ref).
 """
 function Systems.variable_gradient(
     f::AbstractFlow{
@@ -375,7 +375,7 @@ Hamiltonian flow (differentiated at fixed control), when available. Delegates to
 [`CTFlows.Systems.pseudo_hamiltonian_gradient`](@ref); the `ad_backend` keyword
 (default: the system's backend) selects the AD backend.
 
-See also: [`CTFlows.Flows.pseudo_hamiltonian`](@ref), [`CTFlows.Flows.pseudo_variable_gradient`](@ref).
+See also: [`CTFlows.Systems.pseudo_hamiltonian`](@ref), [`CTFlows.Systems.pseudo_variable_gradient`](@ref).
 """
 function Systems.pseudo_hamiltonian_gradient(
     f::AbstractFlow{
@@ -394,7 +394,7 @@ Hamiltonian flow (differentiated at fixed control), when available. Delegates to
 [`CTFlows.Systems.pseudo_variable_gradient`](@ref); the `ad_backend` keyword
 (default: the system's backend) selects the AD backend.
 
-See also: [`CTFlows.Flows.pseudo_hamiltonian_gradient`](@ref).
+See also: [`CTFlows.Systems.pseudo_hamiltonian_gradient`](@ref).
 """
 function Systems.pseudo_variable_gradient(
     f::AbstractFlow{

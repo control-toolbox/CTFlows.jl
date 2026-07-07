@@ -739,6 +739,35 @@ function test_hamiltonian_getter()
         end
 
         # ====================================================================
+        # FUNCTOR TYPE (callable structs, not closures)
+        # ====================================================================
+
+        Test.@testset "Getter wraps HVFOoPFunctor / HVFIpFunctor (still <: Function)" begin
+            h = Data.Hamiltonian(
+                (x, p) -> 0.5 * sum(x .^ 2) + 0.5 * sum(p .^ 2);
+                is_autonomous=true,
+                is_variable=false,
+            )
+            backend = Differentiation.DifferentiationInterface(;
+                ad_backend=ADTypes.AutoForwardDiff()
+            )
+            sys = Systems.HamiltonianSystem(h, backend)
+
+            hvf_oop = Systems.hamiltonian_vector_field(sys; inplace=false)
+            hvf_ip = Systems.hamiltonian_vector_field(sys; inplace=true)
+            # the getter now wraps callable structs rather than anonymous closures
+            Test.@test hvf_oop.f isa Systems.HVFOoPFunctor
+            Test.@test hvf_ip.f isa Systems.HVFIpFunctor
+            # subtyping Function is what lets them live in Data.HamiltonianVectorField
+            Test.@test hvf_oop.f isa Function
+            Test.@test hvf_ip.f isa Function
+            # the functors carry the Hamiltonian and backend in fields (no captured closure)
+            g = Systems.HVFOoPFunctor(h, backend)
+            Test.@test g.h === h
+            Test.@test g.backend === backend
+        end
+
+        # ====================================================================
         # EXPORTS
         # ====================================================================
 

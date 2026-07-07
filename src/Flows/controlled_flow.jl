@@ -55,7 +55,7 @@ system(F::ControlledFlow) = system(F.flow)
 """
 $(TYPEDSIGNATURES)
 
-Return the underlying [`CTFlows.Integrators.AbstractIntegrator`](@ref) of the inner
+Return the underlying [`CTSolvers.Integrators.AbstractIntegrator`](@extref) of the inner
 state flow.
 """
 integrator(F::ControlledFlow) = integrator(F.flow)

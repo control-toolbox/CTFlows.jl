@@ -64,6 +64,15 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                 joinpath("Systems", "pseudo_hamiltonian_system.jl"),
                 joinpath("Systems", "building.jl"),
                 joinpath("Systems", "hamiltonian_getter.jl"),
+                joinpath("Systems", "hamiltonian_getters_extra.jl"),
+            ),
+        ),
+        (
+            mod=CTFlows.Display,
+            title="Display",
+            filename="display",
+            files=src(
+                joinpath("Display", "Display.jl"),
             ),
         ),
         (
@@ -124,7 +133,16 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             title="Plots Extension",
             title_in_menu="Plots",
             filename="ext_plots",
-            files=ext("CTFlowsPlots.jl"),
+            files=ext(
+                "CTFlowsPlots.jl",
+                joinpath("CTFlowsPlots", "PlotEngine", "PlotEngine.jl"),
+                joinpath("CTFlowsPlots", "PlotEngine", "panel.jl"),
+                joinpath("CTFlowsPlots", "PlotEngine", "render.jl"),
+                joinpath("CTFlowsPlots", "TrajectoryPlots", "TrajectoryPlots.jl"),
+                joinpath("CTFlowsPlots", "TrajectoryPlots", "description.jl"),
+                joinpath("CTFlowsPlots", "TrajectoryPlots", "panels.jl"),
+                joinpath("CTFlowsPlots", "TrajectoryPlots", "plot.jl"),
+            ),
         ),
         (
             sym=:CTFlowsSciMLIntegrator,
