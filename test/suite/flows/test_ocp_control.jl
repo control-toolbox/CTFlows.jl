@@ -11,6 +11,7 @@ import CTBase.Traits: Traits
 import CTBase.Exceptions: Exceptions
 import CTModels: CTModels
 import CTFlows.Flows: Flows
+import CTFlows.Systems: Systems
 using OrdinaryDiffEqTsit5: Tsit5
 using ForwardDiff: ForwardDiff  # triggers the DI ForwardDiff extension (AutoForwardDiff)
 
@@ -19,6 +20,17 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 const ATOL = 1e-8
 _opts() = (; alg = Tsit5(), reltol = 1e-12, abstol = 1e-12)
+
+# Trapezoidal quadrature over a uniform grid — used to cross-check the augmented
+# variable costate `pvf = -∫ ∂H/∂v dt` against the flow's own (x,p) trajectory,
+# independently of any hand-derived closed form.
+function _trapz(ts, ys)
+    s = zero(eltype(ys))
+    for i in 1:(length(ts) - 1)
+        s += 0.5 * (ys[i] + ys[i + 1]) * (ts[i + 1] - ts[i])
+    end
+    return s
+end
 
 # =============================================================================
 # OCP fixtures at module top-level
@@ -258,6 +270,90 @@ function test_ocp_control()
             Test.@test pt ≈ pp atol = ATOL
             # costate: ṗ = -∂H̃/∂x = p·v ⇒ p(tf) = p0·e^{v·tf}
             Test.@test pt ≈ p0 * exp(vval * tf) atol = 1e-6
+        end
+
+        # ====================================================================
+        # INTEGRATION — variable_costate on a control flow (:partial / :total)
+        #   OCP_VAR: ẋ = v(-x)+u, ℓ=0.5u², :min ⇒ H̃ = p(-vx+u) - 0.5u².
+        #   ∂H̃/∂u = p - u ; law u=p is stationary, law u=v·p is not.
+        # ====================================================================
+
+        Test.@testset "Integration: :partial variable_costate — quadrature cross-check" begin
+            law = Data.DynClosedLoop((x, p, v) -> p; is_variable = true)   # stationary
+            fp = Flows.Flow(OCP_VAR, law; hamiltonian_type = :partial, _opts()...)
+            t0, tf, x0, p0, v = 0.0, 1.0, 1.0, 0.5, 0.5
+            _, _, pvf = fp(t0, x0, p0, tf; variable = v, variable_costate = true)
+            Test.@test pvf isa Number
+            # pvf = -∫ ∂H̃/∂v dt (u held at the law value) — quadrature on the flow's own
+            # (x(t), p(t)) trajectory, using the pseudo variable-gradient getter.
+            ∇ṽ = Systems.pseudo_variable_gradient(fp)
+            ts = range(t0, tf; length = 101)
+            ys = map(ts) do t
+                x, p = t == t0 ? (x0, p0) : fp(t0, x0, p0, t; variable = v)
+                first(∇ṽ(t, x, p, p, v))          # u = law(x,p,v) = p
+            end
+            Test.@test pvf ≈ -_trapz(ts, ys) atol = 1e-3
+        end
+
+        Test.@testset "Integration: :total vs :partial variable_costate agree (stationary)" begin
+            law = Data.DynClosedLoop((x, p, v) -> p; is_variable = true)   # u=p stationary
+            ft = Flows.Flow(OCP_VAR, law; hamiltonian_type = :total, _opts()...)
+            fp = Flows.Flow(OCP_VAR, law; hamiltonian_type = :partial, _opts()...)
+            t0, tf, x0, p0, v = 0.0, 1.0, 1.0, 0.5, 0.5
+            _, _, pvt = ft(t0, x0, p0, tf; variable = v, variable_costate = true)
+            _, _, pvp = fp(t0, x0, p0, tf; variable = v, variable_costate = true)
+            # stationary law ⇒ chain term ∂H̃/∂u·∂u/∂v = 0 ⇒ pv identical in both modes
+            Test.@test pvt ≈ pvp atol = 1e-6
+        end
+
+        Test.@testset "Integration: :total vs :partial variable_costate differ (non-stationary)" begin
+            law = Data.DynClosedLoop((x, p, v) -> v * p; is_variable = true)   # non-stationary
+            ft = Flows.Flow(OCP_VAR, law; hamiltonian_type = :total, _opts()...)
+            fp = Flows.Flow(OCP_VAR, law; hamiltonian_type = :partial, _opts()...)
+            t0, tf, x0, p0, v = 0.0, 1.0, 1.0, 0.5, 0.5
+            _, _, pvt = ft(t0, x0, p0, tf; variable = v, variable_costate = true)
+            _, _, pvp = fp(t0, x0, p0, tf; variable = v, variable_costate = true)
+            # non-stationary law ⇒ chain term ≠ 0 ⇒ the two modes give different pv
+            Test.@test !isapprox(pvt, pvp; atol = 1e-4)
+            # absolute check on :total via quadrature of the total ∂H/∂v (through the law)
+            ∇v = Systems.variable_gradient(ft)
+            ts = range(t0, tf; length = 101)
+            ys = map(ts) do t
+                x, p = t == t0 ? (x0, p0) : ft(t0, x0, p0, t; variable = v)
+                first(∇v(t, x, p, v))
+            end
+            Test.@test pvt ≈ -_trapz(ts, ys) atol = 1e-3
+        end
+
+        # ====================================================================
+        # UNIT — Hamiltonian / pseudo-Hamiltonian / control-law getters
+        # ====================================================================
+
+        Test.@testset "Unit: getters expose H, H̃ and the law (both modes)" begin
+            law = Data.DynClosedLoop((x, p, v) -> p; is_variable = true)
+            fp = Flows.Flow(OCP_VAR, law; hamiltonian_type = :partial, _opts()...)
+            ft = Flows.Flow(OCP_VAR, law; hamiltonian_type = :total, _opts()...)
+            # :partial → PseudoHamiltonianSystem exposes H̃ and the law directly
+            Test.@test Systems.pseudo_hamiltonian(fp) isa Data.AbstractPseudoHamiltonian
+            Test.@test Systems.control_law(fp) isa Data.ControlLaw
+            # :total → HamiltonianSystem wraps a ComposedHamiltonian; H̃ and law recovered
+            Test.@test Systems.pseudo_hamiltonian(ft) isa Data.AbstractPseudoHamiltonian
+            Test.@test Systems.control_law(ft) isa Data.ControlLaw
+            # both expose the true (composed) Hamiltonian
+            Test.@test Systems.hamiltonian(fp) isa Data.AbstractHamiltonian
+            Test.@test Systems.hamiltonian(ft) isa Data.AbstractHamiltonian
+            # gradient getters return callable functors (not closures)
+            Test.@test Systems.pseudo_hamiltonian_gradient(fp) isa
+                Systems.PseudoHamiltonianGradient
+            Test.@test Systems.hamiltonian_gradient(ft) isa Systems.HamiltonianGradient
+            # the AD backend can be provided explicitly (forwarded flow → system)
+            be = Systems.backend(Flows.system(ft))
+            g_default = Systems.hamiltonian_gradient(ft)
+            g_custom = Systems.hamiltonian_gradient(ft; ad_backend = be)
+            Test.@test g_custom isa Systems.HamiltonianGradient
+            Test.@test all(
+                g_default(0.0, 1.0, 0.5, 0.5) .≈ g_custom(0.0, 1.0, 0.5, 0.5)
+            )
         end
 
         # ====================================================================

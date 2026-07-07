@@ -43,6 +43,7 @@ include(joinpath(@__DIR__, "hamiltonian_system.jl"))
 include(joinpath(@__DIR__, "pseudo_hamiltonian_system.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 include(joinpath(@__DIR__, "hamiltonian_getter.jl"))
+include(joinpath(@__DIR__, "hamiltonian_getters_extra.jl"))
 
 # ==============================================================================
 # Module exports
@@ -66,5 +67,9 @@ export PseudoHamiltonianSystem
 export build_system
 export hamiltonian, backend
 export pseudo_hamiltonian, control_law
+export hamiltonian_gradient, variable_gradient
+export pseudo_hamiltonian_gradient, pseudo_variable_gradient
+export HamiltonianGradient, HamiltonianVariableGradient
+export PseudoHamiltonianGradient, PseudoHamiltonianVariableGradient
 
 end # module Systems
