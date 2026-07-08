@@ -175,15 +175,10 @@ function Base.show(io::IO, f::AbstractRHS)
     vd = Traits.variable_dependence(f.vf)
     md = Traits.mutability(f.vf)
     wraps = "VectorField: $(Data._td_label(td)), $(Data._vd_label(vd)), $(Data._md_label(md))"
-    Display.print_header(io, nameof(typeof(f)); fmt = fmt)
-    Display.print_field(io, "wraps", wraps; fmt = fmt, value_style = "")
+    Display.print_header(io, nameof(typeof(f)); fmt=fmt)
+    Display.print_field(io, "wraps", wraps; fmt=fmt, value_style="")
     return Display.print_field(
-        io,
-        "converts",
-        _rhs_conversion_label(f);
-        last = true,
-        fmt = fmt,
-        value_style = "",
+        io, "converts", _rhs_conversion_label(f); last=true, fmt=fmt, value_style=""
     )
 end
 

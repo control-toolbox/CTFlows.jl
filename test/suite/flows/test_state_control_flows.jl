@@ -17,27 +17,27 @@ using OrdinaryDiffEqTsit5: Tsit5
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
-_opts() = (; alg = Tsit5(), reltol = 1e-12, abstol = 1e-12)
+_opts() = (; alg=Tsit5(), reltol=1e-12, abstol=1e-12)
 
 # ẋ = -x + u, ℓ = 0.5u², :min  (autonomous, fixed, 1-D — scalar convention)
 function _build_ocp()
     pre = CTModels.Building.PreModel()
-    CTModels.Building.time_dependence!(pre; autonomous = true)
-    CTModels.Building.time!(pre; t0 = 0.0, tf = 1.0)
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = -x + u; nothing))
-    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> 0.5 * u^2)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=(-x + u); nothing))
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2)
     return CTModels.Building.build(pre)
 end
 
 function _build_control_free()
     pre = CTModels.Building.PreModel()
-    CTModels.Building.time_dependence!(pre; autonomous = true)
-    CTModels.Building.time!(pre; t0 = 0.0, tf = 1.0)
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = -x; nothing))
-    CTModels.Building.objective!(pre, :min; lagrange = (t, x, u, v) -> x^2)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=(-x); nothing))
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> x^2)
     return CTModels.Building.build(pre)
 end
 
@@ -105,17 +105,13 @@ function test_state_control_flows()
         Test.@testset "Error: DynClosedLoop into Flow(fc, law)" begin
             fc = Data.ControlledVectorField((x, u) -> -x + u)
             Test.@test_throws Exceptions.PreconditionError Flows.Flow(
-                fc,
-                Data.DynClosedLoop((x, p) -> -p);
-                _opts()...,
+                fc, Data.DynClosedLoop((x, p) -> -p); _opts()...
             )
         end
 
         Test.@testset "Error: control-free OCP with an OpenLoop law" begin
             Test.@test_throws Exceptions.PreconditionError Flows.Flow(
-                OCP_CF,
-                Data.OpenLoop(() -> 1.0);
-                _opts()...,
+                OCP_CF, Data.OpenLoop(() -> 1.0); _opts()...
             )
         end
     end

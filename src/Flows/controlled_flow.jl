@@ -69,11 +69,7 @@ Point evaluation: delegate to the inner state flow and return the final state at
 (no costate — this is a state flow).
 """
 function (F::ControlledFlow)(
-    t0::Real,
-    x0,
-    tf::Real;
-    variable = __variable(),
-    unsafe = __unsafe(),
+    t0::Real, x0, tf::Real; variable=__variable(), unsafe=__unsafe()
 )
     return F.flow(t0, x0, tf; variable, unsafe)
 end
@@ -88,10 +84,7 @@ Trajectory call: integrate the inner state flow over `tspan` and build a
 plus objective when built from an OCP).
 """
 function (F::ControlledFlow)(
-    tspan::Tuple{<:Real,<:Real},
-    x0;
-    variable = __variable(),
-    unsafe = __unsafe(),
+    tspan::Tuple{<:Real,<:Real}, x0; variable=__variable(), unsafe=__unsafe()
 )
     traj = F.flow(tspan, x0; variable, unsafe)   # VectorFieldTrajectory
     coerce = _controlled_state_coerce(F.ocp, x0)  # precomputed once (only / identity)
@@ -148,10 +141,9 @@ function _controlled_objective(ocp, traj, law, variable, integ, coerce)
     if CTModels.Components.has_lagrange_cost(ocp)
         lag = CTModels.Components.lagrange(ocp)
         running = Data.VectorField(
-            (t, ℓ_vec) ->
-                [lag(t, x(t), Trajectories._controlled_u(law, t, x(t), v), v)];
-            is_autonomous = false,
-            is_variable = false,
+            (t, ℓ_vec) -> [lag(t, x(t), Trajectories._controlled_u(law, t, x(t), v), v)];
+            is_autonomous=false,
+            is_variable=false,
         )
         cost_flow = build_flow(Systems.build_system(running), integ)
         obj += cost_flow(t0, [0.0], tf)[1]

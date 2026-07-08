@@ -185,11 +185,11 @@ function _flow_from_ocp(::Type{Traits.WithControl}, ::CTModels.Models.Model; kwa
     return throw(
         Exceptions.PreconditionError(
             "Flow from a with-control OCP is not supported";
-            reason = "this path builds the flow from the OCP structure assuming no control " *
-                     "(ẋ = f(t,x,∅,v)); a problem with a control input would require a control " *
-                     "law u(t,x,p) from the maximisation of the pseudo-Hamiltonian",
-            suggestion = "use Flow(ocp, law) to pass a control law, or use a control-free OCP",
-            context = "Flow(ocp::CTModels.Models.Model) — control-dependence dispatch",
+            reason="this path builds the flow from the OCP structure assuming no control " *
+                   "(ẋ = f(t,x,∅,v)); a problem with a control input would require a control " *
+                   "law u(t,x,p) from the maximisation of the pseudo-Hamiltonian",
+            suggestion="use Flow(ocp, law) to pass a control law, or use a control-free OCP",
+            context="Flow(ocp::CTModels.Models.Model) — control-dependence dispatch",
         ),
     )
 end
@@ -248,7 +248,7 @@ function _flow_from_pseudo_hamiltonian(
     law::Data.ControlLaw;
     kwargs...,
 )
-    routed = _route_flow_options(kwargs; action_defs = _flow_action_defs())
+    routed = _route_flow_options(kwargs; action_defs=_flow_action_defs())
     components = _build_flow_components(routed)
     ht = _unwrap_option(get(routed.action, :hamiltonian_type, nothing), :total)
     return _build_pseudo_flow(Val(ht), h̃, law, components)
@@ -272,10 +272,10 @@ function _flow_from_pseudo_hamiltonian(
     return throw(
         Exceptions.PreconditionError(
             "Flow(h̃, law) requires a DynClosedLoop control law";
-            reason = "a pseudo-Hamiltonian H̃(t,x,p,u,v) depends on the costate p, but " *
-                     "OpenLoop u(t,v) and ClosedLoop u(t,x,v) control laws do not take p",
-            suggestion = "use DynClosedLoop(u) to construct a control law u(t,x,p,v)",
-            context = "Flow(h̃::PseudoHamiltonian, law::ControlLaw) — feedback dispatch",
+            reason="a pseudo-Hamiltonian H̃(t,x,p,u,v) depends on the costate p, but " *
+                   "OpenLoop u(t,v) and ClosedLoop u(t,x,v) control laws do not take p",
+            suggestion="use DynClosedLoop(u) to construct a control law u(t,x,p,v)",
+            context="Flow(h̃::PseudoHamiltonian, law::ControlLaw) — feedback dispatch",
         ),
     )
 end
@@ -308,9 +308,9 @@ function _build_pseudo_flow(::Val{ht}, h̃, law, components) where {ht}
     return throw(
         Exceptions.IncorrectArgument(
             "unknown hamiltonian_type :$ht";
-            got = ":$ht",
-            expected = ":total or :partial",
-            context = "Flow(…, law::ControlLaw; hamiltonian_type=…)",
+            got=":$ht",
+            expected=":total or :partial",
+            context="Flow(…, law::ControlLaw; hamiltonian_type=…)",
         ),
     )
 end
@@ -377,11 +377,11 @@ function _flow_from_controlled_vf(
     return throw(
         Exceptions.PreconditionError(
             "Flow(fc, law) requires an OpenLoop or ClosedLoop control law";
-            reason = "a DynClosedLoop law u(t,x,p,v) needs the costate p, which a state " *
-                     "flow of a vector field does not have",
-            suggestion = "use OpenLoop(u) or ClosedLoop(u); for a DynClosedLoop law use " *
-                         "Flow(h̃, law) or Flow(ocp, law)",
-            context = "Flow(fc::ControlledVectorField, law::ControlLaw) — feedback dispatch",
+            reason="a DynClosedLoop law u(t,x,p,v) needs the costate p, which a state " *
+                   "flow of a vector field does not have",
+            suggestion="use OpenLoop(u) or ClosedLoop(u); for a DynClosedLoop law use " *
+                       "Flow(h̃, law) or Flow(ocp, law)",
+            context="Flow(fc::ControlledVectorField, law::ControlLaw) — feedback dispatch",
         ),
     )
 end
@@ -440,9 +440,7 @@ See also: [`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.Cont
 """
 function Flow(ocp::CTModels.Models.Model, u::Function; kwargs...)
     law = Data.DynClosedLoop(
-        u;
-        is_autonomous = Traits.is_autonomous(ocp),
-        is_variable = Traits.is_variable(ocp),
+        u; is_autonomous=Traits.is_autonomous(ocp), is_variable=Traits.is_variable(ocp)
     )
     return Flow(ocp, law; kwargs...)
 end
@@ -464,12 +462,12 @@ function _flow_from_ocp_control(
     Traits.control_dependence(ocp) === Traits.WithControl || throw(
         Exceptions.PreconditionError(
             "Flow(ocp, law) requires a with-control OCP";
-            reason = "the OCP is control-free (no control input), so a control law cannot be applied",
-            suggestion = "use Flow(ocp; kwargs…) for a control-free OCP",
-            context = "Flow(ocp, law::ControlLaw) — control-dependence check",
+            reason="the OCP is control-free (no control input), so a control law cannot be applied",
+            suggestion="use Flow(ocp; kwargs…) for a control-free OCP",
+            context="Flow(ocp, law::ControlLaw) — control-dependence check",
         ),
     )
-    routed = _route_flow_options(kwargs; action_defs = _flow_action_defs())
+    routed = _route_flow_options(kwargs; action_defs=_flow_action_defs())
     components = _build_flow_components(routed)
     ht = _unwrap_option(get(routed.action, :hamiltonian_type, nothing), :total)
     h̃ = _ocp_pseudo_hamiltonian(ocp)
@@ -494,9 +492,9 @@ function _flow_from_ocp_control(
     Traits.control_dependence(ocp) === Traits.WithControl || throw(
         Exceptions.PreconditionError(
             "Flow(ocp, law) requires a with-control OCP";
-            reason = "the OCP is control-free (no control input), so a control law cannot be applied",
-            suggestion = "use Flow(ocp; kwargs…) for a control-free OCP",
-            context = "Flow(ocp, law::ControlLaw) — control-dependence check",
+            reason="the OCP is control-free (no control input), so a control law cannot be applied",
+            suggestion="use Flow(ocp; kwargs…) for a control-free OCP",
+            context="Flow(ocp, law::ControlLaw) — control-dependence check",
         ),
     )
     fc = _ocp_controlled_vector_field(ocp)
@@ -512,10 +510,7 @@ a [`CTBase.Data.ComposedVectorField`](@extref), build a `VectorFieldSystem`, and
 resulting state flow together with the OCP reference (or `nothing`) and the law.
 """
 function _controlled_flow(
-    fc::Data.ControlledVectorField,
-    law::Data.ControlLaw,
-    ocp;
-    kwargs...,
+    fc::Data.ControlledVectorField, law::Data.ControlLaw, ocp; kwargs...
 )
     g = Data.ComposedVectorField(fc, law)
     system = Systems.build_system(g)
@@ -527,10 +522,10 @@ function Flow(::CTModels.Models.Model, ::Any, args...; kwargs...)
     return throw(
         Exceptions.PreconditionError(
             "Flow(ocp, …) with extra positional arguments is not supported";
-            reason = "passing a control law, state constraint or multiplier as a positional " *
-                     "argument is not handled by the OCP flow constructor",
-            suggestion = "call Flow(ocp; kwargs…) — the OCP flow takes no positional argument beyond the model",
-            context = "Flow(ocp::CTModels.Models.Model) — positional-argument guard",
+            reason="passing a control law, state constraint or multiplier as a positional " *
+                   "argument is not handled by the OCP flow constructor",
+            suggestion="call Flow(ocp; kwargs…) — the OCP flow takes no positional argument beyond the model",
+            context="Flow(ocp::CTModels.Models.Model) — positional-argument guard",
         ),
     )
 end

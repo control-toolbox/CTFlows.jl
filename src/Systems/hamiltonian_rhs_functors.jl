@@ -116,12 +116,7 @@ end
 function (f::HamIpRHS)(du, u, λ, t)
     x, p = _ham_split(u, f.N)
     ∂x, ∂p = Differentiation.hamiltonian_gradient(
-        f.backend,
-        f.h,
-        t,
-        f.cx(x),
-        f.cp(p),
-        variable(λ),
+        f.backend, f.h, t, f.cx(x), f.cp(p), variable(λ)
     )
     _ham_assign!(du, ∂p, -∂x, f.N)
     return nothing
@@ -175,12 +170,7 @@ end
 function (f::HamOoPRHS)(u, λ, t)
     x, p = _ham_split(u, f.N)
     ∂x, ∂p = Differentiation.hamiltonian_gradient(
-        f.backend,
-        f.h,
-        t,
-        f.cx(x),
-        f.cp(p),
-        variable(λ),
+        f.backend, f.h, t, f.cx(x), f.cp(p), variable(λ)
     )
     return vcat(∂p, -∂x)
 end
@@ -216,9 +206,9 @@ function _check_aug_batch_compat(u::AbstractMatrix, v::AbstractMatrix)
         throw(
             Exceptions.PreconditionError(
                 "batch size mismatch in augmented Hamiltonian RHS";
-                reason = "size(u, 2) = $(size(u, 2)) ≠ size(v, 2) = $(size(v, 2))",
-                context = "HamIpAugRHS — matrix batch mode",
-                suggestion = "variable v must have the same number of columns as the state u",
+                reason="size(u, 2) = $(size(u, 2)) ≠ size(v, 2) = $(size(v, 2))",
+                context="HamIpAugRHS — matrix batch mode",
+                suggestion="variable v must have the same number of columns as the state u",
             ),
         )
     end
@@ -327,15 +317,10 @@ function Base.show(io::IO, f::AbstractHamRHS)
     td = Traits.time_dependence(f.h)
     vd = Traits.variable_dependence(f.h)
     wraps = "Hamiltonian: $(Data._td_label(td)), $(Data._vd_label(vd))"
-    Display.print_header(io, nameof(typeof(f)); fmt = fmt)
-    Display.print_field(io, "wraps", wraps; fmt = fmt, value_style = "")
+    Display.print_header(io, nameof(typeof(f)); fmt=fmt)
+    Display.print_field(io, "wraps", wraps; fmt=fmt, value_style="")
     return Display.print_field(
-        io,
-        "converts",
-        _rhs_conversion_label(f);
-        last = true,
-        fmt = fmt,
-        value_style = "",
+        io, "converts", _rhs_conversion_label(f); last=true, fmt=fmt, value_style=""
     )
 end
 

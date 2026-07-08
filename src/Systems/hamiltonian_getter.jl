@@ -46,14 +46,18 @@ function (g::HVFOoPFunctor{<:Data.Hamiltonian{<:Function,Traits.Autonomous,Trait
     return (∂p, -∂x)
 end
 
-function (g::HVFOoPFunctor{<:Data.Hamiltonian{<:Function,Traits.NonAutonomous,Traits.Fixed}})(
+function (g::HVFOoPFunctor{
+    <:Data.Hamiltonian{<:Function,Traits.NonAutonomous,Traits.Fixed}
+})(
     t, x, p
 )
     ∂x, ∂p = Differentiation.hamiltonian_gradient(g.backend, g.h, t, x, p, nothing)
     return (∂p, -∂x)
 end
 
-function (g::HVFOoPFunctor{<:Data.Hamiltonian{<:Function,Traits.Autonomous,Traits.NonFixed}})(
+function (g::HVFOoPFunctor{
+    <:Data.Hamiltonian{<:Function,Traits.Autonomous,Traits.NonFixed}
+})(
     x, p, v; variable_costate::Bool=false
 )
     ∂x, ∂p = Differentiation.hamiltonian_gradient(g.backend, g.h, nothing, x, p, v)
@@ -62,7 +66,9 @@ function (g::HVFOoPFunctor{<:Data.Hamiltonian{<:Function,Traits.Autonomous,Trait
     return (∂p, -∂x, -∂v)
 end
 
-function (g::HVFOoPFunctor{<:Data.Hamiltonian{<:Function,Traits.NonAutonomous,Traits.NonFixed}})(
+function (g::HVFOoPFunctor{
+    <:Data.Hamiltonian{<:Function,Traits.NonAutonomous,Traits.NonFixed}
+})(
     t, x, p, v; variable_costate::Bool=false
 )
     ∂x, ∂p = Differentiation.hamiltonian_gradient(g.backend, g.h, t, x, p, v)
@@ -139,7 +145,9 @@ function (g::HVFIpFunctor{<:Data.Hamiltonian{<:Function,Traits.Autonomous,Traits
     return nothing
 end
 
-function (g::HVFIpFunctor{<:Data.Hamiltonian{<:Function,Traits.NonAutonomous,Traits.NonFixed}})(
+function (g::HVFIpFunctor{
+    <:Data.Hamiltonian{<:Function,Traits.NonAutonomous,Traits.NonFixed}
+})(
     dx, dp, t, x, p, v; dpv=nothing, variable_costate::Bool=false
 )
     ∂x, ∂p = Differentiation.hamiltonian_gradient(g.backend, g.h, t, x, p, v)

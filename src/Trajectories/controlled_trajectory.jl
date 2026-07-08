@@ -194,11 +194,11 @@ function objective(sol::ControlledTrajectory{T,L,V,Nothing}) where {T,L,V}
     return throw(
         Exceptions.PreconditionError(
             "this ControlledTrajectory has no objective value";
-            reason = "it was built without an optimal control problem (e.g. from " *
-                     "Flow(fc, law) rather than Flow(ocp, law)), so there is no cost to evaluate",
-            suggestion = "build the flow from an OCP — Flow(ocp, law) — to obtain the objective, " *
-                         "or use state(sol) and control(sol)",
-            context = "ControlledTrajectory — objective getter",
+            reason="it was built without an optimal control problem (e.g. from " *
+                   "Flow(fc, law) rather than Flow(ocp, law)), so there is no cost to evaluate",
+            suggestion="build the flow from an OCP — Flow(ocp, law) — to obtain the objective, " *
+                       "or use state(sol) and control(sol)",
+            context="ControlledTrajectory — objective getter",
         ),
     )
 end
@@ -216,11 +216,11 @@ function costate(sol::ControlledTrajectory)
     return throw(
         Exceptions.PreconditionError(
             "a ControlledTrajectory has no costate";
-            reason = "it is the trajectory of a controlled state flow (OpenLoop/ClosedLoop), " *
-                     "which integrates ẋ = f(t, x, u(...), v) with no costate — unlike a " *
-                     "DynClosedLoop (Hamiltonian) flow",
-            suggestion = "use state(sol) and control(sol); costate only exists for Hamiltonian flows",
-            context = "ControlledTrajectory — costate getter",
+            reason="it is the trajectory of a controlled state flow (OpenLoop/ClosedLoop), " *
+                   "which integrates ẋ = f(t, x, u(...), v) with no costate — unlike a " *
+                   "DynClosedLoop (Hamiltonian) flow",
+            suggestion="use state(sol) and control(sol); costate only exists for Hamiltonian flows",
+            context="ControlledTrajectory — costate getter",
         ),
     )
 end
@@ -237,7 +237,7 @@ format with tspan, time points, final state, variable, and objective when availa
 """
 function Base.show(io::IO, ::MIME"text/plain", sol::ControlledTrajectory)
     fmt = Display.format_codes(io)
-    Display.print_header(io, "ControlledTrajectory"; fmt = fmt)
+    Display.print_header(io, "ControlledTrajectory"; fmt=fmt)
     fields = Any[]
     try
         ts = Integrators.times(sol)
@@ -257,7 +257,7 @@ function Base.show(io::IO, ::MIME"text/plain", sol::ControlledTrajectory)
     if sol.objective !== nothing
         push!(fields, ("objective", sol.objective, fmt.value))
     end
-    return Display.print_fields(io, fields; fmt = fmt)
+    return Display.print_fields(io, fields; fmt=fmt)
 end
 
 """

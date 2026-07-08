@@ -32,11 +32,11 @@ const ATOL = 1e-6
 
 # Autonomous, variable Hamiltonians (natural signature (x, p, v)).
 # H0: does NOT depend on v (the free time is the endpoint only) ⇒ ∂H/∂v = 0.
-const H_INDEP = Data.Hamiltonian((x, p, v) -> p^2 / 2; is_variable = true)
+const H_INDEP = Data.Hamiltonian((x, p, v) -> p^2 / 2; is_variable=true)
 # H1: depends on the scalar variable v ⇒ ∂H/∂v = p²/2.
-const H_SCALED = Data.Hamiltonian((x, p, v) -> v * p^2 / 2; is_variable = true)
+const H_SCALED = Data.Hamiltonian((x, p, v) -> v * p^2 / 2; is_variable=true)
 # H2: 2-D variable, depends on v[1] only ⇒ ∂H/∂v = (p, 0).
-const H_2VAR = Data.Hamiltonian((x, p, v) -> v[1] * p; is_variable = true)
+const H_2VAR = Data.Hamiltonian((x, p, v) -> v[1] * p; is_variable=true)
 
 function test_variable_costate_free_time()
     Test.@testset "variable_costate — free times" verbose=VERBOSE showtiming=SHOWTIMING begin
@@ -46,9 +46,9 @@ function test_variable_costate_free_time()
         # =====================================================================
 
         Test.@testset "Free tf, H⊥v: pvf ≈ 0 and transversality reduces to H(tf)" begin
-            φ = Flows.Flow(H_INDEP; alg = Tsit5())
+            φ = Flows.Flow(H_INDEP; alg=Tsit5())
             t0, tf, x0, p0, v = 0.0, 2.0, 1.0, 0.5, 2.0   # v plays the role of tf
-            xf, pf, pvf = φ(t0, x0, p0, tf; variable = v, variable_costate = true)
+            xf, pf, pvf = φ(t0, x0, p0, tf; variable=v, variable_costate=true)
             # ẋ = p, ṗ = 0 ⇒ x(t) = x0 + p0(t-t0), p ≡ p0
             Test.@test xf ≈ x0 + p0 * (tf - t0) atol=ATOL
             Test.@test pf ≈ p0 atol=ATOL
@@ -65,9 +65,9 @@ function test_variable_costate_free_time()
         # =====================================================================
 
         Test.@testset "Variable-dependent H: pvf = -(p0²/2)(tf-t0)" begin
-            φ = Flows.Flow(H_SCALED; alg = Tsit5())
+            φ = Flows.Flow(H_SCALED; alg=Tsit5())
             t0, tf, x0, p0, v = 0.0, 2.0, 1.0, 0.5, 0.7
-            xf, pf, pvf = φ(t0, x0, p0, tf; variable = v, variable_costate = true)
+            xf, pf, pvf = φ(t0, x0, p0, tf; variable=v, variable_costate=true)
             # ẋ = v·p, ṗ = 0 ⇒ x(t) = x0 + v·p0(t-t0)
             Test.@test xf ≈ x0 + v * p0 * (tf - t0) atol=ATOL
             Test.@test pf ≈ p0 atol=ATOL
@@ -80,10 +80,10 @@ function test_variable_costate_free_time()
         # =====================================================================
 
         Test.@testset "#183: eval time t1 ≠ variable value tf is accepted" begin
-            φ = Flows.Flow(H_SCALED; alg = Tsit5())
+            φ = Flows.Flow(H_SCALED; alg=Tsit5())
             t0, x0, p0 = 0.0, 1.0, 0.5
             t1, tf = 1.3, 2.0                      # positional eval time ≠ variable value
-            xf, pf, pvf = φ(t0, x0, p0, t1; variable = tf, variable_costate = true)
+            xf, pf, pvf = φ(t0, x0, p0, t1; variable=tf, variable_costate=true)
             # integration runs to t1, with the Hamiltonian scaled by the variable tf
             Test.@test xf ≈ x0 + tf * p0 * (t1 - t0) atol=ATOL
             Test.@test pf ≈ p0 atol=ATOL
@@ -95,10 +95,10 @@ function test_variable_costate_free_time()
         # =====================================================================
 
         Test.@testset "2-D variable: pvf = [-p0(tf-t0), 0]" begin
-            φ = Flows.Flow(H_2VAR; alg = Tsit5())
+            φ = Flows.Flow(H_2VAR; alg=Tsit5())
             t0, tf, x0, p0 = 0.0, 2.0, 1.0, 0.5
             v = [0.7, 0.3]
-            xf, pf, pvf = φ(t0, x0, p0, tf; variable = v, variable_costate = true)
+            xf, pf, pvf = φ(t0, x0, p0, tf; variable=v, variable_costate=true)
             # ẋ = v[1], ṗ = 0 ⇒ x(t) = x0 + v[1](t-t0)
             Test.@test xf ≈ x0 + v[1] * (tf - t0) atol=ATOL
             Test.@test pf ≈ p0 atol=ATOL
@@ -113,5 +113,6 @@ end
 end # module TestVariableCostateFreeTime
 
 # Redefine in the outer scope so the runner can call it
-test_variable_costate_free_time() =
-    TestVariableCostateFreeTime.test_variable_costate_free_time()
+function test_variable_costate_free_time()
+    return TestVariableCostateFreeTime.test_variable_costate_free_time()
+end

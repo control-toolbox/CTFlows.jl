@@ -93,8 +93,7 @@ end
 # =============================================================================
 
 function HamiltonianSystem(
-    h::Data.AbstractHamiltonian{TD,VD},
-    backend::Differentiation.AbstractADBackend,
+    h::Data.AbstractHamiltonian{TD,VD}, backend::Differentiation.AbstractADBackend
 ) where {TD,VD}
     return HamiltonianSystem{TD,VD,typeof(h),typeof(backend)}(h, backend)
 end
@@ -176,8 +175,7 @@ Lazy implementation: reads `x0`/`p0`/`pv0` from the config to build the augmente
 See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
 function get_ip_rhs_augmented(
-    sys::HamiltonianSystem,
-    config::Configs.AbstractAugmentedHamiltonianConfig,
+    sys::HamiltonianSystem, config::Configs.AbstractAugmentedHamiltonianConfig
 )
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
@@ -209,29 +207,24 @@ Display a Hamiltonian system in a human-readable format.
 """
 function Base.show(io::IO, sys::HamiltonianSystem)
     fmt = Display.format_codes(io)
-    Display.print_header(io, "HamiltonianSystem"; fmt = fmt)
+    Display.print_header(io, "HamiltonianSystem"; fmt=fmt)
     Display.print_field(
         io,
         "time_dependence",
         nameof(Traits.time_dependence(sys));
-        fmt = fmt,
-        value_style = fmt.type,
+        fmt=fmt,
+        value_style=fmt.type,
     )
     Display.print_field(
         io,
         "variable_dependence",
         nameof(Traits.variable_dependence(sys));
-        fmt = fmt,
-        value_style = fmt.type,
+        fmt=fmt,
+        value_style=fmt.type,
     )
-    Display.print_field(io, "", sys.h; fmt = fmt, value_style = "")
+    Display.print_field(io, "", sys.h; fmt=fmt, value_style="")
     return Display.print_field(
-        io,
-        "backend",
-        sys.backend;
-        last = true,
-        fmt = fmt,
-        value_style = "",
+        io, "backend", sys.backend; last=true, fmt=fmt, value_style=""
     )
 end
 
@@ -259,7 +252,7 @@ Return the variable costate capability trait of a variable-dependent Hamiltonian
 See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@extref), [`CTBase.Traits.SupportsVariableCostate`](@extref), [`CTBase.Traits.NoVariableCostate`](@extref).
 """
 function Traits.variable_costate_trait(
-    ::HamiltonianSystem{TD,Traits.NonFixed,H,B},
+    ::HamiltonianSystem{TD,Traits.NonFixed,H,B}
 ) where {TD,H,B}
     return Traits.SupportsVariableCostate
 end
