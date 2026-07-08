@@ -54,24 +54,15 @@ end
 
 # Out-of-place: accepts any AbstractVectorField (VectorField, ComposedVectorField, …).
 function VectorFieldSystem(
-    vf::Data.AbstractVectorField{TD,VD,Traits.OutOfPlace},
+    vf::Data.AbstractVectorField{TD,VD,Traits.OutOfPlace}
 ) where {TD,VD}
     rhs = IPVFOoPRHS(vf)
     rhs_oop = OoPVFOoPRHS(vf)
     rhs_oop_finalize = nothing
     return VectorFieldSystem{
-        TD,
-        VD,
-        Traits.OutOfPlace,
-        typeof(vf),
-        typeof(rhs),
-        typeof(rhs_oop),
-        Nothing,
+        TD,VD,Traits.OutOfPlace,typeof(vf),typeof(rhs),typeof(rhs_oop),Nothing
     }(
-        vf,
-        rhs,
-        rhs_oop,
-        rhs_oop_finalize,
+        vf, rhs, rhs_oop, rhs_oop_finalize
     )
 end
 
@@ -80,18 +71,9 @@ function VectorFieldSystem(vf::Data.VectorField{F,TD,VD,Traits.InPlace}) where {
     rhs_oop = OoPVFIpRHS(vf)
     rhs_oop_finalize = OoPVFIpFinalizeRHS(vf)
     return VectorFieldSystem{
-        TD,
-        VD,
-        Traits.InPlace,
-        typeof(vf),
-        typeof(rhs),
-        typeof(rhs_oop),
-        typeof(rhs_oop_finalize),
+        TD,VD,Traits.InPlace,typeof(vf),typeof(rhs),typeof(rhs_oop),typeof(rhs_oop_finalize)
     }(
-        vf,
-        rhs,
-        rhs_oop,
-        rhs_oop_finalize,
+        vf, rhs, rhs_oop, rhs_oop_finalize
     )
 end
 
@@ -113,8 +95,7 @@ This combination is unsupported because in-place functions require mutable array
 - `ArgumentError` if `sys` is in-place and `u0` is a scalar.
 """
 function _check_vf_scalar_inplace(
-    sys::VectorFieldSystem{TD,VD,Traits.InPlace},
-    u0::Number,
+    sys::VectorFieldSystem{TD,VD,Traits.InPlace}, u0::Number
 ) where {TD,VD}
     return throw(
         ArgumentError(
@@ -204,8 +185,7 @@ For `InPlace` systems, returns `rhs_oop_finalize` (the finalize path) since
 See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function get_oop_rhs(
-    sys::VectorFieldSystem{TD,VD,Traits.OutOfPlace,F,RHS,OOPROHS,Nothing},
-    _,
+    sys::VectorFieldSystem{TD,VD,Traits.OutOfPlace,F,RHS,OOPROHS,Nothing}, _
 ) where {TD,VD,F,RHS,OOPROHS}
     return sys.rhs_oop
 end
@@ -231,8 +211,7 @@ This method is called when `!ismutable(u0)`, so we always return `rhs_oop_finali
 See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function get_oop_rhs(
-    sys::VectorFieldSystem{TD,VD,Traits.InPlace,F,RHS,OOPROHS,FINRHS},
-    _,
+    sys::VectorFieldSystem{TD,VD,Traits.InPlace,F,RHS,OOPROHS,FINRHS}, _
 ) where {TD,VD,F,RHS,OOPROHS,FINRHS}
     @warn "InPlace VectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
     return sys.rhs_oop_finalize
@@ -256,15 +235,14 @@ Shows the type name and the wrapped VectorField with its traits.
 See also: [`CTFlows.Systems.VectorFieldSystem`](@ref).
 """
 function Base.show(
-    io::IO,
-    sys::VectorFieldSystem{TD,VD,MD,F,RHS,OOPROHS,FINRHS},
+    io::IO, sys::VectorFieldSystem{TD,VD,MD,F,RHS,OOPROHS,FINRHS}
 ) where {TD,VD,MD,F,RHS,OOPROHS,FINRHS}
     fmt = Display.format_codes(io)
     wraps = "VectorField: $(Data._td_label(TD)), $(Data._vd_label(VD)), $(Data._md_label(MD))"
     rhs = "$(nameof(typeof(sys.rhs))) ($(_rhs_conversion_label(sys.rhs)))"
-    Display.print_header(io, "VectorFieldSystem"; fmt = fmt)
-    Display.print_field(io, "wraps", wraps; fmt = fmt, value_style = "")
-    return Display.print_field(io, "rhs", rhs; last = true, fmt = fmt, value_style = "")
+    Display.print_header(io, "VectorFieldSystem"; fmt=fmt)
+    Display.print_field(io, "wraps", wraps; fmt=fmt, value_style="")
+    return Display.print_field(io, "rhs", rhs; last=true, fmt=fmt, value_style="")
 end
 
 """

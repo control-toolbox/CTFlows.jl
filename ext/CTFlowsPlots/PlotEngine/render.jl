@@ -82,7 +82,7 @@ as `:split` for a single panel, and the height of a single `:split` row.
 __size_group(n::Integer) = (_width(max(n, 1)), _ROW_HEIGHT + _HEIGHT_PAD)
 
 # y-range guard for a constant series (Plots would otherwise collapse the axis).
-_ylims(y) = (lo = minimum(y); hi = maximum(y); (hi - lo) ≤ 1e-8 ? (lo - 1, hi + 1) : :auto)
+_ylims(y) = (lo=minimum(y); hi=maximum(y); (hi - lo) ≤ 1e-8 ? (lo - 1, hi + 1) : :auto)
 
 # Draw the split cells into `p`, one per subplot (targeted with `subplot=i`).
 function _fill_split!(p, x, time_name::String, cells::AbstractVector{_Cell}; kwargs...)
@@ -108,7 +108,13 @@ function _fill_group!(p, x, time_name::String, panels::AbstractVector{Panel}; kw
     for (i, pan) in enumerate(panels)
         for j in 1:size(pan.data, 2)
             Plots.plot!(
-                p, x, pan.data[:, j]; subplot=i, label=pan.labels[j], kwargs..., pan.style...
+                p,
+                x,
+                pan.data[:, j];
+                subplot=i,
+                label=pan.labels[j],
+                kwargs...,
+                pan.style...,
             )
         end
         Plots.plot!(
@@ -126,8 +132,11 @@ end
 
 function _new_plot(grid, size, plot_title; extra...)
     base = (; layout=grid, size=size, extra...)
-    return plot_title === nothing ? Plots.plot(; base...) :
-           Plots.plot(; base..., plot_title=plot_title)
+    return if plot_title === nothing
+        Plots.plot(; base...)
+    else
+        Plots.plot(; base..., plot_title=plot_title)
+    end
 end
 
 # Margins so per-component ylabels (left) and the bottom time label are not clipped.

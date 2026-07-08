@@ -71,9 +71,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             mod=CTFlows.Display,
             title="Display",
             filename="display",
-            files=src(
-                joinpath("Display", "Display.jl"),
-            ),
+            files=src(joinpath("Display", "Display.jl")),
         ),
         (
             mod=CTFlows.Integrators,

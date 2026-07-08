@@ -92,9 +92,7 @@ Functor returning the gradient `(∂H/∂x, ∂H/∂p)` of a true Hamiltonian, e
 
 See also: [`CTFlows.Systems.hamiltonian_gradient`](@ref), [`CTFlows.Systems.HamiltonianVariableGradient`](@ref).
 """
-struct HamiltonianGradient{
-    H<:Data.AbstractHamiltonian,B<:Differentiation.AbstractADBackend
-}
+struct HamiltonianGradient{H<:Data.AbstractHamiltonian,B<:Differentiation.AbstractADBackend}
     h::H
     backend::B
 end

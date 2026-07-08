@@ -6,8 +6,9 @@
 _sub(i::Integer) = join(Char(0x2080 + (c - '0')) for c in string(i))
 
 # Generated (fallback) component names: scalar -> ["x"], vector -> ["x₁", "x₂", …].
-_gen_names(sym::AbstractString, n::Integer) =
-    n == 1 ? [String(sym)] : [sym * _sub(i) for i in 1:n]
+function _gen_names(sym::AbstractString, n::Integer)
+    return n == 1 ? [String(sym)] : [sym * _sub(i) for i in 1:n]
+end
 
 # Sample a callable `f` over the time grid into an (n_times × n_components) matrix.
 # Handles scalar (1-D) and vector-valued callables uniformly, like the accessors do.
@@ -24,14 +25,23 @@ _rownorm(row) = sqrt(sum(abs2, row))
 _traj_model(sol) = nothing
 _traj_model(sol::Trajectories.ControlledTrajectory) = sol.ocp
 
-_state_names(sol, n) =
-    _traj_model(sol) === nothing ? _gen_names("x", n) :
-    CTModels.state_components(_traj_model(sol))
-_control_names(sol, m) =
-    _traj_model(sol) === nothing ? _gen_names("u", m) :
-    CTModels.control_components(_traj_model(sol))
-_control_name(sol) =
-    _traj_model(sol) === nothing ? "u" : CTModels.control_name(_traj_model(sol))
+function _state_names(sol, n)
+    return if _traj_model(sol) === nothing
+        _gen_names("x", n)
+    else
+        CTModels.state_components(_traj_model(sol))
+    end
+end
+function _control_names(sol, m)
+    return if _traj_model(sol) === nothing
+        _gen_names("u", m)
+    else
+        CTModels.control_components(_traj_model(sol))
+    end
+end
+function _control_name(sol)
+    return _traj_model(sol) === nothing ? "u" : CTModels.control_name(_traj_model(sol))
+end
 
 """
 $(TYPEDSIGNATURES)

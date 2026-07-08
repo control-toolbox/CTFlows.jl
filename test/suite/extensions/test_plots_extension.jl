@@ -55,23 +55,30 @@ end
 # ==============================================================================
 
 # 1-D and 2-D state vector-field trajectories
-_vf_traj() = Trajectories.VectorFieldTrajectory(
-    FakePlotIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
-)
-_vf_traj2() = Trajectories.VectorFieldTrajectory(
-    FakePlotIntegrationResult([0.0, 1.0], [[1.0, 2.0], [3.0, 4.0]])
-)
+function _vf_traj()
+    return Trajectories.VectorFieldTrajectory(
+        FakePlotIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
+    )
+end
+function _vf_traj2()
+    return Trajectories.VectorFieldTrajectory(
+        FakePlotIntegrationResult([0.0, 1.0], [[1.0, 2.0], [3.0, 4.0]])
+    )
+end
 
 # scalar and 2-D Hamiltonian trajectories (u = [state…; costate…])
-_ham_traj() = Trajectories.HamiltonianVectorFieldTrajectory(
-    1.0, FakeHamiltonianPlotResult([0.0, 0.5, 1.0], [[1.0, 5.0], [0.5, 2.5], [0.25, 1.25]])
-)
-_ham_traj2() = Trajectories.HamiltonianVectorFieldTrajectory(
-    [1.0, 2.0],
-    FakeHamiltonianPlotResult(
-        [0.0, 1.0], [[1.0, 2.0, 5.0, 6.0], [3.0, 4.0, 7.0, 8.0]]
-    ),
-)
+function _ham_traj()
+    return Trajectories.HamiltonianVectorFieldTrajectory(
+        1.0,
+        FakeHamiltonianPlotResult([0.0, 0.5, 1.0], [[1.0, 5.0], [0.5, 2.5], [0.25, 1.25]]),
+    )
+end
+function _ham_traj2()
+    return Trajectories.HamiltonianVectorFieldTrajectory(
+        [1.0, 2.0],
+        FakeHamiltonianPlotResult([0.0, 1.0], [[1.0, 2.0, 5.0, 6.0], [3.0, 4.0, 7.0, 8.0]]),
+    )
+end
 
 # controlled trajectory (1-D, no OCP): closed-loop u(t,x,v) = -2x
 function _ctrl_traj(; objective=nothing)
@@ -85,9 +92,7 @@ end
 # controlled trajectory (3 states, 2 controls, no OCP -> generated names)
 function _ctrl_traj_multi()
     inner = Trajectories.VectorFieldTrajectory(
-        FakePlotIntegrationResult(
-            [0.0, 1.0], [[1.0, 2.0, 3.0], [0.5, 1.0, 1.5]]
-        ),
+        FakePlotIntegrationResult([0.0, 1.0], [[1.0, 2.0, 3.0], [0.5, 1.0, 1.5]])
     )
     law = Data.ClosedLoop(x -> [-x[1], -x[2]])      # 2-D control
     return Trajectories.ControlledTrajectory(
@@ -102,7 +107,7 @@ function _ocp_named()
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 2, "x", ["pos", "vel"])
     CTModels.Building.control!(pre, 1, "u", ["thrust"])
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = x[2]; r[2] = u; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=x[2]; r[2]=u; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2)
     return CTModels.Building.build(pre)
 end
@@ -135,7 +140,8 @@ function test_plots_extension()
         # ----------------------------------------------------------------------
         Test.@testset "PlotEngine" begin
             Test.@testset "time axis" begin
-                Test.@test PlotEngine._time_axis([0.0, 1.0, 2.0], :default) == [0.0, 1.0, 2.0]
+                Test.@test PlotEngine._time_axis([0.0, 1.0, 2.0], :default) ==
+                    [0.0, 1.0, 2.0]
                 Test.@test PlotEngine._time_axis([0.0, 1.0, 2.0], :normalize) ==
                     [0.0, 0.5, 1.0]
                 Test.@test_throws Exceptions.IncorrectArgument PlotEngine._time_axis(
@@ -144,9 +150,15 @@ function test_plots_extension()
             end
 
             Test.@testset "cells and grid" begin
-                state = PlotEngine.Panel("state", ["x₁", "x₂"], [1.0 2.0; 3.0 4.0], NamedTuple())
-                costate = PlotEngine.Panel("costate", ["", ""], [5.0 6.0; 7.0 8.0], NamedTuple())
-                control = PlotEngine.Panel("control", ["u"], reshape([9.0, 10.0], 2, 1), NamedTuple())
+                state = PlotEngine.Panel(
+                    "state", ["x₁", "x₂"], [1.0 2.0; 3.0 4.0], NamedTuple()
+                )
+                costate = PlotEngine.Panel(
+                    "costate", ["", ""], [5.0 6.0; 7.0 8.0], NamedTuple()
+                )
+                control = PlotEngine.Panel(
+                    "control", ["u"], reshape([9.0, 10.0], 2, 1), NamedTuple()
+                )
 
                 # stacked: one column of every component
                 cells, grid = PlotEngine._cells_and_grid([state, control], :stacked)
@@ -165,7 +177,11 @@ function test_plots_extension()
 
             Test.@testset "render / render!" begin
                 times = [0.0, 0.5, 1.0]
-                ps = [PlotEngine.Panel("state", ["x"], reshape([1.0, 0.5, 0.25], 3, 1), NamedTuple())]
+                ps = [
+                    PlotEngine.Panel(
+                        "state", ["x"], reshape([1.0, 0.5, 0.25], 3, 1), NamedTuple()
+                    ),
+                ]
                 p = PlotEngine.render(times, ps)
                 Test.@test p isa Plots.Plot
                 Test.@test PlotEngine.render(times, ps; layout=:group) isa Plots.Plot
@@ -243,7 +259,9 @@ function test_plots_extension()
             Test.@test Plots.plot(_vf_traj2(); layout=:split) isa Plots.Plot
             p = Plots.plot(sol)
             Test.@test_nowarn Plots.plot!(p, sol)
-            Test.@test_throws Exceptions.IncorrectArgument Plots.plot(sol; state_style=:none)
+            Test.@test_throws Exceptions.IncorrectArgument Plots.plot(
+                sol; state_style=:none
+            )
         end
 
         # ----------------------------------------------------------------------

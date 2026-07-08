@@ -57,9 +57,7 @@ function PseudoHamiltonianSystem(
     backend::Differentiation.AbstractADBackend,
 ) where {TD,VD}
     return PseudoHamiltonianSystem{TD,VD,typeof(h̃),typeof(law),typeof(backend)}(
-        h̃,
-        law,
-        backend,
+        h̃, law, backend
     )
 end
 
@@ -137,8 +135,7 @@ Return the out-of-place RHS ([`CTFlows.Systems.PseudoHamOoPRHS`](@ref)) for a
 See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function get_oop_rhs(
-    sys::PseudoHamiltonianSystem,
-    config::Configs.AbstractHamiltonianConfig,
+    sys::PseudoHamiltonianSystem, config::Configs.AbstractHamiltonianConfig
 )
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
@@ -157,8 +154,7 @@ Return the augmented in-place RHS ([`CTFlows.Systems.PseudoHamIpAugRHS`](@ref)) 
 See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function get_ip_rhs_augmented(
-    sys::PseudoHamiltonianSystem,
-    config::Configs.AbstractAugmentedHamiltonianConfig,
+    sys::PseudoHamiltonianSystem, config::Configs.AbstractAugmentedHamiltonianConfig
 )
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
@@ -183,7 +179,7 @@ A variable-dependent `PseudoHamiltonianSystem` supports variable-costate integra
 See also: [`CTBase.Traits.SupportsVariableCostate`](@extref).
 """
 function Traits.variable_costate_trait(
-    ::PseudoHamiltonianSystem{TD,Traits.NonFixed,PH,L,B},
+    ::PseudoHamiltonianSystem{TD,Traits.NonFixed,PH,L,B}
 ) where {TD,PH,L,B}
     return Traits.SupportsVariableCostate
 end
@@ -194,29 +190,24 @@ end
 
 function Base.show(io::IO, sys::PseudoHamiltonianSystem)
     fmt = Display.format_codes(io)
-    Display.print_header(io, "PseudoHamiltonianSystem"; fmt = fmt)
+    Display.print_header(io, "PseudoHamiltonianSystem"; fmt=fmt)
     Display.print_field(
         io,
         "time_dependence",
         nameof(Traits.time_dependence(sys));
-        fmt = fmt,
-        value_style = fmt.type,
+        fmt=fmt,
+        value_style=fmt.type,
     )
     Display.print_field(
         io,
         "variable_dependence",
         nameof(Traits.variable_dependence(sys));
-        fmt = fmt,
-        value_style = fmt.type,
+        fmt=fmt,
+        value_style=fmt.type,
     )
-    Display.print_field(io, "", sys.h̃; fmt = fmt, value_style = "")
-    Display.print_field(io, "", sys.law; fmt = fmt, value_style = "")
+    Display.print_field(io, "", sys.h̃; fmt=fmt, value_style="")
+    Display.print_field(io, "", sys.law; fmt=fmt, value_style="")
     return Display.print_field(
-        io,
-        "backend",
-        sys.backend;
-        last = true,
-        fmt = fmt,
-        value_style = "",
+        io, "backend", sys.backend; last=true, fmt=fmt, value_style=""
     )
 end
