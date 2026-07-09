@@ -56,7 +56,7 @@ _time_name(sol) = _traj_model(sol) === nothing ? "t" : CTModels.time_name(_traj_
 
 function _state_panel(sol, ts, style::NamedTuple)
     M = _sample(Trajectories.state(sol), ts)
-    return Panel("state", _state_names(sol, size(M, 2)), M, style)
+    return Plotting.Panel(ts, M; title="state", labels=_state_names(sol, size(M, 2)), style)
 end
 
 # When state is shown alongside (paired columns), the aligned state ylabels label the
@@ -65,7 +65,7 @@ function _costate_panel(sol, ts, style::NamedTuple; state_shown::Bool)
     M = _sample(Trajectories.costate(sol), ts)
     n = size(M, 2)
     labels = state_shown ? fill("", n) : _gen_names("p", n)
-    return Panel("costate", labels, M, style)
+    return Plotting.Panel(ts, M; title="costate", labels, style)
 end
 
 function _control_panel(sol, ts, control::Symbol, style::NamedTuple)
@@ -90,7 +90,7 @@ function _control_panel(sol, ts, control::Symbol, style::NamedTuple)
             ),
         )
     end
-    return Panel("control", labels, data, style)
+    return Plotting.Panel(ts, data; title="control", labels, style)
 end
 
 """
@@ -110,7 +110,7 @@ function _panels(
     control_style::Union{NamedTuple,Symbol},
 )
     ts = Integrators.times(sol)
-    panels = Panel[]
+    panels = Plotting.Panel[]
     state_shown = :state in description && state_style !== :none
     costate_shown = :costate in description && costate_style !== :none
 

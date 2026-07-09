@@ -1,7 +1,8 @@
 """
-Tests for the CTFlowsPlots extension: the generic `PlotEngine` and the `TrajectoryPlots`
-case layer (plotting of the three trajectory types, including `ControlledTrajectory`,
-component-name plumbing from the OCP, and the split/group layouts).
+Tests for the CTFlowsPlots extension: the `TrajectoryPlots` case layer (plotting of the
+three trajectory types, including `ControlledTrajectory`, component-name plumbing from
+the OCP, and the split/group layouts). The generic rendering engine it builds on lives
+in `CTBase.Plotting` and is tested there.
 """
 module TestPlotsExtension
 
@@ -16,9 +17,8 @@ import CTModels: CTModels
 
 using Plots
 
-# Extension and its two sub-modules
+# Extension and its case-layer sub-module
 const CTFlowsPlots = Base.get_extension(CTFlows, :CTFlowsPlots)
-const PlotEngine = CTFlowsPlots.PlotEngine
 const TrajectoryPlots = CTFlowsPlots.TrajectoryPlots
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
@@ -131,68 +131,7 @@ function test_plots_extension()
         # ----------------------------------------------------------------------
         Test.@testset "Extension loading" begin
             Test.@test CTFlowsPlots isa Module
-            Test.@test PlotEngine isa Module
             Test.@test TrajectoryPlots isa Module
-        end
-
-        # ----------------------------------------------------------------------
-        # PlotEngine — generic, domain-free
-        # ----------------------------------------------------------------------
-        Test.@testset "PlotEngine" begin
-            Test.@testset "time axis" begin
-                Test.@test PlotEngine._time_axis([0.0, 1.0, 2.0], :default) ==
-                    [0.0, 1.0, 2.0]
-                Test.@test PlotEngine._time_axis([0.0, 1.0, 2.0], :normalize) ==
-                    [0.0, 0.5, 1.0]
-                Test.@test_throws Exceptions.IncorrectArgument PlotEngine._time_axis(
-                    [0.0, 1.0], :bad
-                )
-            end
-
-            Test.@testset "cells and grid" begin
-                state = PlotEngine.Panel(
-                    "state", ["x₁", "x₂"], [1.0 2.0; 3.0 4.0], NamedTuple()
-                )
-                costate = PlotEngine.Panel(
-                    "costate", ["", ""], [5.0 6.0; 7.0 8.0], NamedTuple()
-                )
-                control = PlotEngine.Panel(
-                    "control", ["u"], reshape([9.0, 10.0], 2, 1), NamedTuple()
-                )
-
-                # stacked: one column of every component
-                cells, grid = PlotEngine._cells_and_grid([state, control], :stacked)
-                Test.@test grid == (3, 1)
-                Test.@test length(cells) == 3
-
-                # paired: state | costate side by side, (2, 2) grid
-                cells2, grid2 = PlotEngine._cells_and_grid([state, costate], :paired)
-                Test.@test grid2 == (2, 2)
-                Test.@test length(cells2) == 4
-
-                # paired fallback to stacked when heights differ
-                _, gridf = PlotEngine._cells_and_grid([state, control], :paired)
-                Test.@test gridf == (3, 1)
-            end
-
-            Test.@testset "render / render!" begin
-                times = [0.0, 0.5, 1.0]
-                ps = [
-                    PlotEngine.Panel(
-                        "state", ["x"], reshape([1.0, 0.5, 0.25], 3, 1), NamedTuple()
-                    ),
-                ]
-                p = PlotEngine.render(times, ps)
-                Test.@test p isa Plots.Plot
-                Test.@test PlotEngine.render(times, ps; layout=:group) isa Plots.Plot
-                Test.@test_nowarn PlotEngine.render!(p, times, ps)
-                Test.@test_throws Exceptions.IncorrectArgument PlotEngine.render(
-                    times, PlotEngine.Panel[]
-                )
-                Test.@test_throws Exceptions.IncorrectArgument PlotEngine.render(
-                    times, ps; layout=:bad
-                )
-            end
         end
 
         # ----------------------------------------------------------------------
