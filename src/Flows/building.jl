@@ -163,12 +163,40 @@ backend, and wraps the resulting flow together with the OCP reference.
 See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), [`CTFlows.Flows.Flow`](@ref), `CTFlows.Flows._ocp_hamiltonian`.
 """
 function _flow_from_ocp(::Type{Traits.ControlFree}, ocp::CTModels.Models.Model; kwargs...)
+    _reject_control_free_constraint(kwargs)
     routed = _route_flow_options(kwargs)
     components = _build_flow_components(routed)
     h = _ocp_hamiltonian(ocp)
     sys = Systems.build_system(h, components.backend)
     inner = build_flow(sys, components.integrator)
     return OptimalControlFlow(inner, ocp)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Reject a `constraint` / `multiplier` keyword on a **control-free** `Flow(ocp)`.
+
+Constrained flows are only defined for the with-control case `Flow(ocp, law; …)`, where
+the constraint term `μ·g` enters the pseudo-Hamiltonian `H̃ + μ·g` alongside the control.
+With no control law there is no pseudo-Hamiltonian to augment, so a state constraint has
+no well-defined place in the control-free OCP Hamiltonian flow. Throws
+[`CTBase.Exceptions.PreconditionError`](@extref).
+
+See also: [`CTFlows.Flows.Flow`](@ref).
+"""
+function _reject_control_free_constraint(kwargs)
+    (haskey(kwargs, :constraint) || haskey(kwargs, :multiplier)) && throw(
+        Exceptions.PreconditionError(
+            "constrained flows are not supported for control-free problems";
+            reason="a `constraint`/`multiplier` pair augments the pseudo-Hamiltonian " *
+                   "H̃ + μ·g with the control; a control-free Flow(ocp) has no control " *
+                   "law and no pseudo-Hamiltonian to carry the constraint term",
+            suggestion="use Flow(ocp, law; constraint=…, multiplier=…) with a control law",
+            context="Flow(ocp; constraint=…, multiplier=…) — control-free constraint guard",
+        ),
+    )
+    return nothing
 end
 
 """
@@ -472,27 +500,20 @@ function _flow_from_ocp_control(
     ht = _unwrap_option(get(routed.action, :hamiltonian_type, nothing), :total)
     cspec = _unwrap_option(get(routed.action, :constraint, nothing), nothing)
     mspec = _unwrap_option(get(routed.action, :multiplier, nothing), nothing)
-    h̃ = _ocp_pseudo_hamiltonian_for(ocp, Val(ht), cspec, mspec)
-    inner = _build_pseudo_flow(Val(ht), h̃, law, components)
+    _validate_constraint_pair(cspec, mspec)
+    inner = _build_ocp_pseudo_flow(Val(ht), ocp, law, components, cspec, mspec)
     return OptimalControlFlow(inner, ocp, law)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Select the pseudo-Hamiltonian for an OCP + control-law flow, given the resolved
-`hamiltonian_type` and the (optional) `constraint`/`multiplier` action options.
+Validate the `constraint`/`multiplier` pairing: they must be given **together** (both or
+neither). Throws [`CTBase.Exceptions.IncorrectArgument`](@extref) if exactly one is given.
 
-- Neither given → the plain [`CTFlows.Flows._ocp_pseudo_hamiltonian`](@ref).
-- Both given → a constrained pseudo-Hamiltonian
-  `H̃(t,x,p,u,v) + μ(t,x,p,v)·g(t,x,u,v)` via
-  [`CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`](@ref). Only the `:total` mode is
-  supported for now (`:partial` is planned for a later release).
-- Exactly one given → [`CTBase.Exceptions.IncorrectArgument`](@extref) (they are paired).
-
-See also: [`CTFlows.Flows._resolve_constraint`](@ref), [`CTFlows.Flows._resolve_multiplier`](@ref).
+See also: [`CTFlows.Flows._build_ocp_pseudo_flow`](@ref).
 """
-function _ocp_pseudo_hamiltonian_for(ocp, ::Val, cspec, mspec)
+function _validate_constraint_pair(cspec, mspec)
     (cspec === nothing) == (mspec === nothing) || throw(
         Exceptions.IncorrectArgument(
             "`constraint` and `multiplier` must be given together";
@@ -501,26 +522,53 @@ function _ocp_pseudo_hamiltonian_for(ocp, ::Val, cspec, mspec)
             context="Flow(ocp, law; constraint=…, multiplier=…) — pairing check",
         ),
     )
-    cspec === nothing && return _ocp_pseudo_hamiltonian(ocp)
-    g = _resolve_constraint(ocp, cspec)
-    μ = _resolve_multiplier(ocp, mspec)
-    return _ocp_constrained_pseudo_hamiltonian(ocp, g, μ)
+    return nothing
 end
 
-# Constrained + :partial is not yet supported (planned for a later release): reject it
-# before building anything, so the error is raised at construction with a clear message.
-function _ocp_pseudo_hamiltonian_for(ocp, ::Val{:partial}, cspec, mspec)
-    if !(cspec === nothing && mspec === nothing)
-        throw(
-            Exceptions.IncorrectArgument(
-                "constrained flows are not yet supported with hamiltonian_type=:partial";
-                got="constraint/multiplier with :partial",
-                expected="hamiltonian_type=:total for a constrained flow",
-                context="Flow(ocp, law; constraint=…, multiplier=…, hamiltonian_type=:partial)",
-            ),
+"""
+$(TYPEDSIGNATURES)
+
+Build the inner Hamiltonian flow of an OCP + control-law flow, dispatching on the
+`hamiltonian_type` and on the presence of a `constraint`/`multiplier` pair (already
+validated by [`CTFlows.Flows._validate_constraint_pair`](@ref)).
+
+- **`:total`** — bake the constraint into the pseudo-Hamiltonian
+  `H̃(t,x,p,u,v) + μ(t,x,p,v)·g(t,x,u,v)` (via
+  [`CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`](@ref)) and compose with the law;
+  AD differentiates through `H̃`, `μ`, `g` and the law (total derivative). Unconstrained →
+  the plain [`CTFlows.Flows._ocp_pseudo_hamiltonian`](@ref).
+- **`:partial`** — build a [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref)
+  carrying the base `H̃`, the law, `g` and `μ` separately; the RHS freezes the multiplier
+  value `μ` alongside the control `u` and differentiates only through `g`. Unconstrained →
+  a [`CTFlows.Systems.PseudoHamiltonianSystem`](@ref).
+
+See also: [`CTFlows.Flows._resolve_constraint`](@ref), [`CTFlows.Flows._resolve_multiplier`](@ref),
+[`CTFlows.Flows._build_pseudo_flow`](@ref).
+"""
+function _build_ocp_pseudo_flow(::Val{:total}, ocp, law, components, cspec, mspec)
+    h̃ = if cspec === nothing
+        _ocp_pseudo_hamiltonian(ocp)
+    else
+        _ocp_constrained_pseudo_hamiltonian(
+            ocp, _resolve_constraint(ocp, cspec), _resolve_multiplier(ocp, mspec)
         )
     end
-    return _ocp_pseudo_hamiltonian(ocp)
+    return _build_pseudo_flow(Val(:total), h̃, law, components)
+end
+
+function _build_ocp_pseudo_flow(::Val{:partial}, ocp, law, components, cspec, mspec)
+    h̃ = _ocp_pseudo_hamiltonian(ocp)
+    cspec === nothing && return _build_pseudo_flow(Val(:partial), h̃, law, components)
+    g = _resolve_constraint(ocp, cspec)
+    μ = _resolve_multiplier(ocp, mspec)
+    sys = Systems.build_system(h̃, law, g, μ, components.backend)
+    return build_flow(sys, components.integrator)
+end
+
+# Unknown hamiltonian_type: delegate to the (throwing) unconstrained fallback so the
+# error message and type match `Flow(h̃, law; hamiltonian_type=…)`.
+function _build_ocp_pseudo_flow(::Val{ht}, ocp, law, components, cspec, mspec) where {ht}
+    return _build_pseudo_flow(Val(ht), _ocp_pseudo_hamiltonian(ocp), law, components)
 end
 
 """

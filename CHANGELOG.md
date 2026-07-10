@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0-beta] - 2026-07-10
+
+### Added
+
+- **Constrained pseudo-Hamiltonian flows (`:partial` mode)**: `Flow(ocp, law; constraint,
+  multiplier, hamiltonian_type=:partial)` now integrates the constrained Hamiltonian
+  `H = H̃ + μ·g` with **both** the control `u` **and** the multiplier value `μ` frozen at
+  their feedback values during differentiation — `g` is differentiated in `(x, p, v)`, `μ`
+  is not. This is the constrained counterpart of the unconstrained `:partial` mode and is
+  sound on a boundary arc (where `g ≡ 0`, the neglected `(∂μ/∂z)ᵀg` term vanishes). See
+  `.reports/constraints-and-duals/math.md`.
+  - New `CTFlows.Systems.ConstrainedPseudoHamiltonianSystem` (carrying the base `H̃`, the
+    law, `g` and `μ` separately) with dedicated RHS functors that evaluate `μ` before the
+    gradient call and freeze it; and `FrozenConstrainedPseudoHamiltonian`, a
+    frozen-multiplier `CTBase.Data.AbstractPseudoHamiltonian` used by those functors.
+  - The variable-costate path picks up `ṗᵥ ∋ −μᵀ ∂g/∂v` at frozen `μ`.
+  - Lifts the PR-3 guard that rejected constrained flows with `hamiltonian_type=:partial`.
+
+### Changed
+
+- **BREAKING — constrained flows are only defined with a control law.** `Flow(ocp;
+  constraint=…, multiplier=…)` on a **control-free** OCP now throws an explicit
+  `CTBase.Exceptions.PreconditionError` (previously an `IncorrectArgument` about an unknown
+  option): a state constraint has no well-defined place in a control-free OCP Hamiltonian
+  flow. Use `Flow(ocp, law; constraint=…, multiplier=…)`. This reverses the design note's
+  earlier "control-free constrained flows stay supported" position.
+- **BREAKING — constrained `Flow(ocp, law; constraint, multiplier, hamiltonian_type=:partial)`
+  no longer errors.** It previously threw `IncorrectArgument` ("not yet supported"); it now
+  integrates the frozen-multiplier constrained flow. Code relying on that error is affected.
+
 ## [0.11.0-beta] - 2026-07-10
 
 ### Added

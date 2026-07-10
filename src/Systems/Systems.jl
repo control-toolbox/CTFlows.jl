@@ -37,10 +37,12 @@ include(joinpath(@__DIR__, "rhs_functors.jl"))
 include(joinpath(@__DIR__, "hvf_rhs_functors.jl"))
 include(joinpath(@__DIR__, "hamiltonian_rhs_functors.jl"))
 include(joinpath(@__DIR__, "pseudo_hamiltonian_rhs_functors.jl"))
+include(joinpath(@__DIR__, "constrained_pseudo_hamiltonian_rhs_functors.jl"))
 include(joinpath(@__DIR__, "vector_field_system.jl"))
 include(joinpath(@__DIR__, "hamiltonian_vector_field_system.jl"))
 include(joinpath(@__DIR__, "hamiltonian_system.jl"))
 include(joinpath(@__DIR__, "pseudo_hamiltonian_system.jl"))
+include(joinpath(@__DIR__, "constrained_pseudo_hamiltonian_system.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 include(joinpath(@__DIR__, "hamiltonian_getter.jl"))
 include(joinpath(@__DIR__, "hamiltonian_getters_extra.jl"))
@@ -56,6 +58,8 @@ export AbstractHVFRHS, AbstractIPHVFRHS, AbstractOoPHVFRHS
 export AbstractHamRHS, AbstractIPHamRHS, AbstractOoPHamRHS
 export AbstractPseudoHamRHS, AbstractIPPseudoHamRHS, AbstractOoPPseudoHamRHS
 export PseudoHamIpRHS, PseudoHamOoPRHS, PseudoHamIpAugRHS
+export FrozenConstrainedPseudoHamiltonian
+export ConstrainedPseudoHamIpRHS, ConstrainedPseudoHamOoPRHS, ConstrainedPseudoHamIpAugRHS
 export get_ip_rhs
 export get_oop_rhs
 export get_ip_rhs_augmented
@@ -64,6 +68,7 @@ export VectorFieldSystem
 export HamiltonianVectorFieldSystem
 export HamiltonianSystem
 export PseudoHamiltonianSystem
+export ConstrainedPseudoHamiltonianSystem
 export build_system
 export hamiltonian, backend
 export pseudo_hamiltonian, control_law
