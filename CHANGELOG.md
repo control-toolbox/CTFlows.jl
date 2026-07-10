@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0-beta] - 2026-07-10
+
+### Added
+
+- **Constrained pseudo-Hamiltonian flows (`:total` mode)**: `Flow(ocp, law; constraint, multiplier)`
+  builds the flow of the constrained Hamiltonian `H = H̃ + μ·g`, where `g` is a path
+  constraint and `μ` a user-supplied Lagrange multiplier.
+  - `constraint` accepts a `:path` constraint **label** (`Symbol`), a
+    `CTBase.Data.PathConstraint`, or a plain function with the OCP's natural arity.
+  - `multiplier` accepts a `CTBase.Data.Multiplier` or a plain function `μ(x,p)` /
+    `μ(t,x,p)` / `μ(x,p,v)` / `μ(t,x,p,v)`.
+  - The constraint term is differentiated *through* in the `:total` mode (total derivative,
+    chain-rule through the law and `μ`); a dedicated guide chapter on the `:total` vs
+    `:partial` semantics is planned.
+  - `constraint`/`multiplier` are paired (both-or-neither); a single one throws
+    `IncorrectArgument`. Constrained flows with `hamiltonian_type=:partial` are not yet
+    supported (planned for a later release) and are rejected at construction.
+  - The unconstrained flow paths are untouched (dispatch selects the constrained
+    pseudo-Hamiltonian only when a constraint is supplied).
+
+### Requires
+
+- CTBase ≥ 0.27.4-beta and CTModels ≥ 0.15.2-beta (AD-friendly constraint-by-label
+  functors, needed to differentiate a labelled path constraint through the `:total` flow).
+
 ## [0.10.0-beta] - 2026-06-28
 
 ### Fixed

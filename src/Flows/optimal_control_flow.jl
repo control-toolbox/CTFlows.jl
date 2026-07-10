@@ -240,6 +240,195 @@ function _ocp_pseudo_hamiltonian(ocp)
 end
 
 # =============================================================================
+# Constrained pseudo-Hamiltonian: H(t,x,p,u,v) = H̃(t,x,p,u,v) + μ(t,x,p,v)·g(t,x,u,v)
+#
+# Wraps an OCPPseudoHamiltonianFunction with a path constraint g and a multiplier μ.
+# Used only for the :total differentiation mode: the whole functor is composed with the
+# control law via Data.ComposedHamiltonian, so AD differentiates through H̃, μ, g and the
+# law (total derivative). For :partial, μ must be frozen in the RHS functor (PR 4).
+#
+# The constraint g is called uniformly as g(t,x,u,v) and the multiplier μ as μ(t,x,p,v);
+# both carriers ignore the arguments their traits do not use.
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Resolve a `constraint` specification into a [`CTBase.Data.PathConstraint`](@extref).
+
+- `spec::Symbol` is a `:path` constraint **label**: resolved via
+  [`CTModels.Models.constraint`](@extref), which returns an out-of-place `g(t,x,u,v)`.
+  Rejected with [`CTBase.Exceptions.IncorrectArgument`](@extref) if the label is not a
+  `:path` constraint (e.g. `:boundary` or a box constraint). The functor is wrapped as a
+  **non-autonomous, non-fixed** [`CTBase.Data.MixedConstraint`](@extref) so its uniform
+  call `g(t,x,u,v)` forwards verbatim to the resolved functor.
+- `spec::CTBase.Data.PathConstraint` is used as-is.
+- `spec::Function` is a raw function with the OCP's natural arity (`(x,u)`, `(t,x,u)`,
+  `(x,u,v)` or `(t,x,u,v)`), wrapped in a [`CTBase.Data.MixedConstraint`](@extref) with the
+  OCP's time/variable dependence.
+
+See also: [`CTFlows.Flows._resolve_multiplier`](@ref), `CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`.
+"""
+function _resolve_constraint(ocp, spec::Symbol)
+    kind, g_oop, _, _ = CTModels.Models.constraint(ocp, spec)
+    kind === :path || throw(
+        Exceptions.IncorrectArgument(
+            "constraint label :$spec is not a path constraint";
+            got=":$kind constraint",
+            expected="a :path constraint label",
+            context="Flow(ocp, law; constraint=:$spec) — label resolution",
+        ),
+    )
+    # The label functor is always the full uniform arity g(t,x,u,v); wrap it as a
+    # non-autonomous, non-fixed MixedConstraint so its uniform call forwards verbatim.
+    return Data.MixedConstraint(g_oop; is_autonomous=false, is_variable=true)
+end
+
+_resolve_constraint(::Any, spec::Data.PathConstraint) = spec
+
+function _resolve_constraint(ocp, spec::Function)
+    return Data.MixedConstraint(
+        spec; is_autonomous=Traits.is_autonomous(ocp), is_variable=Traits.is_variable(ocp)
+    )
+end
+
+function _resolve_constraint(::Any, spec)
+    return throw(
+        Exceptions.IncorrectArgument(
+            "unsupported constraint specification";
+            got="$(typeof(spec))",
+            expected="a :path label (Symbol), a CTBase.Data.PathConstraint, or a Function",
+            context="Flow(ocp, law; constraint=…) — constraint resolution",
+        ),
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Resolve a `multiplier` specification into a [`CTBase.Data.Multiplier`](@extref).
+
+- `spec::CTBase.Data.Multiplier` is used as-is.
+- `spec::Function` is a raw function with the OCP's natural arity (`(x,p)`, `(t,x,p)`,
+  `(x,p,v)` or `(t,x,p,v)`), wrapped in a [`CTBase.Data.Multiplier`](@extref) with the OCP's
+  time/variable dependence.
+
+See also: [`CTFlows.Flows._resolve_constraint`](@ref), `CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`.
+"""
+_resolve_multiplier(::Any, spec::Data.Multiplier) = spec
+
+function _resolve_multiplier(ocp, spec::Function)
+    return Data.Multiplier(
+        spec; is_autonomous=Traits.is_autonomous(ocp), is_variable=Traits.is_variable(ocp)
+    )
+end
+
+function _resolve_multiplier(::Any, spec)
+    return throw(
+        Exceptions.IncorrectArgument(
+            "unsupported multiplier specification";
+            got="$(typeof(spec))",
+            expected="a CTBase.Data.Multiplier or a Function",
+            context="Flow(ocp, law; multiplier=…) — multiplier resolution",
+        ),
+    )
+end
+
+"""
+$(TYPEDEF)
+
+Internal callable representing the **constrained** pseudo-Hamiltonian of an OCP:
+`H(t,x,p,u,v) = H̃(t,x,p,u,v) + μ(t,x,p,v)·g(t,x,u,v)`, where `H̃` is an
+[`OCPPseudoHamiltonianFunction`](@ref), `g` a [`CTBase.Data.PathConstraint`](@extref)
+(uniform call `g(t,x,u,v)`) and `μ` a [`CTBase.Data.Multiplier`](@extref) (uniform call
+`μ(t,x,p,v)`).
+
+Used for the `:total` differentiation mode only: the whole functor is composed with the
+control law via [`CTBase.Data.ComposedHamiltonian`](@extref), so AD differentiates through
+`H̃`, `μ`, `g` and the law (total derivative). The `(TD, VD)` traits drive natural-arity
+dispatch exactly as for [`OCPPseudoHamiltonianFunction`](@ref).
+
+# Type Parameters
+- `TD`, `VD`: time- and variable-dependence traits (compile-time dispatch on arity).
+- `H`: type of the base pseudo-Hamiltonian functor.
+- `G`: type of the path-constraint carrier.
+- `M`: type of the multiplier carrier.
+
+# Fields
+- `h̃::H`: base pseudo-Hamiltonian `H̃(t,x,p,u,v)`.
+- `g::G`: path constraint `g(t,x,u,v)`.
+- `μ::M`: multiplier `μ(t,x,p,v)`.
+
+See also: [`OCPPseudoHamiltonianFunction`](@ref), `CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`.
+"""
+struct ConstrainedPseudoHamiltonianFunction{TD,VD,H,G,M} <: Function
+    h̃::H
+    g::G
+    μ::M
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Core computation of the constrained pseudo-Hamiltonian value
+`H̃(t,x,p,u,v) + μ(t,x,p,v)·g(t,x,u,v)`. The pairing `μ·g` uses `sum(μ .* g)` so it
+handles both scalar (1-D) and vector constraints (matching the `p·f` idiom in
+[`CTFlows.Flows._ocp_pseudo_H`](@ref)). When `v === nothing` (Fixed problems) an empty
+variable vector is forwarded to `μ`/`g`; their Fixed-trait uniform calls ignore it.
+
+See also: [`CTFlows.Flows.ConstrainedPseudoHamiltonianFunction`](@ref).
+"""
+function _constrained_pseudo_H(h::ConstrainedPseudoHamiltonianFunction, t, x, p, u, v)
+    base = _ocp_pseudo_H(h.h̃, t, x, p, u, v)
+    vv = v === nothing ? Float64[] : v
+    return base + sum(h.μ(t, x, p, vv) .* h.g(t, x, u, vv))
+end
+
+function (h::ConstrainedPseudoHamiltonianFunction{_CTM_Auton,Traits.Fixed})(x, p, u)
+    return _constrained_pseudo_H(h, 0.0, x, p, u, nothing)
+end
+function (h::ConstrainedPseudoHamiltonianFunction{_CTM_NonAuton,Traits.Fixed})(t, x, p, u)
+    return _constrained_pseudo_H(h, t, x, p, u, nothing)
+end
+function (h::ConstrainedPseudoHamiltonianFunction{_CTM_Auton,Traits.NonFixed})(x, p, u, v)
+    return _constrained_pseudo_H(h, 0.0, x, p, u, v)
+end
+function (h::ConstrainedPseudoHamiltonianFunction{_CTM_NonAuton,Traits.NonFixed})(
+    t, x, p, u, v
+)
+    return _constrained_pseudo_H(h, t, x, p, u, v)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Build a [`CTFlows.Flows.ConstrainedPseudoHamiltonianFunction`](@ref) from an OCP, a
+resolved path constraint `g` and a resolved multiplier `μ`, wrapped in a
+[`CTBase.Data.PseudoHamiltonian`](@extref) so it flows into the `:total` pipeline exactly
+like the unconstrained [`CTFlows.Flows._ocp_pseudo_hamiltonian`](@ref).
+
+See also: [`CTFlows.Flows.ConstrainedPseudoHamiltonianFunction`](@ref),
+[`CTFlows.Flows._resolve_constraint`](@ref), [`CTFlows.Flows._resolve_multiplier`](@ref).
+"""
+function _ocp_constrained_pseudo_hamiltonian(ocp, g, μ)
+    n = CTModels.Models.state_dimension(ocp)
+    dyn! = CTModels.Models.dynamics(ocp)
+    sp0 = CTModels.Components.criterion(ocp) === :min ? -1.0 : 1.0
+    lag = if CTModels.Components.has_lagrange_cost(ocp)
+        CTModels.Components.lagrange(ocp)
+    else
+        nothing
+    end
+    TD = Traits.time_dependence(ocp)
+    VD = Traits.variable_dependence(ocp)
+    h̃_raw = OCPPseudoHamiltonianFunction{TD,VD,typeof(dyn!),typeof(lag)}(dyn!, lag, sp0, n)
+    raw = ConstrainedPseudoHamiltonianFunction{TD,VD,typeof(h̃_raw),typeof(g),typeof(μ)}(
+        h̃_raw, g, μ
+    )
+    return Data.PseudoHamiltonian(raw, TD, VD)
+end
+
+# =============================================================================
 # OCPControlledVectorFieldFunction — OCP controlled dynamics fc(t,x,u,v) = f(t,x,u,v)
 #
 # Out-of-place wrapper of the OCP in-place dynamics, for the OpenLoop/ClosedLoop

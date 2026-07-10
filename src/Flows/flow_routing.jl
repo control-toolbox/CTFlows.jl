@@ -97,10 +97,11 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the action-level option definitions for control flows. Currently a single
-option, `hamiltonian_type` (`:total` or `:partial`), routed as a first-class action
-option so it is accepted only where meaningful (the control-law flow constructors) and
-rejected as an unknown option elsewhere.
+Return the action-level option definitions for control flows: `hamiltonian_type`
+(`:total` or `:partial`), and the paired `constraint` / `multiplier` options that turn
+the flow into a constrained pseudo-Hamiltonian flow. All three are routed as first-class
+action options so they are accepted only where meaningful (the control-law flow
+constructors) and rejected as unknown options elsewhere.
 
 See also: [`CTFlows.Flows._route_flow_options`](@ref), [`CTFlows.Flows._unwrap_option`](@ref).
 """
@@ -112,6 +113,24 @@ function _flow_action_defs()
             type=Symbol,
             default=:total,
             description="Hamiltonian type for DynClosedLoop flows: :total or :partial",
+        ),
+        Options.OptionDefinition(;
+            name=:constraint,
+            aliases=(),
+            type=Any,
+            default=nothing,
+            description="Path constraint g for a constrained pseudo-Hamiltonian flow: " *
+                        "a :path constraint label (Symbol), a CTBase.Data.PathConstraint, " *
+                        "or a plain function with the OCP's natural arity. Paired with `multiplier`.",
+        ),
+        Options.OptionDefinition(;
+            name=:multiplier,
+            aliases=(),
+            type=Any,
+            default=nothing,
+            description="Lagrange multiplier μ for the path constraint: a " *
+                        "CTBase.Data.Multiplier or a plain function μ with the OCP's natural " *
+                        "arity μ(x,p)/μ(t,x,p)/μ(x,p,v)/μ(t,x,p,v). Paired with `constraint`.",
         ),
     ]
 end

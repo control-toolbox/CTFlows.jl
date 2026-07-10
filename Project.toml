@@ -1,6 +1,6 @@
 name = "CTFlows"
 uuid = "1c39547c-7794-42f7-af83-d98194f657c2"
-version = "0.10.0-beta"
+version = "0.11.0-beta"
 authors = ["Olivier Cots <olivier.cots@toulouse-inp.fr>"]
 
 [deps]
