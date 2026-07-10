@@ -470,9 +470,57 @@ function _flow_from_ocp_control(
     routed = _route_flow_options(kwargs; action_defs=_flow_action_defs())
     components = _build_flow_components(routed)
     ht = _unwrap_option(get(routed.action, :hamiltonian_type, nothing), :total)
-    h̃ = _ocp_pseudo_hamiltonian(ocp)
+    cspec = _unwrap_option(get(routed.action, :constraint, nothing), nothing)
+    mspec = _unwrap_option(get(routed.action, :multiplier, nothing), nothing)
+    h̃ = _ocp_pseudo_hamiltonian_for(ocp, Val(ht), cspec, mspec)
     inner = _build_pseudo_flow(Val(ht), h̃, law, components)
     return OptimalControlFlow(inner, ocp, law)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Select the pseudo-Hamiltonian for an OCP + control-law flow, given the resolved
+`hamiltonian_type` and the (optional) `constraint`/`multiplier` action options.
+
+- Neither given → the plain [`CTFlows.Flows._ocp_pseudo_hamiltonian`](@ref).
+- Both given → a constrained pseudo-Hamiltonian
+  `H̃(t,x,p,u,v) + μ(t,x,p,v)·g(t,x,u,v)` via
+  [`CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`](@ref). Only the `:total` mode is
+  supported for now (`:partial` is planned for a later release).
+- Exactly one given → [`CTBase.Exceptions.IncorrectArgument`](@extref) (they are paired).
+
+See also: [`CTFlows.Flows._resolve_constraint`](@ref), [`CTFlows.Flows._resolve_multiplier`](@ref).
+"""
+function _ocp_pseudo_hamiltonian_for(ocp, ::Val, cspec, mspec)
+    (cspec === nothing) == (mspec === nothing) || throw(
+        Exceptions.IncorrectArgument(
+            "`constraint` and `multiplier` must be given together";
+            got=cspec === nothing ? "only `multiplier`" : "only `constraint`",
+            expected="both `constraint` and `multiplier`, or neither",
+            context="Flow(ocp, law; constraint=…, multiplier=…) — pairing check",
+        ),
+    )
+    cspec === nothing && return _ocp_pseudo_hamiltonian(ocp)
+    g = _resolve_constraint(ocp, cspec)
+    μ = _resolve_multiplier(ocp, mspec)
+    return _ocp_constrained_pseudo_hamiltonian(ocp, g, μ)
+end
+
+# Constrained + :partial is not yet supported (planned for a later release): reject it
+# before building anything, so the error is raised at construction with a clear message.
+function _ocp_pseudo_hamiltonian_for(ocp, ::Val{:partial}, cspec, mspec)
+    if !(cspec === nothing && mspec === nothing)
+        throw(
+            Exceptions.IncorrectArgument(
+                "constrained flows are not yet supported with hamiltonian_type=:partial";
+                got="constraint/multiplier with :partial",
+                expected="hamiltonian_type=:total for a constrained flow",
+                context="Flow(ocp, law; constraint=…, multiplier=…, hamiltonian_type=:partial)",
+            ),
+        )
+    end
+    return _ocp_pseudo_hamiltonian(ocp)
 end
 
 """

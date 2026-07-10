@@ -138,7 +138,27 @@ function _build_typed_2d()
     return CTModels.Building.build(pre)
 end
 
+# scalar LQR with a labelled :path constraint g(x)=x and a :boundary constraint.
+# Same dynamics/cost as _build_lqr, so the constrained closed form below applies.
+function _build_lqr_constrained()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, 1)
+    CTModels.Building.control!(pre, 1)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=(-x + u); nothing))
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2)
+    CTModels.Building.constraint!(
+        pre, :path; f=(r, t, x, u, v) -> (r[1]=x; nothing), lb=[-Inf], ub=[0.0], label=:g
+    )
+    CTModels.Building.constraint!(
+        pre, :boundary; f=(r, x0, xf, v) -> (r[1]=xf; nothing), lb=[0.0], ub=[0.0], label=:bnd
+    )
+    return CTModels.Building.build(pre)
+end
+
 const OCP_LQR = _build_lqr()
+const OCP_LQR_C = _build_lqr_constrained()
 const OCP_DI = _build_double_integrator()
 const OCP_NA = _build_nonauton()
 const OCP_CF = _build_control_free()
@@ -393,6 +413,204 @@ function test_ocp_control()
             xseen, useen, _ = _DYN_SEEN[]
             Test.@test xseen isa AbstractVector && length(xseen) == 2   # 2-D state → vector
             Test.@test useen isa Number   # 1-D control → scalar even when the state is a vector
+        end
+
+        # ====================================================================
+        # CONSTRAINED :total flows — H = H̃ + μ·g
+        #
+        # OCP_LQR: ẋ=-x+u, ℓ=0.5u², :min ⇒ H̃ = p(-x+u) - 0.5u², stationary law u=p.
+        # State constraint g(x)=x with a *constant* multiplier μ≡c gives the composed
+        # Hamiltonian H(x,p) = -px + 0.5p² + c·x, hence
+        #   ṗ = -∂H/∂x = p - c        ⇒ p(t) = c + (p0-c)e^{t}
+        #   ẋ = ∂H/∂p  = -x + p       ⇒ x(t) = (x0-p0/2-c/2)e^{-t} + c + (p0-c)/2·e^{t}
+        # (c=0 recovers the unconstrained LQR closed form).
+        # ====================================================================
+
+        # analytic references for the constrained LQR with constant multiplier c
+        _pc(p0, tf, c) = c + (p0 - c) * exp(tf)
+        _xc(x0, p0, tf, c) =
+            (x0 - p0 / 2 - c / 2) * exp(-tf) + c + (p0 - c) / 2 * exp(tf)
+
+        Test.@testset "Constrained: Data.StateConstraint + Data.Multiplier (closed form)" begin
+            c = 0.3
+            g = Data.StateConstraint(x -> x)       # autonomous, fixed: g(x)
+            μ = Data.Multiplier((x, p) -> c)        # autonomous, fixed, constant
+            law = Data.DynClosedLoop((x, p) -> p)   # stationary for H̃
+            f = Flows.Flow(OCP_LQR, law; constraint=g, multiplier=μ, _opts()...)
+            t0, tf, x0, p0 = 0.0, 1.0, 1.0, 0.5
+            xt, pt = f(t0, x0, p0, tf)
+            Test.@test xt isa Number && pt isa Number
+            Test.@test pt ≈ _pc(p0, tf, c) atol = 1e-6
+            Test.@test xt ≈ _xc(x0, p0, tf, c) atol = 1e-6
+        end
+
+        Test.@testset "Constrained: plain functions match the carrier form" begin
+            c = 0.3
+            law = Data.DynClosedLoop((x, p) -> p)
+            # raw function constraint is wrapped as a MixedConstraint with the OCP traits,
+            # so its natural arity is (x,u); raw multiplier is (x,p).
+            f = Flows.Flow(
+                OCP_LQR, law; constraint=(x, u) -> x, multiplier=(x, p) -> c, _opts()...
+            )
+            t0, tf, x0, p0 = 0.0, 1.0, 1.0, 0.5
+            xt, pt = f(t0, x0, p0, tf)
+            Test.@test pt ≈ _pc(p0, tf, c) atol = 1e-6
+            Test.@test xt ≈ _xc(x0, p0, tf, c) atol = 1e-6
+        end
+
+        Test.@testset "Constrained: :path label resolution matches" begin
+            c = 0.3
+            law = Data.DynClosedLoop((x, p) -> p)
+            f = Flows.Flow(
+                OCP_LQR_C, law; constraint=:g, multiplier=(x, p) -> c, _opts()...
+            )
+            t0, tf, x0, p0 = 0.0, 1.0, 1.0, 0.5
+            xt, pt = f(t0, x0, p0, tf)
+            Test.@test pt ≈ _pc(p0, tf, c) atol = 1e-6
+            Test.@test xt ≈ _xc(x0, p0, tf, c) atol = 1e-6
+        end
+
+        Test.@testset "Constrained: μ≡0 recovers the unconstrained flow" begin
+            law = Data.DynClosedLoop((x, p) -> p)
+            f0 = Flows.Flow(
+                OCP_LQR,
+                law;
+                constraint=Data.StateConstraint(x -> x),
+                multiplier=Data.Multiplier((x, p) -> 0.0),
+                _opts()...,
+            )
+            fu = Flows.Flow(OCP_LQR, law; _opts()...)
+            t0, tf, x0, p0 = 0.0, 1.0, 1.0, 0.5
+            Test.@test all(isapprox.(f0(t0, x0, p0, tf), fu(t0, x0, p0, tf); atol=ATOL))
+        end
+
+        Test.@testset "Constrained: solution builds (EmptyDualModel, no duals)" begin
+            c = 0.3
+            law = Data.DynClosedLoop((x, p) -> p)
+            f = Flows.Flow(
+                OCP_LQR, law; constraint=Data.StateConstraint(x -> x),
+                multiplier=Data.Multiplier((x, p) -> c), _opts()...,
+            )
+            sol = f((0.0, 1.0), 1.0, 0.5)
+            Test.@test CTModels.objective(sol) isa Number
+            Test.@test !CTModels.Solutions.has_duals(sol)   # flow-built ⇒ no duals
+        end
+
+        Test.@testset "Constrained: NonFixed smoke test (variable at call time)" begin
+            c = 0.2
+            # g depends on state only; μ constant. NonFixed OCP composes untouched.
+            g = Data.StateConstraint(x -> x)
+            μ = Data.Multiplier((x, p) -> c)
+            law = Data.DynClosedLoop((x, p, v) -> p; is_variable=true)
+            f = Flows.Flow(OCP_VAR, law; constraint=g, multiplier=μ, _opts()...)
+            xt, pt = f(0.0, 1.0, 0.5, 1.0; variable=0.5)
+            Test.@test isfinite(xt) && isfinite(pt)
+        end
+
+        # ---- getter-based analytic regression tests -----------------------------
+        # Recover the (pseudo-)Hamiltonians and their gradients from the flow and check
+        # them against hand-derived closed forms, freezing exactly what is computed.
+        #   OCP_LQR + g(x)=x + μ≡c + law u=p ⇒
+        #     H̃_c(t,x,p,u,v) = p(-x+u) - 0.5u² + c·x            (control explicit)
+        #     H(x,p)         = H̃_c(x,p,p)   = -p x + 0.5 p² + c x
+        #     ∂ₓH = -p + c,  ∂ₚH = -x + p,  X_H = (∂ₚH,-∂ₓH) = (-x+p, p-c)
+
+        Test.@testset "Constrained: Hamiltonian getters vs analytic derivatives" begin
+            c = 0.3
+            g = Data.StateConstraint(x -> x)
+            μ = Data.Multiplier((x, p) -> c)
+            law = Data.DynClosedLoop((x, p) -> p)
+            f = Flows.Flow(OCP_LQR, law; constraint=g, multiplier=μ, _opts()...)
+            x0, p0, u0 = 0.7, 0.4, -0.2   # u0 ≠ p0 to expose the fixed-u pseudo gradient
+
+            # (1) true Hamiltonian H(x,p) = -p x + 0.5 p² + c x
+            H = Systems.hamiltonian(f)
+            Test.@test H(x0, p0) ≈ -p0 * x0 + 0.5 * p0^2 + c * x0 atol = 1e-10
+
+            # (2) pseudo-Hamiltonian H̃_c(t,x,p,u,v) = p(-x+u) - 0.5u² + c x
+            H̃ = Systems.pseudo_hamiltonian(f)
+            Test.@test H̃(0.0, x0, p0, u0, Float64[]) ≈
+                p0 * (-x0 + u0) - 0.5 * u0^2 + c * x0 atol = 1e-10
+            # the +μ·g term is exactly c·x: difference from the unconstrained H̃
+            fu = Flows.Flow(OCP_LQR, law; _opts()...)
+            H̃u = Systems.pseudo_hamiltonian(fu)
+            Test.@test H̃(0.0, x0, p0, u0, Float64[]) - H̃u(0.0, x0, p0, u0, Float64[]) ≈
+                c * x0 atol = 1e-10
+
+            # (3) total gradient ∇H = (∂ₓH, ∂ₚH) = (-p+c, -x+p) — chain-rule through law
+            ∇H = Systems.hamiltonian_gradient(f)
+            dxH, dpH = ∇H(0.0, x0, p0, Float64[])
+            Test.@test dxH ≈ -p0 + c atol = 1e-8
+            Test.@test dpH ≈ -x0 + p0 atol = 1e-8
+
+            # (4) pseudo gradient at fixed u: ∂ₓH̃_c = -p+c, ∂ₚH̃_c = -x+u
+            ∇H̃ = Systems.pseudo_hamiltonian_gradient(f)
+            dxH̃, dpH̃ = ∇H̃(0.0, x0, p0, u0, Float64[])
+            Test.@test dxH̃ ≈ -p0 + c atol = 1e-8
+            Test.@test dpH̃ ≈ -x0 + u0 atol = 1e-8
+
+            # (5) symplectic gradient X_H = (∂ₚH, -∂ₓH) = (ẋ, ṗ) = (-x+p, p-c),
+            # reconstructed from the total gradient getter (the HVF-by-AD getter is for
+            # flows built from a scalar Data.Hamiltonian, not a ComposedHamiltonian).
+            Test.@test dpH ≈ -x0 + p0 atol = 1e-8    # ẋ = ∂ₚH
+            Test.@test -dxH ≈ p0 - c atol = 1e-8     # ṗ = -∂ₓH
+        end
+
+        # NonFixed constrained: ∂H/∂v carries no constraint term here (μ const, g=x are
+        # v-independent), guarding against a spurious v-coupling from the +μ·g term.
+        #   OCP_VAR: ẋ=v(-x)+u, ℓ=0.5u², law u=p ⇒ H(x,p,v) = -v p x + 0.5 p² + c x,
+        #   so ∂H/∂v = -p x.
+        Test.@testset "Constrained: NonFixed variable gradient (analytic)" begin
+            c = 0.25
+            g = Data.StateConstraint(x -> x)
+            μ = Data.Multiplier((x, p) -> c)
+            law = Data.DynClosedLoop((x, p, v) -> p; is_variable=true)
+            f = Flows.Flow(OCP_VAR, law; constraint=g, multiplier=μ, _opts()...)
+            x0, p0, vv = 0.7, 0.4, 0.5
+            ∇vH = Systems.variable_gradient(f)
+            Test.@test first(∇vH(0.0, x0, p0, vv)) ≈ -p0 * x0 atol = 1e-8
+        end
+
+        # ---- constrained validation matrix --------------------------------------
+
+        Test.@testset "Constrained error: constraint without multiplier" begin
+            law = Data.DynClosedLoop((x, p) -> p)
+            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
+                OCP_LQR, law; constraint=Data.StateConstraint(x -> x), _opts()...
+            )
+        end
+
+        Test.@testset "Constrained error: multiplier without constraint" begin
+            law = Data.DynClosedLoop((x, p) -> p)
+            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
+                OCP_LQR, law; multiplier=Data.Multiplier((x, p) -> 0.0), _opts()...
+            )
+        end
+
+        Test.@testset "Constrained error: non-:path label rejected" begin
+            law = Data.DynClosedLoop((x, p) -> p)
+            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
+                OCP_LQR_C, law; constraint=:bnd, multiplier=(x, p) -> 0.0, _opts()...
+            )
+        end
+
+        Test.@testset "Constrained error: :partial not yet supported" begin
+            law = Data.DynClosedLoop((x, p) -> p)
+            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
+                OCP_LQR,
+                law;
+                constraint=Data.StateConstraint(x -> x),
+                multiplier=Data.Multiplier((x, p) -> 0.0),
+                hamiltonian_type=:partial,
+                _opts()...,
+            )
+        end
+
+        Test.@testset "Constrained error: unsupported constraint spec type" begin
+            law = Data.DynClosedLoop((x, p) -> p)
+            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
+                OCP_LQR, law; constraint=42, multiplier=(x, p) -> 0.0, _opts()...
+            )
         end
 
         # ====================================================================
