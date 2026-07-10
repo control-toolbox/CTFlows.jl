@@ -152,7 +152,12 @@ function _build_lqr_constrained()
         pre, :path; f=(r, t, x, u, v) -> (r[1]=x; nothing), lb=[-Inf], ub=[0.0], label=:g
     )
     CTModels.Building.constraint!(
-        pre, :boundary; f=(r, x0, xf, v) -> (r[1]=xf; nothing), lb=[0.0], ub=[0.0], label=:bnd
+        pre,
+        :boundary;
+        f=(r, x0, xf, v) -> (r[1]=xf; nothing),
+        lb=[0.0],
+        ub=[0.0],
+        label=:bnd,
     )
     return CTModels.Building.build(pre)
 end
@@ -428,8 +433,7 @@ function test_ocp_control()
 
         # analytic references for the constrained LQR with constant multiplier c
         _pc(p0, tf, c) = c + (p0 - c) * exp(tf)
-        _xc(x0, p0, tf, c) =
-            (x0 - p0 / 2 - c / 2) * exp(-tf) + c + (p0 - c) / 2 * exp(tf)
+        _xc(x0, p0, tf, c) = (x0 - p0 / 2 - c / 2) * exp(-tf) + c + (p0 - c) / 2 * exp(tf)
 
         Test.@testset "Constrained: Data.StateConstraint + Data.Multiplier (closed form)" begin
             c = 0.3
@@ -488,8 +492,11 @@ function test_ocp_control()
             c = 0.3
             law = Data.DynClosedLoop((x, p) -> p)
             f = Flows.Flow(
-                OCP_LQR, law; constraint=Data.StateConstraint(x -> x),
-                multiplier=Data.Multiplier((x, p) -> c), _opts()...,
+                OCP_LQR,
+                law;
+                constraint=Data.StateConstraint(x -> x),
+                multiplier=Data.Multiplier((x, p) -> c),
+                _opts()...,
             )
             sol = f((0.0, 1.0), 1.0, 0.5)
             Test.@test CTModels.objective(sol) isa Number
@@ -594,15 +601,197 @@ function test_ocp_control()
             )
         end
 
-        Test.@testset "Constrained error: :partial not yet supported" begin
+        # ====================================================================
+        # CONSTRAINED :partial flows — H = H̃ + μ·g with BOTH u and μ frozen.
+        # Freezing μ ⇒ g is differentiated, μ is not (constrained :partial mode).
+        # See .reports/constraints-and-duals/math.md.
+        # ====================================================================
+
+        Test.@testset "Constrained :partial: constant μ matches closed form" begin
+            c = 0.3
+            g = Data.StateConstraint(x -> x)
+            μ = Data.Multiplier((x, p) -> c)
+            law = Data.DynClosedLoop((x, p) -> p)   # stationary for H̃
+            f = Flows.Flow(
+                OCP_LQR,
+                law;
+                constraint=g,
+                multiplier=μ,
+                hamiltonian_type=:partial,
+                _opts()...,
+            )
+            t0, tf, x0, p0 = 0.0, 1.0, 1.0, 0.5
+            xt, pt = f(t0, x0, p0, tf)
+            Test.@test xt isa Number && pt isa Number
+            # constant μ ⇒ frozen and total agree; closed form of PR 3 applies verbatim
+            Test.@test pt ≈ _pc(p0, tf, c) atol = 1e-6
+            Test.@test xt ≈ _xc(x0, p0, tf, c) atol = 1e-6
+        end
+
+        Test.@testset "Constrained: :total ≡ :partial for constant μ (regression)" begin
+            c = 0.3
+            g = Data.StateConstraint(x -> x)
+            μ = Data.Multiplier((x, p) -> c)
+            law = Data.DynClosedLoop((x, p) -> p)   # stationary for H̃
+            ft = Flows.Flow(
+                OCP_LQR,
+                law;
+                constraint=g,
+                multiplier=μ,
+                hamiltonian_type=:total,
+                _opts()...,
+            )
+            fp = Flows.Flow(
+                OCP_LQR,
+                law;
+                constraint=g,
+                multiplier=μ,
+                hamiltonian_type=:partial,
+                _opts()...,
+            )
+            t0, tf, x0, p0 = 0.0, 1.0, 1.0, 0.5
+            # constant μ + stationary law ⇒ the two RHS are mathematically identical
+            Test.@test all(isapprox.(ft(t0, x0, p0, tf), fp(t0, x0, p0, tf); atol=1e-9))
+        end
+
+        Test.@testset "Constrained :partial: state-dependent μ is frozen (analytic)" begin
+            # g(x)=x, μ(x)=x ⇒ μ·g = x². With law u=p (stationary):
+            #   :partial freezes μ_=x ⇒ ṗ = -∂ₓ[p(-x+p)-0.5p²+μ_·x] = p - x, ẋ = -x+p.
+            #     ẋ = ṗ = p-x is nilpotent ⇒ x(t)=x0-(x0-p0)t, p(t)=p0-(x0-p0)t.
+            #   :total differentiates through μ ⇒ ṗ = p - 2x (different system).
+            g = Data.StateConstraint(x -> x)
+            μ = Data.Multiplier((x, p) -> x)          # state-dependent
+            law = Data.DynClosedLoop((x, p) -> p)
+            fp = Flows.Flow(
+                OCP_LQR,
+                law;
+                constraint=g,
+                multiplier=μ,
+                hamiltonian_type=:partial,
+                _opts()...,
+            )
+            ft = Flows.Flow(
+                OCP_LQR,
+                law;
+                constraint=g,
+                multiplier=μ,
+                hamiltonian_type=:total,
+                _opts()...,
+            )
+            t0, tf, x0, p0 = 0.0, 0.5, 1.0, 0.5
+            xp, pp = fp(t0, x0, p0, tf)
+            # :partial matches the frozen-μ analytic solution
+            Test.@test xp ≈ x0 - (x0 - p0) * tf atol = 1e-6
+            Test.@test pp ≈ p0 - (x0 - p0) * tf atol = 1e-6
+            # :total genuinely differs (μ not frozen) — proves μ is frozen in :partial
+            _, pt = ft(t0, x0, p0, tf)
+            Test.@test !isapprox(pp, pt; atol=1e-3)
+        end
+
+        Test.@testset "Constrained :partial: variable-costate picks up frozen μ·∂g/∂v" begin
+            # v-dependent constraint g(x,v)=x·v, μ≡c. Frozen μ_=c ⇒
+            #   ṗv = -∂/∂v[H̃ + c·(x·v)] = -(∂H̃/∂v + c·x) with ∂H̃/∂v = -p·x (OCP_VAR)
+            #      = x(p - c).
+            c = 0.2
+            g = Data.StateConstraint((x, v) -> x * v; is_variable=true)
+            μ = Data.Multiplier((x, p) -> c)
+            law = Data.DynClosedLoop((x, p, v) -> p; is_variable=true)   # stationary
+            fp = Flows.Flow(
+                OCP_VAR,
+                law;
+                constraint=g,
+                multiplier=μ,
+                hamiltonian_type=:partial,
+                _opts()...,
+            )
+            t0, tf, x0, p0, v = 0.0, 1.0, 1.0, 0.5, 0.5
+            _, _, pvf = fp(t0, x0, p0, tf; variable=v, variable_costate=true)
+            Test.@test pvf isa Number
+            ts = range(t0, tf; length=201)
+            ys = map(ts) do t
+                x, p = t == t0 ? (x0, p0) : fp(t0, x0, p0, t; variable=v)
+                x * (p - c)                       # ṗv along the flow's own trajectory
+            end
+            Test.@test pvf ≈ _trapz(ts, ys) atol = 1e-3
+        end
+
+        Test.@testset "Constrained :partial: NonFixed smoke (variable at call time)" begin
+            c = 0.2
+            g = Data.StateConstraint(x -> x)
+            μ = Data.Multiplier((x, p) -> c)
+            law = Data.DynClosedLoop((x, p, v) -> p; is_variable=true)
+            f = Flows.Flow(
+                OCP_VAR,
+                law;
+                constraint=g,
+                multiplier=μ,
+                hamiltonian_type=:partial,
+                _opts()...,
+            )
+            xt, pt = f(0.0, 1.0, 0.5, 1.0; variable=0.5)
+            Test.@test isfinite(xt) && isfinite(pt)
+        end
+
+        Test.@testset "Constrained :partial: plain functions and :path label" begin
+            c = 0.3
+            law = Data.DynClosedLoop((x, p) -> p)
+            t0, tf, x0, p0 = 0.0, 1.0, 1.0, 0.5
+            ff = Flows.Flow(
+                OCP_LQR,
+                law;
+                constraint=(x, u) -> x,
+                multiplier=(x, p) -> c,
+                hamiltonian_type=:partial,
+                _opts()...,
+            )
+            xf, pf = ff(t0, x0, p0, tf)
+            Test.@test pf ≈ _pc(p0, tf, c) atol = 1e-6
+            Test.@test xf ≈ _xc(x0, p0, tf, c) atol = 1e-6
+            fl = Flows.Flow(
+                OCP_LQR_C,
+                law;
+                constraint=:g,
+                multiplier=(x, p) -> c,
+                hamiltonian_type=:partial,
+                _opts()...,
+            )
+            xl, pl = fl(t0, x0, p0, tf)
+            Test.@test pl ≈ _pc(p0, tf, c) atol = 1e-6
+            Test.@test xl ≈ _xc(x0, p0, tf, c) atol = 1e-6
+        end
+
+        Test.@testset "Constrained :partial error: non-:path label rejected" begin
+            law = Data.DynClosedLoop((x, p) -> p)
+            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
+                OCP_LQR_C,
+                law;
+                constraint=:bnd,
+                multiplier=(x, p) -> 0.0,
+                hamiltonian_type=:partial,
+                _opts()...,
+            )
+        end
+
+        Test.@testset "Constrained :partial error: constraint without multiplier" begin
             law = Data.DynClosedLoop((x, p) -> p)
             Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
                 OCP_LQR,
                 law;
                 constraint=Data.StateConstraint(x -> x),
-                multiplier=Data.Multiplier((x, p) -> 0.0),
                 hamiltonian_type=:partial,
                 _opts()...,
+            )
+        end
+
+        Test.@testset "Control-free OCP with constraint/multiplier is rejected" begin
+            # constrained flows are only defined with a control law (no control-free case)
+            Test.@test_throws Exceptions.PreconditionError Flows.Flow(
+                OCP_CF;
+                constraint=Data.StateConstraint(x -> x),
+                multiplier=Data.Multiplier((x, p) -> 0.0),
+            )
+            Test.@test_throws Exceptions.PreconditionError Flows.Flow(
+                OCP_CF; multiplier=Data.Multiplier((x, p) -> 0.0)
             )
         end
 
