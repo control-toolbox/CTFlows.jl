@@ -696,7 +696,7 @@ end
 
 function OptimalControlFlow(
     flow::Flow{TD,VD,Traits.HamiltonianDynamics}, ocp, law=nothing
-) where {TD,VD}
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     return OptimalControlFlow{TD,VD,typeof(flow),typeof(ocp),typeof(law)}(flow, ocp, law)
 end
 

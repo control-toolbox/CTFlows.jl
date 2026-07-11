@@ -152,10 +152,10 @@ See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.Hamiltonian
 """
 function Systems.hamiltonian_vector_field(
     flow::HamiltonianFlow{
-        TD,VD,<:Systems.HamiltonianSystem,<:Integrators.AbstractIntegrator
+        TD,VD,<:Systems.HamiltonianSystem{TD,VD},<:Integrators.AbstractIntegrator
     };
     inplace::Bool=Systems.__hvf_inplace(),
-) where {TD,VD}
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     return Systems.hamiltonian_vector_field(flow.system; inplace=inplace)
 end
 
@@ -171,8 +171,9 @@ See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.Hamiltonian
 """
 function Systems.hamiltonian_vector_field(
     flow::HamiltonianFlow{
-        TD,VD,<:Systems.HamiltonianVectorFieldSystem,<:Integrators.AbstractIntegrator
+        TD,VD,<:Systems.HamiltonianVectorFieldSystem{<:Function,TD,VD},
+        <:Integrators.AbstractIntegrator,
     },
-) where {TD,VD}
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     return Systems.hamiltonian_vector_field(flow.system)
 end

@@ -230,7 +230,14 @@ See also: [`CTBase.Traits.SupportsVariableCostate`](@extref).
 """
 function Traits.variable_costate_trait(
     ::ConstrainedPseudoHamiltonianSystem{TD,Traits.NonFixed,PH,L,G,M,B}
-) where {TD,PH,L,G,M,B}
+) where {
+    TD<:Traits.TimeDependence,
+    PH<:Data.PseudoHamiltonian{<:Function,TD,Traits.NonFixed},
+    L<:Data.ControlLaw{<:Function,Traits.DynClosedLoopFeedback},
+    G,
+    M,
+    B<:Differentiation.AbstractADBackend,
+}
     return Traits.SupportsVariableCostate
 end
 

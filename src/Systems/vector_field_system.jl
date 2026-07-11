@@ -55,7 +55,7 @@ end
 # Out-of-place: accepts any AbstractVectorField (VectorField, ComposedVectorField, …).
 function VectorFieldSystem(
     vf::Data.AbstractVectorField{TD,VD,Traits.OutOfPlace}
-) where {TD,VD}
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     rhs = IPVFOoPRHS(vf)
     rhs_oop = OoPVFOoPRHS(vf)
     rhs_oop_finalize = nothing
@@ -66,7 +66,9 @@ function VectorFieldSystem(
     )
 end
 
-function VectorFieldSystem(vf::Data.VectorField{F,TD,VD,Traits.InPlace}) where {F,TD,VD}
+function VectorFieldSystem(
+    vf::Data.VectorField{F,TD,VD,Traits.InPlace}
+) where {F<:Function,TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     rhs = IPVFIpRHS(vf)
     rhs_oop = OoPVFIpRHS(vf)
     rhs_oop_finalize = OoPVFIpFinalizeRHS(vf)
@@ -96,7 +98,7 @@ This combination is unsupported because in-place functions require mutable array
 """
 function _check_vf_scalar_inplace(
     sys::VectorFieldSystem{TD,VD,Traits.InPlace}, u0::Number
-) where {TD,VD}
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     return throw(
         ArgumentError(
             "InPlace VectorField with scalar u0 is unsupported. " *
@@ -186,7 +188,13 @@ See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function get_oop_rhs(
     sys::VectorFieldSystem{TD,VD,Traits.OutOfPlace,F,RHS,OOPROHS,Nothing}, _
-) where {TD,VD,F,RHS,OOPROHS}
+) where {
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    F<:Data.AbstractVectorField{TD,VD,Traits.OutOfPlace},
+    RHS<:AbstractIPRHS,
+    OOPROHS<:AbstractOoPRHS,
+}
     return sys.rhs_oop
 end
 
@@ -212,7 +220,14 @@ See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function get_oop_rhs(
     sys::VectorFieldSystem{TD,VD,Traits.InPlace,F,RHS,OOPROHS,FINRHS}, _
-) where {TD,VD,F,RHS,OOPROHS,FINRHS}
+) where {
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    F<:Data.AbstractVectorField{TD,VD,Traits.InPlace},
+    RHS<:AbstractIPRHS,
+    OOPROHS<:AbstractOoPRHS,
+    FINRHS,
+}
     @warn "InPlace VectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
     return sys.rhs_oop_finalize
 end
@@ -236,7 +251,15 @@ See also: [`CTFlows.Systems.VectorFieldSystem`](@ref).
 """
 function Base.show(
     io::IO, sys::VectorFieldSystem{TD,VD,MD,F,RHS,OOPROHS,FINRHS}
-) where {TD,VD,MD,F,RHS,OOPROHS,FINRHS}
+) where {
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    MD<:Traits.AbstractMutabilityTrait,
+    F<:Data.AbstractVectorField{TD,VD,MD},
+    RHS<:AbstractIPRHS,
+    OOPROHS<:AbstractOoPRHS,
+    FINRHS,
+}
     fmt = Display.format_codes(io)
     wraps = "VectorField: $(Data._td_label(TD)), $(Data._vd_label(VD)), $(Data._md_label(MD))"
     rhs = "$(nameof(typeof(sys.rhs))) ($(_rhs_conversion_label(sys.rhs)))"

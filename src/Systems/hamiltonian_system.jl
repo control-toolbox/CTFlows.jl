@@ -88,15 +88,9 @@ function backend(sys::HamiltonianSystem)
     return sys.backend
 end
 
-# =============================================================================
-# Constructors
-# =============================================================================
-
-function HamiltonianSystem(
-    h::Data.AbstractHamiltonian{TD,VD}, backend::Differentiation.AbstractADBackend
-) where {TD,VD}
-    return HamiltonianSystem{TD,VD,typeof(h),typeof(backend)}(h, backend)
-end
+# Note: no explicit outer constructor — Julia's auto-generated default outer
+# constructor already matches this struct's own bounds exactly (TD, VD are
+# inferable from `h`'s bound `H<:Data.AbstractHamiltonian{TD,VD}`).
 
 # =============================================================================
 # Public lazy RHS builders
@@ -253,6 +247,10 @@ See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@extref), [`CTBase
 """
 function Traits.variable_costate_trait(
     ::HamiltonianSystem{TD,Traits.NonFixed,H,B}
-) where {TD,H,B}
+) where {
+    TD<:Traits.TimeDependence,
+    H<:Data.AbstractHamiltonian{TD,Traits.NonFixed},
+    B<:Differentiation.AbstractADBackend,
+}
     return Traits.SupportsVariableCostate
 end
