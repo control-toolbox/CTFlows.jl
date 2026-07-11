@@ -778,6 +778,30 @@ function test_ocp_control()
             Test.@test pvf ≈ _trapz(ts, ys) atol = 1e-3
         end
 
+        Test.@testset "Constrained: :total variable-costate picks up ∂/∂v[H̃+μ·g] (analytic)" begin
+            # Same setup as the :partial test above — v-dependent constraint g(x,v)=x·v,
+            # μ≡c, stationary AND v-independent law u=p ⇒ the chain term ∂H̃/∂u·∂u/∂v
+            # vanishes, so :total's pv coincides with the same frozen-μ analytic formula.
+            # Fills the last cell of the {constraint} × {:total,:partial} × {variable,
+            # variable_costate} matrix (the other three are covered above/below).
+            c = 0.2
+            g = Data.StateConstraint((x, v) -> x * v; is_variable=true)
+            μ = Data.Multiplier((x, p) -> c)
+            law = Data.DynClosedLoop((x, p, v) -> p; is_variable=true)
+            ft = Flows.Flow(
+                OCP_VAR, law; constraint=g, multiplier=μ, hamiltonian_type=:total, _opts()...
+            )
+            t0, tf, x0, p0, v = 0.0, 1.0, 1.0, 0.5, 0.5
+            _, _, pvt = ft(t0, x0, p0, tf; variable=v, variable_costate=true)
+            Test.@test pvt isa Number
+            ts = range(t0, tf; length=201)
+            ys = map(ts) do t
+                x, p = t == t0 ? (x0, p0) : ft(t0, x0, p0, t; variable=v)
+                x * (p - c)                       # ∂/∂v[H̃+μ·g] along the flow's own trajectory
+            end
+            Test.@test pvt ≈ _trapz(ts, ys) atol = 1e-3
+        end
+
         Test.@testset "Constrained :partial: NonFixed smoke (variable at call time)" begin
             c = 0.2
             g = Data.StateConstraint(x -> x)
