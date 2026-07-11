@@ -105,7 +105,15 @@ Return the system associated with a `Flow`.
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.integrator`](@ref).
 """
-function system(f::Flow{TD,VD,D,S,I})::S where {TD,VD,D,S,I}
+function system(
+    f::Flow{TD,VD,D,S,I}
+)::S where {
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    D<:Traits.AbstractDynamicsTrait,
+    S<:Systems.AbstractSystem{TD,VD,D},
+    I<:Integrators.AbstractIntegrator,
+}
     return f.system
 end
 
@@ -116,7 +124,15 @@ Return the integrator associated with a `Flow`.
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.system`](@ref).
 """
-function integrator(f::Flow{TD,VD,D,S,I})::I where {TD,VD,D,S,I}
+function integrator(
+    f::Flow{TD,VD,D,S,I}
+)::I where {
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    D<:Traits.AbstractDynamicsTrait,
+    S<:Systems.AbstractSystem{TD,VD,D},
+    I<:Integrators.AbstractIntegrator,
+}
     return f.integrator
 end
 
