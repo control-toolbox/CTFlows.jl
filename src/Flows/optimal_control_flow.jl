@@ -292,6 +292,26 @@ function _resolve_constraint(ocp, spec::Function)
     )
 end
 
+# Combined carrier for a tuple of simultaneous constraints: resolves each element and
+# concatenates their uniform `(t,x,u,v)` values, so the downstream `sum(μ .* g)` pairing
+# computes `Σᵢ μᵢ·gᵢ` with no change to the pseudo-Hamiltonian functors.
+struct _CombinedConstraint{G<:Tuple}
+    parts::G
+end
+(c::_CombinedConstraint)(t, x, u, v) = reduce(vcat, map(g -> g(t, x, u, v), c.parts))
+
+function _resolve_constraint(ocp, spec::Tuple)
+    isempty(spec) && throw(
+        Exceptions.IncorrectArgument(
+            "empty constraint tuple";
+            got="()",
+            expected="a non-empty tuple of constraints",
+            context="Flow(ocp, law; constraint=(…,)) — constraint resolution",
+        ),
+    )
+    return _CombinedConstraint(map(s -> _resolve_constraint(ocp, s), spec))
+end
+
 function _resolve_constraint(::Any, spec)
     return throw(
         Exceptions.IncorrectArgument(
@@ -321,6 +341,25 @@ function _resolve_multiplier(ocp, spec::Function)
     return Data.Multiplier(
         spec; is_autonomous=Traits.is_autonomous(ocp), is_variable=Traits.is_variable(ocp)
     )
+end
+
+# Combined carrier for a tuple of multipliers, paired element-wise with a `_CombinedConstraint`:
+# concatenates the uniform `(t,x,p,v)` values in the same order, so `sum(μ .* g)` = `Σᵢ μᵢ·gᵢ`.
+struct _CombinedMultiplier{M<:Tuple}
+    parts::M
+end
+(m::_CombinedMultiplier)(t, x, p, v) = reduce(vcat, map(μ -> μ(t, x, p, v), m.parts))
+
+function _resolve_multiplier(ocp, spec::Tuple)
+    isempty(spec) && throw(
+        Exceptions.IncorrectArgument(
+            "empty multiplier tuple";
+            got="()",
+            expected="a non-empty tuple of multipliers",
+            context="Flow(ocp, law; multiplier=(…,)) — multiplier resolution",
+        ),
+    )
+    return _CombinedMultiplier(map(s -> _resolve_multiplier(ocp, s), spec))
 end
 
 function _resolve_multiplier(::Any, spec)

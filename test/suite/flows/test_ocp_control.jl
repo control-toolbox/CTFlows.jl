@@ -803,6 +803,48 @@ function test_ocp_control()
         end
 
         # ====================================================================
+        # Multiple simultaneous constraints (tuples)
+        # ====================================================================
+
+        Test.@testset "Constrained: tuple of constraints ≡ combined vector (both modes)" begin
+            # A tuple (g₁,g₂)/(μ₁,μ₂) must give the same flow as a single vector-valued
+            # constraint/multiplier — the combined carrier just concatenates.
+            law = Data.DynClosedLoop((x, p) -> p[2])
+            t0, tf, x0, p0 = 0.0, 1.0, [1.0, 2.0], [0.5, 0.5]
+            g1(x, u) = x[1]
+            g2(x, u) = x[2]
+            μ1(x, p) = 0.3
+            μ2(x, p) = 0.7
+            for ht in (:total, :partial)
+                f_tuple = Flows.Flow(
+                    OCP_DI, law; constraint=(g1, g2), multiplier=(μ1, μ2),
+                    hamiltonian_type=ht, _opts()...,
+                )
+                f_vec = Flows.Flow(
+                    OCP_DI, law; constraint=(x, u) -> [x[1], x[2]],
+                    multiplier=(x, p) -> [0.3, 0.7], hamiltonian_type=ht, _opts()...,
+                )
+                xt, pt = f_tuple(t0, x0, p0, tf)
+                xv, pv = f_vec(t0, x0, p0, tf)
+                Test.@test xt ≈ xv atol = ATOL
+                Test.@test pt ≈ pv atol = ATOL
+            end
+        end
+
+        Test.@testset "Constrained: tuple length mismatch / tuple-scalar mix rejected" begin
+            law = Data.DynClosedLoop((x, p) -> p[2])
+            # matched-length requirement: 2 constraints, 1 multiplier
+            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
+                OCP_DI, law; constraint=((x, u) -> x[1], (x, u) -> x[2]),
+                multiplier=((x, p) -> 0.3,), _opts()...,
+            )
+            # both-must-be-tuples: tuple constraint, scalar multiplier
+            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
+                OCP_DI, law; constraint=((x, u) -> x[1],), multiplier=(x, p) -> 0.3, _opts()...,
+            )
+        end
+
+        # ====================================================================
         # ERROR paths
         # ====================================================================
 

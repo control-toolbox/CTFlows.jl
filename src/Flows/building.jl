@@ -522,6 +522,27 @@ function _validate_constraint_pair(cspec, mspec)
             context="Flow(ocp, law; constraint=…, multiplier=…) — pairing check",
         ),
     )
+    # Multiple constraints: if either side is a tuple, both must be tuples of equal length
+    # (element `i` of `constraint` pairs with element `i` of `multiplier`).
+    if cspec isa Tuple || mspec isa Tuple
+        (cspec isa Tuple && mspec isa Tuple) || throw(
+            Exceptions.IncorrectArgument(
+                "`constraint` and `multiplier` must both be tuples for multiple constraints";
+                got=cspec isa Tuple ? "tuple `constraint`, non-tuple `multiplier`" :
+                    "non-tuple `constraint`, tuple `multiplier`",
+                expected="both `constraint` and `multiplier` given as tuples",
+                context="Flow(ocp, law; constraint=(…,), multiplier=(…,)) — pairing check",
+            ),
+        )
+        length(cspec) == length(mspec) || throw(
+            Exceptions.IncorrectArgument(
+                "`constraint` and `multiplier` tuples must have the same length";
+                got="$(length(cspec)) constraints, $(length(mspec)) multipliers",
+                expected="matched tuple lengths",
+                context="Flow(ocp, law; constraint=(…,), multiplier=(…,)) — pairing check",
+            ),
+        )
+    end
     return nothing
 end
 
