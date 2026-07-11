@@ -50,7 +50,12 @@ Alias for state flows: `Flow{TD, VD, StateDynamics, S, I}`.
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref).
 """
-const StateFlow{TD,VD,S,I} = Flow{TD,VD,Traits.StateDynamics,S,I}
+const StateFlow{
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    S<:Systems.AbstractSystem{TD,VD,Traits.StateDynamics},
+    I<:Integrators.AbstractIntegrator,
+} = Flow{TD,VD,Traits.StateDynamics,S,I}
 
 function StateFlow(
     system::S, integrator::I
@@ -65,7 +70,12 @@ Alias for Hamiltonian flows: `Flow{TD, VD, HamiltonianDynamics, S, I}`.
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.StateFlow`](@ref).
 """
-const HamiltonianFlow{TD,VD,S,I} = Flow{TD,VD,Traits.HamiltonianDynamics,S,I}
+const HamiltonianFlow{
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    S<:Systems.AbstractSystem{TD,VD,Traits.HamiltonianDynamics},
+    I<:Integrators.AbstractIntegrator,
+} = Flow{TD,VD,Traits.HamiltonianDynamics,S,I}
 
 function HamiltonianFlow(
     system::S, integrator::I

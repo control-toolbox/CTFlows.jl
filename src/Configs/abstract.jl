@@ -138,7 +138,9 @@ Alias for point integration mode configurations.
 
 Matches any `AbstractConfig` with `EndPointMode` as the mode parameter.
 """
-const AbstractEndPointConfig{X0,C} = AbstractConfigWithMaC{X0,Traits.EndPointMode,C}
+const AbstractEndPointConfig{X0,C<:Traits.AbstractDynamicsTrait} = AbstractConfigWithMaC{
+    X0,Traits.EndPointMode,C
+}
 
 """
 $(TYPEDEF)
@@ -147,7 +149,9 @@ Alias for trajectory integration mode configurations.
 
 Matches any `AbstractConfig` with `TrajectoryMode` as the mode parameter.
 """
-const AbstractTrajectoryConfig{X0,C} = AbstractConfigWithMaC{X0,Traits.TrajectoryMode,C}
+const AbstractTrajectoryConfig{X0,C<:Traits.AbstractDynamicsTrait} = AbstractConfigWithMaC{
+    X0,Traits.TrajectoryMode,C
+}
 
 """
 $(TYPEDEF)
@@ -156,7 +160,9 @@ Alias for state content configurations.
 
 Matches any `AbstractConfig` with `StateDynamics` as the dynamics parameter.
 """
-const AbstractStateConfig{X0,M} = AbstractConfigWithMaC{X0,M,Traits.StateDynamics}
+const AbstractStateConfig{X0,M<:Traits.AbstractModeTrait} = AbstractConfigWithMaC{
+    X0,M,Traits.StateDynamics
+}
 
 """
 $(TYPEDEF)
@@ -165,7 +171,7 @@ Alias for Hamiltonian content configurations.
 
 Matches any `AbstractConfig` with `HamiltonianDynamics` as the dynamics parameter.
 """
-const AbstractHamiltonianConfig{X0,M} = AbstractConfigWithMaC{
+const AbstractHamiltonianConfig{X0,M<:Traits.AbstractModeTrait} = AbstractConfigWithMaC{
     X0,M,Traits.HamiltonianDynamics
 }
 
@@ -186,6 +192,6 @@ Type alias for augmented Hamiltonian configurations, which include state, costat
 
 See also: [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref), [`CTBase.Traits.AugmentedHamiltonianDynamics`](@extref), [`CTFlows.Systems.HamiltonianSystem`](@ref).
 """
-const AbstractAugmentedHamiltonianConfig{X0,M} = AbstractConfigWithMaC{
+const AbstractAugmentedHamiltonianConfig{X0,M<:Traits.AbstractModeTrait} = AbstractConfigWithMaC{
     X0,M,Traits.AugmentedHamiltonianDynamics
 }
