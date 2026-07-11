@@ -1,3 +1,13 @@
+"""
+End-to-end integration test for the double-integrator OCP with a SECOND-ORDER state
+constraint (position `q ≤ a`), built from a `CTModels.Model`. Boundary-arc case (`a =
+0.1`): three-arc shooting with costate jumps at the two junctions (chained by hand, as
+jumps are not yet threaded through `Flow(ocp, law)`), run in both `:total` and `:partial`
+(order-2 on-arc equivalence, item i: constant boundary control). Ported from
+[example-state-constraint.md](../../../../OptimalControl/docs/src/example-state-constraint.md).
+Also exercises the `*` multi-phase reconstruction with jumps (PR 5 D3): a `CTModels.Solution`
+with piecewise reconstructed control.
+"""
 module TestDoubleIntegratorState
 
 using Test: Test
@@ -84,7 +94,6 @@ function test_double_integrator_state()
             s = zeros(6)
             shoot!(s, p0_sol, t1_sol, t2_sol, Δpq_sol, Δpq_sol)
             res_known = sqrt(sum(abs2, s))
-            @info "DI order-2 [$ht] residual at analytic solution" res_known
 
             ξ0 = [-22.0, -6.7, 0.28, 0.72, 22.0, 22.0]   # perturbed guess
             shoot_nl!(s, ξ, _) = shoot!(s, ξ[1:2], ξ[3], ξ[4], ξ[5], ξ[6])
@@ -93,7 +102,6 @@ function test_double_integrator_state()
             sc = zeros(6)
             shoot!(sc, nl.u[1:2], nl.u[3], nl.u[4], nl.u[5], nl.u[6])
             res_conv = sqrt(sum(abs2, sc))
-            @info "DI order-2 [$ht] Newton" res_conv t1=nl.u[3] t2=nl.u[4] Δpq1=nl.u[5] Δpq2=nl.u[6]
 
             Test.@test res_known < 1e-6
             Test.@test res_conv < 1e-8
@@ -105,7 +113,6 @@ function test_double_integrator_state()
             # Multi-phase OCP flow → CTModels Solution with piecewise control.
             φ = fs * (t1_sol, [Δpq_sol, 0.0], fc) * (t2_sol, [Δpq_sol, 0.0], fs)
             sol = φ((_T0, _TF), _X0, p0_sol)
-            @info "DI order-2 [$ht] reconstruction" typeof(sol)
             Test.@test sol isa CTModels.Solutions.Solution
             uu = CTModels.control(sol)
             _u(t) = uu(t) isa Number ? uu(t) : uu(t)[1]

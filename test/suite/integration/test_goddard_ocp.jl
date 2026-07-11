@@ -1,3 +1,13 @@
+"""
+End-to-end integration test for the Goddard optimal control problem, built from a
+`CTModels.Model` (not the hand-built Hamiltonian of `test_goddard.jl`): four arcs
+(boundary-departure, singular, velocity-boundary, off) rebuilt via `Flow(ocp, law)` and
+`Flow(ocp, law; constraint, multiplier)`, and a 7-unknown multi-phase shooting run in both
+`:total` and `:partial` — the hardest end-to-end witness that they converge to the same
+known solution (`on-arc :total ≡ :partial`, see the constrained-flows design note). Also
+exercises the `*` multi-phase reconstruction (a `CTModels.Solution`, PR 5 D3) and the
+1-tuple constraint/multiplier convenience (PR 5 D1) on this problem.
+"""
 module TestGoddardOCP
 
 using Test: Test
@@ -138,7 +148,6 @@ function test_goddard_ocp()
             s = zeros(7)
             shoot!(s, p0_sol, t1_sol, t2_sol, t3_sol, tf_sol)
             res_known = sqrt(sum(abs2, s))
-            @info "Goddard OCP [$ht] residual at known solution" res_known
 
             # Newton from the known solution's neighbourhood
             ξ0 = [3.94, 0.15, 0.05, 0.02, 0.05, 0.10, 0.20]
@@ -149,7 +158,6 @@ function test_goddard_ocp()
             shoot!(sc, nl.u[1:3], nl.u[4], nl.u[5], nl.u[6], nl.u[7])
             res_conv = sqrt(sum(abs2, sc))
             dist_sol = sqrt(sum(abs2, nl.u .- ξ_sol))
-            @info "Goddard OCP [$ht] Newton" res_conv dist_sol ξ=nl.u
 
             # On every Goddard arc the frozen-control :partial dynamics coincides with
             # :total: bang arcs have constant u; on the singular and boundary arcs
@@ -159,6 +167,44 @@ function test_goddard_ocp()
             Test.@test res_known < 1e-5
             Test.@test res_conv < 1e-7
             Test.@test dist_sol < 1e-6
+
+            # Reference arc-by-arc chain at the known solution (same chain as shoot!,
+            # exposed here to cross-check the `*` multi-phase reconstruction below).
+            x1r, p1r = φ1(_GODD_t0, _GODD_x0, p0_sol, t1_sol; variable=tf_sol)
+            x2r, p2r = φs(t1_sol, x1r, p1r, t2_sol; variable=tf_sol)
+            x3r, p3r = φb(t2_sol, x2r, p2r, t3_sol; variable=tf_sol)
+            xfr, pfr = φ0(t3_sol, x3r, p3r, tf_sol; variable=tf_sol)
+
+            if ht === :total
+                Test.@testset "MultiPhase reconstruction: φ1*(t1,φs)*(t2,φb)*(t3,φ0) → Solution" begin
+                    φ = φ1 * (t1_sol, φs) * (t2_sol, φb) * (t3_sol, φ0)
+
+                    # point eval: reproduces the hand-chained arcs, right dimensions (ℝ³)
+                    # (Hamiltonian dynamics returns the flat concatenation [x; p], not a
+                    # (x, p) tuple — see MultiPhase._format_final_output)
+                    res = φ(_GODD_t0, _GODD_x0, p0_sol, tf_sol; variable=tf_sol)
+                    xf_multi, pf_multi = res[1:3], res[4:6]
+                    Test.@test length(xf_multi) == 3
+                    Test.@test length(pf_multi) == 3
+                    Test.@test xf_multi ≈ xfr atol = 1e-8
+                    Test.@test pf_multi ≈ pfr atol = 1e-8
+
+                    # trajectory: same return type as a single-phase OCP flow
+                    sol = φ((_GODD_t0, tf_sol), _GODD_x0, p0_sol; variable=tf_sol)
+                    Test.@test sol isa CTModels.Solutions.Solution
+                    Test.@test CTModels.state(sol)(tf_sol) ≈ xfr atol = 1e-3
+                    Test.@test CTModels.costate(sol)(tf_sol) ≈ pfr atol = 1e-3
+                end
+
+                Test.@testset "1-tuple constraint/multiplier ≡ scalar form (boundary arc)" begin
+                    φb_tuple = Flows.Flow(
+                        ocp, ublaw; constraint=(gc,), multiplier=(μc,), hamiltonian_type=ht
+                    )
+                    x3t, p3t = φb_tuple(t2_sol, x2r, p2r, t3_sol; variable=tf_sol)
+                    Test.@test x3t ≈ x3r atol = 1e-10
+                    Test.@test p3t ≈ p3r atol = 1e-10
+                end
+            end
         end
     end
 end
