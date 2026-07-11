@@ -509,9 +509,14 @@ end
 $(TYPEDSIGNATURES)
 
 Validate the `constraint`/`multiplier` pairing: they must be given **together** (both or
-neither). Throws [`CTBase.Exceptions.IncorrectArgument`](@extref) if exactly one is given.
+neither), and for multiple constraints both must be tuples of equal length (element `i` of
+`constraint` pairs with element `i` of `multiplier`).
 
-See also: [`CTFlows.Flows._build_ocp_pseudo_flow`](@ref).
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if exactly one of the two is given; if one
+  is a tuple and the other is not; or if the two tuples have different lengths.
+
+See also: [`CTFlows.Flows._build_ocp_pseudo_flow`](@ref), [`CTFlows.Flows._CombinedConstraint`](@ref).
 """
 function _validate_constraint_pair(cspec, mspec)
     (cspec === nothing) == (mspec === nothing) || throw(

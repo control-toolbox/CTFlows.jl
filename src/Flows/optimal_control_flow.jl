@@ -266,6 +266,9 @@ Resolve a `constraint` specification into a [`CTBase.Data.PathConstraint`](@extr
 - `spec::Function` is a raw function with the OCP's natural arity (`(x,u)`, `(t,x,u)`,
   `(x,u,v)` or `(t,x,u,v)`), wrapped in a [`CTBase.Data.MixedConstraint`](@extref) with the
   OCP's time/variable dependence.
+- `spec::Tuple` is a non-empty tuple of simultaneous constraints, each resolved recursively
+  and wrapped in a [`CTFlows.Flows._CombinedConstraint`](@ref) (empty tuple rejected with
+  [`CTBase.Exceptions.IncorrectArgument`](@extref)).
 
 See also: [`CTFlows.Flows._resolve_multiplier`](@ref), `CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`.
 """
@@ -292,12 +295,31 @@ function _resolve_constraint(ocp, spec::Function)
     )
 end
 
-# Combined carrier for a tuple of simultaneous constraints: resolves each element and
-# concatenates their uniform `(t,x,u,v)` values, so the downstream `sum(μ .* g)` pairing
-# computes `Σᵢ μᵢ·gᵢ` with no change to the pseudo-Hamiltonian functors.
+"""
+$(TYPEDEF)
+
+Carrier for a tuple of simultaneous path constraints. Its uniform call concatenates the
+per-constraint values `gᵢ(t,x,u,v)`, so the downstream `sum(μ .* g)` pairing computes
+`Σᵢ μᵢ·gᵢ` with no change to the pseudo-Hamiltonian functors. Paired element-wise with a
+[`CTFlows.Flows._CombinedMultiplier`](@ref) built from the matching multiplier tuple.
+
+# Type Parameters
+- `G <: Tuple`: type of the tuple of resolved per-constraint carriers.
+
+# Fields
+- `parts::G`: the resolved per-constraint carriers (each a [`CTBase.Data.PathConstraint`](@extref)).
+
+See also: [`CTFlows.Flows._resolve_constraint`](@ref), [`CTFlows.Flows._CombinedMultiplier`](@ref).
+"""
 struct _CombinedConstraint{G<:Tuple}
     parts::G
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Uniform call: concatenate (`vcat`) the per-constraint values `gᵢ(t,x,u,v)` in tuple order.
+"""
 (c::_CombinedConstraint)(t, x, u, v) = reduce(vcat, map(g -> g(t, x, u, v), c.parts))
 
 function _resolve_constraint(ocp, spec::Tuple)
@@ -332,6 +354,9 @@ Resolve a `multiplier` specification into a [`CTBase.Data.Multiplier`](@extref).
 - `spec::Function` is a raw function with the OCP's natural arity (`(x,p)`, `(t,x,p)`,
   `(x,p,v)` or `(t,x,p,v)`), wrapped in a [`CTBase.Data.Multiplier`](@extref) with the OCP's
   time/variable dependence.
+- `spec::Tuple` is a non-empty tuple of multipliers, each resolved recursively and wrapped in
+  a [`CTFlows.Flows._CombinedMultiplier`](@ref) — matched element-wise with the constraint
+  tuple (empty tuple rejected with [`CTBase.Exceptions.IncorrectArgument`](@extref)).
 
 See also: [`CTFlows.Flows._resolve_constraint`](@ref), `CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`.
 """
@@ -343,11 +368,30 @@ function _resolve_multiplier(ocp, spec::Function)
     )
 end
 
-# Combined carrier for a tuple of multipliers, paired element-wise with a `_CombinedConstraint`:
-# concatenates the uniform `(t,x,p,v)` values in the same order, so `sum(μ .* g)` = `Σᵢ μᵢ·gᵢ`.
+"""
+$(TYPEDEF)
+
+Carrier for a tuple of multipliers, paired element-wise with a
+[`CTFlows.Flows._CombinedConstraint`](@ref). Its uniform call concatenates the per-multiplier
+values `μᵢ(t,x,p,v)` in the same order, so `sum(μ .* g)` = `Σᵢ μᵢ·gᵢ`.
+
+# Type Parameters
+- `M <: Tuple`: type of the tuple of resolved per-multiplier carriers.
+
+# Fields
+- `parts::M`: the resolved per-multiplier carriers (each a [`CTBase.Data.Multiplier`](@extref)).
+
+See also: [`CTFlows.Flows._resolve_multiplier`](@ref), [`CTFlows.Flows._CombinedConstraint`](@ref).
+"""
 struct _CombinedMultiplier{M<:Tuple}
     parts::M
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Uniform call: concatenate (`vcat`) the per-multiplier values `μᵢ(t,x,p,v)` in tuple order.
+"""
 (m::_CombinedMultiplier)(t, x, p, v) = reduce(vcat, map(μ -> μ(t, x, p, v), m.parts))
 
 function _resolve_multiplier(ocp, spec::Tuple)
