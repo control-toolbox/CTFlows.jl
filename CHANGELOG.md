@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0-beta] - 2026-07-11
+
+### Added
+
+- **Multiple simultaneous path constraints**: `constraint`/`multiplier` accept **tuples**
+  of matched length to combine several separately-defined constraints —
+  `Flow(ocp, law; constraint=(g1, g2), multiplier=(μ1, μ2))` — resolved by concatenation
+  (`Σᵢ μᵢ·gᵢ`), in both `:total` and `:partial`. A single constraint carrier that is itself
+  vector-valued (a `:path` label or function returning a vector, paired with a vector
+  multiplier) already worked with no code changes — the tuple form is for combining
+  *distinct* carriers.
+- **MultiPhase reconstruction for OCP-built flows**: a multi-phase `*` concatenation of
+  `OptimalControlFlow`s (built via `Flow(ocp, law)`) now evaluates — previously it errored
+  with `MethodError: no method matching _evaluate_phase(::OptimalControlFlow, …)`. A
+  trajectory call returns a `CTModels.Solution` with a **piecewise** control reconstructed
+  from the per-phase laws and switching times, matching the return type of a single-phase
+  OCP flow. Requires all phases to share the same OCP.
+- **MultiPhase reconstruction for `ControlledFlow` concatenation**: the symmetric state-flow
+  case — a multi-phase `*` of `ControlledFlow`s (`Flow(ocp, law)` with an `OpenLoop` /
+  `ClosedLoop` law, or `Flow(fc, law)`) now returns a `ControlledTrajectory` with piecewise
+  reconstructed control, previously erroring the same way.
+- **Arity-checking for OCP convenience constructors**: `Flow(ocp, u::Function)` and raw
+  `Function` `constraint`/`multiplier` specs wrap the user's function with the OCP's own
+  time/variable dependence; when the function has a single method (arity detection is
+  skipped if ambiguous — multiple dispatch or default arguments), a mismatched arity is now
+  caught up front and raised as one `CTBase.Exceptions.IncorrectArgument` naming the real
+  expected syntax for every mismatched control law / constraint / multiplier, instead of
+  surfacing as an opaque `MethodError` deep inside AD or integration. The error also points
+  to the explicit constructors (`DynClosedLoop`/`OpenLoop`/`ClosedLoop`,
+  `MixedConstraint`/`StateConstraint`/`ControlConstraint`, `Multiplier`) as an escape hatch.
+- **[Constrained flows](https://control-toolbox.org/CTFlows.jl/dev/flows/constrained.html)
+  guide chapter**: the `constraint`/`multiplier` API, the `g ≥ 0` sign convention (vs.
+  Maurer's `c ≤ 0`), multiple constraints, the `:total`/`:partial` semantics with the PMP
+  symplectic-gradient decomposition explaining *why* the two modes agree on a constrained
+  arc, and two worked examples (Goddard, order 1; double integrator, order 2).
+
 ## [0.12.0-beta] - 2026-07-10
 
 ### Added
