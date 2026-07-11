@@ -228,6 +228,69 @@ function test_ocp_control()
         end
 
         # ====================================================================
+        # CONVENIENCE — Flow(ocp, u::Function) ≡ explicit DynClosedLoop, and a raw
+        # function `constraint`/`multiplier` ≡ its wrapped MixedConstraint/Multiplier
+        # ====================================================================
+
+        Test.@testset "Convenience: Flow(ocp, u::Function) ≡ explicit DynClosedLoop" begin
+            # The convenience wraps `u` in a DynClosedLoop with the OCP's time/variable
+            # dependence, so it must reproduce the explicit law exactly.
+
+            # autonomous (x,p): inherits is_autonomous=true, is_variable=false
+            u = (x, p) -> p[2]
+            fconv = Flows.Flow(OCP_DI, u; _opts()...)
+            fexpl = Flows.Flow(OCP_DI, Data.DynClosedLoop(u); _opts()...)
+            Test.@test fconv isa Flows.OptimalControlFlow
+            t0, tf, x0, p0 = 0.0, 1.0, [-1.0, 0.0], [12.0, 6.0]
+            xc, pc = fconv(t0, x0, p0, tf)
+            xe, pe = fexpl(t0, x0, p0, tf)
+            Test.@test xc ≈ xe atol = 1e-10
+            Test.@test pc ≈ pe atol = 1e-10
+
+            # non-autonomous (t,x,p): inherits is_autonomous=false
+            un = (t, x, p) -> p * (1 + tan(t))
+            gconv = Flows.Flow(OCP_NA, un; _opts()...)
+            gexpl = Flows.Flow(OCP_NA, Data.DynClosedLoop(un; is_autonomous=false); _opts()...)
+            xc2, pc2 = gconv(0.0, 0.0, 1.0, π / 4)
+            xe2, pe2 = gexpl(0.0, 0.0, 1.0, π / 4)
+            Test.@test xc2 ≈ xe2 atol = 1e-10
+            Test.@test pc2 ≈ pe2 atol = 1e-10
+
+            # variable (x,p,v): inherits is_variable=true on the NonFixed OCP_VAR
+            uv = (x, p, v) -> p
+            hconv = Flows.Flow(OCP_VAR, uv; _opts()...)
+            hexpl = Flows.Flow(OCP_VAR, Data.DynClosedLoop(uv; is_variable=true); _opts()...)
+            xc3, pc3 = hconv(0.0, 1.0, 0.5, 1.0; variable=0.5)
+            xe3, pe3 = hexpl(0.0, 1.0, 0.5, 1.0; variable=0.5)
+            Test.@test xc3 ≈ xe3 atol = 1e-10
+            Test.@test pc3 ≈ pe3 atol = 1e-10
+        end
+
+        Test.@testset "Convenience: function control + function constraint/multiplier" begin
+            # all three conveniences (u, constraint, multiplier as raw functions) in one call
+            # equal the explicit DynClosedLoop + function constraint/multiplier form
+            u = (x, p) -> p
+            g = (x, u) -> x
+            μ = (x, p) -> 0.7
+            fconv = Flows.Flow(OCP_LQR, u; constraint=g, multiplier=μ, _opts()...)
+            fexpl = Flows.Flow(
+                OCP_LQR, Data.DynClosedLoop(u); constraint=g, multiplier=μ, _opts()...
+            )
+            t0, tf, x0, p0 = 0.0, 1.0, 1.0, 0.5
+            xc, pc = fconv(t0, x0, p0, tf)
+            xe, pe = fexpl(t0, x0, p0, tf)
+            Test.@test xc ≈ xe atol = 1e-10
+            Test.@test pc ≈ pe atol = 1e-10
+
+            # a raw function `constraint` resolves to a mixed-kind PathConstraint (the
+            # `MixedConstraint` constructor), a raw function `multiplier` to a Multiplier
+            resolved = Flows._resolve_constraint(OCP_LQR, g)
+            Test.@test resolved isa Data.PathConstraint
+            Test.@test Traits.is_mixed_constraint(resolved)
+            Test.@test Flows._resolve_multiplier(OCP_LQR, μ) isa Data.Multiplier
+        end
+
+        # ====================================================================
         # INTEGRATION — non-stationary law ⇒ :total ≠ :partial (mandatory)
         # ====================================================================
 
