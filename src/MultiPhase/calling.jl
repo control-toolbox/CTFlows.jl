@@ -152,42 +152,74 @@ end
 # =============================================================================
 
 # Piecewise control law: pick the phase by time (flat searchsortedlast — no nested closures),
-# then call that phase's law uniformly. `switches` are the n-1 switching times (sorted).
+# then delegate to that phase's law with the caller's uniform signature. `switches` are the
+# n-1 switching times (sorted); at an exact switch time the *next* phase is chosen (measure
+# zero — irrelevant for plotting and objective integration). Serves both reconstruction paths:
+# `(pl)(t,x,p,v)` for the Hamiltonian/OCP law, `_controlled_u(pl, t, x, v)` for the state law.
 struct _PiecewiseControlLaw{L,S}
     laws::L      # tuple of per-phase Data.ControlLaw
     switches::S  # vector of switching times
 end
-function (pl::_PiecewiseControlLaw)(t, x, p, v)
-    i = clamp(searchsortedlast(pl.switches, t) + 1, 1, length(pl.laws))
-    return pl.laws[i](t, x, p, v)
+function _phase_law(pl::_PiecewiseControlLaw, t)
+    return pl.laws[clamp(searchsortedlast(pl.switches, t) + 1, 1, length(pl.laws))]
+end
+# Hamiltonian/OCP uniform call: (t, x, p, v).
+(pl::_PiecewiseControlLaw)(t, x, p, v) = _phase_law(pl, t)(t, x, p, v)
+# State (controlled) uniform call: dispatched by Trajectories on the phase law's feedback trait.
+function Trajectories._controlled_u(pl::_PiecewiseControlLaw, t, x, v)
+    return Trajectories._controlled_u(_phase_law(pl, t), t, x, v)
 end
 
-# All-OCP phases → rebuild a Solution with piecewise control; plain flows → merged raw
-# trajectory. Runtime branch on the phase types (prototype: avoids alias-vs-nude specificity).
+# All-OCP (Hamiltonian) phases → CTModels Solution; all-controlled (state) phases →
+# ControlledTrajectory; plain flows (no law) → merged raw trajectory. Runtime branch on the
+# phase types (an alias is not more specific than a constrained type — cannot dispatch here).
 function _finalize_multiphase_trajectory(mpf::MultiPhaseFlow, merged, variable)
     phases = get_flows(mpf)
-    if !isempty(phases) && all(p -> p isa Flows.OptimalControlFlow, phases)
+    isempty(phases) && return merged
+    if all(p -> p isa Flows.OptimalControlFlow, phases)
         return _reconstruct_ocp_solution(mpf, merged, variable)
+    end
+    if all(p -> p isa Flows.ControlledFlow, phases)
+        return _reconstruct_controlled_trajectory(mpf, merged, variable)
     end
     return merged
 end
 
-# All-OCP Hamiltonian phases → rebuild a CTModels Solution with a piecewise control.
-function _reconstruct_ocp_solution(mpf, merged, variable)
-    phases = get_flows(mpf)
+# All phases must be built from the same OCP object to reconstruct a single solution
+# (`nothing === nothing` for `Flow(fc, law)` phases, which carry no OCP).
+function _shared_ocp(phases)
     ocp = phases[1].ocp
     all(p -> p.ocp === ocp, phases) || throw(
         Exceptions.IncorrectArgument(
-            "cannot reconstruct a multi-phase OCP solution from flows of different OCPs";
+            "cannot reconstruct a multi-phase solution from flows of different OCPs";
             got="phases carry ≥ 2 distinct ocp objects",
             expected="all phases built from the same ocp",
             context="MultiPhase trajectory reconstruction",
         ),
     )
-    laws = map(p -> p.law, phases)
-    plaw = _PiecewiseControlLaw(laws, get_switching_times(mpf))
+    return ocp
+end
+
+# All-OCP Hamiltonian phases → rebuild a CTModels Solution with a piecewise control.
+function _reconstruct_ocp_solution(mpf, merged, variable)
+    phases = get_flows(mpf)
+    ocp = _shared_ocp(phases)
+    plaw = _PiecewiseControlLaw(map(p -> p.law, phases), get_switching_times(mpf))
     integ = Flows.integrator(phases[1])
     return Flows._build_ocp_solution(ocp, merged, variable, integ, plaw)
+end
+
+# All-controlled (state) phases → rebuild a ControlledTrajectory with a piecewise control,
+# recomputing the objective (Mayer + Lagrange) over the merged trajectory when the phases
+# carry an OCP (`nothing` objective for `Flow(fc, law)` phases).
+function _reconstruct_controlled_trajectory(mpf, merged, variable)
+    phases = get_flows(mpf)
+    ocp = _shared_ocp(phases)
+    plaw = _PiecewiseControlLaw(map(p -> p.law, phases), get_switching_times(mpf))
+    integ = Flows.integrator(phases[1])
+    coerce = Flows._dim_coerce(length(Integrators.final_state(merged)))
+    obj = Flows._controlled_objective(ocp, merged, plaw, variable, integ, coerce)
+    return Trajectories.ControlledTrajectory(merged, plaw, variable, obj, coerce, ocp)
 end
 
 
