@@ -33,7 +33,9 @@ const EXPORTED_ABSTRACT_TYPES = (
 
 const EXPORTED_CONCRETE_TYPES = (:VectorFieldTrajectory, :HamiltonianVectorFieldTrajectory)
 
-const EXPORTED_FUNCTIONS = (:state, :time_grid, :costate, :build_trajectory, :plot)
+# `plot` is a `RecipesBase.plot` method (an extension overload), not exported — call it
+# qualified (`Trajectories.plot`) or via `Plots.plot`. See test_plots_extension.jl.
+const EXPORTED_FUNCTIONS = (:state, :time_grid, :costate, :build_trajectory)
 
 # Note: Solutions module has no private symbols (after filtering Julia internals)
 # All symbols are exported
