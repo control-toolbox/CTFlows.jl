@@ -162,7 +162,7 @@ This separation is useful when the same config must be passed to several flows.
 
 ---
 
-## Integrator options {#integrator-options}
+## [Integrator options](@id integrator-options)
 
 Options are passed as keyword arguments to `Flows.Flow(data; opts...)` or
 `Integrators.build_integrator(; opts...)`.

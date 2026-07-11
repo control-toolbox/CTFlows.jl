@@ -127,4 +127,5 @@ Traits.time_dependence(f)
 - [`CTFlows.Flows.Flow`](@ref) — the constructor family, including `Flow(ocp)`.
 - [`CTModels.Solutions.Solution`](@extref), [`CTModels.Components.objective`](@extref) — the trajectory-call result and its accessors.
 - [Control laws](control_laws.md) — `Flow(ocp, law)` for with-control problems.
+- [Constrained flows](constrained.md) — `constraint`/`multiplier` path-constraint terms.
 - [Building a flow](building_a_flow.md) — AD-backed Hamiltonian flows.

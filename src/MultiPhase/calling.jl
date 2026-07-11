@@ -139,8 +139,219 @@ function _evaluate_multiphase(
         end
     end
 
-    return Integrators.merge(results)
+    return _finalize_multiphase_trajectory(mpf, Integrators.merge(results), variable)
 end
+
+# =============================================================================
+# Final reconstruction of a multi-phase trajectory
+#
+# A multi-phase trajectory must return the SAME type a single-phase flow returns, with a
+# PIECEWISE control reconstructed from the per-phase laws: all-OptimalControlFlow phases → a
+# CTModels Solution (via _build_ocp_solution), all-ControlledFlow phases → a
+# ControlledTrajectory. Plain flows (no law) keep returning the merged raw trajectory.
+# =============================================================================
+
+"""
+$(TYPEDEF)
+
+Piecewise control law reconstructed from the per-phase laws of a multi-phase flow. It selects
+the phase by time (a flat `searchsortedlast` over the switching times — no nested closures),
+then delegates to that phase's law with the caller's uniform signature. It serves both
+reconstruction paths: `(pl)(t, x, p, v)` for the Hamiltonian/OCP law, and
+`CTFlows.Trajectories._controlled_u(pl, t, x, v)` for the state (controlled) law.
+
+At an exact switching time the *next* phase is selected — a measure-zero choice, irrelevant to
+plotting and to objective integration.
+
+# Type Parameters
+- `L`: type of the tuple of per-phase control laws.
+- `S`: type of the switching-times vector.
+
+# Fields
+- `laws::L`: tuple of the per-phase control laws (each a `CTBase.Data.ControlLaw`).
+- `switches::S`: the `n-1` sorted switching times.
+
+See also: [`CTFlows.MultiPhase._reconstruct_ocp_solution`](@ref),
+[`CTFlows.MultiPhase._reconstruct_controlled_trajectory`](@ref).
+"""
+struct _PiecewiseControlLaw{L,S}
+    laws::L      # tuple of per-phase Data.ControlLaw
+    switches::S  # vector of switching times
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the phase law active at time `t`: the law of the phase selected by `searchsortedlast`
+over the switching times, clamped to the valid phase range.
+
+# Arguments
+- `pl::_PiecewiseControlLaw`: The piecewise control law.
+- `t`: The time at which to select the active phase.
+
+# Returns
+- The per-phase control law active at time `t`.
+"""
+function _phase_law(pl::_PiecewiseControlLaw, t)
+    return pl.laws[clamp(searchsortedlast(pl.switches, t) + 1, 1, length(pl.laws))]
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Hamiltonian/OCP uniform call: delegate to the phase law active at time `t`.
+
+# Arguments
+- `pl::_PiecewiseControlLaw`: The piecewise control law.
+- `t`: Time.
+- `x`: State.
+- `p`: Costate.
+- `v`: Variable (or `Core.NotProvided`).
+
+# Returns
+- The control `u = law(t, x, p, v)` of the phase active at `t`.
+"""
+(pl::_PiecewiseControlLaw)(t, x, p, v) = _phase_law(pl, t)(t, x, p, v)
+
+"""
+$(TYPEDSIGNATURES)
+
+State (controlled) uniform call: delegate to the phase law active at time `t`, dispatched by
+`CTFlows.Trajectories` on that law's feedback trait (`OpenLoop`/`ClosedLoop`).
+
+# Arguments
+- `pl::_PiecewiseControlLaw`: The piecewise control law.
+- `t`: Time.
+- `x`: State.
+- `v`: Variable (or `Core.NotProvided`).
+
+# Returns
+- The control of the phase active at `t`, reconstructed by the feedback-dispatched call.
+"""
+function Trajectories._controlled_u(pl::_PiecewiseControlLaw, t, x, v)
+    return Trajectories._controlled_u(_phase_law(pl, t), t, x, v)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Finalize a merged multi-phase trajectory into the type a single-phase flow would return.
+
+All-`OptimalControlFlow` phases rebuild a [`CTModels.Solutions.Solution`](@extref) (via
+[`CTFlows.MultiPhase._reconstruct_ocp_solution`](@ref)); all-`ControlledFlow` phases rebuild a
+[`CTFlows.Trajectories.ControlledTrajectory`](@ref) (via
+[`CTFlows.MultiPhase._reconstruct_controlled_trajectory`](@ref)); any other case (plain flows
+carrying no law) returns the merged raw trajectory unchanged.
+
+The branch is a runtime `isa` test on the phase types rather than dispatch: a parametric alias
+(e.g. `MultiPhaseHamiltonianFlow`) is not more specific than the constrained base type, so it
+cannot select a method here.
+
+# Arguments
+- `mpf::MultiPhaseFlow`: The multi-phase flow whose phases carry the per-phase laws.
+- `merged`: The merged trajectory over all phases.
+- `variable`: The variable parameter value (for NonFixed systems).
+
+# Returns
+- A `CTModels.Solution`, a `ControlledTrajectory`, or the merged trajectory (see above).
+
+See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@ref).
+"""
+function _finalize_multiphase_trajectory(mpf::MultiPhaseFlow, merged, variable)
+    phases = get_flows(mpf)
+    isempty(phases) && return merged
+    if all(p -> p isa Flows.OptimalControlFlow, phases)
+        return _reconstruct_ocp_solution(mpf, merged, variable)
+    end
+    if all(p -> p isa Flows.ControlledFlow, phases)
+        return _reconstruct_controlled_trajectory(mpf, merged, variable)
+    end
+    return merged
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the OCP shared by every phase. `Flow(fc, law)` phases carry no OCP (`nothing`), which
+compare equal under `===`.
+
+# Arguments
+- `phases`: The tuple of phase flows (each carrying an `ocp` field).
+
+# Returns
+- The single OCP object (or `nothing`) common to all phases.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if the phases carry two or more distinct
+  OCP objects.
+"""
+function _shared_ocp(phases)
+    ocp = phases[1].ocp
+    all(p -> p.ocp === ocp, phases) || throw(
+        Exceptions.IncorrectArgument(
+            "cannot reconstruct a multi-phase solution from flows of different OCPs";
+            got="phases carry ≥ 2 distinct ocp objects",
+            expected="all phases built from the same ocp",
+            context="MultiPhase trajectory reconstruction",
+        ),
+    )
+    return ocp
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Rebuild a [`CTModels.Solutions.Solution`](@extref) from an all-`OptimalControlFlow` multi-phase
+trajectory, reconstructing the control as a [`CTFlows.MultiPhase._PiecewiseControlLaw`](@ref)
+over the per-phase laws.
+
+# Arguments
+- `mpf`: The multi-phase Hamiltonian flow.
+- `merged`: The merged Hamiltonian trajectory over all phases.
+- `variable`: The variable parameter value (for NonFixed systems).
+
+# Returns
+- A [`CTModels.Solutions.Solution`](@extref) with the piecewise-reconstructed control.
+
+See also: [`CTFlows.MultiPhase._reconstruct_controlled_trajectory`](@ref), `CTFlows.Flows._build_ocp_solution`.
+"""
+function _reconstruct_ocp_solution(mpf, merged, variable)
+    phases = get_flows(mpf)
+    ocp = _shared_ocp(phases)
+    plaw = _PiecewiseControlLaw(map(p -> p.law, phases), get_switching_times(mpf))
+    integ = Flows.integrator(phases[1])
+    return Flows._build_ocp_solution(ocp, merged, variable, integ, plaw)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Rebuild a [`CTFlows.Trajectories.ControlledTrajectory`](@ref) from an all-`ControlledFlow`
+multi-phase trajectory, reconstructing the control as a
+[`CTFlows.MultiPhase._PiecewiseControlLaw`](@ref) and recomputing the objective (Mayer +
+Lagrange) over the merged trajectory when the phases carry an OCP (`nothing` objective for
+`Flow(fc, law)` phases).
+
+# Arguments
+- `mpf`: The multi-phase state flow.
+- `merged`: The merged state trajectory over all phases.
+- `variable`: The variable parameter value (for NonFixed systems).
+
+# Returns
+- A [`CTFlows.Trajectories.ControlledTrajectory`](@ref) with the piecewise-reconstructed control.
+
+See also: [`CTFlows.MultiPhase._reconstruct_ocp_solution`](@ref), `CTFlows.Flows._controlled_objective`.
+"""
+function _reconstruct_controlled_trajectory(mpf, merged, variable)
+    phases = get_flows(mpf)
+    ocp = _shared_ocp(phases)
+    plaw = _PiecewiseControlLaw(map(p -> p.law, phases), get_switching_times(mpf))
+    integ = Flows.integrator(phases[1])
+    coerce = Flows._dim_coerce(length(Integrators.final_state(merged)))
+    obj = Flows._controlled_objective(ocp, merged, plaw, variable, integ, coerce)
+    return Trajectories.ControlledTrajectory(merged, plaw, variable, obj, coerce, ocp)
+end
+
 
 # ==============================================================================
 # Phase Evaluation & Jump Delegation
@@ -149,10 +360,35 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Evaluate a single phase for a state flow with point configuration.
+Return the raw inner flow of a phase, unwrapping the decorator flows
+([`CTFlows.Flows.OptimalControlFlow`](@ref) / [`CTFlows.Flows.ControlledFlow`](@ref)) to the
+inner `HamiltonianFlow`/`StateFlow` that yields a mergeable raw segment; any other
+[`CTFlows.Flows.AbstractFlow`](@ref) (a plain `HamiltonianFlow`/`StateFlow` or a nested
+`MultiPhaseFlow`) is returned unchanged.
+
+Dispatching on the abstract flow type — one method per decorator plus the fallback — covers
+every phase kind with no forgotten case.
 
 # Arguments
-- `flow::Flows.StateFlow`: The state flow to evaluate.
+- `f::Flows.AbstractFlow`: The phase flow.
+
+# Returns
+- The raw inner flow to integrate for this phase.
+"""
+_raw_flow(f::Flows.AbstractFlow) = f
+_raw_flow(f::Flows.OptimalControlFlow) = f.flow
+_raw_flow(f::Flows.ControlledFlow) = f.flow
+
+"""
+$(TYPEDSIGNATURES)
+
+Evaluate a single phase for a state flow with point configuration.
+
+Dispatches on the abstract dynamics axis (`AbstractStateFlow`) and unwraps decorator flows via
+[`CTFlows.MultiPhase._raw_flow`](@ref) before integrating.
+
+# Arguments
+- `flow::Flows.AbstractStateFlow`: The state (or decorated state) flow to evaluate.
 - `t0`: Start time.
 - `tf`: End time.
 - `x`: Initial state.
@@ -163,12 +399,18 @@ Evaluate a single phase for a state flow with point configuration.
 # Returns
 - Final state at time tf.
 
-See also: [`CTFlows.Flows.StateFlow`](@ref).
+See also: [`CTFlows.MultiPhase._raw_flow`](@ref), [`CTFlows.Flows.StateFlow`](@ref).
 """
 function _evaluate_phase(
-    flow::Flows.StateFlow, t0, tf, x, ::Configs.AbstractEndPointConfig; variable, unsafe
+    flow::Flows.AbstractStateFlow,
+    t0,
+    tf,
+    x,
+    ::Configs.AbstractEndPointConfig;
+    variable,
+    unsafe,
 )
-    return flow(t0, x, tf; variable=variable, unsafe=unsafe)
+    return _raw_flow(flow)(t0, x, tf; variable=variable, unsafe=unsafe)
 end
 
 """
@@ -176,8 +418,11 @@ $(TYPEDSIGNATURES)
 
 Evaluate a single phase for a state flow with trajectory configuration.
 
+Dispatches on the abstract dynamics axis (`AbstractStateFlow`) and unwraps decorator flows via
+[`CTFlows.MultiPhase._raw_flow`](@ref) before integrating.
+
 # Arguments
-- `flow::Flows.StateFlow`: The state flow to evaluate.
+- `flow::Flows.AbstractStateFlow`: The state (or decorated state) flow to evaluate.
 - `t0`: Start time.
 - `tf`: End time.
 - `x`: Initial state.
@@ -188,12 +433,18 @@ Evaluate a single phase for a state flow with trajectory configuration.
 # Returns
 - Trajectory solution from t0 to tf.
 
-See also: [`CTFlows.Flows.StateFlow`](@ref).
+See also: [`CTFlows.MultiPhase._raw_flow`](@ref), [`CTFlows.Flows.StateFlow`](@ref).
 """
 function _evaluate_phase(
-    flow::Flows.StateFlow, t0, tf, x, ::Configs.AbstractTrajectoryConfig; variable, unsafe
+    flow::Flows.AbstractStateFlow,
+    t0,
+    tf,
+    x,
+    ::Configs.AbstractTrajectoryConfig;
+    variable,
+    unsafe,
 )
-    return flow((t0, tf), x; variable=variable, unsafe=unsafe)
+    return _raw_flow(flow)((t0, tf), x; variable=variable, unsafe=unsafe)
 end
 
 """
@@ -201,8 +452,11 @@ $(TYPEDSIGNATURES)
 
 Evaluate a single phase for a Hamiltonian flow with point configuration.
 
+Dispatches on the abstract dynamics axis (`AbstractHamiltonianFlow`) and unwraps decorator
+flows via [`CTFlows.MultiPhase._raw_flow`](@ref) before integrating.
+
 # Arguments
-- `flow::Flows.HamiltonianFlow`: The Hamiltonian flow to evaluate.
+- `flow::Flows.AbstractHamiltonianFlow`: The Hamiltonian (or decorated Hamiltonian) flow to evaluate.
 - `t0`: Start time.
 - `tf`: End time.
 - `state_tuple`: Tuple of (initial_state, initial_costate).
@@ -213,10 +467,10 @@ Evaluate a single phase for a Hamiltonian flow with point configuration.
 # Returns
 - Tuple of (final_state, final_costate) at time tf.
 
-See also: [`CTFlows.Flows.HamiltonianFlow`](@ref).
+See also: [`CTFlows.MultiPhase._raw_flow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref).
 """
 function _evaluate_phase(
-    flow::Flows.HamiltonianFlow,
+    flow::Flows.AbstractHamiltonianFlow,
     t0,
     tf,
     state_tuple,
@@ -225,7 +479,7 @@ function _evaluate_phase(
     unsafe,
 )
     x, p = state_tuple
-    return flow(t0, x, p, tf; variable=variable, unsafe=unsafe)
+    return _raw_flow(flow)(t0, x, p, tf; variable=variable, unsafe=unsafe)
 end
 
 """
@@ -233,8 +487,11 @@ $(TYPEDSIGNATURES)
 
 Evaluate a single phase for a Hamiltonian flow with trajectory configuration.
 
+Dispatches on the abstract dynamics axis (`AbstractHamiltonianFlow`) and unwraps decorator
+flows via [`CTFlows.MultiPhase._raw_flow`](@ref) before integrating.
+
 # Arguments
-- `flow::Flows.HamiltonianFlow`: The Hamiltonian flow to evaluate.
+- `flow::Flows.AbstractHamiltonianFlow`: The Hamiltonian (or decorated Hamiltonian) flow to evaluate.
 - `t0`: Start time.
 - `tf`: End time.
 - `state_tuple`: Tuple of (initial_state, initial_costate).
@@ -245,10 +502,10 @@ Evaluate a single phase for a Hamiltonian flow with trajectory configuration.
 # Returns
 - Trajectory solution from t0 to tf.
 
-See also: [`CTFlows.Flows.HamiltonianFlow`](@ref).
+See also: [`CTFlows.MultiPhase._raw_flow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref).
 """
 function _evaluate_phase(
-    flow::Flows.HamiltonianFlow,
+    flow::Flows.AbstractHamiltonianFlow,
     t0,
     tf,
     state_tuple,
@@ -257,7 +514,7 @@ function _evaluate_phase(
     unsafe,
 )
     x, p = state_tuple
-    return flow((t0, tf), x, p; variable=variable, unsafe=unsafe)
+    return _raw_flow(flow)((t0, tf), x, p; variable=variable, unsafe=unsafe)
 end
 
 """

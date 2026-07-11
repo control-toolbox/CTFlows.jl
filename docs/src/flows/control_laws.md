@@ -265,4 +265,5 @@ x_c(0.5), u_c(0.5)
 - [`CTBase.Data.OpenLoop`](@extref), [`CTBase.Data.ClosedLoop`](@extref), [`CTBase.Data.DynClosedLoop`](@extref) — control law constructors.
 - `Data.PseudoHamiltonian`, `Data.ControlledVectorField` — data types for controlled systems.
 - [Optimal control](optimal_control.md) — `Flow(ocp)` for control-free problems.
+- [Constrained flows](constrained.md) — `constraint`/`multiplier` on `Flow(ocp, law)`.
 - [Building a flow](building_a_flow.md) — the general pipeline.

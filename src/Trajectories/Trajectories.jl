@@ -9,9 +9,10 @@ This module provides:
 - `build_trajectory`: Trajectory building functions for different configuration types
 - `final_state`, `times`, `evaluate_at`: Semantic accessors for integration results
 - `state`, `time_grid`: Semantic accessors for VectorFieldTrajectory
-- `plot`: Plotting functionality for trajectories
+- `Trajectories.plot`: plotting for trajectories via the Plots extension (a `RecipesBase.plot`
+  method; not re-exported — call it qualified or load `Plots`)
 
-See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.build_trajectory`](@ref), `plot`.
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.build_trajectory`](@ref).
 """
 module Trajectories
 
@@ -56,6 +57,5 @@ export state, time_grid
 export costate
 export control, objective
 export build_trajectory
-export plot
 
 end # module Trajectories

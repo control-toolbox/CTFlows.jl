@@ -34,6 +34,7 @@ Each layer has a single responsibility:
 | [Multi-phase flows](multiphase.md) | Concatenating flows with switching times | `MultiPhaseStateFlow`, `*` |
 | [Optimal control](optimal_control.md) | Flows from optimal control problems | `OptimalControlFlow`, `Flow(ocp)` |
 | [Control laws](control_laws.md) | Flows with control laws | `ControlledFlow`, `Flow(ocp, law)`, `OpenLoop`, `ClosedLoop`, `DynClosedLoop` |
+| [Constrained flows](constrained.md) | Path-constraint terms on `Flow(ocp, law)` | `constraint`, `multiplier`, `hamiltonian_type` |
 | [SciML flows](sciml.md) | Flows from SciML functions and problems | `Flow(::ODEFunction)`, `SciMLProblemFlow` |
 
 The **data layer** (wrapping functions as `VectorField`, `Hamiltonian`,

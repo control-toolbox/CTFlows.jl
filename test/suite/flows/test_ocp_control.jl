@@ -228,6 +228,69 @@ function test_ocp_control()
         end
 
         # ====================================================================
+        # CONVENIENCE — Flow(ocp, u::Function) ≡ explicit DynClosedLoop, and a raw
+        # function `constraint`/`multiplier` ≡ its wrapped MixedConstraint/Multiplier
+        # ====================================================================
+
+        Test.@testset "Convenience: Flow(ocp, u::Function) ≡ explicit DynClosedLoop" begin
+            # The convenience wraps `u` in a DynClosedLoop with the OCP's time/variable
+            # dependence, so it must reproduce the explicit law exactly.
+
+            # autonomous (x,p): inherits is_autonomous=true, is_variable=false
+            u = (x, p) -> p[2]
+            fconv = Flows.Flow(OCP_DI, u; _opts()...)
+            fexpl = Flows.Flow(OCP_DI, Data.DynClosedLoop(u); _opts()...)
+            Test.@test fconv isa Flows.OptimalControlFlow
+            t0, tf, x0, p0 = 0.0, 1.0, [-1.0, 0.0], [12.0, 6.0]
+            xc, pc = fconv(t0, x0, p0, tf)
+            xe, pe = fexpl(t0, x0, p0, tf)
+            Test.@test xc ≈ xe atol = 1e-10
+            Test.@test pc ≈ pe atol = 1e-10
+
+            # non-autonomous (t,x,p): inherits is_autonomous=false
+            un = (t, x, p) -> p * (1 + tan(t))
+            gconv = Flows.Flow(OCP_NA, un; _opts()...)
+            gexpl = Flows.Flow(OCP_NA, Data.DynClosedLoop(un; is_autonomous=false); _opts()...)
+            xc2, pc2 = gconv(0.0, 0.0, 1.0, π / 4)
+            xe2, pe2 = gexpl(0.0, 0.0, 1.0, π / 4)
+            Test.@test xc2 ≈ xe2 atol = 1e-10
+            Test.@test pc2 ≈ pe2 atol = 1e-10
+
+            # variable (x,p,v): inherits is_variable=true on the NonFixed OCP_VAR
+            uv = (x, p, v) -> p
+            hconv = Flows.Flow(OCP_VAR, uv; _opts()...)
+            hexpl = Flows.Flow(OCP_VAR, Data.DynClosedLoop(uv; is_variable=true); _opts()...)
+            xc3, pc3 = hconv(0.0, 1.0, 0.5, 1.0; variable=0.5)
+            xe3, pe3 = hexpl(0.0, 1.0, 0.5, 1.0; variable=0.5)
+            Test.@test xc3 ≈ xe3 atol = 1e-10
+            Test.@test pc3 ≈ pe3 atol = 1e-10
+        end
+
+        Test.@testset "Convenience: function control + function constraint/multiplier" begin
+            # all three conveniences (u, constraint, multiplier as raw functions) in one call
+            # equal the explicit DynClosedLoop + function constraint/multiplier form
+            u = (x, p) -> p
+            g = (x, u) -> x
+            μ = (x, p) -> 0.7
+            fconv = Flows.Flow(OCP_LQR, u; constraint=g, multiplier=μ, _opts()...)
+            fexpl = Flows.Flow(
+                OCP_LQR, Data.DynClosedLoop(u); constraint=g, multiplier=μ, _opts()...
+            )
+            t0, tf, x0, p0 = 0.0, 1.0, 1.0, 0.5
+            xc, pc = fconv(t0, x0, p0, tf)
+            xe, pe = fexpl(t0, x0, p0, tf)
+            Test.@test xc ≈ xe atol = 1e-10
+            Test.@test pc ≈ pe atol = 1e-10
+
+            # a raw function `constraint` resolves to a mixed-kind PathConstraint (the
+            # `MixedConstraint` constructor), a raw function `multiplier` to a Multiplier
+            resolved = Flows._resolve_constraint(OCP_LQR, g)
+            Test.@test resolved isa Data.PathConstraint
+            Test.@test Traits.is_mixed_constraint(resolved)
+            Test.@test Flows._resolve_multiplier(OCP_LQR, μ) isa Data.Multiplier
+        end
+
+        # ====================================================================
         # INTEGRATION — non-stationary law ⇒ :total ≠ :partial (mandatory)
         # ====================================================================
 
@@ -715,6 +778,30 @@ function test_ocp_control()
             Test.@test pvf ≈ _trapz(ts, ys) atol = 1e-3
         end
 
+        Test.@testset "Constrained: :total variable-costate picks up ∂/∂v[H̃+μ·g] (analytic)" begin
+            # Same setup as the :partial test above — v-dependent constraint g(x,v)=x·v,
+            # μ≡c, stationary AND v-independent law u=p ⇒ the chain term ∂H̃/∂u·∂u/∂v
+            # vanishes, so :total's pv coincides with the same frozen-μ analytic formula.
+            # Fills the last cell of the {constraint} × {:total,:partial} × {variable,
+            # variable_costate} matrix (the other three are covered above/below).
+            c = 0.2
+            g = Data.StateConstraint((x, v) -> x * v; is_variable=true)
+            μ = Data.Multiplier((x, p) -> c)
+            law = Data.DynClosedLoop((x, p, v) -> p; is_variable=true)
+            ft = Flows.Flow(
+                OCP_VAR, law; constraint=g, multiplier=μ, hamiltonian_type=:total, _opts()...
+            )
+            t0, tf, x0, p0, v = 0.0, 1.0, 1.0, 0.5, 0.5
+            _, _, pvt = ft(t0, x0, p0, tf; variable=v, variable_costate=true)
+            Test.@test pvt isa Number
+            ts = range(t0, tf; length=201)
+            ys = map(ts) do t
+                x, p = t == t0 ? (x0, p0) : ft(t0, x0, p0, t; variable=v)
+                x * (p - c)                       # ∂/∂v[H̃+μ·g] along the flow's own trajectory
+            end
+            Test.@test pvt ≈ _trapz(ts, ys) atol = 1e-3
+        end
+
         Test.@testset "Constrained :partial: NonFixed smoke (variable at call time)" begin
             c = 0.2
             g = Data.StateConstraint(x -> x)
@@ -799,6 +886,48 @@ function test_ocp_control()
             law = Data.DynClosedLoop((x, p) -> p)
             Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
                 OCP_LQR, law; constraint=42, multiplier=(x, p) -> 0.0, _opts()...
+            )
+        end
+
+        # ====================================================================
+        # Multiple simultaneous constraints (tuples)
+        # ====================================================================
+
+        Test.@testset "Constrained: tuple of constraints ≡ combined vector (both modes)" begin
+            # A tuple (g₁,g₂)/(μ₁,μ₂) must give the same flow as a single vector-valued
+            # constraint/multiplier — the combined carrier just concatenates.
+            law = Data.DynClosedLoop((x, p) -> p[2])
+            t0, tf, x0, p0 = 0.0, 1.0, [1.0, 2.0], [0.5, 0.5]
+            g1(x, u) = x[1]
+            g2(x, u) = x[2]
+            μ1(x, p) = 0.3
+            μ2(x, p) = 0.7
+            for ht in (:total, :partial)
+                f_tuple = Flows.Flow(
+                    OCP_DI, law; constraint=(g1, g2), multiplier=(μ1, μ2),
+                    hamiltonian_type=ht, _opts()...,
+                )
+                f_vec = Flows.Flow(
+                    OCP_DI, law; constraint=(x, u) -> [x[1], x[2]],
+                    multiplier=(x, p) -> [0.3, 0.7], hamiltonian_type=ht, _opts()...,
+                )
+                xt, pt = f_tuple(t0, x0, p0, tf)
+                xv, pv = f_vec(t0, x0, p0, tf)
+                Test.@test xt ≈ xv atol = ATOL
+                Test.@test pt ≈ pv atol = ATOL
+            end
+        end
+
+        Test.@testset "Constrained: tuple length mismatch / tuple-scalar mix rejected" begin
+            law = Data.DynClosedLoop((x, p) -> p[2])
+            # matched-length requirement: 2 constraints, 1 multiplier
+            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
+                OCP_DI, law; constraint=((x, u) -> x[1], (x, u) -> x[2]),
+                multiplier=((x, p) -> 0.3,), _opts()...,
+            )
+            # both-must-be-tuples: tuple constraint, scalar multiplier
+            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
+                OCP_DI, law; constraint=((x, u) -> x[1],), multiplier=(x, p) -> 0.3, _opts()...,
             )
         end
 

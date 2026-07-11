@@ -448,6 +448,183 @@ function Flow(ocp::CTModels.Models.Model, law::Data.ControlLaw; kwargs...)
     return _flow_from_ocp_control(Traits.feedback(law), ocp, law; kwargs...)
 end
 
+# =============================================================================
+# Convenience-constructor arity checking
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Natural arity expected of a raw convenience function (control law, constraint, or
+multiplier) for an OCP with the given time/variable dependence.
+
+The natural signatures of a control law `u(x,p)`, a constraint `g(x,u)` and a multiplier
+`μ(x,p)` all share the same shape: 2 fixed arguments, plus `t` if the OCP is
+non-autonomous, plus `v` if the OCP is non-fixed (`is_variable`).
+
+# Arguments
+- `ocp::CTModels.Models.Model`: the OCP, used to read its time/variable dependence.
+
+# Returns
+- `Int`: the expected number of positional arguments.
+
+See also: [`CTFlows.Flows._arity_issue`](@ref).
+"""
+_expected_arity(ocp) = 2 + !Traits.is_autonomous(ocp) + Traits.is_variable(ocp)
+
+"""
+$(TYPEDSIGNATURES)
+
+Natural-syntax example for a raw convenience function, given its symbol and second
+argument name and an OCP's time/variable dependence — used in arity-mismatch messages.
+
+# Arguments
+- `label::AbstractString`: the symbol name shown in the example (e.g. `"u"`).
+- `second::AbstractString`: the name of the second natural argument (`"p"` for a control
+  law/multiplier, `"u"` for a constraint).
+- `ocp::CTModels.Models.Model`: the OCP, used to read its time/variable dependence.
+
+# Returns
+- `String`: e.g. `"u(t, x, p)"`.
+
+See also: [`CTFlows.Flows._arity_issue`](@ref).
+"""
+function _natural_syntax(label::AbstractString, second::AbstractString, ocp)
+    args = String[]
+    Traits.is_autonomous(ocp) || push!(args, "t")
+    push!(args, "x", second)
+    Traits.is_variable(ocp) && push!(args, "v")
+    return "$label($(join(args, ", ")))"
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Check the arity of a raw convenience function `f` against the natural arity expected for
+an OCP with the given time/variable dependence.
+
+Mirrors the mutability-detection pattern used for vector fields
+(`CTBase.Data._detect_mutability_vf`): a single-method guard makes arity detection
+unambiguous via `first(methods(f)).nargs`. Unlike that pattern, this check **skips**
+(returns `nothing`) rather than throws when `f` has more than one method — the caller
+cannot tell which arity the user intended, so no diagnostic is possible.
+
+# Arguments
+- `f::Function`: the raw function to inspect (control law, constraint, or multiplier).
+- `ocp::CTModels.Models.Model`: the OCP, used to infer the expected arity.
+- `label::AbstractString`: the symbol name used in the natural-syntax example (e.g. `"u"`).
+- `second::AbstractString`: the name of the second natural argument (`"p"` for a control
+  law/multiplier, `"u"` for a constraint).
+- `kind::AbstractString`: a human-readable description of the role (e.g. `"control law"`),
+  used in the diagnostic message.
+
+# Returns
+- `Nothing`: if the arity matches, or if `f` has more than one method (ambiguous).
+- `String`: a one-line diagnostic naming the expected natural syntax, otherwise.
+
+See also: [`CTFlows.Flows._expected_arity`](@ref), [`CTFlows.Flows._natural_syntax`](@ref).
+"""
+function _arity_issue(
+    f::Function, ocp, label::AbstractString, second::AbstractString, kind::AbstractString
+)
+    length(methods(f)) == 1 || return nothing
+    arity = first(methods(f)).nargs - 1
+    expected = _expected_arity(ocp)
+    arity == expected && return nothing
+    syntax = _natural_syntax(label, second, ocp)
+    return "$kind `$label` has arity $arity, expected $expected — natural syntax is `$syntax`"
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Collect arity issues from a convenience spec into `issues`, dispatching on the spec's
+shape: skip `nothing`; check a raw `Function` directly; check each `Function` element of a
+`Tuple` (multi-constraint/multiplier case, labelled `label1`, `label2`, …); skip anything
+else (`Symbol`, `CTBase.Data.PathConstraint`, `CTBase.Data.Multiplier` — not raw functions).
+
+# Arguments
+- `issues::Vector{String}`: accumulator, mutated in place.
+- `ocp::CTModels.Models.Model`: the OCP, used to infer the expected arity.
+- `spec`: the convenience spec (`nothing`, `Function`, `Tuple`, or an already-resolved
+  carrier).
+- `label::AbstractString`, `second::AbstractString`, `kind::AbstractString`: forwarded to
+  [`CTFlows.Flows._arity_issue`](@ref).
+
+See also: [`CTFlows.Flows._check_convenience_arities`](@ref).
+"""
+_spec_arity_issues!(issues, ocp, ::Nothing, label, second, kind) = nothing
+function _spec_arity_issues!(
+    issues, ocp, spec::Function, label::AbstractString, second::AbstractString, kind::AbstractString
+)
+    issue = _arity_issue(spec, ocp, label, second, kind)
+    issue === nothing || push!(issues, issue)
+    return nothing
+end
+function _spec_arity_issues!(
+    issues, ocp, spec::Tuple, label::AbstractString, second::AbstractString, kind::AbstractString
+)
+    for (i, s) in enumerate(spec)
+        s isa Function || continue
+        issue = _arity_issue(s, ocp, "$label$i", second, "$kind #$i")
+        issue === nothing || push!(issues, issue)
+    end
+    return nothing
+end
+_spec_arity_issues!(issues, ocp, spec, label, second, kind) = nothing
+
+"""
+$(TYPEDSIGNATURES)
+
+Check the arities of the raw functions passed to an OCP convenience constructor — the
+control law `u`, and (if given as raw `Function`s) the `constraint`/`multiplier` specs —
+against the OCP's time/variable dependence.
+
+Collects every mismatch (a function with a single method and a wrong arity) into one
+[`CTBase.Exceptions.IncorrectArgument`](@extref), naming the expected natural syntax for
+each and suggesting the explicit constructors as an escape hatch. Functions with more than
+one method are skipped (arity cannot be determined); `Tuple` constraint/multiplier specs
+are checked element-wise; `nothing` is skipped (no spec given).
+
+# Arguments
+- `ocp::CTModels.Models.Model`: the OCP.
+- `u`: the control-law spec (`nothing` or a raw `Function`).
+- `cspec`: the `constraint` spec (`nothing`, `Symbol`, `Function`, `Tuple`, or
+  `CTBase.Data.PathConstraint`).
+- `mspec`: the `multiplier` spec (`nothing`, `Function`, `Tuple`, or `CTBase.Data.Multiplier`).
+
+A control-free OCP is skipped entirely (no throw): a control law's arity is only
+meaningful relative to an OCP that actually has a control, and a control-free OCP is
+already rejected with a clearer, more fundamental `PreconditionError` downstream.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if at least one raw function has a
+  single method and a mismatched arity, on a with-control OCP.
+
+See also: [`CTFlows.Flows._arity_issue`](@ref), [`CTFlows.Flows._spec_arity_issues!`](@ref).
+"""
+function _check_convenience_arities(ocp, u, cspec, mspec)
+    Traits.control_dependence(ocp) === Traits.WithControl || return nothing
+    issues = String[]
+    _spec_arity_issues!(issues, ocp, u, "u", "p", "control law")
+    _spec_arity_issues!(issues, ocp, cspec, "g", "u", "constraint")
+    _spec_arity_issues!(issues, ocp, mspec, "μ", "p", "multiplier")
+    isempty(issues) && return nothing
+    throw(
+        Exceptions.IncorrectArgument(
+            "convenience-constructor arity mismatch ($(length(issues)) issue(s))";
+            got=join(issues, "; "),
+            expected="each raw function's arity to match the OCP's time/variable dependence",
+            suggestion="pass explicit constructors instead — Data.DynClosedLoop/Data.OpenLoop/Data.ClosedLoop " *
+                       "for the control law, Data.MixedConstraint/Data.StateConstraint/Data.ControlConstraint " *
+                       "for the constraint, Data.Multiplier for the multiplier — with the time/variable " *
+                       "dependence you intend; this check only runs when the raw function has a single " *
+                       "method (skipped if ambiguous, e.g. multiple dispatch or default arguments)",
+            context="Flow(ocp, u::Function; constraint=…, multiplier=…) — convenience arity check",
+        ),
+    )
+end
+
 """
 $(TYPEDSIGNATURES)
 
@@ -464,9 +641,21 @@ time-varying feedback on an autonomous OCP), build the
 [`CTBase.Data.DynClosedLoop`](@extref) explicitly and call
 [`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.ControlLaw)`](@ref).
 
-See also: [`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.ControlLaw)`](@ref).
+If `u` (and, when given as raw `Function`s, the `constraint`/`multiplier` keyword specs)
+has a single method, its arity is checked against the OCP's time/variable dependence —
+see [`CTFlows.Flows._check_convenience_arities`](@ref).
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if `u`, `constraint`, or `multiplier`
+  has a single method and a mismatched arity.
+
+See also: [`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.ControlLaw)`](@ref),
+[`CTFlows.Flows._check_convenience_arities`](@ref).
 """
 function Flow(ocp::CTModels.Models.Model, u::Function; kwargs...)
+    _check_convenience_arities(
+        ocp, u, get(kwargs, :constraint, nothing), get(kwargs, :multiplier, nothing)
+    )
     law = Data.DynClosedLoop(
         u; is_autonomous=Traits.is_autonomous(ocp), is_variable=Traits.is_variable(ocp)
     )
@@ -479,7 +668,20 @@ $(TYPEDSIGNATURES)
 Build an [`CTFlows.Flows.OptimalControlFlow`](@ref) from the OCP pseudo-Hamiltonian and
 a `DynClosedLoop` law, dispatching on the `hamiltonian_type` action option.
 
-See also: [`CTFlows.Flows._build_pseudo_flow`](@ref), [`CTFlows.Flows._ocp_pseudo_hamiltonian`](@ref).
+If `constraint`/`multiplier` are given as raw `Function`s with a single method, their
+arity is checked against the OCP's time/variable dependence — see
+[`CTFlows.Flows._check_convenience_arities`](@ref). `law` itself is not checked here: it
+may have been built explicitly with traits that deliberately differ from the OCP's (the
+arity of a raw `u` is only checked in
+[`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, u::Function)`](@ref), which builds the
+law itself from the OCP's traits).
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if `constraint` or `multiplier` has a
+  single method and a mismatched arity.
+
+See also: [`CTFlows.Flows._build_pseudo_flow`](@ref), [`CTFlows.Flows._ocp_pseudo_hamiltonian`](@ref),
+[`CTFlows.Flows._check_convenience_arities`](@ref).
 """
 function _flow_from_ocp_control(
     ::Type{Traits.DynClosedLoopFeedback},
@@ -500,6 +702,7 @@ function _flow_from_ocp_control(
     ht = _unwrap_option(get(routed.action, :hamiltonian_type, nothing), :total)
     cspec = _unwrap_option(get(routed.action, :constraint, nothing), nothing)
     mspec = _unwrap_option(get(routed.action, :multiplier, nothing), nothing)
+    _check_convenience_arities(ocp, nothing, cspec, mspec)
     _validate_constraint_pair(cspec, mspec)
     inner = _build_ocp_pseudo_flow(Val(ht), ocp, law, components, cspec, mspec)
     return OptimalControlFlow(inner, ocp, law)
@@ -509,9 +712,14 @@ end
 $(TYPEDSIGNATURES)
 
 Validate the `constraint`/`multiplier` pairing: they must be given **together** (both or
-neither). Throws [`CTBase.Exceptions.IncorrectArgument`](@extref) if exactly one is given.
+neither), and for multiple constraints both must be tuples of equal length (element `i` of
+`constraint` pairs with element `i` of `multiplier`).
 
-See also: [`CTFlows.Flows._build_ocp_pseudo_flow`](@ref).
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if exactly one of the two is given; if one
+  is a tuple and the other is not; or if the two tuples have different lengths.
+
+See also: [`CTFlows.Flows._build_ocp_pseudo_flow`](@ref), [`CTFlows.Flows._CombinedConstraint`](@ref).
 """
 function _validate_constraint_pair(cspec, mspec)
     (cspec === nothing) == (mspec === nothing) || throw(
@@ -522,6 +730,27 @@ function _validate_constraint_pair(cspec, mspec)
             context="Flow(ocp, law; constraint=…, multiplier=…) — pairing check",
         ),
     )
+    # Multiple constraints: if either side is a tuple, both must be tuples of equal length
+    # (element `i` of `constraint` pairs with element `i` of `multiplier`).
+    if cspec isa Tuple || mspec isa Tuple
+        (cspec isa Tuple && mspec isa Tuple) || throw(
+            Exceptions.IncorrectArgument(
+                "`constraint` and `multiplier` must both be tuples for multiple constraints";
+                got=cspec isa Tuple ? "tuple `constraint`, non-tuple `multiplier`" :
+                    "non-tuple `constraint`, tuple `multiplier`",
+                expected="both `constraint` and `multiplier` given as tuples",
+                context="Flow(ocp, law; constraint=(…,), multiplier=(…,)) — pairing check",
+            ),
+        )
+        length(cspec) == length(mspec) || throw(
+            Exceptions.IncorrectArgument(
+                "`constraint` and `multiplier` tuples must have the same length";
+                got="$(length(cspec)) constraints, $(length(mspec)) multipliers",
+                expected="matched tuple lengths",
+                context="Flow(ocp, law; constraint=(…,), multiplier=(…,)) — pairing check",
+            ),
+        )
+    end
     return nothing
 end
 
