@@ -69,7 +69,8 @@ _ambiguous_u(x, p) = p
 _ambiguous_u(x, p, v) = p
 
 function test_convenience_arity()
-    Test.@testset "Convenience-constructor arity checking" verbose = VERBOSE showtiming = SHOWTIMING begin
+    Test.@testset "Convenience-constructor arity checking" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
 
         # ====================================================================
         # single-issue mismatches
@@ -151,9 +152,7 @@ function test_convenience_arity()
             μ1 = (x, p) -> 0.5
             μ2 = (x, p) -> 0.5
             try
-                Flows.Flow(
-                    OCP_LQR, u; constraint=(g1, g2), multiplier=(μ1, μ2), _opts()...
-                )
+                Flows.Flow(OCP_LQR, u; constraint=(g1, g2), multiplier=(μ1, μ2), _opts()...)
                 Test.@test false
             catch err
                 Test.@test err isa Exceptions.IncorrectArgument

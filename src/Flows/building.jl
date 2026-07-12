@@ -555,14 +555,24 @@ See also: [`CTFlows.Flows._check_convenience_arities`](@ref).
 """
 _spec_arity_issues!(issues, ocp, ::Nothing, label, second, kind) = nothing
 function _spec_arity_issues!(
-    issues, ocp, spec::Function, label::AbstractString, second::AbstractString, kind::AbstractString
+    issues,
+    ocp,
+    spec::Function,
+    label::AbstractString,
+    second::AbstractString,
+    kind::AbstractString,
 )
     issue = _arity_issue(spec, ocp, label, second, kind)
     issue === nothing || push!(issues, issue)
     return nothing
 end
 function _spec_arity_issues!(
-    issues, ocp, spec::Tuple, label::AbstractString, second::AbstractString, kind::AbstractString
+    issues,
+    ocp,
+    spec::Tuple,
+    label::AbstractString,
+    second::AbstractString,
+    kind::AbstractString,
 )
     for (i, s) in enumerate(spec)
         s isa Function || continue
@@ -610,7 +620,7 @@ function _check_convenience_arities(ocp, u, cspec, mspec)
     _spec_arity_issues!(issues, ocp, cspec, "g", "u", "constraint")
     _spec_arity_issues!(issues, ocp, mspec, "μ", "p", "multiplier")
     isempty(issues) && return nothing
-    throw(
+    return throw(
         Exceptions.IncorrectArgument(
             "convenience-constructor arity mismatch ($(length(issues)) issue(s))";
             got=join(issues, "; "),
@@ -736,8 +746,11 @@ function _validate_constraint_pair(cspec, mspec)
         (cspec isa Tuple && mspec isa Tuple) || throw(
             Exceptions.IncorrectArgument(
                 "`constraint` and `multiplier` must both be tuples for multiple constraints";
-                got=cspec isa Tuple ? "tuple `constraint`, non-tuple `multiplier`" :
-                    "non-tuple `constraint`, tuple `multiplier`",
+                got=if cspec isa Tuple
+                    "tuple `constraint`, non-tuple `multiplier`"
+                else
+                    "non-tuple `constraint`, tuple `multiplier`"
+                end,
                 expected="both `constraint` and `multiplier` given as tuples",
                 context="Flow(ocp, law; constraint=(…,), multiplier=(…,)) — pairing check",
             ),

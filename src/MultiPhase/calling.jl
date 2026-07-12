@@ -352,7 +352,6 @@ function _reconstruct_controlled_trajectory(mpf, merged, variable)
     return Trajectories.ControlledTrajectory(merged, plaw, variable, obj, coerce, ocp)
 end
 
-
 # ==============================================================================
 # Phase Evaluation & Jump Delegation
 # ==============================================================================

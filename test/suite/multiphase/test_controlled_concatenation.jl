@@ -28,7 +28,7 @@ function _build_ocp()
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = (-x + u); nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=(-x + u); nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2)
     return CTModels.Building.build(pre)
 end
@@ -73,7 +73,8 @@ function test_controlled_concatenation()
 
             # objective = ∫_0^0.5 0.5 u² dt with u = -x = x0 e^{-2t} (phase 2 contributes 0)
             #           = 0.5 x0² (1 - e^{-2}) / 4
-            Test.@test Trajectories.objective(sol) ≈ 0.5 * x0^2 * (1 - exp(-2)) / 4 atol = 1e-3
+            Test.@test Trajectories.objective(sol) ≈ 0.5 * x0^2 * (1 - exp(-2)) / 4 atol =
+                1e-3
         end
 
         # ── OpenLoop, two phases (piecewise-constant control) ────────────────
@@ -135,4 +136,6 @@ end
 
 end # module
 
-test_controlled_concatenation() = TestControlledConcatenation.test_controlled_concatenation()
+function test_controlled_concatenation()
+    return TestControlledConcatenation.test_controlled_concatenation()
+end

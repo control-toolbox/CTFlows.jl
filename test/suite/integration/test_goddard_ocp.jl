@@ -63,13 +63,13 @@ function _build_goddard_ocp()
     CTModels.Building.variable!(pre, 1)
     CTModels.Building.time!(pre; t0=_GODD_t0, indf=1)   # free final time = variable[1]
     CTModels.Building.dynamics!(
-        pre, (r, t, x, u, v) -> (r .= _godd_F0(x) .+ u[1] .* _godd_F1(x); nothing)
+        pre, (r, t, x, u, v) -> (r.=_godd_F0(x) .+ u[1] .* _godd_F1(x); nothing)
     )
     CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> -xf[3])
     CTModels.Building.constraint!(
         pre,
         :path;
-        f=(r, t, x, u, v) -> (r[1] = x[2]; nothing),
+        f=(r, t, x, u, v) -> (r[1]=x[2]; nothing),
         lb=[-Inf],
         ub=[_GODD_vmax],
         label=:vmax,
@@ -153,7 +153,13 @@ function test_goddard_ocp()
             ξ0 = [3.94, 0.15, 0.05, 0.02, 0.05, 0.10, 0.20]
             shoot_nl!(s, ξ, _) = shoot!(s, ξ[1:3], ξ[4], ξ[5], ξ[6], ξ[7])
             prob = NonlinearProblem(shoot_nl!, ξ0)
-            nl = solve(prob, SimpleNewtonRaphson(); abstol=1e-10, reltol=1e-10, show_trace=Val(false))
+            nl = solve(
+                prob,
+                SimpleNewtonRaphson();
+                abstol=1e-10,
+                reltol=1e-10,
+                show_trace=Val(false),
+            )
             sc = zeros(7)
             shoot!(sc, nl.u[1:3], nl.u[4], nl.u[5], nl.u[6], nl.u[7])
             res_conv = sqrt(sum(abs2, sc))
