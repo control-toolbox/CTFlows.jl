@@ -51,8 +51,9 @@ the uniform `(t, x, p, u, v)` signature.
 See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref),
 [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@ref).
 """
-struct FrozenConstrainedPseudoHamiltonian{TD,VD,PH,G,T} <:
-       Data.AbstractPseudoHamiltonian{TD,VD}
+struct FrozenConstrainedPseudoHamiltonian{
+    TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,PH,G,T
+} <: Data.AbstractPseudoHamiltonian{TD,VD}
     h̃::PH
     g::G
     μ_::T
@@ -61,7 +62,7 @@ end
 # Infer the (TD, VD) traits from the base pseudo-Hamiltonian.
 function FrozenConstrainedPseudoHamiltonian(
     h̃::Data.PseudoHamiltonian{<:Function,TD,VD}, g, μ_
-) where {TD,VD}
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     return FrozenConstrainedPseudoHamiltonian{TD,VD,typeof(h̃),typeof(g),typeof(μ_)}(
         h̃, g, μ_
     )

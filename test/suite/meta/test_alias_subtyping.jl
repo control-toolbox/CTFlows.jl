@@ -17,6 +17,7 @@ instead of surfacing as a mysterious dispatch bug elsewhere.
 module TestAliasSubtyping
 
 using Test: Test
+import CTBase.Data: Data
 import CTFlows.Configs
 import CTFlows.Flows
 import CTFlows.Systems
@@ -56,6 +57,11 @@ function test_alias_subtyping()
             Test.@test MultiPhase.MultiPhaseHamiltonianFlow <: MultiPhase.MultiPhaseFlow
             Test.@test MultiPhase.MultiPhaseStateFlow <: Flows.AbstractFlow
             Test.@test MultiPhase.MultiPhaseHamiltonianFlow <: Flows.AbstractFlow
+        end
+
+        Test.@testset "Systems — CTBase parent" begin
+            Test.@test Systems.FrozenConstrainedPseudoHamiltonian <:
+                Data.AbstractPseudoHamiltonian
         end
     end
 end
