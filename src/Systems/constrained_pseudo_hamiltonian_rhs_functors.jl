@@ -106,7 +106,13 @@ See also: [`CTFlows.Systems.ConstrainedPseudoHamOoPRHS`](@ref),
 [`CTFlows.Systems.ConstrainedPseudoHamIpAugRHS`](@ref), [`CTFlows.Systems.PseudoHamIpRHS`](@ref).
 """
 struct ConstrainedPseudoHamIpRHS{
-    PH<:Data.PseudoHamiltonian,L<:Data.ControlLaw,G,M,B,CX,CP
+    PH<:Data.PseudoHamiltonian,
+    L<:Data.ControlLaw,
+    G,
+    M,
+    B<:Differentiation.AbstractADBackend,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
 } <: AbstractIPPseudoHamRHS
     h̃::PH
     law::L
@@ -150,7 +156,13 @@ see [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@ref) for the computation. Ret
 See also: [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@ref).
 """
 struct ConstrainedPseudoHamOoPRHS{
-    PH<:Data.PseudoHamiltonian,L<:Data.ControlLaw,G,M,B,CX,CP
+    PH<:Data.PseudoHamiltonian,
+    L<:Data.ControlLaw,
+    G,
+    M,
+    B<:Differentiation.AbstractADBackend,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
 } <: AbstractOoPPseudoHamRHS
     h̃::PH
     law::L
@@ -204,7 +216,13 @@ See also: [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@ref),
 [`CTFlows.Systems.PseudoHamIpAugRHS`](@ref).
 """
 struct ConstrainedPseudoHamIpAugRHS{
-    PH<:Data.PseudoHamiltonian,L<:Data.ControlLaw,G,M,B,CX,CP
+    PH<:Data.PseudoHamiltonian,
+    L<:Data.ControlLaw,
+    G,
+    M,
+    B<:Differentiation.AbstractADBackend,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
 } <: AbstractIPPseudoHamRHS
     h̃::PH
     law::L

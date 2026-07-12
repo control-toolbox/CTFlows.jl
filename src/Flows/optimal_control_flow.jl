@@ -38,7 +38,12 @@ selects the correct natural-arity call signature without runtime branches.
 
 See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), `CTFlows.Flows._ocp_H`, `CTFlows.Flows._ocp_hamiltonian`.
 """
-struct OCPHamiltonianFunction{TD,VD,DF,LF} <: Function
+struct OCPHamiltonianFunction{
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    DF<:Function,
+    LF<:Union{Function,Nothing},
+} <: Function
     dynamics!::DF
     lagrange::LF
     sp0::Float64
@@ -81,22 +86,24 @@ function _ocp_H(h::OCPHamiltonianFunction, t, x, p, v)
     return val
 end
 
-function (h::OCPHamiltonianFunction{_CTM_Auton,Traits.Fixed,DF,LF})(x, p) where {DF,LF}
+function (h::OCPHamiltonianFunction{_CTM_Auton,Traits.Fixed,DF,LF})(
+    x, p
+) where {DF<:Function,LF<:Union{Function,Nothing}}
     return _ocp_H(h, 0.0, x, p, nothing)
 end
 function (h::OCPHamiltonianFunction{_CTM_NonAuton,Traits.Fixed,DF,LF})(
     t, x, p
-) where {DF,LF}
+) where {DF<:Function,LF<:Union{Function,Nothing}}
     return _ocp_H(h, t, x, p, nothing)
 end
 function (h::OCPHamiltonianFunction{_CTM_Auton,Traits.NonFixed,DF,LF})(
     x, p, v
-) where {DF,LF}
+) where {DF<:Function,LF<:Union{Function,Nothing}}
     return _ocp_H(h, 0.0, x, p, v)
 end
 function (h::OCPHamiltonianFunction{_CTM_NonAuton,Traits.NonFixed,DF,LF})(
     t, x, p, v
-) where {DF,LF}
+) where {DF<:Function,LF<:Union{Function,Nothing}}
     return _ocp_H(h, t, x, p, v)
 end
 
@@ -162,7 +169,12 @@ Internal callable representing the pseudo-Hamiltonian of an optimal control prob
 See also: [`CTFlows.Flows.OCPHamiltonianFunction`](@ref), `CTFlows.Flows._ocp_pseudo_hamiltonian`,
 [`CTBase.Data.PseudoHamiltonian`](@extref).
 """
-struct OCPPseudoHamiltonianFunction{TD,VD,DF,LF} <: Function
+struct OCPPseudoHamiltonianFunction{
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    DF<:Function,
+    LF<:Union{Function,Nothing},
+} <: Function
     dynamics!::DF
     lagrange::LF
     sp0::Float64
@@ -196,22 +208,22 @@ end
 
 function (h::OCPPseudoHamiltonianFunction{_CTM_Auton,Traits.Fixed,DF,LF})(
     x, p, u
-) where {DF,LF}
+) where {DF<:Function,LF<:Union{Function,Nothing}}
     return _ocp_pseudo_H(h, 0.0, x, p, u, nothing)
 end
 function (h::OCPPseudoHamiltonianFunction{_CTM_NonAuton,Traits.Fixed,DF,LF})(
     t, x, p, u
-) where {DF,LF}
+) where {DF<:Function,LF<:Union{Function,Nothing}}
     return _ocp_pseudo_H(h, t, x, p, u, nothing)
 end
 function (h::OCPPseudoHamiltonianFunction{_CTM_Auton,Traits.NonFixed,DF,LF})(
     x, p, u, v
-) where {DF,LF}
+) where {DF<:Function,LF<:Union{Function,Nothing}}
     return _ocp_pseudo_H(h, 0.0, x, p, u, v)
 end
 function (h::OCPPseudoHamiltonianFunction{_CTM_NonAuton,Traits.NonFixed,DF,LF})(
     t, x, p, u, v
-) where {DF,LF}
+) where {DF<:Function,LF<:Union{Function,Nothing}}
     return _ocp_pseudo_H(h, t, x, p, u, v)
 end
 
@@ -444,7 +456,13 @@ dispatch exactly as for [`OCPPseudoHamiltonianFunction`](@ref).
 
 See also: [`OCPPseudoHamiltonianFunction`](@ref), `CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`.
 """
-struct ConstrainedPseudoHamiltonianFunction{TD,VD,H,G,M} <: Function
+struct ConstrainedPseudoHamiltonianFunction{
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    H<:OCPPseudoHamiltonianFunction,
+    G,
+    M,
+} <: Function
     h̃::H
     g::G
     μ::M
@@ -538,7 +556,14 @@ open-loop or closed-loop control law) to build the state flow of the closed-loop
 
 See also: [`CTBase.Data.ControlledVectorField`](@extref), `_ocp_controlled_vector_field`.
 """
-struct OCPControlledVectorFieldFunction{TD,VD,DF,CX,CU,CV} <: Function
+struct OCPControlledVectorFieldFunction{
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    DF<:Function,
+    CX<:Union{typeof(only),typeof(identity)},
+    CU<:Union{typeof(only),typeof(identity)},
+    CV<:Union{typeof(only),typeof(identity)},
+} <: Function
     dynamics!::DF
     n::Int
     cx::CX
@@ -608,22 +633,24 @@ Call operators for [`CTFlows.Flows.OCPControlledVectorFieldFunction`](@ref), dis
 
 See also: [`CTFlows.Flows.OCPControlledVectorFieldFunction`](@ref), [`CTFlows.Flows._ocp_controlled_vf`](@ref).
 """
-function (h::OCPControlledVectorFieldFunction{_CTM_Auton,Traits.Fixed,DF})(x, u) where {DF}
+function (h::OCPControlledVectorFieldFunction{_CTM_Auton,Traits.Fixed,DF})(
+    x, u
+) where {DF<:Function}
     return _ocp_controlled_vf(h, 0.0, x, u, nothing)
 end
 function (h::OCPControlledVectorFieldFunction{_CTM_NonAuton,Traits.Fixed,DF})(
     t, x, u
-) where {DF}
+) where {DF<:Function}
     return _ocp_controlled_vf(h, t, x, u, nothing)
 end
 function (h::OCPControlledVectorFieldFunction{_CTM_Auton,Traits.NonFixed,DF})(
     x, u, v
-) where {DF}
+) where {DF<:Function}
     return _ocp_controlled_vf(h, 0.0, x, u, v)
 end
 function (h::OCPControlledVectorFieldFunction{_CTM_NonAuton,Traits.NonFixed,DF})(
     t, x, u, v
-) where {DF}
+) where {DF<:Function}
     return _ocp_controlled_vf(h, t, x, u, v)
 end
 
