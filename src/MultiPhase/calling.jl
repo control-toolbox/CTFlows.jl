@@ -776,7 +776,7 @@ See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Configs.St
 """
 function (mpf::MultiPhaseFlow{TD,VD,Traits.StateDynamics})(
     t0::Real, x0, tf::Real; variable=Flows.__variable(), unsafe=Flows.__unsafe()
-) where {TD,VD}
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     config = Configs.StateEndPointConfig(t0, x0, tf)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
@@ -811,7 +811,7 @@ See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Configs.St
 """
 function (mpf::MultiPhaseFlow{TD,VD,Traits.StateDynamics})(
     tspan::Tuple{Real,Real}, x0; variable=Flows.__variable(), unsafe=Flows.__unsafe()
-) where {TD,VD}
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     config = Configs.StateTrajectoryConfig(tspan, x0)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
@@ -847,7 +847,7 @@ See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Conf
 """
 function (mpf::MultiPhaseFlow{TD,VD,Traits.HamiltonianDynamics})(
     t0::Real, x0, p0, tf::Real; variable=Flows.__variable(), unsafe=Flows.__unsafe()
-) where {TD,VD}
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     config = Configs.HamiltonianEndPointConfig(t0, x0, p0, tf)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
@@ -883,7 +883,7 @@ See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Conf
 """
 function (mpf::MultiPhaseFlow{TD,VD,Traits.HamiltonianDynamics})(
     tspan::Tuple{Real,Real}, x0, p0; variable=Flows.__variable(), unsafe=Flows.__unsafe()
-) where {TD,VD}
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     config = Configs.HamiltonianTrajectoryConfig(tspan, x0, p0)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end

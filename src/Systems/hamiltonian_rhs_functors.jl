@@ -105,7 +105,12 @@ gradient in-place, following the canonical Hamiltonian equations:
 
 See also: [`CTFlows.Systems.HamOoPRHS`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
 """
-struct HamIpRHS{H<:Data.AbstractHamiltonian,B,CX,CP} <: AbstractIPHamRHS
+struct HamIpRHS{
+    H<:Data.AbstractHamiltonian,
+    B<:Differentiation.AbstractADBackend,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+} <: AbstractIPHamRHS
     h::H
     backend::B
     N::Int
@@ -159,7 +164,12 @@ gradient out-of-place, following the canonical Hamiltonian equations:
 
 See also: [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
 """
-struct HamOoPRHS{H<:Data.AbstractHamiltonian,B,CX,CP} <: AbstractOoPHamRHS
+struct HamOoPRHS{
+    H<:Data.AbstractHamiltonian,
+    B<:Differentiation.AbstractADBackend,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+} <: AbstractOoPHamRHS
     h::H
     backend::B
     N::Int
@@ -270,7 +280,12 @@ The state vector is augmented as `[x; p; v]` where `v` is the variable costate.
 
 See also: [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamOoPRHS`](@ref).
 """
-struct HamIpAugRHS{H<:Data.AbstractHamiltonian,B,CX,CP} <: AbstractIPHamRHS
+struct HamIpAugRHS{
+    H<:Data.AbstractHamiltonian,
+    B<:Differentiation.AbstractADBackend,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+} <: AbstractIPHamRHS
     h::H
     backend::B
     n_x::Int

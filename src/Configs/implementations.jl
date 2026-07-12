@@ -133,7 +133,7 @@ maintain consistent vector-based ODE problem construction.
 
 See also: [`CTFlows.Configs.AbstractStateConfig`](@ref), [`CTFlows.Configs.initial_condition`](@ref).
 """
-function initial_condition(c::AbstractStateConfig{<:Number,M}) where {M}
+function initial_condition(c::AbstractStateConfig{<:Number,M}) where {M<:Traits.AbstractModeTrait}
     return [c.x0]
 end
 

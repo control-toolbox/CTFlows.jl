@@ -63,7 +63,9 @@ true
 
 See also: [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
 """
-const AbstractStateSystem{TD,VD} = AbstractSystem{TD,VD,Traits.StateDynamics}
+const AbstractStateSystem{
+    TD<:Traits.TimeDependence,VD<:Traits.VariableDependence
+} = AbstractSystem{TD,VD,Traits.StateDynamics}
 
 """
 $(TYPEDEF)
@@ -88,7 +90,9 @@ true
 
 See also: [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Systems.AbstractStateSystem`](@ref).
 """
-const AbstractHamiltonianSystem{TD,VD} = AbstractSystem{TD,VD,Traits.HamiltonianDynamics}
+const AbstractHamiltonianSystem{
+    TD<:Traits.TimeDependence,VD<:Traits.VariableDependence
+} = AbstractSystem{TD,VD,Traits.HamiltonianDynamics}
 
 """
 $(TYPEDSIGNATURES)

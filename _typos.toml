@@ -6,6 +6,7 @@ extend-ignore-re = [
     "GODD",
     "_godd",
     "_ANF",
+    "mis-dispatching",
 ]
 
 [files]

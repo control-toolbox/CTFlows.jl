@@ -42,7 +42,9 @@ $(TYPEDSIGNATURES)
 Construct a [`CTFlows.Flows.ControlledFlow`](@ref) from an inner state
 [`CTFlows.Flows.Flow`](@ref), an optional OCP (for the objective), and a control law.
 """
-function ControlledFlow(flow::Flow{TD,VD,Traits.StateDynamics}, ocp, law) where {TD,VD}
+function ControlledFlow(
+    flow::Flow{TD,VD,Traits.StateDynamics}, ocp, law
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     return ControlledFlow{TD,VD,typeof(flow),typeof(ocp),typeof(law)}(flow, ocp, law)
 end
 

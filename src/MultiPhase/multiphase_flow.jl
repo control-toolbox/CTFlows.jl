@@ -47,9 +47,13 @@ Alias for state multi-phase flows: `MultiPhaseFlow{TD,VD,StateDynamics,FS,ST,J}`
 
 See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@ref), [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref).
 """
-const MultiPhaseStateFlow{TD,VD,FS,ST,J} = MultiPhaseFlow{
-    TD,VD,Traits.StateDynamics,FS,ST,J
-}
+const MultiPhaseStateFlow{
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    FS<:Tuple,
+    ST<:Vector{<:Real},
+    J<:Vector{<:Any},
+} = MultiPhaseFlow{TD,VD,Traits.StateDynamics,FS,ST,J}
 
 """
 $(TYPEDEF)
@@ -58,9 +62,13 @@ Alias for Hamiltonian multi-phase flows: `MultiPhaseFlow{TD,VD,HamiltonianDynami
 
 See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@ref), [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref).
 """
-const MultiPhaseHamiltonianFlow{TD,VD,FS,ST,J} = MultiPhaseFlow{
-    TD,VD,Traits.HamiltonianDynamics,FS,ST,J
-}
+const MultiPhaseHamiltonianFlow{
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    FS<:Tuple,
+    ST<:Vector{<:Real},
+    J<:Vector{<:Any},
+} = MultiPhaseFlow{TD,VD,Traits.HamiltonianDynamics,FS,ST,J}
 
 function MultiPhaseStateFlow(
     flows::FS, switching_times::ST, jumps::J

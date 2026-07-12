@@ -54,14 +54,28 @@ by allocating the result into the pre-allocated `du` buffer.
 # Call signature
 `(f::IPHVFOoPRHS)(du, u, λ, t) -> nothing`
 """
-struct IPHVFOoPRHS{F,TD,VD,CX,CP} <: AbstractIPHVFRHS
+struct IPHVFOoPRHS{
+    F<:Function,
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+} <: AbstractIPHVFRHS
     hvf::Data.HamiltonianVectorField{F,TD,VD,Traits.OutOfPlace}
     N::Int
     cx::CX
     cp::CP
 end
 
-function (f::IPHVFOoPRHS{F,TD,VD,CX,CP})(du, u, λ, t) where {F,TD,VD,CX,CP}
+function (f::IPHVFOoPRHS{F,TD,VD,CX,CP})(
+    du, u, λ, t
+) where {
+    F<:Function,
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+}
     x, p = _ham_split(u, f.N)
     dx, dp = f.hvf(t, f.cx(x), f.cp(p), variable(λ); variable_costate=false)
     _ham_assign!(du, dx, dp, f.N)
@@ -85,14 +99,28 @@ by directly calling the function with pre-allocated buffers.
 # Call signature
 `(f::IPHVFIpRHS)(du, u, λ, t) -> nothing`
 """
-struct IPHVFIpRHS{F,TD,VD,CX,CP} <: AbstractIPHVFRHS
+struct IPHVFIpRHS{
+    F<:Function,
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+} <: AbstractIPHVFRHS
     hvf::Data.HamiltonianVectorField{F,TD,VD,Traits.InPlace}
     N::Int
     cx::CX
     cp::CP
 end
 
-function (f::IPHVFIpRHS{F,TD,VD,CX,CP})(du, u, λ, t) where {F,TD,VD,CX,CP}
+function (f::IPHVFIpRHS{F,TD,VD,CX,CP})(
+    du, u, λ, t
+) where {
+    F<:Function,
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+}
     x, p = _ham_split(u, f.N)
     dx, dp = _ham_split(du, f.N)
     f.hvf(dx, dp, t, f.cx(x), f.cp(p), variable(λ); variable_costate=false)
@@ -116,14 +144,28 @@ by directly calling the function and concatenating the results.
 # Call signature
 `(f::OoPHVFOoPRHS)(u, λ, t) -> du`
 """
-struct OoPHVFOoPRHS{F,TD,VD,CX,CP} <: AbstractOoPHVFRHS
+struct OoPHVFOoPRHS{
+    F<:Function,
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+} <: AbstractOoPHVFRHS
     hvf::Data.HamiltonianVectorField{F,TD,VD,Traits.OutOfPlace}
     N::Int
     cx::CX
     cp::CP
 end
 
-function (f::OoPHVFOoPRHS{F,TD,VD,CX,CP})(u, λ, t) where {F,TD,VD,CX,CP}
+function (f::OoPHVFOoPRHS{F,TD,VD,CX,CP})(
+    u, λ, t
+) where {
+    F<:Function,
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+}
     x, p = _ham_split(u, f.N)
     dx, dp = f.hvf(t, f.cx(x), f.cp(p), variable(λ); variable_costate=false)
     return vcat(dx, dp)
@@ -146,14 +188,28 @@ by allocating temporary buffers on each call.
 # Call signature
 `(f::OoPHVFIpRHS)(u, λ, t) -> du`
 """
-struct OoPHVFIpRHS{F,TD,VD,CX,CP} <: AbstractOoPHVFRHS
+struct OoPHVFIpRHS{
+    F<:Function,
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+} <: AbstractOoPHVFRHS
     hvf::Data.HamiltonianVectorField{F,TD,VD,Traits.InPlace}
     N::Int
     cx::CX
     cp::CP
 end
 
-function (f::OoPHVFIpRHS{F,TD,VD,CX,CP})(u, λ, t) where {F,TD,VD,CX,CP}
+function (f::OoPHVFIpRHS{F,TD,VD,CX,CP})(
+    u, λ, t
+) where {
+    F<:Function,
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+}
     x, p = _ham_split(u, f.N)
     dx, dp = similar(x), similar(p)
     f.hvf(dx, dp, t, f.cx(x), f.cp(p), variable(λ); variable_costate=false)
@@ -177,14 +233,28 @@ that converts the result to match the input type (e.g., Vector → SVector).
 # Call signature
 `(f::OoPHVFIpFinalizeRHS)(u, λ, t) -> du`
 """
-struct OoPHVFIpFinalizeRHS{F,TD,VD,CX,CP} <: AbstractOoPHVFRHS
+struct OoPHVFIpFinalizeRHS{
+    F<:Function,
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+} <: AbstractOoPHVFRHS
     hvf::Data.HamiltonianVectorField{F,TD,VD,Traits.InPlace}
     N::Int
     cx::CX
     cp::CP
 end
 
-function (f::OoPHVFIpFinalizeRHS{F,TD,VD,CX,CP})(u, λ, t) where {F,TD,VD,CX,CP}
+function (f::OoPHVFIpFinalizeRHS{F,TD,VD,CX,CP})(
+    u, λ, t
+) where {
+    F<:Function,
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+}
     x, p = _ham_split(u, f.N)
     dx, dp = similar(x), similar(p)
     f.hvf(dx, dp, t, f.cx(x), f.cp(p), variable(λ); variable_costate=false)
@@ -211,7 +281,13 @@ for the augmented system (state + costate + variable costate).
 # Call signature
 `(f::IPHVFOoPAugRHS)(du, u, λ, t) -> nothing`
 """
-struct IPHVFOoPAugRHS{F,TD,VD,CX,CP} <: AbstractIPHVFRHS
+struct IPHVFOoPAugRHS{
+    F<:Function,
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+} <: AbstractIPHVFRHS
     hvf::Data.HamiltonianVectorField{F,TD,VD,Traits.OutOfPlace}
     n_x::Int
     n_v::Int
@@ -219,7 +295,15 @@ struct IPHVFOoPAugRHS{F,TD,VD,CX,CP} <: AbstractIPHVFRHS
     cp::CP
 end
 
-function (f::IPHVFOoPAugRHS{F,TD,VD,CX,CP})(du, u, λ, t) where {F,TD,VD,CX,CP}
+function (f::IPHVFOoPAugRHS{F,TD,VD,CX,CP})(
+    du, u, λ, t
+) where {
+    F<:Function,
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+}
     v = variable(λ)
     x, p, _ = _aug_split(u, f.n_x, f.n_v)
     dx, dp, dpv = f.hvf(t, f.cx(x), f.cp(p), v; variable_costate=true)
@@ -243,7 +327,13 @@ for the augmented system (state + costate + variable costate).
 # Call signature
 `(f::IPHVFIpAugRHS)(du, u, λ, t) -> nothing`
 """
-struct IPHVFIpAugRHS{F,TD,VD,CX,CP} <: AbstractIPHVFRHS
+struct IPHVFIpAugRHS{
+    F<:Function,
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+} <: AbstractIPHVFRHS
     hvf::Data.HamiltonianVectorField{F,TD,VD,Traits.InPlace}
     n_x::Int
     n_v::Int
@@ -251,7 +341,15 @@ struct IPHVFIpAugRHS{F,TD,VD,CX,CP} <: AbstractIPHVFRHS
     cp::CP
 end
 
-function (f::IPHVFIpAugRHS{F,TD,VD,CX,CP})(du, u, λ, t) where {F,TD,VD,CX,CP}
+function (f::IPHVFIpAugRHS{F,TD,VD,CX,CP})(
+    du, u, λ, t
+) where {
+    F<:Function,
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+}
     v = variable(λ)
     x, p, _ = _aug_split(u, f.n_x, f.n_v)
     dx, dp, _ = _aug_split(du, f.n_x, f.n_v)

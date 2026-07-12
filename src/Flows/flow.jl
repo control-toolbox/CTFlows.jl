@@ -50,7 +50,12 @@ Alias for state flows: `Flow{TD, VD, StateDynamics, S, I}`.
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref).
 """
-const StateFlow{TD,VD,S,I} = Flow{TD,VD,Traits.StateDynamics,S,I}
+const StateFlow{
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    S<:Systems.AbstractSystem{TD,VD,Traits.StateDynamics},
+    I<:Integrators.AbstractIntegrator,
+} = Flow{TD,VD,Traits.StateDynamics,S,I}
 
 function StateFlow(
     system::S, integrator::I
@@ -65,7 +70,12 @@ Alias for Hamiltonian flows: `Flow{TD, VD, HamiltonianDynamics, S, I}`.
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.StateFlow`](@ref).
 """
-const HamiltonianFlow{TD,VD,S,I} = Flow{TD,VD,Traits.HamiltonianDynamics,S,I}
+const HamiltonianFlow{
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    S<:Systems.AbstractSystem{TD,VD,Traits.HamiltonianDynamics},
+    I<:Integrators.AbstractIntegrator,
+} = Flow{TD,VD,Traits.HamiltonianDynamics,S,I}
 
 function HamiltonianFlow(
     system::S, integrator::I
@@ -95,7 +105,15 @@ Return the system associated with a `Flow`.
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.integrator`](@ref).
 """
-function system(f::Flow{TD,VD,D,S,I})::S where {TD,VD,D,S,I}
+function system(
+    f::Flow{TD,VD,D,S,I}
+)::S where {
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    D<:Traits.AbstractDynamicsTrait,
+    S<:Systems.AbstractSystem{TD,VD,D},
+    I<:Integrators.AbstractIntegrator,
+}
     return f.system
 end
 
@@ -106,7 +124,15 @@ Return the integrator associated with a `Flow`.
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.system`](@ref).
 """
-function integrator(f::Flow{TD,VD,D,S,I})::I where {TD,VD,D,S,I}
+function integrator(
+    f::Flow{TD,VD,D,S,I}
+)::I where {
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    D<:Traits.AbstractDynamicsTrait,
+    S<:Systems.AbstractSystem{TD,VD,D},
+    I<:Integrators.AbstractIntegrator,
+}
     return f.integrator
 end
 
@@ -126,10 +152,10 @@ See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.Hamiltonian
 """
 function Systems.hamiltonian_vector_field(
     flow::HamiltonianFlow{
-        TD,VD,<:Systems.HamiltonianSystem,<:Integrators.AbstractIntegrator
+        TD,VD,<:Systems.HamiltonianSystem{TD,VD},<:Integrators.AbstractIntegrator
     };
     inplace::Bool=Systems.__hvf_inplace(),
-) where {TD,VD}
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     return Systems.hamiltonian_vector_field(flow.system; inplace=inplace)
 end
 
@@ -145,8 +171,9 @@ See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.Hamiltonian
 """
 function Systems.hamiltonian_vector_field(
     flow::HamiltonianFlow{
-        TD,VD,<:Systems.HamiltonianVectorFieldSystem,<:Integrators.AbstractIntegrator
+        TD,VD,<:Systems.HamiltonianVectorFieldSystem{<:Function,TD,VD},
+        <:Integrators.AbstractIntegrator,
     },
-) where {TD,VD}
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     return Systems.hamiltonian_vector_field(flow.system)
 end

@@ -64,23 +64,10 @@ end
 
 Traits.ad_trait(::ConstrainedPseudoHamiltonianSystem) = Traits.WithAD
 
-# =============================================================================
-# Constructor
-# =============================================================================
-
-function ConstrainedPseudoHamiltonianSystem(
-    h̃::Data.PseudoHamiltonian{<:Function,TD,VD},
-    law::Data.ControlLaw{<:Function,Traits.DynClosedLoopFeedback},
-    g,
-    μ,
-    backend::Differentiation.AbstractADBackend,
-) where {TD,VD}
-    return ConstrainedPseudoHamiltonianSystem{
-        TD,VD,typeof(h̃),typeof(law),typeof(g),typeof(μ),typeof(backend)
-    }(
-        h̃, law, g, μ, backend
-    )
-end
+# Note: no explicit outer constructor — Julia's auto-generated default outer
+# constructor already matches this struct's own bounds exactly (TD, VD are
+# inferable from `h̃`'s bound `PH<:Data.PseudoHamiltonian{<:Function,TD,VD}`;
+# `g`, `μ` are unbounded fields, matching the struct's own `G`, `M`).
 
 # =============================================================================
 # Getters
@@ -230,7 +217,14 @@ See also: [`CTBase.Traits.SupportsVariableCostate`](@extref).
 """
 function Traits.variable_costate_trait(
     ::ConstrainedPseudoHamiltonianSystem{TD,Traits.NonFixed,PH,L,G,M,B}
-) where {TD,PH,L,G,M,B}
+) where {
+    TD<:Traits.TimeDependence,
+    PH<:Data.PseudoHamiltonian{<:Function,TD,Traits.NonFixed},
+    L<:Data.ControlLaw{<:Function,Traits.DynClosedLoopFeedback},
+    G,
+    M,
+    B<:Differentiation.AbstractADBackend,
+}
     return Traits.SupportsVariableCostate
 end
 

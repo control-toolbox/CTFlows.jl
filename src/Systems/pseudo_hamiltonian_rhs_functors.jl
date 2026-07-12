@@ -65,8 +65,13 @@ In-place RHS functor for a `PseudoHamiltonianSystem`. Evaluates the feedback con
 
 See also: [`CTFlows.Systems.PseudoHamOoPRHS`](@ref), [`CTFlows.Systems.PseudoHamIpAugRHS`](@ref).
 """
-struct PseudoHamIpRHS{PH<:Data.PseudoHamiltonian,L<:Data.ControlLaw,B,CX,CP} <:
-       AbstractIPPseudoHamRHS
+struct PseudoHamIpRHS{
+    PH<:Data.PseudoHamiltonian,
+    L<:Data.ControlLaw,
+    B<:Differentiation.AbstractADBackend,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+} <: AbstractIPPseudoHamRHS
     h̃::PH
     law::L
     backend::B
@@ -101,8 +106,13 @@ Out-of-place RHS functor for a `PseudoHamiltonianSystem`; see
 
 See also: [`CTFlows.Systems.PseudoHamIpRHS`](@ref).
 """
-struct PseudoHamOoPRHS{PH<:Data.PseudoHamiltonian,L<:Data.ControlLaw,B,CX,CP} <:
-       AbstractOoPPseudoHamRHS
+struct PseudoHamOoPRHS{
+    PH<:Data.PseudoHamiltonian,
+    L<:Data.ControlLaw,
+    B<:Differentiation.AbstractADBackend,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+} <: AbstractOoPPseudoHamRHS
     h̃::PH
     law::L
     backend::B
@@ -145,8 +155,13 @@ state is `[x; p; pv]`.
 
 See also: [`CTFlows.Systems.PseudoHamIpRHS`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
 """
-struct PseudoHamIpAugRHS{PH<:Data.PseudoHamiltonian,L<:Data.ControlLaw,B,CX,CP} <:
-       AbstractIPPseudoHamRHS
+struct PseudoHamIpAugRHS{
+    PH<:Data.PseudoHamiltonian,
+    L<:Data.ControlLaw,
+    B<:Differentiation.AbstractADBackend,
+    CX<:Union{typeof(only),typeof(identity)},
+    CP<:Union{typeof(only),typeof(identity)},
+} <: AbstractIPPseudoHamRHS
     h̃::PH
     law::L
     backend::B

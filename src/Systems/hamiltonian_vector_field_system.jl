@@ -49,15 +49,9 @@ end
 
 Traits.ad_trait(::HamiltonianVectorFieldSystem) = Traits.WithoutAD
 
-# =============================================================================
-# Constructors
-# =============================================================================
-
-function HamiltonianVectorFieldSystem(
-    hvf::Data.HamiltonianVectorField{F,TD,VD,MD}
-) where {F,TD,VD,MD}
-    return HamiltonianVectorFieldSystem{F,TD,VD,MD}(hvf)
-end
+# Note: no explicit outer constructor — Julia's auto-generated default outer
+# constructor already matches this struct's own bounds exactly (all 4 type
+# parameters are inferable from the `hvf` field's type).
 
 # =============================================================================
 # Internal helpers for shape inference and coercion
@@ -255,7 +249,7 @@ See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
 function get_ip_rhs(
     sys::HamiltonianVectorFieldSystem{F,TD,VD,Traits.OutOfPlace},
     config::Configs.AbstractHamiltonianConfig,
-) where {F,TD,VD}
+) where {F<:Function,TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
     return IPHVFOoPRHS(sys.hvf, _state_dim(x0), _coerce_state(x0), _coerce_state(p0))
@@ -280,7 +274,7 @@ See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
 function get_ip_rhs(
     sys::HamiltonianVectorFieldSystem{F,TD,VD,Traits.InPlace},
     config::Configs.AbstractHamiltonianConfig,
-) where {F,TD,VD}
+) where {F<:Function,TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
     return IPHVFIpRHS(sys.hvf, _state_dim(x0), _coerce_state(x0), _coerce_state(p0))
@@ -305,7 +299,7 @@ See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 function get_oop_rhs(
     sys::HamiltonianVectorFieldSystem{F,TD,VD,Traits.OutOfPlace},
     config::Configs.AbstractHamiltonianConfig,
-) where {F,TD,VD}
+) where {F<:Function,TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
     return OoPHVFOoPRHS(sys.hvf, _state_dim(x0), _coerce_state(x0), _coerce_state(p0))
@@ -334,7 +328,7 @@ See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 function get_oop_rhs(
     sys::HamiltonianVectorFieldSystem{F,TD,VD,Traits.InPlace},
     config::Configs.AbstractHamiltonianConfig,
-) where {F,TD,VD}
+) where {F<:Function,TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
     if !ismutable(x0)
@@ -365,7 +359,7 @@ See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](
 function get_ip_rhs_augmented(
     sys::HamiltonianVectorFieldSystem{F,TD,VD,Traits.OutOfPlace},
     config::Configs.AbstractAugmentedHamiltonianConfig,
-) where {F,TD,VD}
+) where {F<:Function,TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
     n_x = _state_dim(x0)
@@ -393,7 +387,7 @@ See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](
 function get_ip_rhs_augmented(
     sys::HamiltonianVectorFieldSystem{F,TD,VD,Traits.InPlace},
     config::Configs.AbstractAugmentedHamiltonianConfig,
-) where {F,TD,VD}
+) where {F<:Function,TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
     n_x = _state_dim(x0)
@@ -409,7 +403,7 @@ end
 # TODO: docstring
 function Traits.variable_costate_trait(
     ::HamiltonianVectorFieldSystem{F,TD,Traits.NonFixed,MD}
-) where {F,TD,MD}
+) where {F<:Function,TD<:Traits.TimeDependence,MD<:Traits.AbstractMutabilityTrait}
     return Traits.SupportsVariableCostate
 end
 
@@ -430,7 +424,14 @@ Shows the type name and the wrapped HamiltonianVectorField with its traits.
 
 See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
 """
-function Base.show(io::IO, sys::HamiltonianVectorFieldSystem{F,TD,VD,MD}) where {F,TD,VD,MD}
+function Base.show(
+    io::IO, sys::HamiltonianVectorFieldSystem{F,TD,VD,MD}
+) where {
+    F<:Function,
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    MD<:Traits.AbstractMutabilityTrait,
+}
     fmt = Display.format_codes(io)
     wraps = "HamiltonianVectorField: $(Data._td_label(TD)), $(Data._vd_label(VD)), $(Data._md_label(MD))"
     Display.print_header(io, "HamiltonianVectorFieldSystem"; fmt=fmt)

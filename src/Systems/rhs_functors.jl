@@ -78,7 +78,8 @@ by directly calling the VectorField.
 # Call signature
 `(f::IPVFIpRHS)(du, u, λ, t) -> nothing`
 """
-struct IPVFIpRHS{F,TD,VD} <: AbstractIPRHS
+struct IPVFIpRHS{F<:Function,TD<:Traits.TimeDependence,VD<:Traits.VariableDependence} <:
+       AbstractIPRHS
     vf::Data.VectorField{F,TD,VD,Traits.InPlace}
 end
 
@@ -123,7 +124,8 @@ by allocating a temporary buffer on each call.
 # Call signature
 `(f::OoPVFIpRHS)(u, λ, t) -> du`
 """
-struct OoPVFIpRHS{F,TD,VD} <: AbstractOoPRHS
+struct OoPVFIpRHS{F<:Function,TD<:Traits.TimeDependence,VD<:Traits.VariableDependence} <:
+       AbstractOoPRHS
     vf::Data.VectorField{F,TD,VD,Traits.InPlace}
 end
 
@@ -147,7 +149,9 @@ that converts the result to match the input type (e.g., Vector → SVector).
 # Call signature
 `(f::OoPVFIpFinalizeRHS)(u, λ, t) -> du`
 """
-struct OoPVFIpFinalizeRHS{F,TD,VD} <: AbstractOoPRHS
+struct OoPVFIpFinalizeRHS{
+    F<:Function,TD<:Traits.TimeDependence,VD<:Traits.VariableDependence
+} <: AbstractOoPRHS
     vf::Data.VectorField{F,TD,VD,Traits.InPlace}
 end
 

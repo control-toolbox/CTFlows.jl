@@ -202,7 +202,7 @@ function hamiltonian_vector_field(
     h::Data.Hamiltonian{F,TD,VD};
     ad_backend=Differentiation.__ad_backend(),
     inplace::Bool=__hvf_inplace(),
-) where {F,TD,VD}
+) where {F<:Function,TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     # If ad_backend is an AbstractADBackend instance, use it directly; otherwise wrap it
     backend = if ad_backend isa Differentiation.AbstractADBackend
         ad_backend
