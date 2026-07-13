@@ -250,7 +250,9 @@ function test_ocp_control()
             # non-autonomous (t,x,p): inherits is_autonomous=false
             un = (t, x, p) -> p * (1 + tan(t))
             gconv = Flows.Flow(OCP_NA, un; _opts()...)
-            gexpl = Flows.Flow(OCP_NA, Data.DynClosedLoop(un; is_autonomous=false); _opts()...)
+            gexpl = Flows.Flow(
+                OCP_NA, Data.DynClosedLoop(un; is_autonomous=false); _opts()...
+            )
             xc2, pc2 = gconv(0.0, 0.0, 1.0, π / 4)
             xe2, pe2 = gexpl(0.0, 0.0, 1.0, π / 4)
             Test.@test xc2 ≈ xe2 atol = 1e-10
@@ -259,7 +261,9 @@ function test_ocp_control()
             # variable (x,p,v): inherits is_variable=true on the NonFixed OCP_VAR
             uv = (x, p, v) -> p
             hconv = Flows.Flow(OCP_VAR, uv; _opts()...)
-            hexpl = Flows.Flow(OCP_VAR, Data.DynClosedLoop(uv; is_variable=true); _opts()...)
+            hexpl = Flows.Flow(
+                OCP_VAR, Data.DynClosedLoop(uv; is_variable=true); _opts()...
+            )
             xc3, pc3 = hconv(0.0, 1.0, 0.5, 1.0; variable=0.5)
             xe3, pe3 = hexpl(0.0, 1.0, 0.5, 1.0; variable=0.5)
             Test.@test xc3 ≈ xe3 atol = 1e-10
@@ -599,8 +603,8 @@ function test_ocp_control()
 
             # (2) pseudo-Hamiltonian H̃_c(t,x,p,u,v) = p(-x+u) - 0.5u² + c x
             H̃ = Systems.pseudo_hamiltonian(f)
-            Test.@test H̃(0.0, x0, p0, u0, Float64[]) ≈
-                p0 * (-x0 + u0) - 0.5 * u0^2 + c * x0 atol = 1e-10
+            Test.@test H̃(0.0, x0, p0, u0, Float64[]) ≈ p0 * (-x0 + u0) - 0.5 * u0^2 + c * x0 atol =
+                1e-10
             # the +μ·g term is exactly c·x: difference from the unconstrained H̃
             fu = Flows.Flow(OCP_LQR, law; _opts()...)
             H̃u = Systems.pseudo_hamiltonian(fu)
@@ -789,7 +793,12 @@ function test_ocp_control()
             μ = Data.Multiplier((x, p) -> c)
             law = Data.DynClosedLoop((x, p, v) -> p; is_variable=true)
             ft = Flows.Flow(
-                OCP_VAR, law; constraint=g, multiplier=μ, hamiltonian_type=:total, _opts()...
+                OCP_VAR,
+                law;
+                constraint=g,
+                multiplier=μ,
+                hamiltonian_type=:total,
+                _opts()...,
             )
             t0, tf, x0, p0, v = 0.0, 1.0, 1.0, 0.5, 0.5
             _, _, pvt = ft(t0, x0, p0, tf; variable=v, variable_costate=true)
@@ -904,12 +913,20 @@ function test_ocp_control()
             μ2(x, p) = 0.7
             for ht in (:total, :partial)
                 f_tuple = Flows.Flow(
-                    OCP_DI, law; constraint=(g1, g2), multiplier=(μ1, μ2),
-                    hamiltonian_type=ht, _opts()...,
+                    OCP_DI,
+                    law;
+                    constraint=(g1, g2),
+                    multiplier=(μ1, μ2),
+                    hamiltonian_type=ht,
+                    _opts()...,
                 )
                 f_vec = Flows.Flow(
-                    OCP_DI, law; constraint=(x, u) -> [x[1], x[2]],
-                    multiplier=(x, p) -> [0.3, 0.7], hamiltonian_type=ht, _opts()...,
+                    OCP_DI,
+                    law;
+                    constraint=(x, u) -> [x[1], x[2]],
+                    multiplier=(x, p) -> [0.3, 0.7],
+                    hamiltonian_type=ht,
+                    _opts()...,
                 )
                 xt, pt = f_tuple(t0, x0, p0, tf)
                 xv, pv = f_vec(t0, x0, p0, tf)
@@ -922,12 +939,19 @@ function test_ocp_control()
             law = Data.DynClosedLoop((x, p) -> p[2])
             # matched-length requirement: 2 constraints, 1 multiplier
             Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
-                OCP_DI, law; constraint=((x, u) -> x[1], (x, u) -> x[2]),
-                multiplier=((x, p) -> 0.3,), _opts()...,
+                OCP_DI,
+                law;
+                constraint=((x, u) -> x[1], (x, u) -> x[2]),
+                multiplier=((x, p) -> 0.3,),
+                _opts()...,
             )
             # both-must-be-tuples: tuple constraint, scalar multiplier
             Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
-                OCP_DI, law; constraint=((x, u) -> x[1],), multiplier=(x, p) -> 0.3, _opts()...,
+                OCP_DI,
+                law;
+                constraint=((x, u) -> x[1],),
+                multiplier=(x, p) -> 0.3,
+                _opts()...,
             )
         end
 

@@ -38,11 +38,10 @@ function _build_di(a)
     CTModels.Building.time!(pre; t0=_T0, tf=_TF)
     CTModels.Building.state!(pre, 2)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= [x[2], u[1]]; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r.=[x[2], u[1]]; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u[1]^2)
     CTModels.Building.constraint!(
-        pre, :path;
-        f=(r, t, x, u, v) -> (r[1] = x[1]; nothing), lb=[-Inf], ub=[a], label=:q,
+        pre, :path; f=(r, t, x, u, v) -> (r[1]=x[1]; nothing), lb=[-Inf], ub=[a], label=:q
     )
     return CTModels.Building.build(pre)
 end
@@ -62,11 +61,24 @@ function test_double_integrator_state()
         ξ_sol = [p0_sol..., t1_sol, t2_sol, Δpq_sol, Δpq_sol]
 
         function _build_flows(ht)
-            fs = Flows.Flow(ocp, (x, p) -> p[2]; hamiltonian_type=ht,
-                            alg=Tsit5(), reltol=1e-12, abstol=1e-12)
-            fc = Flows.Flow(ocp, (x, p) -> 0.0;
-                            constraint=(x, u) -> a - x[1], multiplier=(x, p) -> 0.0,
-                            hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12)
+            fs = Flows.Flow(
+                ocp,
+                (x, p) -> p[2];
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
+            )
+            fc = Flows.Flow(
+                ocp,
+                (x, p) -> 0.0;
+                constraint=(x, u) -> a - x[1],
+                multiplier=(x, p) -> 0.0,
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
+            )
             return fs, fc
         end
 
@@ -97,8 +109,13 @@ function test_double_integrator_state()
 
             ξ0 = [-22.0, -6.7, 0.28, 0.72, 22.0, 22.0]   # perturbed guess
             shoot_nl!(s, ξ, _) = shoot!(s, ξ[1:2], ξ[3], ξ[4], ξ[5], ξ[6])
-            nl = solve(NonlinearProblem(shoot_nl!, ξ0), SimpleNewtonRaphson();
-                       abstol=1e-10, reltol=1e-10, show_trace=Val(false))
+            nl = solve(
+                NonlinearProblem(shoot_nl!, ξ0),
+                SimpleNewtonRaphson();
+                abstol=1e-10,
+                reltol=1e-10,
+                show_trace=Val(false),
+            )
             sc = zeros(6)
             shoot!(sc, nl.u[1:2], nl.u[3], nl.u[4], nl.u[5], nl.u[6])
             res_conv = sqrt(sum(abs2, sc))

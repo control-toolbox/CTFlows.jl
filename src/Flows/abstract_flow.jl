@@ -57,9 +57,9 @@ true
 
 See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@ref).
 """
-const AbstractStateFlow{
-    TD<:Traits.TimeDependence,VD<:Traits.VariableDependence
-} = AbstractFlow{TD,VD,Traits.StateDynamics}
+const AbstractStateFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence} = AbstractFlow{
+    TD,VD,Traits.StateDynamics
+}
 
 """
 $(TYPEDEF)
@@ -82,9 +82,9 @@ true
 
 See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractStateFlow`](@ref).
 """
-const AbstractHamiltonianFlow{
-    TD<:Traits.TimeDependence,VD<:Traits.VariableDependence
-} = AbstractFlow{TD,VD,Traits.HamiltonianDynamics}
+const AbstractHamiltonianFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence} = AbstractFlow{
+    TD,VD,Traits.HamiltonianDynamics
+}
 
 """
 $(TYPEDSIGNATURES)
