@@ -35,7 +35,7 @@ function _build_di_time()
     CTModels.Building.control!(pre, 1)
     CTModels.Building.variable!(pre, 1)
     CTModels.Building.time!(pre; t0=_T0, indf=1)   # free final time = variable[1]
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= [x[2], u[1]]; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r.=[x[2], u[1]]; nothing))
     CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> v[1])
     return CTModels.Building.build(pre)
 end
@@ -44,7 +44,8 @@ end
 _H(x, p, u) = p[1] * x[2] + p[2] * u - 1
 
 function test_double_integrator_time()
-    Test.@testset "Double integrator — time-optimal bang-bang (:total/:partial)" verbose = VERBOSE showtiming = SHOWTIMING begin
+    Test.@testset "Double integrator — time-optimal bang-bang (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_di_time()
 
         # Closed form (PMP): ṗ1 = 0 ⇒ p1 ≡ 1 (normal case), ṗ2 = -p1 ⇒ p2(t) = 1 - t,
@@ -99,7 +100,13 @@ function test_double_integrator_time()
             ξ0 = [0.8, 0.8, 0.8, 1.8]
             shoot_nl!(s, ξ, _) = shoot!(s, ξ[1:2], ξ[3], ξ[4])
             prob = NonlinearProblem(shoot_nl!, ξ0)
-            nl = solve(prob, SimpleNewtonRaphson(); abstol=1e-10, reltol=1e-10, show_trace=Val(false))
+            nl = solve(
+                prob,
+                SimpleNewtonRaphson();
+                abstol=1e-10,
+                reltol=1e-10,
+                show_trace=Val(false),
+            )
             sc = zeros(4)
             shoot!(sc, nl.u[1:2], nl.u[3], nl.u[4])
             res_conv = sqrt(sum(abs2, sc))

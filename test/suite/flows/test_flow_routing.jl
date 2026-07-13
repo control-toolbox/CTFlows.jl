@@ -123,7 +123,9 @@ function test_flow_routing()
 
         Test.@testset "Error: constraint/multiplier rejected on Flow(h)" begin
             # Flow(h) routes without action_defs ⇒ these are unknown options.
-            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(_TEST_H; constraint=:g)
+            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
+                _TEST_H; constraint=:g
+            )
             Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
                 _TEST_H; multiplier=1.0
             )

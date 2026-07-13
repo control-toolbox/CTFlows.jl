@@ -28,7 +28,7 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 _opts() = (; alg=Tsit5(), reltol=1e-12, abstol=1e-12)
 
 # scalar helper (control may come back as a Number or a 1-vector)
-_uval(u, t) = (val = u(t); val isa Number ? val : val[1])
+_uval(u, t) = (val=u(t); val isa Number ? val : val[1])
 
 # LQR: ẋ = -x + u, ℓ = 0.5u², :min (1-D). With DynClosedLoop u(x,p) = p the maximized flow
 # is p(t) = p0 eᵗ and x(t) = (x0 - p0/2)e⁻ᵗ + (p0/2)eᵗ.
@@ -38,7 +38,7 @@ function _build_lqr()
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = (-x + u); nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=(-x + u); nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2)
     return CTModels.Building.build(pre)
 end
@@ -71,9 +71,12 @@ function test_ocp_concatenation()
                 sol = φ((t0, tf), x0, p0)
                 sol1 = f((t0, tf), x0, p0)
                 Test.@test sol isa CTModels.Solutions.Solution
-                xs, ps, us = CTModels.state(sol), CTModels.costate(sol), CTModels.control(sol)
+                xs, ps, us = CTModels.state(sol),
+                CTModels.costate(sol),
+                CTModels.control(sol)
                 xs1, ps1, us1 = CTModels.state(sol1),
-                CTModels.costate(sol1), CTModels.control(sol1)
+                CTModels.costate(sol1),
+                CTModels.control(sol1)
                 # merged trajectory interpolates linearly (SciML merge is `dense=false`)
                 for t in (0.2, 0.5, 0.8)
                     Test.@test xs(t) ≈ xs1(t) atol = 1e-3
@@ -82,7 +85,8 @@ function test_ocp_concatenation()
                 end
                 Test.@test CTModels.objective(sol) ≈ CTModels.objective(sol1) atol = 1e-3
                 # objective = ∫₀¹ 0.5 p² dt = 0.25 p0² (e^{2tf} - 1)
-                Test.@test CTModels.objective(sol) ≈ 0.25 * p0^2 * (exp(2tf) - 1) atol = 1e-3
+                Test.@test CTModels.objective(sol) ≈ 0.25 * p0^2 * (exp(2tf) - 1) atol =
+                    1e-3
             end
         end
 

@@ -194,7 +194,9 @@ available (the trajectory was built without an OCP, e.g. from `Flow(fc, law)`).
 
 See also: [`CTFlows.Trajectories.objective`](@ref).
 """
-function objective(sol::ControlledTrajectory{T,L,V,Nothing}) where {T<:VectorFieldTrajectory,L,V}
+function objective(
+    sol::ControlledTrajectory{T,L,V,Nothing}
+) where {T<:VectorFieldTrajectory,L,V}
     return throw(
         Exceptions.PreconditionError(
             "this ControlledTrajectory has no objective value";
