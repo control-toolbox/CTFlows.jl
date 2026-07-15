@@ -12,6 +12,7 @@ import CTBase.Exceptions: Exceptions
 import CTModels: CTModels
 import CTFlows.Flows: Flows
 import CTFlows.Trajectories: Trajectories
+import CTFlows.Integrators: Integrators
 using OrdinaryDiffEqTsit5: Tsit5
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
@@ -67,6 +68,8 @@ function test_state_control_flows()
             Test.@test u(0.5) ≈ -x0 * exp(-2 * 0.5) atol = 1e-6   # u = -x
             # objective ∫0.5u² = ∫0.5 x0² e^{-4t} = 0.5 x0² (1-e^{-4})/4
             Test.@test Trajectories.objective(sol) ≈ 0.5 * (1 - exp(-4)) / 4 atol = 1e-6
+            Test.@test Integrators.successful(sol) == true
+            Test.@test Integrators.status(sol) == :Success
         end
 
         # ── OpenLoop from an OCP: g(x) = -x + 1 ⇒ x(t) = 1 + (x0-1)e^{-t} ──────

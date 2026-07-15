@@ -254,6 +254,40 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Return the termination status of the solution by delegating to the integration result.
+
+# Arguments
+- `sol::HamiltonianVectorFieldTrajectory`: The Hamiltonian vector field solution.
+
+# Returns
+- The termination status (a `Symbol`) from the integration result.
+
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTSolvers.Integrators.status`](@extref).
+"""
+function Integrators.status(sol::HamiltonianVectorFieldTrajectory)
+    return Integrators.status(sol.result)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return whether the solution terminated successfully by delegating to the integration result.
+
+# Arguments
+- `sol::HamiltonianVectorFieldTrajectory`: The Hamiltonian vector field solution.
+
+# Returns
+- Whether the integration succeeded.
+
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTSolvers.Integrators.successful`](@extref).
+"""
+function Integrators.successful(sol::HamiltonianVectorFieldTrajectory)
+    return Integrators.successful(sol.result)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Merge a sequence of HamiltonianVectorFieldTrajectory objects into a single HamiltonianVectorFieldTrajectory.
 
 This extracts the internal integration results, merges them, and wraps the result

@@ -29,6 +29,8 @@ end
 
 Integrators.final_state(r::FakeHamiltonianResult) = r.final_u
 Integrators.times(r::FakeHamiltonianResult) = r.ts
+Integrators.status(r::FakeHamiltonianResult) = :Success
+Integrators.successful(r::FakeHamiltonianResult) = true
 function Integrators.evaluate_at(r::FakeHamiltonianResult, t::Real)
     idx = findfirst(≥(t), r.ts)
     if isnothing(idx)
@@ -140,6 +142,23 @@ function test_hamiltonian_vector_field_trajectory()
             x, p = Integrators.final_state(sol)
             Test.@test x == [1.0, 2.0]
             Test.@test p == [3.0, 4.0]
+        end
+
+        # ====================================================================
+        # UNIT TESTS - status and successful
+        # ====================================================================
+
+        Test.@testset "status and successful" begin
+            result = FakeHamiltonianResult(
+                [1.0, 2.0, 3.0, 4.0],
+                [0.0, 0.5, 1.0],
+                [[1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], [2, 3, 4, 5]],
+            )
+            x0 = [1.0, 2.0]  # initial state
+            sol = Trajectories.HamiltonianVectorFieldTrajectory(x0, result)
+
+            Test.@test Integrators.status(sol) == :Success
+            Test.@test Integrators.successful(sol) == true
         end
 
         # ====================================================================

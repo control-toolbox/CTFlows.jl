@@ -327,6 +327,8 @@ function test_ocp_control()
             fp = Flows.Flow(OCP_DI, law; hamiltonian_type=:partial, _opts()...)
             solp = fp((t0, tf), x0, p0)
             Test.@test obj ≈ CTModels.objective(solp) atol = 1e-6
+            Test.@test CTModels.Solutions.successful(sol) == true
+            Test.@test CTModels.Solutions.status(sol) == :Success
         end
 
         # ====================================================================

@@ -22,6 +22,8 @@ end
 
 Integrators.times(r::FakeIntegrationResult) = r.t
 Integrators.final_state(r::FakeIntegrationResult) = r.u[end]
+Integrators.status(r::FakeIntegrationResult) = :Success
+Integrators.successful(r::FakeIntegrationResult) = true
 function Integrators.evaluate_at(r::FakeIntegrationResult, t::Real)
     # Simple interpolation for testing
     return r.u[1]
@@ -90,6 +92,13 @@ function test_vector_field_trajectory()
                 tg = Trajectories.time_grid(sol)
                 ts = Integrators.times(sol)
                 Test.@test tg === ts  # Returns same object
+            end
+
+            Test.@testset "delegates status/successful to result" begin
+                result = FakeIntegrationResult([0.0, 0.5, 1.0], [[1.0], [0.5], [0.25]])
+                sol = Trajectories.VectorFieldTrajectory(result)
+                Test.@test Integrators.status(sol) == :Success
+                Test.@test Integrators.successful(sol) == true
             end
         end
 
