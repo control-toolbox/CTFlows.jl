@@ -332,6 +332,8 @@ function test_optimal_control_flow()
             x0, p0 = 1.0, 0.5
             sol = OCF_AF_MAYER((t0, tf), x0, p0)
             Test.@test sol isa CTModels.Solutions.Solution
+            Test.@test CTModels.Solutions.successful(sol) == true
+            Test.@test CTModels.Solutions.status(sol) == :Success
         end
 
         Test.@testset "Integration: Mayer objective ≈ analytic" begin

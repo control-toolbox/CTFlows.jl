@@ -167,6 +167,22 @@ Integrators.final_state(sol::ControlledTrajectory) = Integrators.final_state(sol
 """
 $(TYPEDSIGNATURES)
 
+Return the termination status of a `ControlledTrajectory`, delegating to the underlying
+state trajectory.
+"""
+Integrators.status(sol::ControlledTrajectory) = Integrators.status(sol.traj)
+
+"""
+$(TYPEDSIGNATURES)
+
+Return whether a `ControlledTrajectory` terminated successfully, delegating to the
+underlying state trajectory.
+"""
+Integrators.successful(sol::ControlledTrajectory) = Integrators.successful(sol.traj)
+
+"""
+$(TYPEDSIGNATURES)
+
 Evaluate the state at time `t` (scalar for a 1-D state).
 """
 (sol::ControlledTrajectory)(t::Real) = sol.state_coerce(sol.traj(t))

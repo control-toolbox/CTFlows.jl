@@ -71,6 +71,8 @@ function test_ocp_concatenation()
                 sol = φ((t0, tf), x0, p0)
                 sol1 = f((t0, tf), x0, p0)
                 Test.@test sol isa CTModels.Solutions.Solution
+                Test.@test CTModels.Solutions.successful(sol) == true
+                Test.@test CTModels.Solutions.status(sol) == :Success
                 xs, ps, us = CTModels.state(sol),
                 CTModels.costate(sol),
                 CTModels.control(sol)

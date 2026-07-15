@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.1-beta] - 2026-07-16
+
+### Added
+
+- **Real `status`/`successful` on flow-built `CTModels.Solution`s**: `_build_ocp_solution`
+  previously hard-coded `successful=true` and left `status` unset, discarding the actual ODE
+  termination info. It now delegates to `Integrators.status`/`Integrators.successful`
+  (requires CTSolvers v0.4.29-beta, which added these accessors to
+  `AbstractIntegrationResult`), so a degraded or forced-`unsafe=true` integration is reported
+  truthfully on the resulting `CTModels.Solution` — single-phase, control-free, and merged
+  multi-phase alike.
+- **`status`/`successful` delegation on all trajectory wrappers**: added to
+  `HamiltonianVectorFieldTrajectory`, `VectorFieldTrajectory`, and `ControlledTrajectory`
+  (via its inner state trajectory), matching the existing
+  `final_state`/`times`/`evaluate_at`/`merge` delegation already present on all three.
+
+### Changed
+
+- **`CTBase` compat bumped to `0.28`** (pulled in transitively by CTSolvers v0.4.29-beta).
+
 ## [0.13.0-beta] - 2026-07-11
 
 ### Added

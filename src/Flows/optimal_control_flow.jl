@@ -840,11 +840,9 @@ function _build_ocp_solution(
         v,
         p;
         objective=obj,
-        iterations=-1,
-        constraints_violation=-1.0,
         message="Solution computed by CTFlows OCP flow",
-        status=:nostatusmessage,
-        successful=true,
+        status=Integrators.status(sol),
+        successful=Integrators.successful(sol),
         control_interpolation=:linear,
     )
 end

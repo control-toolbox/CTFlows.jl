@@ -35,6 +35,8 @@ using CTSolvers.Integrators:
     final_state,
     times,
     evaluate_at,
+    status,
+    successful,
     merge,
     build_integrator,
     options_point,
@@ -133,7 +135,7 @@ end
 # ==============================================================================
 
 export AbstractIntegrator, SciML
-export AbstractIntegrationResult, final_state, times, evaluate_at, merge
+export AbstractIntegrationResult, final_state, times, evaluate_at, status, successful, merge
 export build_integrator, options_point, options_trajectory
 export build_problem, build_options
 
