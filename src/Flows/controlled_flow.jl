@@ -89,8 +89,8 @@ function (F::ControlledFlow)(
     tspan::Tuple{<:Real,<:Real}, x0; variable=__variable(), unsafe=__unsafe()
 )
     traj = F.flow(tspan, x0; variable, unsafe)   # VectorFieldTrajectory
-    coerce = _controlled_state_coerce(F.ocp, x0)  # precomputed once (only / identity)
-    obj = _controlled_objective(F.ocp, traj, F.law, variable, integrator(F.flow), coerce)
+    coerce = _flow_state_coerce(F.ocp, x0)  # precomputed once (only / identity)
+    obj = _state_flow_objective(F.ocp, traj, F.law, variable, integrator(F.flow), coerce)
     return Trajectories.StateFlowTrajectory(traj, F.law, variable, obj, coerce, F.ocp)
 end
 
@@ -102,14 +102,14 @@ $(TYPEDSIGNATURES)
 Precomputed state coercion (`only` for a 1-D state, `identity` otherwise) from the
 OCP's declared state dimension.
 """
-_controlled_state_coerce(ocp, x0) = _dim_coerce(CTModels.Models.state_dimension(ocp))
+_flow_state_coerce(ocp, x0) = _dim_coerce(CTModels.Models.state_dimension(ocp))
 """
 $(TYPEDSIGNATURES)
 
 Precomputed state coercion (`only` for a 1-D state, `identity` otherwise) inferred from
 `x0` when there is no OCP (`Flow(fc, law)`).
 """
-_controlled_state_coerce(::Nothing, x0) = _dim_coerce(length(x0))
+_flow_state_coerce(::Nothing, x0) = _dim_coerce(length(x0))
 
 # =============================================================================
 # Objective (only when the flow was built from an OCP)
@@ -118,37 +118,26 @@ _controlled_state_coerce(::Nothing, x0) = _dim_coerce(length(x0))
 """
 $(TYPEDSIGNATURES)
 
-No objective when the controlled flow was not built from an OCP (e.g. `Flow(fc, law)`).
+No objective when the state flow was not built from an OCP (e.g. `Flow(fc, law)`).
 """
-_controlled_objective(::Nothing, traj, law, variable, integ, coerce) = nothing
+_state_flow_objective(::Nothing, traj, law, variable, integ, coerce) = nothing
 
 """
 $(TYPEDSIGNATURES)
 
-Compute the objective (Mayer + Lagrange) of an OCP along a controlled state trajectory,
-reconstructing the control `u(t) = law(t, x(t), v)` for the Lagrange integrand.
+Compute the objective (Mayer + Lagrange) of an OCP along a state-flow trajectory.
 
-See also: [`CTFlows.Trajectories.StateFlowTrajectory`](@ref), `CTFlows.Flows._ocp_objective`.
+Builds the (1-D = scalar coerced) state projection `x(t)` and the reconstructed control
+`u(t)` from the law (empty when `law === nothing`), then delegates to the shared
+[`CTFlows.Flows._flow_objective`](@ref) core.
+
+See also: [`CTFlows.Trajectories.StateFlowTrajectory`](@ref), `CTFlows.Flows._flow_objective`, `CTFlows.Flows._control_of`.
 """
-function _controlled_objective(ocp, traj, law, variable, integ, coerce)
-    x = Trajectories.ControlledStateProjection(traj, coerce)   # callable x(t), scalar for 1-D
+function _state_flow_objective(ocp, traj, law, variable, integ, coerce)
+    x = Trajectories.ControlledStateProjection(traj, coerce)  # callable x(t), scalar for 1-D
     T = collect(Float64, Trajectories.time_grid(traj))
     t0, tf = first(T), last(T)
-    v = Trajectories._cp_variable(variable)            # raw variable (nothing if NotProvided)
-    obj = 0.0
-    if CTModels.Components.has_mayer_cost(ocp)
-        may = CTModels.Components.mayer(ocp)
-        obj += may(x(t0), x(tf), v)
-    end
-    if CTModels.Components.has_lagrange_cost(ocp)
-        lag = CTModels.Components.lagrange(ocp)
-        running = Data.VectorField(
-            (t, ℓ_vec) -> [lag(t, x(t), Trajectories._controlled_u(law, t, x(t), v), v)];
-            is_autonomous=false,
-            is_variable=false,
-        )
-        cost_flow = build_flow(Systems.build_system(running), integ)
-        obj += cost_flow(t0, [0.0], tf)[1]
-    end
-    return obj
+    v = Trajectories._cp_variable(variable)  # raw variable (nothing if NotProvided)
+    u = _control_of(law, x, v)               # OpenLoop/ClosedLoop, or empty when law===nothing
+    return _flow_objective(ocp, x, u, v, t0, tf, integ)
 end

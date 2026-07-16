@@ -340,7 +340,7 @@ Lagrange) over the merged trajectory when the phases carry an OCP (`nothing` obj
 # Returns
 - A [`CTFlows.Trajectories.StateFlowTrajectory`](@ref) with the piecewise-reconstructed control.
 
-See also: [`CTFlows.MultiPhase._reconstruct_ocp_solution`](@ref), `CTFlows.Flows._controlled_objective`.
+See also: [`CTFlows.MultiPhase._reconstruct_ocp_solution`](@ref), `CTFlows.Flows._state_flow_objective`.
 """
 function _reconstruct_controlled_trajectory(mpf, merged, variable)
     phases = get_flows(mpf)
@@ -348,7 +348,7 @@ function _reconstruct_controlled_trajectory(mpf, merged, variable)
     plaw = _PiecewiseControlLaw(map(p -> p.law, phases), get_switching_times(mpf))
     integ = Flows.integrator(phases[1])
     coerce = Flows._dim_coerce(length(Integrators.final_state(merged)))
-    obj = Flows._controlled_objective(ocp, merged, plaw, variable, integ, coerce)
+    obj = Flows._state_flow_objective(ocp, merged, plaw, variable, integ, coerce)
     return Trajectories.StateFlowTrajectory(merged, plaw, variable, obj, coerce, ocp)
 end
 

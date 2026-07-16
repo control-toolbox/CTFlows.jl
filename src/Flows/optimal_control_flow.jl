@@ -763,53 +763,11 @@ Convert a variable argument into a `Vector{Float64}`.
 Returns an empty vector when the variable was not provided (`Core.NotProvided`),
 a 1-element vector for scalars, and a copy for vectors.
 
-See also: `_build_ocp_solution`, `_ocp_objective`.
+See also: `_build_ocp_solution`, `CTFlows.Flows._flow_objective`.
 """
 _variable_vector(::Core.NotProvidedType) = Float64[]
 _variable_vector(v::Number) = [Float64(v)]
 _variable_vector(v::AbstractVector) = Float64.(v)
-
-"""
-Reconstruct the control `u(t)` along a trajectory from a control law and the
-state/costate projections. Returns `t -> Float64[]` when there is no control law
-(control-free OCP), and `t -> law(t, x(t), p(t), v)` otherwise.
-
-See also: `_ocp_objective`, `_build_ocp_solution`.
-"""
-_control_of(::Nothing, x, p, v) = (_ -> Float64[])
-_control_of(law, x, p, v) = (t -> law(t, x(t), p(t), v))
-
-"""
-$(TYPEDSIGNATURES)
-
-Compute the objective value (Mayer + Lagrange) of an OCP along a trajectory.
-
-The Mayer term is evaluated at the endpoints `x(t0)` and `x(tf)`. The Lagrange term is
-integrated by flowing `ℓ̇(t) = ℓ(t, x(t), u(t), v)` from `t0` to `tf`, where `u(t)` is
-reconstructed from the control law (empty for a control-free OCP).
-
-See also: `CTFlows.Flows._build_ocp_solution`, `CTFlows.Flows._control_of`, `CTFlows.Flows._variable_vector`, [`CTFlows.Flows.Flow`](@ref).
-"""
-function _ocp_objective(ocp, x, p, v, t0, tf, integ, law)
-    obj = 0.0
-    if CTModels.Components.has_mayer_cost(ocp)
-        may = CTModels.Components.mayer(ocp)
-        obj += may(x(t0), x(tf), v)
-    end
-    if CTModels.Components.has_lagrange_cost(ocp)
-        lag = CTModels.Components.lagrange(ocp)
-        uc = _control_of(law, x, p, v)
-        # Integrate ℓ̇(t) = lag(t, x(t), u(t), v) from t0 to tf.
-        # Use a 1-element Vector so SciML always has a mutable in-place buffer.
-        running = Data.VectorField(
-            (t, ℓ_vec) -> [lag(t, x(t), uc(t), v)]; is_autonomous=false, is_variable=false
-        )
-        cost_flow = build_flow(Systems.build_system(running), integ)
-        ℓ_tf = cost_flow(t0, [0.0], tf)   # returns [ℓ(tf)]
-        obj += ℓ_tf[1]
-    end
-    return obj
-end
 
 """
 $(TYPEDSIGNATURES)
@@ -817,10 +775,10 @@ $(TYPEDSIGNATURES)
 Build a `CTModels.Solution` from a `HamiltonianVectorFieldTrajectory`.
 
 Extracts the time grid, state/costate projections, and variable vector from the
-trajectory, computes the objective via `CTFlows.Flows._ocp_objective`, and assembles a full
-`CTModels.Solution` with empty control (control-free OCP).
+trajectory, computes the objective via `CTFlows.Flows._flow_objective`, and assembles a
+full `CTModels.Solution` with empty control (control-free OCP).
 
-See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), `CTFlows.Flows._ocp_objective`, `CTFlows.Flows._variable_vector`, [`CTModels.Solutions.Solution`](@extref).
+See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), `CTFlows.Flows._flow_objective`, `CTFlows.Flows._control_of`, `CTFlows.Flows._variable_vector`, [`CTModels.Solutions.Solution`](@extref).
 """
 function _build_ocp_solution(
     ocp, sol::Trajectories.HamiltonianVectorFieldTrajectory, variable, integ, law=nothing
@@ -831,7 +789,7 @@ function _build_ocp_solution(
     t0, tf = first(T), last(T)
     v = _variable_vector(variable)
     u = _control_of(law, x, p, v)  # empty for control-free; law(t,x,p,v) otherwise
-    obj = _ocp_objective(ocp, x, p, v, t0, tf, integ, law)
+    obj = _flow_objective(ocp, x, u, v, t0, tf, integ)
     return CTModels.Solutions.build_solution(
         ocp,
         T,
