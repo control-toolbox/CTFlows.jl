@@ -679,6 +679,130 @@ function _ocp_controlled_vector_field(ocp)
 end
 
 # =============================================================================
+# OCPStateVectorFieldFunction — OCP state dynamics without control g(t,x,v) = f(t,x,∅,v)
+#
+# Out-of-place wrapper of the OCP in-place dynamics with an empty control, for the basic
+# (non-Hamiltonian, no costate) flow of a control-free OCP — direct-shooting use case
+# (issue #230). Mirrors OCPControlledVectorFieldFunction with the control eliminated.
+# =============================================================================
+
+"""
+$(TYPEDEF)
+
+Internal callable representing the state dynamics of a control-free OCP, out-of-place:
+`g(t,x,v) = f(t,x,∅,v)`. Used to build the basic state flow of `Flow(ocp)` for a
+control-free problem — point evaluation and trajectory calls with **no costate**.
+
+# Type Parameters
+- `TD`, `VD`: time- and variable-dependence traits (compile-time dispatch on arity).
+- `DF`: type of the in-place dynamics function.
+
+# Fields
+- `dynamics!::DF`: in-place dynamics `f!(r, t, x, u, v)` from the OCP (called with an
+  empty `u`).
+- `n::Int`: state dimension.
+- `cx::CX`, `cv::CV`: state / variable coercions (`only` for a 1-D quantity, `identity`
+  otherwise), precomputed once from the OCP dimensions.
+
+See also: [`CTBase.Data.VectorField`](@extref), `CTFlows.Flows._ocp_state_vector_field`,
+[`CTFlows.Flows.OCPControlledVectorFieldFunction`](@ref).
+"""
+struct OCPStateVectorFieldFunction{
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    DF<:Function,
+    CX<:Union{typeof(only),typeof(identity)},
+    CV<:Union{typeof(only),typeof(identity)},
+} <: Function
+    dynamics!::DF
+    n::Int
+    cx::CX
+    cv::CV
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Core computation of the control-free OCP state dynamics `g(t,x,v) = f(t,x,∅,v)`: coerce
+`x`/`v` with the precomputed per-dimension coercions (scalar for 1-D), fill a
+length-`n_x` buffer with the in-place dynamics called with an empty control, and return
+it (scalar for a 1-D state).
+
+See also: [`CTFlows.Flows.OCPStateVectorFieldFunction`](@ref).
+"""
+function _ocp_state_vf(h::OCPStateVectorFieldFunction, t, x, v)
+    xs = h.cx(x)
+    if v === nothing
+        T = eltype(xs)
+        u = Vector{T}(undef, 0)
+        vv = u
+    else
+        vs = h.cv(v)
+        T = Base.promote_op(*, eltype(xs), eltype(vs))
+        u = Vector{T}(undef, 0)
+        vv = vs
+    end
+    r = Vector{T}(undef, h.n)
+    h.dynamics!(r, t, xs, u, vv)
+    return _finalize_vf(r, xs)
+end
+
+"""
+Call operators for [`CTFlows.Flows.OCPStateVectorFieldFunction`](@ref), dispatching on the
+`(TD, VD)` trait pair for the correct arity:
+
+| `TD` / `VD` | Call signature | Effective call |
+|---|---|---|
+| `Auton` / `Fixed` | `g(x)` | `f(0, x, ∅)` |
+| `NonAuton` / `Fixed` | `g(t, x)` | `f(t, x, ∅)` |
+| `Auton` / `NonFixed` | `g(x, v)` | `f(0, x, ∅, v)` |
+| `NonAuton` / `NonFixed` | `g(t, x, v)` | `f(t, x, ∅, v)` |
+
+See also: [`CTFlows.Flows.OCPStateVectorFieldFunction`](@ref), [`CTFlows.Flows._ocp_state_vf`](@ref).
+"""
+function (h::OCPStateVectorFieldFunction{_CTM_Auton,Traits.Fixed,DF})(
+    x
+) where {DF<:Function}
+    return _ocp_state_vf(h, 0.0, x, nothing)
+end
+function (h::OCPStateVectorFieldFunction{_CTM_NonAuton,Traits.Fixed,DF})(
+    t, x
+) where {DF<:Function}
+    return _ocp_state_vf(h, t, x, nothing)
+end
+function (h::OCPStateVectorFieldFunction{_CTM_Auton,Traits.NonFixed,DF})(
+    x, v
+) where {DF<:Function}
+    return _ocp_state_vf(h, 0.0, x, v)
+end
+function (h::OCPStateVectorFieldFunction{_CTM_NonAuton,Traits.NonFixed,DF})(
+    t, x, v
+) where {DF<:Function}
+    return _ocp_state_vf(h, t, x, v)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Build an [`CTFlows.Flows.OCPStateVectorFieldFunction`](@ref) from a control-free OCP and
+wrap it in a [`CTBase.Data.VectorField`](@extref) (out-of-place).
+
+See also: [`CTFlows.Flows.OCPStateVectorFieldFunction`](@ref), `CTFlows.Flows._ocp_controlled_vector_field`.
+"""
+function _ocp_state_vector_field(ocp)
+    n = CTModels.Models.state_dimension(ocp)
+    dyn! = CTModels.Models.dynamics(ocp)
+    cx = _dim_coerce(n)                                        # precomputed once
+    cv = _dim_coerce(CTModels.Models.variable_dimension(ocp))
+    TD = Traits.time_dependence(ocp)
+    VD = Traits.variable_dependence(ocp)
+    g_raw = OCPStateVectorFieldFunction{TD,VD,typeof(dyn!),typeof(cx),typeof(cv)}(
+        dyn!, n, cx, cv
+    )
+    return Data.VectorField(g_raw, TD, VD, Traits.OutOfPlace)
+end
+
+# =============================================================================
 # OptimalControlFlow — thin AbstractFlow wrapper that carries the ocp reference
 #
 # The inner HamiltonianFlow handles all point-eval + variable_costate logic.
@@ -704,27 +828,35 @@ rebuilds a full [`CTModels.Solutions.Solution`](@extref) from the problem.
 - `M`: type of the wrapped optimal control problem model.
 - `CL`: type of the control law (`Nothing` for a control-free OCP, a
   `CTBase.Data.ControlLaw` when the flow was built from an OCP and a control law).
+- `SF`: type of the inner control-free state flow (`Nothing` unless the OCP is
+  control-free — see `state_flow`).
 
 # Fields
 - `flow::IF`: the inner Hamiltonian flow doing the integration.
 - `ocp::M`: the optimal control problem, kept so trajectory calls can build a solution.
 - `law::CL`: the control law, used to reconstruct `u(t)` along the trajectory (or
   `nothing` for control-free problems).
+- `state_flow::SF`: inner state flow of `ẋ = f(t,x,∅,v)`, built only for a control-free
+  OCP (`Flow(ocp)`, no law); `nothing` otherwise. Backs the basic (no-costate) call
+  arities `f(t0,x0,tf)` / `f((t0,tf),x0)` — see [`CTFlows.Flows._ocp_state_vector_field`](@ref).
 
 See also: [`CTFlows.Flows.Flow`](@ref), [`CTModels.Solutions.Solution`](@extref).
 """
 struct OptimalControlFlow{
-    TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,IF,M,CL
+    TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,IF,M,CL,SF
 } <: AbstractFlow{TD,VD,Traits.HamiltonianDynamics}
     flow::IF    # inner HamiltonianFlow
     ocp::M
     law::CL
+    state_flow::SF
 end
 
 function OptimalControlFlow(
-    flow::Flow{TD,VD,Traits.HamiltonianDynamics}, ocp, law=nothing
+    flow::Flow{TD,VD,Traits.HamiltonianDynamics}, ocp, law=nothing; state_flow=nothing
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
-    return OptimalControlFlow{TD,VD,typeof(flow),typeof(ocp),typeof(law)}(flow, ocp, law)
+    return OptimalControlFlow{TD,VD,typeof(flow),typeof(ocp),typeof(law),typeof(state_flow)}(
+        flow, ocp, law, state_flow
+    )
 end
 
 system(F::OptimalControlFlow) = system(F.flow)
@@ -751,6 +883,74 @@ function (F::OptimalControlFlow)(
 )
     sol = F.flow(tspan, x0, p0; variable, unsafe)   # HamiltonianVectorFieldTrajectory
     return _build_ocp_solution(F.ocp, sol, variable, integrator(F.flow), F.law)
+end
+
+# ── basic (no-costate) point eval / trajectory — control-free OCP only ─────
+
+"""
+$(TYPEDSIGNATURES)
+
+Return `F.state_flow`, or throw a [`CTBase.Exceptions.PreconditionError`](@extref) when
+the flow was not built from a control-free OCP (`Flow(ocp)`) — a flow built with a
+`DynClosedLoop` control law (`Flow(ocp, law)`) has no state-only flow, since its dynamics
+depend on the costate `p(t)`.
+
+See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), [`CTFlows.Flows._ocp_state_vector_field`](@ref).
+"""
+function _require_state_flow(F::OptimalControlFlow)
+    F.state_flow === nothing && throw(
+        Exceptions.PreconditionError(
+            "basic (no-costate) call requires a control-free OCP";
+            reason="this flow was built from Flow(ocp, law) with a DynClosedLoop control " *
+                   "law u(t,x,p,v); its dynamics depend on the costate p(t), so there is " *
+                   "no state-only flow to call without one",
+            suggestion="use f(t0, x0, p0, tf) — or f((t0,tf), x0, p0) for a trajectory",
+            context="OptimalControlFlow(t0,x0,tf) — basic call, no costate",
+        ),
+    )
+    return F.state_flow
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Basic (non-Hamiltonian) point evaluation, without a costate: `f(t0, x0, tf; variable)`.
+Delegates to the inner control-free state flow — see
+[`CTFlows.Flows._ocp_state_vector_field`](@ref). This is the direct-shooting use case
+([#230](https://github.com/control-toolbox/CTFlows.jl/issues/230)).
+
+# Throws
+- [`CTBase.Exceptions.PreconditionError`](@extref): if the flow was built with a control
+  law (`Flow(ocp, law)`) — use `f(t0,x0,p0,tf)` instead.
+"""
+function (F::OptimalControlFlow)(
+    t0::Real, x0, tf::Real; variable=Core.NotProvided, unsafe::Bool=false
+)
+    return _require_state_flow(F)(t0, x0, tf; variable, unsafe)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Basic (non-Hamiltonian) trajectory call, without a costate: `f((t0,tf), x0; variable)`.
+Integrates the inner control-free state flow and builds a
+[`CTFlows.Trajectories.StateFlowTrajectory`](@ref) (`law = nothing`: state and objective,
+no control, no costate — `control`/`costate` throw a `PreconditionError`).
+
+# Throws
+- [`CTBase.Exceptions.PreconditionError`](@extref): if the flow was built with a control
+  law (`Flow(ocp, law)`) — use `f((t0,tf),x0,p0)` instead.
+
+See also: [`CTFlows.Trajectories.StateFlowTrajectory`](@ref), `CTFlows.Flows._state_flow_objective`.
+"""
+function (F::OptimalControlFlow)(
+    tspan::Tuple{<:Real,<:Real}, x0; variable=Core.NotProvided, unsafe::Bool=false
+)
+    sf = _require_state_flow(F)
+    traj = sf(tspan, x0; variable, unsafe)   # VectorFieldTrajectory
+    coerce = _flow_state_coerce(F.ocp, x0)   # precomputed once (only / identity)
+    obj = _state_flow_objective(F.ocp, traj, nothing, variable, integrator(sf), coerce)
+    return Trajectories.StateFlowTrajectory(traj, nothing, variable, obj, coerce, F.ocp)
 end
 
 # =============================================================================

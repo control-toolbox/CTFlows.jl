@@ -169,7 +169,9 @@ function _flow_from_ocp(::Type{Traits.ControlFree}, ocp::CTModels.Models.Model; 
     h = _ocp_hamiltonian(ocp)
     sys = Systems.build_system(h, components.backend)
     inner = build_flow(sys, components.integrator)
-    return OptimalControlFlow(inner, ocp)
+    state_sys = Systems.build_system(_ocp_state_vector_field(ocp))
+    state_flow = build_flow(state_sys, components.integrator)
+    return OptimalControlFlow(inner, ocp; state_flow=state_flow)
 end
 
 """
