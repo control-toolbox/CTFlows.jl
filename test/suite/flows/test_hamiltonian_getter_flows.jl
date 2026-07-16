@@ -279,6 +279,37 @@ function test_hamiltonian_getter_flows()
         end
 
         # ====================================================================
+        # vector_field getter (polymorphic: Hamiltonian → X_H, state → the VF)
+        # ====================================================================
+
+        Test.@testset "vector_field getter" begin
+            Test.@testset "Hamiltonian flow → X_H (same as hamiltonian_vector_field)" begin
+                h = Data.Hamiltonian(
+                    (x, p) -> 0.5 * sum(x .^ 2) + 0.5 * sum(p .^ 2);
+                    is_autonomous=true,
+                    is_variable=false,
+                )
+                backend = Differentiation.DifferentiationInterface(;
+                    ad_backend=ADTypes.AutoForwardDiff()
+                )
+                flow = Flows.HamiltonianFlow(Systems.HamiltonianSystem(h, backend), MockIntegrator())
+                xv = Systems.vector_field(flow)
+                hv = Systems.hamiltonian_vector_field(flow)
+                Test.@test xv isa Data.HamiltonianVectorField
+                x = [1.0, 2.0]
+                p = [0.5, 1.5]
+                Test.@test xv.f(x, p) == hv.f(x, p)
+            end
+
+            Test.@testset "state flow → the underlying vector field" begin
+                vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+                sflow = Flows.StateFlow(Systems.VectorFieldSystem(vf), MockIntegrator())
+                Test.@test Systems.vector_field(sflow) === vf
+                Test.@test Flows.vector_field(sflow) === vf   # re-export
+            end
+        end
+
+        # ====================================================================
         # EXPORTS
         # ====================================================================
 
@@ -289,6 +320,11 @@ function test_hamiltonian_getter_flows()
 
             Test.@testset "hamiltonian_vector_field is re-exported from Flows" begin
                 Test.@test isdefined(Flows, :hamiltonian_vector_field)
+            end
+
+            Test.@testset "vector_field is accessible via Systems and re-exported from Flows" begin
+                Test.@test isdefined(Systems, :vector_field)
+                Test.@test isdefined(Flows, :vector_field)
             end
         end
     end

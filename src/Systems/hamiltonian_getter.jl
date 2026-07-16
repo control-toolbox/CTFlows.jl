@@ -34,12 +34,12 @@ Dispatched on the Hamiltonian's time/variable-dependence traits:
 
 See also: [`CTFlows.Systems.HVFIpFunctor`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 """
-struct HVFOoPFunctor{H<:Data.Hamiltonian,B<:Differentiation.AbstractADBackend} <: Function
+struct HVFOoPFunctor{H<:Data.AbstractHamiltonian,B<:Differentiation.AbstractADBackend} <: Function
     h::H
     backend::B
 end
 
-function (g::HVFOoPFunctor{<:Data.Hamiltonian{<:Function,Traits.Autonomous,Traits.Fixed}})(
+function (g::HVFOoPFunctor{<:Data.AbstractHamiltonian{Traits.Autonomous,Traits.Fixed}})(
     x, p
 )
     ∂x, ∂p = Differentiation.hamiltonian_gradient(g.backend, g.h, nothing, x, p, nothing)
@@ -47,7 +47,7 @@ function (g::HVFOoPFunctor{<:Data.Hamiltonian{<:Function,Traits.Autonomous,Trait
 end
 
 function (g::HVFOoPFunctor{
-    <:Data.Hamiltonian{<:Function,Traits.NonAutonomous,Traits.Fixed}
+    <:Data.AbstractHamiltonian{Traits.NonAutonomous,Traits.Fixed}
 })(
     t, x, p
 )
@@ -56,7 +56,7 @@ function (g::HVFOoPFunctor{
 end
 
 function (g::HVFOoPFunctor{
-    <:Data.Hamiltonian{<:Function,Traits.Autonomous,Traits.NonFixed}
+    <:Data.AbstractHamiltonian{Traits.Autonomous,Traits.NonFixed}
 })(
     x, p, v; variable_costate::Bool=false
 )
@@ -67,7 +67,7 @@ function (g::HVFOoPFunctor{
 end
 
 function (g::HVFOoPFunctor{
-    <:Data.Hamiltonian{<:Function,Traits.NonAutonomous,Traits.NonFixed}
+    <:Data.AbstractHamiltonian{Traits.NonAutonomous,Traits.NonFixed}
 })(
     t, x, p, v; variable_costate::Bool=false
 )
@@ -103,12 +103,12 @@ is filled with `-∂H/∂v`; it must be provided or a `PreconditionError` is thr
 
 See also: [`CTFlows.Systems.HVFOoPFunctor`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 """
-struct HVFIpFunctor{H<:Data.Hamiltonian,B<:Differentiation.AbstractADBackend} <: Function
+struct HVFIpFunctor{H<:Data.AbstractHamiltonian,B<:Differentiation.AbstractADBackend} <: Function
     h::H
     backend::B
 end
 
-function (g::HVFIpFunctor{<:Data.Hamiltonian{<:Function,Traits.Autonomous,Traits.Fixed}})(
+function (g::HVFIpFunctor{<:Data.AbstractHamiltonian{Traits.Autonomous,Traits.Fixed}})(
     dx, dp, x, p
 )
     ∂x, ∂p = Differentiation.hamiltonian_gradient(g.backend, g.h, nothing, x, p, nothing)
@@ -117,7 +117,7 @@ function (g::HVFIpFunctor{<:Data.Hamiltonian{<:Function,Traits.Autonomous,Traits
     return nothing
 end
 
-function (g::HVFIpFunctor{<:Data.Hamiltonian{<:Function,Traits.NonAutonomous,Traits.Fixed}})(
+function (g::HVFIpFunctor{<:Data.AbstractHamiltonian{Traits.NonAutonomous,Traits.Fixed}})(
     dx, dp, t, x, p
 )
     ∂x, ∂p = Differentiation.hamiltonian_gradient(g.backend, g.h, t, x, p, nothing)
@@ -126,7 +126,7 @@ function (g::HVFIpFunctor{<:Data.Hamiltonian{<:Function,Traits.NonAutonomous,Tra
     return nothing
 end
 
-function (g::HVFIpFunctor{<:Data.Hamiltonian{<:Function,Traits.Autonomous,Traits.NonFixed}})(
+function (g::HVFIpFunctor{<:Data.AbstractHamiltonian{Traits.Autonomous,Traits.NonFixed}})(
     dx, dp, x, p, v; dpv=nothing, variable_costate::Bool=false
 )
     ∂x, ∂p = Differentiation.hamiltonian_gradient(g.backend, g.h, nothing, x, p, v)
@@ -146,7 +146,7 @@ function (g::HVFIpFunctor{<:Data.Hamiltonian{<:Function,Traits.Autonomous,Traits
 end
 
 function (g::HVFIpFunctor{
-    <:Data.Hamiltonian{<:Function,Traits.NonAutonomous,Traits.NonFixed}
+    <:Data.AbstractHamiltonian{Traits.NonAutonomous,Traits.NonFixed}
 })(
     dx, dp, t, x, p, v; dpv=nothing, variable_costate::Bool=false
 )
@@ -173,15 +173,18 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Get the Hamiltonian vector field from a scalar Hamiltonian function.
+Get the Hamiltonian vector field from a Hamiltonian.
 
-This function computes the Hamiltonian vector field X_H = (∂H/∂p, -∂H/∂x) for a given scalar
-Hamiltonian function using automatic differentiation. The returned vector field wraps a
-callable [`CTFlows.Systems.HVFOoPFunctor`](@ref) or [`CTFlows.Systems.HVFIpFunctor`](@ref)
-whose call signature matches the Hamiltonian's time and variable dependence traits.
+This function computes the Hamiltonian vector field `X_H = (∂H/∂p, -∂H/∂x)` (also known as
+the **symplectic gradient** of `H`) for a given Hamiltonian using automatic
+differentiation. It accepts any [`CTBase.Data.AbstractHamiltonian`](@extref) — a scalar
+`Hamiltonian` or a `ComposedHamiltonian` (as produced by an OCP + control law) — so it also
+covers pseudo-Hamiltonian flows. The returned vector field wraps a callable
+[`CTFlows.Systems.HVFOoPFunctor`](@ref) or [`CTFlows.Systems.HVFIpFunctor`](@ref) whose
+call signature matches the Hamiltonian's time and variable dependence traits.
 
 # Arguments
-- `h::Data.Hamiltonian{F, TD, VD}`: The scalar Hamiltonian function with traits `TD` (time dependence) and `VD` (variable dependence).
+- `h::Data.AbstractHamiltonian{TD, VD}`: The Hamiltonian with traits `TD` (time dependence) and `VD` (variable dependence).
 - `ad_backend`: AD backend type (default: `Differentiation.__ad_backend()` = `AutoForwardDiff()`) or an `AbstractADBackend` instance.
 - `inplace::Bool`: Whether to return an in-place functor (default: `__hvf_inplace()` = `false`).
 
@@ -199,10 +202,10 @@ whose call signature matches the Hamiltonian's time and variable dependence trai
 See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTBase.Data.HamiltonianVectorField`](@extref)
 """
 function hamiltonian_vector_field(
-    h::Data.Hamiltonian{F,TD,VD};
+    h::Data.AbstractHamiltonian{TD,VD};
     ad_backend=Differentiation.__ad_backend(),
     inplace::Bool=__hvf_inplace(),
-) where {F<:Function,TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     # If ad_backend is an AbstractADBackend instance, use it directly; otherwise wrap it
     backend = if ad_backend isa Differentiation.AbstractADBackend
         ad_backend

@@ -80,6 +80,21 @@ function VectorFieldSystem(
 end
 
 # =============================================================================
+# Getter
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the underlying vector field of a `VectorFieldSystem`, as a
+[`CTBase.Data.AbstractVectorField`](@extref) — the field `X(t, x, v)` integrated by the
+state flow.
+
+See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
+"""
+vector_field(sys::VectorFieldSystem) = sys.vf
+
+# =============================================================================
 # Guard for unsupported combinations
 # =============================================================================
 

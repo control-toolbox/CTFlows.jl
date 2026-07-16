@@ -75,6 +75,17 @@ function test_vector_field_system()
         end
 
         # ====================================================================
+        # UNIT TESTS - vector_field getter
+        # ====================================================================
+
+        Test.@testset "vector_field getter" begin
+            vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
+            sys = Systems.VectorFieldSystem(vf)
+            Test.@test Systems.vector_field(sys) === sys.vf
+            Test.@test Systems.vector_field(sys) === vf
+        end
+
+        # ====================================================================
         # UNIT TESTS - Contract Implementation
         # ====================================================================
 
@@ -408,6 +419,9 @@ function test_vector_field_system()
         Test.@testset "Exports Verification" begin
             Test.@testset "Exported types" begin
                 Test.@test isdefined(Systems, :VectorFieldSystem)
+            end
+            Test.@testset "Exported getters" begin
+                Test.@test isdefined(Systems, :vector_field)
             end
         end
 
