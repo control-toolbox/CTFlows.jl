@@ -34,7 +34,7 @@ costate** (the underlying flow is a state flow) and no objective.
 See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref),
 [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.control`](@ref).
 """
-struct StateFlowTrajectory{T<:VectorFieldTrajectory,L,V,O,C,M} <:
+struct StateFlowTrajectory{T<:VectorFieldTrajectory,L,V,O,C,M,SP,CP} <:
        AbstractVectorFieldTrajectory
     traj::T
     law::L
@@ -42,7 +42,51 @@ struct StateFlowTrajectory{T<:VectorFieldTrajectory,L,V,O,C,M} <:
     objective::O
     state_coerce::C
     ocp::M
+    state_proj::SP
+    control_proj::CP
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Construct a `StateFlowTrajectory`, precomputing the state and control projections once so
+the `state`/`control` accessors return a stored functor instead of rebuilding one on every
+call. The control projection is `nothing` when there is no control law (`law === nothing`,
+a basic control-free `Flow(ocp)`), in which case `control(sol)` raises a clear error.
+"""
+function StateFlowTrajectory(
+    traj::VectorFieldTrajectory, law, variable, objective, state_coerce, ocp
+)
+    sp = ControlledStateProjection(traj, state_coerce)
+    cp = _build_control_proj(law, traj, variable, state_coerce)
+    return StateFlowTrajectory{
+        typeof(traj),
+        typeof(law),
+        typeof(variable),
+        typeof(objective),
+        typeof(state_coerce),
+        typeof(ocp),
+        typeof(sp),
+        typeof(cp),
+    }(
+        traj, law, variable, objective, state_coerce, ocp, sp, cp
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+No control projection when there is no control law (a basic control-free `Flow(ocp)`).
+"""
+_build_control_proj(::Nothing, traj, variable, coerce) = nothing
+"""
+$(TYPEDSIGNATURES)
+
+Build the (precomputed) [`CTFlows.Trajectories.ControlProjection`](@ref) from the law and
+the inner trajectory.
+"""
+_build_control_proj(law, traj, variable, coerce) =
+    ControlProjection(traj, law, variable, coerce)
 
 # =============================================================================
 # Control reconstruction — feedback-dispatched uniform call of the law
@@ -127,20 +171,38 @@ $(TYPEDSIGNATURES)
 
 Return the state function `x(t)` of a `StateFlowTrajectory` (scalar for a 1-D state).
 
+Returns the stored [`CTFlows.Trajectories.ControlledStateProjection`](@ref) precomputed at
+construction.
+
 See also: [`CTFlows.Trajectories.control`](@ref).
 """
-state(sol::StateFlowTrajectory) = ControlledStateProjection(sol.traj, sol.state_coerce)
+state(sol::StateFlowTrajectory) = sol.state_proj
 
 """
 $(TYPEDSIGNATURES)
 
 Return the reconstructed control function `u(t) = law(t, x(t), v)` of a
-`StateFlowTrajectory`, as a [`CTFlows.Trajectories.ControlProjection`](@ref).
+`StateFlowTrajectory`, as the stored [`CTFlows.Trajectories.ControlProjection`](@ref).
+
+Raises a [`CTBase.Exceptions.PreconditionError`](@extref) when the trajectory was built
+without a control law (a basic control-free `Flow(ocp)`), which has no control to
+reconstruct.
 
 See also: [`CTFlows.Trajectories.state`](@ref).
 """
-function control(sol::StateFlowTrajectory)
-    return ControlProjection(sol.traj, sol.law, sol.variable, sol.state_coerce)
+control(sol::StateFlowTrajectory) = _sft_control(sol.control_proj)
+
+_sft_control(cp::ControlProjection) = cp
+function _sft_control(::Nothing)
+    return throw(
+        Exceptions.PreconditionError(
+            "this StateFlowTrajectory has no control";
+            reason="it was built without a control law (a basic control-free Flow(ocp), " *
+                   "e.g. for direct shooting), so there is no control to reconstruct",
+            suggestion="use state(sol); control only exists for flows built with a control law",
+            context="StateFlowTrajectory — control getter",
+        ),
+    )
 end
 
 """

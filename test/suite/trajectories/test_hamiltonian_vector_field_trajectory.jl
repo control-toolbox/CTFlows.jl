@@ -393,6 +393,15 @@ function test_hamiltonian_vector_field_trajectory()
             Test.@testset "CostateProjection matches direct sol(t)[2]" begin
                 Test.@test (@allocated p_func(0.0)) == (@allocated sol(0.0)[2])
             end
+
+            # §9: the accessors return the projection stored at construction, so they
+            # rebuild nothing and allocate nothing.
+            Test.@testset "state/costate accessors allocate nothing" begin
+                Trajectories.state(sol)
+                Trajectories.costate(sol)   # warm-up
+                Test.@test (@allocated Trajectories.state(sol)) == 0
+                Test.@test (@allocated Trajectories.costate(sol)) == 0
+            end
         end
 
         # ====================================================================

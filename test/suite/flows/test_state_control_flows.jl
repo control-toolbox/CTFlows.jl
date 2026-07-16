@@ -70,6 +70,13 @@ function test_state_control_flows()
             Test.@test Trajectories.objective(sol) ≈ 0.5 * (1 - exp(-4)) / 4 atol = 1e-6
             Test.@test Integrators.successful(sol) == true
             Test.@test Integrators.status(sol) == :Success
+
+            # §9: state/control accessors return the projection stored at construction,
+            # so they rebuild nothing and allocate nothing.
+            Trajectories.state(sol)
+            Trajectories.control(sol)   # warm-up
+            Test.@test (@allocated Trajectories.state(sol)) == 0
+            Test.@test (@allocated Trajectories.control(sol)) == 0
         end
 
         # ── OpenLoop from an OCP: g(x) = -x + 1 ⇒ x(t) = 1 + (x0-1)e^{-t} ──────
