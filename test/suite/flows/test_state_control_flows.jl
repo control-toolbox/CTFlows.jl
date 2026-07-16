@@ -1,6 +1,6 @@
 """
 Integration tests for OpenLoop / ClosedLoop control flows: state flows returning a
-ControlledTrajectory (state + reconstructed control [+ objective from an OCP]).
+StateFlowTrajectory (state + reconstructed control [+ objective from an OCP]).
 """
 
 module TestStateControlFlows
@@ -59,9 +59,9 @@ function test_state_control_flows()
             Test.@test xf isa Number
             Test.@test xf ≈ x0 * exp(-2 * tf) atol = 1e-6
 
-            # trajectory: ControlledTrajectory
+            # trajectory: StateFlowTrajectory
             sol = f((t0, tf), x0)
-            Test.@test sol isa Trajectories.ControlledTrajectory
+            Test.@test sol isa Trajectories.StateFlowTrajectory
             x = Trajectories.state(sol)
             u = Trajectories.control(sol)
             Test.@test x(0.5) ≈ x0 * exp(-2 * 0.5) atol = 1e-6
@@ -89,7 +89,7 @@ function test_state_control_flows()
             fc = Data.ControlledVectorField((x, u) -> -x + u)
             f = Flows.Flow(fc, Data.ClosedLoop(x -> -x); _opts()...)
             sol = f((0.0, 1.0), 1.0)
-            Test.@test sol isa Trajectories.ControlledTrajectory
+            Test.@test sol isa Trajectories.StateFlowTrajectory
             Test.@test Trajectories.state(sol)(0.5) ≈ exp(-2 * 0.5) atol = 1e-6
             # no OCP ⇒ objective errors clearly
             Test.@test_throws Exceptions.PreconditionError Trajectories.objective(sol)
@@ -97,7 +97,7 @@ function test_state_control_flows()
 
         # ── getter error: a controlled trajectory has no costate ─────────────
 
-        Test.@testset "Error: costate on a ControlledTrajectory" begin
+        Test.@testset "Error: costate on a StateFlowTrajectory" begin
             f = Flows.Flow(OCP, Data.ClosedLoop(x -> -x); _opts()...)
             sol = f((0.0, 1.0), 1.0)
             Test.@test_throws Exceptions.PreconditionError Trajectories.costate(sol)

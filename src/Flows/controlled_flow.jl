@@ -3,7 +3,7 @@
 #
 # Wraps an inner state flow (VectorFieldSystem of the closed-loop dynamics) and the
 # control law. Point evaluation returns the final state; a trajectory call returns a
-# ControlledTrajectory (state + reconstructed control [+ objective when from an OCP]).
+# StateFlowTrajectory (state + reconstructed control [+ objective when from an OCP]).
 # =============================================================================
 
 """
@@ -14,7 +14,7 @@ law, built by [`CTFlows.Flows.Flow`](@ref) from `Flow(ocp, law)` or `Flow(fc, la
 
 Unlike an [`CTFlows.Flows.OptimalControlFlow`](@ref) (Hamiltonian, with a costate), this
 is a **state** flow: point evaluation is `f(t0, x0, tf; variable)` (no costate) and a
-trajectory call returns a [`CTFlows.Trajectories.ControlledTrajectory`](@ref).
+trajectory call returns a [`CTFlows.Trajectories.StateFlowTrajectory`](@ref).
 
 # Type Parameters
 - `TD`, `VD`: time/variable dependence, inherited from the inner flow.
@@ -27,7 +27,7 @@ trajectory call returns a [`CTFlows.Trajectories.ControlledTrajectory`](@ref).
 - `ocp::M`: the OCP model (for the objective), or `nothing`.
 - `law::L`: the control law, used to reconstruct `u(t)`.
 
-See also: [`CTFlows.Trajectories.ControlledTrajectory`](@ref), [`CTFlows.Flows.Flow`](@ref).
+See also: [`CTFlows.Trajectories.StateFlowTrajectory`](@ref), [`CTFlows.Flows.Flow`](@ref).
 """
 struct ControlledFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,IF,M,L} <:
        AbstractFlow{TD,VD,Traits.StateDynamics}
@@ -76,13 +76,13 @@ function (F::ControlledFlow)(
     return F.flow(t0, x0, tf; variable, unsafe)
 end
 
-# ── trajectory call — builds a ControlledTrajectory ──────────────────────────
+# ── trajectory call — builds a StateFlowTrajectory ──────────────────────────
 
 """
 $(TYPEDSIGNATURES)
 
 Trajectory call: integrate the inner state flow over `tspan` and build a
-[`CTFlows.Trajectories.ControlledTrajectory`](@ref) (state + reconstructed control,
+[`CTFlows.Trajectories.StateFlowTrajectory`](@ref) (state + reconstructed control,
 plus objective when built from an OCP).
 """
 function (F::ControlledFlow)(
@@ -91,7 +91,7 @@ function (F::ControlledFlow)(
     traj = F.flow(tspan, x0; variable, unsafe)   # VectorFieldTrajectory
     coerce = _controlled_state_coerce(F.ocp, x0)  # precomputed once (only / identity)
     obj = _controlled_objective(F.ocp, traj, F.law, variable, integrator(F.flow), coerce)
-    return Trajectories.ControlledTrajectory(traj, F.law, variable, obj, coerce, F.ocp)
+    return Trajectories.StateFlowTrajectory(traj, F.law, variable, obj, coerce, F.ocp)
 end
 
 # State coercion (only for a 1-D state, identity otherwise), precomputed once — from the
@@ -128,7 +128,7 @@ $(TYPEDSIGNATURES)
 Compute the objective (Mayer + Lagrange) of an OCP along a controlled state trajectory,
 reconstructing the control `u(t) = law(t, x(t), v)` for the Lagrange integrand.
 
-See also: [`CTFlows.Trajectories.ControlledTrajectory`](@ref), `CTFlows.Flows._ocp_objective`.
+See also: [`CTFlows.Trajectories.StateFlowTrajectory`](@ref), `CTFlows.Flows._ocp_objective`.
 """
 function _controlled_objective(ocp, traj, law, variable, integ, coerce)
     x = Trajectories.ControlledStateProjection(traj, coerce)   # callable x(t), scalar for 1-D

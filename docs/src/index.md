@@ -61,7 +61,7 @@ Data → Systems → Integrators → Flows → Trajectories
 | Systems | [`CTFlows.Systems`](@ref CTFlows.Systems) | `VectorFieldSystem`, `HamiltonianSystem`, `PseudoHamiltonianSystem` |
 | Integrators | [`CTFlows.Integrators`](@ref CTFlows.Integrators) | `SciML` |
 | Flows | [`CTFlows.Flows`](@ref CTFlows.Flows) | `StateFlow`, `HamiltonianFlow`, `OptimalControlFlow`, `ControlledFlow` |
-| Trajectories | [`CTFlows.Trajectories`](@ref CTFlows.Trajectories) | `VectorFieldTrajectory`, `HamiltonianVectorFieldTrajectory`, `ControlledTrajectory` |
+| Trajectories | [`CTFlows.Trajectories`](@ref CTFlows.Trajectories) | `VectorFieldTrajectory`, `HamiltonianVectorFieldTrajectory`, `StateFlowTrajectory` |
 | Multi-phase | [`CTFlows.MultiPhase`](@ref CTFlows.MultiPhase) | `MultiPhaseStateFlow` |
 
 The data layer (`VectorField`, `Hamiltonian`, `HamiltonianVectorField`) lives in [`CTBase.Data`](@extref CTBase.Data); the ODE integrator

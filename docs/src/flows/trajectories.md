@@ -34,7 +34,7 @@ hsol = hflow((0.0, 1.0), x0, p0)
 |---|---|---|
 | `VectorFieldTrajectory` | `StateFlow` trajectory call | state trajectory |
 | `HamiltonianVectorFieldTrajectory` | `HamiltonianFlow` trajectory call | state + costate trajectories |
-| `ControlledTrajectory` | `ControlledFlow` trajectory call | state + reconstructed control (+ objective when from OCP) |
+| `StateFlowTrajectory` | `ControlledFlow` trajectory call | state + reconstructed control (+ objective when from OCP) |
 
 ---
 
@@ -105,9 +105,9 @@ x_h(0.5), p_h(0.5)
 
 ---
 
-## ControlledTrajectory
+## StateFlowTrajectory
 
-A `ControlledTrajectory` is produced by a trajectory call on a
+A `StateFlowTrajectory` is produced by a trajectory call on a
 `ControlledFlow` (see [Control laws](control_laws.md)). It wraps a state
 trajectory with a reconstructed control and an optional objective.
 
@@ -159,7 +159,7 @@ These are used internally by the solution wrappers and normally not called direc
 
 ## See also
 
-- [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.ControlledTrajectory`](@ref) — solution container types.
+- [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.StateFlowTrajectory`](@ref) — solution container types.
 - [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.costate`](@ref), [`CTFlows.Trajectories.control`](@ref), [`CTFlows.Trajectories.objective`](@ref) — trajectory accessors.
 - [`CTFlows.Trajectories.time_grid`](@ref), [`CTSolvers.Integrators.times`](@extref) — time grid accessors.
 - [`CTSolvers.Integrators.final_state`](@extref), [`CTSolvers.Integrators.evaluate_at`](@extref) — low-level result accessors.

@@ -20,14 +20,14 @@ $(TYPEDSIGNATURES)
 
 Contract: the default panels for a trajectory when the user gives no `description`.
 Defined on the **abstract** trajectory types and specialized where a subtype exposes
-more (a `ControlledTrajectory` also has a control).
+more (a `StateFlowTrajectory` also has a control).
 
 - `AbstractVectorFieldTrajectory` → `(:state,)`
-- `ControlledTrajectory` → `(:state, :control)`
+- `StateFlowTrajectory` → `(:state, :control)`
 - `AbstractHamiltonianVectorFieldTrajectory` → `(:state, :costate)`
 """
 _default_description(::Trajectories.AbstractVectorFieldTrajectory) = (:state,)
-_default_description(::Trajectories.ControlledTrajectory) = (:state, :control)
+_default_description(::Trajectories.StateFlowTrajectory) = (:state, :control)
 function _default_description(::Trajectories.AbstractHamiltonianVectorFieldTrajectory)
     return (:state, :costate)
 end

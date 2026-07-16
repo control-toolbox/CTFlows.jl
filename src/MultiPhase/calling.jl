@@ -148,7 +148,7 @@ end
 # A multi-phase trajectory must return the SAME type a single-phase flow returns, with a
 # PIECEWISE control reconstructed from the per-phase laws: all-OptimalControlFlow phases → a
 # CTModels Solution (via _build_ocp_solution), all-ControlledFlow phases → a
-# ControlledTrajectory. Plain flows (no law) keep returning the merged raw trajectory.
+# StateFlowTrajectory. Plain flows (no law) keep returning the merged raw trajectory.
 # =============================================================================
 
 """
@@ -239,7 +239,7 @@ Finalize a merged multi-phase trajectory into the type a single-phase flow would
 
 All-`OptimalControlFlow` phases rebuild a [`CTModels.Solutions.Solution`](@extref) (via
 [`CTFlows.MultiPhase._reconstruct_ocp_solution`](@ref)); all-`ControlledFlow` phases rebuild a
-[`CTFlows.Trajectories.ControlledTrajectory`](@ref) (via
+[`CTFlows.Trajectories.StateFlowTrajectory`](@ref) (via
 [`CTFlows.MultiPhase._reconstruct_controlled_trajectory`](@ref)); any other case (plain flows
 carrying no law) returns the merged raw trajectory unchanged.
 
@@ -253,7 +253,7 @@ cannot select a method here.
 - `variable`: The variable parameter value (for NonFixed systems).
 
 # Returns
-- A `CTModels.Solution`, a `ControlledTrajectory`, or the merged trajectory (see above).
+- A `CTModels.Solution`, a `StateFlowTrajectory`, or the merged trajectory (see above).
 
 See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@ref).
 """
@@ -326,7 +326,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Rebuild a [`CTFlows.Trajectories.ControlledTrajectory`](@ref) from an all-`ControlledFlow`
+Rebuild a [`CTFlows.Trajectories.StateFlowTrajectory`](@ref) from an all-`ControlledFlow`
 multi-phase trajectory, reconstructing the control as a
 [`CTFlows.MultiPhase._PiecewiseControlLaw`](@ref) and recomputing the objective (Mayer +
 Lagrange) over the merged trajectory when the phases carry an OCP (`nothing` objective for
@@ -338,7 +338,7 @@ Lagrange) over the merged trajectory when the phases carry an OCP (`nothing` obj
 - `variable`: The variable parameter value (for NonFixed systems).
 
 # Returns
-- A [`CTFlows.Trajectories.ControlledTrajectory`](@ref) with the piecewise-reconstructed control.
+- A [`CTFlows.Trajectories.StateFlowTrajectory`](@ref) with the piecewise-reconstructed control.
 
 See also: [`CTFlows.MultiPhase._reconstruct_ocp_solution`](@ref), `CTFlows.Flows._controlled_objective`.
 """
@@ -349,7 +349,7 @@ function _reconstruct_controlled_trajectory(mpf, merged, variable)
     integ = Flows.integrator(phases[1])
     coerce = Flows._dim_coerce(length(Integrators.final_state(merged)))
     obj = Flows._controlled_objective(ocp, merged, plaw, variable, integ, coerce)
-    return Trajectories.ControlledTrajectory(merged, plaw, variable, obj, coerce, ocp)
+    return Trajectories.StateFlowTrajectory(merged, plaw, variable, obj, coerce, ocp)
 end
 
 # ==============================================================================
