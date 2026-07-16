@@ -86,6 +86,28 @@ Hamiltonian flow — see [Integrating](integrating.md).
 
 ---
 
+## Free times (issues [#231](https://github.com/control-toolbox/CTFlows.jl/issues/231), [#183](https://github.com/control-toolbox/CTFlows.jl/issues/183))
+
+`Flow(ocp)` builds an `OptimalControlFlow` around an inner `HamiltonianFlow`, so the
+same free-time shooting technique described in
+[Integrating § Variable costate](integrating.md#Variable-costate) applies directly: a
+free ``t_0`` or ``t_f`` is passed as (a component of) the `variable`, and `t1` in
+`f(t0, x0, p0, t1; variable=v)` is the **evaluation time** — independent of `v`, even
+when `v` *represents* the free endpoint being shot on.
+
+The mitigated transversality residuals are evaluated from the OCP's own Hamiltonian —
+`H = Systems.hamiltonian(f)` — with an **opposite sign convention** at each end:
+
+```math
+p_{t_0}(t_f) = -H(t_0, x_0, p_0, v), \qquad p_{t_f}(t_f) = H(t_f, x_f, p_f, v).
+```
+
+See `test/suite/flows/test_variable_costate_free_time.jl` for worked examples (free
+``t_0``, free ``t_f``, and both free at once) and the Goddard problem tests for a
+shooting method built this way.
+
+---
+
 ## Trajectory calls — a `CTModels.Solution`
 
 A trajectory call integrates the Hamiltonian system **and** assembles a complete
