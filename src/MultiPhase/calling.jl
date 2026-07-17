@@ -863,7 +863,8 @@ function (mpf::MultiPhaseFlow{TD,VD,Traits.StateDynamics})(
     t0::Real, x0, tf::Real; variable=Flows.__variable(), unsafe=Flows.__unsafe()
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     config = Configs.StateEndPointConfig(t0, x0, tf)
-    return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
+    xf = _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
+    return Systems._coerce_state(xf)(xf)   # 1-D = scalar
 end
 
 """

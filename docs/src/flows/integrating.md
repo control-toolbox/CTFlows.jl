@@ -190,10 +190,13 @@ The default integrator is **SciML** backed by `OrdinaryDiffEqTsit5` (loaded when
 ```@example flows_integrating
 # Tighter tolerances
 flow_tight = Flows.Flow(vf; reltol=1e-12, abstol=1e-12)
+```
 
-# Different algorithm (requires the matching OrdinaryDiffEq package to be loaded)
-# using OrdinaryDiffEqRosenbrock
-# flow_rodas = Flows.Flow(vf; alg=Rodas4())
+Different algorithm (requires the matching OrdinaryDiffEq package to be loaded).
+
+```@example flows_integrating
+using OrdinaryDiffEqRosenbrock
+flow_rodas = Flows.Flow(vf; alg=Rodas4())
 ```
 
 ### Unsafe mode
@@ -223,7 +226,6 @@ lets the same problem definition be re-solved with different parameters efficien
 
 ```@example flows_integrating
 integ = Integrators.build_integrator(; reltol=1e-8)
-typeof(integ)
 ```
 
 ---

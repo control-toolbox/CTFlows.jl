@@ -75,7 +75,7 @@ state–costate pair. For ``\dot{x} = \lambda x`` the costate satisfies
 ``\dot{p} = -\lambda p``:
 
 ```@repl flows_ocp
-x0, p0 = [1.0], [1.0];
+x0, p0 = 1.0, 1.0;
 xf, pf = f(0.0, x0, p0, 1.0);
 xf   # ≈ exp(λ)
 pf   # ≈ exp(-λ)
@@ -166,13 +166,11 @@ nothing`: state and objective are available, but the flow carries neither a cont
 a costate, so `control`/`costate` raise a `PreconditionError`:
 
 ```@example flows_ocp
-using CTFlows.Trajectories
-
 sol_basic = f((0.0, 1.0), x0)
-nothing # hide
 ```
 
 ```@repl flows_ocp
+using CTFlows.Trajectories
 Trajectories.state(sol_basic)(0.5)
 Trajectories.objective(sol_basic)   # ≈ exp(λ)
 ```

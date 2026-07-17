@@ -49,13 +49,13 @@ end
 
 # Mock ODE problem type
 struct MockODEProblem
-    u0::Vector{Float64}
+    u0::Any
     tspan::Tuple{Float64,Float64}
 end
 
 # Mock integration result type
 struct MockIntegrationResult <: Integrators.AbstractIntegrationResult
-    u::Vector{Float64}
+    u::Any
     t::Vector{Float64}
 end
 
@@ -753,7 +753,61 @@ function test_calling_multiphase()
 
                 result = mpf(0.0, x0, 1.0)
                 # Each phase multiplies by 2, so final is x0 * 4
+                Test.@test result isa AbstractVector && length(result) == 2
                 Test.@test result == x0 * 4
+            end
+
+            Test.@testset "1-D scalar convention: vector x0 input → scalar output" begin
+                sys = FakeStateSystem([1.0])
+                integ = MockIntegrator(2.0)
+                flow1 = Flows.StateFlow(sys, integ)
+                flow2 = Flows.StateFlow(sys, integ)
+                mpf = flow1 * (0.5, flow2)
+
+                x0_1d = [3.0]              # length-1 vector
+                result = mpf(0.0, x0_1d, 1.0)
+                Test.@test result isa Number        # 1-D = scalar convention
+                Test.@test result ≈ only(x0_1d) * 4   # same value as scalar input
+            end
+
+            Test.@testset "matrix 2×2 convention: matrix x0 → matrix output" begin
+                sys = FakeStateSystem([1.0, 2.0])
+                integ = MockIntegrator(2.0)
+                flow1 = Flows.StateFlow(sys, integ)
+                flow2 = Flows.StateFlow(sys, integ)
+                mpf = flow1 * (0.5, flow2)
+
+                X0 = [1.0 2.0; 3.0 4.0]
+                result = mpf(0.0, X0, 1.0)
+                Test.@test result isa AbstractMatrix   # must stay a matrix
+                Test.@test size(result) == (2, 2)
+                Test.@test result == X0 * 4
+            end
+
+            Test.@testset "matrix 1×1 convention: 1×1 matrix x0 → matrix output" begin
+                sys = FakeStateSystem([1.0])
+                integ = MockIntegrator(2.0)
+                flow1 = Flows.StateFlow(sys, integ)
+                flow2 = Flows.StateFlow(sys, integ)
+                mpf = flow1 * (0.5, flow2)
+
+                X0 = fill(1.0, 1, 1)               # 1×1 matrix
+                result = mpf(0.0, X0, 1.0)
+                Test.@test result isa AbstractMatrix   # must NOT collapse to scalar
+                Test.@test size(result) == (1, 1)
+                Test.@test result == fill(4.0, 1, 1)
+            end
+
+            Test.@testset "1-D scalar convention: scalar x0 input → scalar output" begin
+                sys = FakeStateSystem([1.0])
+                integ = MockIntegrator(2.0)
+                flow1 = Flows.StateFlow(sys, integ)
+                flow2 = Flows.StateFlow(sys, integ)
+                mpf = flow1 * (0.5, flow2)
+
+                result = mpf(0.0, 3.0, 1.0)
+                Test.@test result isa Number        # 1-D = scalar convention
+                Test.@test result ≈ 3.0 * 4
             end
 
             Test.@testset "call with (tspan, x0)" begin
@@ -767,6 +821,20 @@ function test_calling_multiphase()
                 # Result should be a merged MockIntegrationResult
                 Test.@test result isa MockIntegrationResult
                 Test.@test result.u == vcat(x0 * 2, x0 * 4)
+            end
+
+            Test.@testset "n-D vector trajectory: 2-D state → MockIntegrationResult" begin
+                sys = FakeStateSystem([1.0, 2.0])
+                integ = MockIntegrator(2.0)
+                flow1 = Flows.StateFlow(sys, integ)
+                flow2 = Flows.StateFlow(sys, integ)
+                mpf = flow1 * (0.5, flow2)
+
+                x0_2d = [1.0, 2.0]
+                result = mpf((0.0, 1.0), x0_2d)
+                Test.@test result isa MockIntegrationResult
+                Test.@test result.u isa AbstractVector && length(result.u) == 4
+                Test.@test result.u == vcat(x0_2d * 2, x0_2d * 4)
             end
         end
 

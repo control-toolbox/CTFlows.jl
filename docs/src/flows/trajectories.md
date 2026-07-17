@@ -67,12 +67,12 @@ sol   # produced by flow((t0, tf), x0)
 | `status(sol)` / `successful(sol)` | retcode / `Bool` | solver outcome (see [Solver status](#Solver-status-and-final-state)) |
 
 ```@example flows_solutions
-ts = Trajectories.time_grid(sol)      # vector of time points
+ts = Trajectories.time_grid(sol)   # vector of time points
 ts[1], ts[end]
 ```
 
 ```@example flows_solutions
-x = Trajectories.state(sol)           # callable: x(t) → state at time t
+x = Trajectories.state(sol)        # callable: x(t) → state at time t
 x(0.0)                             # initial state (exact)
 ```
 
@@ -176,11 +176,11 @@ Integrators.status(sol), Integrators.successful(sol)
 ```
 
 ```@example flows_solutions
-Integrators.final_state(sol)    # xf — a state flow returns the state
+Integrators.final_state(sol)  # xf — a state flow returns the state
 ```
 
 ```@example flows_solutions
-Integrators.final_state(hsol)   # (xf, pf) — a Hamiltonian flow returns the pair
+Integrators.final_state(hsol) # (xf, pf) — a Hamiltonian flow returns the pair
 ```
 
 `status` returns the integrator's return code and `successful` a `Bool`. A **point**

@@ -73,7 +73,8 @@ Point evaluation: delegate to the inner state flow and return the final state at
 function (F::ControlledFlow)(
     t0::Real, x0, tf::Real; variable=__variable(), unsafe=__unsafe()
 )
-    return F.flow(t0, x0, tf; variable, unsafe)
+    xf = F.flow(t0, x0, tf; variable, unsafe)
+    return _flow_state_coerce(F.ocp, x0)(xf)   # 1-D = scalar
 end
 
 # ── trajectory call — builds a StateFlowTrajectory ──────────────────────────

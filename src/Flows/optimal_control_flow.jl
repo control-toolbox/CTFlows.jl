@@ -933,7 +933,8 @@ Delegates to the inner control-free state flow — see
 function (F::OptimalControlFlow)(
     t0::Real, x0, tf::Real; variable=Core.NotProvided, unsafe::Bool=false
 )
-    return _require_state_flow(F)(t0, x0, tf; variable, unsafe)
+    xf = _require_state_flow(F)(t0, x0, tf; variable, unsafe)
+    return _flow_state_coerce(F.ocp, x0)(xf)   # 1-D = scalar
 end
 
 """

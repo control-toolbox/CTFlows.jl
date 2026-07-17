@@ -121,6 +121,20 @@ function test_flow_callables_sciml_vector_field()
                 Test.@test size(Xf) == (2, 2)
                 Test.@test Xf ≈ X0 * exp(-1.0) atol=ATOL
             end
+
+            Test.@testset "1-D vector x0 → length-1 vector output (state flow)" begin
+                xf = flow(0.0, [1.0], 1.0)
+                Test.@test xf isa AbstractVector && length(xf) == 1   # state flow preserves vectors
+                Test.@test xf ≈ [exp(-1.0)] atol=ATOL
+            end
+
+            Test.@testset "1×1 matrix x0 → matrix output" begin
+                X0 = fill(1.0, 1, 1)
+                Xf = flow(0.0, X0, 1.0)
+                Test.@test Xf isa AbstractMatrix   # must NOT collapse to scalar
+                Test.@test size(Xf) == (1, 1)
+                Test.@test Xf ≈ fill(exp(-1.0), 1, 1) atol=ATOL
+            end
         end
 
         # ====================================================================

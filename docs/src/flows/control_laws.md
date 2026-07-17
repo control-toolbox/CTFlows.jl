@@ -80,7 +80,6 @@ f_total = Flows.Flow(h̃, law; reltol=1e-10)
 
 # Partial mode: AD at fixed u
 f_partial = Flows.Flow(h̃, law; hamiltonian_type=:partial, reltol=1e-10)
-nothing # hide
 ```
 
 Because the flow was built from a pseudo-Hamiltonian and a law, it exposes them (and
@@ -122,7 +121,6 @@ fc = Data.ControlledVectorField((x, u) -> -x + u)
 law = Data.ClosedLoop(x -> -x)  # feedback u = -x
 
 f = Flows.Flow(fc, law; reltol=1e-8)
-nothing # hide
 ```
 
 !!! warning "DynClosedLoop rejected"
@@ -166,7 +164,6 @@ nothing # hide
 # DynClosedLoop law: u(x, p) = p  (from PMP, maximises H̃ = p*(-x+u) - 0.5*u^2)
 law = Data.DynClosedLoop((x, p) -> p)
 f_ocp = Flows.Flow(ocp, law; reltol=1e-10)
-nothing # hide
 ```
 
 Point evaluation returns the final state–costate pair:
@@ -211,7 +208,6 @@ state, reconstructed control, and objective (Mayer + Lagrange).
 # OpenLoop law: u() = 1 (constant, autonomous ⇒ no time argument)
 law_ol = Data.OpenLoop(() -> 1.0)
 f_cflow = Flows.Flow(ocp, law_ol; reltol=1e-8)
-nothing # hide
 ```
 
 ```@repl flows_laws
