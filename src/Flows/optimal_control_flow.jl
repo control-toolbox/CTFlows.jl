@@ -851,6 +851,13 @@ struct OptimalControlFlow{
     state_flow::SF
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Construct a [`CTFlows.Flows.OptimalControlFlow`](@ref) from an inner Hamiltonian
+[`CTFlows.Flows.Flow`](@ref), the OCP, an optional control law, and an optional
+control-free `state_flow` (see the `state_flow` field).
+"""
 function OptimalControlFlow(
     flow::Flow{TD,VD,Traits.HamiltonianDynamics}, ocp, law=nothing; state_flow=nothing
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}

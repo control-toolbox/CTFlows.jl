@@ -10,11 +10,15 @@ interval: you hand it an initial condition and a final time, and it returns the 
 
 CTFlows builds flows through a **four-layer pipeline**:
 
-```
+```text
 Data → Systems → Integrators → Flows → Trajectories
 ```
 
-Each layer has a single responsibility:
+Each layer has a single responsibility. The arrows show the **build order**, not a
+data dependency: `Systems` and `Integrators` are constructed independently — one
+from `Data`, the other from integrator options — and only meet when
+`build_flow(system, integrator)` combines them into a `Flow` (see
+[Building a flow](building_a_flow.md)):
 
 | Layer | Submodule | What it produces |
 |---|---|---|
@@ -35,12 +39,17 @@ Each layer has a single responsibility:
 | [Optimal control](optimal_control.md) | Flows from optimal control problems | `OptimalControlFlow`, `Flow(ocp)` |
 | [Control laws](control_laws.md) | Flows with control laws | `ControlledFlow`, `Flow(ocp, law)`, `OpenLoop`, `ClosedLoop`, `DynClosedLoop` |
 | [Constrained flows](constrained.md) | Path-constraint terms on `Flow(ocp, law)` | `constraint`, `multiplier`, `hamiltonian_type` |
-| [SciML flows](sciml.md) | Flows from SciML functions and problems | `Flow(::ODEFunction)`, `SciMLProblemFlow` |
+| [SciML flows](sciml.md) | Flows from SciML functions and problems | `Flow(::ODEFunction)`, `Flow(::ODEProblem)`, `SciMLProblemFlow` |
 
 The **data layer** (wrapping functions as `VectorField`, `Hamiltonian`,
 `HamiltonianVectorField`) and the **trait system** (`Autonomous`, `Fixed`,
 `InPlace`, …) live in CTBase — see [`CTBase.Data`](@extref CTBase.Data) and
-[`CTBase.Traits`](@extref CTBase.Traits) in the CTBase documentation.
+[`CTBase.Traits`](@extref CTBase.Traits) in the CTBase documentation. Likewise, the
+**ODE solver strategy** (`SciML`) is not implemented in CTFlows: it is provided by
+[`CTSolvers.Integrators`](@extref CTSolvers.Integrators) and re-exported through
+[`CTFlows.Integrators`](@ref CTFlows.Integrators) — see
+[SciML integrator internals](integrating.md#SciML-integrator-internals) for the
+split between the two packages.
 
 ## Qualified access
 
@@ -67,16 +76,24 @@ The fastest path from a function to an integrated trajectory:
 # 1. Wrap the dynamics as a VectorField
 #    The function x -> -x is autonomous (no t) and fixed (no variable parameter)
 vf = Data.VectorField(x -> -x)
+```
 
+```@example flows_overview
 # 2. Build the flow directly from the data (shortcut constructor)
 flow = Flows.Flow(vf; reltol=1e-8, abstol=1e-8)
+```
 
+```@example flows_overview
 # 3a. Point integration: final state only
 xf = flow(0.0, [1.0, 0.0], 1.0)
+```
 
+```@example flows_overview
 # 3b. Trajectory integration: full time history
 sol = flow((0.0, 1.0), [1.0, 0.0])
+```
 
+```@example flows_overview
 # 4. Read the result
 ts = Trajectories.time_grid(sol)   # vector of time points
 x  = Trajectories.state(sol)       # callable: x(t) → state at time t
@@ -101,3 +118,16 @@ We work on a state space ``\mathcal{X} \subseteq \mathbb{R}^n``.
 
 Which extra arguments appear (``t``, ``v``) is encoded by the **trait system** —
 see [`CTBase.Traits`](@extref CTBase.Traits).
+
+An **optimal control problem** adds a control ``u \in \mathcal{U}``, dynamics
+``\dot{x} = f(t, x, u, v)``, and a Mayer/Lagrange cost to minimise (or maximise). Its
+**pseudo-Hamiltonian** ``\tilde{H}(t, x, p, u, v) = p \cdot f(t, x, u, v) + s\,p^0\,
+\ell(t, x, u, v)`` (``p^0 = -1``, ``s = \pm 1`` for `:min`/`:max`) still carries the
+control explicitly. Two routes turn it into a genuine Hamiltonian that a flow can
+integrate:
+
+- **Control-free**: no control at all — ``\tilde{H}`` reduces directly to
+  ``H(t, x, p, v)``. This is `Flow(ocp)` — see [Optimal control](optimal_control.md).
+- **With a control law**: a feedback ``u(t, x, p, v)`` (or ``u(t, x, v)``) closes the
+  loop, ``H(t, x, p, v) = \tilde{H}(t, x, p, u(\ldots), v)``. This is
+  `Flow(ocp, law)` / `Flow(h̃, law)` — see [Control laws](control_laws.md).

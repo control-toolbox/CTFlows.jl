@@ -192,6 +192,14 @@ See also: [`CTFlows.Trajectories.state`](@ref).
 """
 control(sol::StateFlowTrajectory) = _sft_control(sol.control_proj)
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the stored [`CTFlows.Trajectories.ControlProjection`](@ref) as-is, or throw a
+[`CTBase.Exceptions.PreconditionError`](@extref) when the trajectory has no control
+projection (`cp === nothing`, a basic control-free `Flow(ocp)`). Dispatch helper for
+[`CTFlows.Trajectories.control`](@ref).
+"""
 _sft_control(cp::ControlProjection) = cp
 function _sft_control(::Nothing)
     return throw(

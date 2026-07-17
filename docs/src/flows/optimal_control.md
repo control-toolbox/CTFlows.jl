@@ -130,6 +130,44 @@ CTModels.Components.costate(sol)(0.5) # p(0.5) ≈ exp(-λ/2)
 
 ---
 
+## Basic flow — no costate (direct shooting)
+
+For a **control-free** OCP, `Flow(ocp)` also exposes a **state-only** call, with no
+costate — the direct-shooting use case
+([#230](https://github.com/control-toolbox/CTFlows.jl/issues/230)). Same `f` object,
+dispatched on arity (3 positional arguments instead of 4):
+
+```@repl flows_ocp
+xf_basic = f(0.0, x0, 1.0)
+xf_basic ≈ xf
+```
+
+A trajectory call returns a
+[`StateFlowTrajectory`](@ref CTFlows.Trajectories.StateFlowTrajectory) with `law =
+nothing`: state and objective are available, but the flow carries neither a control nor
+a costate, so `control`/`costate` raise a `PreconditionError`:
+
+```@example flows_ocp
+using CTFlows.Trajectories
+
+sol_basic = f((0.0, 1.0), x0)
+nothing # hide
+```
+
+```@repl flows_ocp
+Trajectories.state(sol_basic)(0.5)
+Trajectories.objective(sol_basic)   # ≈ exp(λ)
+```
+
+`Flow(ocp, law)` has no such basic call when `law` is `DynClosedLoop`: its dynamics
+depend on the costate `p(t)`, so `f(t0, x0, tf)` raises a `PreconditionError`
+suggesting `f(t0, x0, p0, tf)` instead. For an `OpenLoop`/`ClosedLoop` law, the
+state-only equivalent already exists as the
+[`ControlledFlow`](@ref CTFlows.Flows.ControlledFlow) returned by `Flow(ocp, law)` —
+see [Control laws](control_laws.md).
+
+---
+
 ## Inspecting the wrapper
 
 `OptimalControlFlow` is a thin `AbstractFlow` wrapper around the inner

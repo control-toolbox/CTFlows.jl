@@ -160,14 +160,23 @@ solves it, and wraps the result — see [Integrating](integrating.md).
 
 ---
 
-## Hamiltonian vector field getter
+## Vector field getters
 
-For a `HamiltonianFlow`, you can retrieve the underlying `HamiltonianVectorField`
-at any time:
+`Systems.vector_field(f)` is the uniform entry point across flow kinds — for a
+`HamiltonianFlow` it returns the (symplectic) Hamiltonian vector field
+``X_H = (\partial_p H, -\partial_x H)``, an alias of `hamiltonian_vector_field(f)`;
+for a state `Flow` it returns the underlying `AbstractVectorField` integrated by
+the flow:
 
 ```@example flows_building
-# HamiltonianVectorField-backed flow
+# State flow → the underlying VectorField
+Flows.vector_field(flow)
+```
+
+```@example flows_building
+# HamiltonianVectorField-backed flow → X_H (vector_field is an alias)
 hvf_back = Flows.hamiltonian_vector_field(hflow)
+Flows.vector_field(hflow) === hvf_back
 ```
 
 For an AD-backed flow (built from `Hamiltonian`), the getter materialises the
@@ -176,6 +185,11 @@ vector field on demand:
 ```@example flows_building
 hvf_ad = Flows.hamiltonian_vector_field(hflow_ad)
 ```
+
+`hamiltonian_vector_field` (and therefore `vector_field`) also covers flows built
+from a pseudo-Hamiltonian or an OCP together with a control law — the Hamiltonian is
+then a `CTBase.Data.ComposedHamiltonian` (`:total` mode) or reconstructed from a
+`PseudoHamiltonianSystem` (`:partial` mode); see [Control laws](control_laws.md).
 
 ---
 
@@ -186,3 +200,4 @@ hvf_ad = Flows.hamiltonian_vector_field(hflow_ad)
 - [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractStateFlow`](@ref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@ref) — abstract supertypes.
 - [`CTFlows.Flows.system`](@ref), [`CTFlows.Flows.integrator`](@ref) — flow accessors.
 - [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref) — system contract.
+- [`CTFlows.Systems.vector_field`](@ref), [`CTFlows.Flows.hamiltonian_vector_field`](@ref) — vector field getters (state and Hamiltonian flows).
