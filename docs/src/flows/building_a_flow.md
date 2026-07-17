@@ -155,19 +155,56 @@ Any concrete flow must implement:
 - `system(flow)` — the associated `AbstractSystem`
 - `integrator(flow)` — the associated `AbstractIntegrator`
 
+```@example flows_building
+Flows.system(flow)      # the VectorFieldSystem wrapped by this StateFlow
+```
+
+```@example flows_building
+Flows.integrator(flow)  # the SciML integrator strategy
+```
+
 Calling a flow delegates through `_invoke_flow` which builds the ODE problem,
 solves it, and wraps the result — see [Integrating](integrating.md).
 
 ---
 
-## Hamiltonian vector field getter
+## Flow getters
 
-For a `HamiltonianFlow`, you can retrieve the underlying `HamiltonianVectorField`
-at any time:
+Every flow answers a small, uniform set of getters. Which ones are meaningful depends
+on how the flow was built; calling an inapplicable getter raises a clear
+`IncorrectArgument`.
+
+| Getter | Available on | Returns |
+|---|---|---|
+| `system(f)` / `integrator(f)` | all flows | the wrapped `AbstractSystem` / `AbstractIntegrator` |
+| `vector_field(f)` | all flows | the integrated vector field (for a Hamiltonian flow, ``X_H`` — an alias of `hamiltonian_vector_field`) |
+| `hamiltonian_vector_field(f)` | Hamiltonian flows | ``X_H = (\partial_p H, -\partial_x H)`` |
+| `hamiltonian(f)` | Hamiltonian flows | the scalar ``H(t, x, p, v)`` |
+| `hamiltonian_gradient(f)` / `variable_gradient(f)` | Hamiltonian flows | functors ``(\partial_x H, \partial_p H)`` / ``\partial_v H`` |
+| `pseudo_hamiltonian(f)` / `control_law(f)` | flows built with a control law | ``\tilde H(t, x, p, u, v)`` / the feedback ``u`` |
+| `pseudo_hamiltonian_gradient(f)` / `pseudo_variable_gradient(f)` | flows built with a control law | functors of ``\tilde H`` |
+
+The Hamiltonian getters are shown executed on [Integrating](integrating.md), the
+pseudo-Hamiltonian ones on [Control laws](control_laws.md). This page covers the
+vector-field getters.
+
+### Vector field
+
+`Systems.vector_field(f)` is the uniform entry point across flow kinds — for a
+`HamiltonianFlow` it returns the (symplectic) Hamiltonian vector field
+``X_H = (\partial_p H, -\partial_x H)``, an alias of `hamiltonian_vector_field(f)`;
+for a state `Flow` it returns the underlying `AbstractVectorField` integrated by
+the flow:
 
 ```@example flows_building
-# HamiltonianVectorField-backed flow
+# State flow → the underlying VectorField
+Flows.vector_field(flow)
+```
+
+```@example flows_building
+# HamiltonianVectorField-backed flow → X_H (vector_field is an alias)
 hvf_back = Flows.hamiltonian_vector_field(hflow)
+Flows.vector_field(hflow) === hvf_back
 ```
 
 For an AD-backed flow (built from `Hamiltonian`), the getter materialises the
@@ -176,6 +213,11 @@ vector field on demand:
 ```@example flows_building
 hvf_ad = Flows.hamiltonian_vector_field(hflow_ad)
 ```
+
+`hamiltonian_vector_field` (and therefore `vector_field`) also covers flows built
+from a pseudo-Hamiltonian or an OCP together with a control law — the Hamiltonian is
+then a `CTBase.Data.ComposedHamiltonian` (`:total` mode) or reconstructed from a
+`PseudoHamiltonianSystem` (`:partial` mode); see [Control laws](control_laws.md).
 
 ---
 
@@ -186,3 +228,4 @@ hvf_ad = Flows.hamiltonian_vector_field(hflow_ad)
 - [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractStateFlow`](@ref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@ref) — abstract supertypes.
 - [`CTFlows.Flows.system`](@ref), [`CTFlows.Flows.integrator`](@ref) — flow accessors.
 - [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref) — system contract.
+- [`CTFlows.Systems.vector_field`](@ref), [`CTFlows.Flows.hamiltonian_vector_field`](@ref) — vector field getters (state and Hamiltonian flows).

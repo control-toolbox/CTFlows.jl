@@ -37,6 +37,11 @@ const H_INDEP = Data.Hamiltonian((x, p, v) -> p^2 / 2; is_variable=true)
 const H_SCALED = Data.Hamiltonian((x, p, v) -> v * p^2 / 2; is_variable=true)
 # H2: 2-D variable, depends on v[1] only ⇒ ∂H/∂v = (p, 0).
 const H_2VAR = Data.Hamiltonian((x, p, v) -> v[1] * p; is_variable=true)
+# H3: linear in p, scaled by v (v plays t0) ⇒ ∂H/∂v = p.
+const H_T0 = Data.Hamiltonian((x, p, v) -> v * p; is_variable=true)
+# H4: 2-D variable, v[1] plays t0 (linear term) and v[2] plays tf (quadratic term)
+# ⇒ ∂H/∂v = (p, p²/2).
+const H_T0TF = Data.Hamiltonian((x, p, v) -> v[1] * p + v[2] * p^2 / 2; is_variable=true)
 
 function test_variable_costate_free_time()
     Test.@testset "variable_costate — free times" verbose=VERBOSE showtiming=SHOWTIMING begin
@@ -106,6 +111,53 @@ function test_variable_costate_free_time()
             Test.@test pvf isa AbstractVector && length(pvf) == 2
             Test.@test pvf[1] ≈ -p0 * (tf - t0) atol=ATOL
             Test.@test pvf[2] ≈ 0.0 atol=ATOL
+        end
+
+        # =====================================================================
+        # Free t0 — same mechanism, transversality residual evaluated at t0
+        # (asymmetric sign vs. the free-tf case: p_{t0}(tf) = -H(t0, x0, p0, v))
+        # =====================================================================
+
+        Test.@testset "Free t0: pvf = -p0(tf-t0)" begin
+            φ = Flows.Flow(H_T0; alg=Tsit5())
+            t0, tf, x0, p0 = 0.3, 2.0, 1.0, 0.5
+            v = t0                                  # v plays the role of t0
+            xf, pf, pvf = φ(t0, x0, p0, tf; variable=v, variable_costate=true)
+            # ẋ = v, ṗ = 0 ⇒ x(t) = x0 + v(t-t0), p ≡ p0
+            Test.@test xf ≈ x0 + v * (tf - t0) atol=ATOL
+            Test.@test pf ≈ p0 atol=ATOL
+            # ∂H/∂v = p = p0 (const) ⇒ pvf = -p0(tf-t0)
+            Test.@test pvf ≈ -p0 * (tf - t0) atol=ATOL
+            # mitigated transversality residual: p_{t0}(tf) = -H(t0,x0,p0,v)
+            H = Systems.hamiltonian(φ)
+            res = pvf + H(t0, x0, p0, v)
+            Test.@test res ≈ -p0 * (tf - t0) + v * p0 atol=ATOL
+        end
+
+        # =====================================================================
+        # Both t0 and tf free — 2-D variable, one residual per endpoint, with
+        # opposite signs (p_{t0}(tf) = -H(t0,…), p_{tf}(tf) = H(tf,…))
+        # =====================================================================
+
+        Test.@testset "2-D (t0,tf) free: one transversality residual per endpoint" begin
+            φ = Flows.Flow(H_T0TF; alg=Tsit5())
+            t0, tf, x0, p0 = 0.3, 2.0, 1.0, 0.5
+            v = [t0, tf]                            # v[1] plays t0, v[2] plays tf
+            xf, pf, pvf = φ(t0, x0, p0, tf; variable=v, variable_costate=true)
+            # ẋ = v[1] + v[2]·p, ṗ = 0 ⇒ x(t) = x0 + (v[1]+v[2]p0)(t-t0)
+            Test.@test xf ≈ x0 + (v[1] + v[2] * p0) * (tf - t0) atol=ATOL
+            Test.@test pf ≈ p0 atol=ATOL
+            # ∂H/∂v = (p, p²/2) ⇒ pvf = (-p0(tf-t0), -(p0²/2)(tf-t0))
+            Test.@test pvf isa AbstractVector && length(pvf) == 2
+            Test.@test pvf[1] ≈ -p0 * (tf - t0) atol=ATOL
+            Test.@test pvf[2] ≈ -(p0^2 / 2) * (tf - t0) atol=ATOL
+            # one residual per endpoint, opposite sign convention
+            H = Systems.hamiltonian(φ)
+            res_t0 = pvf[1] + H(t0, x0, p0, v)
+            res_tf = pvf[2] - H(tf, xf, pf, v)
+            Hval = v[1] * p0 + v[2] * p0^2 / 2   # H doesn't depend on (t,x) ⇒ same at t0/tf
+            Test.@test res_t0 ≈ -p0 * (tf - t0) + Hval atol=ATOL
+            Test.@test res_tf ≈ -(p0^2 / 2) * (tf - t0) - Hval atol=ATOL
         end
     end
 end

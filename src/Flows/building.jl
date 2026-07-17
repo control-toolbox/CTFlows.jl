@@ -169,7 +169,9 @@ function _flow_from_ocp(::Type{Traits.ControlFree}, ocp::CTModels.Models.Model; 
     h = _ocp_hamiltonian(ocp)
     sys = Systems.build_system(h, components.backend)
     inner = build_flow(sys, components.integrator)
-    return OptimalControlFlow(inner, ocp)
+    state_sys = Systems.build_system(_ocp_state_vector_field(ocp))
+    state_flow = build_flow(state_sys, components.integrator)
+    return OptimalControlFlow(inner, ocp; state_flow=state_flow)
 end
 
 """
@@ -356,7 +358,7 @@ Build a [`CTFlows.Flows.ControlledFlow`](@ref) directly from a controlled vector
 Dispatches on the law's [`CTBase.Traits.feedback`](@extref) trait: the control is
 eliminated via a [`CTBase.Data.ComposedVectorField`](@extref) `g(t,x,v)=fc(t,x,u(...),v)`,
 integrated as a state flow. A trajectory call returns a
-[`CTFlows.Trajectories.ControlledTrajectory`](@ref) (state + reconstructed control, no
+[`CTFlows.Trajectories.StateFlowTrajectory`](@ref) (state + reconstructed control, no
 objective — there is no OCP).
 
 # Throws
@@ -433,7 +435,7 @@ Dispatches on the law's [`CTBase.Traits.feedback`](@extref) trait:
 - `OpenLoop`/`ClosedLoop` → a [`CTFlows.Flows.ControlledFlow`](@ref) (state flow): the
   control is eliminated via a [`CTBase.Data.ComposedVectorField`](@extref) and the OCP
   dynamics are integrated as a state flow; the trajectory call returns a
-  [`CTFlows.Trajectories.ControlledTrajectory`](@ref).
+  [`CTFlows.Trajectories.StateFlowTrajectory`](@ref).
 
 # Throws
 - [`CTBase.Exceptions.PreconditionError`](@extref): if the OCP is control-free.

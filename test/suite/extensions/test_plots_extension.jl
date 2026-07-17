@@ -1,6 +1,6 @@
 """
 Tests for the CTFlowsPlots extension: the `TrajectoryPlots` case layer (plotting of the
-three trajectory types, including `ControlledTrajectory`, component-name plumbing from
+three trajectory types, including `StateFlowTrajectory`, component-name plumbing from
 the OCP, and the split/group layouts). The generic rendering engine it builds on lives
 in `CTBase.Plotting` and is tested there.
 """
@@ -84,7 +84,7 @@ end
 function _ctrl_traj(; objective=nothing)
     inner = _vf_traj()
     law = Data.ClosedLoop(x -> -2x)                 # autonomous, fixed
-    return Trajectories.ControlledTrajectory(
+    return Trajectories.StateFlowTrajectory(
         inner, law, Core.NotProvided, objective, only, nothing
     )
 end
@@ -95,7 +95,7 @@ function _ctrl_traj_multi()
         FakePlotIntegrationResult([0.0, 1.0], [[1.0, 2.0, 3.0], [0.5, 1.0, 1.5]])
     )
     law = Data.ClosedLoop(x -> [-x[1], -x[2]])      # 2-D control
-    return Trajectories.ControlledTrajectory(
+    return Trajectories.StateFlowTrajectory(
         inner, law, Core.NotProvided, nothing, identity, nothing
     )
 end
@@ -116,7 +116,7 @@ end
 function _ctrl_traj_ocp()
     inner = _vf_traj2()                               # 2-D state
     law = Data.ClosedLoop(x -> [-x[1]])              # 1-D control
-    return Trajectories.ControlledTrajectory(
+    return Trajectories.StateFlowTrajectory(
         inner, law, Core.NotProvided, nothing, identity, _ocp_named()
     )
 end
@@ -155,7 +155,7 @@ function test_plots_extension()
                 # generated defaults
                 Test.@test TrajectoryPlots._state_names(_vf_traj2(), 2) == ["x₁", "x₂"]
                 Test.@test TrajectoryPlots._time_name(_vf_traj2()) == "t"
-                # from the OCP the ControlledTrajectory carries
+                # from the OCP the StateFlowTrajectory carries
                 sol = _ctrl_traj_ocp()
                 Test.@test TrajectoryPlots._state_names(sol, 2) == ["pos", "vel"]
                 Test.@test TrajectoryPlots._control_names(sol, 1) == ["thrust"]
@@ -204,7 +204,7 @@ function test_plots_extension()
         end
 
         # ----------------------------------------------------------------------
-        Test.@testset "ControlledTrajectory plotting" begin
+        Test.@testset "StateFlowTrajectory plotting" begin
             sol = _ctrl_traj()
             Test.@test Plots.plot(sol) isa Plots.Plot                     # state + control
             Test.@test Plots.plot(sol, :control) isa Plots.Plot

@@ -41,11 +41,33 @@ x0, p0 = sol(0.0)        # returns tuple (x(0), p(0))
 
 See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.AbstractHamiltonianVectorFieldTrajectory`](@ref).
 """
-struct HamiltonianVectorFieldTrajectory{X0,R<:Integrators.AbstractIntegrationResult,V} <:
-       AbstractHamiltonianVectorFieldTrajectory
+struct HamiltonianVectorFieldTrajectory{
+    X0,R<:Integrators.AbstractIntegrationResult,V,SP,CP
+} <: AbstractHamiltonianVectorFieldTrajectory
     x0::X0
     result::R
     variable::V
+    state_proj::SP
+    costate_proj::CP
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Construct a `HamiltonianVectorFieldTrajectory`, precomputing the state and costate
+projections once so the `state`/`costate` accessors return a stored functor instead of
+rebuilding one on every call.
+"""
+function HamiltonianVectorFieldTrajectory(
+    x0, result::Integrators.AbstractIntegrationResult, variable
+)
+    sp = StateProjection(result, x0)
+    cp = CostateProjection(result, x0)
+    return HamiltonianVectorFieldTrajectory{
+        typeof(x0),typeof(result),typeof(variable),typeof(sp),typeof(cp)
+    }(
+        x0, result, variable, sp, cp
+    )
 end
 
 """
@@ -151,26 +173,49 @@ $(TYPEDEF)
 
 Callable struct returning the state component of a `HamiltonianVectorFieldTrajectory`.
 
-`StateProjection(sol)(t)` is equivalent to `sol(t)[1]`, but avoids creating a closure
-each time `state(sol)` is called. The solution reference is stored once at construction.
+`StateProjection(result, x0)(t)` is equivalent to `sol(t)[1]`. It wraps the inner
+integration result and `x0` (not the trajectory itself), so it is constructed once at
+trajectory construction and stored, and the `state(sol)` accessor returns it without
+rebuilding a functor on every call.
 """
-struct StateProjection{S<:HamiltonianVectorFieldTrajectory} <: Function
-    sol::S
+struct StateProjection{R<:Integrators.AbstractIntegrationResult,X0} <: Function
+    result::R
+    x0::X0
 end
-(sp::StateProjection)(t::Real) = sp.sol(t)[1]
+(sp::StateProjection)(t::Real) =
+    _ham_split_solution(Integrators.evaluate_at(sp.result, t), sp.x0)[1]
+
+"""
+$(TYPEDSIGNATURES)
+
+Build a `StateProjection` from a `HamiltonianVectorFieldTrajectory` (its `result`/`x0`).
+"""
+StateProjection(sol::HamiltonianVectorFieldTrajectory) = StateProjection(sol.result, sol.x0)
 
 """
 $(TYPEDEF)
 
 Callable struct returning the costate component of a `HamiltonianVectorFieldTrajectory`.
 
-`CostateProjection(sol)(t)` is equivalent to `sol(t)[2]`, but avoids creating a closure
-each time `costate(sol)` is called. The solution reference is stored once at construction.
+`CostateProjection(result, x0)(t)` is equivalent to `sol(t)[2]`. It wraps the inner
+integration result and `x0` (not the trajectory itself), so it is constructed once at
+trajectory construction and stored, and the `costate(sol)` accessor returns it without
+rebuilding a functor on every call.
 """
-struct CostateProjection{S<:HamiltonianVectorFieldTrajectory} <: Function
-    sol::S
+struct CostateProjection{R<:Integrators.AbstractIntegrationResult,X0} <: Function
+    result::R
+    x0::X0
 end
-(cp::CostateProjection)(t::Real) = cp.sol(t)[2]
+(cp::CostateProjection)(t::Real) =
+    _ham_split_solution(Integrators.evaluate_at(cp.result, t), cp.x0)[2]
+
+"""
+$(TYPEDSIGNATURES)
+
+Build a `CostateProjection` from a `HamiltonianVectorFieldTrajectory` (its `result`/`x0`).
+"""
+CostateProjection(sol::HamiltonianVectorFieldTrajectory) =
+    CostateProjection(sol.result, sol.x0)
 
 """
 $(TYPEDSIGNATURES)
@@ -198,7 +243,7 @@ x(0.5)            # interpolated state at t = 0.5
 See also: [`CTFlows.Trajectories.costate`](@ref), [`CTSolvers.Integrators.times`](@extref).
 """
 function state(sol::HamiltonianVectorFieldTrajectory)
-    return StateProjection(sol)
+    return sol.state_proj
 end
 
 """
@@ -227,7 +272,7 @@ p(0.5)            # interpolated costate at t = 0.5
 See also: [`CTFlows.Trajectories.state`](@ref), [`CTSolvers.Integrators.times`](@extref).
 """
 function costate(sol::HamiltonianVectorFieldTrajectory)
-    return CostateProjection(sol)
+    return sol.costate_proj
 end
 
 """

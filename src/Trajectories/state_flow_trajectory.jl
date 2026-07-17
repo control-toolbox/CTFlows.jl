@@ -1,5 +1,5 @@
 # =============================================================================
-# ControlledTrajectory — a trajectory of a controlled dynamical system:
+# StateFlowTrajectory — a trajectory of a controlled dynamical system:
 # state x(t) plus a reconstructed control u(t) = law(t, x(t), v). No costate.
 # =============================================================================
 
@@ -34,7 +34,7 @@ costate** (the underlying flow is a state flow) and no objective.
 See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref),
 [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.control`](@ref).
 """
-struct ControlledTrajectory{T<:VectorFieldTrajectory,L,V,O,C,M} <:
+struct StateFlowTrajectory{T<:VectorFieldTrajectory,L,V,O,C,M,SP,CP} <:
        AbstractVectorFieldTrajectory
     traj::T
     law::L
@@ -42,7 +42,51 @@ struct ControlledTrajectory{T<:VectorFieldTrajectory,L,V,O,C,M} <:
     objective::O
     state_coerce::C
     ocp::M
+    state_proj::SP
+    control_proj::CP
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Construct a `StateFlowTrajectory`, precomputing the state and control projections once so
+the `state`/`control` accessors return a stored functor instead of rebuilding one on every
+call. The control projection is `nothing` when there is no control law (`law === nothing`,
+a basic control-free `Flow(ocp)`), in which case `control(sol)` raises a clear error.
+"""
+function StateFlowTrajectory(
+    traj::VectorFieldTrajectory, law, variable, objective, state_coerce, ocp
+)
+    sp = ControlledStateProjection(traj, state_coerce)
+    cp = _build_control_proj(law, traj, variable, state_coerce)
+    return StateFlowTrajectory{
+        typeof(traj),
+        typeof(law),
+        typeof(variable),
+        typeof(objective),
+        typeof(state_coerce),
+        typeof(ocp),
+        typeof(sp),
+        typeof(cp),
+    }(
+        traj, law, variable, objective, state_coerce, ocp, sp, cp
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+No control projection when there is no control law (a basic control-free `Flow(ocp)`).
+"""
+_build_control_proj(::Nothing, traj, variable, coerce) = nothing
+"""
+$(TYPEDSIGNATURES)
+
+Build the (precomputed) [`CTFlows.Trajectories.ControlProjection`](@ref) from the law and
+the inner trajectory.
+"""
+_build_control_proj(law, traj, variable, coerce) =
+    ControlProjection(traj, law, variable, coerce)
 
 # =============================================================================
 # Control reconstruction — feedback-dispatched uniform call of the law
@@ -78,7 +122,7 @@ _cp_variable(v) = v isa Core.NotProvidedType ? nothing : v
 $(TYPEDEF)
 
 Callable struct returning the (1-D = scalar coerced) state of a
-[`CTFlows.Trajectories.ControlledTrajectory`](@ref). The coercion (`only`/`identity`) is
+[`CTFlows.Trajectories.StateFlowTrajectory`](@ref). The coercion (`only`/`identity`) is
 precomputed and stored, so no length is tested at run time.
 """
 struct ControlledStateProjection{T<:VectorFieldTrajectory,C} <: Function
@@ -97,7 +141,7 @@ Return the (1-D = scalar coerced) state at time `t` from a
 $(TYPEDEF)
 
 Callable struct returning the reconstructed control of a
-[`CTFlows.Trajectories.ControlledTrajectory`](@ref):
+[`CTFlows.Trajectories.StateFlowTrajectory`](@ref):
 `ControlProjection(sol)(t) = law(t, x(t), v)`. A functor (not a closure); the state
 coercion is precomputed.
 """
@@ -125,79 +169,105 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the state function `x(t)` of a `ControlledTrajectory` (scalar for a 1-D state).
+Return the state function `x(t)` of a `StateFlowTrajectory` (scalar for a 1-D state).
+
+Returns the stored [`CTFlows.Trajectories.ControlledStateProjection`](@ref) precomputed at
+construction.
 
 See also: [`CTFlows.Trajectories.control`](@ref).
 """
-state(sol::ControlledTrajectory) = ControlledStateProjection(sol.traj, sol.state_coerce)
+state(sol::StateFlowTrajectory) = sol.state_proj
 
 """
 $(TYPEDSIGNATURES)
 
 Return the reconstructed control function `u(t) = law(t, x(t), v)` of a
-`ControlledTrajectory`, as a [`CTFlows.Trajectories.ControlProjection`](@ref).
+`StateFlowTrajectory`, as the stored [`CTFlows.Trajectories.ControlProjection`](@ref).
+
+Raises a [`CTBase.Exceptions.PreconditionError`](@extref) when the trajectory was built
+without a control law (a basic control-free `Flow(ocp)`), which has no control to
+reconstruct.
 
 See also: [`CTFlows.Trajectories.state`](@ref).
 """
-function control(sol::ControlledTrajectory)
-    return ControlProjection(sol.traj, sol.law, sol.variable, sol.state_coerce)
+control(sol::StateFlowTrajectory) = _sft_control(sol.control_proj)
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the stored [`CTFlows.Trajectories.ControlProjection`](@ref) as-is, or throw a
+[`CTBase.Exceptions.PreconditionError`](@extref) when the trajectory has no control
+projection (`cp === nothing`, a basic control-free `Flow(ocp)`). Dispatch helper for
+[`CTFlows.Trajectories.control`](@ref).
+"""
+_sft_control(cp::ControlProjection) = cp
+function _sft_control(::Nothing)
+    return throw(
+        Exceptions.PreconditionError(
+            "this StateFlowTrajectory has no control";
+            reason="it was built without a control law (a basic control-free Flow(ocp), " *
+                   "e.g. for direct shooting), so there is no control to reconstruct",
+            suggestion="use state(sol); control only exists for flows built with a control law",
+            context="StateFlowTrajectory — control getter",
+        ),
+    )
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Return the time grid of a `ControlledTrajectory`.
+Return the time grid of a `StateFlowTrajectory`.
 """
-Integrators.times(sol::ControlledTrajectory) = Integrators.times(sol.traj)
+Integrators.times(sol::StateFlowTrajectory) = Integrators.times(sol.traj)
 
 """
 $(TYPEDSIGNATURES)
 
-Alias for `times(sol)` — the time grid of a `ControlledTrajectory`.
+Alias for `times(sol)` — the time grid of a `StateFlowTrajectory`.
 """
-time_grid(sol::ControlledTrajectory) = Integrators.times(sol.traj)
+time_grid(sol::StateFlowTrajectory) = Integrators.times(sol.traj)
 
 """
 $(TYPEDSIGNATURES)
 
-Return the final state of a `ControlledTrajectory`.
+Return the final state of a `StateFlowTrajectory`.
 """
-Integrators.final_state(sol::ControlledTrajectory) = Integrators.final_state(sol.traj)
+Integrators.final_state(sol::StateFlowTrajectory) = Integrators.final_state(sol.traj)
 
 """
 $(TYPEDSIGNATURES)
 
-Return the termination status of a `ControlledTrajectory`, delegating to the underlying
+Return the termination status of a `StateFlowTrajectory`, delegating to the underlying
 state trajectory.
 """
-Integrators.status(sol::ControlledTrajectory) = Integrators.status(sol.traj)
+Integrators.status(sol::StateFlowTrajectory) = Integrators.status(sol.traj)
 
 """
 $(TYPEDSIGNATURES)
 
-Return whether a `ControlledTrajectory` terminated successfully, delegating to the
+Return whether a `StateFlowTrajectory` terminated successfully, delegating to the
 underlying state trajectory.
 """
-Integrators.successful(sol::ControlledTrajectory) = Integrators.successful(sol.traj)
+Integrators.successful(sol::StateFlowTrajectory) = Integrators.successful(sol.traj)
 
 """
 $(TYPEDSIGNATURES)
 
 Evaluate the state at time `t` (scalar for a 1-D state).
 """
-(sol::ControlledTrajectory)(t::Real) = sol.state_coerce(sol.traj(t))
+(sol::StateFlowTrajectory)(t::Real) = sol.state_coerce(sol.traj(t))
 
 """
 $(TYPEDSIGNATURES)
 
-Return the objective value of a `ControlledTrajectory` (Mayer + Lagrange, with the
+Return the objective value of a `StateFlowTrajectory` (Mayer + Lagrange, with the
 control reconstructed from the law). Available only when the trajectory was built from
 an OCP (trajectory mode); otherwise a clear error is raised.
 
 See also: [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.control`](@ref).
 """
 function objective(
-    sol::ControlledTrajectory{T,L,V,<:Real}
+    sol::StateFlowTrajectory{T,L,V,<:Real}
 ) where {T<:VectorFieldTrajectory,L,V}
     return sol.objective
 end
@@ -211,16 +281,16 @@ available (the trajectory was built without an OCP, e.g. from `Flow(fc, law)`).
 See also: [`CTFlows.Trajectories.objective`](@ref).
 """
 function objective(
-    sol::ControlledTrajectory{T,L,V,Nothing}
+    sol::StateFlowTrajectory{T,L,V,Nothing}
 ) where {T<:VectorFieldTrajectory,L,V}
     return throw(
         Exceptions.PreconditionError(
-            "this ControlledTrajectory has no objective value";
+            "this StateFlowTrajectory has no objective value";
             reason="it was built without an optimal control problem (e.g. from " *
                    "Flow(fc, law) rather than Flow(ocp, law)), so there is no cost to evaluate",
             suggestion="build the flow from an OCP — Flow(ocp, law) — to obtain the objective, " *
                        "or use state(sol) and control(sol)",
-            context="ControlledTrajectory — objective getter",
+            context="StateFlowTrajectory — objective getter",
         ),
     )
 end
@@ -228,21 +298,21 @@ end
 """
 $(TYPEDSIGNATURES)
 
-A `ControlledTrajectory` has **no costate** — it is the trajectory of a controlled
+A `StateFlowTrajectory` has **no costate** — it is the trajectory of a controlled
 state flow (`OpenLoop`/`ClosedLoop`), not a Hamiltonian flow. Raises a
 `PreconditionError` pointing at the available getters.
 
 See also: [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.control`](@ref).
 """
-function costate(sol::ControlledTrajectory)
+function costate(sol::StateFlowTrajectory)
     return throw(
         Exceptions.PreconditionError(
-            "a ControlledTrajectory has no costate";
+            "a StateFlowTrajectory has no costate";
             reason="it is the trajectory of a controlled state flow (OpenLoop/ClosedLoop), " *
                    "which integrates ẋ = f(t, x, u(...), v) with no costate — unlike a " *
                    "DynClosedLoop (Hamiltonian) flow",
             suggestion="use state(sol) and control(sol); costate only exists for Hamiltonian flows",
-            context="ControlledTrajectory — costate getter",
+            context="StateFlowTrajectory — costate getter",
         ),
     )
 end
@@ -254,12 +324,12 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Pretty-print a [`CTFlows.Trajectories.ControlledTrajectory`](@ref) to `io` (multi-line
+Pretty-print a [`CTFlows.Trajectories.StateFlowTrajectory`](@ref) to `io` (multi-line
 format with tspan, time points, final state, variable, and objective when available).
 """
-function Base.show(io::IO, ::MIME"text/plain", sol::ControlledTrajectory)
+function Base.show(io::IO, ::MIME"text/plain", sol::StateFlowTrajectory)
     fmt = Display.format_codes(io)
-    Display.print_header(io, "ControlledTrajectory"; fmt=fmt)
+    Display.print_header(io, "StateFlowTrajectory"; fmt=fmt)
     fields = Any[]
     try
         ts = Integrators.times(sol)
@@ -285,10 +355,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Compact one-line representation of a [`CTFlows.Trajectories.ControlledTrajectory`](@ref).
+Compact one-line representation of a [`CTFlows.Trajectories.StateFlowTrajectory`](@ref).
 """
-function Base.show(io::IO, sol::ControlledTrajectory)
-    print(io, "ControlledTrajectory(")
+function Base.show(io::IO, sol::StateFlowTrajectory)
+    print(io, "StateFlowTrajectory(")
     parts = String[]
     try
         ts = Integrators.times(sol)

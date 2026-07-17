@@ -113,11 +113,72 @@ pf
 You can also start from a scalar Hamiltonian and let automatic differentiation
 derive the vector field — see [Building a flow](flows/building_a_flow.md).
 
+### Optimal control problems
+
+This is the entry point most users of the control-toolbox ecosystem actually reach
+for: `Flow(ocp)` builds a flow directly from an **optimal control problem** — a
+[`CTModels.Models.Model`](@extref CTModels.Models.Model) — with no Hamiltonian to
+write by hand.
+
+```@example getting_started
+using CTModels
+
+pre = CTModels.Building.PreModel()
+CTModels.Building.time_dependence!(pre; autonomous=true)
+CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+CTModels.Building.state!(pre, 1)
+CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = -x[1]; nothing))
+CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf[1])
+ocp = CTModels.Building.build(pre)
+
+f = Flows.Flow(ocp; reltol=1e-10)
+nothing # hide
+```
+
+Point evaluation returns the final state–costate pair (Hamiltonian semantics):
+
+```@repl getting_started
+xf, pf = f(0.0, [1.0], [1.0], 1.0);
+xf
+pf
+```
+
+A trajectory call assembles a full `CTModels.Solution` — state, costate, and the
+objective value:
+
+```@example getting_started
+sol = f((0.0, 1.0), [1.0], [1.0])
+```
+
+```@repl getting_started
+CTModels.Components.objective(sol)
+```
+
+This is a *control-free* problem (no `u` in the dynamics). For a problem **with**
+a control, pass a control law — `Flow(ocp, law)` — see
+[Control laws](flows/control_laws.md). See
+[Optimal control](flows/optimal_control.md) for the full picture, including the
+basic no-costate call `f(t0, x0, tf)` for direct shooting.
+
+### Plotting the result
+
+Load `Plots` and any solution object draws directly — here the state and costate of
+the `CTModels.Solution` on a shared time axis:
+
+```@setup getting_started
+using Plots
+Base.showable(::MIME"image/png", ::Plots.Plot) = false
+```
+
+```@example getting_started
+plot(sol)
+```
+
 ## Where to go next
 
+- [Optimal control](flows/optimal_control.md) — flows built directly from a `CTModels` problem.
+- [Control laws](flows/control_laws.md) — `Flow(ocp, law)`, `OpenLoop` / `ClosedLoop` / `DynClosedLoop`.
 - [Flows overview](flows/overview.md) — the full pipeline and the mathematical setting.
 - [Integrating](flows/integrating.md) — call styles, variable parameters, solver options.
 - [Multi-phase flows](flows/multiphase.md) — concatenation with switching times and jumps.
-- [Optimal control](flows/optimal_control.md) — flows built directly from a `CTModels` problem.
-- [Control laws](flows/control_laws.md) — `Flow(ocp, law)`, `OpenLoop` / `ClosedLoop` / `DynClosedLoop`.
 - [SciML flows](flows/sciml.md) — wrap an existing `ODEFunction` or `ODEProblem`.

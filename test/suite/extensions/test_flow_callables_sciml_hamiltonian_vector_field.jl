@@ -154,6 +154,19 @@ function test_flow_callables_sciml_hamiltonian_vector_field()
                 Test.@test Pf ≈ -X0 atol=ATOL
             end
 
+            Test.@testset "1×1 matrix x0, p0 → matrix output" begin
+                hflow = Flows.build_flow(HSYS, INTEG)
+                X0 = fill(1.0, 1, 1)
+                P0 = fill(0.0, 1, 1)
+                Xf, Pf = hflow(0.0, X0, P0, π/2)
+                Test.@test Xf isa AbstractMatrix   # must NOT collapse to scalar
+                Test.@test Pf isa AbstractMatrix
+                Test.@test size(Xf) == (1, 1)
+                Test.@test size(Pf) == (1, 1)
+                Test.@test Xf ≈ P0 atol=ATOL
+                Test.@test Pf ≈ -X0 atol=ATOL
+            end
+
             Test.@testset "ForwardDiff.Dual scalar x0, p0" begin
                 hflow = Flows.build_flow(HSYS, INTEG)
                 x0 = ForwardDiff.Dual(1.0, 1.0)

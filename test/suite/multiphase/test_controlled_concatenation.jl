@@ -1,7 +1,7 @@
 """
 Integration tests for the concatenation (`*`) of controlled (state) flows: a multi-phase
 `ControlledFlow` must return the SAME type a single-phase controlled flow returns — a
-`ControlledTrajectory` with a PIECEWISE control reconstructed from the per-phase laws
+`StateFlowTrajectory` with a PIECEWISE control reconstructed from the per-phase laws
 (and, for OCP-built phases, the objective recomputed over the merged trajectory).
 """
 
@@ -58,7 +58,7 @@ function test_controlled_concatenation()
 
             # trajectory: same type as a single-phase controlled flow
             sol = φ((0.0, 1.0), x0)
-            Test.@test sol isa Trajectories.ControlledTrajectory
+            Test.@test sol isa Trajectories.StateFlowTrajectory
             x = Trajectories.state(sol)
             u = Trajectories.control(sol)
 
@@ -86,7 +86,7 @@ function test_controlled_concatenation()
             f2 = Flows.Flow(OCP, Data.OpenLoop(() -> 2.0); _opts()...)
             φ = f1 * (0.5, f2)
             sol = φ((0.0, 1.0), 0.0)
-            Test.@test sol isa Trajectories.ControlledTrajectory
+            Test.@test sol isa Trajectories.StateFlowTrajectory
             u = Trajectories.control(sol)
             Test.@test u(0.25) ≈ 1.0 atol = 1e-8
             Test.@test u(0.75) ≈ 2.0 atol = 1e-8
@@ -106,7 +106,7 @@ function test_controlled_concatenation()
             φ = f1 * (0.5, Δ, f2)
             Test.@test φ(0.0, x0, 1.0) ≈ xf_ref atol = 1e-6
             sol = φ((0.0, 1.0), x0)
-            Test.@test sol isa Trajectories.ControlledTrajectory
+            Test.@test sol isa Trajectories.StateFlowTrajectory
         end
 
         # ── Flow(fc, law) phases: no OCP ⇒ no objective (2-D, vector-safe) ────
@@ -117,7 +117,7 @@ function test_controlled_concatenation()
             f2 = Flows.Flow(fc, Data.ClosedLoop(x -> zero(x)); _opts()...)
             φ = f1 * (0.5, f2)
             sol = φ((0.0, 1.0), [1.0, 2.0])
-            Test.@test sol isa Trajectories.ControlledTrajectory
+            Test.@test sol isa Trajectories.StateFlowTrajectory
             # no OCP ⇒ objective getter errors clearly
             Test.@test_throws Exceptions.PreconditionError Trajectories.objective(sol)
         end

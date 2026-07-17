@@ -42,7 +42,7 @@ import ..Integrators: Integrators
 
 include(joinpath(@__DIR__, "vector_field_trajectory.jl"))
 include(joinpath(@__DIR__, "hamiltonian_vector_field_trajectory.jl"))
-include(joinpath(@__DIR__, "controlled_trajectory.jl"))
+include(joinpath(@__DIR__, "state_flow_trajectory.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 
 # ==============================================================================
@@ -51,7 +51,7 @@ include(joinpath(@__DIR__, "building.jl"))
 
 export AbstractVectorFieldTrajectory, VectorFieldTrajectory
 export AbstractHamiltonianVectorFieldTrajectory, HamiltonianVectorFieldTrajectory
-export ControlledTrajectory, ControlProjection
+export StateFlowTrajectory, ControlProjection
 export StateProjection, CostateProjection
 export state, time_grid
 export costate

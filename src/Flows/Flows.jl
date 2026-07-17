@@ -30,7 +30,7 @@ import CommonSolve: CommonSolve
 
 import ..Display: Display
 import ..Configs: Configs
-import ..Systems: Systems, hamiltonian_vector_field
+import ..Systems: Systems, hamiltonian_vector_field, vector_field
 import ..Integrators: Integrators
 import ..Trajectories: Trajectories
 
@@ -43,6 +43,7 @@ include(joinpath(@__DIR__, "abstract_flow.jl"))
 include(joinpath(@__DIR__, "flow.jl"))
 include(joinpath(@__DIR__, "registry.jl"))
 include(joinpath(@__DIR__, "flow_routing.jl"))
+include(joinpath(@__DIR__, "ocp_readouts.jl"))
 include(joinpath(@__DIR__, "optimal_control_flow.jl"))
 include(joinpath(@__DIR__, "controlled_flow.jl"))
 include(joinpath(@__DIR__, "building.jl"))
@@ -58,7 +59,7 @@ export AbstractFlow,
 export OptimalControlFlow, ControlledFlow
 export system, integrator
 export build_flow
-export hamiltonian_vector_field
+export hamiltonian_vector_field, vector_field
 export flow_registry
 
 end # module Flows

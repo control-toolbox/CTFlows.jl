@@ -99,24 +99,31 @@ xf, pf, pvf = hflow_v(0.0, 1.0, 0.5, 1.0; variable=[2.0], variable_costate=true)
 This is only available for point evaluation, and only when `variable` is provided
 (`NonFixed` flows require it).
 
-### Free times (issues [#231](https://github.com/control-toolbox/CTFlows.jl/issues/231), [#183](https://github.com/control-toolbox/CTFlows.jl/issues/183))
+### Free times
 
 The positional `tf` argument is the **evaluation time**; it is independent of the
 `variable` value, even when a variable component *represents* a free initial or final
 time. Passing `flow(t0, x0, p0, t1; variable=v)` with `t1 ≠ v` is valid.
 
 When a variable component is a free time, the flow keeps integrating the same naive
-adjoint — no special-casing. The free-time transversality condition is instead written
-by hand in the shooting method, as a **mitigated** condition that lets you initialize
-the corresponding costate at zero:
+adjoint — no special-casing — with the augmented costate started at ``p_v(t_0) = 0``
+(the convention `variable_costate=true` always uses). This zero start is exactly what
+makes the **mitigated** free-time transversality conditions valid: written at ``t_f``,
+they are
 
 ```math
 p_{t_0}(t_f) = -H(t_0, x_0, p_0, v), \qquad p_{t_f}(t_f) = H(t_f, x_f, p_f, v),
 ```
 
-where `H` is obtained from [`CTFlows.Systems.hamiltonian`](@ref)`(flow)`. See the
-Goddard problem tests (`test/suite/integration/test_goddard.jl`) for a shooting method
-using a free final time this way.
+where `H` is obtained from [`CTFlows.Systems.hamiltonian`](@ref)`(flow)`; a nonzero
+``p_v(t_0)`` would shift both sides. The shooting method writes these conditions by hand.
+
+See `test/suite/flows/test_variable_costate_free_time.jl` for worked shooting residuals
+built on this ``p_v`` mechanism (free ``t_0``, free ``t_f``, and both at once). The
+Goddard tests (`test/suite/integration/test_goddard.jl`) instead close their free final
+time with the classical ``H \equiv 0`` condition — not the ``p_v`` adjoint. This settles
+issues [#231](https://github.com/control-toolbox/CTFlows.jl/issues/231) and
+[#183](https://github.com/control-toolbox/CTFlows.jl/issues/183).
 
 ---
 
@@ -126,9 +133,9 @@ Any Hamiltonian flow exposes its underlying Hamiltonian and — when the flow wa
 from a control law — its pseudo-Hamiltonian, control law, and their gradients:
 
 ```@example flows_integrating
-Systems.hamiltonian(hflow_v)              # the callable H(t, x, p, v)
-Systems.hamiltonian_gradient(hflow_v)      # functor: (t, x, p, v) -> (∂H/∂x, ∂H/∂p)
-Systems.variable_gradient(hflow_v)         # functor: (t, x, p, v) -> ∂H/∂v
+Systems.hamiltonian(hflow_v)          # the callable H(t, x, p, v)
+Systems.hamiltonian_gradient(hflow_v) # functor: (t, x, p, v) -> (∂H/∂x, ∂H/∂p)
+Systems.variable_gradient(hflow_v)    # functor: (t, x, p, v) -> ∂H/∂v
 ```
 
 `Systems.pseudo_hamiltonian`, `Systems.control_law`, `Systems.pseudo_hamiltonian_gradient`
@@ -183,10 +190,13 @@ The default integrator is **SciML** backed by `OrdinaryDiffEqTsit5` (loaded when
 ```@example flows_integrating
 # Tighter tolerances
 flow_tight = Flows.Flow(vf; reltol=1e-12, abstol=1e-12)
+```
 
-# Different algorithm (requires the matching OrdinaryDiffEq package to be loaded)
-# using OrdinaryDiffEqRosenbrock
-# flow_rodas = Flows.Flow(vf; alg=Rodas4())
+Different algorithm (requires the matching OrdinaryDiffEq package to be loaded).
+
+```@example flows_integrating
+using OrdinaryDiffEqRosenbrock
+flow_rodas = Flows.Flow(vf; alg=Rodas4())
 ```
 
 ### Unsafe mode
@@ -216,7 +226,6 @@ lets the same problem definition be re-solved with different parameters efficien
 
 ```@example flows_integrating
 integ = Integrators.build_integrator(; reltol=1e-8)
-typeof(integ)
 ```
 
 ---

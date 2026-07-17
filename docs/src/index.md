@@ -6,9 +6,10 @@ CurrentModule = CTFlows
 
 `CTFlows.jl` is the **flow integration layer** of the
 [control-toolbox ecosystem](https://github.com/control-toolbox). Given a dynamical
-system — a vector field, a Hamiltonian, or a Hamiltonian vector field — it builds a
-callable **flow** that integrates the system from any initial condition to any final
-time, with a pluggable ODE solver and optional automatic differentiation.
+system — a vector field, a Hamiltonian, a Hamiltonian vector field, or directly an
+**optimal control problem** — it builds a callable **flow** that integrates the
+system from any initial condition to any final time, with a pluggable ODE solver and
+optional automatic differentiation.
 
 !!! info "CTFlows in the ecosystem"
     **CTFlows** handles **integration**. For **modelling** optimal control problems see
@@ -46,6 +47,13 @@ x(0.5)                                  # interpolate
     (`CTBase.Data`, `CTFlows.Flows`, …) and is reached via a qualified path or a
     `using CTFlows.SubModule` import.
 
+The same `Flow` constructor also builds directly from an **optimal control
+problem** — a [`CTModels.Models.Model`](@extref CTModels.Models.Model) — with no
+Hamiltonian to write by hand: `Flows.Flow(ocp)`. This is the entry point most users
+of the control-toolbox ecosystem actually reach for; see the
+[Getting Started](getting-started.md) walkthrough and the
+[Optimal control](flows/optimal_control.md) guide.
+
 ## Architecture
 
 CTFlows is organised as a pipeline:
@@ -61,7 +69,7 @@ Data → Systems → Integrators → Flows → Trajectories
 | Systems | [`CTFlows.Systems`](@ref CTFlows.Systems) | `VectorFieldSystem`, `HamiltonianSystem`, `PseudoHamiltonianSystem` |
 | Integrators | [`CTFlows.Integrators`](@ref CTFlows.Integrators) | `SciML` |
 | Flows | [`CTFlows.Flows`](@ref CTFlows.Flows) | `StateFlow`, `HamiltonianFlow`, `OptimalControlFlow`, `ControlledFlow` |
-| Trajectories | [`CTFlows.Trajectories`](@ref CTFlows.Trajectories) | `VectorFieldTrajectory`, `HamiltonianVectorFieldTrajectory`, `ControlledTrajectory` |
+| Trajectories | [`CTFlows.Trajectories`](@ref CTFlows.Trajectories) | `VectorFieldTrajectory`, `HamiltonianVectorFieldTrajectory`, `StateFlowTrajectory` |
 | Multi-phase | [`CTFlows.MultiPhase`](@ref CTFlows.MultiPhase) | `MultiPhaseStateFlow` |
 
 The data layer (`VectorField`, `Hamiltonian`, `HamiltonianVectorField`) lives in [`CTBase.Data`](@extref CTBase.Data); the ODE integrator

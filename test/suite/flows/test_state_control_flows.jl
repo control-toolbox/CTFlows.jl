@@ -1,6 +1,6 @@
 """
 Integration tests for OpenLoop / ClosedLoop control flows: state flows returning a
-ControlledTrajectory (state + reconstructed control [+ objective from an OCP]).
+StateFlowTrajectory (state + reconstructed control [+ objective from an OCP]).
 """
 
 module TestStateControlFlows
@@ -42,8 +42,21 @@ function _build_control_free()
     return CTModels.Building.build(pre)
 end
 
+# ẋ = -x + u, ℓ = 0.5u², :min  (autonomous, fixed, 2-D)
+function _build_ocp_2d()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, 2)
+    CTModels.Building.control!(pre, 2)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=-x[1] + u[1]; r[2]=-x[2] + u[2]; nothing))
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * (u[1]^2 + u[2]^2))
+    return CTModels.Building.build(pre)
+end
+
 const OCP = _build_ocp()
 const OCP_CF = _build_control_free()
+const OCP_2D = _build_ocp_2d()
 
 function test_state_control_flows()
     Test.@testset "State control flows" verbose=VERBOSE showtiming=SHOWTIMING begin
@@ -59,9 +72,9 @@ function test_state_control_flows()
             Test.@test xf isa Number
             Test.@test xf ≈ x0 * exp(-2 * tf) atol = 1e-6
 
-            # trajectory: ControlledTrajectory
+            # trajectory: StateFlowTrajectory
             sol = f((t0, tf), x0)
-            Test.@test sol isa Trajectories.ControlledTrajectory
+            Test.@test sol isa Trajectories.StateFlowTrajectory
             x = Trajectories.state(sol)
             u = Trajectories.control(sol)
             Test.@test x(0.5) ≈ x0 * exp(-2 * 0.5) atol = 1e-6
@@ -70,6 +83,42 @@ function test_state_control_flows()
             Test.@test Trajectories.objective(sol) ≈ 0.5 * (1 - exp(-4)) / 4 atol = 1e-6
             Test.@test Integrators.successful(sol) == true
             Test.@test Integrators.status(sol) == :Success
+
+            # §9: state/control accessors return the projection stored at construction,
+            # so they rebuild nothing and allocate nothing.
+            Trajectories.state(sol)
+            Trajectories.control(sol)   # warm-up
+            Test.@test (@allocated Trajectories.state(sol)) == 0
+            Test.@test (@allocated Trajectories.control(sol)) == 0
+        end
+
+        Test.@testset "1-D scalar convention: vector x0 input → scalar output" begin
+            f = Flows.Flow(OCP, Data.ClosedLoop(x -> -x); _opts()...)
+            t0, tf, x0 = 0.0, 1.0, 1.0
+            xf_scalar = f(t0, x0, tf)
+            xf_vec = f(t0, [x0], tf)           # length-1 vector input
+            Test.@test xf_vec isa Number        # must collapse to scalar
+            Test.@test xf_vec ≈ xf_scalar atol = 1e-12
+        end
+
+        Test.@testset "n-D vector convention: 2-D state → vector output" begin
+            f = Flows.Flow(OCP_2D, Data.ClosedLoop(x -> -x); _opts()...)
+            t0, tf = 0.0, 1.0
+            x0 = [1.0, 2.0]
+            xf = f(t0, x0, tf)
+            Test.@test xf isa AbstractVector && length(xf) == 2
+            Test.@test xf ≈ x0 .* exp(-2 * tf) atol = 1e-6
+        end
+
+        Test.@testset "n-D vector trajectory: 2-D state → StateFlowTrajectory" begin
+            f = Flows.Flow(OCP_2D, Data.ClosedLoop(x -> -x); _opts()...)
+            t0, tf = 0.0, 1.0
+            x0 = [1.0, 2.0]
+            sol = f((t0, tf), x0)
+            Test.@test sol isa Trajectories.StateFlowTrajectory
+            x = Trajectories.state(sol)
+            Test.@test x(0.5) isa AbstractVector && length(x(0.5)) == 2
+            Test.@test x(0.5) ≈ x0 .* exp(-2 * 0.5) atol = 1e-6
         end
 
         # ── OpenLoop from an OCP: g(x) = -x + 1 ⇒ x(t) = 1 + (x0-1)e^{-t} ──────
@@ -89,7 +138,7 @@ function test_state_control_flows()
             fc = Data.ControlledVectorField((x, u) -> -x + u)
             f = Flows.Flow(fc, Data.ClosedLoop(x -> -x); _opts()...)
             sol = f((0.0, 1.0), 1.0)
-            Test.@test sol isa Trajectories.ControlledTrajectory
+            Test.@test sol isa Trajectories.StateFlowTrajectory
             Test.@test Trajectories.state(sol)(0.5) ≈ exp(-2 * 0.5) atol = 1e-6
             # no OCP ⇒ objective errors clearly
             Test.@test_throws Exceptions.PreconditionError Trajectories.objective(sol)
@@ -97,7 +146,7 @@ function test_state_control_flows()
 
         # ── getter error: a controlled trajectory has no costate ─────────────
 
-        Test.@testset "Error: costate on a ControlledTrajectory" begin
+        Test.@testset "Error: costate on a StateFlowTrajectory" begin
             f = Flows.Flow(OCP, Data.ClosedLoop(x -> -x); _opts()...)
             sol = f((0.0, 1.0), 1.0)
             Test.@test_throws Exceptions.PreconditionError Trajectories.costate(sol)

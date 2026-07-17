@@ -95,7 +95,7 @@ end
 # Thin public methods: one triple (plot / plot! / plot!(p, …)) per concrete type. They
 # dispatch on the concrete type (winning over the abstract stubs) and forward to the
 # abstract-typed `_plot` / `_plot!`.
-for T in (:VectorFieldTrajectory, :ControlledTrajectory, :HamiltonianVectorFieldTrajectory)
+for T in (:VectorFieldTrajectory, :StateFlowTrajectory, :HamiltonianVectorFieldTrajectory)
     @eval begin
         function Plots.plot(sol::Trajectories.$T, description::Symbol...; kwargs...)
             return _plot(sol, description...; kwargs...)

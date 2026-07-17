@@ -625,11 +625,16 @@ function test_ocp_control()
             Test.@test dxH̃ ≈ -p0 + c atol = 1e-8
             Test.@test dpH̃ ≈ -x0 + u0 atol = 1e-8
 
-            # (5) symplectic gradient X_H = (∂ₚH, -∂ₓH) = (ẋ, ṗ) = (-x+p, p-c),
-            # reconstructed from the total gradient getter (the HVF-by-AD getter is for
-            # flows built from a scalar Data.Hamiltonian, not a ComposedHamiltonian).
-            Test.@test dpH ≈ -x0 + p0 atol = 1e-8    # ẋ = ∂ₚH
-            Test.@test -dxH ≈ p0 - c atol = 1e-8     # ṗ = -∂ₓH
+            # (5) symplectic gradient X_H = (∂ₚH, -∂ₓH) = (ẋ, ṗ) = (-x+p, p-c), straight
+            # from the vector-field getter — which now covers a flow built from an OCP and
+            # a control law (its Hamiltonian is a ComposedHamiltonian), not only a scalar
+            # Data.Hamiltonian.
+            X_H = Systems.hamiltonian_vector_field(f)
+            ẋ, ṗ = X_H(x0, p0)
+            Test.@test ẋ ≈ -x0 + p0 atol = 1e-8    # ẋ = ∂ₚH
+            Test.@test ṗ ≈ p0 - c atol = 1e-8      # ṗ = -∂ₓH
+            # vector_field(f) is the same object on a Hamiltonian flow
+            Test.@test Systems.vector_field(f)(x0, p0) == X_H(x0, p0)
         end
 
         # NonFixed constrained: ∂H/∂v carries no constraint term here (μ const, g=x are

@@ -297,6 +297,61 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Return the (symplectic) Hamiltonian vector field `X_H = (∂H/∂p, -∂H/∂x)` of a Hamiltonian
+flow, as a [`CTBase.Data.HamiltonianVectorField`](@extref). Delegates to the system-level
+[`CTFlows.Systems.hamiltonian_vector_field`](@ref), so it also covers flows built from a
+pseudo-Hamiltonian (or an OCP) and a control law (`:partial` / `:total`), whose Hamiltonian
+is a `CTBase.Data.ComposedHamiltonian`.
+
+See also: [`CTFlows.Systems.hamiltonian`](@ref), [`CTFlows.Systems.vector_field`](@ref).
+"""
+function Systems.hamiltonian_vector_field(
+    f::AbstractFlow{
+        <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.HamiltonianDynamics
+    };
+    kwargs...,
+)
+    return Systems.hamiltonian_vector_field(system(f); kwargs...)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the vector field of a flow: the (symplectic) Hamiltonian vector field `X_H` for a
+Hamiltonian flow. Alias of [`CTFlows.Systems.hamiltonian_vector_field`](@ref) on the
+Hamiltonian side; see the `StateDynamics` method for state flows.
+
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
+"""
+function Systems.vector_field(
+    f::AbstractFlow{
+        <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.HamiltonianDynamics
+    };
+    kwargs...,
+)
+    return Systems.hamiltonian_vector_field(f; kwargs...)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the underlying vector field `X(t, x, v)` of a state flow, as a
+[`CTBase.Data.AbstractVectorField`](@extref). Delegates to the system-level
+[`CTFlows.Systems.vector_field`](@ref).
+
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
+"""
+function Systems.vector_field(
+    f::AbstractFlow{
+        <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.StateDynamics
+    },
+)
+    return Systems.vector_field(system(f))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Return the pseudo-Hamiltonian `H̃(t, x, p, u, v)` underlying a Hamiltonian flow, when
 available — i.e. when the flow was built from a pseudo-Hamiltonian (or an OCP) and a
 control law, in either the `:partial` or the `:total` mode. Delegates to

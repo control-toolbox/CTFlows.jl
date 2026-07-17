@@ -19,11 +19,11 @@ _rownorm(row) = sqrt(sum(abs2, row))
 
 # =============================================================================
 # Component names: from the OCP model when the trajectory carries one, else generated.
-# Only a ControlledTrajectory built from an OCP (Flow(ocp, law)) carries a model.
+# Only a StateFlowTrajectory built from an OCP (Flow(ocp, law)) carries a model.
 # =============================================================================
 
 _traj_model(sol) = nothing
-_traj_model(sol::Trajectories.ControlledTrajectory) = sol.ocp
+_traj_model(sol::Trajectories.StateFlowTrajectory) = sol.ocp
 
 function _state_names(sol, n)
     return if _traj_model(sol) === nothing

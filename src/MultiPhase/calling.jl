@@ -148,7 +148,7 @@ end
 # A multi-phase trajectory must return the SAME type a single-phase flow returns, with a
 # PIECEWISE control reconstructed from the per-phase laws: all-OptimalControlFlow phases → a
 # CTModels Solution (via _build_ocp_solution), all-ControlledFlow phases → a
-# ControlledTrajectory. Plain flows (no law) keep returning the merged raw trajectory.
+# StateFlowTrajectory. Plain flows (no law) keep returning the merged raw trajectory.
 # =============================================================================
 
 """
@@ -239,7 +239,7 @@ Finalize a merged multi-phase trajectory into the type a single-phase flow would
 
 All-`OptimalControlFlow` phases rebuild a [`CTModels.Solutions.Solution`](@extref) (via
 [`CTFlows.MultiPhase._reconstruct_ocp_solution`](@ref)); all-`ControlledFlow` phases rebuild a
-[`CTFlows.Trajectories.ControlledTrajectory`](@ref) (via
+[`CTFlows.Trajectories.StateFlowTrajectory`](@ref) (via
 [`CTFlows.MultiPhase._reconstruct_controlled_trajectory`](@ref)); any other case (plain flows
 carrying no law) returns the merged raw trajectory unchanged.
 
@@ -253,7 +253,7 @@ cannot select a method here.
 - `variable`: The variable parameter value (for NonFixed systems).
 
 # Returns
-- A `CTModels.Solution`, a `ControlledTrajectory`, or the merged trajectory (see above).
+- A `CTModels.Solution`, a `StateFlowTrajectory`, or the merged trajectory (see above).
 
 See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@ref).
 """
@@ -326,7 +326,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Rebuild a [`CTFlows.Trajectories.ControlledTrajectory`](@ref) from an all-`ControlledFlow`
+Rebuild a [`CTFlows.Trajectories.StateFlowTrajectory`](@ref) from an all-`ControlledFlow`
 multi-phase trajectory, reconstructing the control as a
 [`CTFlows.MultiPhase._PiecewiseControlLaw`](@ref) and recomputing the objective (Mayer +
 Lagrange) over the merged trajectory when the phases carry an OCP (`nothing` objective for
@@ -338,9 +338,9 @@ Lagrange) over the merged trajectory when the phases carry an OCP (`nothing` obj
 - `variable`: The variable parameter value (for NonFixed systems).
 
 # Returns
-- A [`CTFlows.Trajectories.ControlledTrajectory`](@ref) with the piecewise-reconstructed control.
+- A [`CTFlows.Trajectories.StateFlowTrajectory`](@ref) with the piecewise-reconstructed control.
 
-See also: [`CTFlows.MultiPhase._reconstruct_ocp_solution`](@ref), `CTFlows.Flows._controlled_objective`.
+See also: [`CTFlows.MultiPhase._reconstruct_ocp_solution`](@ref), `CTFlows.Flows._state_flow_objective`.
 """
 function _reconstruct_controlled_trajectory(mpf, merged, variable)
     phases = get_flows(mpf)
@@ -348,8 +348,8 @@ function _reconstruct_controlled_trajectory(mpf, merged, variable)
     plaw = _PiecewiseControlLaw(map(p -> p.law, phases), get_switching_times(mpf))
     integ = Flows.integrator(phases[1])
     coerce = Flows._dim_coerce(length(Integrators.final_state(merged)))
-    obj = Flows._controlled_objective(ocp, merged, plaw, variable, integ, coerce)
-    return Trajectories.ControlledTrajectory(merged, plaw, variable, obj, coerce, ocp)
+    obj = Flows._state_flow_objective(ocp, merged, plaw, variable, integ, coerce)
+    return Trajectories.StateFlowTrajectory(merged, plaw, variable, obj, coerce, ocp)
 end
 
 # ==============================================================================
@@ -588,6 +588,54 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Apply an additive jump to a single component.
+
+# Arguments
+- `v`: Component value (state or costate).
+- `j`: Additive offset (vector or scalar); added element-wise.
+
+# Returns
+- `v .+ j`.
+
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref).
+"""
+_apply_component_jump(v, j) = v .+ j
+
+"""
+$(TYPEDSIGNATURES)
+
+Apply a callable jump to a single component.
+
+# Arguments
+- `v`: Component value (state or costate).
+- `j::Function`: Callable; called as `j(v)`.
+
+# Returns
+- `j(v)`.
+
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref).
+"""
+_apply_component_jump(v, j::Function) = j(v)
+
+"""
+$(TYPEDSIGNATURES)
+
+Identity jump — leave the component unchanged.
+
+# Arguments
+- `v`: Component value (state or costate).
+- `::Nothing`: Sentinel for "no jump on this component".
+
+# Returns
+- `v` unchanged.
+
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref).
+"""
+_apply_component_jump(v, ::Nothing) = v
+
+"""
+$(TYPEDSIGNATURES)
+
 Apply a jump to the state for state flows.
 
 # Arguments
@@ -616,13 +664,16 @@ Apply a jump to the state for state dynamics.
 - `state`: Current state.
 
 # Returns
-- State after applying the jump (element-wise addition).
+- State after applying the jump.
 
 # Notes
 This is an internal dispatch method for the `_apply_jump` function.
+Delegates to [`CTFlows.MultiPhase._apply_component_jump`](@ref), which supports
+additive offsets (`j` a vector/scalar), callables (`j(state)`), and `nothing`
+(identity).
 """
 function _apply_jump(::Type{Traits.StateDynamics}, mpf, i, state)
-    return state .+ get_jump(mpf, i)
+    return _apply_component_jump(state, get_jump(mpf, i))
 end
 
 """
@@ -649,39 +700,74 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Apply a tuple jump to a Hamiltonian state tuple.
+Apply per-component jumps to a Hamiltonian state tuple.
+
+Each component (`jump[1]` for state, `jump[2]` for costate) is handled
+independently by [`CTFlows.MultiPhase._apply_component_jump`](@ref): a
+vector/scalar is added, a callable is applied, and `nothing` leaves the
+component unchanged.
 
 # Arguments
 - `state_tuple::Tuple`: Tuple of (state, costate).
-- `jump::Tuple`: Tuple of (state_jump, costate_jump).
+- `jump::Tuple`: Tuple of (state_jump, costate_jump); each element may be a
+  vector/scalar, a callable, or `nothing`.
 
 # Returns
-- Tuple of (state + state_jump, costate + costate_jump).
+- Tuple of updated (state, costate).
 
-See also: [`CTFlows.MultiPhase._apply_jump`](@ref).
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref),
+  [`CTFlows.MultiPhase._apply_component_jump`](@ref).
 """
 function _apply_hamiltonian_jump(state_tuple::Tuple, jump::Tuple)
     x, p = state_tuple
-    return (x + jump[1], p + jump[2])
+    return (_apply_component_jump(x, jump[1]), _apply_component_jump(p, jump[2]))
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Apply a scalar jump to the costate component of a Hamiltonian state tuple.
+Apply a callable jump to a Hamiltonian state tuple.
+
+The callable receives both components and must return an updated
+`(state, costate)` tuple: `(x, p) ← jump(x, p)`.
 
 # Arguments
 - `state_tuple::Tuple`: Tuple of (state, costate).
-- `jump`: Costate jump value (scalar).
+- `jump::Function`: Callable with signature `(x, p) -> (x', p')`.
 
 # Returns
-- Tuple of (state, costate + jump).
+- Tuple `(x', p')` returned by `jump`.
 
-See also: [`CTFlows.MultiPhase._apply_jump`](@ref).
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref),
+  [`CTFlows.MultiPhase._apply_component_jump`](@ref).
+"""
+function _apply_hamiltonian_jump(state_tuple::Tuple, jump::Function)
+    x, p = state_tuple
+    return jump(x, p)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Apply an additive costate jump to a Hamiltonian state tuple.
+
+Adds `jump` to the costate only; the state is left unchanged.
+Follows the "1-D is a scalar" convention: pass a scalar for a 1-D costate,
+a vector for an n-D costate.
+
+# Arguments
+- `state_tuple::Tuple`: Tuple of (state, costate).
+- `jump`: Additive costate offset (scalar or vector).
+
+# Returns
+- Tuple of `(state, costate .+ jump)`.
+
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref),
+  [`CTFlows.MultiPhase._apply_component_jump`](@ref).
 """
 function _apply_hamiltonian_jump(state_tuple::Tuple, jump)
     x, p = state_tuple
-    return (x, p + jump)
+    return (x, p .+ jump)
 end
 
 """
@@ -777,7 +863,8 @@ function (mpf::MultiPhaseFlow{TD,VD,Traits.StateDynamics})(
     t0::Real, x0, tf::Real; variable=Flows.__variable(), unsafe=Flows.__unsafe()
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     config = Configs.StateEndPointConfig(t0, x0, tf)
-    return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
+    xf = _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
+    return Systems._coerce_state(xf)(xf)   # 1-D = scalar
 end
 
 """

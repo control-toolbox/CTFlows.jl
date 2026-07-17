@@ -75,7 +75,7 @@ state–costate pair. For ``\dot{x} = \lambda x`` the costate satisfies
 ``\dot{p} = -\lambda p``:
 
 ```@repl flows_ocp
-x0, p0 = [1.0], [1.0];
+x0, p0 = 1.0, 1.0;
 xf, pf = f(0.0, x0, p0, 1.0);
 xf   # ≈ exp(λ)
 pf   # ≈ exp(-λ)
@@ -83,6 +83,33 @@ pf   # ≈ exp(-λ)
 
 The `variable`, `variable_costate` and `unsafe` keywords work as for any
 Hamiltonian flow — see [Integrating](integrating.md).
+
+---
+
+## Free times
+
+`Flow(ocp)` builds an `OptimalControlFlow` around an inner `HamiltonianFlow`, so the
+same free-time shooting technique described in
+[Integrating § Variable costate](integrating.md#Variable-costate) applies directly: a
+free ``t_0`` or ``t_f`` is passed as (a component of) the `variable`, and `t1` in
+`f(t0, x0, p0, t1; variable=v)` is the **evaluation time** — independent of `v`, even
+when `v` *represents* the free endpoint being shot on.
+
+Because the augmented costate is initialised at ``p_v(t_0) = 0``, the mitigated
+transversality residuals can be evaluated from the OCP's own Hamiltonian —
+`H = Systems.hamiltonian(f)` — with an **opposite sign convention** at each end:
+
+```math
+p_{t_0}(t_f) = -H(t_0, x_0, p_0, v), \qquad p_{t_f}(t_f) = H(t_f, x_f, p_f, v).
+```
+
+See `test/suite/flows/test_variable_costate_free_time.jl` for worked examples that
+exercise this ``p_v`` mechanism (free ``t_0``, free ``t_f``, and both at once), and
+[Integrating § Free times](integrating.md#Free-times) for the derivation. This settles
+issues [#231](https://github.com/control-toolbox/CTFlows.jl/issues/231) and
+[#183](https://github.com/control-toolbox/CTFlows.jl/issues/183). (The Goddard tests
+close their free final time with the classical ``H \equiv 0`` condition instead — not
+the ``p_v`` adjoint.)
 
 ---
 
@@ -105,6 +132,55 @@ CTModels.Components.objective(sol)    # ≈ exp(λ)
 CTModels.Components.state(sol)(0.5)   # x(0.5) ≈ exp(λ/2)
 CTModels.Components.costate(sol)(0.5) # p(0.5) ≈ exp(-λ/2)
 ```
+
+Because the result is a `CTModels.Solution`, it plots directly once `Plots` is loaded —
+state and costate on a shared time axis (the control panel is empty, the problem being
+control-free):
+
+```@setup flows_ocp
+using Plots
+Base.showable(::MIME"image/png", ::Plots.Plot) = false
+```
+
+```@example flows_ocp
+plot(sol)
+```
+
+---
+
+## Basic flow — no costate (direct shooting)
+
+For a **control-free** OCP, `Flow(ocp)` also exposes a **state-only** call, with no
+costate — the direct-shooting use case
+([#230](https://github.com/control-toolbox/CTFlows.jl/issues/230)). Same `f` object,
+dispatched on arity (3 positional arguments instead of 4):
+
+```@repl flows_ocp
+xf_basic = f(0.0, x0, 1.0)
+xf_basic ≈ xf
+```
+
+A trajectory call returns a
+[`StateFlowTrajectory`](@ref CTFlows.Trajectories.StateFlowTrajectory) with `law =
+nothing`: state and objective are available, but the flow carries neither a control nor
+a costate, so `control`/`costate` raise a `PreconditionError`:
+
+```@example flows_ocp
+sol_basic = f((0.0, 1.0), x0)
+```
+
+```@repl flows_ocp
+using CTFlows.Trajectories
+Trajectories.state(sol_basic)(0.5)
+Trajectories.objective(sol_basic)   # ≈ exp(λ)
+```
+
+`Flow(ocp, law)` has no such basic call when `law` is `DynClosedLoop`: its dynamics
+depend on the costate `p(t)`, so `f(t0, x0, tf)` raises a `PreconditionError`
+suggesting `f(t0, x0, p0, tf)` instead. For an `OpenLoop`/`ClosedLoop` law, the
+state-only equivalent already exists as the
+[`ControlledFlow`](@ref CTFlows.Flows.ControlledFlow) returned by `Flow(ocp, law)` —
+see [Control laws](control_laws.md).
 
 ---
 

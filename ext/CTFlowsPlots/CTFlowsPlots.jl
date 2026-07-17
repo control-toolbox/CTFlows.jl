@@ -2,7 +2,7 @@
     CTFlowsPlots
 
 Package extension providing plotting for CTFlows trajectory types
-(`VectorFieldTrajectory`, `HamiltonianVectorFieldTrajectory`, `ControlledTrajectory`).
+(`VectorFieldTrajectory`, `HamiltonianVectorFieldTrajectory`, `StateFlowTrajectory`).
 Activated automatically when `Plots` is loaded together with `CTFlows`.
 
 The rendering engine lives in `CTBase.Plotting` (with its `CTBasePlots` backend); this

@@ -63,7 +63,7 @@ export ConstrainedPseudoHamIpRHS, ConstrainedPseudoHamOoPRHS, ConstrainedPseudoH
 export get_ip_rhs
 export get_oop_rhs
 export get_ip_rhs_augmented
-export hamiltonian_vector_field
+export hamiltonian_vector_field, vector_field
 export VectorFieldSystem
 export HamiltonianVectorFieldSystem
 export HamiltonianSystem

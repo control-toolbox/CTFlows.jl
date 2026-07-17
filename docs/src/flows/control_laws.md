@@ -14,6 +14,7 @@ using CTFlows
 using CTBase.Data
 using CTBase.Traits
 using CTFlows.Flows
+using CTFlows.Systems
 using CTFlows.Trajectories
 using CTModels
 import OrdinaryDiffEqTsit5
@@ -43,7 +44,7 @@ dispatch in `Flow` constructors.
 | Law type | Flow type | Dynamics | Trajectory result |
 |---|---|---|---|
 | `DynClosedLoop` | `HamiltonianFlow` / `OptimalControlFlow` | Hamiltonian (state + costate) | `HamiltonianVectorFieldTrajectory` / `CTModels.Solution` |
-| `OpenLoop` / `ClosedLoop` | `ControlledFlow` (state flow) | state only | `ControlledTrajectory` |
+| `OpenLoop` / `ClosedLoop` | `ControlledFlow` (state flow) | state only | `StateFlowTrajectory` |
 
 A `DynClosedLoop` law needs the costate ``p`` to evaluate the feedback, so it
 produces a **Hamiltonian** flow. An `OpenLoop` or `ClosedLoop` law does not need
@@ -79,7 +80,22 @@ f_total = Flows.Flow(h̃, law; reltol=1e-10)
 
 # Partial mode: AD at fixed u
 f_partial = Flows.Flow(h̃, law; hamiltonian_type=:partial, reltol=1e-10)
-nothing # hide
+```
+
+Because the flow was built from a pseudo-Hamiltonian and a law, it exposes them (and
+the resulting closed-loop Hamiltonian) through the `Systems` getters — these throw an
+`IncorrectArgument` on a plain `HamiltonianFlow` that carries no law:
+
+```@example flows_laws
+Systems.pseudo_hamiltonian(f_total)   # H̃(t, x, p, u, v)
+```
+
+```@example flows_laws
+Systems.control_law(f_total)          # the DynClosedLoop feedback u(t, x, p, v)
+```
+
+```@example flows_laws
+Systems.hamiltonian(f_total)          # closed-loop H(t, x, p, v) = H̃(…, u(…), …)
 ```
 
 !!! warning "OpenLoop/ClosedLoop rejected"
@@ -96,7 +112,7 @@ control is eliminated via a
 `Data.ComposedVectorField`
 ``g(t, x, v) = f_c(t, x, u(\ldots), v)``, and the result is integrated as a
 state flow. The resulting [`ControlledFlow`](@ref CTFlows.Flows.ControlledFlow)
-carries no OCP, so trajectory calls return a `ControlledTrajectory` **without**
+carries no OCP, so trajectory calls return a `StateFlowTrajectory` **without**
 an objective.
 
 ```@example flows_laws
@@ -105,7 +121,6 @@ fc = Data.ControlledVectorField((x, u) -> -x + u)
 law = Data.ClosedLoop(x -> -x)  # feedback u = -x
 
 f = Flows.Flow(fc, law; reltol=1e-8)
-nothing # hide
 ```
 
 !!! warning "DynClosedLoop rejected"
@@ -149,7 +164,6 @@ nothing # hide
 # DynClosedLoop law: u(x, p) = p  (from PMP, maximises H̃ = p*(-x+u) - 0.5*u^2)
 law = Data.DynClosedLoop((x, p) -> p)
 f_ocp = Flows.Flow(ocp, law; reltol=1e-10)
-nothing # hide
 ```
 
 Point evaluation returns the final state–costate pair:
@@ -161,11 +175,24 @@ xf
 pf
 ```
 
-Trajectory evaluation returns a `CTModels.Solution`:
+Trajectory evaluation returns a `CTModels.Solution`, with the control reconstructed
+from the law:
 
 ```@example flows_laws
 sol = f_ocp((0.0, 1.0), x0, p0)
 CTModels.Components.objective(sol)
+```
+
+Once `Plots` is loaded it draws directly — state, costate, and the reconstructed
+control ``u(t) = p(t)``:
+
+```@setup flows_laws
+using Plots
+Base.showable(::MIME"image/png", ::Plots.Plot) = false
+```
+
+```@example flows_laws
+plot(sol)
 ```
 
 ### OpenLoop / ClosedLoop → `ControlledFlow`
@@ -174,14 +201,13 @@ The OCP's controlled dynamics are extracted as a `ControlledVectorField`, the
 law eliminates the control, and the result is a
 [`ControlledFlow`](@ref CTFlows.Flows.ControlledFlow) — a **state** flow. Point
 calls return the final state (no costate); trajectory calls return a
-[`ControlledTrajectory`](@ref CTFlows.Trajectories.ControlledTrajectory) with
+[`StateFlowTrajectory`](@ref CTFlows.Trajectories.StateFlowTrajectory) with
 state, reconstructed control, and objective (Mayer + Lagrange).
 
 ```@example flows_laws
 # OpenLoop law: u() = 1 (constant, autonomous ⇒ no time argument)
 law_ol = Data.OpenLoop(() -> 1.0)
 f_cflow = Flows.Flow(ocp, law_ol; reltol=1e-8)
-nothing # hide
 ```
 
 ```@repl flows_laws
@@ -200,8 +226,8 @@ Trajectories.objective(sol_c)   # ≈ 0.5 * 1^2 * 1 = 0.5
 A plain function `u` is wrapped in a `DynClosedLoop` law automatically, with
 time/variable dependence inferred from the OCP:
 
-```julia
-f = Flows.Flow(ocp, (x, p) -> p; reltol=1e-10)  # autonomous, fixed
+```@example flows_laws
+f_conv = Flows.Flow(ocp, (x, p) -> p; reltol=1e-10)  # autonomous, fixed → auto DynClosedLoop
 ```
 
 The function `u` **must** have the natural arity matching the OCP's traits:
@@ -220,13 +246,13 @@ A [`ControlledFlow`](@ref CTFlows.Flows.ControlledFlow) wraps:
 
 It is a subtype of `AbstractFlow` with `StateDynamics`. Point evaluation
 returns the final state (no costate); trajectory evaluation returns a
-`ControlledTrajectory`.
+`StateFlowTrajectory`.
 
 ---
 
-## `ControlledTrajectory`
+## `StateFlowTrajectory`
 
-A [`ControlledTrajectory`](@ref CTFlows.Trajectories.ControlledTrajectory) is
+A [`StateFlowTrajectory`](@ref CTFlows.Trajectories.StateFlowTrajectory) is
 the result of a trajectory call on a `ControlledFlow`. It provides:
 
 | Accessor | Returns | Notes |
@@ -243,6 +269,13 @@ u_c = Trajectories.control(sol_c)
 x_c(0.5), u_c(0.5)
 ```
 
+A `StateFlowTrajectory` plots its state and reconstructed control together (its default
+panels are `(:state, :control)`):
+
+```@example flows_laws
+plot(sol_c)
+```
+
 ---
 
 ## Summary table
@@ -250,9 +283,9 @@ x_c(0.5), u_c(0.5)
 | Constructor | Law type | Resulting flow | Trajectory type |
 |---|---|---|---|
 | `Flow(h̃, law)` | `DynClosedLoop` | `HamiltonianFlow` | `HamiltonianVectorFieldTrajectory` |
-| `Flow(fc, law)` | `OpenLoop` / `ClosedLoop` | `ControlledFlow` | `ControlledTrajectory` (no objective) |
+| `Flow(fc, law)` | `OpenLoop` / `ClosedLoop` | `ControlledFlow` | `StateFlowTrajectory` (no objective) |
 | `Flow(ocp, law)` | `DynClosedLoop` | `OptimalControlFlow` | `CTModels.Solution` |
-| `Flow(ocp, law)` | `OpenLoop` / `ClosedLoop` | `ControlledFlow` | `ControlledTrajectory` (with objective) |
+| `Flow(ocp, law)` | `OpenLoop` / `ClosedLoop` | `ControlledFlow` | `StateFlowTrajectory` (with objective) |
 | `Flow(ocp, u::Function)` | `DynClosedLoop` (auto) | `OptimalControlFlow` | `CTModels.Solution` |
 
 ---
@@ -260,7 +293,7 @@ x_c(0.5), u_c(0.5)
 ## See also
 
 - [`CTFlows.Flows.ControlledFlow`](@ref), [`CTFlows.Flows.OptimalControlFlow`](@ref) — flow types.
-- [`CTFlows.Trajectories.ControlledTrajectory`](@ref) — trajectory with reconstructed control.
+- [`CTFlows.Trajectories.StateFlowTrajectory`](@ref) — trajectory with reconstructed control.
 - [`CTFlows.Trajectories.control`](@ref), [`CTFlows.Trajectories.objective`](@ref) — controlled trajectory accessors.
 - [`CTBase.Data.OpenLoop`](@extref), [`CTBase.Data.ClosedLoop`](@extref), [`CTBase.Data.DynClosedLoop`](@extref) — control law constructors.
 - `Data.PseudoHamiltonian`, `Data.ControlledVectorField` — data types for controlled systems.
