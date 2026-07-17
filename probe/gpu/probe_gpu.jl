@@ -54,8 +54,10 @@ struct ProbeResult
     block::String
     name::String
     status::Symbol           # :ok | :fail | :xfail | :skip   (:xfail = failed as expected)
-    detail::String           # value summary, or exception type + message
+    detail::String           # value summary, or exception type + message (truncated)
+    fulltrace::String        # full showerror + backtrace, kept only for unexpected :fail
 end
+ProbeResult(b, n, s, d) = ProbeResult(b, n, s, d, "")
 const RESULTS = ProbeResult[]
 
 _truncate(s, n=140) = length(s) > n ? first(s, n) * " …" : s
@@ -89,12 +91,16 @@ function probe(f, block, name; skip_if::Bool=false, skip_reason::String="", expe
         end
         return val
     catch err
+        bt = catch_backtrace()
         etype = string(typeof(err))
         tag = _is_scalar_indexing_error(err) ? "SCALAR-INDEXING" : "ERROR"
         msg = _truncate(sprint(showerror, err))
         status = expect_fail ? :xfail : :fail
         mark = expect_fail ? "✗ xfail" : "✗ FAIL "
-        push!(RESULTS, ProbeResult(block, name, status, "$etype: $msg"))
+        # Keep the full error + backtrace only for UNEXPECTED failures (xfails are the
+        # known scalar-indexing cases — no need to dump their traces).
+        fulltrace = status == :fail ? sprint(showerror, err, bt) : ""
+        push!(RESULTS, ProbeResult(block, name, status, "$etype: $msg", fulltrace))
         @printf("  %s %-50s  %-15s %s :: %s\n", mark, name, tag, etype, msg)
         return nothing
     end
@@ -297,4 +303,19 @@ let n_ok = count(r -> r.status == :ok, RESULTS),
     println("     not the augmented blocker. The real augmented blocker is B4 (kernel compilation).")
     println("   • B4 FAIL ⇒ variable_costate augmented RHS is not GPU-compilable yet — investigate.")
     println("   • B5 eltype == Float32 ⇒ no silent Float64 promotion.")
+end
+
+# ---------------------------------------------------------------------------
+# Full detail for UNEXPECTED failures (the untruncated error + backtrace) — this is
+# what pins the root cause of a genuine limitation (currently B4's KernelError).
+# ---------------------------------------------------------------------------
+let unexpected = filter(r -> r.status == :fail && !isempty(r.fulltrace), RESULTS)
+    if !isempty(unexpected)
+        section("UNEXPECTED-FAILURE DETAIL (full error + backtrace)")
+        for r in unexpected
+            println()
+            println("  ── [", r.block, "] ", r.name, " ──")
+            println(r.fulltrace)
+        end
+    end
 end
