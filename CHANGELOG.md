@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0-beta] - 2026-07-17
+
+### Added
+
+- **Basic (non-Hamiltonian) `Flow(ocp)` call without a costate** (§6, [#230]):
+  `xf = f(t0, x0, tf; variable=v)` for a control-free OCP — the direct-shooting use case.
+  Same `Flow(ocp)` object, dispatched on arity via a new inner `state_flow`; a trajectory
+  call returns a `StateFlowTrajectory` with `law = nothing` (objective kept, no control,
+  no costate). `Flow(ocp, law)` with a `DynClosedLoop` law has no such call (its dynamics
+  need the costate) and raises a `PreconditionError` suggesting `f(t0, x0, p0, tf)`.
+- **`Systems.vector_field` getter** (§7, [#185]): returns the vector field of a state flow.
+  `Systems.hamiltonian_vector_field` extended to accept `AbstractHamiltonian`, covering
+  `ComposedHamiltonian` from OCP + law.
+- **Function-based jumps and per-component `nothing` for multi-phase flows**:
+  `_apply_component_jump` with 3 dispatches — additive (`v .+ j`), callable (`j(v)`), and
+  identity (`nothing`). Applies to both state-only and Hamiltonian multi-phase flows,
+  enabling state-dependent costate jumps and partial jumps.
+- **Cached trajectory projections** (§9): accessors return stored functors instead of
+  rebuilding one per call.
+- **Variable-costate free-time tests** (§8, [#231]): `v = t0` and `v = (t0, tf)` cases,
+  plus the transversality note in the guide.
+- **Dimension/shape test coverage**: 20 new tests across 8 files enforcing the "1-D =
+  scalar" convention (vector `x0` → scalar output for OCP-backed flows), n-D vector
+  preservation, and matrix 1×1 / 2×2 conventions for `StateFlow`, `HamiltonianFlow`, and
+  `MultiPhaseStateFlow`.
+- **New documentation pages**: `trajectories.md` (solution types and accessors),
+  `control_laws.md` (control law types and flow paths), with executed examples and plot
+  recipes.
+
+### Changed
+
+- **BREAKING — `ControlledTrajectory` renamed to `StateFlowTrajectory`** (no compat alias).
+  The type is produced by three state flows (`Flow(fc, law)`, `Flow(ocp, law)`, and the
+  new basic `Flow(ocp)`), so its invariant is "trajectory of a state flow", not "there is
+  a control".
+- **BREAKING — `Data` module moved to `CTBase.Data`.** `src/Data/` deleted; `CTFlows.Data`
+  is now an alias via `using CTBase.Data` (re-exports `VectorField`/`Hamiltonian`/… for
+  back-compat).
+- **BREAKING — 1-D scalar coercion on OCP-backed flow point calls.** `OptimalControlFlow`
+  basic call, `ControlledFlow` point call, and `MultiPhaseStateFlow` point call now coerce
+  length-1 vector outputs to scalars via `_flow_state_coerce` / `Systems._coerce_state`,
+  matching the existing Hamiltonian call behavior. Raw `StateFlow` (from `VectorField` /
+  `ODEProblem`) intentionally preserves the input type.
+- **Targeted helper renames**: `_controlled_state_coerce` → `_flow_state_coerce`,
+  `_controlled_objective` → `_state_flow_objective`.
+- **Consolidated objective core** `_flow_objective` and single feedback-dispatched
+  `_control_of`, removing duplication between Hamiltonian and state paths.
+- **New fields** on `StateFlowTrajectory`, `HamiltonianVectorFieldTrajectory`, and
+  `OptimalControlFlow` (constructor signatures preserved).
+- **New export** `Systems.vector_field`.
+
 ## [0.13.1-beta] - 2026-07-16
 
 ### Added
