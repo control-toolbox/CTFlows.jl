@@ -149,6 +149,29 @@ xf, pf = hmpf(0.0, x0, p0, 2.0)
 
 ---
 
+## Plotting
+
+The merged trajectory of a multi-phase flow is a plain `VectorFieldTrajectory` (or
+`HamiltonianVectorFieldTrajectory`) — the same types produced by a single-phase flow
+— so the `CTFlowsPlots` recipe (see [Trajectories](trajectories.md#Plotting)) applies
+directly, switching times included:
+
+```@setup flows_multiphase
+using Plots
+Base.showable(::MIME"image/png", ::Plots.Plot) = false
+```
+
+```@example flows_multiphase
+plot(sol)   # state trajectory across both phases, switch at t = 1.0
+```
+
+```@example flows_multiphase
+hsol = hmpf((0.0, 2.0), x0, p0)
+plot(hsol)  # state and costate, across both phases
+```
+
+---
+
 ## Design notes
 
 - Concatenation is an associative binary operation on flows: `(f1 * (t, f2)) * (s, f3)`.

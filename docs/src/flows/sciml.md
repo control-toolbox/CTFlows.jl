@@ -41,10 +41,20 @@ parameter through `p`, which CTFlows maps to the `variable` keyword:
 xf = flow(0.0, [1.0], 1.0; variable=2.0)   # ≈ exp(-2)
 ```
 
-Trajectory calls work the same way:
+Trajectory calls work the same way, returning a `VectorFieldTrajectory` — plot it
+directly once `Plots` is loaded:
 
 ```@example flows_sciml
 sol = flow((0.0, 1.0), [1.0]; variable=2.0)
+```
+
+```@setup flows_sciml
+using Plots
+Base.showable(::MIME"image/png", ::Plots.Plot) = false
+```
+
+```@example flows_sciml
+plot(sol)
 ```
 
 !!! note "Traits of SciML-backed flows"

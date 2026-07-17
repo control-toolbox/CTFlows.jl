@@ -14,6 +14,7 @@ using CTFlows
 using CTBase.Data
 using CTBase.Traits
 using CTFlows.Flows
+using CTFlows.Systems
 using CTFlows.Trajectories
 using CTModels
 import OrdinaryDiffEqTsit5
@@ -80,6 +81,22 @@ f_total = Flows.Flow(h̃, law; reltol=1e-10)
 # Partial mode: AD at fixed u
 f_partial = Flows.Flow(h̃, law; hamiltonian_type=:partial, reltol=1e-10)
 nothing # hide
+```
+
+Because the flow was built from a pseudo-Hamiltonian and a law, it exposes them (and
+the resulting closed-loop Hamiltonian) through the `Systems` getters — these throw an
+`IncorrectArgument` on a plain `HamiltonianFlow` that carries no law:
+
+```@example flows_laws
+Systems.pseudo_hamiltonian(f_total)   # H̃(t, x, p, u, v)
+```
+
+```@example flows_laws
+Systems.control_law(f_total)          # the DynClosedLoop feedback u(t, x, p, v)
+```
+
+```@example flows_laws
+Systems.hamiltonian(f_total)          # closed-loop H(t, x, p, v) = H̃(…, u(…), …)
 ```
 
 !!! warning "OpenLoop/ClosedLoop rejected"
@@ -161,11 +178,24 @@ xf
 pf
 ```
 
-Trajectory evaluation returns a `CTModels.Solution`:
+Trajectory evaluation returns a `CTModels.Solution`, with the control reconstructed
+from the law:
 
 ```@example flows_laws
 sol = f_ocp((0.0, 1.0), x0, p0)
 CTModels.Components.objective(sol)
+```
+
+Once `Plots` is loaded it draws directly — state, costate, and the reconstructed
+control ``u(t) = p(t)``:
+
+```@setup flows_laws
+using Plots
+Base.showable(::MIME"image/png", ::Plots.Plot) = false
+```
+
+```@example flows_laws
+plot(sol)
 ```
 
 ### OpenLoop / ClosedLoop → `ControlledFlow`
@@ -200,8 +230,8 @@ Trajectories.objective(sol_c)   # ≈ 0.5 * 1^2 * 1 = 0.5
 A plain function `u` is wrapped in a `DynClosedLoop` law automatically, with
 time/variable dependence inferred from the OCP:
 
-```julia
-f = Flows.Flow(ocp, (x, p) -> p; reltol=1e-10)  # autonomous, fixed
+```@example flows_laws
+f_conv = Flows.Flow(ocp, (x, p) -> p; reltol=1e-10)  # autonomous, fixed → auto DynClosedLoop
 ```
 
 The function `u` **must** have the natural arity matching the OCP's traits:
@@ -241,6 +271,13 @@ the result of a trajectory call on a `ControlledFlow`. It provides:
 x_c = Trajectories.state(sol_c)
 u_c = Trajectories.control(sol_c)
 x_c(0.5), u_c(0.5)
+```
+
+A `StateFlowTrajectory` plots its state and reconstructed control together (its default
+panels are `(:state, :control)`):
+
+```@example flows_laws
+plot(sol_c)
 ```
 
 ---

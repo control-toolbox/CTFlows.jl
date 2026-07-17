@@ -168,6 +168,24 @@ solution in practice, as the two worked examples below demonstrate.
 
 ---
 
+## Plotting a constrained trajectory
+
+A constrained `Flow(ocp, law; constraint, multiplier)` with a `DynClosedLoop` law is an
+`OptimalControlFlow`, so a trajectory call returns a `CTModels.Solution` with the control
+reconstructed from the law — plot it directly once `Plots` is loaded:
+
+```@setup flows_constrained
+using Plots
+Base.showable(::MIME"image/png", ::Plots.Plot) = false
+```
+
+```@example flows_constrained
+sol = f((0.0, 1.0), 1.0, 0.5)   # trajectory call on the constrained flow f
+plot(sol)
+```
+
+---
+
 ## Worked example: Goddard problem (order 1)
 
 The [Goddard rocket problem](https://en.wikipedia.org/wiki/Goddard_problem) (maximise final

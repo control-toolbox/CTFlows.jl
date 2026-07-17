@@ -86,7 +86,7 @@ Hamiltonian flow — see [Integrating](integrating.md).
 
 ---
 
-## Free times (issues [#231](https://github.com/control-toolbox/CTFlows.jl/issues/231), [#183](https://github.com/control-toolbox/CTFlows.jl/issues/183))
+## Free times
 
 `Flow(ocp)` builds an `OptimalControlFlow` around an inner `HamiltonianFlow`, so the
 same free-time shooting technique described in
@@ -95,16 +95,21 @@ free ``t_0`` or ``t_f`` is passed as (a component of) the `variable`, and `t1` i
 `f(t0, x0, p0, t1; variable=v)` is the **evaluation time** — independent of `v`, even
 when `v` *represents* the free endpoint being shot on.
 
-The mitigated transversality residuals are evaluated from the OCP's own Hamiltonian —
+Because the augmented costate is initialised at ``p_v(t_0) = 0``, the mitigated
+transversality residuals can be evaluated from the OCP's own Hamiltonian —
 `H = Systems.hamiltonian(f)` — with an **opposite sign convention** at each end:
 
 ```math
 p_{t_0}(t_f) = -H(t_0, x_0, p_0, v), \qquad p_{t_f}(t_f) = H(t_f, x_f, p_f, v).
 ```
 
-See `test/suite/flows/test_variable_costate_free_time.jl` for worked examples (free
-``t_0``, free ``t_f``, and both free at once) and the Goddard problem tests for a
-shooting method built this way.
+See `test/suite/flows/test_variable_costate_free_time.jl` for worked examples that
+exercise this ``p_v`` mechanism (free ``t_0``, free ``t_f``, and both at once), and
+[Integrating § Free times](integrating.md#Free-times) for the derivation. This settles
+issues [#231](https://github.com/control-toolbox/CTFlows.jl/issues/231) and
+[#183](https://github.com/control-toolbox/CTFlows.jl/issues/183). (The Goddard tests
+close their free final time with the classical ``H \equiv 0`` condition instead — not
+the ``p_v`` adjoint.)
 
 ---
 
@@ -126,6 +131,19 @@ Use the standard CTModels accessors on the result:
 CTModels.Components.objective(sol)    # ≈ exp(λ)
 CTModels.Components.state(sol)(0.5)   # x(0.5) ≈ exp(λ/2)
 CTModels.Components.costate(sol)(0.5) # p(0.5) ≈ exp(-λ/2)
+```
+
+Because the result is a `CTModels.Solution`, it plots directly once `Plots` is loaded —
+state and costate on a shared time axis (the control panel is empty, the problem being
+control-free):
+
+```@setup flows_ocp
+using Plots
+Base.showable(::MIME"image/png", ::Plots.Plot) = false
+```
+
+```@example flows_ocp
+plot(sol)
 ```
 
 ---

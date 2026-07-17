@@ -160,6 +160,20 @@ a control, pass a control law — `Flow(ocp, law)` — see
 [Optimal control](flows/optimal_control.md) for the full picture, including the
 basic no-costate call `f(t0, x0, tf)` for direct shooting.
 
+### Plotting the result
+
+Load `Plots` and any solution object draws directly — here the state and costate of
+the `CTModels.Solution` on a shared time axis:
+
+```@setup getting_started
+using Plots
+Base.showable(::MIME"image/png", ::Plots.Plot) = false
+```
+
+```@example getting_started
+plot(sol)
+```
+
 ## Where to go next
 
 - [Optimal control](flows/optimal_control.md) — flows built directly from a `CTModels` problem.

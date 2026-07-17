@@ -58,11 +58,11 @@ CTFlows exports nothing at the package level. Bring submodules into scope explic
 ```@example flows_overview
 using CTFlows
 using CTFlows.Flows        # StateFlow, HamiltonianFlow, Flow, build_flow
-using CTBase.Data         # VectorField, Hamiltonian, HamiltonianVectorField
+using CTBase.Data          # VectorField, Hamiltonian, HamiltonianVectorField
 using CTFlows.Systems      # build_system
 using CTFlows.Integrators  # SciML, build_integrator
-using CTFlows.Trajectories    # VectorFieldTrajectory, state, time_grid
-using CTBase.Traits       # Autonomous, NonAutonomous, Fixed, NonFixed, InPlace, OutOfPlace
+using CTFlows.Trajectories # VectorFieldTrajectory, state, time_grid
+using CTBase.Traits        # Autonomous, NonAutonomous, Fixed, NonFixed, InPlace, OutOfPlace
 using CTFlows.Configs      # StateEndPointConfig, StateTrajectoryConfig, …
 import OrdinaryDiffEqTsit5 # activates the SciML extension
 nothing # hide
@@ -131,3 +131,12 @@ integrate:
 - **With a control law**: a feedback ``u(t, x, p, v)`` (or ``u(t, x, v)``) closes the
   loop, ``H(t, x, p, v) = \tilde{H}(t, x, p, u(\ldots), v)``. This is
   `Flow(ocp, law)` / `Flow(h̃, law)` — see [Control laws](control_laws.md).
+
+## See also
+
+- [Building a flow](building_a_flow.md) — the shortcut and explicit pipeline, plus the flow getters.
+- [Integrating](integrating.md) — call styles, variable parameters, and integrator options.
+- [Trajectories](trajectories.md) — the result containers, their accessors, and plotting.
+- [Optimal control](optimal_control.md), [Control laws](control_laws.md) — flows from an OCP, with or without a control law.
+- [`CTBase.Data`](@extref CTBase.Data), [`CTBase.Traits`](@extref CTBase.Traits) — the data and trait layers (in CTBase).
+- [`CTSolvers.Integrators`](@extref CTSolvers.Integrators) — the ODE integrator strategy (in CTSolvers).
