@@ -12,8 +12,8 @@ on:
 
 jobs:
   gpu-probe:
-    # Run manually (workflow_dispatch) or on a PR carrying the 'run ci gpu' label.
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run ci gpu')
+    # Run manually (workflow_dispatch) or on a PR carrying the 'run probe' label.
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run probe')
     runs-on: ["kkt"]
 
     steps:
