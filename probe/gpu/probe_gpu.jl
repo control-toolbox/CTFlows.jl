@@ -46,7 +46,6 @@ using Zygote: Zygote                             # activates DI AutoZygote
 import CTBase.Data
 import CTBase.Differentiation
 import CTFlows.Flows
-import CTFlows.Integrators
 
 # ---------------------------------------------------------------------------
 # Probe harness: run a labelled experiment, catch everything, record + print
@@ -54,7 +53,7 @@ import CTFlows.Integrators
 struct ProbeResult
     block::String
     name::String
-    status::Symbol           # :ok | :fail | :skip
+    status::Symbol           # :ok | :fail | :xfail | :skip   (:xfail = failed as expected)
     detail::String           # value summary, or exception type + message
 end
 const RESULTS = ProbeResult[]
@@ -68,8 +67,11 @@ end
 
 # Run the experiment `f`. Prints ✓ / ✗ / ∅ with a one-line detail and records it.
 # A returned value is stringified as the success detail; any thrown error is caught,
-# classified (scalar-indexing errors flagged explicitly) and recorded as :fail.
-function probe(f, block, name; skip_if::Bool=false, skip_reason::String="")
+# classified (scalar-indexing errors flagged explicitly) and recorded. Set
+# `expect_fail=true` for experiments that are SUPPOSED to fail today (e.g. the
+# AutoForwardDiff-on-GPU cases): a failure is then recorded as :xfail (expected), and an
+# unexpected *success* is flagged loudly.
+function probe(f, block, name; skip_if::Bool=false, skip_reason::String="", expect_fail::Bool=false)
     if skip_if
         push!(RESULTS, ProbeResult(block, name, :skip, skip_reason))
         @printf("  ∅ %-50s  SKIP  (%s)\n", name, skip_reason)
@@ -78,15 +80,22 @@ function probe(f, block, name; skip_if::Bool=false, skip_reason::String="")
     try
         val = f()
         detail = _truncate(string(val))
-        push!(RESULTS, ProbeResult(block, name, :ok, detail))
-        @printf("  ✓ %-50s  OK    %s\n", name, detail)
+        if expect_fail
+            push!(RESULTS, ProbeResult(block, name, :fail, "UNEXPECTED PASS: $detail"))
+            @printf("  ⚠ %-50s  UNEXPECTED-PASS  %s\n", name, detail)
+        else
+            push!(RESULTS, ProbeResult(block, name, :ok, detail))
+            @printf("  ✓ %-50s  OK    %s\n", name, detail)
+        end
         return val
     catch err
         etype = string(typeof(err))
         tag = _is_scalar_indexing_error(err) ? "SCALAR-INDEXING" : "ERROR"
         msg = _truncate(sprint(showerror, err))
-        push!(RESULTS, ProbeResult(block, name, :fail, "$etype: $msg"))
-        @printf("  ✗ %-50s  %-15s %s :: %s\n", name, tag, etype, msg)
+        status = expect_fail ? :xfail : :fail
+        mark = expect_fail ? "✗ xfail" : "✗ FAIL "
+        push!(RESULTS, ProbeResult(block, name, status, "$etype: $msg"))
+        @printf("  %s %-50s  %-15s %s :: %s\n", mark, name, tag, etype, msg)
         return nothing
     end
 end
@@ -132,12 +141,13 @@ end
 probe("B0", "vcat(x0, p0) on device"; skip_if=!CUDA_OK) do
     Array(vcat(_dev([1.0, 2.0]), _dev([3.0, 4.0])))
 end
-# The pv0 bug: calling.jl:515 does `zeros(eltype(x0), n)` → a host Vector; then
-# vcat(x0, p0, pv0) mixes device + host. Probe the buggy form and the proposed fix.
-probe("B0", "BUG repro: vcat(dev, dev, zeros(1)) [host pv0]"; skip_if=!CUDA_OK) do
+# calling.jl:515 builds pv0 as `zeros(eltype(x0), n)` → a HOST Vector; the augmented
+# init cond is then vcat(x0, p0, pv0). Measure whether that host/device vcat is even a
+# hard failure (result: it is NOT — vcat promotes), vs the device-native `similar` form.
+probe("B0", "mixed host/device: vcat(dev, dev, zeros(1))"; skip_if=!CUDA_OK) do
     Array(vcat(_dev([1.0, 2.0]), _dev([3.0, 4.0]), zeros(Float64, 1)))
 end
-probe("B0", "FIX repro: vcat(dev, dev, similar-zeros)"; skip_if=!CUDA_OK) do
+probe("B0", "device-native: vcat(dev, dev, similar-zeros)"; skip_if=!CUDA_OK) do
     x0 = _dev([1.0, 2.0])
     Array(vcat(x0, _dev([3.0, 4.0]), fill!(similar(x0, 1), 0)))
 end
@@ -150,16 +160,16 @@ section("BLOCK 1 — DifferentiationInterface.gradient on device (the AD gate)")
 
 _f_scalar(x) = sum(abs2, x)
 
-function _grad_probe(backend_name, make_backend; device=true)
+function _grad_probe(backend_name, make_backend; device=true, expect_fail=false)
     label = "DI.gradient $backend_name  ($(device ? "CuArray" : "host baseline"))"
-    probe("B1", label; skip_if=(device && !CUDA_OK)) do
+    probe("B1", label; skip_if=(device && !CUDA_OK), expect_fail=expect_fail) do
         b = Differentiation.DifferentiationInterface(; ad_backend=make_backend())
         x = device ? _dev([1.0, 2.0, 3.0]) : [1.0, 2.0, 3.0]
         Array(Differentiation.gradient(b, _f_scalar, x))   # expect ≈ 2x
     end
 end
 
-_grad_probe("AutoForwardDiff", () -> ADTypes.AutoForwardDiff())
+_grad_probe("AutoForwardDiff", () -> ADTypes.AutoForwardDiff(); expect_fail=true)  # ForwardDiff scalar-indexes on GPU
 _grad_probe("AutoZygote", () -> ADTypes.AutoZygote())
 _grad_probe("AutoForwardDiff", () -> ADTypes.AutoForwardDiff(); device=false)  # baseline
 
@@ -169,8 +179,8 @@ _grad_probe("AutoForwardDiff", () -> ADTypes.AutoForwardDiff(); device=false)  #
 # ===========================================================================
 section("BLOCK 2 — Differentiation.hamiltonian_gradient on device")
 
-function _hamgrad_probe(backend_name, make_backend)
-    probe("B2", "hamiltonian_gradient $backend_name (CuArray)"; skip_if=!CUDA_OK) do
+function _hamgrad_probe(backend_name, make_backend; expect_fail=false)
+    probe("B2", "hamiltonian_gradient $backend_name (CuArray)"; skip_if=!CUDA_OK, expect_fail=expect_fail) do
         h = Data.Hamiltonian((x, p) -> (sum(abs2, x) + sum(abs2, p)) / 2)
         b = Differentiation.DifferentiationInterface(; ad_backend=make_backend())
         ∂x, ∂p = Differentiation.hamiltonian_gradient(
@@ -179,7 +189,7 @@ function _hamgrad_probe(backend_name, make_backend)
         (Array(∂x), Array(∂p))
     end
 end
-_hamgrad_probe("AutoForwardDiff", () -> ADTypes.AutoForwardDiff())
+_hamgrad_probe("AutoForwardDiff", () -> ADTypes.AutoForwardDiff(); expect_fail=true)
 _hamgrad_probe("AutoZygote", () -> ADTypes.AutoZygote())
 
 # ===========================================================================
@@ -205,7 +215,7 @@ probe("B3", "Flow(HamiltonianVectorField) point"; skip_if=!CUDA_OK) do
 end
 
 # 3c — AD: Flow(Hamiltonian), DEFAULT backend (AutoForwardDiff). Expected: FAIL on device.
-probe("B3", "Flow(Hamiltonian) DEFAULT backend (expect fail)"; skip_if=!CUDA_OK) do
+probe("B3", "Flow(Hamiltonian) DEFAULT backend"; skip_if=!CUDA_OK, expect_fail=true) do
     h = Data.Hamiltonian((x, p) -> (sum(abs2, x) + sum(abs2, p)) / 2)
     f = Flows.Flow(h)                                  # default ad_backend = AutoForwardDiff
     xf, pf = f(0.0, _dev([1.0, 0.0]), _dev([0.0, 1.0]), 1.0)
@@ -221,10 +231,11 @@ probe("B3", "Flow(Hamiltonian) ad_backend=AutoZygote"; skip_if=!CUDA_OK) do
 end
 
 # 3e — AD-FREE: Flow(ODEProblem) with device u0 (SciMLProblemFlow, remake path).
+# The point-call returns the final state directly (a CuArray) — no final_state() wrapper.
 probe("B3", "Flow(ODEProblem) point remake"; skip_if=!CUDA_OK) do
     prob = SciMLBase.ODEProblem((du, u, p, t) -> (du .= .-u), _dev([1.0, 2.0]), (0.0, 1.0))
     f = Flows.Flow(prob)
-    Array(Integrators.final_state(f(0.0, _dev([1.0, 2.0]), 1.0)))
+    Array(f(0.0, _dev([1.0, 2.0]), 1.0))
 end
 
 # ===========================================================================
@@ -260,23 +271,30 @@ end
 section("SUMMARY — capability matrix")
 let n_ok = count(r -> r.status == :ok, RESULTS),
     n_fail = count(r -> r.status == :fail, RESULTS),
+    n_xfail = count(r -> r.status == :xfail, RESULTS),
     n_skip = count(r -> r.status == :skip, RESULTS)
 
     for r in RESULTS
-        mark = r.status == :ok ? "✓ OK  " : r.status == :fail ? "✗ FAIL" : "∅ SKIP"
+        mark =
+            r.status == :ok ? "✓ OK   " :
+            r.status == :xfail ? "✗ xfail" :
+            r.status == :fail ? "✗ FAIL " : "∅ SKIP "
         @printf("  [%s] %-4s %-50s %s\n", mark, r.block, r.name, _truncate(r.detail, 90))
     end
     println()
     @printf(
-        "  totals:  ✓ %d ok   ✗ %d fail   ∅ %d skip   (of %d)\n",
-        n_ok, n_fail, n_skip, length(RESULTS)
+        "  totals:  ✓ %d ok   ✗ %d xfail(expected)   ✗ %d FAIL(unexpected)   ∅ %d skip   (of %d)\n",
+        n_ok, n_xfail, n_fail, n_skip, length(RESULTS)
     )
     println()
-    println("  Interpretation guide:")
-    println("   • B1/B2 FAIL (SCALAR-INDEXING) on AutoForwardDiff, OK on AutoZygote")
-    println("     ⇒ confirms §4.2 (AD is the GPU gate; ForwardDiff scalar-indexes).")
+    println("  Interpretation guide (xfail = failed as expected; a bare FAIL is a real limit):")
+    println("   • B1/B2 xfail (SCALAR-INDEXING) on AutoForwardDiff, OK on AutoZygote")
+    println("     ⇒ confirms §4.2 (AD is the GPU gate; ForwardDiff scalar-indexes; Zygote works).")
     println("   • B3 3a/3b/3e OK ⇒ confirms §5 'AD-free flows are GPU-ready first'.")
-    println("   • B3 3c FAIL vs 3d OK ⇒ confirms the AD-backend default is what must change.")
-    println("   • B0 BUG-repro FAIL vs FIX-repro OK, and B4 ⇒ confirms the pv0 fix (§6).")
+    println("   • B3 3c xfail vs 3d OK ⇒ Flow(Hamiltonian; ad_backend=AutoZygote) already runs;")
+    println("     only the DEFAULT backend must change (D2 = AutoZygote).")
+    println("   • B0 both OK ⇒ host/device vcat is NOT a hard failure; the pv0 `zeros` is hygiene,")
+    println("     not the augmented blocker. The real augmented blocker is B4 (kernel compilation).")
+    println("   • B4 FAIL ⇒ variable_costate augmented RHS is not GPU-compilable yet — investigate.")
     println("   • B5 eltype == Float32 ⇒ no silent Float64 promotion.")
 end
