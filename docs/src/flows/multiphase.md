@@ -25,6 +25,11 @@ flow3 = Flows.Flow(vf; reltol=1e-8)
 
 f_dyn2(x) = -2 .* x
 flow_het = Flows.Flow(Data.VectorField(f_dyn2); reltol=1e-8)
+
+hvf_f(x, p) = (p, -x)
+hvf = Data.HamiltonianVectorField(hvf_f)
+hflow1 = Flows.Flow(hvf; reltol=1e-10)
+hflow2 = Flows.Flow(hvf; reltol=1e-10)
 ```
 
 ---
@@ -79,16 +84,46 @@ Mixing state flows with Hamiltonian flows is not allowed — attempting it raise
 
 ## Jumps at switching times
 
-A jump function ``g`` is applied to the state at the switching time before starting
-the next phase. Pass it as the second element of the switching tuple:
+An additive vector `jump_x` is added to the state at the switching time
+(`x ← x + jump_x`). Pass it as the second element of the switching tuple:
 
 ```@example flows_multiphase
-jump = x -> 2.0 .* x   # double the state at the switch
+jump_x = [0.5, 0.0]   # add 0.5 to the first component at the switch
 
-mpf_jump = flow1 * (1.0, jump, flow2)
+mpf_jump = flow1 * (1.0, jump_x, flow2)
 ```
 
 Pass `nothing` (or use the two-element tuple) for a continuous switch with no jump.
+
+### Function jumps
+
+The second element may also be a **callable** instead of an additive vector:
+
+**State flow** — `f(x)` must return the new state:
+
+```@example flows_multiphase
+mpf_fn = flow1 * (1.0, x -> 2.0 .* x, flow2)   # x ← 2x at t = 1.0
+```
+
+**Hamiltonian flow — 3-element** — `f(x, p)` returns `(x', p')`:
+
+```@example flows_multiphase
+hmpf_fn = hflow1 * (
+    1.0, (x, p) -> (2.0 .* x, p .+ 0.5), hflow2
+)
+```
+
+**Hamiltonian flow — 4-element** — each component independently accepts a
+vector, a callable, or `nothing` (identity). This allows state-only jumps without
+passing explicit zeros for the costate:
+
+```@example flows_multiphase
+# state-only additive jump (costate unchanged)
+hmpf_sx = hflow1 * (1.0, [0.1, 0.0], nothing, hflow2)
+
+# callable on state, costate unchanged
+hmpf_fx = hflow1 * (1.0, x -> 2.0 .* x, nothing, hflow2)
+```
 
 ---
 
@@ -132,11 +167,6 @@ MultiPhase.get_jumps(mpf)                # all jump functions
 The same operators work for Hamiltonian flows:
 
 ```@example flows_multiphase
-hvf_f(x, p) = (p, -x)
-hvf = Data.HamiltonianVectorField(hvf_f)
-hflow1 = Flows.Flow(hvf; reltol=1e-10)
-hflow2 = Flows.Flow(hvf; reltol=1e-10)
-
 hmpf = hflow1 * (1.0, hflow2)
 typeof(hmpf)
 ```
@@ -168,6 +198,84 @@ plot(sol)   # state trajectory across both phases, switch at t = 1.0
 ```@example flows_multiphase
 hsol = hmpf((0.0, 2.0), x0, p0)
 plot(hsol)  # state and costate, across both phases
+```
+
+### Different dynamics — kink at the switching time
+
+When the two phases use different vector fields, the slope changes abruptly at the
+switching time. The trajectory is continuous but not differentiable:
+
+```@example flows_multiphase
+# phase 1: f(x) = -x   |   phase 2: f(x) = -2x
+sol_het = mpf_het((0.0, 2.0), x0)
+plot(sol_het)   # kink visible at t = 1.0
+```
+
+### State jump — discontinuity in state
+
+A non-zero additive jump `x ← x + jump_x` produces a visible discontinuity in the
+state trajectory:
+
+```@example flows_multiphase
+# jump_x = [0.5, 0.0] defined above
+sol_jump = mpf_jump((0.0, 2.0), x0)
+plot(sol_jump)   # state jumps by [0.5, 0.0] at t = 1.0
+```
+
+### Hamiltonian flow — costate jump
+
+For Hamiltonian flows, `hflow1 * (t, jump_p, hflow2)` adds an additive vector to
+the costate (`p ← p + jump_p`). The state remains continuous:
+
+```@example flows_multiphase
+jump_p = [0.0, 0.5]
+hmpf_jp = hflow1 * (1.0, jump_p, hflow2)
+hsol_jp = hmpf_jp((0.0, 2.0), x0, p0)
+plot(hsol_jp)   # costate jumps by [0.0, 0.5] at t = 1.0, state unchanged
+```
+
+### Hamiltonian flow — simultaneous state and costate jump
+
+`hflow1 * (t, jump_x, jump_p, hflow2)` jumps both components at once
+(`x ← x + jump_x`, `p ← p + jump_p`):
+
+```@example flows_multiphase
+jump_xx, jump_pp = [0.1, 0.0], [0.0, 0.5]
+hmpf_jxp = hflow1 * (1.0, jump_xx, jump_pp, hflow2)
+hsol_jxp = hmpf_jxp((0.0, 2.0), x0, p0)
+plot(hsol_jxp)   # both state and costate jump at t = 1.0
+```
+
+### State function jump
+
+A callable `f(x)` transforms the state at the switching time:
+
+```@example flows_multiphase
+mpf_fn = flow1 * (1.0, x -> 2.0 .* x, flow2)
+sol_fn = mpf_fn((0.0, 2.0), x0)
+plot(sol_fn)   # state doubled at t = 1.0
+```
+
+### Hamiltonian function jump — full transformation
+
+A callable `f(x, p)` transforms both components simultaneously:
+
+```@example flows_multiphase
+hmpf_fn = hflow1 * (
+    1.0, (x, p) -> (2.0 .* x, p .+ 0.5), hflow2
+)
+hsol_fn = hmpf_fn((0.0, 2.0), x0, p0)
+plot(hsol_fn)   # state doubled, costate shifted at t = 1.0
+```
+
+### Hamiltonian state-only jump
+
+Using `nothing` for the costate component leaves it unchanged:
+
+```@example flows_multiphase
+hmpf_sx = hflow1 * (1.0, [0.1, 0.0], nothing, hflow2)
+hsol_sx = hmpf_sx((0.0, 2.0), x0, p0)
+plot(hsol_sx)   # state jumps, costate continuous
 ```
 
 ---

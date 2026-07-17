@@ -352,23 +352,59 @@ function test_calling_multiphase()
             end
         end
 
+        # ==============================================================
+        # Unit: _apply_component_jump
+        # ==============================================================
+        Test.@testset "_apply_component_jump" begin
+            v = [1.0, 2.0]
+
+            Test.@testset "additive vector" begin
+                j = [0.1, 0.2]
+                Test.@test MultiPhase._apply_component_jump(v, j) == v .+ j
+            end
+
+            Test.@testset "callable function" begin
+                f = v -> 2.0 .* v
+                Test.@test MultiPhase._apply_component_jump(v, f) == 2.0 .* v
+            end
+
+            Test.@testset "nothing — identity" begin
+                Test.@test MultiPhase._apply_component_jump(v, nothing) === v
+            end
+        end
+
+        # ==============================================================
+        # Unit: _apply_jump
+        # ==============================================================
         Test.@testset "_apply_jump" begin
             x = [1.0, 2.0]
             p = [0.5, 0.3]
             jump = [0.1, 0.2]
 
-            Test.@testset "MultiPhaseStateFlow" begin
+            Test.@testset "MultiPhaseStateFlow — additive vector" begin
                 sys = FakeStateSystem([1.0, 2.0])
                 integ = FakeIntegrator(:fake_result)
                 flow1 = Flows.StateFlow(sys, integ)
                 flow2 = Flows.StateFlow(sys, integ)
-                mpf = flow1 * (0.5, jump, flow2)  # Create mpf with a jump
+                mpf = flow1 * (0.5, jump, flow2)
 
                 result = MultiPhase._apply_jump(mpf, 1, x)
                 Test.@test result == x + jump
             end
 
-            Test.@testset "MultiPhaseHamiltonianFlow" begin
+            Test.@testset "MultiPhaseStateFlow — callable function" begin
+                sys = FakeStateSystem([1.0, 2.0])
+                integ = FakeIntegrator(:fake_result)
+                flow1 = Flows.StateFlow(sys, integ)
+                flow2 = Flows.StateFlow(sys, integ)
+                f = x -> 2.0 .* x
+                mpf = flow1 * (0.5, f, flow2)
+
+                result = MultiPhase._apply_jump(mpf, 1, x)
+                Test.@test result == 2.0 .* x
+            end
+
+            Test.@testset "MultiPhaseHamiltonianFlow — additive vector (costate)" begin
                 hsys = FakeHamiltonianSystem([1.0, 2.0])
                 hinteg = FakeHamiltonianIntegrator(:fake_result)
                 hflow1 = Flows.HamiltonianFlow(hsys, hinteg)
@@ -378,26 +414,78 @@ function test_calling_multiphase()
                 result = MultiPhase._apply_jump(hmpf, 1, (x, p))
                 Test.@test result == (x, p + jump)
             end
+
+            Test.@testset "MultiPhaseHamiltonianFlow — callable function" begin
+                hsys = FakeHamiltonianSystem([1.0, 2.0])
+                hinteg = FakeHamiltonianIntegrator(:fake_result)
+                hflow1 = Flows.HamiltonianFlow(hsys, hinteg)
+                hflow2 = Flows.HamiltonianFlow(hsys, hinteg)
+                f = (x, p) -> (2.0 .* x, 3.0 .* p)
+                hmpf = hflow1 * (0.5, f, hflow2)
+
+                result = MultiPhase._apply_jump(hmpf, 1, (x, p))
+                Test.@test result == (2.0 .* x, 3.0 .* p)
+            end
         end
 
+        # ==============================================================
+        # Unit: _apply_hamiltonian_jump
+        # ==============================================================
         Test.@testset "_apply_hamiltonian_jump" begin
             x = [1.0, 2.0]
             p = [0.5, 0.3]
             state_tuple = (x, p)
 
-            Test.@testset "jump as Tuple (jump_x, jump_p)" begin
+            Test.@testset "Tuple — additive (jump_x, jump_p)" begin
                 jump_x = [0.1, 0.2]
                 jump_p = [0.01, 0.02]
-                result = MultiPhase._apply_hamiltonian_jump(state_tuple, (jump_x, jump_p))
+                result = MultiPhase._apply_hamiltonian_jump(
+                    state_tuple, (jump_x, jump_p)
+                )
                 Test.@test result[1] == x + jump_x
                 Test.@test result[2] == p + jump_p
             end
 
-            Test.@testset "jump as single vector (jump_p only)" begin
+            Test.@testset "Tuple — (nothing, jump_p): costate-only" begin
+                jump_p = [0.01, 0.02]
+                result = MultiPhase._apply_hamiltonian_jump(
+                    state_tuple, (nothing, jump_p)
+                )
+                Test.@test result[1] === x
+                Test.@test result[2] == p + jump_p
+            end
+
+            Test.@testset "Tuple — (jump_x, nothing): state-only" begin
+                jump_x = [0.1, 0.2]
+                result = MultiPhase._apply_hamiltonian_jump(
+                    state_tuple, (jump_x, nothing)
+                )
+                Test.@test result[1] == x + jump_x
+                Test.@test result[2] === p
+            end
+
+            Test.@testset "Tuple — (f_x, f_p): callable functions" begin
+                fx = x -> 2.0 .* x
+                fp = p -> 3.0 .* p
+                result = MultiPhase._apply_hamiltonian_jump(
+                    state_tuple, (fx, fp)
+                )
+                Test.@test result[1] == 2.0 .* x
+                Test.@test result[2] == 3.0 .* p
+            end
+
+            Test.@testset "single vector — costate-only (additive)" begin
                 jump_p = [0.01, 0.02]
                 result = MultiPhase._apply_hamiltonian_jump(state_tuple, jump_p)
                 Test.@test result[1] == x
                 Test.@test result[2] == p + jump_p
+            end
+
+            Test.@testset "callable function — full transformation" begin
+                f = (x, p) -> (2.0 .* x, 3.0 .* p)
+                result = MultiPhase._apply_hamiltonian_jump(state_tuple, f)
+                Test.@test result[1] == 2.0 .* x
+                Test.@test result[2] == 3.0 .* p
             end
         end
 

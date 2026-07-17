@@ -588,6 +588,54 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Apply an additive jump to a single component.
+
+# Arguments
+- `v`: Component value (state or costate).
+- `j`: Additive offset (vector or scalar); added element-wise.
+
+# Returns
+- `v .+ j`.
+
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref).
+"""
+_apply_component_jump(v, j) = v .+ j
+
+"""
+$(TYPEDSIGNATURES)
+
+Apply a callable jump to a single component.
+
+# Arguments
+- `v`: Component value (state or costate).
+- `j::Function`: Callable; called as `j(v)`.
+
+# Returns
+- `j(v)`.
+
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref).
+"""
+_apply_component_jump(v, j::Function) = j(v)
+
+"""
+$(TYPEDSIGNATURES)
+
+Identity jump — leave the component unchanged.
+
+# Arguments
+- `v`: Component value (state or costate).
+- `::Nothing`: Sentinel for "no jump on this component".
+
+# Returns
+- `v` unchanged.
+
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref).
+"""
+_apply_component_jump(v, ::Nothing) = v
+
+"""
+$(TYPEDSIGNATURES)
+
 Apply a jump to the state for state flows.
 
 # Arguments
@@ -616,13 +664,16 @@ Apply a jump to the state for state dynamics.
 - `state`: Current state.
 
 # Returns
-- State after applying the jump (element-wise addition).
+- State after applying the jump.
 
 # Notes
 This is an internal dispatch method for the `_apply_jump` function.
+Delegates to [`CTFlows.MultiPhase._apply_component_jump`](@ref), which supports
+additive offsets (`j` a vector/scalar), callables (`j(state)`), and `nothing`
+(identity).
 """
 function _apply_jump(::Type{Traits.StateDynamics}, mpf, i, state)
-    return state .+ get_jump(mpf, i)
+    return _apply_component_jump(state, get_jump(mpf, i))
 end
 
 """
@@ -649,39 +700,74 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Apply a tuple jump to a Hamiltonian state tuple.
+Apply per-component jumps to a Hamiltonian state tuple.
+
+Each component (`jump[1]` for state, `jump[2]` for costate) is handled
+independently by [`CTFlows.MultiPhase._apply_component_jump`](@ref): a
+vector/scalar is added, a callable is applied, and `nothing` leaves the
+component unchanged.
 
 # Arguments
 - `state_tuple::Tuple`: Tuple of (state, costate).
-- `jump::Tuple`: Tuple of (state_jump, costate_jump).
+- `jump::Tuple`: Tuple of (state_jump, costate_jump); each element may be a
+  vector/scalar, a callable, or `nothing`.
 
 # Returns
-- Tuple of (state + state_jump, costate + costate_jump).
+- Tuple of updated (state, costate).
 
-See also: [`CTFlows.MultiPhase._apply_jump`](@ref).
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref),
+  [`CTFlows.MultiPhase._apply_component_jump`](@ref).
 """
 function _apply_hamiltonian_jump(state_tuple::Tuple, jump::Tuple)
     x, p = state_tuple
-    return (x + jump[1], p + jump[2])
+    return (_apply_component_jump(x, jump[1]), _apply_component_jump(p, jump[2]))
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Apply a scalar jump to the costate component of a Hamiltonian state tuple.
+Apply a callable jump to a Hamiltonian state tuple.
+
+The callable receives both components and must return an updated
+`(state, costate)` tuple: `(x, p) ← jump(x, p)`.
 
 # Arguments
 - `state_tuple::Tuple`: Tuple of (state, costate).
-- `jump`: Costate jump value (scalar).
+- `jump::Function`: Callable with signature `(x, p) -> (x', p')`.
 
 # Returns
-- Tuple of (state, costate + jump).
+- Tuple `(x', p')` returned by `jump`.
 
-See also: [`CTFlows.MultiPhase._apply_jump`](@ref).
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref),
+  [`CTFlows.MultiPhase._apply_component_jump`](@ref).
+"""
+function _apply_hamiltonian_jump(state_tuple::Tuple, jump::Function)
+    x, p = state_tuple
+    return jump(x, p)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Apply an additive costate jump to a Hamiltonian state tuple.
+
+Adds `jump` to the costate only; the state is left unchanged.
+Follows the "1-D is a scalar" convention: pass a scalar for a 1-D costate,
+a vector for an n-D costate.
+
+# Arguments
+- `state_tuple::Tuple`: Tuple of (state, costate).
+- `jump`: Additive costate offset (scalar or vector).
+
+# Returns
+- Tuple of `(state, costate .+ jump)`.
+
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref),
+  [`CTFlows.MultiPhase._apply_component_jump`](@ref).
 """
 function _apply_hamiltonian_jump(state_tuple::Tuple, jump)
     x, p = state_tuple
-    return (x, p + jump)
+    return (x, p .+ jump)
 end
 
 """

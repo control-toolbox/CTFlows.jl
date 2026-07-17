@@ -71,17 +71,16 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Concatenate two state flows with a switching time and an additive state jump using the `*`
-operator.
+Concatenate two state flows with a switching time and a state jump using the `*` operator.
 
-Creates a multi-phase flow that adds `jump` to the state at the switching time
-(`x ← x + jump`). The jump follows the "1-D is a scalar" convention: a scalar for a 1-D state,
-a vector for an n-D state — its shape must match the state.
+`jump` is applied to the state at the switching time. Two forms are accepted:
+- **Additive** (vector or scalar): `x ← x + jump`.
+- **Callable** (`f::Function`): `x ← f(x)`.
 
 # Arguments
 - `f1::AbstractStateFlow`: First flow (phase 1).
-- `(t_switch, jump, f2)::Tuple{Real, Any, AbstractStateFlow}`: Tuple of switching time, additive
-  state jump, and second flow (phase 2).
+- `(t_switch, jump, f2)::Tuple{Real, Any, AbstractStateFlow}`: Tuple of switching time,
+  state jump (vector/scalar or callable), and second flow (phase 2).
 
 # Returns
 - `MultiPhaseStateFlow`: Multi-phase flow with a jump.
@@ -90,10 +89,15 @@ a vector for an n-D state — its shape must match the state.
 \`\`\`julia
 using CTFlows.Flows, CTFlows.MultiPhase
 
+# additive jump
 mpf = flow1 * (1.0, [0.1, 0.2], flow2)   # x ← x + [0.1, 0.2] at t = 1.0
+
+# callable jump
+mpf = flow1 * (1.0, x -> 2.0 .* x, flow2)   # x ← 2x at t = 1.0
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
+See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref),
+  [`CTFlows.MultiPhase._apply_component_jump`](@ref).
 """
 function Base.:*(
     f1::Flows.AbstractStateFlow,
@@ -143,17 +147,16 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Concatenate two Hamiltonian flows with a switching time and an additive costate jump using the
-`*` operator.
+Concatenate two Hamiltonian flows with a switching time and a jump using the `*` operator.
 
-Creates a multi-phase Hamiltonian flow that adds `jump` to the costate at the switching time
-(`p ← p + jump`; the state is unchanged). The jump follows the "1-D is a scalar" convention: a
-scalar for a 1-D costate, a vector for an n-D costate — its shape must match the costate.
+`jump` is applied at the switching time. Two forms are accepted:
+- **Additive** (vector or scalar): `p ← p + jump`; the state is unchanged.
+- **Callable** (`f::Function`): `(x, p) ← f(x, p)`; both components may change.
 
 # Arguments
 - `f1::AbstractHamiltonianFlow`: First flow (phase 1).
 - `(t_switch, jump, f2)::Tuple{Real, Any, AbstractHamiltonianFlow}`: Tuple of switching time,
-  additive costate jump, and second flow (phase 2).
+  jump (vector/scalar or callable), and second flow (phase 2).
 
 # Returns
 - `MultiPhaseHamiltonianFlow`: Multi-phase Hamiltonian flow with a jump.
@@ -162,10 +165,15 @@ scalar for a 1-D costate, a vector for an n-D costate — its shape must match t
 \`\`\`julia
 using CTFlows.Flows, CTFlows.MultiPhase
 
+# additive costate jump
 mpf = flow1 * (1.0, [0.5, 0.0], flow2)   # p ← p + [0.5, 0.0] at t = 1.0
+
+# callable jump (both components)
+mpf = flow1 * (1.0, (x, p) -> (x, 2.0 .* p), flow2)   # p ← 2p at t = 1.0
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
+See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref),
+  [`CTFlows.MultiPhase._apply_hamiltonian_jump`](@ref).
 """
 function Base.:*(
     f1::Flows.AbstractHamiltonianFlow,
@@ -181,30 +189,39 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Concatenate two Hamiltonian flows with a switching time and separate additive state/costate
-jumps using the `*` operator.
+Concatenate two Hamiltonian flows with a switching time and separate per-component jumps
+using the `*` operator.
 
-Creates a multi-phase Hamiltonian flow that adds `jump_x` to the state and `jump_p` to the
-costate at the switching time (`x ← x + jump_x`, `p ← p + jump_p`). Each jump follows the
-"1-D is a scalar" convention: a scalar for a 1-D quantity, a vector for an n-D one — its shape
-must match the state/costate.
+Each of `jump_x` and `jump_p` is applied to the state and costate independently at the
+switching time. Three forms are accepted per component:
+- **Additive** (vector or scalar): `component ← component + jump`.
+- **Callable** (`f::Function`): `component ← f(component)`.
+- **`nothing`**: component is left unchanged (state-only or costate-only jump).
 
 # Arguments
 - `f1::AbstractHamiltonianFlow`: First flow (phase 1).
 - `(t_switch, jump_x, jump_p, f2)::Tuple{Real, Any, Any, AbstractHamiltonianFlow}`: Tuple of
-  switching time, additive state jump, additive costate jump, and second flow (phase 2).
+  switching time, state jump, costate jump, and second flow (phase 2).
 
 # Returns
-- `MultiPhaseHamiltonianFlow`: Multi-phase Hamiltonian flow with separate jumps.
+- `MultiPhaseHamiltonianFlow`: Multi-phase Hamiltonian flow with per-component jumps.
 
 # Example
 \`\`\`julia
 using CTFlows.Flows, CTFlows.MultiPhase
 
-mpf = flow1 * (1.0, [0.1, 0.0], [0.0, 0.5], flow2)   # x ← x + [0.1,0.0], p ← p + [0.0,0.5]
+# additive on both
+mpf = flow1 * (1.0, [0.1, 0.0], [0.0, 0.5], flow2)
+
+# state-only additive jump (costate unchanged)
+mpf = flow1 * (1.0, [0.1, 0.0], nothing, flow2)
+
+# callable on state, nothing on costate
+mpf = flow1 * (1.0, x -> 2.0 .* x, nothing, flow2)
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
+See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref),
+  [`CTFlows.MultiPhase._apply_component_jump`](@ref).
 """
 function Base.:*(
     f1::Flows.AbstractHamiltonianFlow,
