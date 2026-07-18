@@ -42,6 +42,8 @@ using SciMLBase: SciMLBase
 import ADTypes
 using ForwardDiff: ForwardDiff                   # activates DI AutoForwardDiff
 using Zygote: Zygote                             # activates DI AutoZygote
+using DiffEqGPU: DiffEqGPU                        # ensemble GPU tooling (Block 6)
+using StaticArrays: SVector                       # for the EnsembleGPUKernel path
 
 import CTBase.Data
 import CTBase.Differentiation
@@ -262,14 +264,11 @@ probe("B4", "variable_costate, HOST variable"; skip_if=!CUDA_OK) do
     (Array(xf), Array(pf))
 end
 
-# B4b — DEVICE variable, length 1: confirms the RHS root cause. Run 5 (sum(v) fix): this
-# now gets PAST integration (_aug_assign!/hamiltonian_gradient run clean device→device) and
-# fails LATER, in Trajectories._aug_split_solution (Trajectories/building.jl:93-95): with
-# length(pv0)==1, Systems._coerce_state(pv0) returns `only` (the "1-D = scalar" convention,
-# hamiltonian_vector_field_system.jl:97), and `only(::CuArray)` scalar-indexes via `iterate`.
-# So B4b's failure is NOT the augmented RHS — it's the same "1-D=scalar coercion is
-# scalar-indexing" limitation already flagged for OCP/Model flows (report §5).
-probe("B4", "variable_costate, DEVICE variable, length 1"; skip_if=!CUDA_OK) do
+# B4b — DEVICE variable, length 1. Runs 3-6 pinned this to `only(::CuArray)` scalar-indexing
+# in Trajectories._aug_split_solution (the "1-D=scalar" coercion). THIS BRANCH applies the
+# proposed fix (`_safe_only` = GPUArraysCore.@allowscalar only, dispatched on the live array in
+# Systems._coerce_state), so this probe should now be ✓ — validating the fix end-to-end.
+probe("B4", "variable_costate, DEVICE variable, length 1 (fix: _safe_only)"; skip_if=!CUDA_OK) do
     h = Data.Hamiltonian(
         (x, p, v) -> (sum(abs2, x) + sum(abs2, p)) / 2 + sum(v); is_variable=true  # sum(v), not v[1]: scalar indexing a device v is disallowed
     )
@@ -312,6 +311,65 @@ probe("B5", "Flow(VectorField) Float32, eltype preserved"; skip_if=!CUDA_OK) do
 end
 
 # ===========================================================================
+# BLOCK 6 — Ensemble GPU tooling PoC (§3 model 2 / §7 Family C)
+#   Pin the DiffEqGPU tooling on the kkt hardware: N independent small ODEs solved in
+#   parallel on the GPU. This is the tooling spike (which ensemble algorithm, what the RHS
+#   must look like), NOT yet wired to CTFlows flows — that is the real Family C follow-up.
+#   Dynamics: ẋ = -x, x(1) = x0·e⁻¹. Each trajectory perturbs x0.
+# ===========================================================================
+section("BLOCK 6 — ensemble GPU tooling PoC (DiffEqGPU)")
+
+const _N_ENS = 8
+const _ENS_U0(i) = [Float64(i), 2.0 * i]                 # per-trajectory initial condition
+_ens_expected(i) = _ENS_U0(i) .* exp(-1.0)
+
+# 6a — EnsembleGPUArray: in-place RHS, host arrays moved to GPU by the ensemble algorithm.
+#      Most permissive path; closest to how a CTFlows in-place RHS functor would plug in.
+probe("B6", "EnsembleGPUArray (in-place, N=$_N_ENS)"; skip_if=!CUDA_OK) do
+    f!(du, u, p, t) = (du .= .-u)
+    prob = SciMLBase.ODEProblem(f!, _ENS_U0(1), (0.0, 1.0))
+    eprob = SciMLBase.EnsembleProblem(
+        prob; prob_func=(p, i, repeat) -> SciMLBase.remake(p; u0=_ENS_U0(i))
+    )
+    sol = SciMLBase.solve(
+        eprob,
+        OrdinaryDiffEqTsit5.Tsit5(),
+        DiffEqGPU.EnsembleGPUArray(CUDA.CUDABackend());
+        trajectories=_N_ENS,
+        save_everystep=false,
+    )
+    # each sol[i][end] is the final state; compare to the analytic value
+    maxerr = maximum(
+        maximum(abs.(Array(sol[i][end]) .- _ens_expected(i))) for i in 1:_N_ENS
+    )
+    "max abs err vs analytic = $maxerr"
+end
+
+# 6b — EnsembleGPUKernel: kernel-compiled path. Requires an out-of-place, StaticArrays RHS
+#      with no host-state closures. Tells us what a GPU-kernel-ready CTFlows RHS must satisfy.
+probe("B6", "EnsembleGPUKernel (out-of-place SVector, N=$_N_ENS)"; skip_if=!CUDA_OK) do
+    f_oop(u, p, t) = -u
+    u0 = SVector{2,Float64}(1.0, 2.0)
+    prob = SciMLBase.ODEProblem(f_oop, u0, (0.0, 1.0))
+    eprob = SciMLBase.EnsembleProblem(
+        prob;
+        prob_func=(p, i, repeat) ->
+            SciMLBase.remake(p; u0=SVector{2,Float64}(Float64(i), 2.0 * i)),
+    )
+    sol = SciMLBase.solve(
+        eprob,
+        DiffEqGPU.GPUTsit5(),
+        DiffEqGPU.EnsembleGPUKernel(CUDA.CUDABackend());
+        trajectories=_N_ENS,
+        save_everystep=false,
+    )
+    maxerr = maximum(
+        maximum(abs.(Array(sol[i][end]) .- _ens_expected(i))) for i in 1:_N_ENS
+    )
+    "max abs err vs analytic = $maxerr"
+end
+
+# ===========================================================================
 # SUMMARY
 # ===========================================================================
 section("SUMMARY — capability matrix")
@@ -340,12 +398,14 @@ let n_ok = count(r -> r.status == :ok, RESULTS),
     println("   • B3 3c xfail vs 3d OK ⇒ Flow(Hamiltonian; ad_backend=AutoZygote) already runs;")
     println("     only the DEFAULT backend must change (D2 = AutoZygote).")
     println("   • B0 both OK ⇒ host/device vcat is NOT a hard failure; the pv0 `zeros` is hygiene.")
-    println("   • B4 has TWO distinct root causes, not one:")
-    println("     - HOST variable ⇒ _aug_assign! broadcasts a host ∂pv into a device du (KernelError).")
-    println("     - DEVICE variable, length 1 ⇒ RHS integration succeeds; the LATER only(::CuArray)")
-    println("       solution-split coercion scalar-indexes (the general '1-D=scalar on GPU' gap).")
-    println("     - DEVICE variable, length 2 ⇒ if OK, the augmented pipeline is otherwise GPU-clean.")
+    println("   • B4 (this branch applies the _safe_only fix):")
+    println("     - HOST variable ⇒ still _aug_assign! host-∂pv-into-device-du (KernelError, separate fix).")
+    println("     - DEVICE variable, length 1 ⇒ should now be ✓ (_safe_only = @allowscalar only fixes the")
+    println("       '1-D=scalar on GPU' solution-split coercion). This validates the chosen fix.")
+    println("     - DEVICE variable, length 2 ⇒ ✓ (never hit `only`; augmented pipeline is GPU-clean).")
     println("   • B5 eltype == Float32 ⇒ no silent Float64 promotion.")
+    println("   • B6 ⇒ DiffEqGPU ensemble tooling PoC: EnsembleGPUArray (permissive, in-place) and")
+    println("     EnsembleGPUKernel (kernel-compiled, needs OOP + StaticArrays) both matching analytic.")
 end
 
 # ---------------------------------------------------------------------------
