@@ -439,27 +439,21 @@ function test_calling_multiphase()
             Test.@testset "Tuple — additive (jump_x, jump_p)" begin
                 jump_x = [0.1, 0.2]
                 jump_p = [0.01, 0.02]
-                result = MultiPhase._apply_hamiltonian_jump(
-                    state_tuple, (jump_x, jump_p)
-                )
+                result = MultiPhase._apply_hamiltonian_jump(state_tuple, (jump_x, jump_p))
                 Test.@test result[1] == x + jump_x
                 Test.@test result[2] == p + jump_p
             end
 
             Test.@testset "Tuple — (nothing, jump_p): costate-only" begin
                 jump_p = [0.01, 0.02]
-                result = MultiPhase._apply_hamiltonian_jump(
-                    state_tuple, (nothing, jump_p)
-                )
+                result = MultiPhase._apply_hamiltonian_jump(state_tuple, (nothing, jump_p))
                 Test.@test result[1] === x
                 Test.@test result[2] == p + jump_p
             end
 
             Test.@testset "Tuple — (jump_x, nothing): state-only" begin
                 jump_x = [0.1, 0.2]
-                result = MultiPhase._apply_hamiltonian_jump(
-                    state_tuple, (jump_x, nothing)
-                )
+                result = MultiPhase._apply_hamiltonian_jump(state_tuple, (jump_x, nothing))
                 Test.@test result[1] == x + jump_x
                 Test.@test result[2] === p
             end
@@ -467,9 +461,7 @@ function test_calling_multiphase()
             Test.@testset "Tuple — (f_x, f_p): callable functions" begin
                 fx = x -> 2.0 .* x
                 fp = p -> 3.0 .* p
-                result = MultiPhase._apply_hamiltonian_jump(
-                    state_tuple, (fx, fp)
-                )
+                result = MultiPhase._apply_hamiltonian_jump(state_tuple, (fx, fp))
                 Test.@test result[1] == 2.0 .* x
                 Test.@test result[2] == 3.0 .* p
             end

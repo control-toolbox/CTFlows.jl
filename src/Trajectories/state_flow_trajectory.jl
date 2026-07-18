@@ -85,8 +85,9 @@ $(TYPEDSIGNATURES)
 Build the (precomputed) [`CTFlows.Trajectories.ControlProjection`](@ref) from the law and
 the inner trajectory.
 """
-_build_control_proj(law, traj, variable, coerce) =
-    ControlProjection(traj, law, variable, coerce)
+function _build_control_proj(law, traj, variable, coerce)
+    return ControlProjection(traj, law, variable, coerce)
+end
 
 # =============================================================================
 # Control reconstruction — feedback-dispatched uniform call of the law

@@ -182,8 +182,9 @@ struct StateProjection{R<:Integrators.AbstractIntegrationResult,X0} <: Function
     result::R
     x0::X0
 end
-(sp::StateProjection)(t::Real) =
-    _ham_split_solution(Integrators.evaluate_at(sp.result, t), sp.x0)[1]
+function (sp::StateProjection)(t::Real)
+    return _ham_split_solution(Integrators.evaluate_at(sp.result, t), sp.x0)[1]
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -206,16 +207,18 @@ struct CostateProjection{R<:Integrators.AbstractIntegrationResult,X0} <: Functio
     result::R
     x0::X0
 end
-(cp::CostateProjection)(t::Real) =
-    _ham_split_solution(Integrators.evaluate_at(cp.result, t), cp.x0)[2]
+function (cp::CostateProjection)(t::Real)
+    return _ham_split_solution(Integrators.evaluate_at(cp.result, t), cp.x0)[2]
+end
 
 """
 $(TYPEDSIGNATURES)
 
 Build a `CostateProjection` from a `HamiltonianVectorFieldTrajectory` (its `result`/`x0`).
 """
-CostateProjection(sol::HamiltonianVectorFieldTrajectory) =
-    CostateProjection(sol.result, sol.x0)
+function CostateProjection(sol::HamiltonianVectorFieldTrajectory)
+    return CostateProjection(sol.result, sol.x0)
+end
 
 """
 $(TYPEDSIGNATURES)
