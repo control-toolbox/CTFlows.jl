@@ -111,8 +111,8 @@ struct ConstrainedPseudoHamIpRHS{
     G,
     M,
     B<:Differentiation.AbstractADBackend,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractIPPseudoHamRHS
     h̃::PH
     law::L
@@ -161,8 +161,8 @@ struct ConstrainedPseudoHamOoPRHS{
     G,
     M,
     B<:Differentiation.AbstractADBackend,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractOoPPseudoHamRHS
     h̃::PH
     law::L
@@ -221,8 +221,8 @@ struct ConstrainedPseudoHamIpAugRHS{
     G,
     M,
     B<:Differentiation.AbstractADBackend,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractIPPseudoHamRHS
     h̃::PH
     law::L

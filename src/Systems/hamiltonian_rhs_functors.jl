@@ -108,8 +108,8 @@ See also: [`CTFlows.Systems.HamOoPRHS`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@
 struct HamIpRHS{
     H<:Data.AbstractHamiltonian,
     B<:Differentiation.AbstractADBackend,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractIPHamRHS
     h::H
     backend::B
@@ -167,8 +167,8 @@ See also: [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@r
 struct HamOoPRHS{
     H<:Data.AbstractHamiltonian,
     B<:Differentiation.AbstractADBackend,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractOoPHamRHS
     h::H
     backend::B
@@ -283,8 +283,8 @@ See also: [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamOoPRHS`](@ref
 struct HamIpAugRHS{
     H<:Data.AbstractHamiltonian,
     B<:Differentiation.AbstractADBackend,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractIPHamRHS
     h::H
     backend::B

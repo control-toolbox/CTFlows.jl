@@ -90,32 +90,11 @@ Scope: applied only on Hamiltonian paths (`HamiltonianSystem`,
 convention — the user's array is the contract there.
 
 Differs from `CTBase.Core.make_coerce` only in that a length-1 vector collapses to
-a scalar (`_safe_only`, see below) instead of being kept as a 1-vector (`identity`).
+a scalar (`_safe_only`, the GPU-safe `only`) instead of being kept as a 1-vector (`identity`).
 """
 _coerce_state(::Number) = _safe_only
 _coerce_state(::AbstractMatrix) = identity
 _coerce_state(x::AbstractVector) = length(x) == 1 ? _safe_only : identity
-
-"""
-    _safe_only(x::GPUArraysCore.AbstractGPUArray) = GPUArraysCore.@allowscalar only(x)
-    _safe_only(x) = only(x)
-
-Collapse a length-1 array to its single scalar element, GPU-safely.
-
-On host arrays this is exactly `only(x)`. On device arrays (`CuArray` and any other
-`GPUArraysCore.AbstractGPUArray`), `only` would resolve via `iterate → getindex`, which
-`GPUArraysCore` blocks by default (scalar indexing of device memory). Since this is a
-single, deliberate, O(1) terminal extraction — not a scalar loop — it is wrapped in
-`@allowscalar`, which permits exactly this one read. Dispatch is on the **array actually
-received at the call site**, so the "1-D = scalar" contract returns an identical host scalar
-on CPU and GPU (never a device 1-vector), preserving CPU/GPU uniformity of the convention.
-
-This is backend-agnostic (`AbstractGPUArray` covers CUDA/AMDGPU/Metal) and, on the RHS hot
-path, only ever runs for the degenerate length-1-on-GPU case (real GPU workloads have
-`length ≥ 2`, where `_coerce_state` returns `identity` at zero cost).
-"""
-_safe_only(x::GPUArraysCore.AbstractGPUArray) = GPUArraysCore.@allowscalar only(x)
-_safe_only(x) = only(x)
 
 # =============================================================================
 # Internal helpers for split/assign (dispatch on array type)

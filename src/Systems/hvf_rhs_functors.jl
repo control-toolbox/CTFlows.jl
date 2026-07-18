@@ -58,8 +58,8 @@ struct IPHVFOoPRHS{
     F<:Function,
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractIPHVFRHS
     hvf::Data.HamiltonianVectorField{F,TD,VD,Traits.OutOfPlace}
     N::Int
@@ -73,8 +73,8 @@ function (f::IPHVFOoPRHS{F,TD,VD,CX,CP})(
     F<:Function,
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 }
     x, p = _ham_split(u, f.N)
     dx, dp = f.hvf(t, f.cx(x), f.cp(p), variable(λ); variable_costate=false)
@@ -103,8 +103,8 @@ struct IPHVFIpRHS{
     F<:Function,
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractIPHVFRHS
     hvf::Data.HamiltonianVectorField{F,TD,VD,Traits.InPlace}
     N::Int
@@ -118,8 +118,8 @@ function (f::IPHVFIpRHS{F,TD,VD,CX,CP})(
     F<:Function,
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 }
     x, p = _ham_split(u, f.N)
     dx, dp = _ham_split(du, f.N)
@@ -148,8 +148,8 @@ struct OoPHVFOoPRHS{
     F<:Function,
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractOoPHVFRHS
     hvf::Data.HamiltonianVectorField{F,TD,VD,Traits.OutOfPlace}
     N::Int
@@ -163,8 +163,8 @@ function (f::OoPHVFOoPRHS{F,TD,VD,CX,CP})(
     F<:Function,
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 }
     x, p = _ham_split(u, f.N)
     dx, dp = f.hvf(t, f.cx(x), f.cp(p), variable(λ); variable_costate=false)
@@ -192,8 +192,8 @@ struct OoPHVFIpRHS{
     F<:Function,
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractOoPHVFRHS
     hvf::Data.HamiltonianVectorField{F,TD,VD,Traits.InPlace}
     N::Int
@@ -207,8 +207,8 @@ function (f::OoPHVFIpRHS{F,TD,VD,CX,CP})(
     F<:Function,
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 }
     x, p = _ham_split(u, f.N)
     dx, dp = similar(x), similar(p)
@@ -237,8 +237,8 @@ struct OoPHVFIpFinalizeRHS{
     F<:Function,
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractOoPHVFRHS
     hvf::Data.HamiltonianVectorField{F,TD,VD,Traits.InPlace}
     N::Int
@@ -252,8 +252,8 @@ function (f::OoPHVFIpFinalizeRHS{F,TD,VD,CX,CP})(
     F<:Function,
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 }
     x, p = _ham_split(u, f.N)
     dx, dp = similar(x), similar(p)
@@ -285,8 +285,8 @@ struct IPHVFOoPAugRHS{
     F<:Function,
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractIPHVFRHS
     hvf::Data.HamiltonianVectorField{F,TD,VD,Traits.OutOfPlace}
     n_x::Int
@@ -301,8 +301,8 @@ function (f::IPHVFOoPAugRHS{F,TD,VD,CX,CP})(
     F<:Function,
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 }
     v = variable(λ)
     x, p, _ = _aug_split(u, f.n_x, f.n_v)
@@ -331,8 +331,8 @@ struct IPHVFIpAugRHS{
     F<:Function,
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractIPHVFRHS
     hvf::Data.HamiltonianVectorField{F,TD,VD,Traits.InPlace}
     n_x::Int
@@ -347,8 +347,8 @@ function (f::IPHVFIpAugRHS{F,TD,VD,CX,CP})(
     F<:Function,
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 }
     v = variable(λ)
     x, p, _ = _aug_split(u, f.n_x, f.n_v)
