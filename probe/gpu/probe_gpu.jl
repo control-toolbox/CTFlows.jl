@@ -338,10 +338,12 @@ probe("B6", "EnsembleGPUArray (in-place, N=$_N_ENS)"; skip_if=!CUDA_OK) do
         trajectories=_N_ENS,
         save_everystep=false,
     )
-    # sol.u[i] is the i-th trajectory's ODESolution (sol[i] would tensor-index into the
-    # AbstractVectorOfArray instead of selecting a trajectory); [end] is its final state.
+    # sol.u[i] is the i-th trajectory's ODESolution. ODESolution is itself an
+    # AbstractVectorOfArray (component x time), so `[end]` on it is Cartesian linear
+    # indexing into that 2-D shape (returns a single component, not the final state
+    # vector) — go through its raw `.u` field (`.u[end]`) to get the actual final state.
     maxerr = maximum(
-        maximum(abs.(Array(sol.u[i][end]) .- _ens_expected(i))) for i in 1:_N_ENS
+        maximum(abs.(Array(sol.u[i].u[end]) .- _ens_expected(i))) for i in 1:_N_ENS
     )
     "max abs err vs analytic = $maxerr"
 end
@@ -365,7 +367,7 @@ probe("B6", "EnsembleGPUKernel (out-of-place SVector, N=$_N_ENS)"; skip_if=!CUDA
         save_everystep=false,
     )
     maxerr = maximum(
-        maximum(abs.(Array(sol.u[i][end]) .- _ens_expected(i))) for i in 1:_N_ENS
+        maximum(abs.(Array(sol.u[i].u[end]) .- _ens_expected(i))) for i in 1:_N_ENS
     )
     "max abs err vs analytic = $maxerr"
 end
