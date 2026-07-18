@@ -77,12 +77,16 @@ function test_constrained_pseudo_hamiltonian_system()
             μ = Data.Multiplier((x, p) -> x)
             be = _backend()
 
-            ip = Systems.ConstrainedPseudoHamIpRHS(h̃, law, g, μ, be, 1, only, only)
+            ip = Systems.ConstrainedPseudoHamIpRHS(
+                h̃, law, g, μ, be, 1, Systems._safe_only, Systems._safe_only
+            )
             du = zeros(2)
             ip(du, [1.0, 2.0], Systems.ODEParameters(nothing), 0.0)
             Test.@test du ≈ [-3.0, 1.0] atol = 1e-10
 
-            oop = Systems.ConstrainedPseudoHamOoPRHS(h̃, law, g, μ, be, 1, only, only)
+            oop = Systems.ConstrainedPseudoHamOoPRHS(
+                h̃, law, g, μ, be, 1, Systems._safe_only, Systems._safe_only
+            )
             Test.@test oop([1.0, 2.0], Systems.ODEParameters(nothing), 0.0) ≈ [-3.0, 1.0] atol =
                 1e-10
         end
@@ -106,7 +110,9 @@ function test_constrained_pseudo_hamiltonian_system()
             sys = Systems.build_system(h̃, law, g, μ, be)
             Test.@test Traits.variable_costate_trait(sys) === Traits.SupportsVariableCostate
 
-            aug = Systems.ConstrainedPseudoHamIpAugRHS(h̃, law, g, μ, be, 1, 1, only, only)
+            aug = Systems.ConstrainedPseudoHamIpAugRHS(
+                h̃, law, g, μ, be, 1, 1, Systems._safe_only, Systems._safe_only
+            )
             du = zeros(3)
             aug(du, [1.0, 2.0, 0.0], Systems.ODEParameters(0.5), 0.0)
             # ṗv = -∂ᵥ[H̃+μ_·g] = -(-1.7) = 1.7

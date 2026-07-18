@@ -51,12 +51,12 @@ function test_pseudo_hamiltonian_system()
             law = Data.DynClosedLoop((x, p) -> -p)
             be = _backend()
             # x=1, p=2 ⇒ u=-p=-2 ; ∂H̃/∂x=-p=-2, ∂H̃/∂p=-x+u=-3 ⇒ du=[∂p;-∂x]=[-3, 2]
-            ip = Systems.PseudoHamIpRHS(h̃, law, be, 1, only, only)
+            ip = Systems.PseudoHamIpRHS(h̃, law, be, 1, Systems._safe_only, Systems._safe_only)
             du = zeros(2)
             ip(du, [1.0, 2.0], Systems.ODEParameters(nothing), 0.0)
             Test.@test du ≈ [-3.0, 2.0] atol = 1e-10
 
-            oop = Systems.PseudoHamOoPRHS(h̃, law, be, 1, only, only)
+            oop = Systems.PseudoHamOoPRHS(h̃, law, be, 1, Systems._safe_only, Systems._safe_only)
             Test.@test oop([1.0, 2.0], Systems.ODEParameters(nothing), 0.0) ≈ [-3.0, 2.0] atol =
                 1e-10
         end
@@ -85,7 +85,9 @@ function test_pseudo_hamiltonian_system()
             )
             law = Data.DynClosedLoop((x, p, v) -> -p; is_variable=true)
             be = _backend()
-            aug = Systems.PseudoHamIpAugRHS(h̃, law, be, 1, 1, only, only)
+            aug = Systems.PseudoHamIpAugRHS(
+                h̃, law, be, 1, 1, Systems._safe_only, Systems._safe_only
+            )
             du = zeros(3)
             # x=1,p=2,v=3 ⇒ u=-2 ; ∂H̃/∂x=-p+0.5v²=2.5, ∂H̃/∂p=-x+u=-3, ∂H̃/∂v=v·x=3
             # du = [∂p; -∂x; -∂v] = [-3; -2.5; -3]
@@ -121,7 +123,9 @@ function test_pseudo_hamiltonian_system()
         Test.@testset "Unit: RHS functor call is type-stable" begin
             h̃ = Data.PseudoHamiltonian((x, p, u) -> p * (-x + u) + 0.5 * u^2)
             law = Data.DynClosedLoop((x, p) -> -p)
-            oop = Systems.PseudoHamOoPRHS(h̃, law, _backend(), 1, only, only)
+            oop = Systems.PseudoHamOoPRHS(
+                h̃, law, _backend(), 1, Systems._safe_only, Systems._safe_only
+            )
             Test.@test_nowarn Test.@inferred oop(
                 [1.0, 2.0], Systems.ODEParameters(nothing), 0.0
             )
