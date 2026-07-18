@@ -253,7 +253,7 @@ section("BLOCK 4 — variable_costate flow on device (pv0 construction)")
 # _aug_assign! broadcasts the HOST ∂pv (= -∂H/∂v, host because v is host) into the DEVICE du.
 probe("B4", "variable_costate, HOST variable"; skip_if=!CUDA_OK) do
     h = Data.Hamiltonian(
-        (x, p, v) -> (sum(abs2, x) + sum(abs2, p)) / 2 + v[1]; is_variable=true
+        (x, p, v) -> (sum(abs2, x) + sum(abs2, p)) / 2 + sum(v); is_variable=true  # sum(v), not v[1]: scalar indexing a device v is disallowed
     )
     f = Flows.Flow(h; ad_backend=ADTypes.AutoZygote())
     xf, pf = f(
@@ -265,9 +265,12 @@ end
 # B4b — DEVICE variable: confirms the root cause. If v is on-device, variable_gradient
 # returns a device ∂pv, so _aug_assign! writes device→device and the kernel should compile.
 # A ✓ here validates the fix direction (device-adapt the variable-costate block / carry v on-device).
+# NOTE (run 4): with the earlier `+ v[1]` Hamiltonian this failed EARLIER — at H evaluation —
+# because `v[1]` scalar-indexes the device v (inside hamiltonian_gradient), never reaching
+# _aug_assign!. Using `sum(v)` (GPU-friendly) makes this a clean test of the augmented path.
 probe("B4", "variable_costate, DEVICE variable (fix check)"; skip_if=!CUDA_OK) do
     h = Data.Hamiltonian(
-        (x, p, v) -> (sum(abs2, x) + sum(abs2, p)) / 2 + v[1]; is_variable=true
+        (x, p, v) -> (sum(abs2, x) + sum(abs2, p)) / 2 + sum(v); is_variable=true  # sum(v), not v[1]: scalar indexing a device v is disallowed
     )
     f = Flows.Flow(h; ad_backend=ADTypes.AutoZygote())
     xf, pf = f(
