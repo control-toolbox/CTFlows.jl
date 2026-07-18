@@ -34,7 +34,8 @@ Dispatched on the Hamiltonian's time/variable-dependence traits:
 
 See also: [`CTFlows.Systems.HVFIpFunctor`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 """
-struct HVFOoPFunctor{H<:Data.AbstractHamiltonian,B<:Differentiation.AbstractADBackend} <: Function
+struct HVFOoPFunctor{H<:Data.AbstractHamiltonian,B<:Differentiation.AbstractADBackend} <:
+       Function
     h::H
     backend::B
 end
@@ -46,18 +47,14 @@ function (g::HVFOoPFunctor{<:Data.AbstractHamiltonian{Traits.Autonomous,Traits.F
     return (∂p, -∂x)
 end
 
-function (g::HVFOoPFunctor{
-    <:Data.AbstractHamiltonian{Traits.NonAutonomous,Traits.Fixed}
-})(
+function (g::HVFOoPFunctor{<:Data.AbstractHamiltonian{Traits.NonAutonomous,Traits.Fixed}})(
     t, x, p
 )
     ∂x, ∂p = Differentiation.hamiltonian_gradient(g.backend, g.h, t, x, p, nothing)
     return (∂p, -∂x)
 end
 
-function (g::HVFOoPFunctor{
-    <:Data.AbstractHamiltonian{Traits.Autonomous,Traits.NonFixed}
-})(
+function (g::HVFOoPFunctor{<:Data.AbstractHamiltonian{Traits.Autonomous,Traits.NonFixed}})(
     x, p, v; variable_costate::Bool=false
 )
     ∂x, ∂p = Differentiation.hamiltonian_gradient(g.backend, g.h, nothing, x, p, v)
@@ -103,7 +100,8 @@ is filled with `-∂H/∂v`; it must be provided or a `PreconditionError` is thr
 
 See also: [`CTFlows.Systems.HVFOoPFunctor`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 """
-struct HVFIpFunctor{H<:Data.AbstractHamiltonian,B<:Differentiation.AbstractADBackend} <: Function
+struct HVFIpFunctor{H<:Data.AbstractHamiltonian,B<:Differentiation.AbstractADBackend} <:
+       Function
     h::H
     backend::B
 end
@@ -145,9 +143,7 @@ function (g::HVFIpFunctor{<:Data.AbstractHamiltonian{Traits.Autonomous,Traits.No
     return nothing
 end
 
-function (g::HVFIpFunctor{
-    <:Data.AbstractHamiltonian{Traits.NonAutonomous,Traits.NonFixed}
-})(
+function (g::HVFIpFunctor{<:Data.AbstractHamiltonian{Traits.NonAutonomous,Traits.NonFixed}})(
     dx, dp, t, x, p, v; dpv=nothing, variable_costate::Bool=false
 )
     ∂x, ∂p = Differentiation.hamiltonian_gradient(g.backend, g.h, t, x, p, v)
