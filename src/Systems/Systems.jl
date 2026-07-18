@@ -13,6 +13,7 @@ module Systems
 
 # 1. External-package imports (qualified, pollution-free)
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
+import GPUArraysCore
 import CTBase.Core
 import CTBase.Data
 import CTBase.Differentiation
@@ -32,6 +33,7 @@ import ..Configs: Configs
 
 include(joinpath(@__DIR__, "ode_parameters.jl"))
 include(joinpath(@__DIR__, "defaults.jl"))
+include(joinpath(@__DIR__, "coercion.jl"))
 include(joinpath(@__DIR__, "abstract_system.jl"))
 include(joinpath(@__DIR__, "rhs_functors.jl"))
 include(joinpath(@__DIR__, "hvf_rhs_functors.jl"))

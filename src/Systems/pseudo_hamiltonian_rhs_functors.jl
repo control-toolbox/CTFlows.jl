@@ -69,8 +69,8 @@ struct PseudoHamIpRHS{
     PH<:Data.PseudoHamiltonian,
     L<:Data.ControlLaw,
     B<:Differentiation.AbstractADBackend,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractIPPseudoHamRHS
     h̃::PH
     law::L
@@ -110,8 +110,8 @@ struct PseudoHamOoPRHS{
     PH<:Data.PseudoHamiltonian,
     L<:Data.ControlLaw,
     B<:Differentiation.AbstractADBackend,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractOoPPseudoHamRHS
     h̃::PH
     law::L
@@ -159,8 +159,8 @@ struct PseudoHamIpAugRHS{
     PH<:Data.PseudoHamiltonian,
     L<:Data.ControlLaw,
     B<:Differentiation.AbstractADBackend,
-    CX<:Union{typeof(only),typeof(identity)},
-    CP<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(_safe_only),typeof(identity)},
+    CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractIPPseudoHamRHS
     h̃::PH
     law::L

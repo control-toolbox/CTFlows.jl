@@ -90,11 +90,11 @@ Scope: applied only on Hamiltonian paths (`HamiltonianSystem`,
 convention — the user's array is the contract there.
 
 Differs from `CTBase.Core.make_coerce` only in that a length-1 vector collapses to
-a scalar (`only`) instead of being kept as a 1-vector (`identity`).
+a scalar (`_safe_only`, the GPU-safe `only`) instead of being kept as a 1-vector (`identity`).
 """
-_coerce_state(::Number) = only
+_coerce_state(::Number) = _safe_only
 _coerce_state(::AbstractMatrix) = identity
-_coerce_state(x::AbstractVector) = length(x) == 1 ? only : identity
+_coerce_state(x::AbstractVector) = length(x) == 1 ? _safe_only : identity
 
 # =============================================================================
 # Internal helpers for split/assign (dispatch on array type)
