@@ -249,13 +249,29 @@ end
 # ===========================================================================
 section("BLOCK 4 — variable_costate flow on device (pv0 construction)")
 
-probe("B4", "Flow(Hamiltonian) variable_costate=true"; skip_if=!CUDA_OK) do
+# B4a — HOST variable (the default D4 behaviour). Run 3 pinned this to a KernelError:
+# _aug_assign! broadcasts the HOST ∂pv (= -∂H/∂v, host because v is host) into the DEVICE du.
+probe("B4", "variable_costate, HOST variable"; skip_if=!CUDA_OK) do
     h = Data.Hamiltonian(
         (x, p, v) -> (sum(abs2, x) + sum(abs2, p)) / 2 + v[1]; is_variable=true
     )
     f = Flows.Flow(h; ad_backend=ADTypes.AutoZygote())
     xf, pf = f(
         0.0, _dev([1.0, 0.0]), _dev([0.0, 1.0]), 1.0; variable=[0.5], variable_costate=true
+    )
+    (Array(xf), Array(pf))
+end
+
+# B4b — DEVICE variable: confirms the root cause. If v is on-device, variable_gradient
+# returns a device ∂pv, so _aug_assign! writes device→device and the kernel should compile.
+# A ✓ here validates the fix direction (device-adapt the variable-costate block / carry v on-device).
+probe("B4", "variable_costate, DEVICE variable (fix check)"; skip_if=!CUDA_OK) do
+    h = Data.Hamiltonian(
+        (x, p, v) -> (sum(abs2, x) + sum(abs2, p)) / 2 + v[1]; is_variable=true
+    )
+    f = Flows.Flow(h; ad_backend=ADTypes.AutoZygote())
+    xf, pf = f(
+        0.0, _dev([1.0, 0.0]), _dev([0.0, 1.0]), 1.0; variable=_dev([0.5]), variable_costate=true
     )
     (Array(xf), Array(pf))
 end
