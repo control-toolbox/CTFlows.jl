@@ -329,7 +329,7 @@ probe("B6", "EnsembleGPUArray (in-place, N=$_N_ENS)"; skip_if=!CUDA_OK) do
     f!(du, u, p, t) = (du .= .-u)
     prob = SciMLBase.ODEProblem(f!, _ENS_U0(1), (0.0, 1.0))
     eprob = SciMLBase.EnsembleProblem(
-        prob; prob_func=(p, i, repeat) -> SciMLBase.remake(p; u0=_ENS_U0(i))
+        prob; prob_func=(p, ctx) -> SciMLBase.remake(p; u0=_ENS_U0(ctx.sim_id))
     )
     sol = SciMLBase.solve(
         eprob,
@@ -353,8 +353,8 @@ probe("B6", "EnsembleGPUKernel (out-of-place SVector, N=$_N_ENS)"; skip_if=!CUDA
     prob = SciMLBase.ODEProblem(f_oop, u0, (0.0, 1.0))
     eprob = SciMLBase.EnsembleProblem(
         prob;
-        prob_func=(p, i, repeat) ->
-            SciMLBase.remake(p; u0=SVector{2,Float64}(Float64(i), 2.0 * i)),
+        prob_func=(p, ctx) ->
+            SciMLBase.remake(p; u0=SVector{2,Float64}(Float64(ctx.sim_id), 2.0 * ctx.sim_id)),
     )
     sol = SciMLBase.solve(
         eprob,
