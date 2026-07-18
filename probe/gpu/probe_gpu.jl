@@ -262,19 +262,40 @@ probe("B4", "variable_costate, HOST variable"; skip_if=!CUDA_OK) do
     (Array(xf), Array(pf))
 end
 
-# B4b — DEVICE variable: confirms the root cause. If v is on-device, variable_gradient
-# returns a device ∂pv, so _aug_assign! writes device→device and the kernel should compile.
-# A ✓ here validates the fix direction (device-adapt the variable-costate block / carry v on-device).
-# NOTE (run 4): with the earlier `+ v[1]` Hamiltonian this failed EARLIER — at H evaluation —
-# because `v[1]` scalar-indexes the device v (inside hamiltonian_gradient), never reaching
-# _aug_assign!. Using `sum(v)` (GPU-friendly) makes this a clean test of the augmented path.
-probe("B4", "variable_costate, DEVICE variable (fix check)"; skip_if=!CUDA_OK) do
+# B4b — DEVICE variable, length 1: confirms the RHS root cause. Run 5 (sum(v) fix): this
+# now gets PAST integration (_aug_assign!/hamiltonian_gradient run clean device→device) and
+# fails LATER, in Trajectories._aug_split_solution (Trajectories/building.jl:93-95): with
+# length(pv0)==1, Systems._coerce_state(pv0) returns `only` (the "1-D = scalar" convention,
+# hamiltonian_vector_field_system.jl:97), and `only(::CuArray)` scalar-indexes via `iterate`.
+# So B4b's failure is NOT the augmented RHS — it's the same "1-D=scalar coercion is
+# scalar-indexing" limitation already flagged for OCP/Model flows (report §5).
+probe("B4", "variable_costate, DEVICE variable, length 1"; skip_if=!CUDA_OK) do
     h = Data.Hamiltonian(
         (x, p, v) -> (sum(abs2, x) + sum(abs2, p)) / 2 + sum(v); is_variable=true  # sum(v), not v[1]: scalar indexing a device v is disallowed
     )
     f = Flows.Flow(h; ad_backend=ADTypes.AutoZygote())
     xf, pf = f(
         0.0, _dev([1.0, 0.0]), _dev([0.0, 1.0]), 1.0; variable=_dev([0.5]), variable_costate=true
+    )
+    (Array(xf), Array(pf))
+end
+
+# B4c — DEVICE variable, length 2: avoids the length==1 `only` coercion entirely (both x0/p0
+# and pv0 have length > 1, so _coerce_state returns `identity` everywhere). If this is ✓, it
+# confirms the augmented RHS + solution-splitting pipeline is fully GPU-clean once no
+# dimension is 1-D-scalar-coerced — isolating "1-D=scalar on GPU" as the ONLY remaining gap.
+probe("B4", "variable_costate, DEVICE variable, length 2 (avoids only())"; skip_if=!CUDA_OK) do
+    h = Data.Hamiltonian(
+        (x, p, v) -> (sum(abs2, x) + sum(abs2, p)) / 2 + sum(v); is_variable=true
+    )
+    f = Flows.Flow(h; ad_backend=ADTypes.AutoZygote())
+    xf, pf = f(
+        0.0,
+        _dev([1.0, 0.0]),
+        _dev([0.0, 1.0]),
+        1.0;
+        variable=_dev([0.5, 0.5]),
+        variable_costate=true,
     )
     (Array(xf), Array(pf))
 end
@@ -318,9 +339,12 @@ let n_ok = count(r -> r.status == :ok, RESULTS),
     println("   • B3 3a/3b/3e OK ⇒ confirms §5 'AD-free flows are GPU-ready first'.")
     println("   • B3 3c xfail vs 3d OK ⇒ Flow(Hamiltonian; ad_backend=AutoZygote) already runs;")
     println("     only the DEFAULT backend must change (D2 = AutoZygote).")
-    println("   • B0 both OK ⇒ host/device vcat is NOT a hard failure; the pv0 `zeros` is hygiene,")
-    println("     not the augmented blocker. The real augmented blocker is B4 (kernel compilation).")
-    println("   • B4 FAIL ⇒ variable_costate augmented RHS is not GPU-compilable yet — investigate.")
+    println("   • B0 both OK ⇒ host/device vcat is NOT a hard failure; the pv0 `zeros` is hygiene.")
+    println("   • B4 has TWO distinct root causes, not one:")
+    println("     - HOST variable ⇒ _aug_assign! broadcasts a host ∂pv into a device du (KernelError).")
+    println("     - DEVICE variable, length 1 ⇒ RHS integration succeeds; the LATER only(::CuArray)")
+    println("       solution-split coercion scalar-indexes (the general '1-D=scalar on GPU' gap).")
+    println("     - DEVICE variable, length 2 ⇒ if OK, the augmented pipeline is otherwise GPU-clean.")
     println("   • B5 eltype == Float32 ⇒ no silent Float64 promotion.")
 end
 
