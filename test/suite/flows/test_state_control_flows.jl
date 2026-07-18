@@ -49,8 +49,12 @@ function _build_ocp_2d()
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 2)
     CTModels.Building.control!(pre, 2)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=-x[1] + u[1]; r[2]=-x[2] + u[2]; nothing))
-    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * (u[1]^2 + u[2]^2))
+    CTModels.Building.dynamics!(
+        pre, (r, t, x, u, v) -> (r[1]=(-x[1] + u[1]); r[2]=(-x[2] + u[2]); nothing)
+    )
+    CTModels.Building.objective!(
+        pre, :min; lagrange=(t, x, u, v) -> 0.5 * (u[1]^2 + u[2]^2)
+    )
     return CTModels.Building.build(pre)
 end
 

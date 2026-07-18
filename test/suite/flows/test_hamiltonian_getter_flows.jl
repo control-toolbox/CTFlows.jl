@@ -292,7 +292,9 @@ function test_hamiltonian_getter_flows()
                 backend = Differentiation.DifferentiationInterface(;
                     ad_backend=ADTypes.AutoForwardDiff()
                 )
-                flow = Flows.HamiltonianFlow(Systems.HamiltonianSystem(h, backend), MockIntegrator())
+                flow = Flows.HamiltonianFlow(
+                    Systems.HamiltonianSystem(h, backend), MockIntegrator()
+                )
                 xv = Systems.vector_field(flow)
                 hv = Systems.hamiltonian_vector_field(flow)
                 Test.@test xv isa Data.HamiltonianVectorField
