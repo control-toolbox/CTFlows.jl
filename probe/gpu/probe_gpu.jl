@@ -39,7 +39,7 @@ using Printf: @printf
 using CUDA: CUDA
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5   # activates the CTFlows SciML integrator ext
 using SciMLBase: SciMLBase
-import ADTypes
+using ADTypes: ADTypes
 using ForwardDiff: ForwardDiff                   # activates DI AutoForwardDiff
 using Zygote: Zygote                             # activates DI AutoZygote
 using DiffEqGPU: DiffEqGPU                        # ensemble GPU tooling (Block 6)
@@ -75,7 +75,9 @@ end
 # `expect_fail=true` for experiments that are SUPPOSED to fail today (e.g. the
 # AutoForwardDiff-on-GPU cases): a failure is then recorded as :xfail (expected), and an
 # unexpected *success* is flagged loudly.
-function probe(f, block, name; skip_if::Bool=false, skip_reason::String="", expect_fail::Bool=false)
+function probe(
+    f, block, name; skip_if::Bool=false, skip_reason::String="", expect_fail::Bool=false
+)
     if skip_if
         push!(RESULTS, ProbeResult(block, name, :skip, skip_reason))
         @printf("  ∅ %-50s  SKIP  (%s)\n", name, skip_reason)
@@ -112,7 +114,7 @@ function section(title)
     println()
     println("="^92)
     println("  ", title)
-    println("="^92)
+    return println("="^92)
 end
 
 # ---------------------------------------------------------------------------
@@ -143,21 +145,21 @@ _dev(x) = CUDA_OK ? CUDA.CuArray(x) : x
 # ===========================================================================
 section("BLOCK 0 — array primitives on device (array-type audit)")
 
-probe("B0", "CuArray construction + broadcast (-x)"; skip_if=!CUDA_OK) do
-    Array(-_dev([1.0, 2.0, 3.0]))
+probe("B0", "CuArray construction + broadcast (-x)"; skip_if=(!CUDA_OK)) do
+    return Array(-_dev([1.0, 2.0, 3.0]))
 end
-probe("B0", "vcat(x0, p0) on device"; skip_if=!CUDA_OK) do
-    Array(vcat(_dev([1.0, 2.0]), _dev([3.0, 4.0])))
+probe("B0", "vcat(x0, p0) on device"; skip_if=(!CUDA_OK)) do
+    return Array(vcat(_dev([1.0, 2.0]), _dev([3.0, 4.0])))
 end
 # calling.jl:515 builds pv0 as `zeros(eltype(x0), n)` → a HOST Vector; the augmented
 # init cond is then vcat(x0, p0, pv0). Measure whether that host/device vcat is even a
 # hard failure (result: it is NOT — vcat promotes), vs the device-native `similar` form.
-probe("B0", "mixed host/device: vcat(dev, dev, zeros(1))"; skip_if=!CUDA_OK) do
-    Array(vcat(_dev([1.0, 2.0]), _dev([3.0, 4.0]), zeros(Float64, 1)))
+probe("B0", "mixed host/device: vcat(dev, dev, zeros(1))"; skip_if=(!CUDA_OK)) do
+    return Array(vcat(_dev([1.0, 2.0]), _dev([3.0, 4.0]), zeros(Float64, 1)))
 end
-probe("B0", "device-native: vcat(dev, dev, similar-zeros)"; skip_if=!CUDA_OK) do
+probe("B0", "device-native: vcat(dev, dev, similar-zeros)"; skip_if=(!CUDA_OK)) do
     x0 = _dev([1.0, 2.0])
-    Array(vcat(x0, _dev([3.0, 4.0]), fill!(similar(x0, 1), 0)))
+    return Array(vcat(x0, _dev([3.0, 4.0]), fill!(similar(x0, 1), 0)))
 end
 
 # ===========================================================================
@@ -173,7 +175,7 @@ function _grad_probe(backend_name, make_backend; device=true, expect_fail=false)
     probe("B1", label; skip_if=(device && !CUDA_OK), expect_fail=expect_fail) do
         b = Differentiation.DifferentiationInterface(; ad_backend=make_backend())
         x = device ? _dev([1.0, 2.0, 3.0]) : [1.0, 2.0, 3.0]
-        Array(Differentiation.gradient(b, _f_scalar, x))   # expect ≈ 2x
+        return Array(Differentiation.gradient(b, _f_scalar, x))   # expect ≈ 2x
     end
 end
 
@@ -188,13 +190,18 @@ _grad_probe("AutoForwardDiff", () -> ADTypes.AutoForwardDiff(); device=false)  #
 section("BLOCK 2 — Differentiation.hamiltonian_gradient on device")
 
 function _hamgrad_probe(backend_name, make_backend; expect_fail=false)
-    probe("B2", "hamiltonian_gradient $backend_name (CuArray)"; skip_if=!CUDA_OK, expect_fail=expect_fail) do
+    probe(
+        "B2",
+        "hamiltonian_gradient $backend_name (CuArray)";
+        skip_if=(!CUDA_OK),
+        expect_fail=expect_fail,
+    ) do
         h = Data.Hamiltonian((x, p) -> (sum(abs2, x) + sum(abs2, p)) / 2)
         b = Differentiation.DifferentiationInterface(; ad_backend=make_backend())
         ∂x, ∂p = Differentiation.hamiltonian_gradient(
             b, h, 0.0, _dev([1.0, 2.0]), _dev([3.0, 4.0]), nothing
         )
-        (Array(∂x), Array(∂p))
+        return (Array(∂x), Array(∂p))
     end
 end
 _hamgrad_probe("AutoForwardDiff", () -> ADTypes.AutoForwardDiff(); expect_fail=true)
@@ -206,44 +213,44 @@ _hamgrad_probe("AutoZygote", () -> ADTypes.AutoZygote())
 section("BLOCK 3 — flows on device (current, unparameterized CTFlows)")
 
 # 3a — AD-FREE: Flow(VectorField), state flow. Expected: works (WithoutAD path).
-probe("B3", "Flow(VectorField) point  f(t0,x0,tf)"; skip_if=!CUDA_OK) do
+probe("B3", "Flow(VectorField) point  f(t0,x0,tf)"; skip_if=(!CUDA_OK)) do
     f = Flows.Flow(Data.VectorField(x -> -x))          # ẋ = -x
-    Array(f(0.0, _dev([1.0, 2.0]), 1.0))
+    return Array(f(0.0, _dev([1.0, 2.0]), 1.0))
 end
-probe("B3", "Flow(VectorField) trajectory  f((t0,tf),x0)"; skip_if=!CUDA_OK) do
+probe("B3", "Flow(VectorField) trajectory  f((t0,tf),x0)"; skip_if=(!CUDA_OK)) do
     f = Flows.Flow(Data.VectorField(x -> -x))
-    string(typeof(f((0.0, 1.0), _dev([1.0, 2.0]))))
+    return string(typeof(f((0.0, 1.0), _dev([1.0, 2.0]))))
 end
 
 # 3b — AD-FREE: Flow(HamiltonianVectorField) (X_H given explicitly). Expected: works.
-probe("B3", "Flow(HamiltonianVectorField) point"; skip_if=!CUDA_OK) do
+probe("B3", "Flow(HamiltonianVectorField) point"; skip_if=(!CUDA_OK)) do
     f = Flows.Flow(Data.HamiltonianVectorField((x, p) -> (p, -x)))   # harmonic oscillator
     xf, pf = f(0.0, _dev([1.0, 0.0]), _dev([0.0, 1.0]), 1.0)
-    (Array(xf), Array(pf))
+    return (Array(xf), Array(pf))
 end
 
 # 3c — AD: Flow(Hamiltonian), DEFAULT backend (AutoForwardDiff). Expected: FAIL on device.
-probe("B3", "Flow(Hamiltonian) DEFAULT backend"; skip_if=!CUDA_OK, expect_fail=true) do
+probe("B3", "Flow(Hamiltonian) DEFAULT backend"; skip_if=(!CUDA_OK), expect_fail=true) do
     h = Data.Hamiltonian((x, p) -> (sum(abs2, x) + sum(abs2, p)) / 2)
     f = Flows.Flow(h)                                  # default ad_backend = AutoForwardDiff
     xf, pf = f(0.0, _dev([1.0, 0.0]), _dev([0.0, 1.0]), 1.0)
-    (Array(xf), Array(pf))
+    return (Array(xf), Array(pf))
 end
 
 # 3d — AD: Flow(Hamiltonian) with a GPU-capable backend. Measure whether it works.
-probe("B3", "Flow(Hamiltonian) ad_backend=AutoZygote"; skip_if=!CUDA_OK) do
+probe("B3", "Flow(Hamiltonian) ad_backend=AutoZygote"; skip_if=(!CUDA_OK)) do
     h = Data.Hamiltonian((x, p) -> (sum(abs2, x) + sum(abs2, p)) / 2)
     f = Flows.Flow(h; ad_backend=ADTypes.AutoZygote())
     xf, pf = f(0.0, _dev([1.0, 0.0]), _dev([0.0, 1.0]), 1.0)
-    (Array(xf), Array(pf))
+    return (Array(xf), Array(pf))
 end
 
 # 3e — AD-FREE: Flow(ODEProblem) with device u0 (SciMLProblemFlow, remake path).
 # The point-call returns the final state directly (a CuArray) — no final_state() wrapper.
-probe("B3", "Flow(ODEProblem) point remake"; skip_if=!CUDA_OK) do
+probe("B3", "Flow(ODEProblem) point remake"; skip_if=(!CUDA_OK)) do
     prob = SciMLBase.ODEProblem((du, u, p, t) -> (du .= .-u), _dev([1.0, 2.0]), (0.0, 1.0))
     f = Flows.Flow(prob)
-    Array(f(0.0, _dev([1.0, 2.0]), 1.0))
+    return Array(f(0.0, _dev([1.0, 2.0]), 1.0))
 end
 
 # ===========================================================================
@@ -253,37 +260,50 @@ section("BLOCK 4 — variable_costate flow on device (pv0 construction)")
 
 # B4a — HOST variable (the default D4 behaviour). Run 3 pinned this to a KernelError:
 # _aug_assign! broadcasts the HOST ∂pv (= -∂H/∂v, host because v is host) into the DEVICE du.
-probe("B4", "variable_costate, HOST variable"; skip_if=!CUDA_OK) do
+probe("B4", "variable_costate, HOST variable"; skip_if=(!CUDA_OK)) do
     h = Data.Hamiltonian(
-        (x, p, v) -> (sum(abs2, x) + sum(abs2, p)) / 2 + sum(v); is_variable=true  # sum(v), not v[1]: scalar indexing a device v is disallowed
+        (x, p, v) -> (sum(abs2, x) + sum(abs2, p)) / 2 + sum(v);
+        is_variable=true,  # sum(v), not v[1]: scalar indexing a device v is disallowed
     )
     f = Flows.Flow(h; ad_backend=ADTypes.AutoZygote())
     xf, pf = f(
         0.0, _dev([1.0, 0.0]), _dev([0.0, 1.0]), 1.0; variable=[0.5], variable_costate=true
     )
-    (Array(xf), Array(pf))
+    return (Array(xf), Array(pf))
 end
 
 # B4b — DEVICE variable, length 1. Runs 3-6 pinned this to `only(::CuArray)` scalar-indexing
 # in Trajectories._aug_split_solution (the "1-D=scalar" coercion). THIS BRANCH applies the
 # proposed fix (`_safe_only` = GPUArraysCore.@allowscalar only, dispatched on the live array in
 # Systems._coerce_state), so this probe should now be ✓ — validating the fix end-to-end.
-probe("B4", "variable_costate, DEVICE variable, length 1 (fix: _safe_only)"; skip_if=!CUDA_OK) do
+probe(
+    "B4",
+    "variable_costate, DEVICE variable, length 1 (fix: _safe_only)";
+    skip_if=(!CUDA_OK),
+) do
     h = Data.Hamiltonian(
-        (x, p, v) -> (sum(abs2, x) + sum(abs2, p)) / 2 + sum(v); is_variable=true  # sum(v), not v[1]: scalar indexing a device v is disallowed
+        (x, p, v) -> (sum(abs2, x) + sum(abs2, p)) / 2 + sum(v);
+        is_variable=true,  # sum(v), not v[1]: scalar indexing a device v is disallowed
     )
     f = Flows.Flow(h; ad_backend=ADTypes.AutoZygote())
     xf, pf = f(
-        0.0, _dev([1.0, 0.0]), _dev([0.0, 1.0]), 1.0; variable=_dev([0.5]), variable_costate=true
+        0.0,
+        _dev([1.0, 0.0]),
+        _dev([0.0, 1.0]),
+        1.0;
+        variable=_dev([0.5]),
+        variable_costate=true,
     )
-    (Array(xf), Array(pf))
+    return (Array(xf), Array(pf))
 end
 
 # B4c — DEVICE variable, length 2: avoids the length==1 `only` coercion entirely (both x0/p0
 # and pv0 have length > 1, so _coerce_state returns `identity` everywhere). If this is ✓, it
 # confirms the augmented RHS + solution-splitting pipeline is fully GPU-clean once no
 # dimension is 1-D-scalar-coerced — isolating "1-D=scalar on GPU" as the ONLY remaining gap.
-probe("B4", "variable_costate, DEVICE variable, length 2 (avoids only())"; skip_if=!CUDA_OK) do
+probe(
+    "B4", "variable_costate, DEVICE variable, length 2 (avoids only())"; skip_if=(!CUDA_OK)
+) do
     h = Data.Hamiltonian(
         (x, p, v) -> (sum(abs2, x) + sum(abs2, p)) / 2 + sum(v); is_variable=true
     )
@@ -296,7 +316,7 @@ probe("B4", "variable_costate, DEVICE variable, length 2 (avoids only())"; skip_
         variable=_dev([0.5, 0.5]),
         variable_costate=true,
     )
-    (Array(xf), Array(pf))
+    return (Array(xf), Array(pf))
 end
 
 # ===========================================================================
@@ -304,10 +324,10 @@ end
 # ===========================================================================
 section("BLOCK 5 — Float32 end-to-end on device")
 
-probe("B5", "Flow(VectorField) Float32, eltype preserved"; skip_if=!CUDA_OK) do
+probe("B5", "Flow(VectorField) Float32, eltype preserved"; skip_if=(!CUDA_OK)) do
     f = Flows.Flow(Data.VectorField(x -> -x))
     xf = f(0.0f0, _dev(Float32[1, 2]), 1.0f0)
-    (eltype(xf), Array(xf))
+    return (eltype(xf), Array(xf))
 end
 
 # ===========================================================================
@@ -325,7 +345,7 @@ _ens_expected(i) = _ENS_U0(i) .* exp(-1.0)
 
 # 6a — EnsembleGPUArray: in-place RHS, host arrays moved to GPU by the ensemble algorithm.
 #      Most permissive path; closest to how a CTFlows in-place RHS functor would plug in.
-probe("B6", "EnsembleGPUArray (in-place, N=$_N_ENS)"; skip_if=!CUDA_OK) do
+probe("B6", "EnsembleGPUArray (in-place, N=$_N_ENS)"; skip_if=(!CUDA_OK)) do
     f!(du, u, p, t) = (du .= .-u)
     prob = SciMLBase.ODEProblem(f!, _ENS_U0(1), (0.0, 1.0))
     eprob = SciMLBase.EnsembleProblem(
@@ -345,19 +365,20 @@ probe("B6", "EnsembleGPUArray (in-place, N=$_N_ENS)"; skip_if=!CUDA_OK) do
     maxerr = maximum(
         maximum(abs.(Array(sol.u[i].u[end]) .- _ens_expected(i))) for i in 1:_N_ENS
     )
-    "max abs err vs analytic = $maxerr"
+    return "max abs err vs analytic = $maxerr"
 end
 
 # 6b — EnsembleGPUKernel: kernel-compiled path. Requires an out-of-place, StaticArrays RHS
 #      with no host-state closures. Tells us what a GPU-kernel-ready CTFlows RHS must satisfy.
-probe("B6", "EnsembleGPUKernel (out-of-place SVector, N=$_N_ENS)"; skip_if=!CUDA_OK) do
+probe("B6", "EnsembleGPUKernel (out-of-place SVector, N=$_N_ENS)"; skip_if=(!CUDA_OK)) do
     f_oop(u, p, t) = -u
     u0 = SVector{2,Float64}(1.0, 2.0)
     prob = SciMLBase.ODEProblem(f_oop, u0, (0.0, 1.0))
     eprob = SciMLBase.EnsembleProblem(
         prob;
-        prob_func=(p, ctx) ->
-            SciMLBase.remake(p; u0=SVector{2,Float64}(Float64(ctx.sim_id), 2.0 * ctx.sim_id)),
+        prob_func=(p, ctx) -> SciMLBase.remake(
+            p; u0=SVector{2,Float64}(Float64(ctx.sim_id), 2.0 * ctx.sim_id)
+        ),
     )
     sol = SciMLBase.solve(
         eprob,
@@ -369,7 +390,7 @@ probe("B6", "EnsembleGPUKernel (out-of-place SVector, N=$_N_ENS)"; skip_if=!CUDA
     maxerr = maximum(
         maximum(abs.(Array(sol.u[i].u[end]) .- _ens_expected(i))) for i in 1:_N_ENS
     )
-    "max abs err vs analytic = $maxerr"
+    return "max abs err vs analytic = $maxerr"
 end
 
 # ===========================================================================
@@ -382,33 +403,62 @@ let n_ok = count(r -> r.status == :ok, RESULTS),
     n_skip = count(r -> r.status == :skip, RESULTS)
 
     for r in RESULTS
-        mark =
-            r.status == :ok ? "✓ OK   " :
-            r.status == :xfail ? "✗ xfail" :
-            r.status == :fail ? "✗ FAIL " : "∅ SKIP "
+        mark = if r.status == :ok
+            "✓ OK   "
+        elseif r.status == :xfail
+            "✗ xfail"
+        elseif r.status == :fail
+            "✗ FAIL "
+        else
+            "∅ SKIP "
+        end
         @printf("  [%s] %-4s %-50s %s\n", mark, r.block, r.name, _truncate(r.detail, 90))
     end
     println()
     @printf(
         "  totals:  ✓ %d ok   ✗ %d xfail(expected)   ✗ %d FAIL(unexpected)   ∅ %d skip   (of %d)\n",
-        n_ok, n_xfail, n_fail, n_skip, length(RESULTS)
+        n_ok,
+        n_xfail,
+        n_fail,
+        n_skip,
+        length(RESULTS)
     )
     println()
-    println("  Interpretation guide (xfail = failed as expected; a bare FAIL is a real limit):")
+    println(
+        "  Interpretation guide (xfail = failed as expected; a bare FAIL is a real limit):"
+    )
     println("   • B1/B2 xfail (SCALAR-INDEXING) on AutoForwardDiff, OK on AutoZygote")
-    println("     ⇒ confirms §4.2 (AD is the GPU gate; ForwardDiff scalar-indexes; Zygote works).")
+    println(
+        "     ⇒ confirms §4.2 (AD is the GPU gate; ForwardDiff scalar-indexes; Zygote works).",
+    )
     println("   • B3 3a/3b/3e OK ⇒ confirms §5 'AD-free flows are GPU-ready first'.")
-    println("   • B3 3c xfail vs 3d OK ⇒ Flow(Hamiltonian; ad_backend=AutoZygote) already runs;")
+    println(
+        "   • B3 3c xfail vs 3d OK ⇒ Flow(Hamiltonian; ad_backend=AutoZygote) already runs;"
+    )
     println("     only the DEFAULT backend must change (D2 = AutoZygote).")
-    println("   • B0 both OK ⇒ host/device vcat is NOT a hard failure; the pv0 `zeros` is hygiene.")
+    println(
+        "   • B0 both OK ⇒ host/device vcat is NOT a hard failure; the pv0 `zeros` is hygiene.",
+    )
     println("   • B4 (this branch applies the _safe_only fix):")
-    println("     - HOST variable ⇒ still _aug_assign! host-∂pv-into-device-du (KernelError, separate fix).")
-    println("     - DEVICE variable, length 1 ⇒ should now be ✓ (_safe_only = @allowscalar only fixes the")
-    println("       '1-D=scalar on GPU' solution-split coercion). This validates the chosen fix.")
-    println("     - DEVICE variable, length 2 ⇒ ✓ (never hit `only`; augmented pipeline is GPU-clean).")
+    println(
+        "     - HOST variable ⇒ still _aug_assign! host-∂pv-into-device-du (KernelError, separate fix).",
+    )
+    println(
+        "     - DEVICE variable, length 1 ⇒ should now be ✓ (_safe_only = @allowscalar only fixes the",
+    )
+    println(
+        "       '1-D=scalar on GPU' solution-split coercion). This validates the chosen fix.",
+    )
+    println(
+        "     - DEVICE variable, length 2 ⇒ ✓ (never hit `only`; augmented pipeline is GPU-clean).",
+    )
     println("   • B5 eltype == Float32 ⇒ no silent Float64 promotion.")
-    println("   • B6 ⇒ DiffEqGPU ensemble tooling PoC: EnsembleGPUArray (permissive, in-place) and")
-    println("     EnsembleGPUKernel (kernel-compiled, needs OOP + StaticArrays) both matching analytic.")
+    println(
+        "   • B6 ⇒ DiffEqGPU ensemble tooling PoC: EnsembleGPUArray (permissive, in-place) and",
+    )
+    println(
+        "     EnsembleGPUKernel (kernel-compiled, needs OOP + StaticArrays) both matching analytic.",
+    )
 end
 
 # ---------------------------------------------------------------------------

@@ -13,7 +13,7 @@ module Systems
 
 # 1. External-package imports (qualified, pollution-free)
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
-import GPUArraysCore
+using GPUArraysCore: GPUArraysCore
 import CTBase.Core
 import CTBase.Data
 import CTBase.Differentiation
