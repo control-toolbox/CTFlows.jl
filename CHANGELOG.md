@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`method=:gpu` device selection on every `Flow(...)` constructor** (GPU roadmap-v4 §5,
+  phase 2): registers the now-parameterized `SciML{P}` (CTSolvers `v0.4.30-beta`) and
+  `DifferentiationInterface{P}` (CTBase `v0.28.1-beta`) strategies with `[CPU, GPU]`. A single
+  `method=:gpu` token resolves `GPU` for both the `:di` and `:sciml` families at once. Default
+  (no `method`) behaviour is byte-identical to before.
+
+### Changed
+
+- **Unified flow construction** onto one resolution mechanism keyed by `Traits.ad_trait`
+  (`WithAD` vs `WithoutAD`), retiring direct `build_integrator` use in favour of a shared
+  `_build_integrator` helper.
+- **BREAKING** — `Flow(vf; ad_backend=…)` on an **AD-free** flow is now rejected as an unknown
+  option instead of being silently ignored (the AD-free plan has no `:di` family).
+
 ## [0.14.0-beta] - 2026-07-17
 
 ### Added

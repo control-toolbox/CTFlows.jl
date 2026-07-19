@@ -512,7 +512,12 @@ function _invoke_flow_variable_costate(
     t0 = Configs.initial_time(config)
     x0 = Configs.initial_state(config)
     p0 = Configs.initial_costate(config)
-    pv0 = Systems._coerce_state(variable)(zeros(eltype(x0), length(variable)))
+    # Preserve x0's array type & eltype for the costate buffer: `similar(x0, …)` keeps it
+    # device-resident when x0 is on GPU. For a scalar x0 (1-D=scalar convention, CPU-only),
+    # fall back to a host `Vector` since `similar` is not defined on a scalar.
+    n_v = length(variable)
+    pv0_zero = x0 isa AbstractArray ? fill!(similar(x0, n_v), 0) : zeros(eltype(x0), n_v)
+    pv0 = Systems._coerce_state(variable)(pv0_zero)
     tf = Configs.final_time(config)
     config_aug = Configs.AugmentedHamiltonianEndPointConfig(t0, x0, p0, pv0, tf)
     return _invoke_flow(flow, config_aug; variable=variable, unsafe=unsafe)

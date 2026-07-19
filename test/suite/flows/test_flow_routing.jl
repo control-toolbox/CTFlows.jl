@@ -43,7 +43,9 @@ function test_flow_routing()
         end
 
         Test.@testset "Unit: _FLOW_DESCRIPTION" begin
-            Test.@test Flows._FLOW_DESCRIPTION === (:di, :sciml)
+            # The device token (:cpu) is explicit: the registry is now parameterized [CPU, GPU],
+            # so a device token is required; :cpu reproduces the pre-parameterization behaviour.
+            Test.@test Flows._FLOW_DESCRIPTION === (:di, :sciml, :cpu)
         end
 
         Test.@testset "Unit: flow_registry" begin

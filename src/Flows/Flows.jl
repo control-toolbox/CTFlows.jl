@@ -15,6 +15,7 @@ module Flows
 import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 import CTBase.Core
 import CTBase.Data
+import CTBase.Descriptions
 import CTBase.Differentiation
 import CTBase.Exceptions
 import CTBase.Strategies

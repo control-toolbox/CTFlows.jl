@@ -30,7 +30,7 @@ xf = flow(0.0, [1.0], 1.0; variable=2.0)
 """
 function Flows.Flow(f::SciMLBase.AbstractODEFunction; opts...)
     sys = SciMLFunctionSystem(f)
-    integ = Integrators.build_integrator(; opts...)
+    integ = Flows._build_integrator(opts)
     return build_flow(sys, integ)
 end
 
@@ -63,6 +63,6 @@ xf = Integrators.final_state(result)
 ```
 """
 function Flows.Flow(prob::SciMLBase.AbstractODEProblem; opts...)
-    integ = Integrators.build_integrator(; opts...)
+    integ = Flows._build_integrator(opts)
     return SciMLProblemFlow(prob, integ)
 end
