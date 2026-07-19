@@ -18,10 +18,78 @@ fam = Flows._flow_families()
 
 See also: [`CTFlows.Flows._route_flow_options`](@ref), [`CTFlows.Flows.flow_registry`](@ref)
 """
-function _flow_families()
+function _flow_families(::Type{Traits.WithAD})
     return (
         backend=Differentiation.AbstractADBackend, integrator=Integrators.AbstractIntegrator
     )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Strategy families for an AD-free flow: only the `:sciml` integrator (no `:di` backend, since
+no scalar Hamiltonian is differentiated).
+"""
+function _flow_families(::Type{Traits.WithoutAD})
+    return (integrator=Integrators.AbstractIntegrator,)
+end
+
+# Back-compat: the full (WithAD) families.
+_flow_families() = _flow_families(Traits.WithAD)
+
+"""
+$(TYPEDSIGNATURES)
+
+Base method description for a flow plan, per AD trait. The device token (`:cpu`) is **explicit**:
+the flow registry is parameterized (`[CPU, GPU]`), so a device token is required —
+[`CTBase.Strategies.extract_global_parameter_from_method`](@extref) throws otherwise. The bare
+`:cpu` reproduces the pre-parameterization CPU behaviour exactly (`SciML{CPU}` metadata ≡ old).
+"""
+_flow_base_description(::Type{Traits.WithAD}) = (:di, :sciml, :cpu)
+_flow_base_description(::Type{Traits.WithoutAD}) = (:sciml, :cpu)
+
+"""
+$(TYPEDSIGNATURES)
+
+Candidate descriptions (the `:cpu`/`:gpu` device variants) against which a user `method` is
+completed via [`CTBase.Descriptions.complete`](@extref).
+"""
+_available_flow_methods(::Type{Traits.WithAD}) = ((:di, :sciml, :cpu), (:di, :sciml, :gpu))
+_available_flow_methods(::Type{Traits.WithoutAD}) = ((:sciml, :cpu), (:sciml, :gpu))
+
+# Normalize a user-supplied `method` into a token tuple (or `nothing` for the default).
+_as_method_tokens(::Nothing) = nothing
+_as_method_tokens(m::Symbol) = (m,)
+_as_method_tokens(m::Tuple{Vararg{Symbol}}) = m
+
+"""
+$(TYPEDSIGNATURES)
+
+Resolve the effective method description for a flow from its AD trait and an optional user
+`method` (a `Symbol` such as `:gpu`, or a token tuple). `method === nothing` yields the base
+(CPU) description; otherwise the tokens are completed against
+[`CTFlows.Flows._available_flow_methods`](@ref).
+"""
+function _flow_description(ad_trait, method)
+    tokens = _as_method_tokens(method)
+    tokens === nothing && return _flow_base_description(ad_trait)
+    return Descriptions.complete(tokens...; descriptions=_available_flow_methods(ad_trait))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Split a flow constructor's keyword arguments into `(method, rest)`: the device selection
+(`method=:gpu`, a `Symbol` or token tuple; `nothing` if absent) and the remaining strategy
+options. `method` rides along in every constructor's `kwargs...` and is popped here, at the
+routing boundary, so it is never mistaken for a strategy option.
+
+See also: [`CTFlows.Flows._flow_description`](@ref), [`CTFlows.Flows._route_flow_options`](@ref).
+"""
+function _pop_method(kwargs)
+    nt = (; kwargs...)
+    method = get(nt, :method, nothing)
+    return method, Base.structdiff(nt, NamedTuple{(:method,)})
 end
 
 """
@@ -42,7 +110,7 @@ This constant identifies the strategy families used in flow construction:
 
 See also: [`CTFlows.Flows._route_flow_options`](@ref), [`CTFlows.Flows._build_flow_components`](@ref), [`CTFlows.Flows._flow_families`](@ref).
 """
-const _FLOW_DESCRIPTION = (:di, :sciml)
+const _FLOW_DESCRIPTION = _flow_base_description(Traits.WithAD)
 
 """
 $(TYPEDSIGNATURES)
@@ -82,16 +150,26 @@ See also: [`CTFlows.Flows._flow_families`](@ref), [`CTFlows.Flows._build_flow_co
 [`CTBase.Orchestration.route_all_options`](@extref)
 """
 function _route_flow_options(
-    kwargs; action_defs::Vector{<:Options.OptionDefinition}=Options.OptionDefinition[]
+    ad_trait,
+    kwargs;
+    method=nothing,
+    action_defs::Vector{<:Options.OptionDefinition}=Options.OptionDefinition[],
 )
     return Orchestration.route_all_options(
-        _FLOW_DESCRIPTION,
-        _flow_families(),
+        _flow_description(ad_trait, method),
+        _flow_families(ad_trait),
         action_defs,
         (; kwargs...),
         flow_registry();
         source_mode=:description,
     )
+end
+
+# Back-compat: default to the WithAD plan (the full `:di`/`:sciml` families).
+function _route_flow_options(
+    kwargs; action_defs::Vector{<:Options.OptionDefinition}=Options.OptionDefinition[]
+)
+    return _route_flow_options(Traits.WithAD, kwargs; action_defs=action_defs)
 end
 
 """
@@ -156,16 +234,20 @@ Each strategy is constructed via
 that were routed to its family by [`CTFlows.Flows._route_flow_options`](@ref).
 
 # Arguments
+- `ad_trait`: `Traits.WithAD` (builds `:di` backend + `:sciml` integrator) or `Traits.WithoutAD`
+  (builds only the `:sciml` integrator).
 - `routed`: Result of [`CTFlows.Flows._route_flow_options`](@ref) containing routed option values.
+- `method`: Optional device selection (`Symbol`/token tuple, e.g. `:gpu`) threaded into the
+  resolved global strategy parameter (`CPU`/`GPU`) for **all** families at once.
 
 # Returns
-- `NamedTuple{(:backend, :integrator)}`: Concrete strategy instances.
+- `NamedTuple`: concrete strategy instances keyed by family — `(integrator,)` for `WithoutAD`,
+  `(backend, integrator)` for `WithAD`.
 
 # Example
 ```julia
-# Build concrete strategies from routed options
-routed = Flows._route_flow_options((; reltol=1e-8))
-components = Flows._build_flow_components(routed)
+routed = Flows._route_flow_options(Traits.WithAD, (; reltol=1e-8))
+components = Flows._build_flow_components(Traits.WithAD, routed)
 # components.backend isa CTBase.Differentiation.DifferentiationInterface
 # components.integrator isa CTFlows.Integrators.SciML
 ```
@@ -173,14 +255,38 @@ components = Flows._build_flow_components(routed)
 See also: [`CTFlows.Flows._route_flow_options`](@ref), [`CTFlows.Flows.flow_registry`](@ref),
 [`CTBase.Orchestration.build_strategy_from_resolved`](@extref)
 """
-function _build_flow_components(routed)
-    families = _flow_families()
-    resolved = Orchestration.resolve_method(_FLOW_DESCRIPTION, families, flow_registry())
-    backend = Orchestration.build_strategy_from_resolved(
-        resolved, :backend, families, flow_registry(); routed.strategies.backend...
+function _build_flow_components(ad_trait, routed; method=nothing)
+    families = _flow_families(ad_trait)
+    resolved = Orchestration.resolve_method(
+        _flow_description(ad_trait, method), families, flow_registry()
     )
-    integrator = Orchestration.build_strategy_from_resolved(
-        resolved, :integrator, families, flow_registry(); routed.strategies.integrator...
-    )
-    return (backend=backend, integrator=integrator)
+    built = map(keys(families)) do family
+        Orchestration.build_strategy_from_resolved(
+            resolved, family, families, flow_registry();
+            getproperty(routed.strategies, family)...,
+        )
+    end
+    return NamedTuple{keys(families)}(built)
+end
+
+# Back-compat: default to the WithAD plan (backend + integrator).
+_build_flow_components(routed) = _build_flow_components(Traits.WithAD, routed)
+
+"""
+$(TYPEDSIGNATURES)
+
+Build the SciML integrator for an **AD-free** flow (`Traits.WithoutAD`) directly from a flow
+constructor's keyword arguments, honouring a `method=:gpu` device selection popped from them.
+
+Shared by the AD-free constructors (`Flow(VectorField)`, `Flow(HamiltonianVectorField)`,
+controlled-vector-field flows, `Flow(ODEFunction)`, `Flow(ODEProblem)`), which build only an
+integrator (no `:di` AD backend). Routing through the `WithoutAD` plan means an `ad_backend`
+option is correctly rejected here as unknown (there is no AD backend to configure).
+
+See also: [`CTFlows.Flows._build_flow_components`](@ref), [`CTFlows.Flows._pop_method`](@ref).
+"""
+function _build_integrator(opts)
+    method, kwargs = _pop_method(opts)
+    routed = _route_flow_options(Traits.WithoutAD, kwargs; method=method)
+    return _build_flow_components(Traits.WithoutAD, routed; method=method).integrator
 end

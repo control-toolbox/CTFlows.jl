@@ -11,7 +11,11 @@ This constructor builds a complete flow by:
 
 # Arguments
 - `data::CTBase.Data.VectorField`: The vector field defining the system dynamics.
-- `opts...`: Keyword options passed to the integrator's strategy.
+- `opts...`: Keyword options passed to the integrator's strategy. Pass `method=:gpu`
+  (a `Symbol`, or a token tuple) to build the flow for GPU execution — the integrator
+  resolves to `SciML{GPU}`; the default (`method=:cpu`) builds a CPU flow. The `method`
+  selector is accepted by **every** `Flow(...)` constructor and, for AD-dependent flows,
+  also selects the GPU AD backend.
 
 # Returns
 - `CTFlows.Flows.Flow`: The complete flow ready for integration.
@@ -28,8 +32,7 @@ See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.build_system`](@ref), 
 """
 function Flow(data::Data.VectorField; opts...)
     system = Systems.build_system(data)
-    integrator = Integrators.build_integrator(; opts...)
-    return build_flow(system, integrator)
+    return build_flow(system, _build_integrator(opts))
 end
 
 """
@@ -62,8 +65,7 @@ See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.build_syste
 """
 function Flow(data::Data.HamiltonianVectorField; opts...)
     system = Systems.build_system(data)
-    integrator = Integrators.build_integrator(; opts...)
-    return build_flow(system, integrator)
+    return build_flow(system, _build_integrator(opts))
 end
 
 """
@@ -83,6 +85,9 @@ This constructor builds a complete Hamiltonian flow by:
   Options are automatically routed based on their names:
   - Backend options (e.g., `ad_backend`) → `:di` strategy
   - Integrator options (e.g., `reltol`, `abstol`, `alg`) → `:sciml` strategy
+  Pass `method=:gpu` to build the flow for GPU execution: the AD backend resolves to
+  `DifferentiationInterface{GPU}` (whose default backend is `AutoZygote`) and the integrator
+  to `SciML{GPU}`. The default (`method=:cpu`) keeps `AutoForwardDiff` + `SciML{CPU}`.
 
 # Returns
 - `CTFlows.Flows.HamiltonianFlow`: The complete Hamiltonian flow ready for integration.
@@ -111,8 +116,9 @@ See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.build_syste
 [`CTFlows.Flows._route_flow_options`](@ref), [`CTFlows.Flows._build_flow_components`](@ref)
 """
 function Flow(h::Data.AbstractHamiltonian; kwargs...)
-    routed = _route_flow_options(kwargs)
-    components = _build_flow_components(routed)
+    method, kw = _pop_method(kwargs)
+    routed = _route_flow_options(Traits.WithAD, kw; method=method)
+    components = _build_flow_components(Traits.WithAD, routed; method=method)
     sys = Systems.build_system(h, components.backend)
     return build_flow(sys, components.integrator)
 end
@@ -164,8 +170,9 @@ See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), [`CTFlows.Flows.Flow`](@re
 """
 function _flow_from_ocp(::Type{Traits.ControlFree}, ocp::CTModels.Models.Model; kwargs...)
     _reject_control_free_constraint(kwargs)
-    routed = _route_flow_options(kwargs)
-    components = _build_flow_components(routed)
+    method, kw = _pop_method(kwargs)
+    routed = _route_flow_options(Traits.WithAD, kw; method=method)
+    components = _build_flow_components(Traits.WithAD, routed; method=method)
     h = _ocp_hamiltonian(ocp)
     sys = Systems.build_system(h, components.backend)
     inner = build_flow(sys, components.integrator)
@@ -278,8 +285,9 @@ function _flow_from_pseudo_hamiltonian(
     law::Data.ControlLaw;
     kwargs...,
 )
-    routed = _route_flow_options(kwargs; action_defs=_flow_action_defs())
-    components = _build_flow_components(routed)
+    method, kw = _pop_method(kwargs)
+    routed = _route_flow_options(Traits.WithAD, kw; method=method, action_defs=_flow_action_defs())
+    components = _build_flow_components(Traits.WithAD, routed; method=method)
     ht = _unwrap_option(get(routed.action, :hamiltonian_type, nothing), :total)
     return _build_pseudo_flow(Val(ht), h̃, law, components)
 end
@@ -709,8 +717,9 @@ function _flow_from_ocp_control(
             context="Flow(ocp, law::ControlLaw) — control-dependence check",
         ),
     )
-    routed = _route_flow_options(kwargs; action_defs=_flow_action_defs())
-    components = _build_flow_components(routed)
+    method, kw = _pop_method(kwargs)
+    routed = _route_flow_options(Traits.WithAD, kw; method=method, action_defs=_flow_action_defs())
+    components = _build_flow_components(Traits.WithAD, routed; method=method)
     ht = _unwrap_option(get(routed.action, :hamiltonian_type, nothing), :total)
     cspec = _unwrap_option(get(routed.action, :constraint, nothing), nothing)
     mspec = _unwrap_option(get(routed.action, :multiplier, nothing), nothing)
@@ -854,8 +863,7 @@ function _controlled_flow(
 )
     g = Data.ComposedVectorField(fc, law)
     system = Systems.build_system(g)
-    integrator = Integrators.build_integrator(; kwargs...)
-    return ControlledFlow(build_flow(system, integrator), ocp, law)
+    return ControlledFlow(build_flow(system, _build_integrator(kwargs)), ocp, law)
 end
 
 function Flow(::CTModels.Models.Model, ::Any, args...; kwargs...)
