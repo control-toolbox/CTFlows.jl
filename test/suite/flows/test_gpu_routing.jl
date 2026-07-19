@@ -36,8 +36,23 @@ function test_gpu_routing()
             Test.@test Flows._flow_description(Traits.WithoutAD, nothing) == (:sciml, :cpu)
             Test.@test Flows._flow_description(Traits.WithoutAD, :cpu) == (:sciml, :cpu)
             Test.@test Flows._flow_description(Traits.WithoutAD, :gpu) == (:sciml, :gpu)
-            Test.@test Flows._flow_description(Traits.WithAD, nothing) == (:di, :sciml, :cpu)
+            Test.@test Flows._flow_description(Traits.WithAD, nothing) ==
+                (:di, :sciml, :cpu)
             Test.@test Flows._flow_description(Traits.WithAD, :gpu) == (:di, :sciml, :gpu)
+        end
+
+        # `method` accepts a Symbol OR a token tuple (documented API surface); the tuple
+        # form completes against the same candidate set as the Symbol form.
+        Test.@testset "method tuple form" begin
+            Test.@test Flows._flow_description(Traits.WithoutAD, (:gpu,)) == (:sciml, :gpu)
+            Test.@test Flows._flow_description(Traits.WithoutAD, (:sciml, :gpu)) ==
+                (:sciml, :gpu)
+            Test.@test Flows._flow_description(Traits.WithAD, (:gpu,)) ==
+                (:di, :sciml, :gpu)
+            Test.@test Flows._flow_description(Traits.WithAD, (:di, :sciml, :gpu)) ==
+                (:di, :sciml, :gpu)
+            # end-to-end: a tuple method builds a flow just like the Symbol form
+            Test.@test Flows.Flow(_test_vf(); method=(:gpu,)) isa Flows.AbstractFlow
         end
 
         # ====================================================================

@@ -23,6 +23,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING** — `Flow(vf; ad_backend=…)` on an **AD-free** flow is now rejected as an unknown
   option instead of being silently ignored (the AD-free plan has no `:di` family).
 
+### Fixed
+
+- **Augmented & OCP flows are now GPU-clean** (GPU roadmap-v4 §5, phase 3): the variable-costate
+  RHS `_aug_assign!` device-adapts the host `∂pv` block (`-∂H/∂v`, produced from the host-side
+  `v`) to `du`'s array type before assignment — one localized fix covering all four augmented
+  functors — clearing the `GPUCompiler.KernelError` on `variable_costate` flows. The OCP
+  "1-D = scalar" coercion cluster (`_dim_coerce`, the `OCPControlled`/`OCPStateVectorFieldFunction`
+  field bounds, `_finalize_vf`) and the `_ham_split_solution` scalar branch now route through the
+  GPU-safe `Systems._safe_only` instead of raw `only`, so a length-1 device buffer no longer
+  scalar-indexes. CPU behaviour is byte-identical; on-device assertions land in phase 4.
+
 ## [0.14.0-beta] - 2026-07-17
 
 ### Added
