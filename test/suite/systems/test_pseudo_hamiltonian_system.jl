@@ -51,12 +51,16 @@ function test_pseudo_hamiltonian_system()
             law = Data.DynClosedLoop((x, p) -> -p)
             be = _backend()
             # x=1, p=2 ⇒ u=-p=-2 ; ∂H̃/∂x=-p=-2, ∂H̃/∂p=-x+u=-3 ⇒ du=[∂p;-∂x]=[-3, 2]
-            ip = Systems.PseudoHamIpRHS(h̃, law, be, 1, Systems._safe_only, Systems._safe_only)
+            ip = Systems.PseudoHamIpRHS(
+                h̃, law, be, 1, Systems._safe_only, Systems._safe_only
+            )
             du = zeros(2)
             ip(du, [1.0, 2.0], Systems.ODEParameters(nothing), 0.0)
             Test.@test du ≈ [-3.0, 2.0] atol = 1e-10
 
-            oop = Systems.PseudoHamOoPRHS(h̃, law, be, 1, Systems._safe_only, Systems._safe_only)
+            oop = Systems.PseudoHamOoPRHS(
+                h̃, law, be, 1, Systems._safe_only, Systems._safe_only
+            )
             Test.@test oop([1.0, 2.0], Systems.ODEParameters(nothing), 0.0) ≈ [-3.0, 2.0] atol =
                 1e-10
         end
