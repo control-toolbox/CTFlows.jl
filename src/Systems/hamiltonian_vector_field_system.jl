@@ -218,12 +218,16 @@ The augmented derivative vector has the form `[dx; dp; dpv]` where:
 See also: [`CTFlows.Systems._aug_split`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
 """
 function _aug_assign!(du::AbstractVector, dx, dp, dpv, n_x::Int, n_v::Int)
-    return (du[1:n_x].=dx; du[(n_x + 1):(2 * n_x)].=dp; du[(end - n_v + 1):end].=dpv)
+    du[1:n_x] .= _device_like(du, dx)
+    du[(n_x + 1):(2 * n_x)] .= _device_like(du, dp)
+    du[(end - n_v + 1):end] .= _device_like(du, dpv)
+    return nothing
 end
 function _aug_assign!(du::AbstractMatrix, dx, dp, dpv, n_x::Int, n_v::Int)
-    return (
-        du[1:n_x, :].=dx; du[(n_x + 1):(2 * n_x), :].=dp; du[(end - n_v + 1):end, :].=dpv
-    )
+    du[1:n_x, :] .= _device_like(du, dx)
+    du[(n_x + 1):(2 * n_x), :] .= _device_like(du, dp)
+    du[(end - n_v + 1):end, :] .= _device_like(du, dpv)
+    return nothing
 end
 
 # =============================================================================

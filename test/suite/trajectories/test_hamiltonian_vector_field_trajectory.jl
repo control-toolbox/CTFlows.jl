@@ -4,9 +4,22 @@ using Test: Test
 import CTFlows.Integrators: Integrators
 import CTFlows.Trajectories: Trajectories
 import CTBase.Exceptions
+import GPUArraysCore: GPUArraysCore
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
+
+# Top-level CPU-backed `AbstractGPUArray` stand-in: lets the scalar-x0 split branch be
+# exercised on a "device" array without a GPU (guards its GPU-safe `_safe_only` collapse).
+struct FakeGPUArray{T,N} <: GPUArraysCore.AbstractGPUArray{T,N}
+    data::Array{T,N}
+end
+Base.size(a::FakeGPUArray) = size(a.data)
+Base.getindex(a::FakeGPUArray, i::Int...) = a.data[i...]
+Base.setindex!(a::FakeGPUArray, v, i::Int...) = (a.data[i...] = v)
+function Base.similar(::FakeGPUArray, ::Type{T}, dims::Dims) where {T}
+    return FakeGPUArray(Array{T}(undef, dims))
+end
 
 # =============================================================================
 # Fake integration result for testing
@@ -325,6 +338,15 @@ function test_hamiltonian_vector_field_trajectory()
                 Test.@test size(p) == (2, 2)
                 Test.@test x == [1.0 2.0; 3.0 4.0]
                 Test.@test p == [5.0 6.0; 7.0 8.0]
+            end
+
+            # scalar x0 on a device `u`: the collapse routes through the GPU-safe
+            # `_safe_only` (not raw `only`), consistent with every other split path.
+            Test.@testset "scalar x0, device u (GPU-safe collapse)" begin
+                u = FakeGPUArray([1.0, 2.0])
+                x, p = Trajectories._ham_split_solution(u, 1.0)
+                Test.@test x === 1.0
+                Test.@test p === 2.0
             end
         end
 

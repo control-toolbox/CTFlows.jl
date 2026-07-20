@@ -8,9 +8,24 @@ import CTFlows.Systems: Systems
 import CTFlows.Configs: Configs
 import CTFlows.Trajectories: Trajectories
 import StaticArrays: SA, StaticArrays
+import GPUArraysCore: GPUArraysCore
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
+
+# Top-level fake device array (never inside a test function — world-age).
+# A CPU-backed `AbstractGPUArray` stand-in that lets the `GPUArraysCore` dispatch
+# branches of `_device_like` / `_aug_assign!` be exercised deterministically without a
+# real GPU (the on-device assertions themselves live in phase 4 on the `kkt` runner).
+struct FakeGPUArray{T,N} <: GPUArraysCore.AbstractGPUArray{T,N}
+    data::Array{T,N}
+end
+Base.size(a::FakeGPUArray) = size(a.data)
+Base.getindex(a::FakeGPUArray, i::Int...) = a.data[i...]
+Base.setindex!(a::FakeGPUArray, v, i::Int...) = (a.data[i...] = v)
+function Base.similar(::FakeGPUArray, ::Type{T}, dims::Dims) where {T}
+    return FakeGPUArray(Array{T}(undef, dims))
+end
 
 function test_hamiltonian_vector_field_system()
     Test.@testset "Hamiltonian Vector Field System Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
@@ -343,6 +358,82 @@ function test_hamiltonian_vector_field_system()
             dpv_mat = [5.0 10.0]
             Systems._aug_assign!(du_mat, dx_mat, dp_mat, dpv_mat, 2, 1)
             Test.@test du_mat == [1.0 6.0; 2.0 7.0; -3.0 -8.0; -4.0 -9.0; 5.0 10.0]
+        end
+
+        # ====================================================================
+        # UNIT TESTS - _safe_only / _coerce_state (1-D = scalar, GPU-safe)
+        # ====================================================================
+
+        Test.@testset "_safe_only" begin
+            # host: exactly `only`
+            Test.@test Systems._safe_only([7.0]) === 7.0
+            Test.@test Systems._safe_only(fill(3.0)) === 3.0   # 0-D array
+            # device: the single terminal read is permitted via @allowscalar and still
+            # returns a host scalar (never a device 1-vector) — CPU/GPU uniformity.
+            Test.@test Systems._safe_only(FakeGPUArray([7.0])) === 7.0
+        end
+
+        Test.@testset "_coerce_state dispatch" begin
+            # scalar / length-1 collapse to the GPU-safe `only`; ≥2 and matrices stay put
+            Test.@test Systems._coerce_state(1.0) === Systems._safe_only
+            Test.@test Systems._coerce_state([1.0]) === Systems._safe_only
+            Test.@test Systems._coerce_state([1.0, 2.0]) === identity
+            Test.@test Systems._coerce_state([1.0 2.0; 3.0 4.0]) === identity
+            # dispatch is on the array kind, so a device 1-vector also collapses safely
+            Test.@test Systems._coerce_state(FakeGPUArray([1.0])) === Systems._safe_only
+            Test.@test Systems._coerce_state(FakeGPUArray([1.0, 2.0])) === identity
+        end
+
+        # ====================================================================
+        # UNIT TESTS - _device_like (B4a: device-adapt a host block before assign)
+        # ====================================================================
+
+        Test.@testset "_device_like" begin
+            # --- host dst: pure identity, no copy, for every source kind ---
+            Test.@testset "host dst is identity" begin
+                dst = zeros(3)
+                src_vec = [1.0, 2.0]
+                src_mat = [1.0 2.0; 3.0 4.0]
+                Test.@test Systems._device_like(dst, src_vec) === src_vec
+                Test.@test Systems._device_like(dst, src_mat) === src_mat
+                Test.@test Systems._device_like(dst, 5.0) === 5.0
+            end
+
+            # --- device dst: host source is copied ONTO the device (typed like dst),
+            #     device source and scalars pass straight through (no needless copy) ---
+            Test.@testset "device dst adapts only the host block" begin
+                dst = FakeGPUArray(zeros(3))
+                host_src = [1.0, 2.0]
+                dev_src = FakeGPUArray([3.0, 4.0])
+                adapted = Systems._device_like(dst, host_src)
+                Test.@test adapted isa FakeGPUArray          # host → device-typed
+                Test.@test adapted.data == host_src          # values preserved
+                Test.@test Systems._device_like(dst, dev_src) === dev_src   # device: no copy
+                Test.@test Systems._device_like(dst, 5.0) === 5.0           # scalar: no copy
+            end
+        end
+
+        # _aug_assign! on a device `du` with a HOST `dpv` block — the exact B4a scenario
+        # (`variable_costate` RHS: ∂x/∂p device, ∂pv host). Guards that the assembled
+        # `[dp; -dx; -dpv]` is correct and stays device-typed. (Real-CUDA KernelError
+        # reproduction is a phase-4 on-device assertion; this pins the mechanism on CPU.)
+        Test.@testset "_aug_assign! — device du, host pv block" begin
+            du = FakeGPUArray(zeros(5))
+            dx = FakeGPUArray([1.0, 2.0])
+            dp = FakeGPUArray([-3.0, -4.0])
+            dpv = [5.0]                                   # host block
+            Systems._aug_assign!(du, dx, dp, dpv, 2, 1)
+            Test.@test du isa FakeGPUArray
+            Test.@test du.data == [1.0, 2.0, -3.0, -4.0, 5.0]
+
+            # matrix (batch) form, host pv row
+            du_m = FakeGPUArray(zeros(5, 2))
+            dx_m = FakeGPUArray([1.0 6.0; 2.0 7.0])
+            dp_m = FakeGPUArray([-3.0 -8.0; -4.0 -9.0])
+            dpv_m = [5.0 10.0]                            # host row
+            Systems._aug_assign!(du_m, dx_m, dp_m, dpv_m, 2, 1)
+            Test.@test du_m isa FakeGPUArray
+            Test.@test du_m.data == [1.0 6.0; 2.0 7.0; -3.0 -8.0; -4.0 -9.0; 5.0 10.0]
         end
 
         # ====================================================================

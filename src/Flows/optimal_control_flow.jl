@@ -560,9 +560,9 @@ struct OCPControlledVectorFieldFunction{
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
     DF<:Function,
-    CX<:Union{typeof(only),typeof(identity)},
-    CU<:Union{typeof(only),typeof(identity)},
-    CV<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(Systems._safe_only),typeof(identity)},
+    CU<:Union{typeof(Systems._safe_only),typeof(identity)},
+    CV<:Union{typeof(Systems._safe_only),typeof(identity)},
 } <: Function
     dynamics!::DF
     n::Int
@@ -577,7 +577,7 @@ $(TYPEDSIGNATURES)
 
 Collapse a length-1 result buffer to a scalar (1-D state convention).
 """
-_finalize_vf(r, ::Number) = only(r)
+_finalize_vf(r, ::Number) = Systems._safe_only(r)
 """
 $(TYPEDSIGNATURES)
 
@@ -593,7 +593,7 @@ $(TYPEDSIGNATURES)
 Precomputed coercion from a declared dimension: `only` collapses a 1-D quantity to a
 scalar (accepting both a scalar and a length-1 vector), `identity` leaves n-D untouched.
 """
-_dim_coerce(dim::Int) = dim == 1 ? only : identity
+_dim_coerce(dim::Int) = dim == 1 ? Systems._safe_only : identity
 
 """
 $(TYPEDSIGNATURES)
@@ -711,8 +711,8 @@ struct OCPStateVectorFieldFunction{
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
     DF<:Function,
-    CX<:Union{typeof(only),typeof(identity)},
-    CV<:Union{typeof(only),typeof(identity)},
+    CX<:Union{typeof(Systems._safe_only),typeof(identity)},
+    CV<:Union{typeof(Systems._safe_only),typeof(identity)},
 } <: Function
     dynamics!::DF
     n::Int

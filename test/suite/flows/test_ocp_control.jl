@@ -489,6 +489,24 @@ function test_ocp_control()
             Test.@test useen isa Number   # 1-D control → scalar even when the state is a vector
         end
 
+        # Unit guard for the coercion primitives behind the two contract tests above:
+        # the 1-D collapse routes through the GPU-safe `_safe_only` (not raw `only`).
+        # Regression guard for the phase-3 migration. (The struct field bounds admitting
+        # `typeof(_safe_only)` is exercised indirectly by every scalar-state OCP flow, e.g.
+        # `x0 = 2.0` in test_ocp_basic_flow.jl — a stale `typeof(only)` bound would
+        # TypeError there at construction.)
+        Test.@testset "Unit: OCP coercion routes through _safe_only" begin
+            # _dim_coerce builds cx/cu/cv: 1-D → GPU-safe collapse, ≥2 → identity
+            Test.@test Flows._dim_coerce(1) === Systems._safe_only
+            Test.@test Flows._dim_coerce(2) === identity
+
+            # _finalize_vf: scalar for a 1-D (Number) state, buffer as-is for a vector state
+            Test.@test Flows._finalize_vf([5.0], 0.0) === 5.0
+            Test.@test Flows._finalize_vf([5.0], 0.0) isa Number
+            r = [1.0, 2.0]
+            Test.@test Flows._finalize_vf(r, [1.0, 2.0]) === r
+        end
+
         # ====================================================================
         # CONSTRAINED :total flows — H = H̃ + μ·g
         #
@@ -605,8 +623,8 @@ function test_ocp_control()
 
             # (2) pseudo-Hamiltonian H̃_c(t,x,p,u,v) = p(-x+u) - 0.5u² + c x
             H̃ = Systems.pseudo_hamiltonian(f)
-            Test.@test H̃(0.0, x0, p0, u0, Float64[]) ≈ p0 * (-x0 + u0) - 0.5 * u0^2 + c * x0 atol =
-                1e-10
+            Test.@test H̃(0.0, x0, p0, u0, Float64[]) ≈
+                p0 * (-x0 + u0) - 0.5 * u0^2 + c * x0 atol = 1e-10
             # the +μ·g term is exactly c·x: difference from the unconstrained H̃
             fu = Flows.Flow(OCP_LQR, law; _opts()...)
             H̃u = Systems.pseudo_hamiltonian(fu)

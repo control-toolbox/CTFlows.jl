@@ -26,3 +26,28 @@ See also: [`CTFlows.Systems._coerce_state`](@ref).
 """
 _safe_only(x::GPUArraysCore.AbstractGPUArray) = GPUArraysCore.@allowscalar only(x)
 _safe_only(x) = only(x)
+
+"""
+    _device_like(dst, src)
+
+Return `src` in a form that can be broadcast into `dst` without a device/host mismatch.
+
+Augmented Hamiltonian flows split into `[∂p; -∂x; -∂pv]`; on GPU the state blocks
+`∂x`/`∂p` are device-resident (built from a device state) but `∂pv = -∂H/∂v` is **host**
+(the variable `v` transits host-side, per the D4 rule), so broadcasting it into a device
+`du` slice wraps a non-`isbits` host `Vector` in a `Broadcasted` and fails to compile
+(`GPUCompiler.KernelError`). `_device_like` copies **only** that host block onto the device
+matching `dst`; on host, and for already-device blocks, it is the identity (no copy).
+
+Dispatch is on the array actually received at the call site, so CPU behaviour is byte-for-byte
+unchanged and only the degenerate device-`dst`/host-`src` case pays a tiny `O(n_v)` H2D copy.
+Backend-agnostic (`GPUArraysCore.AbstractGPUArray` covers CUDA/AMDGPU/Metal).
+
+See also: [`CTFlows.Systems._aug_assign!`](@ref), [`CTFlows.Systems._safe_only`](@ref).
+"""
+_device_like(::AbstractArray, src) = src
+_device_like(::GPUArraysCore.AbstractGPUArray, src::Number) = src
+_device_like(::GPUArraysCore.AbstractGPUArray, src::GPUArraysCore.AbstractGPUArray) = src
+function _device_like(dst::GPUArraysCore.AbstractGPUArray, src::AbstractArray)
+    return copyto!(similar(dst, eltype(src), size(src)), src)
+end

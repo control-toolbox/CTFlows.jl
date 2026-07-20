@@ -84,16 +84,19 @@ end
 # =============================================================================
 
 """
-    _ham_split_solution(u::AbstractVector, x0::Number) = (only(u[1:1]), only(u[2:2]))
+    _ham_split_solution(u::AbstractVector, x0::Number) = (_safe_only(u[1:1]), _safe_only(u[2:2]))
     _ham_split_solution(u::AbstractVector, x0::AbstractVector) = (u[1:n], u[n+1:2n])
     _ham_split_solution(u::AbstractMatrix, x0::AbstractMatrix) = (u[1:n, :], u[n+1:2n, :])
 
 Split a combined state vector into state and costate components, preserving the shape of x0.
 
-For scalar x0, extracts single elements and coerces them back to scalars.
+For scalar x0, extracts single elements and coerces them back to scalars (via the GPU-safe
+[`CTFlows.Systems._safe_only`](@ref), consistent with every other 1-D=scalar split path).
 For vector/matrix x0, extracts views of the appropriate size.
 """
-_ham_split_solution(u::AbstractVector, x0::Number) = (only(u[1:1]), only(u[2:2]))
+function _ham_split_solution(u::AbstractVector, x0::Number)
+    (Systems._safe_only(u[1:1]), Systems._safe_only(u[2:2]))
+end
 _ham_split_solution(u::AbstractVector, x0::AbstractVector) =
     let n = length(x0)
         (u[1:n], u[(n + 1):2n])
