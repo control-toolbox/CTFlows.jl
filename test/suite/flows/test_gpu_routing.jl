@@ -36,7 +36,8 @@ function test_gpu_routing()
             Test.@test Flows._flow_description(Traits.WithoutAD, nothing) == (:sciml, :cpu)
             Test.@test Flows._flow_description(Traits.WithoutAD, :cpu) == (:sciml, :cpu)
             Test.@test Flows._flow_description(Traits.WithoutAD, :gpu) == (:sciml, :gpu)
-            Test.@test Flows._flow_description(Traits.WithAD, nothing) == (:di, :sciml, :cpu)
+            Test.@test Flows._flow_description(Traits.WithAD, nothing) ==
+                (:di, :sciml, :cpu)
             Test.@test Flows._flow_description(Traits.WithAD, :gpu) == (:di, :sciml, :gpu)
         end
 

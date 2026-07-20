@@ -261,8 +261,11 @@ function _build_flow_components(ad_trait, routed; method=nothing)
         _flow_description(ad_trait, method), families, flow_registry()
     )
     built = map(keys(families)) do family
-        Orchestration.build_strategy_from_resolved(
-            resolved, family, families, flow_registry();
+        return Orchestration.build_strategy_from_resolved(
+            resolved,
+            family,
+            families,
+            flow_registry();
             getproperty(routed.strategies, family)...,
         )
     end
