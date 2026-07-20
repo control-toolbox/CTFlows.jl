@@ -20,6 +20,20 @@ Base.setindex!(a::FakeGPUArray, v, i::Int...) = (a.data[i...] = v)
 function Base.similar(::FakeGPUArray, ::Type{T}, dims::Dims) where {T}
     return FakeGPUArray(Array{T}(undef, dims))
 end
+# GPUArrays.jl (loaded via CUDA in the test session) overrides copyto!/view/getindex for
+# AbstractGPUArray with device-kernel implementations this CPU stand-in cannot satisfy;
+# delegate them to the backing Array so the fake only exercises CTFlows' AbstractGPUArray
+# dispatch, never GPUArrays' device paths.
+function Base.copyto!(dst::FakeGPUArray{T,N}, src::AbstractArray{T,N}) where {T,N}
+    (copyto!(dst.data, src); dst)
+end
+# resolve the ambiguity with GPUArrays' copyto!(::AnyGPUArray, ::Array)
+function Base.copyto!(dst::FakeGPUArray{T,N}, src::Array{T,N}) where {T,N}
+    (copyto!(dst.data, src); dst)
+end
+Base.view(a::FakeGPUArray, I::Vararg{Any}) = view(a.data, I...)
+Base.getindex(a::FakeGPUArray, I::AbstractUnitRange) = FakeGPUArray(a.data[I])
+Base.getindex(a::FakeGPUArray, I::AbstractUnitRange, ::Colon) = FakeGPUArray(a.data[I, :])
 
 # =============================================================================
 # Fake integration result for testing
