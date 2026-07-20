@@ -19,6 +19,17 @@ using Test
 using CTBase
 using CTFlows
 
+# CUDA availability check — GPU execution tests (suite/extensions/test_gpu_flows.jl) self-gate
+# on `is_cuda_on()` and skip cleanly when no functional device is present (e.g. CI CPU runners,
+# dev machines). The real GPU run is the `test-gpu-kkt` job on the kkt NVIDIA runner.
+using CUDA
+is_cuda_on() = CUDA.functional()
+if is_cuda_on()
+    println("✓ CUDA functional, GPU tests enabled")
+else
+    println("⚠️  CUDA not functional, GPU tests will be skipped")
+end
+
 # Trigger loading of optional extensions
 const TestRunner = Base.get_extension(CTBase, :TestRunner)
 
