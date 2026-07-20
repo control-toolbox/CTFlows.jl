@@ -187,12 +187,30 @@ function test_gpu_flows()
         end
 
         # ================================================================
-        # Multi-phase concatenation on device — probe-unverified; enable after the first
-        # green kkt run confirms the concatenation path is scalar-index-free on device.
+        # Multi-phase concatenation on device (state flow, point config).
+        #   Confirmed scalar-index-free: `_extract_final_state` reads `final_state`
+        #   (no scalar getindex) and jumps are applied as broadcasts `v .+ j`, so a
+        #   state-flow `*` concatenation runs under `allowscalar(false)`.
         # ================================================================
 
-        Test.@testset "multi-phase on device (pending kkt confirmation)" begin
-            Test.@test_skip false
+        Test.@testset "multi-phase concat — no jump == single flow" begin
+            f = Flows.Flow(Data.VectorField(x -> -x))              # ẋ = -x
+            mpf = f * (0.5, f)                                     # split at t = 0.5, no jump
+            xf = mpf(0.0, _dev([1.0, 2.0]), 1.0)
+            Test.@test xf isa CUDA.CuArray
+            # splitting a flow with no jump leaves the endpoint unchanged: x(1) = x0·e⁻¹
+            Test.@test Array(xf) ≈ [1.0, 2.0] .* _E1 atol = 1e-6
+        end
+
+        Test.@testset "multi-phase concat — scalar additive jump" begin
+            f = Flows.Flow(Data.VectorField(x -> -x))              # ẋ = -x
+            mpf = f * (0.5, 0.1, f)                                # x ← x .+ 0.1 at t = 0.5
+            xf = mpf(0.0, _dev([1.0, 2.0]), 1.0)
+            Test.@test xf isa CUDA.CuArray
+            # phase 1 to 0.5, +0.1, phase 2 to 1.0
+            x_mid = [1.0, 2.0] .* exp(-0.5) .+ 0.1
+            x_ref = x_mid .* exp(-0.5)
+            Test.@test Array(xf) ≈ x_ref atol = 1e-6
         end
     end
     return nothing
