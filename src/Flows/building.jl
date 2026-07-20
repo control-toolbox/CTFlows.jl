@@ -286,7 +286,9 @@ function _flow_from_pseudo_hamiltonian(
     kwargs...,
 )
     method, kw = _pop_method(kwargs)
-    routed = _route_flow_options(Traits.WithAD, kw; method=method, action_defs=_flow_action_defs())
+    routed = _route_flow_options(
+        Traits.WithAD, kw; method=method, action_defs=_flow_action_defs()
+    )
     components = _build_flow_components(Traits.WithAD, routed; method=method)
     ht = _unwrap_option(get(routed.action, :hamiltonian_type, nothing), :total)
     return _build_pseudo_flow(Val(ht), h̃, law, components)
@@ -718,7 +720,9 @@ function _flow_from_ocp_control(
         ),
     )
     method, kw = _pop_method(kwargs)
-    routed = _route_flow_options(Traits.WithAD, kw; method=method, action_defs=_flow_action_defs())
+    routed = _route_flow_options(
+        Traits.WithAD, kw; method=method, action_defs=_flow_action_defs()
+    )
     components = _build_flow_components(Traits.WithAD, routed; method=method)
     ht = _unwrap_option(get(routed.action, :hamiltonian_type, nothing), :total)
     cspec = _unwrap_option(get(routed.action, :constraint, nothing), nothing)
