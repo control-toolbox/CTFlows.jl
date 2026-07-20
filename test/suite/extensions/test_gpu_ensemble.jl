@@ -71,6 +71,11 @@ function test_gpu_ensemble()
                 Test.@test Array(sol.u[i].u[end]) ≈ _expected(i) atol = 1e-5
             end
 
+            # all N trajectories are present and genuinely distinct — guards that `prob_func` /
+            # `remake` actually varied `u0` per trajectory (a silent "all identical" regression)
+            Test.@test length(sol.u) == _N_ENS
+            Test.@test !isapprox(Array(sol.u[1].u[end]), Array(sol.u[2].u[end]); atol=1e-2)
+
             # cross-check against the CPU EnsembleThreads() reference (same problem, host solve)
             csol = SciMLBase.solve(
                 eprob,
@@ -111,6 +116,32 @@ function test_gpu_ensemble()
             for i in 1:_N_ENS
                 Test.@test Array(sol.u[i].u[end]) ≈ _expected(i) atol = 1e-5
             end
+            Test.@test length(sol.u) == _N_ENS
+            Test.@test !isapprox(Array(sol.u[1].u[end]), Array(sol.u[2].u[end]); atol=1e-2)
+        end
+
+        # ================================================================
+        # Float32 end-to-end (GPUs prefer Float32; check the ensemble path preserves eltype
+        #   and does not silently promote to Float64). Mirrors probe Block 5 in the ensemble.
+        # ================================================================
+        Test.@testset "EnsembleGPUArray Float32, eltype preserved" begin
+            f!(du, u, p, t) = (du .= .-u)
+            prob = SciMLBase.ODEProblem(f!, Float32[1, 2], (0.0f0, 1.0f0))
+            eprob = SciMLBase.EnsembleProblem(
+                prob;
+                prob_func=(p, ctx) ->
+                    SciMLBase.remake(p; u0=Float32[ctx.sim_id, 2 * ctx.sim_id]),
+            )
+            sol = SciMLBase.solve(
+                eprob,
+                OrdinaryDiffEqTsit5.Tsit5(),
+                DiffEqGPU.EnsembleGPUArray(CUDA.CUDABackend());
+                trajectories=_N_ENS,
+                save_everystep=false,
+            )
+            Test.@test eltype(sol.u[1].u[end]) == Float32
+            Test.@test Array(sol.u[1].u[end]) ≈ Float32[1, 2] .* Float32(exp(-1)) atol =
+                1.0f-4
         end
     end
     return nothing
