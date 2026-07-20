@@ -85,9 +85,12 @@ function test_gpu_flows()
         end
 
         Test.@testset "Flow(ODEFunction) device u0" begin
-            odef = SciMLBase.ODEFunction((du, u, p, t) -> (du .= .-u))
+            # An ODEFunction carries a parameter slot `p`, so its flow is NonFixed: `p` is
+            # supplied via `variable=` at call time (here the decay rate, a host scalar that
+            # broadcasts cleanly against the device state).
+            odef = SciMLBase.ODEFunction((du, u, p, t) -> (du .= .-p .* u))
             f = Flows.Flow(odef)
-            xf = f(0.0, _dev([1.0, 2.0]), 1.0)
+            xf = f(0.0, _dev([1.0, 2.0]), 1.0; variable=1.0)   # ẋ = -1·u
             Test.@test xf isa CUDA.CuArray
             Test.@test Array(xf) ≈ [1.0, 2.0] .* _E1 atol = 1e-6
         end
