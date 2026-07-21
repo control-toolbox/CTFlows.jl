@@ -1,8 +1,7 @@
 """
 End-to-end integration test for the ORBITAL TRANSFER energy-minimisation problem
 (smooth single arc, 4D state, 2D control): minimises `∫ 0.5‖u‖² dt` subject to
-Keplerian dynamics with thrust acceleration. Ported from CTProblems.jl
-`OrbitalTransfertEnergy`.
+Keplerian dynamics with thrust acceleration.
 
 Single-arc shooting (fixed tf, 4 equations, 4 unknowns `p0 ∈ R⁴`).
 Control law `u* = [p3, p4]` (smooth interior optimum from ∂H/∂u = 0).
