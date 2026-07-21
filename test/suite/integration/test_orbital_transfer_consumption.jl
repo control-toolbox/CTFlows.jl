@@ -1,8 +1,8 @@
 """
-End-to-end integration test for the ORBITAL TRANSFERT CONSUMPTION minimisation problem
+End-to-end integration test for the ORBITAL TRANSFER CONSUMPTION minimisation problem
 (bang-off-bang-off-bang, 5 arcs "B+B0B+B0B+"): Keplerian dynamics with low-thrust
 control, `tf = 1.5 * tf_min` fixed, minimise `∫ ||u|| dt`. Ported from CTProblems.jl
-`OrbitalTransfertConsumption`.
+`OrbitalTransferConsumption`.
 
 Multi-arc shooting (fixed tf, 8 equations, 8 unknowns `[p0[1:4], t1, t2, t3, t4]`).
 - Bang arc: `u = p[3:4] / ||p[3:4]||` (||u|| = 1, max thrust)
@@ -14,7 +14,7 @@ Multi-arc shooting (fixed tf, 8 equations, 8 unknowns `[p0[1:4], t1, t2, t3, t4]
 The bang control depends on p, so `:total` and `:partial` may differ in general,
 but both are tested. Multi-phase reconstruction via `*` composition.
 """
-module TestOrbitalTransfertConsumption
+module TestOrbitalTransferConsumption
 
 using Test: Test
 import CTModels: CTModels
@@ -56,7 +56,7 @@ const _TI_GUESS = [
 ]
 const _XI_GUESS = [deepcopy(_P0_GUESS); deepcopy(_TI_GUESS)]
 
-function _build_orbital_transfert_consumption()
+function _build_orbital_transfer_consumption()
     pre = CTModels.Building.PreModel()
     CTModels.Building.time_dependence!(pre; autonomous=true)
     CTModels.Building.time!(pre; t0=_T0, tf=_TF)
@@ -100,9 +100,9 @@ _bang_law(x, p) = [p[3], p[4]] / sqrt(p[3]^2 + p[4]^2)
 # Off control: u = [0, 0]
 _off_law(x, p) = [0.0, 0.0]
 
-function test_orbital_transfert_consumption()
-    Test.@testset "Orbital transfert — consumption B+B0B+B0B+ (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
-        ocp = _build_orbital_transfert_consumption()
+function test_orbital_transfer_consumption()
+    Test.@testset "Orbital transfer — consumption B+B0B+B0B+ (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+        ocp = _build_orbital_transfer_consumption()
 
         for ht in (:total, :partial)
             f_bang = Flows.Flow(
@@ -150,5 +150,5 @@ end
 
 end # module
 
-test_orbital_transfert_consumption() =
-    TestOrbitalTransfertConsumption.test_orbital_transfert_consumption()
+test_orbital_transfer_consumption() =
+    TestOrbitalTransferConsumption.test_orbital_transfer_consumption()

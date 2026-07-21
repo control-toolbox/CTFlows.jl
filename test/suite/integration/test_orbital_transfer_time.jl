@@ -1,8 +1,8 @@
 """
-End-to-end integration test for the ORBITAL TRANSFERT TIME minimisation problem
+End-to-end integration test for the ORBITAL TRANSFER TIME minimisation problem
 (bang single arc, 4D): Keplerian dynamics with low-thrust control, `tf` free
 (variable `v[1] = tf`), minimise `tf`. Ported from CTProblems.jl
-`OrbitalTransfertTime`.
+`OrbitalTransferTime`.
 
 Single-arc shooting (free tf, 5 equations, 5 unknowns `[p0[1:4], tf]`).
 - Bang control: `u = γ_max * [p₃, p₄] / ||p[3:4]||`
@@ -13,7 +13,7 @@ Single-arc shooting (free tf, 5 equations, 5 unknowns `[p0[1:4], tf]`).
 The bang control depends only on `p` (not `x`), so `:total` and `:partial` coincide
 — asserted for both.
 """
-module TestOrbitalTransfertTime
+module TestOrbitalTransferTime
 
 using Test: Test
 import CTModels: CTModels
@@ -50,7 +50,7 @@ const _XI_GUESS = [
 # Placeholder — will be updated after Newton convergence
 const _XI_SOL = _XI_GUESS
 
-function _build_orbital_transfert_time()
+function _build_orbital_transfer_time()
     pre = CTModels.Building.PreModel()
     CTModels.Building.time_dependence!(pre; autonomous=true)
     CTModels.Building.variable!(pre, 1)
@@ -98,9 +98,9 @@ _ham(x, p) = let u = _control_law(x, p, nothing)
     p[4] * (-_MU * x[2] / r1^3 + u[2])
 end
 
-function test_orbital_transfert_time()
-    Test.@testset "Orbital transfert — time minimisation (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
-        ocp = _build_orbital_transfert_time()
+function test_orbital_transfer_time()
+    Test.@testset "Orbital transfer — time minimisation (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+        ocp = _build_orbital_transfer_time()
 
         for ht in (:total, :partial)
             f = Flows.Flow(
@@ -139,5 +139,5 @@ end
 
 end # module
 
-test_orbital_transfert_time() =
-    TestOrbitalTransfertTime.test_orbital_transfert_time()
+test_orbital_transfer_time() =
+    TestOrbitalTransferTime.test_orbital_transfer_time()
