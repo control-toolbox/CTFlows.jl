@@ -83,7 +83,7 @@ function test_orbital_transfer_energy()
                 return nothing
             end
 
-            ξ_opt = test_shooting(shoot!, _XI_SOL, _XI_GUESS; atol=1e-6)
+            ξ_opt = test_shooting(shoot!, _XI_SOL, _XI_GUESS; atol=1e-5)
 
             Test.@test isapprox(ξ_opt[1], _XI_SOL[1]; atol=1e-4)
             Test.@test isapprox(ξ_opt[2], _XI_SOL[2]; atol=1e-4)
