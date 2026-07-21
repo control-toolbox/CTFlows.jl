@@ -31,11 +31,11 @@ end
 # delegate them to the backing Array so the fake only exercises CTFlows' AbstractGPUArray
 # dispatch, never GPUArrays' device paths.
 function Base.copyto!(dst::FakeGPUArray{T,N}, src::AbstractArray{T,N}) where {T,N}
-    (copyto!(dst.data, src); dst)
+    return (copyto!(dst.data, src); dst)
 end
 # resolve the ambiguity with GPUArrays' copyto!(::AnyGPUArray, ::Array)
 function Base.copyto!(dst::FakeGPUArray{T,N}, src::Array{T,N}) where {T,N}
-    (copyto!(dst.data, src); dst)
+    return (copyto!(dst.data, src); dst)
 end
 Base.view(a::FakeGPUArray, I::Vararg{Any}) = view(a.data, I...)
 Base.getindex(a::FakeGPUArray, I::AbstractUnitRange) = FakeGPUArray(a.data[I])
