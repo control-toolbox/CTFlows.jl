@@ -623,8 +623,8 @@ function test_ocp_control()
 
             # (2) pseudo-Hamiltonian H̃_c(t,x,p,u,v) = p(-x+u) - 0.5u² + c x
             H̃ = Systems.pseudo_hamiltonian(f)
-            Test.@test H̃(0.0, x0, p0, u0, Float64[]) ≈
-                p0 * (-x0 + u0) - 0.5 * u0^2 + c * x0 atol = 1e-10
+            Test.@test H̃(0.0, x0, p0, u0, Float64[]) ≈ p0 * (-x0 + u0) - 0.5 * u0^2 + c * x0 atol =
+                1e-10
             # the +μ·g term is exactly c·x: difference from the unconstrained H̃
             fu = Flows.Flow(OCP_LQR, law; _opts()...)
             H̃u = Systems.pseudo_hamiltonian(fu)

@@ -95,7 +95,7 @@ For scalar x0, extracts single elements and coerces them back to scalars (via th
 For vector/matrix x0, extracts views of the appropriate size.
 """
 function _ham_split_solution(u::AbstractVector, x0::Number)
-    (Systems._safe_only(u[1:1]), Systems._safe_only(u[2:2]))
+    return (Systems._safe_only(u[1:1]), Systems._safe_only(u[2:2]))
 end
 _ham_split_solution(u::AbstractVector, x0::AbstractVector) =
     let n = length(x0)
