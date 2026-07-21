@@ -365,7 +365,10 @@ probe("B6", "EnsembleGPUArray (in-place, N=$_N_ENS)"; skip_if=(!CUDA_OK)) do
     maxerr = maximum(
         maximum(abs.(Array(sol.u[i].u[end]) .- _ens_expected(i))) for i in 1:_N_ENS
     )
-    return "max abs err vs analytic = $maxerr"
+    # Device-residency check (plan.md Remarks): is the per-trajectory result still a
+    # device array, or has DiffEqGPU already gathered it to host before returning?
+    ftype = typeof(sol.u[1].u[end])
+    return "max abs err vs analytic = $maxerr; final-state type = $ftype"
 end
 
 # 6b — EnsembleGPUKernel: kernel-compiled path. Requires an out-of-place, StaticArrays RHS
@@ -390,7 +393,72 @@ probe("B6", "EnsembleGPUKernel (out-of-place SVector, N=$_N_ENS)"; skip_if=(!CUD
     maxerr = maximum(
         maximum(abs.(Array(sol.u[i].u[end]) .- _ens_expected(i))) for i in 1:_N_ENS
     )
-    return "max abs err vs analytic = $maxerr"
+    ftype = typeof(sol.u[1].u[end])
+    return "max abs err vs analytic = $maxerr; final-state type = $ftype"
+end
+
+# 6c/6d — Coupled-oscillator RHS (ẋ=p, ṗ=-x), deliberately excluded from phase 4b (plan.md
+#   Remarks: "du[1]/u[2] = scalar-indexing, interdit sous allowscalar(false)"). Re-examined:
+#   a coupled 2-state RHS does NOT require scalar `getindex`/`setindex!` on a device array in
+#   either ensemble path — it was avoidable all along, not a genuine gate:
+#     • EnsembleGPUArray (in-place): write it as a matrix-vector product `du .= A * u`
+#       (BLAS/CUBLAS gemv, not scalar indexing) instead of `du[1]=u[2]; du[2]=-u[1]`.
+#     • EnsembleGPUKernel (out-of-place SVector): `u[1]`/`u[2]` index a stack-allocated
+#       `StaticArrays.SVector` inside the compiled kernel, not an `AbstractGPUArray` — that is
+#       NOT what `CUDA.allowscalar(false)` guards against.
+#   x(0)=i, p(0)=0 ⇒ analytic x(1)=i·cos(1), p(1)=-i·sin(1).
+const _HO_A = _dev([0.0 1.0; -1.0 0.0])
+_ho_u0(i) = [Float64(i), 0.0]
+_ho_expected(i) = [Float64(i) * cos(1.0), -Float64(i) * sin(1.0)]
+
+probe(
+    "B6",
+    "EnsembleGPUArray coupled oscillator (in-place, du.=A*u, N=$_N_ENS)";
+    skip_if=(!CUDA_OK),
+) do
+    f!(du, u, p, t) = (du .= _HO_A * u)
+    prob = SciMLBase.ODEProblem(f!, _ho_u0(1), (0.0, 1.0))
+    eprob = SciMLBase.EnsembleProblem(
+        prob; prob_func=(p, ctx) -> SciMLBase.remake(p; u0=_ho_u0(ctx.sim_id))
+    )
+    sol = SciMLBase.solve(
+        eprob,
+        OrdinaryDiffEqTsit5.Tsit5(),
+        DiffEqGPU.EnsembleGPUArray(CUDA.CUDABackend());
+        trajectories=_N_ENS,
+        save_everystep=false,
+    )
+    maxerr = maximum(
+        maximum(abs.(Array(sol.u[i].u[end]) .- _ho_expected(i))) for i in 1:_N_ENS
+    )
+    ftype = typeof(sol.u[1].u[end])
+    return "max abs err vs analytic = $maxerr; final-state type = $ftype"
+end
+
+probe(
+    "B6",
+    "EnsembleGPUKernel coupled oscillator (out-of-place SVector, N=$_N_ENS)";
+    skip_if=(!CUDA_OK),
+) do
+    f_oop(u, p, t) = SVector(u[2], -u[1])
+    u0 = SVector{2,Float64}(1.0, 0.0)
+    prob = SciMLBase.ODEProblem(f_oop, u0, (0.0, 1.0))
+    eprob = SciMLBase.EnsembleProblem(
+        prob;
+        prob_func=(p, ctx) -> SciMLBase.remake(p; u0=SVector{2,Float64}(Float64(ctx.sim_id), 0.0)),
+    )
+    sol = SciMLBase.solve(
+        eprob,
+        DiffEqGPU.GPUTsit5(),
+        DiffEqGPU.EnsembleGPUKernel(CUDA.CUDABackend());
+        trajectories=_N_ENS,
+        save_everystep=false,
+    )
+    maxerr = maximum(
+        maximum(abs.(Array(sol.u[i].u[end]) .- _ho_expected(i))) for i in 1:_N_ENS
+    )
+    ftype = typeof(sol.u[1].u[end])
+    return "max abs err vs analytic = $maxerr; final-state type = $ftype"
 end
 
 # ===========================================================================
