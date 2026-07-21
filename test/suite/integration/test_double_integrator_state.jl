@@ -1,12 +1,17 @@
 """
-End-to-end integration test for the double-integrator OCP with a SECOND-ORDER state
-constraint (position `q ≤ a`), built from a `CTModels.Model`. Boundary-arc case (`a =
-0.1`): three-arc shooting with costate jumps at the two junctions (chained by hand, as
-jumps are not yet threaded through `Flow(ocp, law)`), run in both `:total` and `:partial`
-(order-2 on-arc equivalence, item i: constant boundary control). Ported from
-[example-state-constraint.md](../../../../OptimalControl/docs/src/example-state-constraint.md).
-Also exercises the `*` multi-phase reconstruction with jumps (PR 5 D3): a `CTModels.Solution`
-with piecewise reconstructed control.
+End-to-end integration tests for the double-integrator OCP with a SECOND-ORDER state
+constraint (position `q ≤ a`), built from a `CTModels.Model`. Two cases from
+[example-state-constraint.md](../../../../OptimalControl/docs/src/example-state-constraint.md):
+
+1. **Touch point** (`a = 0.2`): two-arc shooting with a single costate jump at the
+   contact instant. 4 unknowns, 4 equations.
+2. **Boundary arc** (`a = 0.1`): three-arc shooting with costate jumps at both junctions
+   (chained by hand, as jumps are not yet threaded through `Flow(ocp, law)`). 6 unknowns,
+   6 equations.
+
+Both run in `:total` and `:partial` (order-2 on-arc equivalence, item i: constant
+boundary control). Also exercises the `*` multi-phase reconstruction with jumps
+(PR 5 D3): a `CTModels.Solution` with piecewise reconstructed control.
 """
 module TestDoubleIntegratorState
 
@@ -47,7 +52,73 @@ function _build_di(a)
 end
 
 function test_double_integrator_state()
-    Test.@testset "Double integrator — 2nd-order state constraint (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    # ==========================================================================
+    # Case 1: Touch point (a = 0.2)
+    # ==========================================================================
+    Test.@testset "Double integrator — 2nd-order touch point a=0.2 (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+        a = 0.2
+        ocp = _build_di(a)
+        g(x) = a - x[1]   # constraint g(x) ≥ 0
+
+        # Analytic touch-point solution (see example-state-constraint.md):
+        #   t1 = 0.5, p0 = [-4.8, -3.2], Δpq = 9.6.
+        t1_sol = 0.5
+        p0_sol = [-4.8, -3.2]
+        Δpq_sol = 9.6
+
+        for ht in (:total, :partial)
+            fs = Flows.Flow(
+                ocp, (x, p) -> p[2];
+                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+            )
+
+            function shoot!(s, p0, t1, Δpq)
+                x1, p1 = fs(_T0, _X0, p0, t1)
+                p1p = [p1[1] + Δpq, p1[2]]
+                xf, _ = fs(t1, x1, p1p, _TF)
+                s[1:2] = xf - _XF
+                s[3] = g(x1)          # touch: q(t1) = a
+                s[4] = x1[2]          # tangency: v(t1) = 0
+                return nothing
+            end
+
+            s = zeros(4)
+            shoot!(s, p0_sol, t1_sol, Δpq_sol)
+            res_known = sqrt(sum(abs2, s))
+
+            ξ0 = [-4.5, -3.0, 0.48, 9.0]
+            shoot_nl!(s, ξ, _) = shoot!(s, ξ[1:2], ξ[3], ξ[4])
+            nl = solve(
+                NonlinearProblem(shoot_nl!, ξ0),
+                SimpleNewtonRaphson();
+                abstol=1e-10, reltol=1e-10, show_trace=Val(false),
+            )
+            sc = zeros(4)
+            shoot!(sc, nl.u[1:2], nl.u[3], nl.u[4])
+            res_conv = sqrt(sum(abs2, sc))
+
+            Test.@test res_known < 1e-6
+            Test.@test res_conv < 1e-8
+            Test.@test isapprox(nl.u[3], t1_sol; atol=1e-6)   # t1 ≈ 0.5
+            Test.@test isapprox(nl.u[4], Δpq_sol; atol=1e-4)  # Δpq ≈ 9.6
+
+            # Reconstruction with costate jump at touch point.
+            φ = fs * (t1_sol, [Δpq_sol, 0.0], fs)
+            sol = φ((_T0, _TF), _X0, p0_sol)
+            Test.@test sol isa CTModels.Solutions.Solution
+            uu = CTModels.control(sol)
+            _u(t) = uu(t) isa Number ? uu(t) : uu(t)[1]
+            # No boundary arc: control is non-zero on both sides of t1
+            Test.@test abs(_u(0.25)) > 1e-3
+            Test.@test abs(_u(0.75)) > 1e-3
+            Test.@test CTModels.objective(sol) > 0
+        end
+    end
+
+    # ==========================================================================
+    # Case 2: Boundary arc (a = 0.1)
+    # ==========================================================================
+    Test.@testset "Double integrator — 2nd-order boundary arc a=0.1 (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
         a = 0.1
         ocp = _build_di(a)
         g(x) = a - x[1]   # constraint g(x) ≥ 0
