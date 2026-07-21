@@ -94,3 +94,4 @@ gives full control over each step.
 | [Optimal control](flows/optimal_control.md) | Flows from optimal control problems (`Flow(ocp)`) |
 | [Control laws](flows/control_laws.md) | `Flow(ocp, law)`, `Flow(h̃, law)`, `Flow(fc, law)` — `OpenLoop`, `ClosedLoop`, `DynClosedLoop` |
 | [SciML flows](flows/sciml.md) | Flows from `ODEFunction` / `ODEProblem` (SciML extension) |
+| [VF compatibility](flows/compatibility_vf.md) | `Flow(VectorField)` state-type compatibility: scalar, vector, matrix, `SVector`, `MVector`, complex, `Dual` |
