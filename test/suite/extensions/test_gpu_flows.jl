@@ -11,12 +11,18 @@ NVIDIA runner (PR label `run ci gpu`).
 GPU-friendly test integrands use `sum`/`dot`/broadcasts, never scalar indexing (`v[i]`, `x[i]`)
 — a device scalar read is blocked by `allowscalar(false)` (probe run 4/5).
 
-Phase 4c adds the **AD-free** OCP surface: `Flow(ocp)`'s state flow (no costate) and
-`Flow(ocp, OpenLoop/ClosedLoop)`. The AD-dependent OCP surface (`Flow(ocp)` Hamiltonian,
-`Flow(ocp, DynClosedLoop)`) is **deferred**: those right-hand sides fill a buffer through
-CTModels' in-place `dynamics!`, and Zygote — the `method=:gpu` AD default — cannot
-differentiate array mutation. That gate fails on CPU too, so it is an AD-architecture issue,
-not a GPU one; the negative row below documents it.
+Phase 4c added the **AD-free** OCP surface: `Flow(ocp)`'s state flow (no costate) and
+`Flow(ocp, OpenLoop/ClosedLoop)`. Phase 4f closes the **AD-dependent** half (`Flow(ocp)`
+Hamiltonian, `Flow(ocp, DynClosedLoop)`), which 4c had to defer: those right-hand sides fill a
+buffer through CTModels' in-place `dynamics!`, and `AutoZygote` — the `method=:gpu` AD default at
+the time — cannot differentiate array mutation. That was an AD-architecture gate, not a GPU one
+(it failed on CPU too), so no buffer fix could lift it.
+
+It was lifted by changing the backend, not the code: an H200 probe campaign (phase 4e,
+`probe/gpu/probe_gpu.jl` blocks B7/B8) measured every reverse-mode DI candidate, `AutoMooncake`
+differentiated the mutating right-hand side on device, and CTBase `v0.28.2-beta` made it the GPU
+default. So `method=:gpu` now resolves `AutoMooncake()` and the rows below assert positively where
+a `@test_throws` gate used to sit.
 
 Out of scope here: the ensemble path (phase 4b, `test_gpu_ensemble.jl`).
 """
@@ -31,7 +37,10 @@ import CTFlows.Trajectories: Trajectories
 import CTModels: CTModels
 import ADTypes: ADTypes
 import SciMLBase: SciMLBase
-import Zygote: Zygote  # loads the Zygote backend so the AutoZygote GPU AD default can differentiate
+# Both AD backends are ADTypes *markers*: they construct without their package, but evaluating a
+# gradient needs the package loaded so DI can dispatch.
+import Mooncake: Mooncake  # backs the `method=:gpu` default (AutoMooncake, CTBase 0.28.2-beta)
+import Zygote: Zygote      # backs the rows that pass `ad_backend=AutoZygote()` explicitly
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
@@ -49,6 +58,10 @@ const _S1 = sin(1.0)
 #   x(1) = [cos1,  sin1],  p(1) = [-sin1, cos1]
 const _OSC_X = [_C1, _S1]
 const _OSC_P = [-_S1, _C1]
+# AD-dependent OCP rows (phase 4f): a non-zero initial costate, so the costate equation is
+# actually asserted. For the control-free ẋ = -x model, ṗ = p ⇒ p(1) = p0·e⁺¹.
+const _P0_AD = [1.0, -1.0]
+const _EP1 = exp(1.0)
 
 # =============================================================================
 # OCP fixtures (module top-level, per the repo convention)
@@ -148,10 +161,11 @@ function test_gpu_flows()
         end
 
         # ================================================================
-        # AD-dependent flows (GPU AD default = AutoZygote, phase 1b/2)
+        # AD-dependent flows (GPU AD default = AutoMooncake, CTBase 0.28.2-beta;
+        # it was AutoZygote from phase 1b until the 4e probe replaced it)
         # ================================================================
 
-        Test.@testset "Flow(Hamiltonian; method=:gpu) — AutoZygote default" begin
+        Test.@testset "Flow(Hamiltonian; method=:gpu) — AutoMooncake default" begin
             h = Data.Hamiltonian((x, p) -> (sum(abs2, x) + sum(abs2, p)) / 2)   # oscillator
             f = Flows.Flow(h; method=:gpu)
             xf, pf = f(0.0, _dev([1.0, 0.0]), _dev([0.0, 1.0]), 1.0)
@@ -298,17 +312,38 @@ function test_gpu_flows()
             Test.@test Array(xf) ≈ [1.0, 2.0] .* _E1 atol = 1e-6
         end
 
-        # The AD-dependent OCP surface is DEFERRED, and the reason is not GPU-specific:
-        # `_ocp_H` fills its buffer through CTModels' in-place `dynamics!`, and Zygote (the
-        # `method=:gpu` AD default, phase 1b) cannot differentiate array mutation — it throws
-        # "Mutating arrays is not supported". This reproduces on CPU; the row records the gate
-        # so a future fix (Enzyme, Zygote.Buffer, or an out-of-place dynamics contract) flips
-        # it deliberately rather than silently.
-        Test.@testset "Flow(ocp) Hamiltonian on device — deferred (AD/mutation gate)" begin
+        # ================================================================
+        # AD-dependent OCP flows on device (phase 4f) — the half 4c deferred.
+        #   These differentiate the OCP (pseudo-)Hamiltonian, whose RHS fills a buffer through
+        #   CTModels' in-place `dynamics!`. That mutation is what AutoZygote could not handle;
+        #   AutoMooncake — the `method=:gpu` default since CTBase 0.28.2-beta — can, so the
+        #   `@test_throws` gate that used to sit here is now a positive assertion.
+        # ================================================================
+
+        Test.@testset "Flow(ocp) Hamiltonian on device (method=:gpu)" begin
+            # OCP_GPU_CF is ẋ = -x, control-free ⇒ H(x,p) = ⟨p, -x⟩, LINEAR in p. Hence
+            #   ẋ =  ∂H/∂p = -x  ⇒ x(1) = x0·e⁻¹
+            #   ṗ = -∂H/∂x =  p  ⇒ p(1) = p0·e⁺¹
+            # p0 is deliberately NON-ZERO: it makes the costate a real assertion and a sign
+            # guard (a flipped sign would give p0·e⁻¹). Both references were cross-checked on
+            # CPU with the ForwardDiff default and match to ~1e-10.
             f = Flows.Flow(OCP_GPU_CF; method=:gpu)
-            Test.@test_throws Exception f(
-                0.0, _dev([1.0, 2.0]), _dev([0.0, 0.0]), 1.0
-            )
+            xf, pf = f(0.0, _dev([1.0, 2.0]), _dev(_P0_AD), 1.0)
+            Test.@test xf isa CUDA.CuArray            # buffer + gradient stayed on device
+            Test.@test Array(xf) ≈ [1.0, 2.0] .* _E1 atol = 1e-6
+            Test.@test Array(pf) ≈ _P0_AD .* _EP1 atol = 1e-6
+        end
+
+        Test.@testset "Flow(ocp, DynClosedLoop) on device (method=:gpu)" begin
+            # The other AD-dependent OCP shape: a dynamic feedback law makes the flow
+            # differentiate the PSEUDO-Hamiltonian. This is the shape probe B8 validated.
+            # OCP_GPU_CTRL is autonomous + fixed, so the law arity is (x, p).
+            # u ≡ 0 ⇒ ẋ = -x again, so the same analytic reference applies.
+            f = Flows.Flow(OCP_GPU_CTRL, Data.DynClosedLoop((x, p) -> 0.0); method=:gpu)
+            xf, pf = f(0.0, _dev([1.0, 2.0]), _dev(_P0_AD), 1.0)
+            Test.@test xf isa CUDA.CuArray
+            Test.@test Array(xf) ≈ [1.0, 2.0] .* _E1 atol = 1e-6
+            Test.@test Array(pf) ≈ _P0_AD .* _EP1 atol = 1e-6
         end
     end
     return nothing
