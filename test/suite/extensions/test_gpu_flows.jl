@@ -27,6 +27,7 @@ using Test: Test
 import CUDA: CUDA
 import CTBase.Data: Data
 import CTFlows.Flows: Flows
+import CTFlows.Trajectories: Trajectories
 import CTModels: CTModels
 import ADTypes: ADTypes
 import SciMLBase: SciMLBase
@@ -60,13 +61,19 @@ const _OSC_P = [-_S1, _C1]
 # =============================================================================
 
 # control-free, autonomous, fixed, 2-D: ẋ = -x ⇒ x(1) = x0·e⁻¹
+#
+# The MAYER term must be device-safe too, not just the dynamics: a trajectory call evaluates
+# it as `may(x(t0), x(tf), v)` (`ocp_readouts.jl:48`) with the flow's own — here device —
+# endpoints. The natural `xf[1]` scalar-indexes a `CuArray` and is rejected under
+# `allowscalar(false)`; `sum` is a reduction and stays on device.
+# ⇒ objective = sum(x(1)) = (1+2)·e⁻¹.
 function _build_gpu_cf_ocp()
     pre = CTModels.Building.PreModel()
     CTModels.Building.time_dependence!(pre; autonomous=true)
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 2)
     CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= .-x; nothing))
-    CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf[1])
+    CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> sum(xf))
     return CTModels.Building.build(pre)
 end
 
@@ -273,10 +280,13 @@ function test_gpu_flows()
 
         Test.@testset "Flow(ocp) state trajectory on device" begin
             # The tspan call returns a StateFlowTrajectory (NOT a CTModels.Solution), so it
-            # does not cross the host-pinned `build_solution` boundary.
+            # does not cross the host-pinned `build_solution` boundary. It DOES evaluate the
+            # Mayer objective on the device endpoints, so this row also covers the
+            # `_flow_objective` Mayer path (mayer = sum(xf) ⇒ (1+2)·e⁻¹).
             f = Flows.Flow(OCP_GPU_CF)
             traj = f((0.0, 1.0), _dev([1.0, 2.0]))
             Test.@test traj !== nothing
+            Test.@test Trajectories.objective(traj) ≈ 3.0 * _E1 atol = 1e-6
         end
 
         Test.@testset "Flow(ocp, ClosedLoop) on device" begin
