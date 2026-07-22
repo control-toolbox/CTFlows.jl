@@ -451,6 +451,60 @@ function test_hamiltonian_vector_field_system()
         end
 
         # ====================================================================
+        # UNIT TESTS - _buffer_like (phase 4c: device-preserving RHS buffers)
+        #   The OCP right-hand sides allocate their in-place `dynamics!` buffer from the
+        #   state; `_buffer_like` keeps it on whichever device the state lives on, while
+        #   falling back to a host Vector for the 1-D = scalar convention.
+        # ====================================================================
+
+        Test.@testset "_buffer_like" begin
+            Test.@testset "host array template → host Vector" begin
+                b = Systems._buffer_like([1.0, 2.0, 3.0], Float64, 3)
+                Test.@test b isa Vector{Float64}
+                Test.@test length(b) == 3
+                # eltype is the requested one, not the template's (AD promotes it)
+                Test.@test Systems._buffer_like([1.0, 2.0], Float32, 2) isa Vector{Float32}
+                # length 0 is a valid request (empty control / variable buffers)
+                Test.@test isempty(Systems._buffer_like([1.0], Float64, 0))
+            end
+
+            # 1-D = scalar: `cx === _safe_only` yields a Number, for which `similar` is
+            # undefined — the Number fallback must produce a host Vector.
+            Test.@testset "scalar template → host Vector" begin
+                b = Systems._buffer_like(2.5, Float64, 3)
+                Test.@test b isa Vector{Float64}
+                Test.@test length(b) == 3
+                Test.@test isempty(Systems._buffer_like(2.5, Float64, 0))
+            end
+
+            # A view is what the OCP RHS actually receives (the state is a SubArray of the
+            # integrator's augmented buffer): `similar` must still give a plain host Vector,
+            # i.e. allocation-identical to the pre-4c `Vector{T}(undef, n)`.
+            Test.@testset "SubArray template → host Vector" begin
+                v = view([1.0, 2.0, 3.0, 4.0], 2:3)
+                b = Systems._buffer_like(v, Float64, 3)
+                Test.@test b isa Vector{Float64}
+                Test.@test length(b) == 3
+            end
+
+            # device template → device buffer: this is the whole point of the helper, and
+            # what makes `Flow(ocp, …)` runnable on a device state.
+            Test.@testset "device template → device buffer" begin
+                b = Systems._buffer_like(FakeGPUArray([1.0, 2.0]), Float64, 2)
+                Test.@test b isa FakeGPUArray
+                Test.@test length(b) == 2
+                Test.@test eltype(b) == Float64
+                # eltype follows the request (AD duals), not the template
+                Test.@test eltype(Systems._buffer_like(FakeGPUArray([1.0]), Float32, 1)) ==
+                    Float32
+                # the empty control/variable buffers must be device-typed too, otherwise a
+                # host Vector enters a device broadcast (GPUCompiler.KernelError)
+                Test.@test Systems._buffer_like(FakeGPUArray([1.0]), Float64, 0) isa
+                    FakeGPUArray
+            end
+        end
+
+        # ====================================================================
         # UNIT TESTS - get_ip_rhs_augmented (just verify it builds without error)
         # ====================================================================
 
