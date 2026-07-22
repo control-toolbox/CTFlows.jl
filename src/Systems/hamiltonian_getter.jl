@@ -181,14 +181,16 @@ call signature matches the Hamiltonian's time and variable dependence traits.
 
 # Arguments
 - `h::Data.AbstractHamiltonian{TD, VD}`: The Hamiltonian with traits `TD` (time dependence) and `VD` (variable dependence).
-- `ad_backend`: AD backend type (default: `Differentiation.__ad_backend()` = `AutoForwardDiff()`) or an `AbstractADBackend` instance.
+- `ad_backend::Differentiation.AbstractADBackend`: The AD backend to use (default: `__hvf_ad_backend()` = `Differentiation.DifferentiationInterface()`, the CPU default).
 - `inplace::Bool`: Whether to return an in-place functor (default: `__hvf_inplace()` = `false`).
 
 # Returns
 - `Data.HamiltonianVectorField`: The Hamiltonian vector field with correct traits matching the input Hamiltonian.
 
 # Notes
-- If `ad_backend` is an `AbstractADBackend` instance, it is used directly; otherwise it is wrapped via `Differentiation.build_ad_backend`.
+- `ad_backend` must already be a fully-built strategy (e.g. from `Flow`'s registry-based routing,
+  or constructed directly as `Differentiation.DifferentiationInterface{Strategies.GPU}(...)`).
+  This function does not build or device-select a backend from a raw `ADTypes.AbstractADType`.
 - The functor call signature depends on the Hamiltonian's traits:
   - Autonomous/Fixed: `(x, p) -> (∂p, -∂x)` or `(dx, dp, x, p) -> nothing` (in-place)
   - NonAutonomous/Fixed: `(t, x, p) -> (∂p, -∂x)` or `(dx, dp, t, x, p) -> nothing` (in-place)
@@ -199,16 +201,10 @@ See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.Hamilto
 """
 function hamiltonian_vector_field(
     h::Data.AbstractHamiltonian{TD,VD};
-    ad_backend=Differentiation.__ad_backend(),
+    ad_backend::Differentiation.AbstractADBackend=__hvf_ad_backend(),
     inplace::Bool=__hvf_inplace(),
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
-    # If ad_backend is an AbstractADBackend instance, use it directly; otherwise wrap it
-    backend = if ad_backend isa Differentiation.AbstractADBackend
-        ad_backend
-    else
-        Differentiation.build_ad_backend(; ad_backend=ad_backend)
-    end
-    f = inplace ? HVFIpFunctor(h, backend) : HVFOoPFunctor(h, backend)
+    f = inplace ? HVFIpFunctor(h, ad_backend) : HVFOoPFunctor(h, ad_backend)
     return Data.HamiltonianVectorField(
         f;
         is_autonomous=TD <: Traits.Autonomous,
@@ -260,15 +256,16 @@ Hamiltonian overload to compute the vector field via automatic differentiation.
 - `Data.HamiltonianVectorField`: The Hamiltonian vector field with correct traits matching the system's Hamiltonian.
 
 # Notes
-- This overload uses the AD backend stored in `sys.backend` for gradient computation.
+- This overload uses the AD backend returned by `backend(sys)` for gradient computation,
+  passed through as-is (no unwrapping/rewrapping), so a device-specific backend (e.g.
+  `DifferentiationInterface{Strategies.GPU}`) is preserved.
 - The `inplace` parameter controls whether the returned closure writes results in-place.
 - Delegates to [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 
 See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTBase.Data.Hamiltonian`](@extref), [`CTBase.Differentiation.AbstractADBackend`](@extref)
 """
 function hamiltonian_vector_field(sys::HamiltonianSystem; inplace::Bool=__hvf_inplace())
-    ad_backend = Differentiation.ad_backend(sys.backend)
-    return hamiltonian_vector_field(sys.h; ad_backend=ad_backend, inplace=inplace)
+    return hamiltonian_vector_field(sys.h; ad_backend=backend(sys), inplace=inplace)
 end
 
 """
@@ -306,9 +303,8 @@ See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Systems.
 function _hamiltonian_vector_field_by_ad(
     ::Type{Traits.WithAD}, sys::AbstractHamiltonianSystem; inplace::Bool=__hvf_inplace()
 )
-    ad_backend = Differentiation.ad_backend(backend(sys))
     return hamiltonian_vector_field(
-        hamiltonian(sys); ad_backend=ad_backend, inplace=inplace
+        hamiltonian(sys); ad_backend=backend(sys), inplace=inplace
     )
 end
 
