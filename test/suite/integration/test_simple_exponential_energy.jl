@@ -73,6 +73,9 @@ function test_simple_exponential_energy()
             sol = f((_T0, _TF), _X0, ξ_opt[1])
             Test.@test sol isa CTModels.Solutions.Solution
             Test.@test CTModels.objective(sol) > 0   # ∫0.5u² > 0
+            # ANALYTIC. CTProblems.jl `SimpleExponentialEnergy` gives J* = (e² - 1)·p0²/4
+            # with p0 = exp(-tf)/sinh(tf) — the same p0 already asserted above.
+            Test.@test CTModels.objective(sol) ≈ (exp(2.0) - 1) * _P0_SOL^2 / 4 rtol = 1e-6
         end
     end
 end

@@ -119,6 +119,8 @@ function test_double_integrator_state_first_order()
                 # Interior arc: u = p₂ ≠ 0
                 Test.@test abs(_u(0.5 * t1)) > 1e-3
                 Test.@test CTModels.objective(sol) > 0
+                # PINNED REFERENCE — regression guard, NOT a derived optimum (sits on 7.68 to ~5e-12).
+                Test.@test CTModels.objective(sol) ≈ 7.68 rtol = 1e-6
             end
         end
     end

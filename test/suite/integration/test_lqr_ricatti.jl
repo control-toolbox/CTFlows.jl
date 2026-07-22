@@ -77,6 +77,10 @@ function test_lqr_ricatti()
             sol = f((_T0, _TF), _X0, ξ_opt)
             Test.@test sol isa CTModels.Solutions.Solution
             Test.@test CTModels.objective(sol) > 0
+            # PINNED REFERENCE — regression guard, NOT a derived optimum. CTProblems.jl also
+            # marks this problem `:numerical` and obtains its objective by integrating the
+            # Riccati ODE, so there is no closed form to check against.
+            Test.@test CTModels.objective(sol) ≈ 0.6739990459 rtol = 1e-6
         end
     end
 end

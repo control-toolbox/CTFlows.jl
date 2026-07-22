@@ -87,6 +87,9 @@ function test_simple_integrator_energy_free_tf()
             sol = f((_T0, ξ_opt[2]), _X0, ξ_opt[1]; variable=ξ_opt[2])
             Test.@test sol isa CTModels.Solutions.Solution
             Test.@test CTModels.objective(sol) > 0   # ∫0.5u² > 0
+            # ANALYTIC. CTProblems.jl `SimpleIntegratorEnergyFreeTf` gives J* = (tf+10)²/(2tf),
+            # which at the closed-form tf = 10 is 400/20 = 20.
+            Test.@test CTModels.objective(sol) ≈ (_TF_SOL + 10)^2 / (2 * _TF_SOL) rtol = 1e-6
         end
     end
 end

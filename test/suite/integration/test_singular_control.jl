@@ -123,6 +123,8 @@ function test_singular_control()
                 sol = f((_T0, _TF_SOL), [0.0, 0.0, _TH0_SOL], _P0_SOL; variable=_TF_SOL)
                 Test.@test sol isa CTModels.Solutions.Solution
                 Test.@test CTModels.objective(sol) > 0
+                # PINNED REFERENCE — regression guard, NOT a derived optimum (no closed form used).
+                Test.@test CTModels.objective(sol) ≈ 1.1497308858 rtol = 1e-6
             end
         end
     end

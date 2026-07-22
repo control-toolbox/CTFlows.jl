@@ -74,6 +74,12 @@ function test_double_integrator_energy()
             sol = f((_T0, _TF), _X0, ξ_opt)
             Test.@test sol isa CTModels.Solutions.Solution
             Test.@test CTModels.objective(sol) > 0   # ∫0.5u² > 0
+            # Analytic value, derived from the closed-form costate documented above:
+            # u*(t) = p2(t) = p20 - p10·t = 6 - 12t, so
+            #   J = ½∫₀¹(6-12t)² dt = ½∫₀¹(36 - 144t + 144t²) dt = ½(36 - 72 + 48) = 6.
+            # Cross-checked against CTProblems.jl `DoubleIntegratorEnergy`, which states the
+            # same value as ½(α²T³/3 + β²T - αβT²) with α = 12, β = 6, T = 1.
+            Test.@test CTModels.objective(sol) ≈ 6.0 rtol = 1e-8
         end
     end
 end

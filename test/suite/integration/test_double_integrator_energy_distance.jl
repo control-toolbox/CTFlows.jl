@@ -74,6 +74,10 @@ function test_double_integrator_energy_distance()
             sol = f((_T0, _TF), _X0, ξ_opt)
             Test.@test sol isa CTModels.Solutions.Solution
             Test.@test CTModels.objective(sol) < 0   # -0.5x₁(tf) + ∫0.5u² < 0
+            # ANALYTIC. CTProblems.jl `DoubleIntegratorEnergyDistance` gives the closed form
+            #   J* = -0.5·x₁(tf) + tf³/24  with  x₁(tf) = tf²/12·(3tf - tf) = 1/6  at tf = 1,
+            # hence J* = -1/12 + 1/24 = -1/24. Matches the integrated value to ~1e-15.
+            Test.@test CTModels.objective(sol) ≈ -1 / 24 rtol = 1e-6
         end
     end
 end
