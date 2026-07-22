@@ -33,8 +33,10 @@ Compute the objective value (Mayer + Lagrange) of an OCP along a trajectory, giv
 callable state `x(t)` and control `u(t)` and the variable `v`.
 
 The Mayer term is evaluated at the endpoints `x(t0)` and `x(tf)`. The Lagrange term is
-integrated by flowing `ℓ̇(t) = ℓ(t, x(t), u(t), v)` from `t0` to `tf` (a 1-element vector
-gives SciML a mutable in-place buffer). Shared core of both the Hamiltonian
+integrated by flowing `ℓ̇(t) = ℓ(t, x(t), u(t), v)` from `t0` to `tf` on a **scalar** cost
+state: under the "1-D = scalar" convention the out-of-place right-hand side is wrapped in
+an `IPVFOoPRHS`, and that wrapper — not the state — supplies SciML's mutable in-place
+buffer. Shared core of both the Hamiltonian
 (`OptimalControlFlow`) and state (`ControlledFlow`) objective paths; each caller builds
 its own `x`, `u`, `v` and delegates here.
 
@@ -50,10 +52,10 @@ function _flow_objective(ocp, x, u, v, t0, tf, integ)
     if CTModels.Components.has_lagrange_cost(ocp)
         lag = CTModels.Components.lagrange(ocp)
         running = Data.VectorField(
-            (t, ℓ_vec) -> [lag(t, x(t), u(t), v)]; is_autonomous=false, is_variable=false
+            (t, ℓ) -> lag(t, x(t), u(t), v); is_autonomous=false, is_variable=false
         )
         cost_flow = build_flow(Systems.build_system(running), integ)
-        obj += cost_flow(t0, [0.0], tf)[1]
+        obj += cost_flow(t0, 0.0, tf)
     end
     return obj
 end
