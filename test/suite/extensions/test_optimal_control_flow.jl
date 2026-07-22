@@ -111,6 +111,53 @@ function _build_ocp_nonauton_fixed_mayer()
     return CTModels.Building.build(pre)
 end
 
+# ── objective-coverage fixtures ──────────────────────────────────────────────
+# The Mayer/Lagrange/Bolza trio was covered only for the autonomous / fixed-time / SCALAR-state
+# family. These three extend it to the families that had Mayer only (variable, non-autonomous)
+# plus a vector state, which had no objective coverage at all. Every analytic reference below is
+# derived in closed form AND was reconciled numerically against the flow before being committed.
+
+# autonomous, non-fixed (variable), Lagrange: ẋ = v·x, ℓ = x² ⇒ ∫₀ᵀ x0²e^{2vt}dt
+function _build_ocp_auton_nonfixed_lagrange()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, 1)
+    CTModels.Building.variable!(pre, 1)
+    CTModels.Building.dynamics!(pre, (r, _, x, _, v) -> (r[1]=v[1] * x[1]; nothing))
+    CTModels.Building.objective!(pre, :min; lagrange=(_, x, _, _) -> x[1]^2)
+    return CTModels.Building.build(pre)
+end
+
+# non-autonomous, fixed, Lagrange: ẋ = t·x, ℓ = t·x².
+# ℓ = x² would give ∫e^{t²}dt — no elementary closed form (erfi). With the t factor,
+# d(x²)/dt = 2t·x², so the integral telescopes to (x(tf)² − x0²)/2 — exact and x-dependent.
+function _build_ocp_nonauton_fixed_lagrange()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=false)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, 1)
+    CTModels.Building.dynamics!(pre, (r, t, x, _, _) -> (r[1]=t * x[1]; nothing))
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, _, _) -> t * x[1]^2)
+    return CTModels.Building.build(pre)
+end
+
+# VECTOR state (n = 2), Bolza: ẋ = λx componentwise, mayer = Σxf, ℓ = Σx²
+function _build_ocp_vector_bolza()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, 2)
+    CTModels.Building.dynamics!(pre, (r, _, x, _, _) -> (r .= λ_TEST .* x; nothing))
+    CTModels.Building.objective!(
+        pre,
+        :min;
+        mayer=(x0, xf, v) -> sum(xf),
+        lagrange=(_, x, _, _) -> sum(abs2, x),
+    )
+    return CTModels.Building.build(pre)
+end
+
 # with-control OCP (control! called) → WithControl trait, unsupported by Flow(ocp)
 function _build_ocp_with_control()
     pre = CTModels.Building.PreModel()
@@ -133,6 +180,9 @@ const OCP_AF_BOLZA = _build_ocp_auton_fixed_bolza()
 const OCP_ANF_MAYER = _build_ocp_auton_nonfixed_mayer()
 const OCP_NAF_MAYER = _build_ocp_nonauton_fixed_mayer()
 const OCP_WITH_CTRL = _build_ocp_with_control()
+const OCP_ANF_LAG = _build_ocp_auton_nonfixed_lagrange()
+const OCP_NAF_LAG = _build_ocp_nonauton_fixed_lagrange()
+const OCP_VEC_BOLZA = _build_ocp_vector_bolza()
 
 # Pre-built flows (all via generic HamiltonianSystem — OCP rides the generic path)
 const FLOW_AF = Flows.build_flow(
@@ -160,6 +210,15 @@ _lag_obj(T, x0) = x0^2 * (exp(2λ_TEST * T) - 1) / (2λ_TEST)
 _may_obj(T, x0) = x0 * exp(λ_TEST * T)
 
 _xna_ref(t, t0, x0) = x0 * exp((t^2 - t0^2) / 2)  # ẋ=t·x
+
+# Objective references for the extended families (each reconciled numerically before committing).
+# variable: ẋ = v·x, ℓ = x²  ⇒  ∫₀ᵀ x0² e^{2vt} dt
+_lag_obj_var(T, x0, v) = x0^2 * (exp(2 * v * T) - 1) / (2 * v)
+# non-autonomous: ẋ = t·x, ℓ = t·x²  ⇒  ½[x²] = (x(tf)² − x0²)/2
+_lag_obj_na(tf, t0, x0) = (_xna_ref(tf, t0, x0)^2 - x0^2) / 2
+# vector state: ẋ = λx, mayer = Σxf, ℓ = Σx²  (Σ over components; both terms scale as the scalar case)
+_may_obj_vec(T, x0) = sum(x0) * exp(λ_TEST * T)
+_lag_obj_vec(T, x0) = sum(abs2, x0) * (exp(2λ_TEST * T) - 1) / (2λ_TEST)
 
 # =============================================================================
 
@@ -397,6 +456,49 @@ function test_optimal_control_flow()
             sol = ocf_bolza((t0, tf), x0, p0)
             expected = _may_obj(tf - t0, x0) + _lag_obj(tf - t0, x0)
             Test.@test CTModels.Components.objective(sol) ≈ expected atol=ATOL
+        end
+
+        # ── objective coverage beyond the autonomous/fixed/scalar family ──────
+        # The trio above pinned only ONE OCP family. The objective path also runs for problems
+        # with a variable, with explicit time dependence, and with a vector state — none of which
+        # were covered. `_ocp_hamiltonian` + `_flow_objective` are shared by all of them, so a
+        # regression in the Lagrange quadrature would previously have been caught in one shape only.
+
+        Test.@testset "Integration: Lagrange objective ≈ analytic — with variable" begin
+            flow = Flows.build_flow(
+                Systems.build_system(Flows._ocp_hamiltonian(OCP_ANF_LAG), DI_BACKEND), INTEG
+            )
+            ocf = Flows.OptimalControlFlow(flow, OCP_ANF_LAG)
+            t0, tf = 0.0, 1.0
+            x0, p0, v = 1.0, 0.5, 1.5
+            sol = ocf((t0, tf), x0, p0; variable=v)
+            Test.@test CTModels.Components.objective(sol) ≈ _lag_obj_var(tf - t0, x0, v) atol =
+                ATOL
+        end
+
+        Test.@testset "Integration: Lagrange objective ≈ analytic — non-autonomous" begin
+            flow = Flows.build_flow(
+                Systems.build_system(Flows._ocp_hamiltonian(OCP_NAF_LAG), DI_BACKEND), INTEG
+            )
+            ocf = Flows.OptimalControlFlow(flow, OCP_NAF_LAG)
+            t0, tf = 0.0, 1.0
+            x0, p0 = 1.0, 0.5
+            sol = ocf((t0, tf), x0, p0)
+            Test.@test CTModels.Components.objective(sol) ≈ _lag_obj_na(tf, t0, x0) atol = ATOL
+        end
+
+        Test.@testset "Integration: Bolza objective ≈ analytic — vector state" begin
+            flow = Flows.build_flow(
+                Systems.build_system(Flows._ocp_hamiltonian(OCP_VEC_BOLZA), DI_BACKEND),
+                INTEG,
+            )
+            ocf = Flows.OptimalControlFlow(flow, OCP_VEC_BOLZA)
+            t0, tf = 0.0, 1.0
+            x0, p0 = [1.0, 2.0], [0.5, 0.25]
+            sol = ocf((t0, tf), x0, p0)
+            expected = _may_obj_vec(tf - t0, x0) + _lag_obj_vec(tf - t0, x0)
+            # the vector Bolza value is ~89, so a relative tolerance is the meaningful check here
+            Test.@test CTModels.Components.objective(sol) ≈ expected rtol = 1e-6
         end
 
         # ── cross-check: OCP flow vs generic HamiltonianSystem ────────────────

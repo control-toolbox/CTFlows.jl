@@ -81,6 +81,10 @@ function test_simple_integrator_lqr_free_tf()
             sol = f((_T0, ξ_opt[2]), _X0, ξ_opt[1]; variable=ξ_opt[2])
             Test.@test sol isa CTModels.Solutions.Solution
             Test.@test CTModels.objective(sol) > 0   # tf + ∫0.5(u²+x²) > 0
+            # ANALYTIC. CTProblems.jl `SimpleIntegratorLqrFreeTf` gives the Bolza value
+            # J* = tf + 0.5·xf²/tanh(tf), evaluated at the closed-form tf = atanh(1/√3).
+            Test.@test CTModels.objective(sol) ≈ _TF_SOL + 0.5 * _XF^2 / tanh(_TF_SOL) rtol =
+                1e-6
         end
     end
 end

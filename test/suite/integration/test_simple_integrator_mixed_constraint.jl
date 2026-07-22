@@ -88,6 +88,9 @@ function test_simple_integrator_mixed_constraint()
             sol = f((_T0, _TF), _X0, ξ_opt)
             Test.@test sol isa CTModels.Solutions.Solution
             Test.@test CTModels.objective(sol) < 0   # ∫(-u) = exp(-1) - 1 < 0
+            # The closed form asserted in the comment above, now actually checked:
+            # measured exp(-1) - 1 = -0.6321205588285526 vs analytic -0.6321205588285577.
+            Test.@test CTModels.objective(sol) ≈ exp(-1) - 1 rtol = 1e-8
         end
     end
 end
