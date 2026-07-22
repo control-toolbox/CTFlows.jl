@@ -42,12 +42,15 @@ using SciMLBase: SciMLBase
 using ADTypes: ADTypes
 using ForwardDiff: ForwardDiff                   # activates DI AutoForwardDiff
 using Zygote: Zygote                             # activates DI AutoZygote
+using Mooncake: Mooncake                         # activates DI AutoMooncake  (Block 7/8)
+using Enzyme: Enzyme                             # activates DI AutoEnzyme    (Block 7/8)
 using DiffEqGPU: DiffEqGPU                        # ensemble GPU tooling (Block 6)
 using StaticArrays: SVector                       # for the EnsembleGPUKernel path
 
 import CTBase.Data
 import CTBase.Differentiation
 import CTFlows.Flows
+import CTModels: CTModels                        # OCP fixture for Block 8
 
 # ---------------------------------------------------------------------------
 # Probe harness: run a labelled experiment, catch everything, record + print
@@ -179,8 +182,31 @@ function _grad_probe(backend_name, make_backend; device=true, expect_fail=false)
     end
 end
 
+"""
+The AD backends under test (phase 4e). DifferentiationInterface supports many more, but
+these are the ones worth spending GPU time on:
+
+  * `AutoForwardDiff` — the CTFlows default; scalar-indexes on GPU, so `expect_fail` on device.
+  * `AutoZygote`      — the current GPU default (CTBase D2). Reverse-mode, GPU-capable, but
+                        cannot differentiate mutation — which is exactly the 4f blocker.
+  * `AutoMooncake`    — reverse-mode; ships GPU rules and handles mutation. The candidate.
+  * `AutoEnzyme`      — reverse-mode; handles mutation. The other candidate.
+
+Deliberately excluded: ReverseDiff and Tracker (tape-based, no DI `Cache` support, a poor fit
+for `CuArray`), Diffractor (documented as broken with DI), and the remaining forward-mode
+backends (same scalar-indexing barrier as ForwardDiff). Note that the DI backend page makes
+**no** GPU-support claims either way — hence measuring rather than reading release notes.
+"""
+const AD_BACKENDS = [
+    ("AutoZygote", () -> ADTypes.AutoZygote()),
+    ("AutoMooncake", () -> ADTypes.AutoMooncake(; config=nothing)),
+    ("AutoEnzyme", () -> ADTypes.AutoEnzyme(; mode=Enzyme.Reverse)),
+]
+
 _grad_probe("AutoForwardDiff", () -> ADTypes.AutoForwardDiff(); expect_fail=true)  # ForwardDiff scalar-indexes on GPU
-_grad_probe("AutoZygote", () -> ADTypes.AutoZygote())
+for (name, make) in AD_BACKENDS
+    _grad_probe(name, make)
+end
 _grad_probe("AutoForwardDiff", () -> ADTypes.AutoForwardDiff(); device=false)  # baseline
 
 # ===========================================================================
@@ -205,7 +231,9 @@ function _hamgrad_probe(backend_name, make_backend; expect_fail=false)
     end
 end
 _hamgrad_probe("AutoForwardDiff", () -> ADTypes.AutoForwardDiff(); expect_fail=true)
-_hamgrad_probe("AutoZygote", () -> ADTypes.AutoZygote())
+for (name, make) in AD_BACKENDS
+    _hamgrad_probe(name, make)
+end
 
 # ===========================================================================
 # BLOCK 3 — flows on device with CURRENT CTFlows (no code change) (§5 matrix)
@@ -365,7 +393,10 @@ probe("B6", "EnsembleGPUArray (in-place, N=$_N_ENS)"; skip_if=(!CUDA_OK)) do
     maxerr = maximum(
         maximum(abs.(Array(sol.u[i].u[end]) .- _ens_expected(i))) for i in 1:_N_ENS
     )
-    return "max abs err vs analytic = $maxerr"
+    # Device-residency check: is the per-trajectory result still a device array, or has
+    # DiffEqGPU already gathered it to host before returning?
+    ftype = typeof(sol.u[1].u[end])
+    return "max abs err vs analytic = $maxerr; final-state type = $ftype"
 end
 
 # 6b — EnsembleGPUKernel: kernel-compiled path. Requires an out-of-place, StaticArrays RHS
@@ -390,7 +421,165 @@ probe("B6", "EnsembleGPUKernel (out-of-place SVector, N=$_N_ENS)"; skip_if=(!CUD
     maxerr = maximum(
         maximum(abs.(Array(sol.u[i].u[end]) .- _ens_expected(i))) for i in 1:_N_ENS
     )
-    return "max abs err vs analytic = $maxerr"
+    ftype = typeof(sol.u[1].u[end])
+    return "max abs err vs analytic = $maxerr; final-state type = $ftype"
+end
+
+# 6c/6d — Coupled-oscillator RHS (ẋ = p, ṗ = -x). These rows settle a question phase 4b left
+#   open, and the answer overturned BOTH earlier explanations — they are kept as executable
+#   evidence for the phase-5 docs, so the mistake is not re-derived later:
+#
+#     • The ORIGINAL note claimed `du[1] = u[2]` was forbidden by `allowscalar(false)`.
+#       False. Inside `EnsembleGPUArray` the RHS runs in a compiled kernel where du/u are
+#       `CuDeviceMatrix` slices; component indexing there is ordinary device code.
+#       `allowscalar(false)` guards HOST-side indexing of a device array — a different thing.
+#
+#     • The proposed fix — `du .= A * u`, "BLAS, not scalar indexing" — is WORSE: it does not
+#       compile. `*` reaches `generic_matvecmul!` → `gemv!` plus a `similar` heap allocation,
+#       none of which exist inside a GPU kernel (`InvalidIRError`). Hence expect_fail below.
+#
+#   The real rule: an `EnsembleGPUArray` RHS must be KERNEL-COMPILABLE — no BLAS, no heap
+#   allocation. Component-wise writes are the correct idiom there; array-level linear algebra
+#   is not. This is the opposite of the host-side `allowscalar(false)` rule, and the two must
+#   not be conflated.
+#
+#   x(0) = i, p(0) = 0 ⇒ analytic x(1) = i·cos(1), p(1) = -i·sin(1).
+const _HO_A = _dev([0.0 1.0; -1.0 0.0])
+_ho_u0(i) = [Float64(i), 0.0]
+_ho_expected(i) = [Float64(i) * cos(1.0), -Float64(i) * sin(1.0)]
+
+probe(
+    "B6",
+    "EnsembleGPUArray coupled oscillator (in-place, du.=A*u, N=$_N_ENS)";
+    skip_if=(!CUDA_OK),
+    expect_fail=true,   # InvalidIRError: gemv! + similar are not kernel-compilable
+) do
+    f!(du, u, p, t) = (du .= _HO_A * u)
+    prob = SciMLBase.ODEProblem(f!, _ho_u0(1), (0.0, 1.0))
+    eprob = SciMLBase.EnsembleProblem(
+        prob; prob_func=(p, ctx) -> SciMLBase.remake(p; u0=_ho_u0(ctx.sim_id))
+    )
+    sol = SciMLBase.solve(
+        eprob,
+        OrdinaryDiffEqTsit5.Tsit5(),
+        DiffEqGPU.EnsembleGPUArray(CUDA.CUDABackend());
+        trajectories=_N_ENS,
+        save_everystep=false,
+    )
+    maxerr = maximum(
+        maximum(abs.(Array(sol.u[i].u[end]) .- _ho_expected(i))) for i in 1:_N_ENS
+    )
+    ftype = typeof(sol.u[1].u[end])
+    return "max abs err vs analytic = $maxerr; final-state type = $ftype"
+end
+
+probe(
+    "B6",
+    "EnsembleGPUKernel coupled oscillator (out-of-place SVector, N=$_N_ENS)";
+    skip_if=(!CUDA_OK),
+) do
+    f_oop(u, p, t) = SVector(u[2], -u[1])
+    u0 = SVector{2,Float64}(1.0, 0.0)
+    prob = SciMLBase.ODEProblem(f_oop, u0, (0.0, 1.0))
+    eprob = SciMLBase.EnsembleProblem(
+        prob;
+        prob_func=(p, ctx) -> SciMLBase.remake(
+            p; u0=SVector{2,Float64}(Float64(ctx.sim_id), 0.0)
+        ),
+    )
+    sol = SciMLBase.solve(
+        eprob,
+        DiffEqGPU.GPUTsit5(),
+        DiffEqGPU.EnsembleGPUKernel(CUDA.CUDABackend());
+        trajectories=_N_ENS,
+        save_everystep=false,
+    )
+    maxerr = maximum(
+        maximum(abs.(Array(sol.u[i].u[end]) .- _ho_expected(i))) for i in 1:_N_ENS
+    )
+    ftype = typeof(sol.u[1].u[end])
+    return "max abs err vs analytic = $maxerr; final-state type = $ftype"
+end
+
+# ===========================================================================
+# BLOCK 7 — AD through a MUTATING in-place RHS (the actual 4f gate)
+#   This is the shape of `_ocp_H`: a scalar function that fills a buffer through an
+#   in-place closure, then reduces it. Zygote is the known-bad reference row — it cannot
+#   differentiate mutation at all, which is *why* 4f is blocked.
+#
+#   Run on HOST first, then on DEVICE. That split is the point of this block: it separates
+#   "this backend cannot do mutation" (host row red) from "this backend cannot do GPU"
+#   (host row green, device row red). Conflating the two is what stalled 4f.
+#
+#   f(x) = sum(r) where r .= 2x  ⇒  ∇f = 2·ones
+# ===========================================================================
+section("BLOCK 7 — AD through a mutating in-place RHS (host vs device)")
+
+_fill_twice!(r, x) = (r .= 2 .* x; nothing)
+
+function _mutating_scalar(x)
+    r = similar(x, length(x))
+    _fill_twice!(r, x)
+    return sum(r)
+end
+
+function _mutgrad_probe(backend_name, make_backend; device=true, expect_fail=false)
+    label = "DI.gradient mutating RHS $backend_name ($(device ? "CuArray" : "host"))"
+    probe("B7", label; skip_if=(device && !CUDA_OK), expect_fail=expect_fail) do
+        b = Differentiation.DifferentiationInterface(; ad_backend=make_backend())
+        x = device ? _dev([1.0, 2.0, 3.0]) : [1.0, 2.0, 3.0]
+        return Array(Differentiation.gradient(b, _mutating_scalar, x))   # expect ≈ 2·ones
+    end
+end
+
+# Zygote: expected to fail on BOTH rows — mutation, not the device, is the problem.
+_mutgrad_probe("AutoZygote", () -> ADTypes.AutoZygote(); device=false, expect_fail=true)
+_mutgrad_probe("AutoZygote", () -> ADTypes.AutoZygote(); expect_fail=true)
+for (name, make) in AD_BACKENDS
+    name == "AutoZygote" && continue
+    _mutgrad_probe(name, make; device=false)   # host: can it do mutation at all?
+    _mutgrad_probe(name, make)                 # device: can it do mutation on GPU?
+end
+
+# ===========================================================================
+# BLOCK 8 — Flow(ocp) Hamiltonian flow on device, per AD backend (the 4f question)
+#   End-to-end: the OCP pseudo-Hamiltonian differentiates the user's MUTATING `dynamics!`.
+#   Phase 4c shipped the AD-free OCP surface (state flows / ClosedLoop); this block asks
+#   whether any backend unlocks the Hamiltonian one.
+#   Fixture is device-safe by construction: broadcast dynamics (no component indexing) and
+#   a `sum`-based Mayer (phase 4c: the objective is user-supplied code just like dynamics!).
+# ===========================================================================
+section("BLOCK 8 — Flow(ocp) Hamiltonian on device, per AD backend")
+
+function _build_probe_ocp()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, 2)
+    CTModels.Building.control!(pre, 1)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= .-x; nothing))
+    CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> sum(xf))
+    return CTModels.Building.build(pre)
+end
+
+function _ocpflow_probe(backend_name, make_backend; expect_fail=false)
+    probe(
+        "B8",
+        "Flow(ocp) Hamiltonian $backend_name (CuArray)";
+        skip_if=(!CUDA_OK),
+        expect_fail=expect_fail,
+    ) do
+        ocp = _build_probe_ocp()
+        f = Flows.Flow(ocp, (x, p) -> 0.0; ad_backend=make_backend())
+        xf, pf = f(0.0, _dev([1.0, 2.0]), _dev([0.0, 0.0]), 1.0)
+        return (Array(xf), Array(pf))      # ẋ = -x with u ≡ 0 ⇒ xf ≈ x0·e⁻¹
+    end
+end
+
+for (name, make) in AD_BACKENDS
+    # Zygote is the shipped GPU default (D2) and the known blocker — mark it xfail so an
+    # UNEXPECTED PASS is reported loudly if the ecosystem has moved under us.
+    _ocpflow_probe(name, make; expect_fail=(name == "AutoZygote"))
 end
 
 # ===========================================================================
@@ -458,6 +647,21 @@ let n_ok = count(r -> r.status == :ok, RESULTS),
     )
     println(
         "     EnsembleGPUKernel (kernel-compiled, needs OOP + StaticArrays) both matching analytic.",
+    )
+    println(
+        "   • B7 is the 4f gate, and the HOST rows already decide half of it (they run without CUDA):",
+    )
+    println(
+        "     Zygote xfail on host ⇒ the blocker is mutation, NOT the device. Mooncake/Enzyme OK on",
+    )
+    println(
+        "     host ⇒ both can differentiate mutation; the device rows say whether that survives GPU.",
+    )
+    println(
+        "   • B8 ⇒ the end-to-end answer: if any backend is OK, 4f is a backend swap rather than a",
+    )
+    println(
+        "     rewrite of `dynamics!`. An UNEXPECTED PASS on the Zygote row would mean D2 is fine.",
     )
 end
 
