@@ -393,7 +393,10 @@ probe("B6", "EnsembleGPUArray (in-place, N=$_N_ENS)"; skip_if=(!CUDA_OK)) do
     maxerr = maximum(
         maximum(abs.(Array(sol.u[i].u[end]) .- _ens_expected(i))) for i in 1:_N_ENS
     )
-    return "max abs err vs analytic = $maxerr"
+    # Device-residency check: is the per-trajectory result still a device array, or has
+    # DiffEqGPU already gathered it to host before returning?
+    ftype = typeof(sol.u[1].u[end])
+    return "max abs err vs analytic = $maxerr; final-state type = $ftype"
 end
 
 # 6b — EnsembleGPUKernel: kernel-compiled path. Requires an out-of-place, StaticArrays RHS
@@ -418,7 +421,84 @@ probe("B6", "EnsembleGPUKernel (out-of-place SVector, N=$_N_ENS)"; skip_if=(!CUD
     maxerr = maximum(
         maximum(abs.(Array(sol.u[i].u[end]) .- _ens_expected(i))) for i in 1:_N_ENS
     )
-    return "max abs err vs analytic = $maxerr"
+    ftype = typeof(sol.u[1].u[end])
+    return "max abs err vs analytic = $maxerr; final-state type = $ftype"
+end
+
+# 6c/6d — Coupled-oscillator RHS (ẋ = p, ṗ = -x). These rows settle a question phase 4b left
+#   open, and the answer overturned BOTH earlier explanations — they are kept as executable
+#   evidence for the phase-5 docs, so the mistake is not re-derived later:
+#
+#     • The ORIGINAL note claimed `du[1] = u[2]` was forbidden by `allowscalar(false)`.
+#       False. Inside `EnsembleGPUArray` the RHS runs in a compiled kernel where du/u are
+#       `CuDeviceMatrix` slices; component indexing there is ordinary device code.
+#       `allowscalar(false)` guards HOST-side indexing of a device array — a different thing.
+#
+#     • The proposed fix — `du .= A * u`, "BLAS, not scalar indexing" — is WORSE: it does not
+#       compile. `*` reaches `generic_matvecmul!` → `gemv!` plus a `similar` heap allocation,
+#       none of which exist inside a GPU kernel (`InvalidIRError`). Hence expect_fail below.
+#
+#   The real rule: an `EnsembleGPUArray` RHS must be KERNEL-COMPILABLE — no BLAS, no heap
+#   allocation. Component-wise writes are the correct idiom there; array-level linear algebra
+#   is not. This is the opposite of the host-side `allowscalar(false)` rule, and the two must
+#   not be conflated.
+#
+#   x(0) = i, p(0) = 0 ⇒ analytic x(1) = i·cos(1), p(1) = -i·sin(1).
+const _HO_A = _dev([0.0 1.0; -1.0 0.0])
+_ho_u0(i) = [Float64(i), 0.0]
+_ho_expected(i) = [Float64(i) * cos(1.0), -Float64(i) * sin(1.0)]
+
+probe(
+    "B6",
+    "EnsembleGPUArray coupled oscillator (in-place, du.=A*u, N=$_N_ENS)";
+    skip_if=(!CUDA_OK),
+    expect_fail=true,   # InvalidIRError: gemv! + similar are not kernel-compilable
+) do
+    f!(du, u, p, t) = (du .= _HO_A * u)
+    prob = SciMLBase.ODEProblem(f!, _ho_u0(1), (0.0, 1.0))
+    eprob = SciMLBase.EnsembleProblem(
+        prob; prob_func=(p, ctx) -> SciMLBase.remake(p; u0=_ho_u0(ctx.sim_id))
+    )
+    sol = SciMLBase.solve(
+        eprob,
+        OrdinaryDiffEqTsit5.Tsit5(),
+        DiffEqGPU.EnsembleGPUArray(CUDA.CUDABackend());
+        trajectories=_N_ENS,
+        save_everystep=false,
+    )
+    maxerr = maximum(
+        maximum(abs.(Array(sol.u[i].u[end]) .- _ho_expected(i))) for i in 1:_N_ENS
+    )
+    ftype = typeof(sol.u[1].u[end])
+    return "max abs err vs analytic = $maxerr; final-state type = $ftype"
+end
+
+probe(
+    "B6",
+    "EnsembleGPUKernel coupled oscillator (out-of-place SVector, N=$_N_ENS)";
+    skip_if=(!CUDA_OK),
+) do
+    f_oop(u, p, t) = SVector(u[2], -u[1])
+    u0 = SVector{2,Float64}(1.0, 0.0)
+    prob = SciMLBase.ODEProblem(f_oop, u0, (0.0, 1.0))
+    eprob = SciMLBase.EnsembleProblem(
+        prob;
+        prob_func=(p, ctx) -> SciMLBase.remake(
+            p; u0=SVector{2,Float64}(Float64(ctx.sim_id), 0.0)
+        ),
+    )
+    sol = SciMLBase.solve(
+        eprob,
+        DiffEqGPU.GPUTsit5(),
+        DiffEqGPU.EnsembleGPUKernel(CUDA.CUDABackend());
+        trajectories=_N_ENS,
+        save_everystep=false,
+    )
+    maxerr = maximum(
+        maximum(abs.(Array(sol.u[i].u[end]) .- _ho_expected(i))) for i in 1:_N_ENS
+    )
+    ftype = typeof(sol.u[1].u[end])
+    return "max abs err vs analytic = $maxerr; final-state type = $ftype"
 end
 
 # ===========================================================================
