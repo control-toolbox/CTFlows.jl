@@ -45,7 +45,9 @@ function _build_exponential_growth()
         b[1] = x0_[1] - 2.0
         return nothing
     end
-    CTModels.Building.constraint!(pre, :boundary; f=boundary!, lb=[0.0], ub=[0.0], label=:ic)
+    CTModels.Building.constraint!(
+        pre, :boundary; f=boundary!, lb=[0.0], ub=[0.0], label=:ic
+    )
 
     function lag(t, x, u, v)
         return (x[1] - data(t))^2
@@ -75,7 +77,9 @@ function _build_harmonic_oscillator()
         b[3] = xf_[1] - 0.0
         return nothing
     end
-    CTModels.Building.constraint!(pre, :boundary; f=boundary!, lb=zeros(3), ub=zeros(3), label=:endpoint)
+    CTModels.Building.constraint!(
+        pre, :boundary; f=boundary!, lb=zeros(3), ub=zeros(3), label=:endpoint
+    )
 
     CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> v[1]^2)
 

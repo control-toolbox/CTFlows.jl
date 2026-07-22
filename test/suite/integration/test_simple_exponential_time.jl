@@ -46,7 +46,7 @@ function _build_simple_exp_time()
     CTModels.Building.time!(pre; t0=_T0, indf=1)   # free final time = variable[1]
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = -x + u; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=(-x + u); nothing))
     CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> v[1])
     return CTModels.Building.build(pre)
 end

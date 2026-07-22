@@ -38,7 +38,9 @@ const _XI_SOL = [_P0_SOL; _T1_SOL; _T0_SOL]
 
 # Initial guess from tutorial direct method (sol.costate(t0))
 # ‖s‖ ≈ 4.7e-3 at this point — Newton converges readily
-const _XI_GUESS = [0.9999999954958447, 0.996660258625808, -0.9999999955009733, -1.9999999910019466]
+const _XI_GUESS = [
+    0.9999999954958447, 0.996660258625808, -0.9999999955009733, -1.9999999910019466
+]
 
 function _build_free_initial_time()
     pre = CTModels.Building.PreModel()
@@ -47,7 +49,7 @@ function _build_free_initial_time()
     CTModels.Building.control!(pre, 1)
     CTModels.Building.variable!(pre, 1)
     CTModels.Building.time!(pre; ind0=1, tf=_TF)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= [x[2], u[1]]; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r.=[x[2], u[1]]; nothing))
     CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> -v[1])
     return CTModels.Building.build(pre)
 end
@@ -60,12 +62,20 @@ function test_free_initial_time()
             # Bang-bang: u=+1 on [t0, t1], u=-1 on [t1, 0]
             # Autonomous + variable ⇒ arity (x, p, v)
             f_pos = Flows.Flow(
-                ocp, (x, p, v) -> 1.0;
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p, v) -> 1.0;
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
             f_neg = Flows.Flow(
-                ocp, (x, p, v) -> -1.0;
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p, v) -> -1.0;
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
 
             function shoot!(s, ξ)

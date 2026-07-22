@@ -46,7 +46,9 @@ function _build_exponential_growth_control()
         b[1] = x0_[1] - 2.0
         return nothing
     end
-    CTModels.Building.constraint!(pre, :boundary; f=boundary!, lb=[0.0], ub=[0.0], label=:ic)
+    CTModels.Building.constraint!(
+        pre, :boundary; f=boundary!, lb=[0.0], ub=[0.0], label=:ic
+    )
 
     function lag(t, x, u, v)
         return (x[1] - data(t))^2 + 0.5 * u[1]^2
@@ -77,12 +79,12 @@ function _build_harmonic_oscillator_control()
         b[3] = xf_[1] - 0.0
         return nothing
     end
-    CTModels.Building.constraint!(pre, :boundary; f=boundary!, lb=zeros(3), ub=zeros(3), label=:endpoint)
+    CTModels.Building.constraint!(
+        pre, :boundary; f=boundary!, lb=zeros(3), ub=zeros(3), label=:endpoint
+    )
 
     CTModels.Building.objective!(
-        pre, :min;
-        mayer=(x0, xf, v) -> v[1]^2,
-        lagrange=(t, x, u, v) -> 0.5 * u[1]^2,
+        pre, :min; mayer=(x0, xf, v) -> v[1]^2, lagrange=(t, x, u, v) -> 0.5 * u[1]^2
     )
 
     return CTModels.Building.build(pre)
@@ -100,20 +102,28 @@ function test_control_and_variable()
             for ht in (:total, :partial)
                 # non-autonomous + variable + control ⇒ arity (t, x, p, v); u* = p (scalar)
                 f = Flows.Flow(
-                    ocp, (t, x, p, v) -> p;
-                    hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                    ocp,
+                    (t, x, p, v) -> p;
+                    hamiltonian_type=ht,
+                    alg=Tsit5(),
+                    reltol=1e-12,
+                    abstol=1e-12,
                 )
 
                 function shoot!(s, ξ)
                     p0, λ = ξ[1], ξ[2]
-                    xf, pf, pvf = f(_T0, 2.0, p0, _TF_G1; variable=[λ], variable_costate=true)
+                    xf, pf, pvf = f(
+                        _T0, 2.0, p0, _TF_G1; variable=[λ], variable_costate=true
+                    )
                     s[1] = pf                              # p(tf) = 0 (free final state)
                     s[2] = pvf                             # pλ(tf) = 0 (no Mayer on λ)
                     return nothing
                 end
 
                 ξ_guess = [0.0475, 0.4934]
-                ξ_opt = test_shooting(shoot!, [_G1_P0_SOL, _G1_LAMBDA_SOL], ξ_guess; atol=1e-8)
+                ξ_opt = test_shooting(
+                    shoot!, [_G1_P0_SOL, _G1_LAMBDA_SOL], ξ_guess; atol=1e-8
+                )
 
                 Test.@test isapprox(ξ_opt[1], _G1_P0_SOL; atol=1e-6)
                 Test.@test isapprox(ξ_opt[2], _G1_LAMBDA_SOL; atol=1e-6)
@@ -129,15 +139,21 @@ function test_control_and_variable()
             for ht in (:total, :partial)
                 # autonomous + variable + control ⇒ arity (x, p, v); u* = p₂
                 f = Flows.Flow(
-                    ocp, (x, p, v) -> p[2];
-                    hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                    ocp,
+                    (x, p, v) -> p[2];
+                    hamiltonian_type=ht,
+                    alg=Tsit5(),
+                    reltol=1e-12,
+                    abstol=1e-12,
                 )
 
                 function shoot!(s, ξ)
                     pq0, pv0, ω = ξ[1], ξ[2], ξ[3]
                     x0 = [1.0, 0.0]
                     p0 = [pq0, pv0]
-                    xf, pf, pvf = f(_T0, x0, p0, _TF_G2; variable=[ω], variable_costate=true)
+                    xf, pf, pvf = f(
+                        _T0, x0, p0, _TF_G2; variable=[ω], variable_costate=true
+                    )
                     s[1] = xf[1]                           # q(tf) = 0
                     s[2] = pf[2]                           # pv(tf) = 0 (free final velocity)
                     s[3] = pvf + 2.0 * ω                   # pω(tf) + ∂g/∂ω = 0, g(ω)=ω²
@@ -145,7 +161,9 @@ function test_control_and_variable()
                 end
 
                 ξ_guess = [-2.06, -2.41, -0.65]
-                ξ_opt = test_shooting(shoot!, [_G2_P0_SOL; _G2_OMEGA_SOL], ξ_guess; atol=1e-8)
+                ξ_opt = test_shooting(
+                    shoot!, [_G2_P0_SOL; _G2_OMEGA_SOL], ξ_guess; atol=1e-8
+                )
 
                 # Sign of ω is irrelevant (cost is ω²), assert on abs
                 Test.@test isapprox(abs(ξ_opt[3]), abs(_G2_OMEGA_SOL); atol=1e-6)

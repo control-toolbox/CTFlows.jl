@@ -43,7 +43,7 @@ function _build_di_consumption()
     CTModels.Building.time!(pre; t0=_T0, tf=_TF)
     CTModels.Building.state!(pre, 2)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= [x[2], u[1]]; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r.=[x[2], u[1]]; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> abs(u[1]))
     return CTModels.Building.build(pre)
 end
@@ -56,16 +56,28 @@ function test_double_integrator_consumption()
             # Bang+ arc: u = +γ; off arc: u = 0; bang- arc: u = -γ.
             # Autonomous + fixed ⇒ arity (x, p).
             f_plus = Flows.Flow(
-                ocp, (x, p) -> _GAMMA;
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p) -> _GAMMA;
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
             f_off = Flows.Flow(
-                ocp, (x, p) -> 0.0;
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p) -> 0.0;
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
             f_minus = Flows.Flow(
-                ocp, (x, p) -> -_GAMMA;
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p) -> -_GAMMA;
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
 
             function shoot!(s, ξ)
@@ -109,5 +121,6 @@ end
 
 end # module
 
-test_double_integrator_consumption() =
-    TestDoubleIntegratorConsumption.test_double_integrator_consumption()
+function test_double_integrator_consumption()
+    return TestDoubleIntegratorConsumption.test_double_integrator_consumption()
+end

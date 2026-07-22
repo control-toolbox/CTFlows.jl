@@ -43,10 +43,10 @@ function _build_di_energy_control_constraint()
     CTModels.Building.time!(pre; t0=_T0, tf=_TF)
     CTModels.Building.state!(pre, 2)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= [x[2], u[1]]; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r.=[x[2], u[1]]; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u[1]^2)
     CTModels.Building.constraint!(
-        pre, :control; rg=1:1, lb=[-_GAMMA], ub=[_GAMMA], label=:u_box,
+        pre, :control; rg=1:1, lb=[-_GAMMA], ub=[_GAMMA], label=:u_box
     )
     return CTModels.Building.build(pre)
 end
@@ -58,16 +58,28 @@ function test_double_integrator_energy_control_constraint()
         for ht in (:total, :partial)
             # Bang+ arc: u = +γ; smooth arc: u* = p₂; bang- arc: u = -γ.
             f_plus = Flows.Flow(
-                ocp, (x, p) -> _GAMMA;
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p) -> _GAMMA;
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
             f_mid = Flows.Flow(
-                ocp, (x, p) -> p[2];
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p) -> p[2];
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
             f_minus = Flows.Flow(
-                ocp, (x, p) -> -_GAMMA;
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p) -> -_GAMMA;
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
 
             function shoot!(s, ξ)
@@ -103,5 +115,6 @@ end
 
 end # module
 
-test_double_integrator_energy_control_constraint() =
-    TestDoubleIntegratorEnergyControlConstraint.test_double_integrator_energy_control_constraint()
+function test_double_integrator_energy_control_constraint()
+    return TestDoubleIntegratorEnergyControlConstraint.test_double_integrator_energy_control_constraint()
+end

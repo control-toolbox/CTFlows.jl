@@ -40,7 +40,7 @@ function _build_simple_exponential_consumption()
     CTModels.Building.time!(pre; t0=_T0, tf=_TF)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = -x[1] + u[1]; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=(-x[1] + u[1]); nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> abs(u[1]))
     return CTModels.Building.build(pre)
 end
@@ -53,12 +53,20 @@ function test_simple_exponential_consumption()
             # Off arc: u=0; bang+ arc: u=+1.
             # Autonomous + fixed ⇒ arity (x, p).
             f_off = Flows.Flow(
-                ocp, (x, p) -> 0.0;
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p) -> 0.0;
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
             f_plus = Flows.Flow(
-                ocp, (x, p) -> 1.0;
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p) -> 1.0;
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
 
             function shoot!(s, ξ)
@@ -89,5 +97,6 @@ end
 
 end # module
 
-test_simple_exponential_consumption() =
-    TestSimpleExponentialConsumption.test_simple_exponential_consumption()
+function test_simple_exponential_consumption()
+    return TestSimpleExponentialConsumption.test_simple_exponential_consumption()
+end

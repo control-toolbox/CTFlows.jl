@@ -50,18 +50,20 @@ function _build_si_nonautonomous()
     CTModels.Building.time!(pre; t0=_T0, tf=_TF)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = u[1]; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=u[1]; nothing))
     CTModels.Building.objective!(
-        pre, :min; lagrange=(t, x, u, v) -> exp(-_ALPHA * t) * u[1],
+        pre, :min; lagrange=(t, x, u, v) -> exp(-_ALPHA * t) * u[1]
     )
     # Control box: 0 ≤ u ≤ 3
-    CTModels.Building.constraint!(
-        pre, :control; rg=1:1, lb=[0.0], ub=[3.0], label=:u_con,
-    )
+    CTModels.Building.constraint!(pre, :control; rg=1:1, lb=[0.0], ub=[3.0], label=:u_con)
     # State path constraint: 1 - x - (t-2)² ≤ 0
     CTModels.Building.constraint!(
-        pre, :path; f=(r, t, x, u, v) -> (r[1] = 1.0 - x[1] - (t - 2.0)^2; nothing),
-        lb=[-Inf], ub=[0.0], label=:x_con,
+        pre,
+        :path;
+        f=(r, t, x, u, v) -> (r[1]=1.0 - x[1] - (t - 2.0)^2; nothing),
+        lb=[-Inf],
+        ub=[0.0],
+        label=:x_con,
     )
     return CTModels.Building.build(pre)
 end
@@ -77,14 +79,22 @@ function test_simple_integrator_state_and_control_constraints_nonautonomous()
             # Off arc: u = 0; boundary arc: u = -2(t-2) from ẋ = d/dt[1-(t-2)²].
             # Non-autonomous + fixed ⇒ arity (t, x, p).
             f0 = Flows.Flow(
-                ocp, (t, x, p) -> 0.0;
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (t, x, p) -> 0.0;
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
             fc = Flows.Flow(
-                ocp, (t, x, p) -> -2.0 * (t - 2.0);
+                ocp,
+                (t, x, p) -> -2.0 * (t - 2.0);
                 constraint=(t, x, u) -> g(t, x),
                 multiplier=(t, x, p) -> -_ALPHA * p[1],
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
 
             function shoot!(s, ξ)
@@ -119,5 +129,6 @@ end
 
 end # module
 
-test_simple_integrator_state_and_control_constraints_nonautonomous() =
-    TestSimpleIntegratorStateControlNonautonomous.test_simple_integrator_state_and_control_constraints_nonautonomous()
+function test_simple_integrator_state_and_control_constraints_nonautonomous()
+    return TestSimpleIntegratorStateControlNonautonomous.test_simple_integrator_state_and_control_constraints_nonautonomous()
+end

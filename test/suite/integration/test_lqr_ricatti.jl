@@ -40,7 +40,7 @@ function _build_lqr_ricatti()
     CTModels.Building.time!(pre; t0=_T0, tf=_TF)
     CTModels.Building.state!(pre, 2)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= _A * x + _B * u; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r.=_A * x + _B * u; nothing))
     CTModels.Building.objective!(
         pre, :min; lagrange=(t, x, u, v) -> 0.5 * (x[1]^2 + x[2]^2 + u[1]^2)
     )

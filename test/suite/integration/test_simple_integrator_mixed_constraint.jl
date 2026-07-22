@@ -41,16 +41,18 @@ function _build_simple_integrator_mixed_constraint()
     CTModels.Building.time!(pre; t0=_T0, tf=_TF)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = u[1]; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=u[1]; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> -u[1])
     # Control box: 0 ≤ u
-    CTModels.Building.constraint!(
-        pre, :control; rg=1:1, lb=[0.0], ub=[Inf], label=:u_box,
-    )
+    CTModels.Building.constraint!(pre, :control; rg=1:1, lb=[0.0], ub=[Inf], label=:u_box)
     # Mixed path constraint: x + u ≤ 0
     CTModels.Building.constraint!(
-        pre, :path; f=(r, t, x, u, v) -> (r[1] = x[1] + u[1]; nothing),
-        lb=[-Inf], ub=[0.0], label=:mixed_con,
+        pre,
+        :path;
+        f=(r, t, x, u, v) -> (r[1]=x[1] + u[1]; nothing),
+        lb=[-Inf],
+        ub=[0.0],
+        label=:mixed_con,
     )
     return CTModels.Building.build(pre)
 end
@@ -92,5 +94,6 @@ end
 
 end # module
 
-test_simple_integrator_mixed_constraint() =
-    TestSimpleIntegratorMixedConstraint.test_simple_integrator_mixed_constraint()
+function test_simple_integrator_mixed_constraint()
+    return TestSimpleIntegratorMixedConstraint.test_simple_integrator_mixed_constraint()
+end
