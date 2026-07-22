@@ -11,8 +11,14 @@ NVIDIA runner (PR label `run ci gpu`).
 GPU-friendly test integrands use `sum`/`dot`/broadcasts, never scalar indexing (`v[i]`, `x[i]`)
 — a device scalar read is blocked by `allowscalar(false)` (probe run 4/5).
 
-Out of scope here: `Flow(ocp, …)` on device (phase 4c — OCP host-buffers + CTModels `dynamics!`
-gate) and the ensemble path (phase 4b).
+Phase 4c adds the **AD-free** OCP surface: `Flow(ocp)`'s state flow (no costate) and
+`Flow(ocp, OpenLoop/ClosedLoop)`. The AD-dependent OCP surface (`Flow(ocp)` Hamiltonian,
+`Flow(ocp, DynClosedLoop)`) is **deferred**: those right-hand sides fill a buffer through
+CTModels' in-place `dynamics!`, and Zygote — the `method=:gpu` AD default — cannot
+differentiate array mutation. That gate fails on CPU too, so it is an AD-architecture issue,
+not a GPU one; the negative row below documents it.
+
+Out of scope here: the ensemble path (phase 4b, `test_gpu_ensemble.jl`).
 """
 
 module TestGPUFlows
@@ -21,6 +27,7 @@ using Test: Test
 import CUDA: CUDA
 import CTBase.Data: Data
 import CTFlows.Flows: Flows
+import CTModels: CTModels
 import ADTypes: ADTypes
 import SciMLBase: SciMLBase
 import Zygote: Zygote  # loads the Zygote backend so the AutoZygote GPU AD default can differentiate
@@ -41,6 +48,44 @@ const _S1 = sin(1.0)
 #   x(1) = [cos1,  sin1],  p(1) = [-sin1, cos1]
 const _OSC_X = [_C1, _S1]
 const _OSC_P = [-_S1, _C1]
+
+# =============================================================================
+# OCP fixtures (module top-level, per the repo convention)
+#
+# GPU-friendly dynamics: the RHS is written as a BROADCAST (`r .= .-x`), never with
+# component-wise scalar writes (`r[1] = x[2]`). CTModels itself is device-clean — it only
+# ever hands the user closure a contiguous `@view` of the buffer — so the whole GPU-safety
+# burden sits in the user's `dynamics!` body. The canonical docs idiom (`r[1] = …`) would
+# scalar-index a device buffer and fail here; this is the contract phase 5 documents.
+# =============================================================================
+
+# control-free, autonomous, fixed, 2-D: ẋ = -x ⇒ x(1) = x0·e⁻¹
+function _build_gpu_cf_ocp()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, 2)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= .-x; nothing))
+    CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf[1])
+    return CTModels.Building.build(pre)
+end
+
+# with-control, autonomous, fixed, 2-D: ẋ = -x + u. The control dimension is 1, so CTFlows
+# coerces `u` to a SCALAR before calling the dynamics (1-D = scalar), which broadcasts
+# cleanly against a device state. With the ClosedLoop law u ≡ 0 the reference is x0·e⁻¹.
+function _build_gpu_ctrl_ocp()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, 2)
+    CTModels.Building.control!(pre, 1)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= .-x .+ u; nothing))
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.0)
+    return CTModels.Building.build(pre)
+end
+
+const OCP_GPU_CF = _build_gpu_cf_ocp()
+const OCP_GPU_CTRL = _build_gpu_ctrl_ocp()
 
 function test_gpu_flows()
     Test.@testset "GPU flows (Family-B, device execution)" verbose=VERBOSE showtiming=SHOWTIMING begin
@@ -211,6 +256,49 @@ function test_gpu_flows()
             x_mid = [1.0, 2.0] .* exp(-0.5) .+ 0.1
             x_ref = x_mid .* exp(-0.5)
             Test.@test Array(xf) ≈ x_ref atol = 1e-6
+        end
+
+        # ================================================================
+        # OCP flows on device (phase 4c) — the AD-FREE surface only.
+        #   Exercises the `_buffer_like` migration: the in-place `dynamics!` buffer is
+        #   now allocated from the state, so a device state yields a device buffer.
+        # ================================================================
+
+        Test.@testset "Flow(ocp) state flow (no costate) on device" begin
+            f = Flows.Flow(OCP_GPU_CF)
+            xf = f(0.0, _dev([1.0, 2.0]), 1.0)          # basic call: no p0
+            Test.@test xf isa CUDA.CuArray               # buffer stayed on device
+            Test.@test Array(xf) ≈ [1.0, 2.0] .* _E1 atol = 1e-6
+        end
+
+        Test.@testset "Flow(ocp) state trajectory on device" begin
+            # The tspan call returns a StateFlowTrajectory (NOT a CTModels.Solution), so it
+            # does not cross the host-pinned `build_solution` boundary.
+            f = Flows.Flow(OCP_GPU_CF)
+            traj = f((0.0, 1.0), _dev([1.0, 2.0]))
+            Test.@test traj !== nothing
+        end
+
+        Test.@testset "Flow(ocp, ClosedLoop) on device" begin
+            # ClosedLoop ⇒ AD-free controlled state flow through `_ocp_controlled_vf`.
+            # u ≡ 0, so ẋ = -x and the reference is the same exponential decay.
+            f = Flows.Flow(OCP_GPU_CTRL, Data.ClosedLoop(x -> 0.0))
+            xf = f(0.0, _dev([1.0, 2.0]), 1.0)
+            Test.@test xf isa CUDA.CuArray
+            Test.@test Array(xf) ≈ [1.0, 2.0] .* _E1 atol = 1e-6
+        end
+
+        # The AD-dependent OCP surface is DEFERRED, and the reason is not GPU-specific:
+        # `_ocp_H` fills its buffer through CTModels' in-place `dynamics!`, and Zygote (the
+        # `method=:gpu` AD default, phase 1b) cannot differentiate array mutation — it throws
+        # "Mutating arrays is not supported". This reproduces on CPU; the row records the gate
+        # so a future fix (Enzyme, Zygote.Buffer, or an out-of-place dynamics contract) flips
+        # it deliberately rather than silently.
+        Test.@testset "Flow(ocp) Hamiltonian on device — deferred (AD/mutation gate)" begin
+            f = Flows.Flow(OCP_GPU_CF; method=:gpu)
+            Test.@test_throws Exception f(
+                0.0, _dev([1.0, 2.0]), _dev([0.0, 0.0]), 1.0
+            )
         end
     end
     return nothing

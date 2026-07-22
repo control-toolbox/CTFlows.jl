@@ -70,15 +70,15 @@ See also: [`CTFlows.Flows.OCPHamiltonianFunction`](@ref).
 function _ocp_H(h::OCPHamiltonianFunction, t, x, p, v)
     if v === nothing
         T = eltype(x)
-        u = Vector{T}(undef, 0)          # empty control (control-free) and variable (Fixed)
-        r = Vector{T}(undef, h.n)
+        u = Systems._buffer_like(x, T, 0)  # empty control (control-free) and variable (Fixed)
+        r = Systems._buffer_like(x, T, h.n)
         h.dynamics!(r, t, x, u, u)       # x passed as-is (scalar for 1-D per convention)
         val = sum(p .* r)
         h.lagrange === nothing || (val += h.sp0 * h.lagrange(t, x, u, u))
     else
         T = Base.promote_op(*, eltype(x), eltype(v))
-        u = Vector{T}(undef, 0)          # empty control (control-free)
-        r = Vector{T}(undef, h.n)
+        u = Systems._buffer_like(x, T, 0)  # empty control (control-free)
+        r = Systems._buffer_like(x, T, h.n)
         h.dynamics!(r, t, x, u, v)       # x, v passed as-is
         val = sum(p .* r)
         h.lagrange === nothing || (val += h.sp0 * h.lagrange(t, x, u, v))
@@ -194,12 +194,12 @@ See also: [`CTFlows.Flows.OCPPseudoHamiltonianFunction`](@ref).
 function _ocp_pseudo_H(h::OCPPseudoHamiltonianFunction, t, x, p, u, v)
     if v === nothing
         T = Base.promote_op(*, eltype(x), eltype(u))
-        vv = Vector{T}(undef, 0)   # empty variable for Fixed problems
+        vv = Systems._buffer_like(x, T, 0)   # empty variable for Fixed problems
     else
         T = Base.promote_op(*, Base.promote_op(*, eltype(x), eltype(u)), eltype(v))
         vv = v
     end
-    r = Vector{T}(undef, h.n)      # in-place derivative buffer (always length n_x)
+    r = Systems._buffer_like(x, T, h.n)   # in-place derivative buffer (always length n_x)
     h.dynamics!(r, t, x, u, vv)    # x, u, v passed as-is (scalar for 1-D per convention)
     val = sum(p .* r)             # p·f — sum handles scalar p (1-D) or vector p (n-D)
     h.lagrange === nothing || (val += h.sp0 * h.lagrange(t, x, u, vv))
@@ -609,13 +609,13 @@ function _ocp_controlled_vf(h::OCPControlledVectorFieldFunction, t, x, u, v)
     us = h.cu(u)
     if v === nothing
         T = Base.promote_op(*, eltype(xs), eltype(us))
-        vv = Vector{T}(undef, 0)
+        vv = Systems._buffer_like(xs, T, 0)
     else
         vs = h.cv(v)
         T = Base.promote_op(*, Base.promote_op(*, eltype(xs), eltype(us)), eltype(vs))
         vv = vs
     end
-    r = Vector{T}(undef, h.n)
+    r = Systems._buffer_like(xs, T, h.n)
     h.dynamics!(r, t, xs, us, vv)
     return _finalize_vf(r, xs)
 end
@@ -734,15 +734,15 @@ function _ocp_state_vf(h::OCPStateVectorFieldFunction, t, x, v)
     xs = h.cx(x)
     if v === nothing
         T = eltype(xs)
-        u = Vector{T}(undef, 0)
+        u = Systems._buffer_like(xs, T, 0)
         vv = u
     else
         vs = h.cv(v)
         T = Base.promote_op(*, eltype(xs), eltype(vs))
-        u = Vector{T}(undef, 0)
+        u = Systems._buffer_like(xs, T, 0)
         vv = vs
     end
-    r = Vector{T}(undef, h.n)
+    r = Systems._buffer_like(xs, T, h.n)
     h.dynamics!(r, t, xs, u, vv)
     return _finalize_vf(r, xs)
 end
