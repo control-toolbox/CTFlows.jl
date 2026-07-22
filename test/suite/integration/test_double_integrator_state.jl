@@ -68,8 +68,12 @@ function test_double_integrator_state()
 
         for ht in (:total, :partial)
             fs = Flows.Flow(
-                ocp, (x, p) -> p[2];
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p) -> p[2];
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
 
             function shoot!(s, p0, t1, Δpq)
@@ -91,7 +95,9 @@ function test_double_integrator_state()
             nl = solve(
                 NonlinearProblem(shoot_nl!, ξ0),
                 SimpleNewtonRaphson();
-                abstol=1e-10, reltol=1e-10, show_trace=Val(false),
+                abstol=1e-10,
+                reltol=1e-10,
+                show_trace=Val(false),
             )
             sc = zeros(4)
             shoot!(sc, nl.u[1:2], nl.u[3], nl.u[4])

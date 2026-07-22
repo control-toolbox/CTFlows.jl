@@ -41,12 +41,12 @@ function _build_simple_integrator_energy_free_tf()
     CTModels.Building.time!(pre; t0=_T0, indf=1)   # free final time = variable[1]
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = u; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=u; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2)
     CTModels.Building.constraint!(
         pre,
         :boundary;
-        f=(r, x0, xf, v) -> (r[1] = xf - v[1] - 10.0; nothing),
+        f=(r, x0, xf, v) -> (r[1]=xf - v[1] - 10.0; nothing),
         lb=[0.0],
         ub=[0.0],
         label=:bc,
@@ -93,5 +93,6 @@ end
 
 end # module
 
-test_simple_integrator_energy_free_tf() =
-    TestSimpleIntegratorEnergyFreeTf.test_simple_integrator_energy_free_tf()
+function test_simple_integrator_energy_free_tf()
+    return TestSimpleIntegratorEnergyFreeTf.test_simple_integrator_energy_free_tf()
+end

@@ -34,10 +34,14 @@ const _TF = 20.0
 const _X0 = [-42272.67, 0.0, 0.0, -5796.72]
 
 # Initial guess from CTProblems (sol.costate(t0) of the direct solution)
-const _XI_GUESS = [131.44483634894812, 34.16617425875177, 249.15735272382514, -23.9732920001312]
+const _XI_GUESS = [
+    131.44483634894812, 34.16617425875177, 249.15735272382514, -23.9732920001312
+]
 
 # Converged Newton solution (residual ‖s‖ ≈ 4.8e-7)
-const _XI_SOL = [131.44483633584628, 34.16617425833765, 249.1573527073759, -23.97329203256135]
+const _XI_SOL = [
+    131.44483633584628, 34.16617425833765, 249.1573527073759, -23.97329203256135
+]
 
 function _build_orbital_transfer()
     pre = CTModels.Building.PreModel()
@@ -69,8 +73,12 @@ function test_orbital_transfer_energy()
             # Smooth control: u* = [p3, p4] from ∂H/∂u = 0
             # Autonomous, no variable ⇒ arity (x, p)
             f = Flows.Flow(
-                ocp, (x, p) -> [p[3], p[4]];
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p) -> [p[3], p[4]];
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
 
             function shoot!(s, ξ)

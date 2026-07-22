@@ -41,11 +41,9 @@ function _build_simple_integrator_lqr_free_tf()
     CTModels.Building.time!(pre; t0=_T0, indf=1)   # free final time = variable[1]
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = u; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=u; nothing))
     CTModels.Building.objective!(
-        pre, :min;
-        mayer=(x0, xf, v) -> v[1],
-        lagrange=(t, x, u, v) -> 0.5 * (u^2 + x^2),
+        pre, :min; mayer=(x0, xf, v) -> v[1], lagrange=(t, x, u, v) -> 0.5 * (u^2 + x^2)
     )
     return CTModels.Building.build(pre)
 end
@@ -89,5 +87,6 @@ end
 
 end # module
 
-test_simple_integrator_lqr_free_tf() =
-    TestSimpleIntegratorLqrFreeTf.test_simple_integrator_lqr_free_tf()
+function test_simple_integrator_lqr_free_tf()
+    return TestSimpleIntegratorLqrFreeTf.test_simple_integrator_lqr_free_tf()
+end

@@ -27,7 +27,9 @@ function test_shooting(shoot!, ξ_exact, ξ_guess; atol=1e-8)
     Test.@test sqrt(sum(abs2, s)) < atol
 
     prob = NonlinearProblem((s, ξ, _) -> shoot!(s, ξ), ξ_guess)
-    nl = solve(prob, SimpleNewtonRaphson(); abstol=1e-10, reltol=1e-10, show_trace=Val(false))
+    nl = solve(
+        prob, SimpleNewtonRaphson(); abstol=1e-10, reltol=1e-10, show_trace=Val(false)
+    )
 
     sc = zeros(n)
     shoot!(sc, nl.u)

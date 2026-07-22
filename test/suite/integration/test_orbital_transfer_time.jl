@@ -58,31 +58,40 @@ function _build_orbital_transfer_time()
     CTModels.Building.state!(pre, 4)
     CTModels.Building.control!(pre, 2)
     # Dynamics: Keplerian + control
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> begin
-        r1 = sqrt(x[1]^2 + x[2]^2)
-        r[1] = x[3]
-        r[2] = x[4]
-        r[3] = -_MU * x[1] / r1^3 + u[1]
-        r[4] = -_MU * x[2] / r1^3 + u[2]
-        return nothing
-    end)
+    CTModels.Building.dynamics!(
+        pre, (r, t, x, u, v) -> begin
+            r1 = sqrt(x[1]^2 + x[2]^2)
+            r[1] = x[3]
+            r[2] = x[4]
+            r[3] = -_MU * x[1] / r1^3 + u[1]
+            r[4] = -_MU * x[2] / r1^3 + u[2]
+            return nothing
+        end
+    )
     # Mayer: minimise tf
     CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> v[1])
     # Control norm constraint: ||u||² ≤ γ_max²
     CTModels.Building.constraint!(
-        pre, :path; f=(r, t, x, u, v) -> (r[1] = u[1]^2 + u[2]^2 - _GAMMA_MAX^2; nothing),
-        lb=[-Inf], ub=[0.0], label=:u_con,
+        pre,
+        :path;
+        f=(r, t, x, u, v) -> (r[1]=u[1]^2 + u[2]^2 - _GAMMA_MAX^2; nothing),
+        lb=[-Inf],
+        ub=[0.0],
+        label=:u_con,
     )
     # Final boundary constraint
     CTModels.Building.constraint!(
-        pre, :boundary;
+        pre,
+        :boundary;
         f=(r, x0, xf, v) -> begin
             r[1] = sqrt(xf[1]^2 + xf[2]^2) - _RF
             r[2] = xf[3] + _ALPHA * xf[2]
             r[3] = xf[4] - _ALPHA * xf[1]
             return nothing
         end,
-        lb=[0.0, 0.0, 0.0], ub=[0.0, 0.0, 0.0], label=:boundary_con,
+        lb=[0.0, 0.0, 0.0],
+        ub=[0.0, 0.0, 0.0],
+        label=:boundary_con,
     )
     return CTModels.Building.build(pre)
 end
@@ -91,11 +100,14 @@ end
 _control_law(x, p, v) = _GAMMA_MAX * [p[3], p[4]] / sqrt(p[3]^2 + p[4]^2)
 
 # Pseudo-Hamiltonian H̃ = p·f (for transversality computation)
-_ham(x, p) = let u = _control_law(x, p, nothing)
-    r1 = sqrt(x[1]^2 + x[2]^2)
-    p[1] * x[3] + p[2] * x[4] +
-    p[3] * (-_MU * x[1] / r1^3 + u[1]) +
-    p[4] * (-_MU * x[2] / r1^3 + u[2])
+function _ham(x, p)
+    let u = _control_law(x, p, nothing)
+        r1 = sqrt(x[1]^2 + x[2]^2)
+        p[1] * x[3] +
+        p[2] * x[4] +
+        p[3] * (-_MU * x[1] / r1^3 + u[1]) +
+        p[4] * (-_MU * x[2] / r1^3 + u[2])
+    end
 end
 
 function test_orbital_transfer_time()
@@ -139,5 +151,4 @@ end
 
 end # module
 
-test_orbital_transfer_time() =
-    TestOrbitalTransferTime.test_orbital_transfer_time()
+test_orbital_transfer_time() = TestOrbitalTransferTime.test_orbital_transfer_time()

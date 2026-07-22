@@ -60,8 +60,9 @@ function _build_singular_control()
     end
     CTModels.Building.dynamics!(pre, dyn!)
 
-    CTModels.Building.constraint!(pre,
-        :control; rg=1:1, lb=[-1.0], ub=[1.0], label=:u_bounds)
+    CTModels.Building.constraint!(
+        pre, :control; rg=1:1, lb=[-1.0], ub=[1.0], label=:u_bounds
+    )
 
     function boundary!(b, q0, qf, v)
         b[1] = q0[1]            # x(0) = 0
@@ -70,8 +71,9 @@ function _build_singular_control()
         b[4] = qf[2]            # y(tf) = 0
         return nothing
     end
-    CTModels.Building.constraint!(pre,
-        :boundary; f=boundary!, lb=zeros(4), ub=zeros(4), label=:endpoint)
+    CTModels.Building.constraint!(
+        pre, :boundary; f=boundary!, lb=zeros(4), ub=zeros(4), label=:endpoint
+    )
 
     CTModels.Building.objective!(pre, :min; mayer=(q0, qf, v) -> v[1])
 
@@ -86,8 +88,12 @@ function test_singular_control()
             # Singular feedback control: u_s(θ) = sin²θ
             # autonomous + variable + control ⇒ arity (x, p, v)
             f = Flows.Flow(
-                ocp, (x, p, v) -> sin(x[3])^2;
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p, v) -> sin(x[3])^2;
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
 
             function shoot!(s, ξ)
