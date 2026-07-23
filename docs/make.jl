@@ -107,7 +107,10 @@ with_api_reference(src_dir, ext_dir) do api_pages
                 "Control laws" => "flows/control_laws.md",
                 "Constrained flows" => "flows/constrained.md",
                 "SciML flows" => "flows/sciml.md",
-                "VF compatibility" => "flows/compatibility_vf.md",
+            ],
+            "Compatibility" => [
+                "Overview" => "compatibility/overview.md",
+                "Flow(VectorField)" => "compatibility/vector_field.md",
             ],
             "API Reference" => api_pages,
         ],

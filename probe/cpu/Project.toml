@@ -1,0 +1,7 @@
+[deps]
+CTBase = "54762871-cc72-4466-b8e8-f6c8b58076cd"
+CTFlows = "1c39547c-7794-42f7-af83-d98194f657c2"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+OrdinaryDiffEqTsit5 = "b1df2697-797e-41e3-8120-5422d3b24e4a"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
