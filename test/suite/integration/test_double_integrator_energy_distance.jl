@@ -37,11 +37,9 @@ function _build_di_energy_distance()
     CTModels.Building.time!(pre; t0=_T0, tf=_TF)
     CTModels.Building.state!(pre, 2)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= [x[2], u[1]]; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r.=[x[2], u[1]]; nothing))
     CTModels.Building.objective!(
-        pre, :min;
-        mayer=(x0, xf, v) -> -0.5 * xf[1],
-        lagrange=(t, x, u, v) -> 0.5 * u[1]^2,
+        pre, :min; mayer=(x0, xf, v) -> -0.5 * xf[1], lagrange=(t, x, u, v) -> 0.5 * u[1]^2
     )
     return CTModels.Building.build(pre)
 end
@@ -76,11 +74,16 @@ function test_double_integrator_energy_distance()
             sol = f((_T0, _TF), _X0, ξ_opt)
             Test.@test sol isa CTModels.Solutions.Solution
             Test.@test CTModels.objective(sol) < 0   # -0.5x₁(tf) + ∫0.5u² < 0
+            # ANALYTIC. CTProblems.jl `DoubleIntegratorEnergyDistance` gives the closed form
+            #   J* = -0.5·x₁(tf) + tf³/24  with  x₁(tf) = tf²/12·(3tf - tf) = 1/6  at tf = 1,
+            # hence J* = -1/12 + 1/24 = -1/24. Matches the integrated value to ~1e-15.
+            Test.@test CTModels.objective(sol) ≈ -1 / 24 rtol = 1e-6
         end
     end
 end
 
 end # module
 
-test_double_integrator_energy_distance() =
-    TestDoubleIntegratorEnergyDistance.test_double_integrator_energy_distance()
+function test_double_integrator_energy_distance()
+    return TestDoubleIntegratorEnergyDistance.test_double_integrator_energy_distance()
+end

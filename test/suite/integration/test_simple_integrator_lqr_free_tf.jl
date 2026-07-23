@@ -41,11 +41,9 @@ function _build_simple_integrator_lqr_free_tf()
     CTModels.Building.time!(pre; t0=_T0, indf=1)   # free final time = variable[1]
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = u; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=u; nothing))
     CTModels.Building.objective!(
-        pre, :min;
-        mayer=(x0, xf, v) -> v[1],
-        lagrange=(t, x, u, v) -> 0.5 * (u^2 + x^2),
+        pre, :min; mayer=(x0, xf, v) -> v[1], lagrange=(t, x, u, v) -> 0.5 * (u^2 + x^2)
     )
     return CTModels.Building.build(pre)
 end
@@ -83,11 +81,16 @@ function test_simple_integrator_lqr_free_tf()
             sol = f((_T0, ξ_opt[2]), _X0, ξ_opt[1]; variable=ξ_opt[2])
             Test.@test sol isa CTModels.Solutions.Solution
             Test.@test CTModels.objective(sol) > 0   # tf + ∫0.5(u²+x²) > 0
+            # ANALYTIC. CTProblems.jl `SimpleIntegratorLqrFreeTf` gives the Bolza value
+            # J* = tf + 0.5·xf²/tanh(tf), evaluated at the closed-form tf = atanh(1/√3).
+            Test.@test CTModels.objective(sol) ≈ _TF_SOL + 0.5 * _XF^2 / tanh(_TF_SOL) rtol =
+                1e-6
         end
     end
 end
 
 end # module
 
-test_simple_integrator_lqr_free_tf() =
-    TestSimpleIntegratorLqrFreeTf.test_simple_integrator_lqr_free_tf()
+function test_simple_integrator_lqr_free_tf()
+    return TestSimpleIntegratorLqrFreeTf.test_simple_integrator_lqr_free_tf()
+end

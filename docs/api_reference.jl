@@ -53,6 +53,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                 joinpath("Systems", "Systems.jl"),
                 joinpath("Systems", "ode_parameters.jl"),
                 joinpath("Systems", "defaults.jl"),
+                joinpath("Systems", "coercion.jl"),
                 joinpath("Systems", "abstract_system.jl"),
                 joinpath("Systems", "rhs_functors.jl"),
                 joinpath("Systems", "hvf_rhs_functors.jl"),

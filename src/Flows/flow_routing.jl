@@ -60,10 +60,9 @@ _available_flow_methods(::Type{Traits.WithoutAD}) = ((:sciml, :cpu), (:sciml, :g
 """
 $(TYPEDSIGNATURES)
 
-Normalize a user-supplied `method` into a token tuple (or `nothing` for the default).
-
-`nothing` passes through unchanged (signals "use the base description"); a single
-`Symbol` is wrapped into a 1-tuple; a tuple of `Symbol`s is returned as-is.
+Normalize a user-supplied `method` into a token tuple, or return `nothing` when no
+method was given (the default). A bare `Symbol` (e.g. `:gpu`) is wrapped into a
+single-element tuple; a tuple of `Symbol`s is returned as-is.
 
 See also: [`CTFlows.Flows._flow_description`](@ref)
 """

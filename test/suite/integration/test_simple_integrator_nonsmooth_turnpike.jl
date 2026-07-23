@@ -42,7 +42,7 @@ function _build_nonsmooth_turnpike()
     CTModels.Building.time!(pre; t0=_T0, tf=_TF)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = u[1]; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=u[1]; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> x[1]^2)
     return CTModels.Building.build(pre)
 end
@@ -55,16 +55,28 @@ function test_simple_integrator_nonsmooth_turnpike()
             # 3 arcs: u=-1, u=0 (singular), u=+1
             # Autonomous, no variable ⇒ arity (x, p)
             fm = Flows.Flow(
-                ocp, (x, p) -> -1.0;
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p) -> -1.0;
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
             f0 = Flows.Flow(
-                ocp, (x, p) -> 0.0;
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p) -> 0.0;
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
             fp = Flows.Flow(
-                ocp, (x, p) -> 1.0;
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p) -> 1.0;
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
 
             function shoot!(s, ξ)
@@ -98,5 +110,6 @@ end
 
 end # module
 
-test_simple_integrator_nonsmooth_turnpike() =
-    TestSimpleIntegratorNonsmoothTurnpike.test_simple_integrator_nonsmooth_turnpike()
+function test_simple_integrator_nonsmooth_turnpike()
+    return TestSimpleIntegratorNonsmoothTurnpike.test_simple_integrator_nonsmooth_turnpike()
+end

@@ -43,16 +43,10 @@ const _TF = 1.5 * _TF_MIN
 
 # CTProblems initial guess (F_max = 100 N), p0[5] ≈ 0 removed
 const _P0_GUESS = [
-    0.02698412111231433,
-    0.006910835140705538,
-    0.050397371862031096,
-    -0.0032972040120747836,
+    0.02698412111231433, 0.006910835140705538, 0.050397371862031096, -0.0032972040120747836
 ]
 const _TI_GUESS = [
-    0.4556797711668658,
-    3.6289692721936913,
-    11.683607683450061,
-    12.505465498856514,
+    0.4556797711668658, 3.6289692721936913, 11.683607683450061, 12.505465498856514
 ]
 const _XI_GUESS = [deepcopy(_P0_GUESS); deepcopy(_TI_GUESS)]
 
@@ -63,33 +57,40 @@ function _build_orbital_transfer_consumption()
     CTModels.Building.state!(pre, 4)
     CTModels.Building.control!(pre, 2)
     # Dynamics: Keplerian + γ_max * u
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> begin
-        r1 = sqrt(x[1]^2 + x[2]^2)
-        r[1] = x[3]
-        r[2] = x[4]
-        r[3] = -_MU * x[1] / r1^3 + _GAMMA_MAX * u[1]
-        r[4] = -_MU * x[2] / r1^3 + _GAMMA_MAX * u[2]
-        return nothing
-    end)
-    # Lagrange: ||u||
-    CTModels.Building.objective!(
-        pre, :min; lagrange=(t, x, u, v) -> sqrt(u[1]^2 + u[2]^2),
+    CTModels.Building.dynamics!(
+        pre, (r, t, x, u, v) -> begin
+            r1 = sqrt(x[1]^2 + x[2]^2)
+            r[1] = x[3]
+            r[2] = x[4]
+            r[3] = -_MU * x[1] / r1^3 + _GAMMA_MAX * u[1]
+            r[4] = -_MU * x[2] / r1^3 + _GAMMA_MAX * u[2]
+            return nothing
+        end
     )
+    # Lagrange: ||u||
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> sqrt(u[1]^2 + u[2]^2))
     # Control norm constraint: ||u||² ≤ 1
     CTModels.Building.constraint!(
-        pre, :path; f=(r, t, x, u, v) -> (r[1] = u[1]^2 + u[2]^2 - 1.0; nothing),
-        lb=[-Inf], ub=[0.0], label=:u_con,
+        pre,
+        :path;
+        f=(r, t, x, u, v) -> (r[1]=u[1]^2 + u[2]^2 - 1.0; nothing),
+        lb=[-Inf],
+        ub=[0.0],
+        label=:u_con,
     )
     # Final boundary constraint
     CTModels.Building.constraint!(
-        pre, :boundary;
+        pre,
+        :boundary;
         f=(r, x0, xf, v) -> begin
             r[1] = sqrt(xf[1]^2 + xf[2]^2) - _RF
             r[2] = xf[3] + _ALPHA * xf[2]
             r[3] = xf[4] - _ALPHA * xf[1]
             return nothing
         end,
-        lb=[0.0, 0.0, 0.0], ub=[0.0, 0.0, 0.0], label=:boundary_con,
+        lb=[0.0, 0.0, 0.0],
+        ub=[0.0, 0.0, 0.0],
+        label=:boundary_con,
     )
     return CTModels.Building.build(pre)
 end
@@ -106,12 +107,10 @@ function test_orbital_transfer_consumption()
 
         for ht in (:total, :partial)
             f_bang = Flows.Flow(
-                ocp, _bang_law;
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp, _bang_law; hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12
             )
             f_off = Flows.Flow(
-                ocp, _off_law;
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp, _off_law; hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12
             )
 
             function shoot!(s, ξ)
@@ -150,5 +149,6 @@ end
 
 end # module
 
-test_orbital_transfer_consumption() =
-    TestOrbitalTransferConsumption.test_orbital_transfer_consumption()
+function test_orbital_transfer_consumption()
+    return TestOrbitalTransferConsumption.test_orbital_transfer_consumption()
+end

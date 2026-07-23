@@ -27,7 +27,6 @@ function test_integrators_shim()
             Test.@test Integrators.times === CTSI.times
             Test.@test Integrators.evaluate_at === CTSI.evaluate_at
             Test.@test Integrators.merge === CTSI.merge
-            Test.@test Integrators.build_integrator === CTSI.build_integrator
             Test.@test Integrators.options_point === CTSI.options_point
             Test.@test Integrators.options_trajectory === CTSI.options_trajectory
         end

@@ -41,12 +41,12 @@ function _build_simple_integrator_energy_free_tf()
     CTModels.Building.time!(pre; t0=_T0, indf=1)   # free final time = variable[1]
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = u; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=u; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2)
     CTModels.Building.constraint!(
         pre,
         :boundary;
-        f=(r, x0, xf, v) -> (r[1] = xf - v[1] - 10.0; nothing),
+        f=(r, x0, xf, v) -> (r[1]=xf - v[1] - 10.0; nothing),
         lb=[0.0],
         ub=[0.0],
         label=:bc,
@@ -87,11 +87,16 @@ function test_simple_integrator_energy_free_tf()
             sol = f((_T0, ξ_opt[2]), _X0, ξ_opt[1]; variable=ξ_opt[2])
             Test.@test sol isa CTModels.Solutions.Solution
             Test.@test CTModels.objective(sol) > 0   # ∫0.5u² > 0
+            # ANALYTIC. CTProblems.jl `SimpleIntegratorEnergyFreeTf` gives J* = (tf+10)²/(2tf),
+            # which at the closed-form tf = 10 is 400/20 = 20.
+            Test.@test CTModels.objective(sol) ≈ (_TF_SOL + 10)^2 / (2 * _TF_SOL) rtol =
+                1e-6
         end
     end
 end
 
 end # module
 
-test_simple_integrator_energy_free_tf() =
-    TestSimpleIntegratorEnergyFreeTf.test_simple_integrator_energy_free_tf()
+function test_simple_integrator_energy_free_tf()
+    return TestSimpleIntegratorEnergyFreeTf.test_simple_integrator_energy_free_tf()
+end

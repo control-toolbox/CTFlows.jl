@@ -38,7 +38,6 @@ using CTSolvers.Integrators:
     status,
     successful,
     merge,
-    build_integrator,
     options_point,
     options_trajectory
 
@@ -136,7 +135,7 @@ end
 
 export AbstractIntegrator, SciML
 export AbstractIntegrationResult, final_state, times, evaluate_at, status, successful, merge
-export build_integrator, options_point, options_trajectory
+export options_point, options_trajectory
 export build_problem, build_options
 
 end # module Integrators

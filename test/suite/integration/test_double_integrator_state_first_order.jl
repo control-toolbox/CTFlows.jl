@@ -43,11 +43,15 @@ function _build_di_first_order()
     CTModels.Building.time!(pre; t0=_T0, tf=_TF)
     CTModels.Building.state!(pre, 2)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= [x[2], u[1]]; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r.=[x[2], u[1]]; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u[1]^2)
     CTModels.Building.constraint!(
-        pre, :path; f=(r, t, x, u, v) -> (r[1] = x[2]; nothing),
-        lb=[-Inf], ub=[_V_MAX], label=:v_con,
+        pre,
+        :path;
+        f=(r, t, x, u, v) -> (r[1]=x[2]; nothing),
+        lb=[-Inf],
+        ub=[_V_MAX],
+        label=:v_con,
     )
     return CTModels.Building.build(pre)
 end
@@ -60,15 +64,23 @@ function test_double_integrator_state_first_order()
         for ht in (:total, :partial)
             # Interior flow: u* = p₂ (smooth optimum from PMP).
             f_interior = Flows.Flow(
-                ocp, (x, p) -> p[2];
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p) -> p[2];
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
             # Boundary flow: u = 0, constraint g(x) = v_max - v, multiplier μ = p₁.
             f_boundary = Flows.Flow(
-                ocp, (x, p) -> 0.0;
+                ocp,
+                (x, p) -> 0.0;
                 constraint=(x, u) -> _V_MAX - x[2],
                 multiplier=(x, p) -> p[1],
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
 
             function shoot!(s, ξ)
@@ -107,6 +119,8 @@ function test_double_integrator_state_first_order()
                 # Interior arc: u = p₂ ≠ 0
                 Test.@test abs(_u(0.5 * t1)) > 1e-3
                 Test.@test CTModels.objective(sol) > 0
+                # PINNED REFERENCE — regression guard, NOT a derived optimum (sits on 7.68 to ~5e-12).
+                Test.@test CTModels.objective(sol) ≈ 7.68 rtol = 1e-6
             end
         end
     end
@@ -114,5 +128,6 @@ end
 
 end # module
 
-test_double_integrator_state_first_order() =
-    TestDoubleIntegratorStateFirstOrder.test_double_integrator_state_first_order()
+function test_double_integrator_state_first_order()
+    return TestDoubleIntegratorStateFirstOrder.test_double_integrator_state_first_order()
+end

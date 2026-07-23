@@ -38,7 +38,7 @@ function _build_simple_exp_energy()
     CTModels.Building.time!(pre; t0=_T0, tf=_TF)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = -x + u; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=(-x + u); nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2)
     return CTModels.Building.build(pre)
 end
@@ -73,10 +73,15 @@ function test_simple_exponential_energy()
             sol = f((_T0, _TF), _X0, ξ_opt[1])
             Test.@test sol isa CTModels.Solutions.Solution
             Test.@test CTModels.objective(sol) > 0   # ∫0.5u² > 0
+            # ANALYTIC. CTProblems.jl `SimpleExponentialEnergy` gives J* = (e² - 1)·p0²/4
+            # with p0 = exp(-tf)/sinh(tf) — the same p0 already asserted above.
+            Test.@test CTModels.objective(sol) ≈ (exp(2.0) - 1) * _P0_SOL^2 / 4 rtol = 1e-6
         end
     end
 end
 
 end # module
 
-test_simple_exponential_energy() = TestSimpleExponentialEnergy.test_simple_exponential_energy()
+function test_simple_exponential_energy()
+    return TestSimpleExponentialEnergy.test_simple_exponential_energy()
+end

@@ -68,8 +68,12 @@ function test_double_integrator_state()
 
         for ht in (:total, :partial)
             fs = Flows.Flow(
-                ocp, (x, p) -> p[2];
-                hamiltonian_type=ht, alg=Tsit5(), reltol=1e-12, abstol=1e-12,
+                ocp,
+                (x, p) -> p[2];
+                hamiltonian_type=ht,
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
 
             function shoot!(s, p0, t1, Δpq)
@@ -91,7 +95,9 @@ function test_double_integrator_state()
             nl = solve(
                 NonlinearProblem(shoot_nl!, ξ0),
                 SimpleNewtonRaphson();
-                abstol=1e-10, reltol=1e-10, show_trace=Val(false),
+                abstol=1e-10,
+                reltol=1e-10,
+                show_trace=Val(false),
             )
             sc = zeros(4)
             shoot!(sc, nl.u[1:2], nl.u[3], nl.u[4])
@@ -110,6 +116,10 @@ function test_double_integrator_state()
             _u(t) = uu(t) isa Number ? uu(t) : uu(t)[1]
             # No boundary arc: control is non-zero on both sides of t1
             Test.@test abs(_u(0.25)) > 1e-3
+            # PINNED REFERENCE — regression guard, NOT a derived optimum. CTProblems.jl gives
+            # J* = 4/(9a), but explicitly only for a ≤ 1/6 (the three-arc case); a = 0.2 is the
+            # two-arc touch-point regime, outside that formula (4/(9·0.2) = 2.222 ≠ 2.24).
+            Test.@test CTModels.objective(sol) ≈ 2.24 rtol = 1e-6
             Test.@test abs(_u(0.75)) > 1e-3
             Test.@test CTModels.objective(sol) > 0
         end
@@ -208,6 +218,9 @@ function test_double_integrator_state()
             Test.@test abs(_u(0.5 * (t1_sol + t2_sol))) < 1e-6      # boundary midpoint
             Test.@test abs(_u(0.5 * t1_sol)) > 1e-3                 # interior arc 1
             Test.@test CTModels.objective(sol) > 0                  # ∫0.5u² > 0
+            # ANALYTIC. CTProblems.jl `DoubleIntegratorEnergyStateConstraint` gives J* = 4/(9a)
+            # for the three-arc case a ≤ 1/6; here a = 0.1, so J* = 40/9.
+            Test.@test CTModels.objective(sol) ≈ 4 / (9 * 0.1) rtol = 1e-6
         end
     end
 end

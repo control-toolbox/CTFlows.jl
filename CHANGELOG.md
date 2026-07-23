@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD024 -->
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -7,8 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.0-beta] - 2026-07-23
+
 ### Added
 
+- **GPU documentation** (GPU roadmap-v4 §5, phase 5): two new pages. *GPU flows*
+  (`docs/src/flows/gpu.md`) is the user guide — when a device helps and when it does not, the
+  `method=:gpu` opt-in, the scalar-indexing contract that every user-supplied closure must obey
+  (dynamics **and** Mayer/Lagrange), the per-device AD defaults, and the validated `DiffEqGPU`
+  ensemble pattern with its inverted right-hand-side rule. *GPU internals*
+  (`docs/src/dev/gpu-internals.md`) is the design record — why the device is a strategy
+  parameter, the `method=:gpu` routing path, the three coercion helpers, the AD-backend
+  decision and its rejected alternatives, and how the device tests are run in CI. Every device
+  snippet is traceable to a row of the GPU test suites. Also registers
+  `src/Systems/coercion.jl` in the API reference, which was missing — its helpers were
+  referenced from other docstrings but had no rendered page.
 - **`method=:gpu` device selection on every `Flow(...)` constructor** (GPU roadmap-v4 §5,
   phase 2): registers the now-parameterized `SciML{P}` (CTSolvers `v0.4.30-beta`) and
   `DifferentiationInterface{P}` (CTBase `v0.28.1-beta`) strategies with `[CPU, GPU]`. A single
@@ -18,10 +32,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Unified flow construction** onto one resolution mechanism keyed by `Traits.ad_trait`
-  (`WithAD` vs `WithoutAD`), retiring direct `build_integrator` use in favour of a shared
-  `_build_integrator` helper.
+  (`WithAD` vs `WithoutAD`), retiring direct use of the re-exported `CTSolvers.Integrators.build_integrator`
+  in favour of a shared internal `_build_integrator` helper.
 - **BREAKING** — `Flow(vf; ad_backend=…)` on an **AD-free** flow is now rejected as an unknown
   option instead of being silently ignored (the AD-free plan has no `:di` family).
+
+### Removed
+
+- **BREAKING** — `CTFlows.Integrators.build_integrator` (a re-export of
+  `CTSolvers.Integrators.build_integrator`) is no longer re-exported: nothing inside CTFlows
+  called it since flow construction moved to `_build_integrator` above, and no other
+  `CTFlows.Integrators` symbol depended on it. Construct the integrator strategy directly —
+  `CTSolvers.Integrators.SciML(; opts...)` (re-exported as `CTFlows.Integrators.SciML`) — instead.
 
 ### Fixed
 
