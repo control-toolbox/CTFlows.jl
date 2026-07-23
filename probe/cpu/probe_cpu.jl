@@ -23,9 +23,9 @@
 # The header activates this folder's own environment and `dev`s the checked-out CTFlows
 # so the probe measures the working-tree source (not the registered version).
 #
-# Scope: `Flow(VectorField)` and `Flow(HamiltonianVectorField)` today. Other
-# constructors (Hamiltonian, ODEFunction/ODEProblem, ocp) become additional
-# blocks as their compatibility pages land.
+# Scope: `Flow(VectorField)`, `Flow(HamiltonianVectorField)`, `Flow(Hamiltonian)`,
+# `Flow(::ODEFunction)`, and `Flow(::ODEProblem)` today. `Flow(ocp)` becomes an
+# additional block once its compatibility page lands.
 # =============================================================================
 
 # ---------------------------------------------------------------------------
@@ -43,10 +43,12 @@ using Logging
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5   # activates the CTFlows SciML integrator ext
 using StaticArrays: SA, SVector, MVector, SMatrix, MMatrix
 using ForwardDiff: ForwardDiff
+using SciMLBase: SciMLBase
 
 import CTBase.Data
 import CTFlows.Flows
 import CTFlows.Trajectories
+import CTFlows.Integrators
 
 # ---------------------------------------------------------------------------
 # Log collector to detect the "InPlace VectorField" performance warning
@@ -474,4 +476,184 @@ println("""
   on a closure that calls the flow), never by hand-constructing a Dual and passing it as x0.
   No custom backend switch (e.g. an internal Mooncake backend) is needed to sidestep this —
   the fix is procedural, not a backend choice.
+""")
+
+# =============================================================================
+# SciMLFunctionSystem probe — Flow(::SciMLBase.AbstractODEFunction) state matrix
+# =============================================================================
+#
+# Ground-truth source for docs/src/compatibility/sciml.md (Flow(::ODEFunction) section).
+# Same mechanics and OOP/IP dispatch as Flow(VectorField) — ismutable(u0) chosen in
+# build_problem, same "InPlace ... immutable u0" fallback+warning shape — but wrapped in a
+# SciMLFunctionSystem instead of a VectorFieldSystem, and ALWAYS NonAutonomous/NonFixed
+# (SciML's uniform (du,u,p,t)/(u,p,t) signature forces this structurally), so every call
+# passes `variable=1.0` explicitly. Dynamics: ẋ = -p·x with p = 1.0 ⇒ the SAME x(1) = x0·e⁻¹
+# as the VectorField block, so the SAME `cases` list and E/_val/_flat/_maxerr helpers apply.
+# =============================================================================
+
+f_scf_oop = SciMLBase.ODEFunction{false}((u, p, t) -> -p .* u)          # out-of-place
+f_scf_ip = SciMLBase.ODEFunction((du, u, p, t) -> du .= -p .* u)        # in-place
+
+flow_scf = Flows.Flow(f_scf_oop; reltol=1e-8)
+flow_scf_ip = Flows.Flow(f_scf_ip; reltol=1e-8)
+
+function cell_scf(fl, kind, x0)
+    g =
+        kind === :point ? (() -> fl(0.0, x0, 1.0; variable=1.0)) :
+        (() -> fl((0.0, 1.0), x0; variable=1.0))
+    l = CollectLogger(String[])
+    try
+        r = Logging.with_logger(l) do
+            g()
+        end
+        warned = any(m -> occursin("InPlace SciMLFunction", m), l.msgs)
+        err = try
+            _maxerr(kind, r, x0)
+        catch
+            NaN
+        end
+        ok = isfinite(err) && err ≤ 1e-4
+        mark = ok ? (warned ? "⚠" : "✓") : "?"
+        return (mark, @sprintf("err=%.1e%s", err, warned ? " (warns)" : ""))
+    catch e
+        return ("✗", string(nameof(typeof(e))))
+    end
+end
+
+println("\n", "="^96)
+println("  CTFlows CPU probe — Flow(::SciMLBase.ODEFunction), ẋ = -p·x, p=1.0,  x(1) = x0·e⁻¹")
+println("  columns describe the ODEFunction kind (OOP: (u,p,t)->-p.*u | IP: (du,u,p,t)->…)")
+println("="^96)
+println(@sprintf("  %-16s | %-14s | %-14s | %-14s | %-14s",
+    "state", "OOP point", "OOP traj", "IP point", "IP traj"))
+println("  " * "-"^92)
+
+n_ok_scf = n_warn_scf = n_fail_scf = 0
+for (lab, x0) in cases
+    marks = String[]
+    for (fl, kind) in ((flow_scf, :point), (flow_scf, :traj), (flow_scf_ip, :point), (flow_scf_ip, :traj))
+        m, d = cell_scf(fl, kind, x0)
+        m == "✓" && (global n_ok_scf += 1)
+        m == "⚠" && (global n_warn_scf += 1)
+        (m == "✗" || m == "?") && (global n_fail_scf += 1)
+        push!(marks, @sprintf("%s %-12s", m, d))
+    end
+    println(@sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4]))
+end
+
+println("  " * "-"^92)
+println(@sprintf("  totals:  ✓ %d works   ⚠ %d works-with-warning   ✗/? %d fail-or-wrong   (of %d)",
+    n_ok_scf, n_warn_scf, n_fail_scf, 4 * length(cases)))
+println("="^96)
+println("""
+  Legend & notes
+  ──────────────
+  ✓  works, result matches analytic to err ≤ 1e-4
+  ⚠  works but emits a performance @warn — in-place ODEFunction + immutable u0
+     (SVector/SMatrix): same fallback mechanism as Flow(VectorField).
+  ✗  raised the named error type    ?  ran but result did not match analytic
+
+  Observed nuances (fold into docs/src/compatibility/sciml.md):
+   • Structurally identical result to Flow(VectorField) — same dispatch, same fallback.
+   • variable= is mandatory here (NonAutonomous/NonFixed always), unlike VF's default Fixed.
+""")
+
+# =============================================================================
+# SciMLProblemFlow probe — Flow(::SciMLBase.AbstractODEProblem) state matrix
+# =============================================================================
+#
+# Ground-truth source for docs/src/compatibility/sciml.md (Flow(::ODEProblem) section).
+# SciMLProblemFlow BYPASSES the CTFlows system pipeline entirely: point/traj calls do
+# SciMLBase.remake then CommonSolve.solve directly — no CTFlows AbstractSystem, no
+# get_ip_rhs/get_oop_rhs, and NO CTFlows-level in-place/immutable guard (unlike every other
+# Flow constructor probed above, all of which route through build_problem). This block
+# MEASURES, rather than assumes, what happens when an IN-PLACE-built ODEProblem is remade at
+# call time with an IMMUTABLE x0 (e.g. SVector) — the open question flagged in
+# .reports/2026-07-23_plan-compatibility-sciml.md.
+#
+# Same dynamics/cases as the SciMLFunctionSystem block: ẋ = -p·x, p = 1.0 fixed into the
+# ORIGINAL ODEProblem, then overridden per call via `variable=1.0` (remake).
+# =============================================================================
+
+prob_oop = SciMLBase.ODEProblem(f_scf_oop, [1.0], (0.0, 1.0), 1.0)   # built out-of-place
+prob_ip = SciMLBase.ODEProblem(f_scf_ip, [1.0], (0.0, 1.0), 1.0)     # built in-place
+
+pflow_oop = Flows.Flow(prob_oop; reltol=1e-8)
+pflow_ip = Flows.Flow(prob_ip; reltol=1e-8)
+
+function _maxerr_prob(kind, r, x0)
+    got = kind === :point ? r : Integrators.evaluate_at(r, 1.0)
+    return maximum(abs.(_flat(got) .- _flat(x0 .* E)))
+end
+
+function cell_prob(fl, kind, x0)
+    g =
+        kind === :point ? (() -> fl(0.0, x0, 1.0; variable=1.0)) :
+        (() -> fl((0.0, 1.0), x0; variable=1.0))
+    try
+        r = g()
+        err = try
+            _maxerr_prob(kind, r, x0)
+        catch
+            NaN
+        end
+        ok = isfinite(err) && err ≤ 1e-4
+        mark = ok ? "✓" : "?"
+        return (mark, @sprintf("err=%.1e", err))
+    catch e
+        return ("✗", _short(string(nameof(typeof(e))) * ": " * sprint(showerror, e)))
+    end
+end
+
+println("\n", "="^96)
+println("  CTFlows CPU probe — Flow(::SciMLBase.ODEProblem), ẋ = -p·x, p=1.0,  x(1) = x0·e⁻¹")
+println("  columns: which ODEProblem was REMADE at call time (built out-of-place vs in-place)")
+println("  *** no CTFlows guard exists on this path — IP-built + immutable x0 measured, not assumed ***")
+println("="^96)
+println(@sprintf("  %-16s | %-30s | %-30s | %-30s | %-30s",
+    "state", "OOP-built point", "OOP-built traj", "IP-built point", "IP-built traj"))
+println("  " * "-"^140)
+
+n_ok_prob = n_fail_prob = 0
+for (lab, x0) in cases
+    marks = String[]
+    for (fl, kind) in ((pflow_oop, :point), (pflow_oop, :traj), (pflow_ip, :point), (pflow_ip, :traj))
+        m, d = cell_prob(fl, kind, x0)
+        m == "✓" ? (global n_ok_prob += 1) : (global n_fail_prob += 1)
+        push!(marks, @sprintf("%s %-28s", m, d))
+    end
+    println(@sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4]))
+end
+
+println("  " * "-"^140)
+println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+    n_ok_prob, n_fail_prob, 4 * length(cases)))
+println("="^96)
+
+let
+    r0 = pflow_oop()
+    r1 = pflow_ip()
+    println(
+        "  no-arg call f() — solves the ORIGINAL problem as-is (u0=[1.0], p=1.0):",
+    )
+    println("    OOP-built: final_state = ", Integrators.final_state(r0),
+        "  (expect ≈ [", E, "])")
+    println("    IP-built:  final_state = ", Integrators.final_state(r1),
+        "  (expect ≈ [", E, "])")
+end
+
+println("""
+  Legend & notes
+  ──────────────
+  ✓  works, result matches analytic to err ≤ 1e-4
+  ✗  raised the named error type (message truncated)   ?  ran but result did not match
+
+  Observed nuances (fold into docs/src/compatibility/sciml.md):
+   • Point call returns the final state directly (already unwrapped by SciMLProblemFlow).
+   • Trajectory call returns a raw Integrators.AbstractIntegrationResult, NOT a
+     Trajectories.VectorFieldTrajectory — use Integrators.times/evaluate_at/final_state.
+   • The no-arg call f() ignores every per-call argument and solves the problem exactly as
+     constructed (its own u0/tspan/p) — shown once above, not part of the state matrix.
+   • See the *** line above for the measured outcome of the flagged open question
+     (IP-built ODEProblem remade with an immutable x0 at call time).
 """)

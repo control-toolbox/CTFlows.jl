@@ -18,10 +18,29 @@ backed by a green cell here.
   from every state container (`scalar`, `Vector`, `MVector`, `SVector`, `Matrix`,
   `MMatrix`, `SMatrix`), every element type (`Real`, `Complex`, `ForwardDiff.Dual`), both
   call styles (point `f(t0, x0, tf)` and trajectory `f((t0, tf), x0)`), for both an
-  out-of-place and an in-place vector field.
+  out-of-place and an in-place vector field. Also checks that differentiating the flow
+  *call* (outer `ForwardDiff.jacobian`) matches the analytic Jacobian.
+- **`Flow(HamiltonianVectorField)`** — the harmonic oscillator `x' = p, p' = -x` (analytic
+  `xf = p0, pf = -x0` at `t = π/2`), same state/costate containers, element types, call
+  styles, OOP/IP split, and outer-Jacobian sensitivity check as the VF block.
+- **`Flow(Hamiltonian)`** — same harmonic-oscillator dynamics via `H = ½(|x|²+|p|²)`,
+  differentiated internally by the default `AutoForwardDiff` backend. No in-place variant
+  (point/traj columns only); `Real` containers all work, `Complex` fails
+  (`ArgumentError: Cannot create a dual over scalar type`). A dedicated "Nested AD" section
+  measures how to differentiate *this* flow (which already uses ForwardDiff internally)
+  w.r.t. `(x0, p0)` — the answer is an outer `ForwardDiff.jacobian`/`gradient` around the
+  flow call, never a hand-built `Dual` passed in as `x0`/`p0`.
+- **`Flow(::SciMLBase.ODEFunction)`** — `ẋ = -p·x` with `p = 1.0` (same analytic solution
+  as the VF block), same state containers/element types/call styles/OOP-IP split. Always
+  `variable=1.0` explicit (SciML's uniform signature forces `NonAutonomous`/`NonFixed`).
+- **`Flow(::SciMLBase.ODEProblem)`** — same dynamics, remade at call time via
+  `SciMLBase.remake`. `SciMLProblemFlow` bypasses the CTFlows system pipeline entirely, so
+  unlike every block above there is **no CTFlows-level in-place/immutable guard** on this
+  path; the block measures — rather than assumes — what happens when an ODEProblem built
+  with an **in-place** function is remade with an **immutable** state (`SVector`) at call
+  time, alongside the no-arg call `f()` and the out-of-place-built case.
 
-Other constructors (`HamiltonianVectorField`, `Hamiltonian`, `ODEFunction`/`ODEProblem`,
-`ocp`) will be added as additional blocks as their compatibility pages land.
+`Flow(ocp)` will be added as an additional block once its compatibility page lands.
 
 ## Running it
 
@@ -54,6 +73,11 @@ The capability matrix appears in the job log.
 - `✗` raised the named error type; `?` ran but the result did not match the analytic
   solution.
 
-At the time of writing, `Flow(VectorField)` is **fully green on CPU**: no unsupported
-state type. The only nuances are the `⚠` fallback above, and that a scalar state's point
-call returns a scalar while its trajectory's `state(sol)(t)` returns a length-1 vector.
+At the time of writing, `Flow(VectorField)`, `Flow(HamiltonianVectorField)`, and
+`Flow(::ODEFunction)` are **fully green on CPU**: no unsupported state type, only the `⚠`
+in-place-plus-immutable fallback above. `Flow(Hamiltonian)` is green for every `Real`
+container but has no `Complex` support (its internal AD backend cannot differentiate
+through a complex scalar). See each block's in-script notes, and the corresponding
+[compatibility page](../../docs/src/compatibility/), for the full nuances — including the
+measured (not assumed) `Flow(::ODEProblem)` result for an in-place-built problem remade
+with an immutable state.

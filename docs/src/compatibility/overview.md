@@ -32,7 +32,7 @@ This work tracks issue
 | `Flow(::VectorField)` | [`StateFlow`](@ref CTFlows.Flows.StateFlow) | [`Flow(VectorField)`](vector_field.md) | ✅ live |
 | `Flow(::HamiltonianVectorField)` | [`HamiltonianFlow`](@ref CTFlows.Flows.HamiltonianFlow) | [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md) | ✅ live |
 | `Flow(::Hamiltonian)` | [`HamiltonianFlow`](@ref CTFlows.Flows.HamiltonianFlow) | [`Flow(Hamiltonian)`](hamiltonian.md) | ✅ live |
-| `Flow(::ODEFunction)` / `Flow(::ODEProblem)` | `SciMLProblemFlow` | — | 🚧 planned |
+| `Flow(::ODEFunction)` / `Flow(::ODEProblem)` | [`StateFlow`](@ref CTFlows.Flows.StateFlow) / `SciMLProblemFlow` | [`Flow(SciML)`](sciml.md) | ✅ live |
 | `Flow(ocp)` | [`OptimalControlFlow`](@ref CTFlows.Flows.OptimalControlFlow) | — | 🚧 planned |
 
 ## At a glance
@@ -55,6 +55,16 @@ This work tracks issue
   never construct a `Dual` by hand and pass it as `x0`/`p0`. It is also already
   1-D = scalar end to end, via the same coercion machinery as
   `Flow(HamiltonianVectorField)` (see #357).
+- [`Flow(SciML)`](sciml.md) covers two constructors with very different mechanics.
+  `Flow(::ODEFunction)` goes through the same CTFlows pipeline as `Flow(VectorField)` and
+  reports the identical result (every container works; in-place + immutable state warns
+  and falls back). `Flow(::ODEProblem)` bypasses that pipeline entirely — `SciMLBase.remake`
+  feeds the new state straight to the original function, with **no CTFlows-level guard**.
+  For a problem built from an **out-of-place** function, every state type remakes cleanly;
+  for one built **in-place**, remaking with an **immutable** state (including a bare
+  scalar) is a **hard, native SciML error** — not a warning with a fallback like everywhere
+  else on this site. Build the `ODEProblem` from an out-of-place function if you need to
+  call it with immutable states.
 
 ## See also
 
