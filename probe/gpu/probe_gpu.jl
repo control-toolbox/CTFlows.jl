@@ -483,9 +483,8 @@ probe(
     prob = SciMLBase.ODEProblem(f_oop, u0, (0.0, 1.0))
     eprob = SciMLBase.EnsembleProblem(
         prob;
-        prob_func=(p, ctx) -> SciMLBase.remake(
-            p; u0=SVector{2,Float64}(Float64(ctx.sim_id), 0.0)
-        ),
+        prob_func=(p, ctx) ->
+            SciMLBase.remake(p; u0=SVector{2,Float64}(Float64(ctx.sim_id), 0.0)),
     )
     sol = SciMLBase.solve(
         eprob,
@@ -515,7 +514,7 @@ end
 # ===========================================================================
 section("BLOCK 7 — AD through a mutating in-place RHS (host vs device)")
 
-_fill_twice!(r, x) = (r .= 2 .* x; nothing)
+_fill_twice!(r, x) = (r.=2 .* x; nothing)
 
 function _mutating_scalar(x)
     r = similar(x, length(x))
@@ -557,7 +556,7 @@ function _build_probe_ocp()
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 2)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= .-x; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r.=(.-x); nothing))
     CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> sum(xf))
     return CTModels.Building.build(pre)
 end

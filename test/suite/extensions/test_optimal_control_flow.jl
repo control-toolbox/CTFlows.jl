@@ -148,12 +148,9 @@ function _build_ocp_vector_bolza()
     CTModels.Building.time_dependence!(pre; autonomous=true)
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 2)
-    CTModels.Building.dynamics!(pre, (r, _, x, _, _) -> (r .= λ_TEST .* x; nothing))
+    CTModels.Building.dynamics!(pre, (r, _, x, _, _) -> (r.=λ_TEST .* x; nothing))
     CTModels.Building.objective!(
-        pre,
-        :min;
-        mayer=(x0, xf, v) -> sum(xf),
-        lagrange=(_, x, _, _) -> sum(abs2, x),
+        pre, :min; mayer=(x0, xf, v) -> sum(xf), lagrange=(_, x, _, _) -> sum(abs2, x)
     )
     return CTModels.Building.build(pre)
 end
@@ -484,7 +481,8 @@ function test_optimal_control_flow()
             t0, tf = 0.0, 1.0
             x0, p0 = 1.0, 0.5
             sol = ocf((t0, tf), x0, p0)
-            Test.@test CTModels.Components.objective(sol) ≈ _lag_obj_na(tf, t0, x0) atol = ATOL
+            Test.@test CTModels.Components.objective(sol) ≈ _lag_obj_na(tf, t0, x0) atol =
+                ATOL
         end
 
         Test.@testset "Integration: Bolza objective ≈ analytic — vector state" begin
