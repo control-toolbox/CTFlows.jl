@@ -35,6 +35,7 @@ This work tracks issue
 | `Flow(::ODEFunction)` / `Flow(::ODEProblem)` | [`StateFlow`](@ref CTFlows.Flows.StateFlow) / `SciMLProblemFlow` | [`Flow(SciML)`](sciml.md) | ✅ live |
 | `Flow(ocp)` (control-free) | [`OptimalControlFlow`](@ref CTFlows.Flows.OptimalControlFlow) | [`Flow(ocp)`](ocp_free.md) | ✅ live |
 | `Flow(ocp, law)` | [`OptimalControlFlow`](@ref CTFlows.Flows.OptimalControlFlow) / [`ControlledFlow`](@ref CTFlows.Flows.ControlledFlow) | [`Flow(ocp, law)`](ocp_control_laws.md) | ✅ live |
+| `Flow(h̃, law)` | [`HamiltonianFlow`](@ref CTFlows.Flows.HamiltonianFlow) | [`Flow(h̃, law)`](pseudo_hamiltonian.md) | ✅ live |
 
 ## At a glance
 
@@ -81,6 +82,16 @@ This work tracks issue
   these pages: `Flow(ocp, OpenLoop/ClosedLoop)` accepts a `ForwardDiff.Dual` state at a
   *point* call but not in a *trajectory* call (the objective computation is not
   `Dual`-transparent).
+- [`Flow(h̃, law)`](pseudo_hamiltonian.md) is the pseudo-Hamiltonian counterpart of
+  `Flow(ocp, DynClosedLoop)`, but **without an OCP** — only `DynClosedLoop` is accepted
+  (`OpenLoop`/`ClosedLoop` are rejected with `PreconditionError`, since a pseudo-Hamiltonian
+  needs the costate). Because `PseudoHamiltonianSystem`/`Data.ComposedHamiltonian` wrap the
+  user's `H̃` directly, with **no OCP-derived fixed-size buffer**, this constructor does
+  **not** inherit `Flow(ocp, law)`'s `Matrix`-family restriction — measured, not assumed: the
+  full `Matrix`/`MMatrix`/`SMatrix` family works, on both `:total` and `:partial`. Its
+  compatibility profile otherwise matches `Flow(Hamiltonian)` exactly: every `Real`
+  container works, `Complex` fails (AD-backed), and a hand-built `Dual` collides with the
+  flow's own internal AD.
 
 ## See also
 

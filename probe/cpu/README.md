@@ -55,6 +55,13 @@ backed by a green cell here.
   does not — identical footprint). Also surfaces a new asymmetry: `ForwardDiff.Dual` works
   at a point call but not in a trajectory call for `OpenLoop`/`ClosedLoop` (the objective
   computation is not `Dual`-transparent).
+- **`Flow(h̃, law)`** — the pseudo-Hamiltonian + `DynClosedLoop` constructor, no OCP
+  (`OpenLoop`/`ClosedLoop` are rejected with `PreconditionError`, demonstrated once).
+  `PseudoHamiltonianSystem`/`ComposedHamiltonian` wrap the user's `H̃` function directly —
+  no OCP-derived fixed-size buffer — so, unlike `Flow(ocp, law)`, the full `Matrix`-family
+  works here too. Measured: same profile as `Flow(Hamiltonian)` (all `Real` containers work
+  on both `:total`/`:partial` × point/traj; `Complex` and a hand-built `Dual` both fail from
+  the same internal-AD causes).
 
 ## Running it
 
@@ -91,7 +98,9 @@ At the time of writing, `Flow(VectorField)`, `Flow(HamiltonianVectorField)`, and
 `Flow(::ODEFunction)` are **fully green on CPU**: no unsupported state type, only the `⚠`
 in-place-plus-immutable fallback above. `Flow(Hamiltonian)` is green for every `Real`
 container but has no `Complex` support (its internal AD backend cannot differentiate
-through a complex scalar). `Flow(ocp)` and `Flow(ocp, law)` are the most restricted
+through a complex scalar). `Flow(h̃, law)` shares that same `Complex`/`Dual` limitation but,
+unlike `Flow(ocp)`/`Flow(ocp, law)`, has **no fixed-size buffer** — the full `Matrix` family
+works. `Flow(ocp)` and `Flow(ocp, law)` are the most restricted
 constructors probed here — a fixed-size internal buffer and the AD-backed `Complex`/`Dual`
 limitation together explain almost every failure. See each block's in-script notes, and the
 corresponding [compatibility page](../../docs/src/compatibility/), for the full nuances —

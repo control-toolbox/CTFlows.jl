@@ -1116,3 +1116,96 @@ println("""
      stationary point of H̃ (∂H̃/∂u=0) — by design, to make the two columns a genuine
      consistency cross-check rather than two unrelated numbers.
 """)
+
+# =============================================================================
+# Flow(h̃, law) — pseudo-Hamiltonian + DynClosedLoop (no OCP)
+# =============================================================================
+#
+# Ground-truth source for docs/src/compatibility/pseudo_hamiltonian.md.
+#
+# Dynamics chosen to generalize to any state/costate container (unlike the scalar
+# example in flows/control_laws.md): h̃(x,p,u) = sum(p.*u) - 0.5*sum(abs2,u),
+# law u(x,p) = p (stationary: ∂h̃/∂u = p-u = 0 at u=p) ⇒ H(x,p) = 0.5·sum(p.^2)
+# ⇒ ẋ = ∂H/∂p = p, ṗ = -∂H/∂x = 0 ⇒ xf = x0+p0, pf = p0 at (t0,tf) = (0,1).
+#
+# Unlike Flow(ocp)/Flow(ocp, law) (issue #358), PseudoHamiltonianSystem/ComposedHamiltonian
+# wrap the user's h̃ function DIRECTLY — no OCP-derived fixed-size buffer — so this block
+# reuses the SAME 17-entry `cases_hvf` list as HVF/VF above (no scalar/vector flow split
+# needed, unlike the OCP blocks). Hypothesis under test: this constructor should behave
+# like Flow(Hamiltonian) (AD-backed, only Complex/hand-built Dual fail), NOT like the
+# restricted Flow(ocp,...) family — measured below, not assumed.
+# =============================================================================
+
+h̃_pf = Data.PseudoHamiltonian((x, p, u) -> sum(p .* u) - 0.5 * sum(abs2, u))
+law_dyn_pf = Data.DynClosedLoop((x, p) -> p)
+
+hflow_pf_total = Flows.Flow(h̃_pf, law_dyn_pf; reltol=1e-8)
+hflow_pf_partial = Flows.Flow(h̃_pf, law_dyn_pf; hamiltonian_type=:partial, reltol=1e-8)
+
+function _maxerr_pf(kind, r, x0, p0)
+    if kind === :point
+        xf, pf = r
+    else
+        xf = Trajectories.state(r)(1.0)
+        pf = Trajectories.costate(r)(1.0)
+    end
+    return maximum(abs.(vcat(_flat(xf) .- _flat(x0 .+ p0), _flat(pf) .- _flat(p0))))
+end
+
+function cell_pf(fl, kind, x0, p0)
+    g = kind === :point ? (() -> fl(0.0, x0, p0, 1.0)) : (() -> fl((0.0, 1.0), x0, p0))
+    try
+        r = g()
+        err = try
+            _maxerr_pf(kind, r, x0, p0)
+        catch
+            NaN
+        end
+        ok = isfinite(err) && err ≤ 1e-4
+        mark = ok ? "✓" : "?"
+        return (mark, @sprintf("err=%.1e", err))
+    catch e
+        return ("✗", _short(string(nameof(typeof(e))) * ": " * sprint(showerror, e)))
+    end
+end
+
+println("\n", "="^100)
+println("  CTFlows CPU probe — Flow(h̃, law), h̃=p·u-0.5|u|², law u=p, ẋ=p,ṗ=0 ⇒ xf=x0+p0, pf=p0")
+println("="^100)
+println(@sprintf("  %-16s | %-16s | %-16s | %-16s | %-16s",
+    "state", ":total point", ":total traj", ":partial point", ":partial traj"))
+println("  " * "-"^96)
+n_ok_pf = n_fail_pf = 0
+for (lab, x0, p0) in cases_hvf
+    marks = String[]
+    for (fl, kind) in ((hflow_pf_total, :point), (hflow_pf_total, :traj),
+                        (hflow_pf_partial, :point), (hflow_pf_partial, :traj))
+        m, d = cell_pf(fl, kind, x0, p0)
+        m == "✓" ? (global n_ok_pf += 1) : (global n_fail_pf += 1)
+        push!(marks, @sprintf("%s %-14s", m, d))
+    end
+    println(@sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4]))
+end
+println("  " * "-"^96)
+println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+    n_ok_pf, n_fail_pf, 4 * length(cases_hvf)))
+println("="^100)
+
+println("\nFlow(h̃, OpenLoop/ClosedLoop) — expected rejection (no costate access):")
+try
+    Flows.Flow(h̃_pf, Data.ClosedLoop(x -> -x); reltol=1e-8)
+    println("  unexpectedly succeeded")
+catch e
+    println("  ✗ ", nameof(typeof(e)), ": ", sprint(showerror, e))
+end
+
+println("""
+  Legend & notes
+  ──────────────
+  ✓  works, result matches the closed-form analytic reference (xf=x0+p0, pf=p0) to err ≤ 1e-4
+  ✗  raised the named error type (message truncated)   ?  ran but result did not match
+
+  This block settles the hypothesis above — read the totals literally, do not assume the
+  Flow(Hamiltonian) profile carries over without checking Complex/Dual rows specifically.
+  Fold whatever is measured into docs/src/compatibility/pseudo_hamiltonian.md.
+""")

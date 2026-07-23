@@ -117,6 +117,7 @@ with_api_reference(src_dir, ext_dir) do api_pages
                 "Flow(SciML)" => "compatibility/sciml.md",
                 "Flow(ocp)" => "compatibility/ocp_free.md",
                 "Flow(ocp, law)" => "compatibility/ocp_control_laws.md",
+                "Flow(h̃, law)" => "compatibility/pseudo_hamiltonian.md",
             ],
             "Developer notes" => ["GPU internals" => "dev/gpu-internals.md"],
             "API Reference" => api_pages,
