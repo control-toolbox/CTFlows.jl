@@ -176,6 +176,26 @@ println("""
 """)
 
 # =============================================================================
+# Sensitivities of Flow(VectorField) — differentiate the CALL, not one hand-seeded Dual
+# =============================================================================
+#
+# The Dual cells in the table above (a single Dual per component, one seed direction at a
+# time) work, but that is not how you would actually compute a Jacobian in practice: wrap
+# the flow CALL in an outer ForwardDiff.jacobian/gradient instead — one call gets every
+# partial at once. Unlike Flow(Hamiltonian), there is no internal AD backend here to nest
+# against, so this is unconditionally straightforward (no tag question at all).
+# =============================================================================
+
+println("\n", "="^96)
+println("  Sensitivities of Flow(VectorField) via an outer ForwardDiff.jacobian call")
+println("="^96)
+let
+    J = ForwardDiff.jacobian(x0 -> flow(0.0, x0, 1.0), [1.0, 2.0])
+    ok = isapprox(J, exp(-1.0) * [1.0 0.0; 0.0 1.0]; atol=1e-4)
+    println("  ✓ ForwardDiff.jacobian(x0 -> flow(0,x0,1), x0)  ", ok ? "matches e⁻¹·I" : "MISMATCH: $J")
+end
+
+# =============================================================================
 # HamiltonianVectorField probe — Flow(HamiltonianVectorField) state/costate matrix
 # =============================================================================
 #
@@ -285,6 +305,27 @@ println("""
      eventually match this).
    • Only ⚠ cells: SVector / SMatrix with an in-place Hamiltonian vector field.
 """)
+
+# =============================================================================
+# Sensitivities of Flow(HamiltonianVectorField) — differentiate the CALL
+# =============================================================================
+#
+# Same point as for Flow(VectorField): wrap the flow CALL in an outer
+# ForwardDiff.jacobian/gradient rather than hand-seeding one Dual component at a time.
+# No internal AD backend here either, so — unlike Flow(Hamiltonian) — there is no nested
+# Dual/tag question at all. Same dynamics as the Hamiltonian (AD) block below, so this
+# Jacobian is a direct cross-check: both constructors must agree on it.
+# =============================================================================
+
+println("\n", "="^96)
+println("  Sensitivities of Flow(HamiltonianVectorField) via an outer ForwardDiff.jacobian call")
+println("="^96)
+let
+    shoot(z) = collect(hflow(0.0, z[1], z[2], pi / 2))
+    J = ForwardDiff.jacobian(shoot, [1.0, 0.0])
+    ok = isapprox(J, [0.0 1.0; -1.0 0.0]; atol=1e-4)
+    println("  ✓ ForwardDiff.jacobian(shoot, [x0,p0])  ", ok ? "matches [0 1; -1 0]" : "MISMATCH: $J")
+end
 
 # =============================================================================
 # Hamiltonian (AD) probe — Flow(Hamiltonian), default backend AutoForwardDiff (CPU)

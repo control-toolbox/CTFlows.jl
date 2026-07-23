@@ -193,6 +193,19 @@ flow(0.0, x0, 1.0)
     the integration grid is identical whether the initial condition is a `Real` or a
     `Dual`. See `test/suite/extensions/test_forwarddiff_extension.jl`.
 
+### Recommended: differentiate the flow, not one hand-seeded `Dual`
+
+Seeding a single `Dual` per component (as above) only gives one partial derivative at a
+time. In practice, wrap the **flow call** in an outer `ForwardDiff.jacobian` /
+`ForwardDiff.gradient` instead — one call returns every partial at once. `Flow(VectorField)`
+has no internal AD backend, so there is no nesting concern here (unlike
+[`Flow(Hamiltonian)`](hamiltonian.md), whose own gradient computation is itself
+`AutoForwardDiff`):
+
+```@repl vf_compat
+ForwardDiff.jacobian(x0 -> flow(0.0, x0, 1.0), [1.0, 2.0])   # ≈ e⁻¹·I
+```
+
 ---
 
 ## In-place vector fields

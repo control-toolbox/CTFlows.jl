@@ -202,6 +202,22 @@ hflow(0.0, x0, p0, pi/2)
     so the integration grid is identical whether the initial condition is a `Real` or a
     `Dual`.
 
+### Recommended: differentiate the flow, not one hand-seeded `Dual`
+
+As for `Flow(VectorField)`, wrap the **flow call** in an outer `ForwardDiff.jacobian` /
+`ForwardDiff.gradient` to get every partial in one call, rather than hand-seeding a `Dual`
+per component. `Flow(HamiltonianVectorField)` has no internal AD backend, so there is no
+nesting concern (unlike [`Flow(Hamiltonian)`](hamiltonian.md)):
+
+```@repl hvf_compat
+shoot(z) = collect(hflow(0.0, z[1], z[2], pi/2))
+ForwardDiff.jacobian(shoot, [1.0, 0.0])   # ≈ [0 1; -1 0]
+```
+
+This is the same Jacobian of the same dynamics computed by
+[`Flow(Hamiltonian)`](hamiltonian.md#Automatic-differentiation:-sensitivities-of-the-flow) —
+a good cross-check that both constructors agree.
+
 ---
 
 ## In-place Hamiltonian vector fields
