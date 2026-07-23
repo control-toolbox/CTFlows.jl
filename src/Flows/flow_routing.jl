@@ -57,7 +57,16 @@ completed via [`CTBase.Descriptions.complete`](@extref).
 _available_flow_methods(::Type{Traits.WithAD}) = ((:di, :sciml, :cpu), (:di, :sciml, :gpu))
 _available_flow_methods(::Type{Traits.WithoutAD}) = ((:sciml, :cpu), (:sciml, :gpu))
 
-# Normalize a user-supplied `method` into a token tuple (or `nothing` for the default).
+"""
+$(TYPEDSIGNATURES)
+
+Normalize a user-supplied `method` into a token tuple (or `nothing` for the default).
+
+`nothing` passes through unchanged (signals "use the base description"); a single
+`Symbol` is wrapped into a 1-tuple; a tuple of `Symbol`s is returned as-is.
+
+See also: [`CTFlows.Flows._flow_description`](@ref)
+"""
 _as_method_tokens(::Nothing) = nothing
 _as_method_tokens(m::Symbol) = (m,)
 _as_method_tokens(m::Tuple{Vararg{Symbol}}) = m

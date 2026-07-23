@@ -101,28 +101,28 @@ behaviours are worth calling out:
 
 The point call returns a scalar:
 
-```@example vf_compat
+```@repl vf_compat
 flow(0.0, 1.0, 1.0)   # ≈ exp(-1)
 ```
 
 The trajectory call returns a `VectorFieldTrajectory`; its state accessor is a length-1
 vector at each time:
 
-```@example vf_compat
-sol = flow((0.0, 1.0), 1.0)
+```@repl vf_compat
+sol = flow((0.0, 1.0), 1.0);
 Trajectories.state(sol)(1.0)   # ≈ [exp(-1)]
 ```
 
 ### Vector
 
-```@example vf_compat
+```@repl vf_compat
 flow(0.0, [1.0, 2.0], 1.0)
 ```
 
 The trajectory's state accessor interpolates at any time in the span:
 
-```@example vf_compat
-sol = flow((0.0, 1.0), [1.0, 2.0])
+```@repl vf_compat
+sol = flow((0.0, 1.0), [1.0, 2.0]);
 Trajectories.state(sol)(0.5)
 ```
 
@@ -130,11 +130,8 @@ Trajectories.state(sol)(0.5)
 
 Mutable and immutable static vectors both integrate out-of-place:
 
-```@example vf_compat
+```@repl vf_compat
 flow(0.0, MVector{2}(1.0, 2.0), 1.0)
-```
-
-```@example vf_compat
 flow(0.0, SA[1.0, 2.0], 1.0)
 ```
 
@@ -142,15 +139,9 @@ flow(0.0, SA[1.0, 2.0], 1.0)
 
 A matrix state integrates every column as an independent trajectory of ``\dot{x} = -x``:
 
-```@example vf_compat
+```@repl vf_compat
 flow(0.0, [1.0 2.0; 3.0 4.0], 1.0)
-```
-
-```@example vf_compat
 flow(0.0, MMatrix{2,2}(1.0, 3.0, 2.0, 4.0), 1.0)   # mutable
-```
-
-```@example vf_compat
 flow(0.0, SMatrix{2,2}(1.0, 3.0, 2.0, 4.0), 1.0)   # immutable
 ```
 
@@ -160,19 +151,19 @@ flow(0.0, SMatrix{2,2}(1.0, 3.0, 2.0, 4.0), 1.0)   # immutable
 
 Complex initial conditions work with the same real vector field — the scalar case:
 
-```@example vf_compat
+```@repl vf_compat
 flow(0.0, 1.0 + 2.0im, 1.0)   # ≈ (1 + 2im) * exp(-1)
 ```
 
 vectors:
 
-```@example vf_compat
+```@repl vf_compat
 flow(0.0, [1.0 + 2.0im, 3.0 + 4.0im], 1.0)
 ```
 
 and matrices:
 
-```@example vf_compat
+```@repl vf_compat
 flow(0.0, [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im], 1.0)
 ```
 
@@ -183,7 +174,7 @@ flow(0.0, [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im], 1.0)
 A `ForwardDiff.Dual` initial condition propagates a sensitivity through the integration —
 the basis for differentiating a flow with respect to its initial state:
 
-```@example vf_compat
+```@repl vf_compat
 x0 = ForwardDiff.Dual(1.0, 1.0)   # value 1.0, seed 1.0
 xf = flow(0.0, x0, 1.0)
 (ForwardDiff.value(xf), ForwardDiff.partials(xf, 1))   # ≈ (exp(-1), exp(-1))
@@ -192,7 +183,7 @@ xf = flow(0.0, x0, 1.0)
 The value tracks ``x_0\,e^{-1}`` and the dual part tracks ``\partial x_f / \partial x_0 =
 e^{-1}``. Vector duals work the same way:
 
-```@example vf_compat
+```@repl vf_compat
 x0 = [ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(2.0, 0.0)]
 flow(0.0, x0, 1.0)
 ```
@@ -210,18 +201,15 @@ An in-place vector field `(du, x) -> (du .= -x)` produces the same results. The 
 the integration path from the **mutability** of `x0`: a mutable container (`Vector`,
 `MVector`, `Matrix`, `MMatrix`) is integrated truly in place, with no allocation per step:
 
-```@example vf_compat
+```@repl vf_compat
 flow_ip(0.0, [1.0, 2.0], 1.0)
-```
-
-```@example vf_compat
 flow_ip(0.0, MVector{2}(1.0, 2.0), 1.0)
 ```
 
 A **scalar** initial condition is also accepted: it is promoted to a length-1 vector before
 the mutability dispatch, so the in-place path applies.
 
-```@example vf_compat
+```@repl vf_compat
 flow_ip(0.0, 1.0, 1.0)   # scalar promoted internally
 ```
 
