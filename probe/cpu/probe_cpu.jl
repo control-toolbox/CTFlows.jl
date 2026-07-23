@@ -1209,3 +1209,108 @@ println("""
   Flow(Hamiltonian) profile carries over without checking Complex/Dual rows specifically.
   Fold whatever is measured into docs/src/compatibility/pseudo_hamiltonian.md.
 """)
+
+# =============================================================================
+# Flow(fc, law) — controlled vector field + OpenLoop/ClosedLoop (no OCP)
+# =============================================================================
+#
+# Ground-truth source for docs/src/compatibility/controlled_vector_field.md.
+#
+# fc(x,u) = u - x (same dynamics as flows/control_laws.md / ocp_control_laws.md).
+# law_cl = ClosedLoop(x -> -x) ⇒ ẋ = -2x ⇒ xf = x0·e⁻² at t=1 (same reference already used
+# in the OCP block above). law_ol = OpenLoop(() -> 1.0) (constant u=1) ⇒ ẋ = 1-x ⇒
+# xf = 1+(x0-1)·e⁻¹ at t=1 — covers the OTHER feedback branch, which ocp_control_laws.md
+# only ever exercised through ClosedLoop.
+#
+# Data.ControlledVectorField has NO in-place variant (confirmed by reading
+# CTBase/src/Data/controlled_vector_field.jl) — Systems.build_system(ComposedVectorField)
+# builds a plain out-of-place VectorFieldSystem, with NO ocp-derived fixed-size buffer
+# (unlike Flow(ocp, OpenLoop/ClosedLoop) — issue #358). Hypothesis under test: this
+# constructor should be as permissive as Flow(VectorField)'s OOP columns (already fully
+# green on CPU) — measured below, not assumed.
+# =============================================================================
+
+fc_cvf = Data.ControlledVectorField((x, u) -> u .- x)
+law_cl = Data.ClosedLoop(x -> -x)
+law_ol = Data.OpenLoop(() -> 1.0)
+
+fclow_cl = Flows.Flow(fc_cvf, law_cl; reltol=1e-8)
+fclow_ol = Flows.Flow(fc_cvf, law_ol; reltol=1e-8)
+
+function _maxerr_fc_cl(kind, r, x0)
+    got = kind === :point ? r : Trajectories.state(r)(1.0)
+    return maximum(abs.(_flat(got) .- _flat(x0 .* _EM2)))
+end
+
+function cell_fc_cl(fl, kind, x0)
+    g = kind === :point ? (() -> fl(0.0, x0, 1.0)) : (() -> fl((0.0, 1.0), x0))
+    try
+        r = g()
+        err = try
+            _maxerr_fc_cl(kind, r, x0)
+        catch
+            NaN
+        end
+        ok = isfinite(err) && err ≤ 1e-4
+        mark = ok ? "✓" : "?"
+        return (mark, @sprintf("err=%.1e", err))
+    catch e
+        return ("✗", _short(string(nameof(typeof(e))) * ": " * sprint(showerror, e)))
+    end
+end
+
+println("\n", "="^96)
+println("  CTFlows CPU probe — Flow(fc, ClosedLoop), fc(x,u)=u-x, law u=-x, ẋ=-2x ⇒ xf=x0·e⁻²")
+println("  no OCP, no AD anywhere (plain out-of-place VectorFieldSystem)")
+println("="^96)
+println(@sprintf("  %-16s | %-30s | %-30s", "state", "point", "traj"))
+println("  " * "-"^80)
+
+n_ok_fc = n_fail_fc = 0
+for (lab, x0, p0) in cases_hvf
+    m1, d1 = cell_fc_cl(fclow_cl, :point, x0)
+    m2, d2 = cell_fc_cl(fclow_cl, :traj, x0)
+    for m in (m1, m2)
+        m == "✓" ? (global n_ok_fc += 1) : (global n_fail_fc += 1)
+    end
+    println(@sprintf("  %-16s | %s %-28s | %s %-28s", lab, m1, d1, m2, d2))
+end
+println("  " * "-"^80)
+println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+    n_ok_fc, n_fail_fc, 2 * length(cases_hvf)))
+println("="^96)
+
+# OpenLoop demo — a few representative cases, not the full matrix (only _law_control's
+# arity changes between OpenLoopFeedback/ClosedLoopFeedback; integration mechanics are
+# identical, already exhaustively measured above via ClosedLoop).
+const _E1 = exp(-1.0)
+println("\nFlow(fc, OpenLoop), fc(x,u)=u-x, law u≡1, ẋ=1-x ⇒ xf=1+(x0-1)·e⁻¹ — spot-check:")
+for (lab, x0) in (
+    ("scalar Real", 1.0),
+    ("Vector Real", [1.0, 0.0]),
+    ("SVector Complex", SA[1.0 + 2.0im, 0.0 + 0.0im]),
+    ("Dual scalar", ForwardDiff.Dual(1.0, 1.0)),
+)
+    xf = fclow_ol(0.0, x0, 1.0)
+    ref = 1 .+ (x0 .- 1) .* _E1
+    err = maximum(abs.(_flat(xf) .- _flat(ref)))
+    println(@sprintf("  %-16s | err=%.1e", lab, err))
+end
+
+println("\nFlow(fc, DynClosedLoop) — expected rejection (no costate access):")
+try
+    Flows.Flow(fc_cvf, Data.DynClosedLoop((x, p) -> p); reltol=1e-8)
+    println("  unexpectedly succeeded")
+catch e
+    println("  ✗ ", nameof(typeof(e)), ": ", sprint(showerror, e))
+end
+
+println("""
+  Legend & notes
+  ──────────────
+  ✓  works, result matches the closed-form analytic reference (xf=x0·e⁻²) to err ≤ 1e-4
+  ✗  raised the named error type (message truncated)   ?  ran but result did not match
+
+  This block settles the hypothesis above — read the totals literally. Fold whatever is
+  measured into docs/src/compatibility/controlled_vector_field.md.
+""")

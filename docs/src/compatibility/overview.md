@@ -36,6 +36,7 @@ This work tracks issue
 | `Flow(ocp)` (control-free) | [`OptimalControlFlow`](@ref CTFlows.Flows.OptimalControlFlow) | [`Flow(ocp)`](ocp_free.md) | ✅ live |
 | `Flow(ocp, law)` | [`OptimalControlFlow`](@ref CTFlows.Flows.OptimalControlFlow) / [`ControlledFlow`](@ref CTFlows.Flows.ControlledFlow) | [`Flow(ocp, law)`](ocp_control_laws.md) | ✅ live |
 | `Flow(h̃, law)` | [`HamiltonianFlow`](@ref CTFlows.Flows.HamiltonianFlow) | [`Flow(h̃, law)`](pseudo_hamiltonian.md) | ✅ live |
+| `Flow(fc, law)` | [`ControlledFlow`](@ref CTFlows.Flows.ControlledFlow) | [`Flow(fc, law)`](controlled_vector_field.md) | ✅ live |
 
 ## At a glance
 
@@ -92,6 +93,18 @@ This work tracks issue
   compatibility profile otherwise matches `Flow(Hamiltonian)` exactly: every `Real`
   container works, `Complex` fails (AD-backed), and a hand-built `Dual` collides with the
   flow's own internal AD.
+- [`Flow(fc, law)`](controlled_vector_field.md) is the controlled-vector-field counterpart
+  of `Flow(h̃, law)` — only `OpenLoop`/`ClosedLoop` accepted (`DynClosedLoop` rejected,
+  needs the costate). `Data.ControlledVectorField` has no in-place variant and, without an
+  OCP, no fixed-size buffer either, so it builds the same plain out-of-place
+  `VectorFieldSystem` as `Flow(VectorField)`. Measured: **fully green**, no unsupported
+  combination at all — the most permissive of the four no-OCP/OCP "control law" pages, and
+  a direct contrast with `Flow(ocp, law)`'s `OpenLoop`/`ClosedLoop` path, whose
+  `SVector`/`Matrix`/trajectory-`Dual` restrictions come entirely from the OCP-derived
+  buffer and objective computation that don't exist here.
+
+This completes the CPU-side compatibility table for every `Flow` constructor; GPU
+compatibility remains a separate, ongoing effort (see [`probe/gpu`](https://github.com/control-toolbox/CTFlows.jl/tree/main/probe/gpu)).
 
 ## See also
 

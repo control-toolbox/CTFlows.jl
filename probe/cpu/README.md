@@ -62,6 +62,14 @@ backed by a green cell here.
   works here too. Measured: same profile as `Flow(Hamiltonian)` (all `Real` containers work
   on both `:total`/`:partial` × point/traj; `Complex` and a hand-built `Dual` both fail from
   the same internal-AD causes).
+- **`Flow(fc, law)`** — the controlled-vector-field counterpart of `Flow(h̃, law)`: only
+  `OpenLoop`/`ClosedLoop` accepted (`DynClosedLoop` rejected with `PreconditionError`,
+  demonstrated once). `Data.ControlledVectorField` has no in-place variant and, without an
+  OCP, no fixed-size buffer either — `Systems.build_system` builds a plain out-of-place
+  `VectorFieldSystem`, identical to `Flow(VectorField)`'s OOP path. Measured: **fully green**
+  — every container × `Real`/`Complex`/`ForwardDiff.Dual` × point/traj works, for both
+  `OpenLoop` and `ClosedLoop` (34/34 on the full `ClosedLoop` matrix, spot-checked on
+  `OpenLoop`). The most permissive of the "intermediate" (no-OCP) constructors probed here.
 
 ## Running it
 
@@ -94,9 +102,11 @@ The capability matrix appears in the job log.
 - `✗` raised the named error type; `?` ran but the result did not match the analytic
   solution.
 
-At the time of writing, `Flow(VectorField)`, `Flow(HamiltonianVectorField)`, and
-`Flow(::ODEFunction)` are **fully green on CPU**: no unsupported state type, only the `⚠`
-in-place-plus-immutable fallback above. `Flow(Hamiltonian)` is green for every `Real`
+At the time of writing, `Flow(VectorField)`, `Flow(HamiltonianVectorField)`,
+`Flow(::ODEFunction)`, and `Flow(fc, law)` are **fully green on CPU**: no unsupported state
+type, only the `⚠` in-place-plus-immutable fallback above (which does not even apply to
+`Flow(fc, law)`, since `Data.ControlledVectorField` has no in-place variant at all).
+`Flow(Hamiltonian)` is green for every `Real`
 container but has no `Complex` support (its internal AD backend cannot differentiate
 through a complex scalar). `Flow(h̃, law)` shares that same `Complex`/`Dual` limitation but,
 unlike `Flow(ocp)`/`Flow(ocp, law)`, has **no fixed-size buffer** — the full `Matrix` family
