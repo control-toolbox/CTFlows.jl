@@ -31,26 +31,30 @@ This work tracks issue
 |---|---|---|---|
 | `Flow(::VectorField)` | [`StateFlow`](@ref CTFlows.Flows.StateFlow) | [`Flow(VectorField)`](vector_field.md) | ✅ live |
 | `Flow(::HamiltonianVectorField)` | [`HamiltonianFlow`](@ref CTFlows.Flows.HamiltonianFlow) | [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md) | ✅ live |
-| `Flow(::Hamiltonian)` | [`HamiltonianFlow`](@ref CTFlows.Flows.HamiltonianFlow) | — | 🚧 planned |
+| `Flow(::Hamiltonian)` | [`HamiltonianFlow`](@ref CTFlows.Flows.HamiltonianFlow) | [`Flow(Hamiltonian)`](hamiltonian.md) | ✅ live |
 | `Flow(::ODEFunction)` / `Flow(::ODEProblem)` | `SciMLProblemFlow` | — | 🚧 planned |
 | `Flow(ocp)` | [`OptimalControlFlow`](@ref CTFlows.Flows.OptimalControlFlow) | — | 🚧 planned |
 
 ## At a glance
 
-Both live pages report the same result on CPU: **every** state/costate type tested works
-— scalar, `Vector`, `Matrix` (batched columns), `MVector` / `SVector`, `MMatrix` /
-`SMatrix`, with `Real`, `Complex`, or `ForwardDiff.Dual` elements — in both the point and
-trajectory call styles. The only caveat in both cases is that an **in-place** vector field
-with an **immutable** initial condition (`SVector` / `SMatrix`) works but emits a
-performance warning.
-
-- [`Flow(VectorField)`](vector_field.md) — the full table and runnable examples.
-- [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md) — the full table and
-  runnable examples. Unlike `Flow(VectorField)`, it is already
+- [`Flow(VectorField)`](vector_field.md) and
+  [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md) report the same result on
+  CPU: **every** state/costate type tested works — scalar, `Vector`, `Matrix` (batched
+  columns), `MVector` / `SVector`, `MMatrix` / `SMatrix`, with `Real`, `Complex`, or
+  `ForwardDiff.Dual` elements — in both the point and trajectory call styles. The only
+  caveat in both cases is that an **in-place** vector field with an **immutable** initial
+  condition (`SVector` / `SMatrix`) works but emits a performance warning.
+  `Flow(HamiltonianVectorField)` is also already
   ["1-D = scalar"](https://github.com/control-toolbox/Handbook/blob/main/philosophy/dimension-and-shape.md)
-  end to end (point *and* trajectory) — see
-  [#357](https://github.com/control-toolbox/CTFlows.jl/issues/357) for bringing
-  `Flow(VectorField)` in line with this.
+  end to end (point *and* trajectory), unlike `Flow(VectorField)` — see
+  [#357](https://github.com/control-toolbox/CTFlows.jl/issues/357).
+- [`Flow(Hamiltonian)`](hamiltonian.md) (AD-backed, no in-place variant) supports every
+  **real** container the same way, but its default backend (`AutoForwardDiff`) does **not**
+  support `Complex` states, and a hand-built `ForwardDiff.Dual` state fails with a
+  `DualMismatchError` — differentiating the flow works only by wrapping the *call* in an
+  outer `ForwardDiff.jacobian`/`gradient`, never by constructing a `Dual` by hand. It is
+  also already 1-D = scalar end to end, via the same coercion machinery as
+  `Flow(HamiltonianVectorField)` (see #357).
 
 ## See also
 

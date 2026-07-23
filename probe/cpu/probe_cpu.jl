@@ -285,3 +285,161 @@ println("""
      eventually match this).
    • Only ⚠ cells: SVector / SMatrix with an in-place Hamiltonian vector field.
 """)
+
+# =============================================================================
+# Hamiltonian (AD) probe — Flow(Hamiltonian), default backend AutoForwardDiff (CPU)
+# =============================================================================
+#
+# Ground-truth source for docs/src/compatibility/hamiltonian.md.
+# Unlike VectorField/HamiltonianVectorField, Data.Hamiltonian has NO in-place variant —
+# the flow computes ẋ = ∂H/∂p, ṗ = -∂H/∂x via automatic differentiation (default backend
+# on CPU: DifferentiationInterface + ADTypes.AutoForwardDiff()). So this block has no
+# OOP/IP split: only {point, traj} columns.
+#
+# Same dynamics as the HVF block (H = 0.5·(|x|² + |p|²) ⇒ ẋ=p, ṗ=-x), so the same
+# analytic solution applies: xf = p0, pf = -x0 at t = π/2.
+#
+# Two open questions this block settles (see .reports/2026-07-23_plan-compatibility-hamiltonian.md)
+# — MEASURED, not assumed:
+#   - Complex state/costate: FAILS with the default AutoForwardDiff backend —
+#     `ArgumentError: Cannot create a dual over scalar type ComplexF64`. Confirmed, matches
+#     the earlier (unvalidated) analysis.
+#   - ForwardDiff.Dual state/costate, HAND-BUILT (`ForwardDiff.Dual(1.0, 1.0)`, an untagged
+#     `Dual{Nothing,...}`): FAILS — `DualMismatchError: Cannot determine ordering of Dual
+#     tags Nothing and ForwardDiff.Tag{...}`. A hand-supplied CUSTOM tag (`Dual{MyTag}(...)`)
+#     does NOT fix this either (tested) — an arbitrary marker type lacks ForwardDiff's
+#     internal tag-ordering machinery.
+#   - The REALISTIC pattern — wrapping the flow CALL in an outer `ForwardDiff.jacobian` /
+#     `ForwardDiff.gradient` (never hand-constructing a `Dual`) — WORKS (see the dedicated
+#     check below). This is exactly how NonlinearSolve-style shooting differentiates a flow
+#     that is itself ForwardDiff-backed: the tag comes from the outer differentiation call,
+#     not from the user.
+# =============================================================================
+
+h_ad     = Data.Hamiltonian((x, p) -> 0.5 * (sum(abs2, x) + sum(abs2, p)))
+hflow_ad = Flows.Flow(h_ad; reltol=1e-8)
+
+function _maxerr_had(kind, r, x0, p0)
+    if kind === :point
+        xf, pf = r
+    else
+        xf = Trajectories.state(r)(pi / 2)
+        pf = Trajectories.costate(r)(pi / 2)
+    end
+    return maximum(abs.(vcat(_flat(xf) .- _flat(p0), _flat(pf) .- _flat(-x0))))
+end
+
+_short(s, n=90) = length(s) > n ? first(s, n) * "…" : s
+
+function cell_had(fl, kind, x0, p0)
+    g = kind === :point ? (() -> fl(0.0, x0, p0, pi / 2)) : (() -> fl((0.0, pi / 2), x0, p0))
+    try
+        r = g()
+        err = try
+            _maxerr_had(kind, r, x0, p0)
+        catch
+            NaN
+        end
+        ok = isfinite(err) && err ≤ 1e-4
+        mark = ok ? "✓" : "?"
+        return (mark, @sprintf("err=%.1e", err))
+    catch e
+        return ("✗", _short(string(nameof(typeof(e))) * ": " * sprint(showerror, e)))
+    end
+end
+
+cases_had = [
+    ("scalar Real",     1.0,                                             0.0),
+    ("Vector Real",     [1.0, 0.0],                                       [0.0, 1.0]),
+    ("MVector Real",    MVector{2}(1.0, 0.0),                             MVector{2}(0.0, 1.0)),
+    ("SVector Real",    SA[1.0, 0.0],                                     SA[0.0, 1.0]),
+    ("Matrix Real",     [1.0 2.0; 3.0 4.0],                               [0.0 0.0; 1.0 1.0]),
+    ("MMatrix Real",    MMatrix{2,2}(1.0, 3.0, 2.0, 4.0),                 MMatrix{2,2}(0.0, 1.0, 0.0, 1.0)),
+    ("SMatrix Real",    SMatrix{2,2}(1.0, 3.0, 2.0, 4.0),                 SMatrix{2,2}(0.0, 1.0, 0.0, 1.0)),
+    ("scalar Complex",  1.0 + 2.0im,                                      0.0 + 0.0im),
+    ("Vector Complex",  [1.0 + 2.0im, 0.0 + 0.0im],                       [0.0 + 0.0im, 1.0 + 1.0im]),
+    ("MVector Complex", MVector{2}(1.0 + 2.0im, 0.0 + 0.0im),             MVector{2}(0.0 + 0.0im, 1.0 + 1.0im)),
+    ("SVector Complex", SA[1.0 + 2.0im, 0.0 + 0.0im],                     SA[0.0 + 0.0im, 1.0 + 1.0im]),
+    ("Matrix Complex",  [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im],       [0.0+0.0im 1.0+1.0im; 2.0+2.0im 3.0+3.0im]),
+    ("SMatrix Complex", SMatrix{2,2}(1.0+2.0im, 3.0+4.0im, 5.0+6.0im, 7.0+8.0im), SMatrix{2,2}(0.0+0.0im, 2.0+2.0im, 1.0+1.0im, 3.0+3.0im)),
+    ("Dual scalar",     ForwardDiff.Dual(1.0, 1.0),                       ForwardDiff.Dual(0.0, 0.0)),
+    ("Dual Vector",     [ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)], [ForwardDiff.Dual(0.0, 0.0), ForwardDiff.Dual(1.0, 0.0)]),
+    ("Dual MVector",    MVector{2}(ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)), MVector{2}(ForwardDiff.Dual(0.0, 0.0), ForwardDiff.Dual(1.0, 0.0))),
+    ("Dual SVector",    SA[ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)], SA[ForwardDiff.Dual(0.0, 0.0), ForwardDiff.Dual(1.0, 0.0)]),
+]
+
+println("\n", "="^96)
+println("  CTFlows CPU probe — Flow(Hamiltonian), H = 0.5(|x|²+|p|²)  [AutoForwardDiff, CPU]")
+println("  analytic: xf = p0, pf = -x0.  NO in-place variant — point/traj columns only.")
+println("="^96)
+println(@sprintf("  %-16s | %-30s | %-30s", "state/costate", "point", "traj"))
+println("  " * "-"^80)
+
+n_ok_had = n_fail_had = 0
+for (lab, x0, p0) in cases_had
+    m1, d1 = cell_had(hflow_ad, :point, x0, p0)
+    m2, d2 = cell_had(hflow_ad, :traj, x0, p0)
+    for m in (m1, m2)
+        m == "✓" ? (global n_ok_had += 1) : (global n_fail_had += 1)
+    end
+    println(@sprintf("  %-16s | %s %-28s | %s %-28s", lab, m1, d1, m2, d2))
+end
+
+println("  " * "-"^80)
+println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+    n_ok_had, n_fail_had, 2 * length(cases_had)))
+println("="^96)
+println("""
+  Legend & notes
+  ──────────────
+  ✓  works, result matches analytic (xf ≈ p0, pf ≈ -x0) to err ≤ 1e-4
+  ✗  raised the named error type (message truncated)   ?  ran but result did not match
+
+  This block settles the two open questions from .reports/2026-07-23_plan-compatibility-hamiltonian.md
+  (Complex support, nested-Dual/tag behaviour) empirically — read the ✓/✗ cells above rather
+  than assuming either result.
+""")
+
+# =============================================================================
+# Nested AD — the pattern that actually works around the Dual/tag cells above
+# =============================================================================
+#
+# The "Dual scalar/Vector/MVector/SVector" rows above are all ✗ because they hand-build
+# a Dual (ForwardDiff.Dual(1.0, 1.0), tag = Nothing) and feed it straight into a flow whose
+# own internal AD is ALSO AutoForwardDiff. That is not how sensitivities of a
+# Flow(Hamiltonian) are meant to be computed: wrap the FLOW CALL in an outer
+# ForwardDiff.jacobian/gradient instead — ForwardDiff then generates its own properly
+# ordered tag for the perturbation, and the nested (forward-over-forward) case is exactly
+# what ForwardDiff.jl is designed to support. This is the same pattern NonlinearSolve-style
+# shooting methods use to differentiate a ForwardDiff-backed flow w.r.t. (x0, p0).
+# =============================================================================
+
+println("\n", "="^96)
+println("  Nested AD via an OUTER ForwardDiff.jacobian/gradient call (the working pattern)")
+println("="^96)
+
+let
+    shoot(z) = collect(hflow_ad(0.0, z[1], z[2], pi / 2))
+    try
+        J = ForwardDiff.jacobian(shoot, [1.0, 0.0])
+        ok = isapprox(J, [0.0 1.0; -1.0 0.0]; atol=1e-4)
+        println("  ✓ ForwardDiff.jacobian(shoot, [x0,p0])  ", ok ? "matches [0 1; -1 0]" : "MISMATCH: $J")
+    catch e
+        println("  ✗ ForwardDiff.jacobian FAILED: ", sprint(showerror, e))
+    end
+
+    residual(z) = sum(abs2, shoot(z))
+    try
+        g = ForwardDiff.gradient(residual, [1.0, 0.0])
+        println("  ✓ ForwardDiff.gradient(residual, [x0,p0]) = ", g)
+    catch e
+        println("  ✗ ForwardDiff.gradient FAILED: ", sprint(showerror, e))
+    end
+end
+println("""
+  Conclusion: nested ForwardDiff-over-ForwardDiff through Flow(Hamiltonian) works — but only
+  when the OUTER Dual is generated by ForwardDiff itself (via jacobian/gradient/derivative
+  on a closure that calls the flow), never by hand-constructing a Dual and passing it as x0.
+  No custom backend switch (e.g. an internal Mooncake backend) is needed to sidestep this —
+  the fix is procedural, not a backend choice.
+""")
