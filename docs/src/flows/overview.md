@@ -40,6 +40,7 @@ from `Data`, the other from integrator options — and only meet when
 | [Control laws](control_laws.md) | Flows with control laws | `ControlledFlow`, `Flow(ocp, law)`, `OpenLoop`, `ClosedLoop`, `DynClosedLoop` |
 | [Constrained flows](constrained.md) | Path-constraint terms on `Flow(ocp, law)` | `constraint`, `multiplier`, `hamiltonian_type` |
 | [SciML flows](sciml.md) | Flows from SciML functions and problems | `Flow(::ODEFunction)`, `Flow(::ODEProblem)`, `SciMLProblemFlow` |
+| [GPU flows](gpu.md) | Running a flow on a device | `method=:gpu`, `CuArray` states, the GPU contract |
 
 The **data layer** (wrapping functions as `VectorField`, `Hamiltonian`,
 `HamiltonianVectorField`) and the **trait system** (`Autonomous`, `Fixed`,
@@ -60,7 +61,7 @@ using CTFlows
 using CTFlows.Flows        # StateFlow, HamiltonianFlow, Flow, build_flow
 using CTBase.Data          # VectorField, Hamiltonian, HamiltonianVectorField
 using CTFlows.Systems      # build_system
-using CTFlows.Integrators  # SciML, build_integrator
+using CTFlows.Integrators  # SciML, build_problem, build_options
 using CTFlows.Trajectories # VectorFieldTrajectory, state, time_grid
 using CTBase.Traits        # Autonomous, NonAutonomous, Fixed, NonFixed, InPlace, OutOfPlace
 using CTFlows.Configs      # StateEndPointConfig, StateTrajectoryConfig, …
@@ -101,7 +102,7 @@ x(0.5)                          # interpolate at t = 0.5
 ```
 
 The shortcut `Flows.Flow(vf; opts...)` hides steps 2–3 of the pipeline
-(`build_system` → `build_integrator` → `build_flow`). See
+(`build_system` → `SciML` → `build_flow`). See
 [Building a flow](building_a_flow.md) for the explicit form.
 
 ## Mathematical setting

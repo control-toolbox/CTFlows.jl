@@ -171,8 +171,8 @@ This separation is useful when the same config must be passed to several flows.
 
 ## [Integrator options](@id integrator-options)
 
-Options are passed as keyword arguments to `Flows.Flow(data; opts...)` or
-`Integrators.build_integrator(; opts...)`.
+Options are passed as keyword arguments to `Flows.Flow(data; opts...)` or, when building
+the integrator explicitly, to `Integrators.SciML(; opts...)`.
 
 The default integrator is **SciML** backed by `OrdinaryDiffEqTsit5` (loaded when
 `import OrdinaryDiffEqTsit5` appears in your session).
@@ -225,7 +225,7 @@ integrator's cached option bundle for the configuration. Integration is then
 lets the same problem definition be re-solved with different parameters efficiently.
 
 ```@example flows_integrating
-integ = Integrators.build_integrator(; reltol=1e-8)
+integ = Integrators.SciML(; reltol=1e-8)
 ```
 
 ---
@@ -236,4 +236,4 @@ integ = Integrators.build_integrator(; reltol=1e-8)
 - [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref) — Hamiltonian configuration objects.
 - [`CTFlows.Configs.tspan`](@ref), [`CTFlows.Configs.initial_state`](@ref), [`CTFlows.Configs.initial_costate`](@ref) — configuration accessors.
 - [`CTFlows.Integrators.build_problem`](@ref), [`CTFlows.Integrators.build_options`](@ref) — the CTFlows-side integrator glue.
-- [`CTSolvers.Integrators.SciML`](@extref), [`CTSolvers.Integrators.build_integrator`](@extref), [`CTSolvers.Integrators.AbstractIntegrator`](@extref) — the integrator strategy (provided by CTSolvers).
+- [`CTSolvers.Integrators.SciML`](@extref), [`CTSolvers.Integrators.AbstractIntegrator`](@extref) — the integrator strategy (provided by CTSolvers).

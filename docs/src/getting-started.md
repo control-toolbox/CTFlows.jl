@@ -182,3 +182,4 @@ plot(sol)
 - [Integrating](flows/integrating.md) — call styles, variable parameters, solver options.
 - [Multi-phase flows](flows/multiphase.md) — concatenation with switching times and jumps.
 - [SciML flows](flows/sciml.md) — wrap an existing `ODEFunction` or `ODEProblem`.
+- [GPU flows](flows/gpu.md) — running a flow on a device, and the rules your own functions must follow.
