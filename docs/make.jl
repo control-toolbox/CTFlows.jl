@@ -112,6 +112,7 @@ with_api_reference(src_dir, ext_dir) do api_pages
             "Compatibility" => [
                 "Overview" => "compatibility/overview.md",
                 "Flow(VectorField)" => "compatibility/vector_field.md",
+                "Flow(HamiltonianVectorField)" => "compatibility/hamiltonian_vector_field.md",
             ],
             "Developer notes" => ["GPU internals" => "dev/gpu-internals.md"],
             "API Reference" => api_pages,

@@ -30,20 +30,27 @@ This work tracks issue
 | Constructor | Builds | Page | Status |
 |---|---|---|---|
 | `Flow(::VectorField)` | [`StateFlow`](@ref CTFlows.Flows.StateFlow) | [`Flow(VectorField)`](vector_field.md) | ✅ live |
-| `Flow(::HamiltonianVectorField)` | [`HamiltonianFlow`](@ref CTFlows.Flows.HamiltonianFlow) | — | 🚧 planned |
+| `Flow(::HamiltonianVectorField)` | [`HamiltonianFlow`](@ref CTFlows.Flows.HamiltonianFlow) | [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md) | ✅ live |
 | `Flow(::Hamiltonian)` | [`HamiltonianFlow`](@ref CTFlows.Flows.HamiltonianFlow) | — | 🚧 planned |
 | `Flow(::ODEFunction)` / `Flow(::ODEProblem)` | `SciMLProblemFlow` | — | 🚧 planned |
 | `Flow(ocp)` | [`OptimalControlFlow`](@ref CTFlows.Flows.OptimalControlFlow) | — | 🚧 planned |
 
-## At a glance — `Flow(VectorField)`
+## At a glance
 
-On CPU, the state flow built from a [`Data.VectorField`](@extref CTBase.Data.VectorField)
-supports **every** state type tested — scalar, `Vector`, `Matrix` (batched columns),
-`MVector` / `SVector`, `MMatrix` / `SMatrix`, with `Real`, `Complex`, or
-`ForwardDiff.Dual` elements — in both the point and trajectory call styles. The only
-caveat is that an **in-place** vector field with an **immutable** initial condition
-(`SVector` / `SMatrix`) works but emits a performance warning. See
-[`Flow(VectorField)`](vector_field.md) for the full table and runnable examples.
+Both live pages report the same result on CPU: **every** state/costate type tested works
+— scalar, `Vector`, `Matrix` (batched columns), `MVector` / `SVector`, `MMatrix` /
+`SMatrix`, with `Real`, `Complex`, or `ForwardDiff.Dual` elements — in both the point and
+trajectory call styles. The only caveat in both cases is that an **in-place** vector field
+with an **immutable** initial condition (`SVector` / `SMatrix`) works but emits a
+performance warning.
+
+- [`Flow(VectorField)`](vector_field.md) — the full table and runnable examples.
+- [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md) — the full table and
+  runnable examples. Unlike `Flow(VectorField)`, it is already
+  ["1-D = scalar"](https://github.com/control-toolbox/Handbook/blob/main/philosophy/dimension-and-shape.md)
+  end to end (point *and* trajectory) — see
+  [#357](https://github.com/control-toolbox/CTFlows.jl/issues/357) for bringing
+  `Flow(VectorField)` in line with this.
 
 ## See also
 
