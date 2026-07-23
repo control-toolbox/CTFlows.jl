@@ -75,7 +75,6 @@ function Integrators.build_problem(
 )
     _check_dyn_config(Traits.dynamics_trait(system), config)
     u0 = Configs.initial_condition(config)
-    Systems._check_vf_scalar_inplace(system, u0)
     λ = Systems.ODEParameters(variable)
     if ismutable(u0)
         f! = Systems.get_ip_rhs(system, config)

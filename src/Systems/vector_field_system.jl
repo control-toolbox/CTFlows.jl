@@ -94,37 +94,6 @@ See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.hamilto
 """
 vector_field(sys::VectorFieldSystem) = sys.vf
 
-# =============================================================================
-# Guard for unsupported combinations
-# =============================================================================
-
-"""
-    _check_vf_scalar_inplace(sys::VectorFieldSystem{F, TD, VD, Traits.InPlace}, u0::Number)
-
-Raise an error if an in-place vector field is used with a scalar initial condition.
-This combination is unsupported because in-place functions require mutable arrays.
-
-# Arguments
-- `sys::VectorFieldSystem`: The vector field system.
-- `u0`: The initial condition.
-
-# Throws
-- `ArgumentError` if `sys` is in-place and `u0` is a scalar.
-"""
-function _check_vf_scalar_inplace(
-    sys::VectorFieldSystem{TD,VD,Traits.InPlace}, u0::Number
-) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
-    return throw(
-        ArgumentError(
-            "InPlace VectorField with scalar u0 is unsupported. " *
-            "Scalar initial conditions require out-of-place vector fields. " *
-            "Consider using an out-of-place VectorField or a vector-valued initial condition.",
-        ),
-    )
-end
-
-_check_vf_scalar_inplace(::AbstractSystem, ::Any) = nothing
-
 """
 $(TYPEDSIGNATURES)
 

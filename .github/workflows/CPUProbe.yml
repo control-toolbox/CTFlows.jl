@@ -1,0 +1,35 @@
+name: CPU probe
+
+# Runs the standalone CPU capability probe (probe/cpu/probe_cpu.jl) on an Ubuntu
+# runner. Diagnostic only: it prints a Flow(VectorField) state-type capability
+# matrix and always succeeds (experiments are individually try/catch'd). See
+# probe/cpu/README.md.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [labeled, synchronize, opened, reopened]
+
+jobs:
+  cpu-probe:
+    # Run manually (workflow_dispatch) or on a PR carrying the 'run probe' label.
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run probe')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@latest
+        with:
+          version: '1'
+
+      - name: Add ct-registry
+        uses: julia-actions/add-julia-registry@v2
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          registry: control-toolbox/ct-registry
+
+      - name: Run CPU probe
+        run: julia --project=probe/cpu probe/cpu/probe_cpu.jl

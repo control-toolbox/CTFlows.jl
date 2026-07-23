@@ -30,7 +30,7 @@ The `.github/workflows/GPUProbe.yml` workflow runs it on the self-hosted `kkt`
 (NVIDIA) runner. Trigger it either by:
 
 - **manually** — Actions → "GPU probe" → *Run workflow*, or
-- **on a PR** — add the `run ci gpu` label to the pull request.
+- **on a PR** — add the `run probe` label to the pull request (same label as the CPU probe).
 
 The capability matrix appears in the job log.
 
