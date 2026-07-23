@@ -68,8 +68,6 @@ the trajectory call `hflow((t0, tf), x0, p0)` →
 | `MMatrix` `Real` | ✓ | ✓ |
 | `SMatrix` `Real` | ✓ | ✓ |
 | `Complex` (any container) | ✗ (a) | ✗ (a) |
-| `ForwardDiff.Dual`, hand-built | ✗ (b) | ✗ (b) |
-| `ForwardDiff.Dual`, via outer `ForwardDiff.jacobian`/`gradient` | ✓ (c) | — |
 
 ### Legend
 
@@ -84,19 +82,9 @@ the trajectory call `hflow((t0, tf), x0, p0)` →
     complex-capable AD backend would need to be selected via `ad_backend=` instead (not
     covered by this page).
 
-!!! warning "(b)/(c) ForwardDiff.Dual as x0 — hand-built fails, the outer-AD pattern works"
-    Passing a **hand-built** `ForwardDiff.Dual` (e.g. `ForwardDiff.Dual(1.0, 1.0)`,
-    an *untagged* `Dual{Nothing,...}`) as `x0`/`p0` fails: the flow's own internal AD is
-    also `AutoForwardDiff`, so this nests two Duals, and `ForwardDiff` refuses the
-    combination — `DualMismatchError: Cannot determine ordering of Dual tags Nothing and
-    ForwardDiff.Tag{...}`. A **hand-supplied custom tag** (`ForwardDiff.Dual{MyTag}(...)`)
-    does **not** fix this either — it was tested and still raises the same error, because
-    an arbitrary marker type lacks `ForwardDiff.Tag`'s internal ordering machinery.
-    The pattern that *does* work — and is the correct way to differentiate a
-    `Flow(Hamiltonian)` with respect to `(x0, p0)` — is to never construct a `Dual` by
-    hand: wrap the **flow call** in an outer `ForwardDiff.jacobian` / `ForwardDiff.gradient`
-    instead, shown below. This is exactly how a `NonlinearSolve`-style shooting method
-    differentiates a flow that is itself `ForwardDiff`-backed.
+The table above is about the flow's *state/costate* input. A separate question — how to
+**differentiate the flow itself** with respect to `(x0, p0)`, e.g. for a shooting method —
+is covered next.
 
 ---
 
@@ -155,23 +143,19 @@ See note (a) above — use a complex-capable `ad_backend` if this is needed.
 
 ## Automatic differentiation: sensitivities of the flow
 
-### What does *not* work
+Since `Flow(Hamiltonian)` is itself `AutoForwardDiff`-backed internally, differentiating it
+with respect to `(x0, p0)` — e.g. for a shooting method — means **nested** AD. Do this by
+differentiating the **flow call**, never by constructing a `ForwardDiff.Dual` by hand and
+passing it as `x0`/`p0`: a hand-built, untagged `Dual` collides with the flow's own internal
+tag (`DualMismatchError`), and a hand-supplied custom tag does not fix it either — an
+arbitrary marker type lacks `ForwardDiff.Tag`'s internal ordering machinery. Wrapping the
+call in an outer `ForwardDiff.jacobian` / `ForwardDiff.gradient` sidesteps this entirely,
+because `ForwardDiff` then generates its own properly ordered tag for the perturbation —
+this is exactly how a `NonlinearSolve`-style shooting method differentiates a flow that is
+itself `ForwardDiff`-backed.
 
-```@repl h_compat
-try
-    x0 = ForwardDiff.Dual(1.0, 1.0)   # hand-built, untagged
-    p0 = ForwardDiff.Dual(0.0, 0.0)
-    hflow(0.0, x0, p0, pi/2)
-catch e
-    showerror(stdout, e)
-end
-```
-
-### The recommended pattern
-
-Differentiate the **flow call**, not a hand-built `Dual`. This computes the exact Jacobian
-of ``(x_f, p_f)`` with respect to ``(x_0, p_0)`` — for the linear harmonic oscillator it is
-the constant matrix ``\begin{pmatrix}0&1\\-1&0\end{pmatrix}``:
+This computes the exact Jacobian of ``(x_f, p_f)`` with respect to ``(x_0, p_0)`` — for the
+linear harmonic oscillator it is the constant matrix ``\begin{pmatrix}0&1\\-1&0\end{pmatrix}``:
 
 ```@repl h_compat
 shoot(z) = collect(hflow(0.0, z[1], z[2], pi/2))
@@ -179,10 +163,8 @@ ForwardDiff.jacobian(shoot, [1.0, 0.0])
 ```
 
 The same closure-wrapping pattern works with `ForwardDiff.gradient` for a scalar shooting
-residual, and is how a `NonlinearSolve`-based shooting method should differentiate a
-`Flow(Hamiltonian)` — the outer `ForwardDiff` call generates a properly ordered tag, so no
-internal backend change (e.g. switching to `AutoZygote`/`AutoMooncake` to dodge the nested
-`Dual`) is needed for this to work.
+residual. No internal backend change (e.g. switching to `AutoZygote`/`AutoMooncake` to
+dodge the nested `Dual`) is needed for this to work.
 
 ---
 

@@ -299,21 +299,14 @@ println("""
 # Same dynamics as the HVF block (H = 0.5·(|x|² + |p|²) ⇒ ẋ=p, ṗ=-x), so the same
 # analytic solution applies: xf = p0, pf = -x0 at t = π/2.
 #
-# Two open questions this block settles (see .reports/2026-07-23_plan-compatibility-hamiltonian.md)
-# — MEASURED, not assumed:
-#   - Complex state/costate: FAILS with the default AutoForwardDiff backend —
-#     `ArgumentError: Cannot create a dual over scalar type ComplexF64`. Confirmed, matches
-#     the earlier (unvalidated) analysis.
-#   - ForwardDiff.Dual state/costate, HAND-BUILT (`ForwardDiff.Dual(1.0, 1.0)`, an untagged
-#     `Dual{Nothing,...}`): FAILS — `DualMismatchError: Cannot determine ordering of Dual
-#     tags Nothing and ForwardDiff.Tag{...}`. A hand-supplied CUSTOM tag (`Dual{MyTag}(...)`)
-#     does NOT fix this either (tested) — an arbitrary marker type lacks ForwardDiff's
-#     internal tag-ordering machinery.
-#   - The REALISTIC pattern — wrapping the flow CALL in an outer `ForwardDiff.jacobian` /
-#     `ForwardDiff.gradient` (never hand-constructing a `Dual`) — WORKS (see the dedicated
-#     check below). This is exactly how NonlinearSolve-style shooting differentiates a flow
-#     that is itself ForwardDiff-backed: the tag comes from the outer differentiation call,
-#     not from the user.
+# Open question this block settles (see .reports/2026-07-23_plan-compatibility-hamiltonian.md)
+# — MEASURED, not assumed: Complex state/costate FAILS with the default AutoForwardDiff
+# backend — `ArgumentError: Cannot create a dual over scalar type ComplexF64`. Confirmed,
+# matches the earlier (unvalidated) analysis.
+#
+# (A hand-built ForwardDiff.Dual as x0/p0 is deliberately NOT probed here as a state type —
+# it is not a useful thing to do; see the "Nested AD" section below for what actually
+# matters: differentiating the flow via an outer ForwardDiff.jacobian/gradient call.)
 # =============================================================================
 
 h_ad     = Data.Hamiltonian((x, p) -> 0.5 * (sum(abs2, x) + sum(abs2, p)))
@@ -362,10 +355,6 @@ cases_had = [
     ("SVector Complex", SA[1.0 + 2.0im, 0.0 + 0.0im],                     SA[0.0 + 0.0im, 1.0 + 1.0im]),
     ("Matrix Complex",  [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im],       [0.0+0.0im 1.0+1.0im; 2.0+2.0im 3.0+3.0im]),
     ("SMatrix Complex", SMatrix{2,2}(1.0+2.0im, 3.0+4.0im, 5.0+6.0im, 7.0+8.0im), SMatrix{2,2}(0.0+0.0im, 2.0+2.0im, 1.0+1.0im, 3.0+3.0im)),
-    ("Dual scalar",     ForwardDiff.Dual(1.0, 1.0),                       ForwardDiff.Dual(0.0, 0.0)),
-    ("Dual Vector",     [ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)], [ForwardDiff.Dual(0.0, 0.0), ForwardDiff.Dual(1.0, 0.0)]),
-    ("Dual MVector",    MVector{2}(ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)), MVector{2}(ForwardDiff.Dual(0.0, 0.0), ForwardDiff.Dual(1.0, 0.0))),
-    ("Dual SVector",    SA[ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)], SA[ForwardDiff.Dual(0.0, 0.0), ForwardDiff.Dual(1.0, 0.0)]),
 ]
 
 println("\n", "="^96)
@@ -395,19 +384,21 @@ println("""
   ✓  works, result matches analytic (xf ≈ p0, pf ≈ -x0) to err ≤ 1e-4
   ✗  raised the named error type (message truncated)   ?  ran but result did not match
 
-  This block settles the two open questions from .reports/2026-07-23_plan-compatibility-hamiltonian.md
-  (Complex support, nested-Dual/tag behaviour) empirically — read the ✓/✗ cells above rather
-  than assuming either result.
+  This block confirms Complex is unsupported by the default AutoForwardDiff backend
+  (measured, not assumed). See the "Nested AD" section below for how to actually
+  differentiate this flow with respect to (x0, p0).
 """)
 
 # =============================================================================
-# Nested AD — the pattern that actually works around the Dual/tag cells above
+# Nested AD — how to differentiate Flow(Hamiltonian) with respect to (x0, p0)
 # =============================================================================
 #
-# The "Dual scalar/Vector/MVector/SVector" rows above are all ✗ because they hand-build
-# a Dual (ForwardDiff.Dual(1.0, 1.0), tag = Nothing) and feed it straight into a flow whose
-# own internal AD is ALSO AutoForwardDiff. That is not how sensitivities of a
-# Flow(Hamiltonian) are meant to be computed: wrap the FLOW CALL in an outer
+# A hand-built Dual (ForwardDiff.Dual(1.0, 1.0), tag = Nothing) fed directly as x0/p0
+# fails, because the flow's own internal AD is ALSO AutoForwardDiff: `DualMismatchError:
+# Cannot determine ordering of Dual tags Nothing and ForwardDiff.Tag{...}`. A hand-supplied
+# CUSTOM tag (Dual{MyTag}(...)) does NOT fix this either (tested) — an arbitrary marker type
+# lacks ForwardDiff's internal tag-ordering machinery. That is not how sensitivities of a
+# Flow(Hamiltonian) are meant to be computed anyway: wrap the FLOW CALL in an outer
 # ForwardDiff.jacobian/gradient instead — ForwardDiff then generates its own properly
 # ordered tag for the perturbation, and the nested (forward-over-forward) case is exactly
 # what ForwardDiff.jl is designed to support. This is the same pattern NonlinearSolve-style

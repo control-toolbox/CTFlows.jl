@@ -50,10 +50,10 @@ This work tracks issue
   [#357](https://github.com/control-toolbox/CTFlows.jl/issues/357).
 - [`Flow(Hamiltonian)`](hamiltonian.md) (AD-backed, no in-place variant) supports every
   **real** container the same way, but its default backend (`AutoForwardDiff`) does **not**
-  support `Complex` states, and a hand-built `ForwardDiff.Dual` state fails with a
-  `DualMismatchError` — differentiating the flow works only by wrapping the *call* in an
-  outer `ForwardDiff.jacobian`/`gradient`, never by constructing a `Dual` by hand. It is
-  also already 1-D = scalar end to end, via the same coercion machinery as
+  support `Complex` states. To differentiate the flow itself with respect to `(x0, p0)`
+  (e.g. for shooting), wrap the *call* in an outer `ForwardDiff.jacobian`/`gradient` —
+  never construct a `Dual` by hand and pass it as `x0`/`p0`. It is also already
+  1-D = scalar end to end, via the same coercion machinery as
   `Flow(HamiltonianVectorField)` (see #357).
 
 ## See also
