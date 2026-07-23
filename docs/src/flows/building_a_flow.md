@@ -8,7 +8,7 @@ A **flow** is a callable that integrates a system from an initial condition to a
 time. Building one involves three steps:
 
 ```
-Data  →  build_system  →  build_integrator  →  build_flow  →  Flow
+Data  →  build_system  →  SciML  →  build_flow  →  Flow
 ```
 
 The shortcut constructor `Flows.Flow(data; opts...)` collapses all three steps into one
@@ -83,12 +83,15 @@ A system exposes:
 
 ### Step 2 — Build the integrator
 
+The integrator is a strategy object; construct it directly with its options.
+
 ```@example flows_building
-integ = Integrators.build_integrator(; reltol=1e-8, abstol=1e-8)
+integ = Integrators.SciML(; reltol=1e-8, abstol=1e-8)
 ```
 
-The default integrator is `SciML` (backed by `OrdinaryDiffEqTsit5` when loaded).
-See [Integrating](integrating.md) for how to choose a different algorithm.
+`SciML` is the integrator strategy provided by CTSolvers (backed by
+`OrdinaryDiffEqTsit5` when loaded). See [Integrating](integrating.md) for how to choose
+a different algorithm.
 
 ### Step 3 — Combine into a flow
 
@@ -224,7 +227,7 @@ then a `CTBase.Data.ComposedHamiltonian` (`:total` mode) or reconstructed from a
 ## See also
 
 - [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.StateFlow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref) — concrete flow types.
-- [`CTFlows.Flows.build_flow`](@ref), [`CTFlows.Systems.build_system`](@ref), [`CTSolvers.Integrators.build_integrator`](@extref) — pipeline builders.
+- [`CTFlows.Flows.build_flow`](@ref), [`CTFlows.Systems.build_system`](@ref), [`CTSolvers.Integrators.SciML`](@extref) — pipeline builders.
 - [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractStateFlow`](@ref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@ref) — abstract supertypes.
 - [`CTFlows.Flows.system`](@ref), [`CTFlows.Flows.integrator`](@ref) — flow accessors.
 - [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref) — system contract.

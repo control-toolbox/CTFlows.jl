@@ -78,8 +78,8 @@ strategy is provided by
 [`CTFlows.Integrators`](@ref CTFlows.Integrators).
 
 The shortcut `Flows.Flow(data; opts...)` collapses all pipeline steps into a single
-call. The explicit pipeline (`build_system` → `build_integrator` → `build_flow`)
-gives full control over each step.
+call. The explicit pipeline (`build_system` → `SciML` → `build_flow`) gives full
+control over each step.
 
 ## Guides
 
@@ -94,3 +94,4 @@ gives full control over each step.
 | [Optimal control](flows/optimal_control.md) | Flows from optimal control problems (`Flow(ocp)`) |
 | [Control laws](flows/control_laws.md) | `Flow(ocp, law)`, `Flow(h̃, law)`, `Flow(fc, law)` — `OpenLoop`, `ClosedLoop`, `DynClosedLoop` |
 | [SciML flows](flows/sciml.md) | Flows from `ODEFunction` / `ODEProblem` (SciML extension) |
+| [GPU flows](flows/gpu.md) | Running a flow on a device: `method=:gpu`, the GPU contract, ensembles |
