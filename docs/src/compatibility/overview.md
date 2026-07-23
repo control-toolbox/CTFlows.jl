@@ -33,7 +33,8 @@ This work tracks issue
 | `Flow(::HamiltonianVectorField)` | [`HamiltonianFlow`](@ref CTFlows.Flows.HamiltonianFlow) | [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md) | ✅ live |
 | `Flow(::Hamiltonian)` | [`HamiltonianFlow`](@ref CTFlows.Flows.HamiltonianFlow) | [`Flow(Hamiltonian)`](hamiltonian.md) | ✅ live |
 | `Flow(::ODEFunction)` / `Flow(::ODEProblem)` | [`StateFlow`](@ref CTFlows.Flows.StateFlow) / `SciMLProblemFlow` | [`Flow(SciML)`](sciml.md) | ✅ live |
-| `Flow(ocp)` | [`OptimalControlFlow`](@ref CTFlows.Flows.OptimalControlFlow) | — | 🚧 planned |
+| `Flow(ocp)` (control-free) | [`OptimalControlFlow`](@ref CTFlows.Flows.OptimalControlFlow) | [`Flow(ocp)`](ocp_free.md) | ✅ live |
+| `Flow(ocp, law)` | [`OptimalControlFlow`](@ref CTFlows.Flows.OptimalControlFlow) / [`ControlledFlow`](@ref CTFlows.Flows.ControlledFlow) | [`Flow(ocp, law)`](ocp_control_laws.md) | ✅ live |
 
 ## At a glance
 
@@ -65,6 +66,21 @@ This work tracks issue
   scalar) is a **hard, native SciML error** — not a warning with a fallback like everywhere
   else on this site. Build the `ODEProblem` from an out-of-place function if you need to
   call it with immutable states.
+- [`Flow(ocp)`](ocp_free.md) and [`Flow(ocp, law)`](ocp_control_laws.md) are the most
+  restricted constructors on this site — unlike every flow above, **the state dimension is
+  fixed at OCP construction** (`state!(pre, n)`), so no single flow accepts every container
+  size. Two structural causes explain almost every ✗ measured on both pages: (1) the
+  internal derivative buffer is always a fixed-size `Vector`, which breaks batched `Matrix`
+  states everywhere, and breaks `SVector` states specifically on the non-AD (state-only /
+  `OpenLoop`/`ClosedLoop`) paths, where OrdinaryDiffEq's out-of-place solver requires
+  type-constancy; (2) the AD-backed paths (`Flow(ocp)`, `Flow(ocp, DynClosedLoop)`) reject
+  `Complex` and hand-built `Dual` for the same reason as `Flow(Hamiltonian)`. Two things are
+  **not** broken, worth calling out explicitly: adding `constraint=`/`multiplier=` to a
+  `DynClosedLoop` flow never changes which state types work (measured, not assumed), and
+  `:total`/`:partial` agree exactly for a stationary feedback law. One asymmetry is new to
+  these pages: `Flow(ocp, OpenLoop/ClosedLoop)` accepts a `ForwardDiff.Dual` state at a
+  *point* call but not in a *trajectory* call (the objective computation is not
+  `Dual`-transparent).
 
 ## See also
 

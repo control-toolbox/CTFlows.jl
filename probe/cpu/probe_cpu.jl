@@ -49,6 +49,7 @@ import CTBase.Data
 import CTFlows.Flows
 import CTFlows.Trajectories
 import CTFlows.Integrators
+import CTModels
 
 # ---------------------------------------------------------------------------
 # Log collector to detect the "InPlace VectorField" performance warning
@@ -656,4 +657,462 @@ println("""
      constructed (its own u0/tspan/p) — shown once above, not part of the state matrix.
    • See the *** line above for the measured outcome of the flagged open question
      (IP-built ODEProblem remade with an immutable x0 at call time).
+""")
+
+# =============================================================================
+# Optimal control problem (OCP) probes — Flow(ocp) and Flow(ocp, law)
+# =============================================================================
+#
+# Ground-truth source for docs/src/compatibility/ocp_free.md and
+# docs/src/compatibility/ocp_control_laws.md. Design rationale (two pages, :total/:partial
+# as a full axis rather than a smoke test, constrained-continuation check, the
+# variable/variable_costate axis) is in .reports/2026-07-23_plan-compatibility-ocp.md.
+#
+# Unlike VF/HVF/Hamiltonian, the state dimension of an OCP is FIXED AT CONSTRUCTION
+# (`state!(pre, n)`) — one flow does not accept every container size. So this block builds
+# TWO ocp instances per family: a SCALAR one (n=1) and a VECTOR-family one (n=2), and reuses
+# the SAME container/value list as the HVF block (`cases_hvf`) — index 1 is the scalar case,
+# 2:end the n=2 cases — rather than inventing a new list.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# OCP fixtures
+# ---------------------------------------------------------------------------
+
+# control-free: H(x,p) = -p·x  (sp0=-1 for :min, no Lagrange) ⇒ ẋ=-x, ṗ=p
+#   ⇒ (xf,pf) = (x0·e⁻¹, p0·e) at tf=1
+function _build_ocp_free(n::Int)
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, n)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= -x; nothing))
+    CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> sum(xf))
+    return CTModels.Building.build(pre)
+end
+
+# control-free, NonFixed: ẋ = v·x (v scalar) ⇒ ṗ = -v·p
+#   ⇒ (xf,pf) = (x0·e^v, p0·e⁻ᵛ) at tf=1;  pv(tf) = -sum(x0.*p0)·(tf-t0)  — reconciled
+#   against test/suite/extensions/test_optimal_control_flow.jl's `_pv_ref` (ℓ=0 case).
+function _build_ocp_free_variable(n::Int)
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, n)
+    CTModels.Building.variable!(pre, 1)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= v[1] .* x; nothing))
+    CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> sum(xf))
+    return CTModels.Building.build(pre)
+end
+
+# with control (control_laws.md's own example, generalized to n): ẋ = u-x, min ∫0.5|u|² dt
+function _build_ocp_ctrl(n::Int)
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, n)
+    CTModels.Building.control!(pre, n)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= u .- x; nothing))
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * sum(abs2, u))
+    return CTModels.Building.build(pre)
+end
+
+ocp_free_1 = _build_ocp_free(1)
+ocp_free_2 = _build_ocp_free(2)
+ocp_freev_1 = _build_ocp_free_variable(1)
+ocp_freev_2 = _build_ocp_free_variable(2)
+ocp_ctrl_1 = _build_ocp_ctrl(1)
+ocp_ctrl_2 = _build_ocp_ctrl(2)
+
+law_dyn = Data.DynClosedLoop((x, p) -> p)     # u = p (stationary: ∂H̃/∂u = p-u = 0)
+law_closed = Data.ClosedLoop(x -> -x)          # u = -x
+
+f_free_1 = Flows.Flow(ocp_free_1; reltol=1e-8)
+f_free_2 = Flows.Flow(ocp_free_2; reltol=1e-8)
+f_freev_1 = Flows.Flow(ocp_freev_1; reltol=1e-8)
+f_freev_2 = Flows.Flow(ocp_freev_2; reltol=1e-8)
+
+f_dyn_total_1 = Flows.Flow(ocp_ctrl_1, law_dyn; reltol=1e-8)                   # :total (default)
+f_dyn_total_2 = Flows.Flow(ocp_ctrl_2, law_dyn; reltol=1e-8)
+f_dyn_partial_1 = Flows.Flow(ocp_ctrl_1, law_dyn; hamiltonian_type=:partial, reltol=1e-8)
+f_dyn_partial_2 = Flows.Flow(ocp_ctrl_2, law_dyn; hamiltonian_type=:partial, reltol=1e-8)
+
+# constant constraint/multiplier (g=1, μ=0.3): μ·g contributes a pure CONSTANT to H̃_c, so
+# ∂H̃_c/∂x = ∂H̃/∂x and ∂H̃_c/∂p = ∂H̃/∂p — the dynamics (and hence the analytic reference) are
+# UNCHANGED from the unconstrained case. This isolates "does the constrained path still run"
+# from "is the constrained physics right" (the latter already covered by
+# test/suite/flows/test_constrained_flows.jl-style tests, not re-derived here).
+f_dyn_total_c_1 = Flows.Flow(
+    ocp_ctrl_1, law_dyn; constraint=(x, u) -> 1.0, multiplier=(x, p) -> 0.3, reltol=1e-8
+)
+f_dyn_total_c_2 = Flows.Flow(
+    ocp_ctrl_2, law_dyn; constraint=(x, u) -> 1.0, multiplier=(x, p) -> 0.3, reltol=1e-8
+)
+f_dyn_partial_c_1 = Flows.Flow(
+    ocp_ctrl_1,
+    law_dyn;
+    hamiltonian_type=:partial,
+    constraint=(x, u) -> 1.0,
+    multiplier=(x, p) -> 0.3,
+    reltol=1e-8,
+)
+f_dyn_partial_c_2 = Flows.Flow(
+    ocp_ctrl_2,
+    law_dyn;
+    hamiltonian_type=:partial,
+    constraint=(x, u) -> 1.0,
+    multiplier=(x, p) -> 0.3,
+    reltol=1e-8,
+)
+
+f_cl_1 = Flows.Flow(ocp_ctrl_1, law_closed; reltol=1e-8)
+f_cl_2 = Flows.Flow(ocp_ctrl_2, law_closed; reltol=1e-8)
+
+# ---------------------------------------------------------------------------
+# Flow(ocp) — Hamiltonian (state+costate) block
+# ---------------------------------------------------------------------------
+
+function _maxerr_ocpfree(kind, r, x0, p0)
+    if kind === :point
+        xf, pf = r
+    else
+        xf = CTModels.Components.state(r)(1.0)
+        pf = CTModels.Components.costate(r)(1.0)
+    end
+    return maximum(
+        abs.(vcat(_flat(xf) .- _flat(x0 .* E), _flat(pf) .- _flat(p0 .* exp(1.0))))
+    )
+end
+
+function cell_ocpfree(fl, kind, x0, p0)
+    g = kind === :point ? (() -> fl(0.0, x0, p0, 1.0)) : (() -> fl((0.0, 1.0), x0, p0))
+    try
+        r = g()
+        err = try
+            _maxerr_ocpfree(kind, r, x0, p0)
+        catch
+            NaN
+        end
+        ok = isfinite(err) && err ≤ 1e-4
+        mark = ok ? "✓" : "?"
+        return (mark, @sprintf("err=%.1e", err))
+    catch e
+        return ("✗", _short(string(nameof(typeof(e))) * ": " * sprint(showerror, e)))
+    end
+end
+
+println("\n", "="^96)
+println("  CTFlows CPU probe — Flow(ocp), control-free, H(x,p)=-p·x,  (xf,pf)=(x0·e⁻¹,p0·e)")
+println("  no OOP/IP (no mutability dispatch for Hamiltonian-type flows)")
+println("="^96)
+println(@sprintf("  %-16s | %-30s | %-30s", "state/costate", "point", "traj"))
+println("  " * "-"^80)
+
+n_ok_ocpfree = n_fail_ocpfree = 0
+for (lab, x0, p0) in cases_hvf
+    fl = x0 isa Number ? f_free_1 : f_free_2   # scalar cases live at indices 1, 8, 14 — not just 1
+    m1, d1 = cell_ocpfree(fl, :point, x0, p0)
+    m2, d2 = cell_ocpfree(fl, :traj, x0, p0)
+    for m in (m1, m2)
+        m == "✓" ? (global n_ok_ocpfree += 1) : (global n_fail_ocpfree += 1)
+    end
+    println(@sprintf("  %-16s | %s %-28s | %s %-28s", lab, m1, d1, m2, d2))
+end
+println("  " * "-"^80)
+println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+    n_ok_ocpfree, n_fail_ocpfree, 2 * length(cases_hvf)))
+println("="^96)
+
+# ---------------------------------------------------------------------------
+# Flow(ocp) — basic (state-only, no costate) block — direct-shooting, issue #230
+# ---------------------------------------------------------------------------
+
+function _maxerr_ocpfree_basic(kind, r, x0)
+    got = kind === :point ? r : Trajectories.state(r)(1.0)
+    return maximum(abs.(_flat(got) .- _flat(x0 .* E)))
+end
+
+function cell_ocpfree_basic(fl, kind, x0)
+    g = kind === :point ? (() -> fl(0.0, x0, 1.0)) : (() -> fl((0.0, 1.0), x0))
+    try
+        r = g()
+        err = try
+            _maxerr_ocpfree_basic(kind, r, x0)
+        catch
+            NaN
+        end
+        ok = isfinite(err) && err ≤ 1e-4
+        mark = ok ? "✓" : "?"
+        return (mark, @sprintf("err=%.1e", err))
+    catch e
+        return ("✗", _short(string(nameof(typeof(e))) * ": " * sprint(showerror, e)))
+    end
+end
+
+println("\n", "="^96)
+println("  CTFlows CPU probe — Flow(ocp), basic state-only call f(t0,x0,tf), no costate")
+println("="^96)
+println(@sprintf("  %-16s | %-30s | %-30s", "state", "point", "traj"))
+println("  " * "-"^80)
+
+n_ok_basic = n_fail_basic = 0
+for (lab, x0, p0) in cases_hvf
+    fl = x0 isa Number ? f_free_1 : f_free_2
+    m1, d1 = cell_ocpfree_basic(fl, :point, x0)
+    m2, d2 = cell_ocpfree_basic(fl, :traj, x0)
+    for m in (m1, m2)
+        m == "✓" ? (global n_ok_basic += 1) : (global n_fail_basic += 1)
+    end
+    println(@sprintf("  %-16s | %s %-28s | %s %-28s", lab, m1, d1, m2, d2))
+end
+println("  " * "-"^80)
+println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+    n_ok_basic, n_fail_basic, 2 * length(cases_hvf)))
+println("="^96)
+
+# ---------------------------------------------------------------------------
+# Flow(ocp) — variable= / variable_costate= axis (flagged as possibly incomplete)
+# ---------------------------------------------------------------------------
+
+cases_var_scalar = [
+    ("scalar Real", 1.0, 0.5),
+    ("scalar Complex", 1.0 + 2.0im, 0.5 + 0.1im),
+    ("Dual scalar", ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.5, 0.0)),
+]
+cases_var_vec = [
+    ("Vector Real", [1.0, 2.0], [0.5, 0.3]),
+    ("SVector Real", SA[1.0, 2.0], SA[0.5, 0.3]),
+]
+const V_TEST = 0.7
+
+function _maxerr_ocpvar(x0, p0, v, xf, pf)
+    return maximum(
+        abs.(vcat(_flat(xf) .- _flat(x0 .* exp(v)), _flat(pf) .- _flat(p0 .* exp(-v))))
+    )
+end
+
+function cell_ocpvar(fl, x0, p0, v)
+    try
+        xf, pf = fl(0.0, x0, p0, 1.0; variable=v)
+        err = try
+            _maxerr_ocpvar(x0, p0, v, xf, pf)
+        catch
+            NaN
+        end
+        ok = isfinite(err) && err ≤ 1e-4
+        mark = ok ? "✓" : "?"
+        return (mark, @sprintf("err=%.1e", err))
+    catch e
+        return ("✗", _short(string(nameof(typeof(e))) * ": " * sprint(showerror, e)))
+    end
+end
+
+function cell_ocpvarcostate(fl, x0, p0, v)
+    try
+        xf, pf, pvf = fl(0.0, x0, p0, 1.0; variable=v, variable_costate=true)
+        errxp = _maxerr_ocpvar(x0, p0, v, xf, pf)
+        refpv = -sum(_flat(x0) .* _flat(p0))
+        errpv = maximum(abs.(_flat(pvf) .- refpv))
+        err = max(errxp, errpv)
+        ok = isfinite(err) && err ≤ 1e-4
+        mark = ok ? "✓" : "?"
+        return (mark, @sprintf("err=%.1e", err))
+    catch e
+        return ("✗", _short(string(nameof(typeof(e))) * ": " * sprint(showerror, e)))
+    end
+end
+
+println("\n", "="^96)
+println("  CTFlows CPU probe — Flow(ocp), variable= / variable_costate= axis")
+println("  ẋ = v·x ⇒ (xf,pf)=(x0·e^v,p0·e⁻ᵛ);  variable_costate: pvf = -Σ(x0·p0)·(tf-t0)")
+println("="^96)
+println(@sprintf("  %-16s | %-30s | %-30s", "state/costate", "variable=v", "+variable_costate=true"))
+println("  " * "-"^80)
+
+n_ok_var = n_fail_var = 0
+for (lab, x0, p0) in cases_var_scalar
+    m1, d1 = cell_ocpvar(f_freev_1, x0, p0, V_TEST)
+    m2, d2 = cell_ocpvarcostate(f_freev_1, x0, p0, V_TEST)
+    for m in (m1, m2)
+        m == "✓" ? (global n_ok_var += 1) : (global n_fail_var += 1)
+    end
+    println(@sprintf("  %-16s | %s %-28s | %s %-28s", lab, m1, d1, m2, d2))
+end
+for (lab, x0, p0) in cases_var_vec
+    m1, d1 = cell_ocpvar(f_freev_2, x0, p0, V_TEST)
+    m2, d2 = cell_ocpvarcostate(f_freev_2, x0, p0, V_TEST)
+    for m in (m1, m2)
+        m == "✓" ? (global n_ok_var += 1) : (global n_fail_var += 1)
+    end
+    println(@sprintf("  %-16s | %s %-28s | %s %-28s", lab, m1, d1, m2, d2))
+end
+println("  " * "-"^80)
+println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+    n_ok_var, n_fail_var, 2 * (length(cases_var_scalar) + length(cases_var_vec))))
+println("="^96)
+println("""
+  NOTE: this axis was flagged as possibly incomplete before measuring — read the totals
+  above literally, do not assume full coverage. Fold whatever is measured (including
+  failures) into docs/src/compatibility/ocp_free.md, and open a follow-up issue (like #357)
+  instead of forcing a clean table if the result is irregular.
+""")
+
+# ---------------------------------------------------------------------------
+# Flow(ocp, DynClosedLoop) — Hamiltonian block, :total vs :partial, unconstrained
+# ---------------------------------------------------------------------------
+
+const _EE = exp(1.0)
+
+function _ref_dyn_xf(x0, p0)
+    return x0 ./ _EE .+ (p0 ./ 2) .* (_EE - 1 / _EE)
+end
+_ref_dyn_pf(p0) = p0 .* _EE
+
+function _maxerr_dyn(kind, r, x0, p0)
+    if kind === :point
+        xf, pf = r
+    else
+        xf = CTModels.Components.state(r)(1.0)
+        pf = CTModels.Components.costate(r)(1.0)
+    end
+    return maximum(
+        abs.(
+            vcat(
+                _flat(xf) .- _flat(_ref_dyn_xf(x0, p0)), _flat(pf) .- _flat(_ref_dyn_pf(p0))
+            ),
+        ),
+    )
+end
+
+function cell_dyn(fl, kind, x0, p0)
+    g = kind === :point ? (() -> fl(0.0, x0, p0, 1.0)) : (() -> fl((0.0, 1.0), x0, p0))
+    try
+        r = g()
+        err = try
+            _maxerr_dyn(kind, r, x0, p0)
+        catch
+            NaN
+        end
+        ok = isfinite(err) && err ≤ 1e-4
+        mark = ok ? "✓" : "?"
+        return (mark, @sprintf("err=%.1e", err))
+    catch e
+        return ("✗", _short(string(nameof(typeof(e))) * ": " * sprint(showerror, e)))
+    end
+end
+
+function _print_dyn_table(title, f1, f2)
+    println("\n", "="^100)
+    println("  ", title)
+    println("="^100)
+    println(@sprintf("  %-16s | %-16s | %-16s | %-16s | %-16s",
+        "state", ":total point", ":total traj", ":partial point", ":partial traj"))
+    println("  " * "-"^96)
+    n_ok = n_fail = 0
+    for (lab, x0, p0) in cases_hvf
+        f = x0 isa Number ? f1 : f2
+        marks = String[]
+        for (fl, kind) in ((f.total, :point), (f.total, :traj), (f.partial, :point), (f.partial, :traj))
+            m, d = cell_dyn(fl, kind, x0, p0)
+            m == "✓" ? (n_ok += 1) : (n_fail += 1)
+            push!(marks, @sprintf("%s %-14s", m, d))
+        end
+        println(@sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4]))
+    end
+    println("  " * "-"^96)
+    println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+        n_ok, n_fail, 4 * length(cases_hvf)))
+    println("="^100)
+    return nothing
+end
+
+_print_dyn_table(
+    "Flow(ocp, DynClosedLoop) — UNCONSTRAINED, H̃=p(u-x)-0.5u², law u=p, stationary feedback",
+    (total=f_dyn_total_1, partial=f_dyn_partial_1),
+    (total=f_dyn_total_2, partial=f_dyn_partial_2),
+)
+
+# ---------------------------------------------------------------------------
+# Flow(ocp, DynClosedLoop) — same table, CONSTRAINED (constraint=1, multiplier=0.3)
+# ---------------------------------------------------------------------------
+#
+# g≡1, μ≡0.3 ⇒ μ·g≡0.3, a pure CONSTANT added to H̃_c ⇒ the dynamics (and hence the
+# analytic reference _ref_dyn_xf/_ref_dyn_pf) are UNCHANGED from the unconstrained table
+# above. This directly answers: "does the constrained path continue to work wherever the
+# unconstrained one does?" — same expected numeric result, only the machinery differs.
+# ---------------------------------------------------------------------------
+
+_print_dyn_table(
+    "Flow(ocp, DynClosedLoop) — CONSTRAINED (constraint=(x,u)->1.0, multiplier=(x,p)->0.3)",
+    (total=f_dyn_total_c_1, partial=f_dyn_partial_c_1),
+    (total=f_dyn_total_c_2, partial=f_dyn_partial_c_2),
+)
+
+# ---------------------------------------------------------------------------
+# Flow(ocp, OpenLoop/ClosedLoop) — state-only block (ControlledFlow, no AD in the RHS)
+# ---------------------------------------------------------------------------
+
+const _EM2 = exp(-2.0)
+
+function _maxerr_cl(kind, r, x0)
+    got = kind === :point ? r : Trajectories.state(r)(1.0)
+    return maximum(abs.(_flat(got) .- _flat(x0 .* _EM2)))
+end
+
+function cell_cl(fl, kind, x0)
+    g = kind === :point ? (() -> fl(0.0, x0, 1.0)) : (() -> fl((0.0, 1.0), x0))
+    try
+        r = g()
+        err = try
+            _maxerr_cl(kind, r, x0)
+        catch
+            NaN
+        end
+        ok = isfinite(err) && err ≤ 1e-4
+        mark = ok ? "✓" : "?"
+        return (mark, @sprintf("err=%.1e", err))
+    catch e
+        return ("✗", _short(string(nameof(typeof(e))) * ": " * sprint(showerror, e)))
+    end
+end
+
+println("\n", "="^96)
+println("  CTFlows CPU probe — Flow(ocp, ClosedLoop), law u=-x, ẋ=-2x ⇒ xf=x0·e⁻²")
+println("  no costate (ControlledFlow — state flow only), no AD in the RHS evaluation")
+println("="^96)
+println(@sprintf("  %-16s | %-30s | %-30s", "state", "point", "traj"))
+println("  " * "-"^80)
+
+n_ok_cl = n_fail_cl = 0
+for (lab, x0, p0) in cases_hvf
+    fl = x0 isa Number ? f_cl_1 : f_cl_2
+    m1, d1 = cell_cl(fl, :point, x0)
+    m2, d2 = cell_cl(fl, :traj, x0)
+    for m in (m1, m2)
+        m == "✓" ? (global n_ok_cl += 1) : (global n_fail_cl += 1)
+    end
+    println(@sprintf("  %-16s | %s %-28s | %s %-28s", lab, m1, d1, m2, d2))
+end
+println("  " * "-"^80)
+println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+    n_ok_cl, n_fail_cl, 2 * length(cases_hvf)))
+println("="^96)
+println("""
+  Legend & notes (all Flow(ocp)/Flow(ocp,law) blocks above)
+  ───────────────────────────────────────────────────────────
+  ✓  works, result matches the closed-form analytic reference to err ≤ 1e-4
+  ✗  raised the named error type (message truncated)   ?  ran but result did not match
+
+  Observed nuances (fold into docs/src/compatibility/ocp_free.md and ocp_control_laws.md):
+   • State dimension is fixed at OCP construction — two ocp instances (n=1, n=2) stand in
+     for the single-flow-any-size pattern used by VF/HVF/Hamiltonian.
+   • Flow(ocp) and Flow(ocp, DynClosedLoop) are both AD-backed (like Flow(Hamiltonian)) —
+     Complex is expected ✗ for the same structural reason; not part of `cases_hvf`, so no
+     dedicated Complex row is printed here (see hamiltonian.md's note for the shared cause).
+   • Flow(ocp, OpenLoop/ClosedLoop) has no internal AD in the dynamics evaluation itself —
+     Complex is expected ✓, like Flow(VectorField); `cases_hvf` DOES include Complex rows,
+     so this is measured directly above.
+   • :total and :partial coincide exactly here because the chosen law (u=p) is the
+     stationary point of H̃ (∂H̃/∂u=0) — by design, to make the two columns a genuine
+     consistency cross-check rather than two unrelated numbers.
 """)

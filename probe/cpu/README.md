@@ -40,7 +40,21 @@ backed by a green cell here.
   with an **in-place** function is remade with an **immutable** state (`SVector`) at call
   time, alongside the no-arg call `f()` and the out-of-place-built case.
 
-`Flow(ocp)` will be added as an additional block once its compatibility page lands.
+- **`Flow(ocp)`** (control-free) — two OCPs built once (scalar `n=1`, vector `n=2`, since
+  an OCP's state dimension is fixed at construction, unlike every block above). Covers the
+  Hamiltonian call (state+costate), the basic state-only call
+  ([#230](https://github.com/control-toolbox/CTFlows.jl/issues/230)), and a
+  `variable=`/`variable_costate=` axis. Two structural causes explain almost every
+  failure: a fixed-size internal derivative buffer (breaks `Matrix`-batch everywhere, and
+  `SVector` specifically on the non-AD state-only path), and the same AD-backed
+  `Complex`/`Dual` limitation as `Flow(Hamiltonian)`.
+- **`Flow(ocp, law)`** — the three feedback kinds (`DynClosedLoop` → `OptimalControlFlow`,
+  `OpenLoop`/`ClosedLoop` → `ControlledFlow`, no internal AD). Measures `:total` vs
+  `:partial` `hamiltonian_type` on the full matrix (they coincide for a stationary law), and
+  whether adding `constraint=`/`multiplier=` changes what state types work (measured: it
+  does not — identical footprint). Also surfaces a new asymmetry: `ForwardDiff.Dual` works
+  at a point call but not in a trajectory call for `OpenLoop`/`ClosedLoop` (the objective
+  computation is not `Dual`-transparent).
 
 ## Running it
 
@@ -77,7 +91,9 @@ At the time of writing, `Flow(VectorField)`, `Flow(HamiltonianVectorField)`, and
 `Flow(::ODEFunction)` are **fully green on CPU**: no unsupported state type, only the `⚠`
 in-place-plus-immutable fallback above. `Flow(Hamiltonian)` is green for every `Real`
 container but has no `Complex` support (its internal AD backend cannot differentiate
-through a complex scalar). See each block's in-script notes, and the corresponding
-[compatibility page](../../docs/src/compatibility/), for the full nuances — including the
-measured (not assumed) `Flow(::ODEProblem)` result for an in-place-built problem remade
-with an immutable state.
+through a complex scalar). `Flow(ocp)` and `Flow(ocp, law)` are the most restricted
+constructors probed here — a fixed-size internal buffer and the AD-backed `Complex`/`Dual`
+limitation together explain almost every failure. See each block's in-script notes, and the
+corresponding [compatibility page](../../docs/src/compatibility/), for the full nuances —
+including the measured (not assumed) `Flow(::ODEProblem)` result for an in-place-built
+problem remade with an immutable state.
