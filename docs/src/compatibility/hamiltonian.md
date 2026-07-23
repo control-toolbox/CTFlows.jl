@@ -28,6 +28,13 @@ All examples use the harmonic oscillator ``H(x,p) = \tfrac12\left(\lVert x\rVert
 [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md), so the analytic solution is
 identical: ``(x_f, p_f) = (p_0, -x_0)`` at ``t_f = \pi/2``.
 
+!!! note "Last probed: 2026-07-23"
+    This page's table *shape* — which containers and axes are tested — reflects
+    [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
+    as of this date. Every ✓/✗ cell below is still re-executed on **every** documentation
+    build regardless (see [Compatibility overview](overview.md)) — only the *scope* of
+    what's tested can go stale, not the results shown.
+
 ```@setup h_compat
 using CTFlows
 using CTBase.Data

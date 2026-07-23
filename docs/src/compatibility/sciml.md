@@ -19,6 +19,13 @@ All examples integrate the scalar exponential decay ``\dot{x} = -p\,x`` with ``p
 (the default SciML integrator, `OrdinaryDiffEqTsit5`) — the same analytic solution as the
 [`Flow(VectorField)`](vector_field.md) page: ``x(1) = x_0\,e^{-1}``.
 
+!!! note "Last probed: 2026-07-23"
+    This page's table *shape* — which containers and axes are tested — reflects
+    [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
+    as of this date. Every ✓/⚠/✗ cell below is still re-executed on **every** documentation
+    build regardless (see [Compatibility overview](overview.md)) — only the *scope* of
+    what's tested can go stale, not the results shown.
+
 ```@setup sciml_compat
 using CTFlows
 using CTFlows.Flows

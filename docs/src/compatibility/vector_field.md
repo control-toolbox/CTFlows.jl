@@ -19,6 +19,13 @@ with the default SciML integrator (`OrdinaryDiffEqTsit5`). The analytic solution
 ``x(t) = x_0\,e^{-t}``, so integrating from ``t_0 = 0`` to ``t_f = 1`` maps every initial
 condition ``x_0`` to ``x_0\,e^{-1}``.
 
+!!! note "Last probed: 2026-07-23"
+    This page's table *shape* — which containers and axes are tested — reflects
+    [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
+    as of this date. Every ✓/⚠ cell below is still re-executed on **every** documentation
+    build regardless (see [Compatibility overview](overview.md)) — only the *scope* of
+    what's tested can go stale, not the results shown.
+
 ```@setup vf_compat
 using CTFlows
 using CTBase.Data

@@ -23,6 +23,13 @@ container size the way `Flow(VectorField)`/`Flow(HamiltonianVectorField)`/
 a scalar one (`n=1`) and a vector one (`n=2`), and every table below tests the scalar
 containers against the first and the vector-family containers against the second.
 
+!!! note "Last probed: 2026-07-23"
+    This page's table *shape* — which containers and axes are tested — reflects
+    [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
+    as of this date. Every ✓/✗ cell below is still re-executed on **every** documentation
+    build regardless (see [Compatibility overview](overview.md)) — only the *scope* of
+    what's tested can go stale, not the results shown.
+
 ```@setup ocp_free_compat
 using CTFlows
 using CTModels

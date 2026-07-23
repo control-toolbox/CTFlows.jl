@@ -35,6 +35,13 @@ the stationary point (``\partial\tilde H/\partial u = p - u = 0``). This gives
 x_f = x_0 + p_0, \qquad p_f = p_0 \quad\text{at } t_f = 1.
 ```
 
+!!! note "Last probed: 2026-07-23"
+    This page's table *shape* — which containers and axes are tested — reflects
+    [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
+    as of this date. Every ✓/✗ cell below is still re-executed on **every** documentation
+    build regardless (see [Compatibility overview](overview.md)) — only the *scope* of
+    what's tested can go stale, not the results shown.
+
 ```@setup ph_compat
 using CTFlows
 using CTBase.Data

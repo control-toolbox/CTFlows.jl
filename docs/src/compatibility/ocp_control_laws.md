@@ -19,6 +19,13 @@ so this page uses two problems built once — scalar (`n=1`) and vector (`n=2`) 
 table tests the scalar containers against the first, the vector-family ones against the
 second.
 
+!!! note "Last probed: 2026-07-23"
+    This page's table *shape* — which containers and axes are tested — reflects
+    [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
+    as of this date. Every ✓/✗ cell below is still re-executed on **every** documentation
+    build regardless (see [Compatibility overview](overview.md)) — only the *scope* of
+    what's tested can go stale, not the results shown.
+
 ```@setup ocp_laws_compat
 using CTFlows
 using CTModels

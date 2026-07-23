@@ -19,8 +19,9 @@ Two properties keep these pages trustworthy:
 - **Executed on build.** Every ✓ / ⚠ example is a Documenter `@example` block re-run on each
   documentation build, so a page cannot silently drift from the code.
 
-Scope: these pages cover **CPU**. GPU compatibility is a separate effort, measured by
-[`probe/gpu`](https://github.com/control-toolbox/CTFlows.jl/tree/main/probe/gpu).
+Scope: the 8 per-constructor pages below cover **CPU**, with every example executed on
+build. [GPU](gpu.md) is covered by a separate page, sourced from a dated probe run rather
+than build-executed — see that page's note on why.
 
 This work tracks issue
 [#343](https://github.com/control-toolbox/CTFlows.jl/issues/343).
@@ -37,6 +38,7 @@ This work tracks issue
 | `Flow(ocp, law)` | [`OptimalControlFlow`](@ref CTFlows.Flows.OptimalControlFlow) / [`ControlledFlow`](@ref CTFlows.Flows.ControlledFlow) | [`Flow(ocp, law)`](ocp_control_laws.md) | ✅ live |
 | `Flow(h̃, law)` | [`HamiltonianFlow`](@ref CTFlows.Flows.HamiltonianFlow) | [`Flow(h̃, law)`](pseudo_hamiltonian.md) | ✅ live |
 | `Flow(fc, law)` | [`ControlledFlow`](@ref CTFlows.Flows.ControlledFlow) | [`Flow(fc, law)`](controlled_vector_field.md) | ✅ live |
+| *(all of the above, on GPU)* | — | [GPU](gpu.md) | ✅ live (probe-sourced, not build-executed) |
 
 ## At a glance
 
@@ -102,9 +104,16 @@ This work tracks issue
   a direct contrast with `Flow(ocp, law)`'s `OpenLoop`/`ClosedLoop` path, whose
   `SVector`/`Matrix`/trajectory-`Dual` restrictions come entirely from the OCP-derived
   buffer and objective computation that don't exist here.
+- [GPU](gpu.md) covers all constructors on NVIDIA/CUDA, sourced from a dated
+  [`probe/gpu`](https://github.com/control-toolbox/CTFlows.jl/tree/main/probe/gpu) run
+  rather than build-executed (no device in the Documenter build). Headline finding:
+  **`AutoMooncake` is the only AD backend that survives every measured device call
+  shape** — `AutoZygote` breaks once a call reduces over a device array or mutates one,
+  `AutoEnzyme` breaks on GPU array reductions (`sum`/`mapreduce`) specifically, which real
+  Hamiltonians always contain. AD-free flows (`VectorField`, `HamiltonianVectorField`,
+  `ODEProblem`) need no keyword at all — just pass `CuArray`s.
 
-This completes the CPU-side compatibility table for every `Flow` constructor; GPU
-compatibility remains a separate, ongoing effort (see [`probe/gpu`](https://github.com/control-toolbox/CTFlows.jl/tree/main/probe/gpu)).
+This completes the compatibility table for every `Flow` constructor, on both CPU and GPU.
 
 ## See also
 
