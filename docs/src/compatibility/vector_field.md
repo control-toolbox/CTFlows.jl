@@ -231,7 +231,7 @@ An **immutable** static array cannot be written in place, so an in-place vector 
 back to an out-of-place *finalize* RHS and emits a performance warning (note (a)). The
 result is still correct:
 
-```@example vf_compat
+```@repl vf_compat
 flow_ip(0.0, SA[1.0, 2.0], 1.0)   # warns, then returns the correct value
 ```
 
