@@ -78,9 +78,12 @@ the trajectory call `hflow((t0, tf), x0, p0)` →
 !!! note "(a) Complex is not supported by the default backend"
     `AutoForwardDiff` cannot differentiate through a `Complex` input: constructing a dual
     number over `ComplexF64` raises `ArgumentError: Cannot create a dual over scalar type
-    ComplexF64`. This is a `ForwardDiff.jl` limitation, not specific to CTFlows — a
-    complex-capable AD backend would need to be selected via `ad_backend=` instead (not
-    covered by this page).
+    ComplexF64`. This is a `ForwardDiff.jl` limitation, not specific to CTFlows.
+
+    If your Hamiltonian naturally involves complex state (e.g. from a Schrödinger-type
+    equation), it can typically be rewritten as a real system by splitting the state into
+    real/imaginary (or conjugate) components — this is not a limitation of CTFlows, just a
+    modeling choice that avoids differentiating through `Complex` directly.
 
 The table above is about the flow's *state/costate* input. A separate question — how to
 **differentiate the flow itself** with respect to `(x0, p0)`, e.g. for a shooting method —
@@ -137,7 +140,8 @@ catch e
 end
 ```
 
-See note (a) above — use a complex-capable `ad_backend` if this is needed.
+See note (a) above — for a system that is naturally complex, rewrite it as a real system
+on the real/imaginary (or conjugate) components instead.
 
 ---
 
