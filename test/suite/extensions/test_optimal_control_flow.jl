@@ -519,6 +519,23 @@ function test_optimal_control_flow()
             Test.@test pf_ocp ≈ pf_gen atol=ATOL
         end
 
+        # ── Matrix (batch) state (issue #358) ───────────────────────────────
+
+        Test.@testset "Integration: Matrix (batch) state — Hamiltonian call" begin
+            f = Flows.Flow(OCP_VEC_BOLZA; alg=Tsit5())
+            t0, tf = 0.0, 1.0
+            X0 = [1.0 2.0; 2.0 1.0]
+            P0 = [0.5 0.25; 0.25 0.5]
+            Xf, Pf = f(t0, X0, P0, tf)
+            Test.@test Xf isa AbstractMatrix
+            Test.@test Pf isa AbstractMatrix
+            for j in 1:2
+                xfj, pfj = f(t0, X0[:, j], P0[:, j], tf)
+                Test.@test Xf[:, j] ≈ xfj atol = ATOL
+                Test.@test Pf[:, j] ≈ pfj atol = ATOL
+            end
+        end
+
         # ── error guards ──────────────────────────────────────────────────────
 
         Test.@testset "Error: Fixed model + variable= kwarg" begin

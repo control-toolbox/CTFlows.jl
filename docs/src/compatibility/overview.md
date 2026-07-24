@@ -70,40 +70,41 @@ This work tracks issue
   scalar) is a **hard, native SciML error** — not a warning with a fallback like everywhere
   else on this site. Build the `ODEProblem` from an out-of-place function if you need to
   call it with immutable states.
-- [`Flow(ocp)`](ocp_free.md) and [`Flow(ocp, law)`](ocp_control_laws.md) are the most
-  restricted constructors on this site — unlike every flow above, **the state dimension is
-  fixed at OCP construction** (`state!(pre, n)`), so no single flow accepts every container
-  size. Two structural causes explain almost every ✗ measured on both pages: (1) the
-  internal derivative buffer is always a fixed-size `Vector`, which breaks batched `Matrix`
-  states everywhere, and breaks `SVector` states specifically on the non-AD (state-only /
-  `OpenLoop`/`ClosedLoop`) paths, where OrdinaryDiffEq's out-of-place solver requires
-  type-constancy; (2) the AD-backed paths (`Flow(ocp)`, `Flow(ocp, DynClosedLoop)`) reject
-  `Complex` and hand-built `Dual` for the same reason as `Flow(Hamiltonian)`. Two things are
-  **not** broken, worth calling out explicitly: adding `constraint=`/`multiplier=` to a
-  `DynClosedLoop` flow never changes which state types work (measured, not assumed), and
-  `:total`/`:partial` agree exactly for a stationary feedback law. One asymmetry is new to
-  these pages: `Flow(ocp, OpenLoop/ClosedLoop)` accepts a `ForwardDiff.Dual` state at a
-  *point* call but not in a *trajectory* call (the objective computation is not
-  `Dual`-transparent).
+- [`Flow(ocp)`](ocp_free.md) and [`Flow(ocp, law)`](ocp_control_laws.md) — unlike every flow
+  above, **the state dimension is fixed at OCP construction** (`state!(pre, n)`), so no
+  single flow accepts every container size; two problems (`n=1`, `n=2`) stand in for that
+  pattern on both pages. Until 2026-07-24, an OCP-derived fixed-size internal buffer broke
+  batched `Matrix` states everywhere and `SVector` states specifically on the non-AD
+  (state-only / `OpenLoop`/`ClosedLoop`) paths ([#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)) — **fixed**: the buffer is now
+  sized from the runtime shape of the value passed in, so the full `Matrix`/`MMatrix`/
+  `SMatrix`/`SVector`/`MVector` family works on every path, matching every other constructor
+  on this site. The remaining ✗ cells are the AD-backed paths (`Flow(ocp)`,
+  `Flow(ocp, DynClosedLoop)`) rejecting `Complex` and hand-built `Dual`, for the same reason
+  as `Flow(Hamiltonian)`. Two things are **not** broken, worth calling out explicitly: adding
+  `constraint=`/`multiplier=` to a `DynClosedLoop` flow never changes which state types work
+  (measured, not assumed), and `:total`/`:partial` agree exactly for a stationary feedback
+  law. One asymmetry is new to these pages: `Flow(ocp, OpenLoop/ClosedLoop)` accepts a
+  `ForwardDiff.Dual` state at a *point* call but not in a *trajectory* call (the objective
+  computation is not `Dual`-transparent).
 - [`Flow(h̃, law)`](pseudo_hamiltonian.md) is the pseudo-Hamiltonian counterpart of
   `Flow(ocp, DynClosedLoop)`, but **without an OCP** — only `DynClosedLoop` is accepted
   (`OpenLoop`/`ClosedLoop` are rejected with `PreconditionError`, since a pseudo-Hamiltonian
-  needs the costate). Because `PseudoHamiltonianSystem`/`Data.ComposedHamiltonian` wrap the
-  user's `H̃` directly, with **no OCP-derived fixed-size buffer**, this constructor does
-  **not** inherit `Flow(ocp, law)`'s `Matrix`-family restriction — measured, not assumed: the
-  full `Matrix`/`MMatrix`/`SMatrix` family works, on both `:total` and `:partial`. Its
-  compatibility profile otherwise matches `Flow(Hamiltonian)` exactly: every `Real`
-  container works, `Complex` fails (AD-backed), and a hand-built `Dual` collides with the
-  flow's own internal AD.
+  needs the costate). `PseudoHamiltonianSystem`/`Data.ComposedHamiltonian` wrap the user's
+  `H̃` directly, with no OCP-derived buffer to size, so — like `Flow(ocp, DynClosedLoop)`
+  since the #358 fix — the full `Matrix`/`MMatrix`/`SMatrix` family works, on both `:total`
+  and `:partial`. Its compatibility profile otherwise matches `Flow(Hamiltonian)` exactly:
+  every `Real` container works, `Complex` fails (AD-backed), and a hand-built `Dual`
+  collides with the flow's own internal AD.
 - [`Flow(fc, law)`](controlled_vector_field.md) is the controlled-vector-field counterpart
   of `Flow(h̃, law)` — only `OpenLoop`/`ClosedLoop` accepted (`DynClosedLoop` rejected,
   needs the costate). `Data.ControlledVectorField` has no in-place variant and, without an
   OCP, no fixed-size buffer either, so it builds the same plain out-of-place
   `VectorFieldSystem` as `Flow(VectorField)`. Measured: **fully green**, no unsupported
-  combination at all — the most permissive of the four no-OCP/OCP "control law" pages, and
-  a direct contrast with `Flow(ocp, law)`'s `OpenLoop`/`ClosedLoop` path, whose
-  `SVector`/`Matrix`/trajectory-`Dual` restrictions come entirely from the OCP-derived
-  buffer and objective computation that don't exist here.
+  combination at all — the most permissive of the four no-OCP/OCP "control law" pages.
+  `Flow(ocp, law)`'s `OpenLoop`/`ClosedLoop` path now matches it on every state-shape axis;
+  the one remaining difference is the trajectory-`Dual` restriction, which comes from the
+  OCP's own objective computation (not `Dual`-transparent) and has no counterpart here since
+  `Flow(fc, law)` computes no objective at all.
 - [GPU](gpu.md) covers all constructors on NVIDIA/CUDA, sourced from a dated
   [`probe/gpu`](https://github.com/control-toolbox/CTFlows.jl/tree/main/probe/gpu) run
   rather than build-executed (no device in the Documenter build). Headline finding:
