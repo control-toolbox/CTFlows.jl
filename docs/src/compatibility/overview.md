@@ -19,7 +19,7 @@ Two properties keep these pages trustworthy:
 - **Executed on build.** Every ✓ / ⚠ example is a Documenter `@example` block re-run on each
   documentation build, so a page cannot silently drift from the code.
 
-Scope: the 8 per-constructor pages below cover **CPU**, with every example executed on
+Scope: the 9 per-constructor pages below cover **CPU**, with every example executed on
 build. [GPU](gpu.md) is covered by a separate page, sourced from a dated probe run rather
 than build-executed — see that page's note on why.
 
@@ -37,6 +37,7 @@ This work tracks issue
 | `Flow(ocp)` (control-free) | [`OptimalControlFlow`](@ref CTFlows.Flows.OptimalControlFlow) | [`Flow(ocp)`](ocp_free.md) | ✅ live |
 | `Flow(ocp, law)` | [`OptimalControlFlow`](@ref CTFlows.Flows.OptimalControlFlow) / [`ControlledFlow`](@ref CTFlows.Flows.ControlledFlow) | [`Flow(ocp, law)`](ocp_control_laws.md) | ✅ live |
 | `Flow(h̃, law)` | [`HamiltonianFlow`](@ref CTFlows.Flows.HamiltonianFlow) | [`Flow(h̃, law)`](pseudo_hamiltonian.md) | ✅ live |
+| `Flow(h̃vf, law)` | [`HamiltonianFlow`](@ref CTFlows.Flows.HamiltonianFlow) | [`Flow(h̃vf, law)`](pseudo_hamiltonian_vector_field.md) | ✅ live |
 | `Flow(fc, law)` | [`ControlledFlow`](@ref CTFlows.Flows.ControlledFlow) | [`Flow(fc, law)`](controlled_vector_field.md) | ✅ live |
 | *(all of the above, on GPU)* | — | [GPU](gpu.md) | ✅ live (probe-sourced, not build-executed) |
 
@@ -95,6 +96,14 @@ This work tracks issue
   compatibility profile otherwise matches `Flow(Hamiltonian)` exactly: every `Real`
   container works, `Complex` fails (AD-backed), and a hand-built `Dual` collides with the
   flow's own internal AD.
+- [`Flow(h̃vf, law)`](pseudo_hamiltonian_vector_field.md) is the vector-field counterpart of
+  `Flow(h̃, law)` — same `DynClosedLoop`-only restriction, but `h̃vf` supplies the
+  derivatives directly instead of an AD-differentiated scalar `H̃`, so there is **no**
+  `hamiltonian_type` option. Measured: its profile matches
+  `Flow(HamiltonianVectorField)` exactly, **including `Complex` and hand-built `Dual`**
+  (both fail on `Flow(h̃, law)`, both work here — no internal AD to collide with). The
+  only caveat is the same in-place + immutable-`u0` (`SVector`/`SMatrix`) performance
+  warning as `Flow(HamiltonianVectorField)`.
 - [`Flow(fc, law)`](controlled_vector_field.md) is the controlled-vector-field counterpart
   of `Flow(h̃, law)` — only `OpenLoop`/`ClosedLoop` accepted (`DynClosedLoop` rejected,
   needs the costate). `Data.ControlledVectorField` has no in-place variant and, without an
