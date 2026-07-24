@@ -143,6 +143,31 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Build a [`CTFlows.Systems.PseudoHamiltonianVectorFieldSystem`](@ref) from a
+pseudo-Hamiltonian vector field `h̃vf(t,x,p,u,v) = (ẋ,ṗ)` (already differentiated by
+the user, no AD) and a dynamic closed-loop control law `u(t,x,p,v)`.
+
+Unlike [`CTFlows.Systems.build_system(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw, backend::CTBase.Differentiation.AbstractADBackend)`](@ref),
+no AD backend is needed: `h̃vf` already returns the derivatives directly, and the
+feedback law is evaluated once per step to produce the control passed to `h̃vf`.
+
+# Arguments
+- `h̃vf::Data.AbstractPseudoHamiltonianVectorField`: the pseudo-Hamiltonian vector field.
+- `law::Data.ControlLaw`: the control law; must carry `DynClosedLoopFeedback`.
+
+See also: [`CTFlows.Systems.PseudoHamiltonianVectorFieldSystem`](@ref),
+[`CTBase.Data.PseudoHamiltonianVectorField`](@extref).
+"""
+function build_system(
+    h̃vf::Data.AbstractPseudoHamiltonianVectorField,
+    law::Data.ControlLaw{<:Function,Traits.DynClosedLoopFeedback},
+)
+    return PseudoHamiltonianVectorFieldSystem(h̃vf, law)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Build a [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref) from a
 pseudo-Hamiltonian `H̃(t,x,p,u,v)`, a dynamic closed-loop control law `u(t,x,p,v)`, a
 path constraint `g(t,x,u,v)`, a multiplier `μ(t,x,p,v)`, and an AD backend.

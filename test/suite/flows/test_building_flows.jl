@@ -3,6 +3,7 @@ module TestBuildingFlows
 using Test: Test
 using OrdinaryDiffEqTsit5
 import CTBase.Data
+import CTBase.Exceptions
 import CTFlows.Flows
 import CTFlows.Systems
 import CTFlows.Integrators
@@ -155,6 +156,69 @@ function test_building_flows()
 
                 Test.@test flow isa Flows.HamiltonianFlow
                 Test.@test flow.integrator isa Integrators.AbstractIntegrator
+            end
+        end
+
+        # ====================================================================
+        # UNIT TESTS - HamiltonianFlow constructor from PseudoHamiltonianVectorField + law
+        # ====================================================================
+
+        Test.@testset "HamiltonianFlow constructor from PseudoHamiltonianVectorField + law" begin
+            Test.@testset "default constructor" begin
+                h̃vf = Data.PseudoHamiltonianVectorField(
+                    (x, p, u) -> (u, zero(p)); is_autonomous=true, is_variable=false
+                )
+                law = Data.DynClosedLoop((x, p) -> p)
+                flow = Flows.Flow(h̃vf, law)
+
+                Test.@test flow isa Flows.HamiltonianFlow
+                Test.@test flow isa Flows.AbstractFlow
+                Test.@test flow.system isa Systems.PseudoHamiltonianVectorFieldSystem
+                Test.@test flow.integrator isa Integrators.AbstractIntegrator
+            end
+
+            Test.@testset "with keyword options" begin
+                h̃vf = Data.PseudoHamiltonianVectorField(
+                    (x, p, u) -> (u, zero(p)); is_autonomous=true, is_variable=false
+                )
+                law = Data.DynClosedLoop((x, p) -> p)
+                flow = Flows.Flow(h̃vf, law; reltol=1e-10)
+
+                Test.@test flow isa Flows.HamiltonianFlow
+                Test.@test flow.integrator isa Integrators.AbstractIntegrator
+            end
+
+            Test.@testset "matches analytic solution" begin
+                # h̃vf = (u, 0): ẋ = u, ṗ = 0. Feedback u = p (stationary point of
+                # H̃ = p·u - 0.5u²) ⟹ ẋ = p, ṗ = 0 ⟹ xf = x0 + p0, pf = p0 at tf = 1.
+                # Same example as the Flow(h̃, law) compatibility page, provided here
+                # pre-differentiated instead of via AD.
+                h̃vf = Data.PseudoHamiltonianVectorField(
+                    (x, p, u) -> (u, zero(p)); is_autonomous=true, is_variable=false
+                )
+                law = Data.DynClosedLoop((x, p) -> p)
+                flow = Flows.Flow(h̃vf, law; reltol=1e-8)
+
+                x0, p0 = 1.0, 0.5
+                xf, pf = flow(0.0, x0, p0, 1.0)
+                Test.@test xf ≈ x0 + p0 atol=1e-6
+                Test.@test pf ≈ p0 atol=1e-6
+            end
+
+            Test.@testset "OpenLoop law is rejected" begin
+                h̃vf = Data.PseudoHamiltonianVectorField(
+                    (x, p, u) -> (u, zero(p)); is_autonomous=true, is_variable=false
+                )
+                law = Data.OpenLoop(t -> 1.0)
+                Test.@test_throws Exceptions.PreconditionError Flows.Flow(h̃vf, law)
+            end
+
+            Test.@testset "ClosedLoop law is rejected" begin
+                h̃vf = Data.PseudoHamiltonianVectorField(
+                    (x, p, u) -> (u, zero(p)); is_autonomous=true, is_variable=false
+                )
+                law = Data.ClosedLoop(x -> -x)
+                Test.@test_throws Exceptions.PreconditionError Flows.Flow(h̃vf, law)
             end
         end
 

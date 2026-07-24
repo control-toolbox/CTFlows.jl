@@ -1211,6 +1211,100 @@ println("""
 """)
 
 # =============================================================================
+# Flow(h̃vf, law) — pseudo-Hamiltonian VECTOR FIELD + DynClosedLoop (no OCP, no AD)
+# =============================================================================
+#
+# Ground-truth source for docs/src/compatibility/pseudo_hamiltonian_vector_field.md.
+#
+# Same reference dynamics as the Flow(h̃, law) block above, but pre-differentiated by
+# hand instead of via AD: h̃(x,p,u) = p·u - 0.5|u|², law u(x,p) = p (stationary point)
+# ⇒ H(x,p) = 0.5·sum(p.^2) ⇒ h̃vf(x,p,u) = (ẋ,ṗ) = (u, 0) ⇒ xf = x0+p0, pf = p0 at
+# (t0,tf) = (0,1) — identical analytic reference, so `_maxerr_pf` is reused as-is.
+#
+# Unlike Flow(h̃, law), there is no AD anywhere here — h̃vf already returns the
+# derivatives directly — so this constructor has no `hamiltonian_type` axis; instead
+# it has the OOP/IP axis, exactly like Flow(HamiltonianVectorField) above. Hypothesis
+# under test: this constructor should behave like Flow(HamiltonianVectorField)
+# (no unsupported state/costate type, only the same IP+immutable-u0 ⚠), NOT like the
+# AD-backed Flow(h̃, law) (which fails on Complex/hand-built Dual) — measured below,
+# not assumed.
+# =============================================================================
+
+h̃vf_pvf = Data.PseudoHamiltonianVectorField((x, p, u) -> (u, zero(p)))
+h̃vf_pvf_ip = Data.PseudoHamiltonianVectorField(
+    (dx, dp, x, p, u) -> (dx.=u; dp.=0); is_inplace=true
+)
+law_dyn_pvf = Data.DynClosedLoop((x, p) -> p)
+
+hflow_pvf = Flows.Flow(h̃vf_pvf, law_dyn_pvf; reltol=1e-8)
+hflow_pvf_ip = Flows.Flow(h̃vf_pvf_ip, law_dyn_pvf; reltol=1e-8)
+
+function cell_pvf(fl, kind, x0, p0)
+    g = kind === :point ? (() -> fl(0.0, x0, p0, 1.0)) : (() -> fl((0.0, 1.0), x0, p0))
+    l = CollectLogger(String[])
+    try
+        r = Logging.with_logger(l) do
+            g()
+        end
+        warned = any(m -> occursin("InPlace PseudoHamiltonianVectorField", m), l.msgs)
+        err = try
+            _maxerr_pf(kind, r, x0, p0)
+        catch
+            NaN
+        end
+        ok = isfinite(err) && err ≤ 1e-4
+        mark = ok ? (warned ? "⚠" : "✓") : "?"
+        return (mark, @sprintf("err=%.1e%s", err, warned ? " (warns)" : ""))
+    catch e
+        return ("✗", string(nameof(typeof(e))))
+    end
+end
+
+println("\n", "="^96)
+println("  CTFlows CPU probe — Flow(h̃vf, law), h̃vf=(u,0), law u=p ⇒ ẋ=p,ṗ=0 ⇒ xf=x0+p0, pf=p0")
+println("="^96)
+println(@sprintf("  %-16s | %-14s | %-14s | %-14s | %-14s",
+    "state/costate", "OOP point", "OOP traj", "IP point", "IP traj"))
+println("  " * "-"^92)
+n_ok_pvf = n_warn_pvf = n_fail_pvf = 0
+for (lab, x0, p0) in cases_hvf
+    marks = String[]
+    for (fl, kind) in ((hflow_pvf, :point), (hflow_pvf, :traj),
+                        (hflow_pvf_ip, :point), (hflow_pvf_ip, :traj))
+        m, d = cell_pvf(fl, kind, x0, p0)
+        m == "✓" && (global n_ok_pvf += 1)
+        m == "⚠" && (global n_warn_pvf += 1)
+        (m == "✗" || m == "?") && (global n_fail_pvf += 1)
+        push!(marks, @sprintf("%s %-12s", m, d))
+    end
+    println(@sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4]))
+end
+println("  " * "-"^92)
+println(@sprintf("  totals:  ✓ %d works   ⚠ %d works-with-warning   ✗/? %d fail-or-wrong   (of %d)",
+    n_ok_pvf, n_warn_pvf, n_fail_pvf, 4 * length(cases_hvf)))
+println("="^96)
+
+println("\nFlow(h̃vf, OpenLoop/ClosedLoop) — expected rejection (no costate access):")
+try
+    Flows.Flow(h̃vf_pvf, Data.ClosedLoop(x -> -x); reltol=1e-8)
+    println("  unexpectedly succeeded")
+catch e
+    println("  ✗ ", nameof(typeof(e)), ": ", sprint(showerror, e))
+end
+
+println("""
+  Legend & notes
+  ──────────────
+  ✓  works, result matches the closed-form analytic reference (xf=x0+p0, pf=p0) to err ≤ 1e-4
+  ⚠  works but emits a performance @warn — in-place h̃vf + immutable u0 (SVector/SMatrix):
+     same fallback as Flow(HamiltonianVectorField).
+  ✗  raised the named error type    ?  ran but result did not match
+
+  This block settles the hypothesis above — read the totals literally. Fold whatever is
+  measured into docs/src/compatibility/pseudo_hamiltonian_vector_field.md.
+""")
+
+# =============================================================================
 # Flow(fc, law) — controlled vector field + OpenLoop/ClosedLoop (no OCP)
 # =============================================================================
 #
