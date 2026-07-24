@@ -356,6 +356,86 @@ function _build_pseudo_flow(::Val{ht}, h̃, law, components) where {ht}
 end
 
 # =============================================================================
+# Flow from a pseudo-Hamiltonian vector field and a control law
+# (intermediate constructor, no AD)
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Build a `HamiltonianFlow` directly from a pseudo-Hamiltonian vector field
+`h̃vf(t,x,p,u,v) = (ẋ,ṗ)` (already differentiated by the user — no AD) and a dynamic
+closed-loop control law `u(t,x,p,v)`, without going through an OCP.
+
+The vector-field analogue of [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@ref):
+that constructor differentiates a scalar `H̃` by AD (`:total`/`:partial`); this one
+takes `h̃vf` as the derivatives directly, so there is only **one mode** — no
+`hamiltonian_type` option.
+
+# Arguments
+- `h̃vf::Data.PseudoHamiltonianVectorField`: the pseudo-Hamiltonian vector field.
+- `law::Data.ControlLaw`: the control law; must carry `DynClosedLoopFeedback`.
+- `opts...`: integrator strategy options (as for `Flow(hvf::Data.HamiltonianVectorField)`)
+  — no AD-backend options, since there is no AD in this path.
+
+# Throws
+- [`CTBase.Exceptions.PreconditionError`](@extref): if the law is `OpenLoop`/`ClosedLoop`
+  (a pseudo-Hamiltonian vector field needs the costate `p`, which those laws do not take).
+
+See also: [`CTFlows.Flows.Flow`](@ref), [`CTBase.Data.PseudoHamiltonianVectorField`](@extref),
+[`CTBase.Data.DynClosedLoop`](@extref).
+"""
+function Flow(h̃vf::Data.PseudoHamiltonianVectorField, law::Data.ControlLaw; opts...)
+    return _flow_from_pseudo_hamiltonian_vf(Traits.feedback(law), h̃vf, law; opts...)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Dispatch helper for [`CTFlows.Flows.Flow(h̃vf::CTBase.Data.PseudoHamiltonianVectorField, law::CTBase.Data.ControlLaw)`](@ref):
+build a `PseudoHamiltonianVectorFieldSystem`-backed Hamiltonian flow from a
+`DynClosedLoop` law.
+
+See also: [`CTFlows.Systems.build_system`](@ref).
+"""
+function _flow_from_pseudo_hamiltonian_vf(
+    ::Type{Traits.DynClosedLoopFeedback},
+    h̃vf::Data.PseudoHamiltonianVectorField,
+    law::Data.ControlLaw;
+    opts...,
+)
+    sys = Systems.build_system(h̃vf, law)
+    return build_flow(sys, _build_integrator(opts))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Reject `OpenLoop`/`ClosedLoop` laws in [`CTFlows.Flows.Flow(h̃vf::CTBase.Data.PseudoHamiltonianVectorField, law::CTBase.Data.ControlLaw)`](@ref):
+a pseudo-Hamiltonian vector field `h̃vf(t,x,p,u,v)` depends on the costate `p`, which
+`OpenLoop`/`ClosedLoop` laws do not provide.
+
+See also: [`CTFlows.Flows.Flow(h̃vf::CTBase.Data.PseudoHamiltonianVectorField, law::CTBase.Data.ControlLaw)`](@ref).
+"""
+function _flow_from_pseudo_hamiltonian_vf(
+    ::Type{<:Union{Traits.OpenLoopFeedback,Traits.ClosedLoopFeedback}},
+    ::Data.PseudoHamiltonianVectorField,
+    ::Data.ControlLaw;
+    opts...,
+)
+    return throw(
+        Exceptions.PreconditionError(
+            "Flow(h̃vf, law) requires a DynClosedLoop control law";
+            reason="a pseudo-Hamiltonian vector field h̃vf(t,x,p,u,v) depends on the " *
+                   "costate p, but OpenLoop u(t,v) and ClosedLoop u(t,x,v) control laws " *
+                   "do not take p",
+            suggestion="use DynClosedLoop(u) to construct a control law u(t,x,p,v)",
+            context="Flow(h̃vf::PseudoHamiltonianVectorField, law::ControlLaw) — feedback dispatch",
+        ),
+    )
+end
+
+# =============================================================================
 # Flow from a controlled vector field and a control law (intermediate constructor)
 # =============================================================================
 

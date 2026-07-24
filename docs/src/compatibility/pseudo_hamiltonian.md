@@ -172,9 +172,13 @@ end
   (`DynClosedLoop`, `hamiltonian_type`, `Flow(h̃, law)` vs `Flow(ocp, law)`).
 - [`Flow(Hamiltonian)` compatibility](hamiltonian.md) — the shared `Complex`/nested-`Dual`
   root cause, and how to actually differentiate an AD-backed flow.
+- [`Flow(h̃vf, law)` compatibility](pseudo_hamiltonian_vector_field.md) — the vector-field
+  sibling (derivatives supplied directly, no AD), whose `Complex`/`Dual` restrictions do
+  **not** apply.
 - [`Flow(ocp, law)` compatibility](ocp_control_laws.md) — the OCP-based counterpart, whose
-  `Matrix`-family restriction (fixed-size buffer, [#358](https://github.com/control-toolbox/CTFlows.jl/issues/358))
-  does **not** apply here.
+  fixed-size-buffer `Matrix`-family restriction
+  ([#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)) never applied here and
+  is now fixed there too.
 - [Compatibility overview](overview.md) — the per-constructor feature matrix and the other flow types.
 - [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref) — the flow types.
 - [`CTBase.Data.PseudoHamiltonian`](@extref CTBase.Data.PseudoHamiltonian), [`CTBase.Data.DynClosedLoop`](@extref CTBase.Data.DynClosedLoop) — the data wrappers.

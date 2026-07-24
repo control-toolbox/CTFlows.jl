@@ -8,6 +8,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.1-beta] - 2026-07-24
+
+### Added
+
+- **`Flow(h̃vf, law)`** — a `HamiltonianFlow` built from a
+  [`CTBase.Data.PseudoHamiltonianVectorField`](@extref CTBase.Data.PseudoHamiltonianVectorField)
+  `h̃vf(t,x,p,u,v) = (ẋ,ṗ)` (a pseudo-Hamiltonian already differentiated by hand, with an
+  explicit control argument) and a `DynClosedLoop` control law. The vector-field
+  counterpart of `Flow(h̃, law)`: no AD, no `hamiltonian_type` option — only one mode,
+  the hand-differentiated analogue of `:partial`. `OpenLoop`/`ClosedLoop` laws are
+  rejected with a `PreconditionError` (a pseudo-Hamiltonian vector field needs the
+  costate `p`, which those laws do not provide), same as `Flow(h̃, law)`.
+  - **New `Systems.PseudoHamiltonianVectorFieldSystem`** wrapping the `h̃vf` and the
+    `law`, with `Traits.ad_trait = WithoutAD`, in-place and out-of-place RHS support,
+    and variable-costate (`dpv`) support — mirrors `Systems.HamiltonianVectorFieldSystem`.
+    No `hamiltonian(sys)` accessor, matching that system's existing gap.
+  - **New RHS functor hierarchy** `Systems.AbstractPseudoHVFRHS`/`AbstractIPPseudoHVFRHS`/`AbstractOoPPseudoHVFRHS`,
+    mirroring `Systems.AbstractHVFRHS`, threading the control law's evaluation
+    `u = law(t, x, p, v)` ahead of each `h̃vf` call.
+  - **New compatibility page**
+    [`docs/src/compatibility/pseudo_hamiltonian_vector_field.md`](https://control-toolbox.org/CTFlows.jl/dev/compatibility/pseudo_hamiltonian_vector_field.html),
+    probe-backed: matches `Flow(HamiltonianVectorField)` exactly, including `Complex`
+    and hand-built `ForwardDiff.Dual` states (both fail on the AD-based `Flow(h̃, law)`,
+    both work here — no internal AD to collide with). Only caveat is the same
+    in-place + immutable-`u0` (`SVector`/`SMatrix`) performance warning as
+    `Flow(HamiltonianVectorField)`.
+- Fills the missing corner of the `Data`-type grid: `Hamiltonian`/`PseudoHamiltonian`
+  (AD) vs. `HamiltonianVectorField`/`PseudoHamiltonianVectorField` (no AD), crossed
+  with no-control vs. control+law. Depends on
+  [CTBase.jl v0.28.5-beta](https://github.com/control-toolbox/CTBase.jl/releases/tag/v0.28.5-beta),
+  which adds the underlying `Data.PseudoHamiltonianVectorField` type. Tracks
+  [#360](https://github.com/control-toolbox/CTFlows.jl/issues/360).
+
+### Testing
+
+- Added `test/suite/systems/test_pseudo_hamiltonian_vector_field_system.jl` (21 tests)
+  and `test/suite/systems/test_pseudo_hvf_rhs_functors.jl` (41 tests).
+- Extended `test/suite/flows/test_building_flows.jl` with the new `Flow(h̃vf, law)`
+  constructor (default + keyword options, analytic-solution match, `OpenLoop`/`ClosedLoop`
+  rejection).
+- Full suite green: **2959/2959**.
+
 ## [0.15.0-beta] - 2026-07-23
 
 ### Added
