@@ -79,9 +79,11 @@ table](ocp_control_laws.md#DynClosedLoop-Hamiltonian-flow,-total-vs-partial):
 | `Complex` (any container) | ✗ (a) | ✗ (a) | ✗ (a) | ✗ (a) |
 | `ForwardDiff.Dual` (any container) | ✗ (b) | ✗ (b) | ✗ (b) | ✗ (b) |
 
-Unlike [`Flow(ocp, law)`](ocp_control_laws.md) (fixed-size internal buffer, `Matrix`-family
-✗), **the full `Matrix` family works here** — measured, not assumed: confirms the "wraps
-`H̃` directly" hypothesis above.
+**The full `Matrix` family works here** — measured, not assumed: confirms the "wraps `H̃`
+directly" hypothesis above. [`Flow(ocp, law)`](ocp_control_laws.md) now matches this (fixed
+as of 2026-07-24, [#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)) — before
+that fix, its OCP-derived fixed-size buffer rejected `Matrix`-family states, unlike the
+buffer-free wrapping used here.
 
 !!! note "(a) Complex is not supported"
     Same cause as [`Flow(Hamiltonian)`'s note (a)](hamiltonian.md#Compatibility-table): the
@@ -174,8 +176,9 @@ end
   sibling (derivatives supplied directly, no AD), whose `Complex`/`Dual` restrictions do
   **not** apply.
 - [`Flow(ocp, law)` compatibility](ocp_control_laws.md) — the OCP-based counterpart, whose
-  `Matrix`-family restriction (fixed-size buffer, [#358](https://github.com/control-toolbox/CTFlows.jl/issues/358))
-  does **not** apply here.
+  fixed-size-buffer `Matrix`-family restriction
+  ([#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)) never applied here and
+  is now fixed there too.
 - [Compatibility overview](overview.md) — the per-constructor feature matrix and the other flow types.
 - [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref) — the flow types.
 - [`CTBase.Data.PseudoHamiltonian`](@extref CTBase.Data.PseudoHamiltonian), [`CTBase.Data.DynClosedLoop`](@extref CTBase.Data.DynClosedLoop) — the data wrappers.

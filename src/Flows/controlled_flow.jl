@@ -101,15 +101,23 @@ end
 $(TYPEDSIGNATURES)
 
 Precomputed state coercion (`only` for a 1-D state, `identity` otherwise) from the
-OCP's declared state dimension.
+OCP's declared state dimension. Unlike [`CTFlows.Flows._dim_coerce`](@ref) alone, this
+also special-cases a batched `Matrix` `x0` to always return `identity`, regardless of the
+declared dimension — `_dim_coerce` is baked in from the OCP's *declared* dimension and
+cannot see `x0`'s runtime shape by itself. Fixing it here (the single source of `coerce`)
+covers every later application of the returned function, including inside
+[`CTFlows.Trajectories.StateFlowTrajectory`](@ref).
 """
+_flow_state_coerce(ocp, ::AbstractMatrix) = identity
 _flow_state_coerce(ocp, x0) = _dim_coerce(CTModels.Models.state_dimension(ocp))
 """
 $(TYPEDSIGNATURES)
 
 Precomputed state coercion (`only` for a 1-D state, `identity` otherwise) inferred from
-`x0` when there is no OCP (`Flow(fc, law)`).
+`x0` when there is no OCP (`Flow(fc, law)`); a batched `Matrix` `x0` always yields
+`identity` — see [`CTFlows.Flows._flow_state_coerce`](@ref).
 """
+_flow_state_coerce(::Nothing, ::AbstractMatrix) = identity
 _flow_state_coerce(::Nothing, x0) = _dim_coerce(length(x0))
 
 # =============================================================================

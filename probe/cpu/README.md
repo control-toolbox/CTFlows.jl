@@ -44,10 +44,11 @@ backed by a green cell here.
   an OCP's state dimension is fixed at construction, unlike every block above). Covers the
   Hamiltonian call (state+costate), the basic state-only call
   ([#230](https://github.com/control-toolbox/CTFlows.jl/issues/230)), and a
-  `variable=`/`variable_costate=` axis. Two structural causes explain almost every
-  failure: a fixed-size internal derivative buffer (breaks `Matrix`-batch everywhere, and
-  `SVector` specifically on the non-AD state-only path), and the same AD-backed
-  `Complex`/`Dual` limitation as `Flow(Hamiltonian)`.
+  `variable=`/`variable_costate=` axis. Until 2026-07-24, a fixed-size internal derivative
+  buffer broke `Matrix`-batch everywhere and `SVector` specifically on the non-AD
+  state-only path — fixed as of that date
+  ([#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)); the remaining
+  failures are the same AD-backed `Complex`/`Dual` limitation as `Flow(Hamiltonian)`.
 - **`Flow(ocp, law)`** — the three feedback kinds (`DynClosedLoop` → `OptimalControlFlow`,
   `OpenLoop`/`ClosedLoop` → `ControlledFlow`, no internal AD). Measures `:total` vs
   `:partial` `hamiltonian_type` on the full matrix (they coincide for a stationary law), and
@@ -58,10 +59,10 @@ backed by a green cell here.
 - **`Flow(h̃, law)`** — the pseudo-Hamiltonian + `DynClosedLoop` constructor, no OCP
   (`OpenLoop`/`ClosedLoop` are rejected with `PreconditionError`, demonstrated once).
   `PseudoHamiltonianSystem`/`ComposedHamiltonian` wrap the user's `H̃` function directly —
-  no OCP-derived fixed-size buffer — so, unlike `Flow(ocp, law)`, the full `Matrix`-family
-  works here too. Measured: same profile as `Flow(Hamiltonian)` (all `Real` containers work
-  on both `:total`/`:partial` × point/traj; `Complex` and a hand-built `Dual` both fail from
-  the same internal-AD causes).
+  no OCP-derived buffer to size — so the full `Matrix`-family always worked here, even
+  before the `Flow(ocp, law)` fix below. Measured: same profile as `Flow(Hamiltonian)` (all
+  `Real` containers work on both `:total`/`:partial` × point/traj; `Complex` and a
+  hand-built `Dual` both fail from the same internal-AD causes).
 - **`Flow(fc, law)`** — the controlled-vector-field counterpart of `Flow(h̃, law)`: only
   `OpenLoop`/`ClosedLoop` accepted (`DynClosedLoop` rejected with `PreconditionError`,
   demonstrated once). `Data.ControlledVectorField` has no in-place variant and, without an
@@ -108,11 +109,16 @@ type, only the `⚠` in-place-plus-immutable fallback above (which does not even
 `Flow(fc, law)`, since `Data.ControlledVectorField` has no in-place variant at all).
 `Flow(Hamiltonian)` is green for every `Real`
 container but has no `Complex` support (its internal AD backend cannot differentiate
-through a complex scalar). `Flow(h̃, law)` shares that same `Complex`/`Dual` limitation but,
-unlike `Flow(ocp)`/`Flow(ocp, law)`, has **no fixed-size buffer** — the full `Matrix` family
-works. `Flow(ocp)` and `Flow(ocp, law)` are the most restricted
-constructors probed here — a fixed-size internal buffer and the AD-backed `Complex`/`Dual`
-limitation together explain almost every failure. See each block's in-script notes, and the
+through a complex scalar). `Flow(h̃, law)` shares that same `Complex`/`Dual` limitation.
+`Flow(ocp)` and `Flow(ocp, law)` used to be the most restricted constructors probed here —
+a fixed-size internal buffer broke `Matrix`-batch and, on the non-AD paths, `SVector` — but
+that buffer is now sized from the runtime shape of the value passed in
+([#358](https://github.com/control-toolbox/CTFlows.jl/issues/358), fixed 2026-07-24), so
+both constructors now match `Flow(h̃, law)`'s `Matrix`-family support. The remaining
+failures on both are the AD-backed `Complex`/`Dual` limitation shared with
+`Flow(Hamiltonian)`, plus one asymmetry specific to `Flow(ocp, OpenLoop/ClosedLoop)`: a
+`ForwardDiff.Dual` state works at a point call but not in a trajectory call (the objective
+computation is not `Dual`-transparent). See each block's in-script notes, and the
 corresponding [compatibility page](../../docs/src/compatibility/), for the full nuances —
 including the measured (not assumed) `Flow(::ODEProblem)` result for an in-place-built
 problem remade with an immutable state.

@@ -99,3 +99,18 @@ See also: [`CTFlows.Systems._device_like`](@ref), [`CTFlows.Systems._safe_only`]
 """
 _buffer_like(template::AbstractArray, ::Type{T}, n::Int) where {T} = similar(template, T, n)
 _buffer_like(::Any, ::Type{T}, n::Int) where {T} = Vector{T}(undef, n)
+
+"""
+$(TYPEDSIGNATURES)
+
+Allocate an uninitialised `n × batch` buffer of eltype `T` when `template` is itself a
+batched `Matrix` state (each column an independent trajectory) — `batch = size(template, 2)`.
+
+More specific than the `AbstractArray` method above, so it is selected automatically for
+a `Matrix`/`MMatrix`/`SMatrix` template; no call site needs to change.
+
+See also: [`CTFlows.Systems._buffer_like`](@ref).
+"""
+function _buffer_like(template::AbstractMatrix, ::Type{T}, n::Int) where {T}
+    return similar(template, T, n, size(template, 2))
+end

@@ -23,12 +23,16 @@ container size the way `Flow(VectorField)`/`Flow(HamiltonianVectorField)`/
 a scalar one (`n=1`) and a vector one (`n=2`), and every table below tests the scalar
 containers against the first and the vector-family containers against the second.
 
-!!! note "Last probed: 2026-07-23"
+!!! note "Last probed: 2026-07-24"
     This page's table *shape* — which containers and axes are tested — reflects
     [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
     as of this date. Every ✓/✗ cell below is still re-executed on **every** documentation
     build regardless (see [Compatibility overview](overview.md)) — only the *scope* of
-    what's tested can go stale, not the results shown.
+    what's tested can go stale, not the results shown. Until 2026-07-24, `Matrix`-family
+    states failed on every path and `SVector` failed on the non-AD (basic) path — a
+    fixed-size internal buffer, tracked as
+    [#358](https://github.com/control-toolbox/CTFlows.jl/issues/358). Both are now fixed;
+    the tables below reflect current (fixed) behaviour.
 
 ```@setup ocp_free_compat
 using CTFlows
@@ -80,9 +84,9 @@ The Hamiltonian point call `f(t0, x0, p0, tf)` returns `(xf, pf)`; the trajector
 | `Vector` `Real` | ✓ | ✓ |
 | `MVector` `Real` | ✓ | ✓ |
 | `SVector` `Real` | ✓ | ✓ |
-| `Matrix` `Real` (batch) | ✗ (b) | ✗ (b) |
-| `MMatrix` `Real` | ✗ (b) | ✗ (b) |
-| `SMatrix` `Real` | ✗ (b) | ✗ (b) |
+| `Matrix` `Real` (batch) | ✓ | ✓ |
+| `MMatrix` `Real` | ✓ | ✓ |
+| `SMatrix` `Real` | ✓ | ✓ |
 | `Complex` (any container) | ✗ (a) | ✗ (a) |
 | `ForwardDiff.Dual` (any container) | ✗ (c) | ✗ (c) |
 
@@ -97,16 +101,6 @@ The Hamiltonian point call `f(t0, x0, p0, tf)` returns `(xf, pf)`; the trajector
     type ComplexF64`. See [`Flow(Hamiltonian)`'s note (a)](hamiltonian.md#Compatibility-table)
     for the full explanation and the real/imaginary-splitting workaround — it applies
     verbatim here.
-
-!!! note "(b) Matrix (batch) states are not supported"
-    Unlike `Flow(VectorField)`, `Flow(HamiltonianVectorField)`, and `Flow(Hamiltonian)` —
-    which all support a column-batched `Matrix` state (each column an independent
-    trajectory) — `Flow(ocp)`'s internal derivative buffer is always a **length-`n` vector**
-    sized from the OCP's *declared* dimension, not from the shape of the value actually
-    passed at call time. Feeding a 2-D (batched) state raises `DimensionMismatch:
-    cannot broadcast array to have fewer non-singleton dimensions`. This is a structural
-    property of how the OCP Hamiltonian is currently wired (`OCPHamiltonianFunction` /
-    `Systems._buffer_like(x, T, n)`), not a deliberate restriction.
 
 !!! note "(c) A hand-built Dual collides with the flow's own internal AD"
     Same nested-AD tag collision as [`Flow(Hamiltonian)`](hamiltonian.md#Automatic-differentiation:-sensitivities-of-the-flow):
@@ -134,15 +128,14 @@ f2(0.0, MVector{2}(1.0, 2.0), MVector{2}(0.5, 0.3), 1.0)
 f2(0.0, SA[1.0, 2.0], SA[0.5, 0.3], 1.0)
 ```
 
-### Not supported: `Matrix` batch, `Complex`, hand-built `Dual`
+`Matrix` (batch) state — each column an independent trajectory, same convention as
+[`Flow(VectorField)`](vector_field.md)/[`Flow(Hamiltonian)`](hamiltonian.md):
 
 ```@repl ocp_free_compat
-try
-    f2(0.0, [1.0 2.0; 3.0 4.0], [0.5 0.3; 0.2 0.1], 1.0)
-catch e
-    showerror(stdout, e)
-end
+f2(0.0, [1.0 2.0; 3.0 4.0], [0.5 0.3; 0.2 0.1], 1.0)
 ```
+
+### Not supported: `Complex`, hand-built `Dual`
 
 ```@repl ocp_free_compat
 try
@@ -165,27 +158,16 @@ profile is structurally different from the Hamiltonian table above:
 | State type | point | traj |
 |---|:---:|:---:|
 | Scalar `Real` | ✓ | ✓ |
-| `Vector` `Real` | ✓ | ✓ |
-| `MVector` `Real` | ✓ | ✓ |
-| `SVector` `Real` | ✗ (d) | ✗ (d) |
-| `Matrix` `Real` (batch) | ✗ (b) | ✗ (b) |
-| Scalar `Complex` | ✓ | ✓ |
-| `Vector`/`MVector` `Complex` | ✓ | ✓ |
-| `SVector`/`Matrix` `Complex` | ✗ (d) / ✗ (b) | ✗ (d) / ✗ (b) |
-| `ForwardDiff.Dual` scalar/`Vector`/`MVector` | ✓ | ✓ |
-| `ForwardDiff.Dual` `SVector` | ✗ (d) | ✗ (d) |
+| `Vector`/`MVector`/`SVector` `Real` | ✓ | ✓ |
+| `Matrix`/`MMatrix`/`SMatrix` `Real` | ✓ | ✓ |
+| Scalar/`Vector`/`MVector`/`SVector` `Complex` | ✓ | ✓ |
+| `Matrix`/`SMatrix` `Complex` | ✓ | ✓ |
+| `ForwardDiff.Dual` scalar/`Vector`/`MVector`/`SVector` | ✓ | ✓ |
 
-Note the reversal from the Hamiltonian table: **`Complex` and `Dual` now work** (no AD on
-this path, exactly like [`Flow(VectorField)`](vector_field.md)) — but `SVector` and
-`Matrix` fail regardless of element type, for the structural reason below.
-
-!!! note "(d) SVector fails: the internal buffer breaks out-of-place type-constancy"
-    The same fixed-size internal buffer behind note (b) always returns a plain `Vector`,
-    regardless of the input container. For a mutable state (`Vector`/`MVector`) this
-    matches; for an immutable `SVector` it does not, and OrdinaryDiffEq's out-of-place
-    solver requires the returned derivative to have the **same type** as the state at every
-    step: `TypeNotConstantError: Detected non-constant types in an out-of-place ODE solve`.
-    `Matrix` fails for the separate reason in note (b) (dimension, not type-constancy).
+Note the reversal from the Hamiltonian table: **`Complex` and `Dual` work here** (no AD on
+this path, exactly like [`Flow(VectorField)`](vector_field.md)) — the Hamiltonian table's
+own `Complex`/`Dual` restrictions come from its internal AD backend, which this path never
+invokes. This path is **fully green**: every container tested works.
 
 ### Examples
 
@@ -206,14 +188,12 @@ f1(0.0, 1.0 + 2.0im, 1.0)
 f1(0.0, ForwardDiff.Dual(1.0, 1.0), 1.0)
 ```
 
-`SVector` fails even though the Hamiltonian call above accepted it:
+`SVector` and `Matrix` (batch) both work too — fixed as of 2026-07-24
+([#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)):
 
 ```@repl ocp_free_compat
-try
-    f2(0.0, SA[1.0, 2.0], 1.0)
-catch e
-    showerror(stdout, e)
-end
+f2(0.0, SA[1.0, 2.0], 1.0)
+f2(0.0, [1.0 2.0; 3.0 4.0], 1.0)
 ```
 
 ---
