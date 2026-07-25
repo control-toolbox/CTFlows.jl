@@ -6,6 +6,7 @@ Integration tests for control flows: Flow(ocp, law) and Flow(h̃, law), with the
 module TestOCPControl
 
 using Test: Test
+using StaticArrays: SA, SVector
 import CTBase.Data: Data
 import CTBase.Traits: Traits
 import CTBase.Exceptions: Exceptions
@@ -162,6 +163,20 @@ function _build_lqr_constrained()
     return CTModels.Building.build(pre)
 end
 
+# 2-D control OCP with control_dimension == state_dimension == 2 (unlike OCP_DI, whose
+# control_dimension is 1): lets a law like `(x,p) -> p` / `x -> -x` be dimensionally valid,
+# for the SVector/Matrix (batch) shape tests below (issue #358).
+function _build_ctrl_2d()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, 2)
+    CTModels.Building.control!(pre, 2)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= u .- x; nothing))
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * sum(abs2, u))
+    return CTModels.Building.build(pre)
+end
+
 const OCP_LQR = _build_lqr()
 const OCP_LQR_C = _build_lqr_constrained()
 const OCP_DI = _build_double_integrator()
@@ -171,6 +186,7 @@ const OCP_MAYER = _build_mayer_control()
 const OCP_VAR = _build_variable_control()
 const OCP_TYPED_1D = _build_typed_1d()
 const OCP_TYPED_2D = _build_typed_2d()
+const OCP_CTRL_2D = _build_ctrl_2d()
 
 function test_ocp_control()
     Test.@testset "OCP control flows" verbose=VERBOSE showtiming=SHOWTIMING begin
@@ -1002,6 +1018,71 @@ function test_ocp_control()
             # OpenLoop/ClosedLoop laws now build a state flow (see test_state_control_flows.jl).
             f = Flows.Flow(OCP_LQR, Data.ClosedLoop(x -> -x); _opts()...)
             Test.@test f isa Flows.ControlledFlow
+        end
+
+        # ====================================================================
+        # SVector / Matrix (batch) state (issue #358)
+        # ====================================================================
+
+        Test.@testset "ClosedLoop: SVector point + trajectory now succeed (issue #358)" begin
+            law_cl = Data.ClosedLoop(x -> -x)
+            f = Flows.Flow(OCP_CTRL_2D, law_cl; _opts()...)
+            t0, tf, x0 = 0.0, 1.0, SA[1.0, 2.0]
+            xf = f(t0, x0, tf)
+            Test.@test xf isa SVector
+            Test.@test xf ≈ f(t0, Vector(x0), tf) atol = ATOL
+
+            sol = f((t0, tf), x0)
+            Test.@test Flows.Trajectories.state(sol)(tf) isa SVector
+        end
+
+        Test.@testset "ClosedLoop: Matrix (batch) point + trajectory now succeed (issue #358)" begin
+            law_cl = Data.ClosedLoop(x -> -x)
+            f = Flows.Flow(OCP_CTRL_2D, law_cl; _opts()...)
+            t0, tf = 0.0, 1.0
+            X0 = [1.0 2.0; 2.0 1.0]
+            Xf = f(t0, X0, tf)
+            Test.@test Xf isa AbstractMatrix
+            for j in 1:2
+                Test.@test Xf[:, j] ≈ f(t0, X0[:, j], tf) atol = ATOL
+            end
+
+            sol = f((t0, tf), X0)
+            Test.@test Flows.Trajectories.state(sol)(tf) isa AbstractMatrix
+        end
+
+        Test.@testset "DynClosedLoop: Matrix (batch) Hamiltonian call now succeeds (issue #358)" begin
+            law = Data.DynClosedLoop((x, p) -> p)
+            f = Flows.Flow(OCP_CTRL_2D, law; _opts()...)
+            t0, tf = 0.0, 1.0
+            X0 = [1.0 2.0; 2.0 1.0]
+            P0 = [0.5 0.25; 0.25 0.5]
+            Xf, Pf = f(t0, X0, P0, tf)
+            for j in 1:2
+                xfj, pfj = f(t0, X0[:, j], P0[:, j], tf)
+                Test.@test Xf[:, j] ≈ xfj atol = ATOL
+                Test.@test Pf[:, j] ≈ pfj atol = ATOL
+            end
+        end
+
+        Test.@testset "DynClosedLoop, constrained: Matrix (batch) now succeeds (issue #358)" begin
+            law = Data.DynClosedLoop((x, p) -> p)
+            f = Flows.Flow(
+                OCP_CTRL_2D,
+                law;
+                constraint=(x, u) -> 1.0,
+                multiplier=(x, p) -> 0.3,
+                _opts()...,
+            )
+            t0, tf = 0.0, 1.0
+            X0 = [1.0 2.0; 2.0 1.0]
+            P0 = [0.5 0.25; 0.25 0.5]
+            Xf, Pf = f(t0, X0, P0, tf)
+            for j in 1:2
+                xfj, pfj = f(t0, X0[:, j], P0[:, j], tf)
+                Test.@test Xf[:, j] ≈ xfj atol = ATOL
+                Test.@test Pf[:, j] ≈ pfj atol = ATOL
+            end
         end
 
         Test.@testset "Error: OpenLoop law into Flow(h̃, law) → PreconditionError" begin

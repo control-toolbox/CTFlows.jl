@@ -104,6 +104,43 @@ Systems.hamiltonian(f_total)          # closed-loop H(t, x, p, v) = H̃(…, u(�
 
 ---
 
+## `Flow(h̃vf, law)` — pseudo-Hamiltonian vector field + DynClosedLoop
+
+A `Data.PseudoHamiltonianVectorField` wraps the **already-differentiated**
+dynamics ``\tilde h(t, x, p, u, v) = (\dot x, \dot p)`` — the vector-field
+analogue of `Flow(h̃, law)`'s scalar `H̃`, exactly as `HamiltonianVectorField` is
+the vector-field analogue of `Hamiltonian`. Combined with a `DynClosedLoop` law
+``u(t, x, p, v)``, the feedback is evaluated once per step and passed directly
+to `h̃vf` — **no AD anywhere**, so there is no `hamiltonian_type` option (unlike
+`Flow(h̃, law)`, only one mode exists here).
+
+```@example flows_laws
+# h̃vf(x, p, u) = (u, 0): ẋ = u, ṗ = 0 — the derivatives of H̃(x,p,u) = p*u - 0.5u²
+# at the stationary feedback u = p, supplied directly instead of via AD
+h̃vf_pvf = Data.PseudoHamiltonianVectorField((x, p, u) -> (u, zero(p)))
+law_pvf = Data.DynClosedLoop((x, p) -> p)  # u = p
+
+f_pvf = Flows.Flow(h̃vf_pvf, law_pvf; reltol=1e-10)
+```
+
+```@repl flows_laws
+x0, p0 = 1.0, 0.5;
+xf, pf = f_pvf(0.0, x0, p0, 1.0);
+xf ≈ x0 + p0, pf ≈ p0
+```
+
+Unlike `Flow(h̃, law)`, there is no `Systems.pseudo_hamiltonian`/`control_law`/
+`hamiltonian` accessor here — `PseudoHamiltonianVectorFieldSystem` carries no
+scalar `H̃` to reconstruct or getter to expose (same gap as
+`HamiltonianVectorFieldSystem`, which likewise exposes no accessor).
+
+!!! warning "OpenLoop/ClosedLoop rejected"
+    A pseudo-Hamiltonian vector field depends on the costate ``p``, which
+    `OpenLoop` and `ClosedLoop` laws do not provide. Passing one raises a
+    `PreconditionError`, same as `Flow(h̃, law)`.
+
+---
+
 ## `Flow(fc, law)` — controlled vector field + OpenLoop/ClosedLoop
 
 A `Data.ControlledVectorField`
@@ -283,6 +320,7 @@ plot(sol_c)
 | Constructor | Law type | Resulting flow | Trajectory type |
 |---|---|---|---|
 | `Flow(h̃, law)` | `DynClosedLoop` | `HamiltonianFlow` | `HamiltonianVectorFieldTrajectory` |
+| `Flow(h̃vf, law)` | `DynClosedLoop` | `HamiltonianFlow` | `HamiltonianVectorFieldTrajectory` |
 | `Flow(fc, law)` | `OpenLoop` / `ClosedLoop` | `ControlledFlow` | `StateFlowTrajectory` (no objective) |
 | `Flow(ocp, law)` | `DynClosedLoop` | `OptimalControlFlow` | `CTModels.Solution` |
 | `Flow(ocp, law)` | `OpenLoop` / `ClosedLoop` | `ControlledFlow` | `StateFlowTrajectory` (with objective) |
@@ -296,7 +334,8 @@ plot(sol_c)
 - [`CTFlows.Trajectories.StateFlowTrajectory`](@ref) — trajectory with reconstructed control.
 - [`CTFlows.Trajectories.control`](@ref), [`CTFlows.Trajectories.objective`](@ref) — controlled trajectory accessors.
 - [`CTBase.Data.OpenLoop`](@extref), [`CTBase.Data.ClosedLoop`](@extref), [`CTBase.Data.DynClosedLoop`](@extref) — control law constructors.
-- `Data.PseudoHamiltonian`, `Data.ControlledVectorField` — data types for controlled systems.
+- `Data.PseudoHamiltonian`, `Data.PseudoHamiltonianVectorField`, `Data.ControlledVectorField` — data types for controlled systems.
+- [`Flow(h̃vf, law)` compatibility](../compatibility/pseudo_hamiltonian_vector_field.md) — full state/costate type compatibility table.
 - [Optimal control](optimal_control.md) — `Flow(ocp)` for control-free problems.
 - [Constrained flows](constrained.md) — `constraint`/`multiplier` on `Flow(ocp, law)`.
 - [Building a flow](building_a_flow.md) — the general pipeline.

@@ -18,10 +18,9 @@ As documented in [Control laws](../flows/control_laws.md), only an
 law is accepted here — `DynClosedLoop` is rejected, since it needs the costate `p`, which a
 state flow does not have. The control is eliminated via
 [`Data.ComposedVectorField`](@extref CTBase.Data.ComposedVectorField)
-``g(t,x,v) = fc(t,x,u(...),v)``, integrated as a plain state flow — **no AD anywhere**, and,
-unlike [`Flow(ocp, law)`](ocp_control_laws.md), **no OCP-derived fixed-size buffer**:
-`Data.ControlledVectorField` has no in-place variant at all, so `g` is always
-out-of-place, and `Systems.build_system(g)` builds exactly the same kind of
+``g(t,x,v) = fc(t,x,u(...),v)``, integrated as a plain state flow — **no AD anywhere**, and
+no OCP-derived buffer to size: `Data.ControlledVectorField` has no in-place variant at all,
+so `g` is always out-of-place, and `Systems.build_system(g)` builds exactly the same kind of
 `VectorFieldSystem` as [`Flow(VectorField)`](vector_field.md)'s out-of-place path.
 
 The dynamics used on this page are the same as
@@ -75,12 +74,15 @@ flow_ol = Flows.Flow(fc, law_ol; reltol=1e-8)
 | Scalar/`Vector`/`MVector`/`SVector`/`Matrix`/`SMatrix` `Complex` | ✓ | ✓ |
 | `ForwardDiff.Dual` scalar/`Vector`/`MVector`/`SVector` | ✓ | ✓ |
 
-**Fully green, measured on `ClosedLoop` — no unsupported combination, unlike
-[`Flow(ocp, law)`'s `OpenLoop`/`ClosedLoop` table](ocp_control_laws.md#OpenLoop-ClosedLoop-—-state-flow,-no-internal-AD)**,
-whose `SVector`/`Matrix`/trajectory-`Dual` restrictions come entirely from the OCP-derived
-fixed-size buffer and objective computation that don't exist on this path. `OpenLoop` shares
-the same mechanics (only the control-law arity differs — `u(t,v)` vs `u(t,x,v)`) and is
-spot-checked below rather than re-measured cell by cell.
+**Fully green, measured on `ClosedLoop` — no unsupported combination**, matching
+[`Flow(ocp, law)`'s `OpenLoop`/`ClosedLoop` table](ocp_control_laws.md#OpenLoop-ClosedLoop-—-state-flow,-no-internal-AD)
+on every state-shape axis since the `Matrix`/`SVector` fix there
+([#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)). The one remaining
+difference is the trajectory-`Dual` case: that table's OCP objective computation is not
+`Dual`-transparent, whereas `Flow(fc, law)` computes no objective at all, so it has no
+counterpart restriction. `OpenLoop` shares the same mechanics as `ClosedLoop` here (only the
+control-law arity differs — `u(t,v)` vs `u(t,x,v)`) and is spot-checked below rather than
+re-measured cell by cell.
 
 ---
 
@@ -152,8 +154,9 @@ end
 - [`Flow(h̃, law)` compatibility](pseudo_hamiltonian.md) — the pseudo-Hamiltonian
   counterpart (`DynClosedLoop` only, AD-backed).
 - [`Flow(ocp, law)` compatibility](ocp_control_laws.md) — the OCP-based counterpart, whose
-  `Matrix`/`SVector` restrictions (fixed-size buffer,
-  [#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)) do **not** apply here.
+  fixed-size-buffer `Matrix`/`SVector` restrictions
+  ([#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)) never applied here and
+  are now fixed there too.
 - [Compatibility overview](overview.md) — the per-constructor feature matrix and the other flow types.
 - [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.ControlledFlow`](@ref) — the flow types.
 - [`CTBase.Data.ControlledVectorField`](@extref CTBase.Data.ControlledVectorField), [`CTBase.Data.OpenLoop`](@extref CTBase.Data.OpenLoop), [`CTBase.Data.ClosedLoop`](@extref CTBase.Data.ClosedLoop) — the data wrappers.

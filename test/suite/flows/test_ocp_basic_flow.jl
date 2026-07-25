@@ -9,6 +9,7 @@ module TestOCPBasicFlow
 using Test: Test
 using DifferentiationInterface: DifferentiationInterface
 using ForwardDiff: ForwardDiff  # triggers DifferentiationInterfaceForwardDiff (provides PushforwardFast)
+using StaticArrays: SA, SVector
 import CTBase.Data: Data
 import CTBase.Exceptions: Exceptions
 import CTModels: CTModels
@@ -76,10 +77,24 @@ function _build_cf_fixed_2d()
     return CTModels.Building.build(pre)
 end
 
+# control-free, autonomous, fixed, 2-D, broadcast dynamics — batch-safe (issue #358): unlike
+# _build_cf_fixed_2d's r[1]/x[1] scalar indexing, `r .= -λ .* x` also works column-wise on a
+# batched Matrix state (each column an independent trajectory).
+function _build_cf_fixed_2d_broadcast()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, 2)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= -λ_TEST .* x; nothing))
+    CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf[1])
+    return CTModels.Building.build(pre)
+end
+
 const OCP_CF_FIXED = _build_cf_fixed()
 const OCP_CF_NONFIXED = _build_cf_nonfixed()
 const OCP_CONTROL = _build_with_control()
 const OCP_CF_FIXED_2D = _build_cf_fixed_2d()
+const OCP_CF_FIXED_2D_BC = _build_cf_fixed_2d_broadcast()
 
 function test_ocp_basic_flow()
     Test.@testset "OCP basic (no-costate) flow" verbose=VERBOSE showtiming=SHOWTIMING begin
@@ -162,6 +177,43 @@ function test_ocp_basic_flow()
             xf = f(t0, x0, tf)
             Test.@test xf isa AbstractVector && length(xf) == 2
             Test.@test xf ≈ x0 .* exp(-λ_TEST * (tf - t0)) atol = 1e-8
+        end
+
+        # ── SVector state (issue #358) ──────────────────────────────────────
+
+        Test.@testset "SVector: point + trajectory now succeed (issue #358)" begin
+            f = Flows.Flow(OCP_CF_FIXED_2D; _opts()...)
+            t0, tf = 0.0, 1.0
+            x0 = SA[2.0, 3.0]
+            xf = f(t0, x0, tf)
+            Test.@test xf isa SVector
+            Test.@test xf ≈ x0 .* exp(-λ_TEST * (tf - t0)) atol = 1e-8
+
+            sol = f((t0, tf), x0)
+            xt = Trajectories.state(sol)(tf)
+            Test.@test xt isa SVector
+            Test.@test xt ≈ x0 .* exp(-λ_TEST * (tf - t0)) atol = 1e-8
+        end
+
+        # ── Matrix (batch) state (issue #358) ───────────────────────────────
+
+        Test.@testset "Matrix (batch): point + trajectory now succeed (issue #358)" begin
+            # broadcast dynamics (batch-safe) — see OCP_CF_FIXED_2D_BC docstring
+            f = Flows.Flow(OCP_CF_FIXED_2D_BC; _opts()...)
+            t0, tf = 0.0, 1.0
+            X0 = [2.0 3.0; 4.0 5.0]   # 2 columns = 2 independent trajectories, n=2
+
+            Xf = f(t0, X0, tf)
+            Test.@test Xf isa AbstractMatrix
+            for j in 1:2
+                Test.@test Xf[:, j] ≈ f(t0, X0[:, j], tf) atol = 1e-8
+            end
+
+            sol = f((t0, tf), X0)
+            Xt = Trajectories.state(sol)(tf)
+            for j in 1:2
+                Test.@test Xt[:, j] ≈ f(t0, X0[:, j], tf) atol = 1e-8
+            end
         end
 
         # ── guard: Flow(ocp, law) has no basic (no-costate) call ────────────

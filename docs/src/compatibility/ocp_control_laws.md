@@ -19,12 +19,17 @@ so this page uses two problems built once — scalar (`n=1`) and vector (`n=2`) 
 table tests the scalar containers against the first, the vector-family ones against the
 second.
 
-!!! note "Last probed: 2026-07-23"
+!!! note "Last probed: 2026-07-24"
     This page's table *shape* — which containers and axes are tested — reflects
     [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
     as of this date. Every ✓/✗ cell below is still re-executed on **every** documentation
     build regardless (see [Compatibility overview](overview.md)) — only the *scope* of
-    what's tested can go stale, not the results shown.
+    what's tested can go stale, not the results shown. Until 2026-07-24, `Matrix`-family
+    states failed on every path here and `SVector` failed on the non-AD
+    (`OpenLoop`/`ClosedLoop`) path — the same fixed-size internal buffer as
+    [`Flow(ocp)`](ocp_free.md), tracked as
+    [#358](https://github.com/control-toolbox/CTFlows.jl/issues/358). Both are now fixed;
+    the tables below reflect current (fixed) behaviour.
 
 ```@setup ocp_laws_compat
 using CTFlows
@@ -98,14 +103,14 @@ two independent measurements:
 | `Vector` `Real` | ✓ | ✓ | ✓ | ✓ |
 | `MVector` `Real` | ✓ | ✓ | ✓ | ✓ |
 | `SVector` `Real` | ✓ | ✓ | ✓ | ✓ |
-| `Matrix`/`MMatrix`/`SMatrix` `Real` | ✗ (b) | ✗ (b) | ✗ (b) | ✗ (b) |
+| `Matrix`/`MMatrix`/`SMatrix` `Real` | ✓ | ✓ | ✓ | ✓ |
 | `Complex` (any container) | ✗ (a) | ✗ (a) | ✗ (a) | ✗ (a) |
 | `ForwardDiff.Dual` (any container) | ✗ (c) | ✗ (c) | ✗ (c) | ✗ (c) |
 
-Notes (a)/(b)/(c) are exactly [`Flow(ocp)`'s notes (a)/(b)/(c)](ocp_free.md):
-`Complex` fails the same `AutoForwardDiff` way, `Matrix`-family fails from the same
-fixed-size internal buffer, and a hand-built `Dual` collides with the flow's own AD the same
-way — none of that is specific to having a control law.
+Notes (a)/(c) are exactly [`Flow(ocp)`'s notes (a)/(c)](ocp_free.md): `Complex` fails the
+same `AutoForwardDiff` way, and a hand-built `Dual` collides with the flow's own AD the same
+way — neither is specific to having a control law. `Matrix`/`MMatrix`/`SMatrix` states work
+here too, fixed as of 2026-07-24 ([#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)).
 
 ```@repl ocp_laws_compat
 x0, p0 = 1.0, 0.5;
@@ -119,6 +124,7 @@ f1_partial(0.0, x0, p0, 1.0)   # matches f1_total exactly — stationary feedbac
 
 ```@repl ocp_laws_compat
 f2_total(0.0, SA[1.0, 2.0], SA[0.5, 0.3], 1.0)
+f2_total(0.0, [1.0 2.0; 3.0 4.0], [0.5 0.3; 0.2 0.1], 1.0)
 ```
 
 ---
@@ -145,7 +151,7 @@ f2c_total = Flows.Flow(
 |---|:---:|:---:|:---:|:---:|
 | Scalar `Real` | ✓ | ✓ | ✓ | ✓ |
 | `Vector`/`MVector`/`SVector` `Real` | ✓ | ✓ | ✓ | ✓ |
-| `Matrix`-family `Real` | ✗ (b) | ✗ (b) | ✗ (b) | ✗ (b) |
+| `Matrix`-family `Real` | ✓ | ✓ | ✓ | ✓ |
 | `Complex` (any container) | ✗ (a) | ✗ (a) | ✗ (a) | ✗ (a) |
 | `ForwardDiff.Dual` (any container) | ✗ (c) | ✗ (c) | ✗ (c) | ✗ (c) |
 
@@ -173,17 +179,16 @@ fcl2 = Flows.Flow(ocp2, law_cl; reltol=1e-8)
 | State type | point | traj |
 |---|:---:|:---:|
 | Scalar `Real` | ✓ | ✓ |
-| `Vector`/`MVector` `Real` | ✓ | ✓ |
-| `SVector` `Real` | ✗ (d) | ✗ (d) |
-| `Matrix`-family `Real` | ✗ (b) | ✗ (b) |
-| Scalar/`Vector`/`MVector` `Complex` | ✓ | ✓ |
-| `SVector`/`Matrix` `Complex` | ✗ (d) / ✗ (b) | ✗ (d) / ✗ (b) |
-| `ForwardDiff.Dual` scalar/`Vector`/`MVector` | ✓ | ✗ (e) |
-| `ForwardDiff.Dual` `SVector` | ✗ (d) | ✗ (d) |
+| `Vector`/`MVector`/`SVector` `Real` | ✓ | ✓ |
+| `Matrix`-family `Real` | ✓ | ✓ |
+| Scalar/`Vector`/`MVector`/`SVector` `Complex` | ✓ | ✓ |
+| `Matrix`-family `Complex` | ✓ | ✓ |
+| `ForwardDiff.Dual` scalar/`Vector`/`MVector`/`SVector` | ✓ | ✗ (e) |
 
 `Complex` and `Dual` work here (no AD in the RHS), like [`Flow(ocp)`'s basic
-call](ocp_free.md) — with `SVector`/`Matrix` failing
-for the same reasons (d)/(b) as that page — **plus one new asymmetry**:
+call](ocp_free.md) — `SVector`/`Matrix`-family now work too, fixed as of 2026-07-24
+([#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)) — **one asymmetry
+remains**:
 
 !!! note "(e) Dual works at a point, but not in a trajectory"
     `ForwardDiff.Dual` states integrate correctly for the **point** call, but the
@@ -215,6 +220,13 @@ sol = fcl2((0.0, 1.0), [1.0, 2.0]);
 Trajectories.state(sol)(1.0), Trajectories.control(sol)(1.0)
 ```
 
+`SVector` and `Matrix` (batch) both work, point and trajectory:
+
+```@repl ocp_laws_compat
+fcl2(0.0, SA[1.0, 2.0], 1.0)
+fcl2(0.0, [1.0 2.0; 3.0 4.0], 1.0)
+```
+
 ---
 
 ## See also
@@ -224,7 +236,7 @@ Trajectories.state(sol)(1.0), Trajectories.control(sol)(1.0)
 - [Constrained flows](../flows/constrained.md) — the `constraint=`/`multiplier=` API this
   page's constrained table exercises.
 - [`Flow(ocp)` compatibility](ocp_free.md) — the control-free counterpart, and the source of
-  notes (a)/(b)/(c)/(d) reused verbatim here.
+  notes (a)/(c) reused verbatim here.
 - [`Flow(Hamiltonian)` compatibility](hamiltonian.md) — the shared `Complex`/nested-`Dual`
   root cause.
 - [Compatibility overview](overview.md) — the per-constructor feature matrix and the other flow types.

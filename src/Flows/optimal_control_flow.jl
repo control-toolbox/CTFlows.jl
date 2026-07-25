@@ -581,9 +581,37 @@ _finalize_vf(r, ::Number) = Systems._safe_only(r)
 """
 $(TYPEDSIGNATURES)
 
-Return the result buffer as-is for an n-D (vector) state.
+Return the result buffer as-is for a `Vector` state — `r` already has this exact type
+(see [`CTFlows.Systems._buffer_like`](@ref)), so this is an identity, no-allocation path.
 """
-_finalize_vf(r, ::AbstractVector) = r
+_finalize_vf(r, ::Vector) = r
+"""
+$(TYPEDSIGNATURES)
+
+Reconstruct the result buffer in the state's own container type (e.g. `Vector` →
+`SVector`/`MVector`), mirroring `Systems.OoPVFIpFinalizeRHS`. The internal buffer `r` is
+always a plain `Vector` (see [`CTFlows.Systems._buffer_like`](@ref)); for an immutable
+state container this conversion is required for OrdinaryDiffEq's out-of-place
+type-constancy.
+"""
+_finalize_vf(r, xs::AbstractVector) = typeof(xs)(r)
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the result buffer as-is for a batched `Matrix` state (each column an independent
+trajectory) — `r` already has this exact type (see [`CTFlows.Systems._buffer_like`](@ref)),
+so this is an identity, no-allocation path.
+"""
+_finalize_vf(r, ::Matrix) = r
+"""
+$(TYPEDSIGNATURES)
+
+Reconstruct the result buffer in the state's own container type (e.g. `Matrix` →
+`SMatrix`/`MMatrix`) for a batched immutable-matrix state, for the same
+out-of-place type-constancy reason as the `AbstractVector` method above.
+"""
+_finalize_vf(r, xs::AbstractMatrix) = typeof(xs)(r)
 
 # Precomputed coercion from a declared dimension: `only` collapses a 1-D quantity to a
 # scalar (accepting both a scalar and a length-1 vector), `identity` leaves n-D untouched.
@@ -598,20 +626,37 @@ _dim_coerce(dim::Int) = dim == 1 ? Systems._safe_only : identity
 """
 $(TYPEDSIGNATURES)
 
+Apply a precomputed per-dimension coercion (`_dim_coerce`), except on a batched `Matrix`
+value, which is always left untouched regardless of the declared dimension. `_dim_coerce`
+is baked in once from the OCP's *declared* dimension, at flow-construction time, before
+the shape of any future call-site value is known — it cannot itself special-case `Matrix`.
+This guard is the runtime check that closes that gap, mirroring
+`Systems._coerce_state(::AbstractMatrix) = identity`.
+
+See also: [`CTFlows.Flows._dim_coerce`](@ref).
+"""
+_apply_dim_coerce(coerce, x::AbstractMatrix) = x
+_apply_dim_coerce(coerce, x) = coerce(x)
+
+"""
+$(TYPEDSIGNATURES)
+
 Core computation of the OCP controlled dynamics `fc(t,x,u,v)`: coerce `x`/`u`/`v` with
-the precomputed per-dimension coercions (scalar for 1-D), fill a length-`n_x` buffer with
-the in-place dynamics, and return it (scalar for a 1-D state).
+the precomputed per-dimension coercions (scalar for 1-D; a batched `Matrix` is always left
+untouched via [`CTFlows.Flows._apply_dim_coerce`](@ref)), fill a buffer with the in-place
+dynamics (`n_x × batch` for a `Matrix` state — see
+[`CTFlows.Systems._buffer_like`](@ref)), and return it (scalar for a 1-D state).
 
 See also: [`CTFlows.Flows.OCPControlledVectorFieldFunction`](@ref).
 """
 function _ocp_controlled_vf(h::OCPControlledVectorFieldFunction, t, x, u, v)
-    xs = h.cx(x)
-    us = h.cu(u)
+    xs = _apply_dim_coerce(h.cx, x)
+    us = _apply_dim_coerce(h.cu, u)
     if v === nothing
         T = Base.promote_op(*, eltype(xs), eltype(us))
         vv = Systems._buffer_like(xs, T, 0)
     else
-        vs = h.cv(v)
+        vs = _apply_dim_coerce(h.cv, v)
         T = Base.promote_op(*, Base.promote_op(*, eltype(xs), eltype(us)), eltype(vs))
         vv = vs
     end
@@ -724,20 +769,21 @@ end
 $(TYPEDSIGNATURES)
 
 Core computation of the control-free OCP state dynamics `g(t,x,v) = f(t,x,∅,v)`: coerce
-`x`/`v` with the precomputed per-dimension coercions (scalar for 1-D), fill a
-length-`n_x` buffer with the in-place dynamics called with an empty control, and return
-it (scalar for a 1-D state).
+`x`/`v` with the precomputed per-dimension coercions (scalar for 1-D; a batched `Matrix`
+is always left untouched via [`CTFlows.Flows._apply_dim_coerce`](@ref)), fill a buffer
+with the in-place dynamics called with an empty control (`n_x × batch` for a `Matrix`
+state), and return it (scalar for a 1-D state).
 
 See also: [`CTFlows.Flows.OCPStateVectorFieldFunction`](@ref).
 """
 function _ocp_state_vf(h::OCPStateVectorFieldFunction, t, x, v)
-    xs = h.cx(x)
+    xs = _apply_dim_coerce(h.cx, x)
     if v === nothing
         T = eltype(xs)
         u = Systems._buffer_like(xs, T, 0)
         vv = u
     else
-        vs = h.cv(v)
+        vs = _apply_dim_coerce(h.cv, v)
         T = Base.promote_op(*, eltype(xs), eltype(vs))
         u = Systems._buffer_like(xs, T, 0)
         vv = vs
