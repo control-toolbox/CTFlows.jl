@@ -49,7 +49,7 @@ import CTBase.Data
 import CTFlows.Flows
 import CTFlows.Trajectories
 import CTFlows.Integrators
-import CTModels
+using CTModels: CTModels
 
 # ---------------------------------------------------------------------------
 # Log collector to detect the "InPlace VectorField" performance warning
@@ -59,7 +59,9 @@ struct CollectLogger <: Logging.AbstractLogger
 end
 Logging.min_enabled_level(::CollectLogger) = Logging.Debug
 Logging.shouldlog(::CollectLogger, args...) = true
-function Logging.handle_message(l::CollectLogger, lvl, msg, _mod, grp, id, file, line; kw...)
+function Logging.handle_message(
+    l::CollectLogger, lvl, msg, _mod, grp, id, file, line; kw...
+)
     push!(l.msgs, string(msg))
     return nothing
 end
@@ -86,7 +88,7 @@ function cell(fl, kind, x0)
     l = CollectLogger(String[])
     try
         r = Logging.with_logger(l) do
-            g()
+            return g()
         end
         warned = any(m -> occursin("InPlace VectorField", m), l.msgs)
         err = try
@@ -105,32 +107,32 @@ end
 # ---------------------------------------------------------------------------
 # The two flows (defined ONCE, exactly as the doc's @setup block does)
 # ---------------------------------------------------------------------------
-vf      = Data.VectorField(x -> -x)                                                       # out-of-place
-flow    = Flows.Flow(vf; reltol=1e-8)
-vf_ip   = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)  # in-place
+vf = Data.VectorField(x -> -x)                                                       # out-of-place
+flow = Flows.Flow(vf; reltol=1e-8)
+vf_ip = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)  # in-place
 flow_ip = Flows.Flow(vf_ip; reltol=1e-8)
 
 # ---------------------------------------------------------------------------
 # State samples: (label, x0). Everything decays to x0 · e⁻¹ under ẋ = -x.
 # ---------------------------------------------------------------------------
 cases = [
-    ("scalar Real",     1.0),
-    ("Vector Real",     [1.0, 2.0]),
-    ("MVector Real",    MVector{2}(1.0, 2.0)),
-    ("SVector Real",    SA[1.0, 2.0]),
-    ("Matrix Real",     [1.0 2.0; 3.0 4.0]),
-    ("MMatrix Real",    MMatrix{2,2}(1.0, 3.0, 2.0, 4.0)),
-    ("SMatrix Real",    SMatrix{2,2}(1.0, 3.0, 2.0, 4.0)),
-    ("scalar Complex",  1.0 + 2.0im),
-    ("Vector Complex",  [1.0 + 2.0im, 3.0 + 4.0im]),
+    ("scalar Real", 1.0),
+    ("Vector Real", [1.0, 2.0]),
+    ("MVector Real", MVector{2}(1.0, 2.0)),
+    ("SVector Real", SA[1.0, 2.0]),
+    ("Matrix Real", [1.0 2.0; 3.0 4.0]),
+    ("MMatrix Real", MMatrix{2,2}(1.0, 3.0, 2.0, 4.0)),
+    ("SMatrix Real", SMatrix{2,2}(1.0, 3.0, 2.0, 4.0)),
+    ("scalar Complex", 1.0 + 2.0im),
+    ("Vector Complex", [1.0 + 2.0im, 3.0 + 4.0im]),
     ("MVector Complex", MVector{2}(1.0 + 2.0im, 3.0 + 4.0im)),
     ("SVector Complex", SA[1.0 + 2.0im, 3.0 + 4.0im]),
-    ("Matrix Complex",  [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im]),
+    ("Matrix Complex", [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im]),
     ("SMatrix Complex", SMatrix{2,2}(1.0+2.0im, 3.0+4.0im, 5.0+6.0im, 7.0+8.0im)),
-    ("Dual scalar",     ForwardDiff.Dual(1.0, 1.0)),
-    ("Dual Vector",     [ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(2.0, 0.0)]),
-    ("Dual MVector",    MVector{2}(ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(2.0, 0.0))),
-    ("Dual SVector",    SA[ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(2.0, 0.0)]),
+    ("Dual scalar", ForwardDiff.Dual(1.0, 1.0)),
+    ("Dual Vector", [ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(2.0, 0.0)]),
+    ("Dual MVector", MVector{2}(ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(2.0, 0.0))),
+    ("Dual SVector", SA[ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(2.0, 0.0)]),
 ]
 
 # ---------------------------------------------------------------------------
@@ -140,8 +142,16 @@ println("\n", "="^96)
 println("  CTFlows CPU probe — Flow(VectorField), dynamics ẋ = -x,  x(1) = x0·e⁻¹")
 println("  columns describe the vector-field kind (OOP: x->-x  |  IP: (du,x)->du.=-x)")
 println("="^96)
-println(@sprintf("  %-16s | %-14s | %-14s | %-14s | %-14s",
-    "state", "OOP point", "OOP traj", "IP point", "IP traj"))
+println(
+    @sprintf(
+        "  %-16s | %-14s | %-14s | %-14s | %-14s",
+        "state",
+        "OOP point",
+        "OOP traj",
+        "IP point",
+        "IP traj"
+    )
+)
 println("  " * "-"^92)
 
 n_ok = n_warn = n_fail = 0
@@ -154,12 +164,21 @@ for (lab, x0) in cases
         (m == "✗" || m == "?") && (global n_fail += 1)
         push!(marks, @sprintf("%s %-12s", m, d))
     end
-    println(@sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4]))
+    println(
+        @sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4])
+    )
 end
 
 println("  " * "-"^92)
-println(@sprintf("  totals:  ✓ %d works   ⚠ %d works-with-warning   ✗/? %d fail-or-wrong   (of %d)",
-    n_ok, n_warn, n_fail, 4 * length(cases)))
+println(
+    @sprintf(
+        "  totals:  ✓ %d works   ⚠ %d works-with-warning   ✗/? %d fail-or-wrong   (of %d)",
+        n_ok,
+        n_warn,
+        n_fail,
+        4 * length(cases)
+    )
+)
 println("="^96)
 println("""
   Legend & notes
@@ -195,7 +214,10 @@ println("="^96)
 let
     J = ForwardDiff.jacobian(x0 -> flow(0.0, x0, 1.0), [1.0, 2.0])
     ok = isapprox(J, exp(-1.0) * [1.0 0.0; 0.0 1.0]; atol=1e-4)
-    println("  ✓ ForwardDiff.jacobian(x0 -> flow(0,x0,1), x0)  ", ok ? "matches e⁻¹·I" : "MISMATCH: $J")
+    println(
+        "  ✓ ForwardDiff.jacobian(x0 -> flow(0,x0,1), x0)  ",
+        ok ? "matches e⁻¹·I" : "MISMATCH: $J",
+    )
 end
 
 # =============================================================================
@@ -209,10 +231,10 @@ end
 # test/suite/extensions/test_flow_callables_sciml_hamiltonian_vector_field.jl.
 # =============================================================================
 
-hvf      = Data.HamiltonianVectorField((x, p) -> (p, -x))                                                                # out-of-place
-hflow    = Flows.Flow(hvf; reltol=1e-8)
-hvf_ip   = Data.HamiltonianVectorField(
-    (dx, dp, x, p) -> (dx .= p; dp .= -x); is_autonomous=true, is_variable=false
+hvf = Data.HamiltonianVectorField((x, p) -> (p, -x))                                                                # out-of-place
+hflow = Flows.Flow(hvf; reltol=1e-8)
+hvf_ip = Data.HamiltonianVectorField(
+    (dx, dp, x, p) -> (dx.=p; dp.=(-x)); is_autonomous=true, is_variable=false
 )                                                                                                                          # in-place
 hflow_ip = Flows.Flow(hvf_ip; reltol=1e-8)
 
@@ -227,11 +249,15 @@ function _maxerr_hvf(kind, r, x0, p0)
 end
 
 function cell_hvf(fl, kind, x0, p0)
-    g = kind === :point ? (() -> fl(0.0, x0, p0, pi / 2)) : (() -> fl((0.0, pi / 2), x0, p0))
+    g = if kind === :point
+        (() -> fl(0.0, x0, p0, pi / 2))
+    else
+        (() -> fl((0.0, pi / 2), x0, p0))
+    end
     l = CollectLogger(String[])
     try
         r = Logging.with_logger(l) do
-            g()
+            return g()
         end
         warned = any(m -> occursin("InPlace HamiltonianVectorField", m), l.msgs)
         err = try
@@ -248,49 +274,91 @@ function cell_hvf(fl, kind, x0, p0)
 end
 
 cases_hvf = [
-    ("scalar Real",     1.0,                                  0.0),
-    ("Vector Real",     [1.0, 0.0],                            [0.0, 1.0]),
-    ("MVector Real",    MVector{2}(1.0, 0.0),                  MVector{2}(0.0, 1.0)),
-    ("SVector Real",    SA[1.0, 0.0],                          SA[0.0, 1.0]),
-    ("Matrix Real",     [1.0 2.0; 3.0 4.0],                    [0.0 0.0; 1.0 1.0]),
-    ("MMatrix Real",    MMatrix{2,2}(1.0, 3.0, 2.0, 4.0),      MMatrix{2,2}(0.0, 1.0, 0.0, 1.0)),
-    ("SMatrix Real",    SMatrix{2,2}(1.0, 3.0, 2.0, 4.0),      SMatrix{2,2}(0.0, 1.0, 0.0, 1.0)),
-    ("scalar Complex",  1.0 + 2.0im,                           0.0 + 0.0im),
-    ("Vector Complex",  [1.0 + 2.0im, 0.0 + 0.0im],            [0.0 + 0.0im, 1.0 + 1.0im]),
-    ("MVector Complex", MVector{2}(1.0 + 2.0im, 0.0 + 0.0im),  MVector{2}(0.0 + 0.0im, 1.0 + 1.0im)),
-    ("SVector Complex", SA[1.0 + 2.0im, 0.0 + 0.0im],          SA[0.0 + 0.0im, 1.0 + 1.0im]),
-    ("Matrix Complex",  [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im], [0.0+0.0im 1.0+1.0im; 2.0+2.0im 3.0+3.0im]),
-    ("SMatrix Complex", SMatrix{2,2}(1.0+2.0im, 3.0+4.0im, 5.0+6.0im, 7.0+8.0im), SMatrix{2,2}(0.0+0.0im, 2.0+2.0im, 1.0+1.0im, 3.0+3.0im)),
-    ("Dual scalar",     ForwardDiff.Dual(1.0, 1.0),            ForwardDiff.Dual(0.0, 0.0)),
-    ("Dual Vector",     [ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)], [ForwardDiff.Dual(0.0, 0.0), ForwardDiff.Dual(1.0, 0.0)]),
-    ("Dual MVector",    MVector{2}(ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)), MVector{2}(ForwardDiff.Dual(0.0, 0.0), ForwardDiff.Dual(1.0, 0.0))),
-    ("Dual SVector",    SA[ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)], SA[ForwardDiff.Dual(0.0, 0.0), ForwardDiff.Dual(1.0, 0.0)]),
+    ("scalar Real", 1.0, 0.0),
+    ("Vector Real", [1.0, 0.0], [0.0, 1.0]),
+    ("MVector Real", MVector{2}(1.0, 0.0), MVector{2}(0.0, 1.0)),
+    ("SVector Real", SA[1.0, 0.0], SA[0.0, 1.0]),
+    ("Matrix Real", [1.0 2.0; 3.0 4.0], [0.0 0.0; 1.0 1.0]),
+    ("MMatrix Real", MMatrix{2,2}(1.0, 3.0, 2.0, 4.0), MMatrix{2,2}(0.0, 1.0, 0.0, 1.0)),
+    ("SMatrix Real", SMatrix{2,2}(1.0, 3.0, 2.0, 4.0), SMatrix{2,2}(0.0, 1.0, 0.0, 1.0)),
+    ("scalar Complex", 1.0 + 2.0im, 0.0 + 0.0im),
+    ("Vector Complex", [1.0 + 2.0im, 0.0 + 0.0im], [0.0 + 0.0im, 1.0 + 1.0im]),
+    (
+        "MVector Complex",
+        MVector{2}(1.0 + 2.0im, 0.0 + 0.0im),
+        MVector{2}(0.0 + 0.0im, 1.0 + 1.0im),
+    ),
+    ("SVector Complex", SA[1.0 + 2.0im, 0.0 + 0.0im], SA[0.0 + 0.0im, 1.0 + 1.0im]),
+    (
+        "Matrix Complex",
+        [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im],
+        [0.0+0.0im 1.0+1.0im; 2.0+2.0im 3.0+3.0im],
+    ),
+    (
+        "SMatrix Complex",
+        SMatrix{2,2}(1.0+2.0im, 3.0+4.0im, 5.0+6.0im, 7.0+8.0im),
+        SMatrix{2,2}(0.0+0.0im, 2.0+2.0im, 1.0+1.0im, 3.0+3.0im),
+    ),
+    ("Dual scalar", ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)),
+    (
+        "Dual Vector",
+        [ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)],
+        [ForwardDiff.Dual(0.0, 0.0), ForwardDiff.Dual(1.0, 0.0)],
+    ),
+    (
+        "Dual MVector",
+        MVector{2}(ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)),
+        MVector{2}(ForwardDiff.Dual(0.0, 0.0), ForwardDiff.Dual(1.0, 0.0)),
+    ),
+    (
+        "Dual SVector",
+        SA[ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)],
+        SA[ForwardDiff.Dual(0.0, 0.0), ForwardDiff.Dual(1.0, 0.0)],
+    ),
 ]
 
 println("\n", "="^96)
 println("  CTFlows CPU probe — Flow(HamiltonianVectorField), x' = p, p' = -x,  (0, π/2)")
 println("  analytic: xf = p0, pf = -x0.  columns: OOP (x,p)->(p,-x)  |  IP (dx,dp,x,p)->…")
 println("="^96)
-println(@sprintf("  %-16s | %-14s | %-14s | %-14s | %-14s",
-    "state/costate", "OOP point", "OOP traj", "IP point", "IP traj"))
+println(
+    @sprintf(
+        "  %-16s | %-14s | %-14s | %-14s | %-14s",
+        "state/costate",
+        "OOP point",
+        "OOP traj",
+        "IP point",
+        "IP traj"
+    )
+)
 println("  " * "-"^92)
 
 n_ok_hvf = n_warn_hvf = n_fail_hvf = 0
 for (lab, x0, p0) in cases_hvf
     marks = String[]
-    for (fl, kind) in ((hflow, :point), (hflow, :traj), (hflow_ip, :point), (hflow_ip, :traj))
+    for (fl, kind) in
+        ((hflow, :point), (hflow, :traj), (hflow_ip, :point), (hflow_ip, :traj))
         m, d = cell_hvf(fl, kind, x0, p0)
         m == "✓" && (global n_ok_hvf += 1)
         m == "⚠" && (global n_warn_hvf += 1)
         (m == "✗" || m == "?") && (global n_fail_hvf += 1)
         push!(marks, @sprintf("%s %-12s", m, d))
     end
-    println(@sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4]))
+    println(
+        @sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4])
+    )
 end
 
 println("  " * "-"^92)
-println(@sprintf("  totals:  ✓ %d works   ⚠ %d works-with-warning   ✗/? %d fail-or-wrong   (of %d)",
-    n_ok_hvf, n_warn_hvf, n_fail_hvf, 4 * length(cases_hvf)))
+println(
+    @sprintf(
+        "  totals:  ✓ %d works   ⚠ %d works-with-warning   ✗/? %d fail-or-wrong   (of %d)",
+        n_ok_hvf,
+        n_warn_hvf,
+        n_fail_hvf,
+        4 * length(cases_hvf)
+    )
+)
 println("="^96)
 println("""
   Legend & notes
@@ -321,13 +389,18 @@ println("""
 # =============================================================================
 
 println("\n", "="^96)
-println("  Sensitivities of Flow(HamiltonianVectorField) via an outer ForwardDiff.jacobian call")
+println(
+    "  Sensitivities of Flow(HamiltonianVectorField) via an outer ForwardDiff.jacobian call"
+)
 println("="^96)
 let
     shoot(z) = collect(hflow(0.0, z[1], z[2], pi / 2))
     J = ForwardDiff.jacobian(shoot, [1.0, 0.0])
     ok = isapprox(J, [0.0 1.0; -1.0 0.0]; atol=1e-4)
-    println("  ✓ ForwardDiff.jacobian(shoot, [x0,p0])  ", ok ? "matches [0 1; -1 0]" : "MISMATCH: $J")
+    println(
+        "  ✓ ForwardDiff.jacobian(shoot, [x0,p0])  ",
+        ok ? "matches [0 1; -1 0]" : "MISMATCH: $J",
+    )
 end
 
 # =============================================================================
@@ -353,7 +426,7 @@ end
 # matters: differentiating the flow via an outer ForwardDiff.jacobian/gradient call.)
 # =============================================================================
 
-h_ad     = Data.Hamiltonian((x, p) -> 0.5 * (sum(abs2, x) + sum(abs2, p)))
+h_ad = Data.Hamiltonian((x, p) -> 0.5 * (sum(abs2, x) + sum(abs2, p)))
 hflow_ad = Flows.Flow(h_ad; reltol=1e-8)
 
 function _maxerr_had(kind, r, x0, p0)
@@ -369,7 +442,11 @@ end
 _short(s, n=90) = length(s) > n ? first(s, n) * "…" : s
 
 function cell_had(fl, kind, x0, p0)
-    g = kind === :point ? (() -> fl(0.0, x0, p0, pi / 2)) : (() -> fl((0.0, pi / 2), x0, p0))
+    g = if kind === :point
+        (() -> fl(0.0, x0, p0, pi / 2))
+    else
+        (() -> fl((0.0, pi / 2), x0, p0))
+    end
     try
         r = g()
         err = try
@@ -386,23 +463,37 @@ function cell_had(fl, kind, x0, p0)
 end
 
 cases_had = [
-    ("scalar Real",     1.0,                                             0.0),
-    ("Vector Real",     [1.0, 0.0],                                       [0.0, 1.0]),
-    ("MVector Real",    MVector{2}(1.0, 0.0),                             MVector{2}(0.0, 1.0)),
-    ("SVector Real",    SA[1.0, 0.0],                                     SA[0.0, 1.0]),
-    ("Matrix Real",     [1.0 2.0; 3.0 4.0],                               [0.0 0.0; 1.0 1.0]),
-    ("MMatrix Real",    MMatrix{2,2}(1.0, 3.0, 2.0, 4.0),                 MMatrix{2,2}(0.0, 1.0, 0.0, 1.0)),
-    ("SMatrix Real",    SMatrix{2,2}(1.0, 3.0, 2.0, 4.0),                 SMatrix{2,2}(0.0, 1.0, 0.0, 1.0)),
-    ("scalar Complex",  1.0 + 2.0im,                                      0.0 + 0.0im),
-    ("Vector Complex",  [1.0 + 2.0im, 0.0 + 0.0im],                       [0.0 + 0.0im, 1.0 + 1.0im]),
-    ("MVector Complex", MVector{2}(1.0 + 2.0im, 0.0 + 0.0im),             MVector{2}(0.0 + 0.0im, 1.0 + 1.0im)),
-    ("SVector Complex", SA[1.0 + 2.0im, 0.0 + 0.0im],                     SA[0.0 + 0.0im, 1.0 + 1.0im]),
-    ("Matrix Complex",  [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im],       [0.0+0.0im 1.0+1.0im; 2.0+2.0im 3.0+3.0im]),
-    ("SMatrix Complex", SMatrix{2,2}(1.0+2.0im, 3.0+4.0im, 5.0+6.0im, 7.0+8.0im), SMatrix{2,2}(0.0+0.0im, 2.0+2.0im, 1.0+1.0im, 3.0+3.0im)),
+    ("scalar Real", 1.0, 0.0),
+    ("Vector Real", [1.0, 0.0], [0.0, 1.0]),
+    ("MVector Real", MVector{2}(1.0, 0.0), MVector{2}(0.0, 1.0)),
+    ("SVector Real", SA[1.0, 0.0], SA[0.0, 1.0]),
+    ("Matrix Real", [1.0 2.0; 3.0 4.0], [0.0 0.0; 1.0 1.0]),
+    ("MMatrix Real", MMatrix{2,2}(1.0, 3.0, 2.0, 4.0), MMatrix{2,2}(0.0, 1.0, 0.0, 1.0)),
+    ("SMatrix Real", SMatrix{2,2}(1.0, 3.0, 2.0, 4.0), SMatrix{2,2}(0.0, 1.0, 0.0, 1.0)),
+    ("scalar Complex", 1.0 + 2.0im, 0.0 + 0.0im),
+    ("Vector Complex", [1.0 + 2.0im, 0.0 + 0.0im], [0.0 + 0.0im, 1.0 + 1.0im]),
+    (
+        "MVector Complex",
+        MVector{2}(1.0 + 2.0im, 0.0 + 0.0im),
+        MVector{2}(0.0 + 0.0im, 1.0 + 1.0im),
+    ),
+    ("SVector Complex", SA[1.0 + 2.0im, 0.0 + 0.0im], SA[0.0 + 0.0im, 1.0 + 1.0im]),
+    (
+        "Matrix Complex",
+        [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im],
+        [0.0+0.0im 1.0+1.0im; 2.0+2.0im 3.0+3.0im],
+    ),
+    (
+        "SMatrix Complex",
+        SMatrix{2,2}(1.0+2.0im, 3.0+4.0im, 5.0+6.0im, 7.0+8.0im),
+        SMatrix{2,2}(0.0+0.0im, 2.0+2.0im, 1.0+1.0im, 3.0+3.0im),
+    ),
 ]
 
 println("\n", "="^96)
-println("  CTFlows CPU probe — Flow(Hamiltonian), H = 0.5(|x|²+|p|²)  [AutoForwardDiff, CPU]")
+println(
+    "  CTFlows CPU probe — Flow(Hamiltonian), H = 0.5(|x|²+|p|²)  [AutoForwardDiff, CPU]"
+)
 println("  analytic: xf = p0, pf = -x0.  NO in-place variant — point/traj columns only.")
 println("="^96)
 println(@sprintf("  %-16s | %-30s | %-30s", "state/costate", "point", "traj"))
@@ -419,8 +510,14 @@ for (lab, x0, p0) in cases_had
 end
 
 println("  " * "-"^80)
-println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
-    n_ok_had, n_fail_had, 2 * length(cases_had)))
+println(
+    @sprintf(
+        "  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+        n_ok_had,
+        n_fail_had,
+        2 * length(cases_had)
+    )
+)
 println("="^96)
 println("""
   Legend & notes
@@ -458,7 +555,10 @@ let
     try
         J = ForwardDiff.jacobian(shoot, [1.0, 0.0])
         ok = isapprox(J, [0.0 1.0; -1.0 0.0]; atol=1e-4)
-        println("  ✓ ForwardDiff.jacobian(shoot, [x0,p0])  ", ok ? "matches [0 1; -1 0]" : "MISMATCH: $J")
+        println(
+            "  ✓ ForwardDiff.jacobian(shoot, [x0,p0])  ",
+            ok ? "matches [0 1; -1 0]" : "MISMATCH: $J",
+        )
     catch e
         println("  ✗ ForwardDiff.jacobian FAILED: ", sprint(showerror, e))
     end
@@ -471,13 +571,15 @@ let
         println("  ✗ ForwardDiff.gradient FAILED: ", sprint(showerror, e))
     end
 end
-println("""
+println(
+    """
   Conclusion: nested ForwardDiff-over-ForwardDiff through Flow(Hamiltonian) works — but only
   when the OUTER Dual is generated by ForwardDiff itself (via jacobian/gradient/derivative
   on a closure that calls the flow), never by hand-constructing a Dual and passing it as x0.
   No custom backend switch (e.g. an internal Mooncake backend) is needed to sidestep this —
   the fix is procedural, not a backend choice.
-""")
+"""
+)
 
 # =============================================================================
 # SciMLFunctionSystem probe — Flow(::SciMLBase.AbstractODEFunction) state matrix
@@ -499,13 +601,15 @@ flow_scf = Flows.Flow(f_scf_oop; reltol=1e-8)
 flow_scf_ip = Flows.Flow(f_scf_ip; reltol=1e-8)
 
 function cell_scf(fl, kind, x0)
-    g =
-        kind === :point ? (() -> fl(0.0, x0, 1.0; variable=1.0)) :
+    g = if kind === :point
+        (() -> fl(0.0, x0, 1.0; variable=1.0))
+    else
         (() -> fl((0.0, 1.0), x0; variable=1.0))
+    end
     l = CollectLogger(String[])
     try
         r = Logging.with_logger(l) do
-            g()
+            return g()
         end
         warned = any(m -> occursin("InPlace SciMLFunction", m), l.msgs)
         err = try
@@ -522,31 +626,52 @@ function cell_scf(fl, kind, x0)
 end
 
 println("\n", "="^96)
-println("  CTFlows CPU probe — Flow(::SciMLBase.ODEFunction), ẋ = -p·x, p=1.0,  x(1) = x0·e⁻¹")
+println(
+    "  CTFlows CPU probe — Flow(::SciMLBase.ODEFunction), ẋ = -p·x, p=1.0,  x(1) = x0·e⁻¹"
+)
 println("  columns describe the ODEFunction kind (OOP: (u,p,t)->-p.*u | IP: (du,u,p,t)->…)")
 println("="^96)
-println(@sprintf("  %-16s | %-14s | %-14s | %-14s | %-14s",
-    "state", "OOP point", "OOP traj", "IP point", "IP traj"))
+println(
+    @sprintf(
+        "  %-16s | %-14s | %-14s | %-14s | %-14s",
+        "state",
+        "OOP point",
+        "OOP traj",
+        "IP point",
+        "IP traj"
+    )
+)
 println("  " * "-"^92)
 
 n_ok_scf = n_warn_scf = n_fail_scf = 0
 for (lab, x0) in cases
     marks = String[]
-    for (fl, kind) in ((flow_scf, :point), (flow_scf, :traj), (flow_scf_ip, :point), (flow_scf_ip, :traj))
+    for (fl, kind) in
+        ((flow_scf, :point), (flow_scf, :traj), (flow_scf_ip, :point), (flow_scf_ip, :traj))
         m, d = cell_scf(fl, kind, x0)
         m == "✓" && (global n_ok_scf += 1)
         m == "⚠" && (global n_warn_scf += 1)
         (m == "✗" || m == "?") && (global n_fail_scf += 1)
         push!(marks, @sprintf("%s %-12s", m, d))
     end
-    println(@sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4]))
+    println(
+        @sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4])
+    )
 end
 
 println("  " * "-"^92)
-println(@sprintf("  totals:  ✓ %d works   ⚠ %d works-with-warning   ✗/? %d fail-or-wrong   (of %d)",
-    n_ok_scf, n_warn_scf, n_fail_scf, 4 * length(cases)))
+println(
+    @sprintf(
+        "  totals:  ✓ %d works   ⚠ %d works-with-warning   ✗/? %d fail-or-wrong   (of %d)",
+        n_ok_scf,
+        n_warn_scf,
+        n_fail_scf,
+        4 * length(cases)
+    )
+)
 println("="^96)
-println("""
+println(
+    """
   Legend & notes
   ──────────────
   ✓  works, result matches analytic to err ≤ 1e-4
@@ -557,7 +682,8 @@ println("""
   Observed nuances (fold into docs/src/compatibility/sciml.md):
    • Structurally identical result to Flow(VectorField) — same dispatch, same fallback.
    • variable= is mandatory here (NonAutonomous/NonFixed always), unlike VF's default Fixed.
-""")
+"""
+)
 
 # =============================================================================
 # SciMLProblemFlow probe — Flow(::SciMLBase.AbstractODEProblem) state matrix
@@ -588,9 +714,11 @@ function _maxerr_prob(kind, r, x0)
 end
 
 function cell_prob(fl, kind, x0)
-    g =
-        kind === :point ? (() -> fl(0.0, x0, 1.0; variable=1.0)) :
+    g = if kind === :point
+        (() -> fl(0.0, x0, 1.0; variable=1.0))
+    else
         (() -> fl((0.0, 1.0), x0; variable=1.0))
+    end
     try
         r = g()
         err = try
@@ -607,40 +735,71 @@ function cell_prob(fl, kind, x0)
 end
 
 println("\n", "="^96)
-println("  CTFlows CPU probe — Flow(::SciMLBase.ODEProblem), ẋ = -p·x, p=1.0,  x(1) = x0·e⁻¹")
-println("  columns: which ODEProblem was REMADE at call time (built out-of-place vs in-place)")
-println("  *** no CTFlows guard exists on this path — IP-built + immutable x0 measured, not assumed ***")
+println(
+    "  CTFlows CPU probe — Flow(::SciMLBase.ODEProblem), ẋ = -p·x, p=1.0,  x(1) = x0·e⁻¹"
+)
+println(
+    "  columns: which ODEProblem was REMADE at call time (built out-of-place vs in-place)"
+)
+println(
+    "  *** no CTFlows guard exists on this path — IP-built + immutable x0 measured, not assumed ***",
+)
 println("="^96)
-println(@sprintf("  %-16s | %-30s | %-30s | %-30s | %-30s",
-    "state", "OOP-built point", "OOP-built traj", "IP-built point", "IP-built traj"))
+println(
+    @sprintf(
+        "  %-16s | %-30s | %-30s | %-30s | %-30s",
+        "state",
+        "OOP-built point",
+        "OOP-built traj",
+        "IP-built point",
+        "IP-built traj"
+    )
+)
 println("  " * "-"^140)
 
 n_ok_prob = n_fail_prob = 0
 for (lab, x0) in cases
     marks = String[]
-    for (fl, kind) in ((pflow_oop, :point), (pflow_oop, :traj), (pflow_ip, :point), (pflow_ip, :traj))
+    for (fl, kind) in
+        ((pflow_oop, :point), (pflow_oop, :traj), (pflow_ip, :point), (pflow_ip, :traj))
         m, d = cell_prob(fl, kind, x0)
         m == "✓" ? (global n_ok_prob += 1) : (global n_fail_prob += 1)
         push!(marks, @sprintf("%s %-28s", m, d))
     end
-    println(@sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4]))
+    println(
+        @sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4])
+    )
 end
 
 println("  " * "-"^140)
-println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
-    n_ok_prob, n_fail_prob, 4 * length(cases)))
+println(
+    @sprintf(
+        "  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+        n_ok_prob,
+        n_fail_prob,
+        4 * length(cases)
+    )
+)
 println("="^96)
 
 let
     r0 = pflow_oop()
     r1 = pflow_ip()
+    println("  no-arg call f() — solves the ORIGINAL problem as-is (u0=[1.0], p=1.0):")
     println(
-        "  no-arg call f() — solves the ORIGINAL problem as-is (u0=[1.0], p=1.0):",
+        "    OOP-built: final_state = ",
+        Integrators.final_state(r0),
+        "  (expect ≈ [",
+        E,
+        "])",
     )
-    println("    OOP-built: final_state = ", Integrators.final_state(r0),
-        "  (expect ≈ [", E, "])")
-    println("    IP-built:  final_state = ", Integrators.final_state(r1),
-        "  (expect ≈ [", E, "])")
+    println(
+        "    IP-built:  final_state = ",
+        Integrators.final_state(r1),
+        "  (expect ≈ [",
+        E,
+        "])",
+    )
 end
 
 println("""
@@ -686,7 +845,7 @@ function _build_ocp_free(n::Int)
     CTModels.Building.time_dependence!(pre; autonomous=true)
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, n)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= -x; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r.=(-x); nothing))
     CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> sum(xf))
     return CTModels.Building.build(pre)
 end
@@ -700,7 +859,7 @@ function _build_ocp_free_variable(n::Int)
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, n)
     CTModels.Building.variable!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= v[1] .* x; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r.=v[1] .* x; nothing))
     CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> sum(xf))
     return CTModels.Building.build(pre)
 end
@@ -712,7 +871,7 @@ function _build_ocp_ctrl(n::Int)
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, n)
     CTModels.Building.control!(pre, n)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= u .- x; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r.=u .- x; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * sum(abs2, u))
     return CTModels.Building.build(pre)
 end
@@ -802,7 +961,9 @@ function cell_ocpfree(fl, kind, x0, p0)
 end
 
 println("\n", "="^96)
-println("  CTFlows CPU probe — Flow(ocp), control-free, H(x,p)=-p·x,  (xf,pf)=(x0·e⁻¹,p0·e)")
+println(
+    "  CTFlows CPU probe — Flow(ocp), control-free, H(x,p)=-p·x,  (xf,pf)=(x0·e⁻¹,p0·e)"
+)
 println("  no OOP/IP (no mutability dispatch for Hamiltonian-type flows)")
 println("="^96)
 println(@sprintf("  %-16s | %-30s | %-30s", "state/costate", "point", "traj"))
@@ -819,8 +980,14 @@ for (lab, x0, p0) in cases_hvf
     println(@sprintf("  %-16s | %s %-28s | %s %-28s", lab, m1, d1, m2, d2))
 end
 println("  " * "-"^80)
-println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
-    n_ok_ocpfree, n_fail_ocpfree, 2 * length(cases_hvf)))
+println(
+    @sprintf(
+        "  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+        n_ok_ocpfree,
+        n_fail_ocpfree,
+        2 * length(cases_hvf)
+    )
+)
 println("="^96)
 
 # ---------------------------------------------------------------------------
@@ -866,8 +1033,14 @@ for (lab, x0, p0) in cases_hvf
     println(@sprintf("  %-16s | %s %-28s | %s %-28s", lab, m1, d1, m2, d2))
 end
 println("  " * "-"^80)
-println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
-    n_ok_basic, n_fail_basic, 2 * length(cases_hvf)))
+println(
+    @sprintf(
+        "  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+        n_ok_basic,
+        n_fail_basic,
+        2 * length(cases_hvf)
+    )
+)
 println("="^96)
 
 # ---------------------------------------------------------------------------
@@ -880,8 +1053,7 @@ cases_var_scalar = [
     ("Dual scalar", ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.5, 0.0)),
 ]
 cases_var_vec = [
-    ("Vector Real", [1.0, 2.0], [0.5, 0.3]),
-    ("SVector Real", SA[1.0, 2.0], SA[0.5, 0.3]),
+    ("Vector Real", [1.0, 2.0], [0.5, 0.3]), ("SVector Real", SA[1.0, 2.0], SA[0.5, 0.3])
 ]
 const V_TEST = 0.7
 
@@ -926,7 +1098,11 @@ println("\n", "="^96)
 println("  CTFlows CPU probe — Flow(ocp), variable= / variable_costate= axis")
 println("  ẋ = v·x ⇒ (xf,pf)=(x0·e^v,p0·e⁻ᵛ);  variable_costate: pvf = -Σ(x0·p0)·(tf-t0)")
 println("="^96)
-println(@sprintf("  %-16s | %-30s | %-30s", "state/costate", "variable=v", "+variable_costate=true"))
+println(
+    @sprintf(
+        "  %-16s | %-30s | %-30s", "state/costate", "variable=v", "+variable_costate=true"
+    )
+)
 println("  " * "-"^80)
 
 n_ok_var = n_fail_var = 0
@@ -947,8 +1123,14 @@ for (lab, x0, p0) in cases_var_vec
     println(@sprintf("  %-16s | %s %-28s | %s %-28s", lab, m1, d1, m2, d2))
 end
 println("  " * "-"^80)
-println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
-    n_ok_var, n_fail_var, 2 * (length(cases_var_scalar) + length(cases_var_vec))))
+println(
+    @sprintf(
+        "  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+        n_ok_var,
+        n_fail_var,
+        2 * (length(cases_var_scalar) + length(cases_var_vec))
+    )
+)
 println("="^96)
 println("""
   NOTE: this axis was flagged as possibly incomplete before measuring — read the totals
@@ -1005,23 +1187,42 @@ function _print_dyn_table(title, f1, f2)
     println("\n", "="^100)
     println("  ", title)
     println("="^100)
-    println(@sprintf("  %-16s | %-16s | %-16s | %-16s | %-16s",
-        "state", ":total point", ":total traj", ":partial point", ":partial traj"))
+    println(
+        @sprintf(
+            "  %-16s | %-16s | %-16s | %-16s | %-16s",
+            "state",
+            ":total point",
+            ":total traj",
+            ":partial point",
+            ":partial traj"
+        )
+    )
     println("  " * "-"^96)
     n_ok = n_fail = 0
     for (lab, x0, p0) in cases_hvf
         f = x0 isa Number ? f1 : f2
         marks = String[]
-        for (fl, kind) in ((f.total, :point), (f.total, :traj), (f.partial, :point), (f.partial, :traj))
+        for (fl, kind) in
+            ((f.total, :point), (f.total, :traj), (f.partial, :point), (f.partial, :traj))
             m, d = cell_dyn(fl, kind, x0, p0)
             m == "✓" ? (n_ok += 1) : (n_fail += 1)
             push!(marks, @sprintf("%s %-14s", m, d))
         end
-        println(@sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4]))
+        println(
+            @sprintf(
+                "  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4]
+            )
+        )
     end
     println("  " * "-"^96)
-    println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
-        n_ok, n_fail, 4 * length(cases_hvf)))
+    println(
+        @sprintf(
+            "  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+            n_ok,
+            n_fail,
+            4 * length(cases_hvf)
+        )
+    )
     println("="^100)
     return nothing
 end
@@ -1094,10 +1295,17 @@ for (lab, x0, p0) in cases_hvf
     println(@sprintf("  %-16s | %s %-28s | %s %-28s", lab, m1, d1, m2, d2))
 end
 println("  " * "-"^80)
-println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
-    n_ok_cl, n_fail_cl, 2 * length(cases_hvf)))
+println(
+    @sprintf(
+        "  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+        n_ok_cl,
+        n_fail_cl,
+        2 * length(cases_hvf)
+    )
+)
 println("="^96)
-println("""
+println(
+    """
   Legend & notes (all Flow(ocp)/Flow(ocp,law) blocks above)
   ───────────────────────────────────────────────────────────
   ✓  works, result matches the closed-form analytic reference to err ≤ 1e-4
@@ -1115,7 +1323,8 @@ println("""
    • :total and :partial coincide exactly here because the chosen law (u=p) is the
      stationary point of H̃ (∂H̃/∂u=0) — by design, to make the two columns a genuine
      consistency cross-check rather than two unrelated numbers.
-""")
+"""
+)
 
 # =============================================================================
 # Flow(h̃, law) — pseudo-Hamiltonian + DynClosedLoop (no OCP)
@@ -1170,25 +1379,47 @@ function cell_pf(fl, kind, x0, p0)
 end
 
 println("\n", "="^100)
-println("  CTFlows CPU probe — Flow(h̃, law), h̃=p·u-0.5|u|², law u=p, ẋ=p,ṗ=0 ⇒ xf=x0+p0, pf=p0")
+println(
+    "  CTFlows CPU probe — Flow(h̃, law), h̃=p·u-0.5|u|², law u=p, ẋ=p,ṗ=0 ⇒ xf=x0+p0, pf=p0"
+)
 println("="^100)
-println(@sprintf("  %-16s | %-16s | %-16s | %-16s | %-16s",
-    "state", ":total point", ":total traj", ":partial point", ":partial traj"))
+println(
+    @sprintf(
+        "  %-16s | %-16s | %-16s | %-16s | %-16s",
+        "state",
+        ":total point",
+        ":total traj",
+        ":partial point",
+        ":partial traj"
+    )
+)
 println("  " * "-"^96)
 n_ok_pf = n_fail_pf = 0
 for (lab, x0, p0) in cases_hvf
     marks = String[]
-    for (fl, kind) in ((hflow_pf_total, :point), (hflow_pf_total, :traj),
-                        (hflow_pf_partial, :point), (hflow_pf_partial, :traj))
+    for (fl, kind) in (
+        (hflow_pf_total, :point),
+        (hflow_pf_total, :traj),
+        (hflow_pf_partial, :point),
+        (hflow_pf_partial, :traj),
+    )
         m, d = cell_pf(fl, kind, x0, p0)
         m == "✓" ? (global n_ok_pf += 1) : (global n_fail_pf += 1)
         push!(marks, @sprintf("%s %-14s", m, d))
     end
-    println(@sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4]))
+    println(
+        @sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4])
+    )
 end
 println("  " * "-"^96)
-println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
-    n_ok_pf, n_fail_pf, 4 * length(cases_hvf)))
+println(
+    @sprintf(
+        "  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+        n_ok_pf,
+        n_fail_pf,
+        4 * length(cases_hvf)
+    )
+)
 println("="^100)
 
 println("\nFlow(h̃, OpenLoop/ClosedLoop) — expected rejection (no costate access):")
@@ -1199,7 +1430,8 @@ catch e
     println("  ✗ ", nameof(typeof(e)), ": ", sprint(showerror, e))
 end
 
-println("""
+println(
+    """
   Legend & notes
   ──────────────
   ✓  works, result matches the closed-form analytic reference (xf=x0+p0, pf=p0) to err ≤ 1e-4
@@ -1208,7 +1440,8 @@ println("""
   This block settles the hypothesis above — read the totals literally, do not assume the
   Flow(Hamiltonian) profile carries over without checking Complex/Dual rows specifically.
   Fold whatever is measured into docs/src/compatibility/pseudo_hamiltonian.md.
-""")
+"""
+)
 
 # =============================================================================
 # Flow(h̃vf, law) — pseudo-Hamiltonian VECTOR FIELD + DynClosedLoop (no OCP, no AD)
@@ -1244,7 +1477,7 @@ function cell_pvf(fl, kind, x0, p0)
     l = CollectLogger(String[])
     try
         r = Logging.with_logger(l) do
-            g()
+            return g()
         end
         warned = any(m -> occursin("InPlace PseudoHamiltonianVectorField", m), l.msgs)
         err = try
@@ -1261,27 +1494,50 @@ function cell_pvf(fl, kind, x0, p0)
 end
 
 println("\n", "="^96)
-println("  CTFlows CPU probe — Flow(h̃vf, law), h̃vf=(u,0), law u=p ⇒ ẋ=p,ṗ=0 ⇒ xf=x0+p0, pf=p0")
+println(
+    "  CTFlows CPU probe — Flow(h̃vf, law), h̃vf=(u,0), law u=p ⇒ ẋ=p,ṗ=0 ⇒ xf=x0+p0, pf=p0"
+)
 println("="^96)
-println(@sprintf("  %-16s | %-14s | %-14s | %-14s | %-14s",
-    "state/costate", "OOP point", "OOP traj", "IP point", "IP traj"))
+println(
+    @sprintf(
+        "  %-16s | %-14s | %-14s | %-14s | %-14s",
+        "state/costate",
+        "OOP point",
+        "OOP traj",
+        "IP point",
+        "IP traj"
+    )
+)
 println("  " * "-"^92)
 n_ok_pvf = n_warn_pvf = n_fail_pvf = 0
 for (lab, x0, p0) in cases_hvf
     marks = String[]
-    for (fl, kind) in ((hflow_pvf, :point), (hflow_pvf, :traj),
-                        (hflow_pvf_ip, :point), (hflow_pvf_ip, :traj))
+    for (fl, kind) in (
+        (hflow_pvf, :point),
+        (hflow_pvf, :traj),
+        (hflow_pvf_ip, :point),
+        (hflow_pvf_ip, :traj),
+    )
         m, d = cell_pvf(fl, kind, x0, p0)
         m == "✓" && (global n_ok_pvf += 1)
         m == "⚠" && (global n_warn_pvf += 1)
         (m == "✗" || m == "?") && (global n_fail_pvf += 1)
         push!(marks, @sprintf("%s %-12s", m, d))
     end
-    println(@sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4]))
+    println(
+        @sprintf("  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4])
+    )
 end
 println("  " * "-"^92)
-println(@sprintf("  totals:  ✓ %d works   ⚠ %d works-with-warning   ✗/? %d fail-or-wrong   (of %d)",
-    n_ok_pvf, n_warn_pvf, n_fail_pvf, 4 * length(cases_hvf)))
+println(
+    @sprintf(
+        "  totals:  ✓ %d works   ⚠ %d works-with-warning   ✗/? %d fail-or-wrong   (of %d)",
+        n_ok_pvf,
+        n_warn_pvf,
+        n_fail_pvf,
+        4 * length(cases_hvf)
+    )
+)
 println("="^96)
 
 println("\nFlow(h̃vf, OpenLoop/ClosedLoop) — expected rejection (no costate access):")
@@ -1292,7 +1548,8 @@ catch e
     println("  ✗ ", nameof(typeof(e)), ": ", sprint(showerror, e))
 end
 
-println("""
+println(
+    """
   Legend & notes
   ──────────────
   ✓  works, result matches the closed-form analytic reference (xf=x0+p0, pf=p0) to err ≤ 1e-4
@@ -1302,7 +1559,8 @@ println("""
 
   This block settles the hypothesis above — read the totals literally. Fold whatever is
   measured into docs/src/compatibility/pseudo_hamiltonian_vector_field.md.
-""")
+"""
+)
 
 # =============================================================================
 # Flow(fc, law) — controlled vector field + OpenLoop/ClosedLoop (no OCP)
@@ -1354,7 +1612,9 @@ function cell_fc_cl(fl, kind, x0)
 end
 
 println("\n", "="^96)
-println("  CTFlows CPU probe — Flow(fc, ClosedLoop), fc(x,u)=u-x, law u=-x, ẋ=-2x ⇒ xf=x0·e⁻²")
+println(
+    "  CTFlows CPU probe — Flow(fc, ClosedLoop), fc(x,u)=u-x, law u=-x, ẋ=-2x ⇒ xf=x0·e⁻²"
+)
 println("  no OCP, no AD anywhere (plain out-of-place VectorFieldSystem)")
 println("="^96)
 println(@sprintf("  %-16s | %-30s | %-30s", "state", "point", "traj"))
@@ -1370,8 +1630,14 @@ for (lab, x0, p0) in cases_hvf
     println(@sprintf("  %-16s | %s %-28s | %s %-28s", lab, m1, d1, m2, d2))
 end
 println("  " * "-"^80)
-println(@sprintf("  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
-    n_ok_fc, n_fail_fc, 2 * length(cases_hvf)))
+println(
+    @sprintf(
+        "  totals:  ✓ %d works   ✗/? %d fail-or-wrong   (of %d)",
+        n_ok_fc,
+        n_fail_fc,
+        2 * length(cases_hvf)
+    )
+)
 println("="^96)
 
 # OpenLoop demo — a few representative cases, not the full matrix (only _law_control's
