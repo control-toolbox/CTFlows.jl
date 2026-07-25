@@ -8,6 +8,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.0-beta] - 2026-07-25
+
+### Fixed
+
+- **`Flow(ocp)`/`Flow(ocp, law)` now support batched (`Matrix`) states and `SVector`
+  states** ([#358]): the OCP-derived derivative buffer was sized from the OCP's
+  *declared* dimension rather than the runtime shape of the state actually passed in,
+  breaking every batched `Matrix` state; and on the non-AD paths (`Flow(ocp)`'s
+  state-only call, `Flow(ocp, OpenLoop/ClosedLoop)`), `_finalize_vf` returned a plain
+  `Vector` instead of reconstructing the state's own container type, breaking
+  OrdinaryDiffEq's out-of-place type-constancy on `SVector` states. Fixed by a new,
+  more specific `Systems._buffer_like(::AbstractMatrix, ...)` dispatch, a runtime
+  `_apply_dim_coerce` guard so a declared-dimension-1 coercion never collapses a
+  batched `Matrix`, and a container-preserving `_finalize_vf`.
+
+### Changed
+
+- **BREAKING — "1-D = scalar" convention extended to `Flow(::VectorField)` and
+  `Flow(::ODEFunction)`** ([#357]): these two constructors previously preserved a
+  length-1 `Vector`/`SVector` state as-is; they now collapse it to a scalar end-to-end
+  (point and trajectory calls), matching the existing Hamiltonian/OCP behaviour.
+  `Flow(::ODEProblem)` is unaffected — it bypasses CTFlows' own `Systems`/`Trajectories`
+  dispatch via a direct `SciMLBase.remake`/`solve`, so there is nothing for the
+  coercion to attach to. Fixed a related regression this surfaced in `MultiPhase`'s
+  inter-phase state handoff for length-1-vector flows (mismatched
+  `VectorFieldTrajectory` type parameters across phases). New reference page
+  [`docs/src/compatibility/shape_contract.md`](https://control-toolbox.org/CTFlows.jl/dev/compatibility/shape_contract.html)
+  documents the convention across every constructor.
+
+### CI
+
+- Fixed label-gated workflows (`CI`, `Documentation`, `Breakage`, `CPUProbe`/`GPUProbe`)
+  re-running already-matched jobs when several gating labels were added to a PR in
+  quick succession.
+
+### Testing
+
+- Full suite green: **2918/2918**.
+
 ## [0.15.1-beta] - 2026-07-24
 
 ### Added
