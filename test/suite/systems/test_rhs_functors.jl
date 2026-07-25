@@ -26,8 +26,8 @@ function test_rhs_functors()
         Test.@testset "Hiérarchie abstraite" begin
             # Out-of-place VectorField
             vf_oop = Data.VectorField(FakeF; is_autonomous=true, is_variable=false)
-            ip_vf_oop = Systems.IPVFOoPRHS(vf_oop)
-            oop_vf_oop = Systems.OoPVFOoPRHS(vf_oop)
+            ip_vf_oop = Systems.IPVFOoPRHS(vf_oop, identity)
+            oop_vf_oop = Systems.OoPVFOoPRHS(vf_oop, identity)
 
             Test.@test ip_vf_oop isa Systems.AbstractIPRHS
             Test.@test ip_vf_oop isa Systems.AbstractRHS{Traits.InPlace}
@@ -36,9 +36,9 @@ function test_rhs_functors()
 
             # In-place VectorField
             vf_ip = Data.VectorField(FakeFIP; is_autonomous=true, is_variable=false)
-            ip_vf_ip = Systems.IPVFIpRHS(vf_ip)
-            oop_vf_ip = Systems.OoPVFIpRHS(vf_ip)
-            oop_vf_finalize = Systems.OoPVFIpFinalizeRHS(vf_ip)
+            ip_vf_ip = Systems.IPVFIpRHS(vf_ip, identity)
+            oop_vf_ip = Systems.OoPVFIpRHS(vf_ip, identity)
+            oop_vf_finalize = Systems.OoPVFIpFinalizeRHS(vf_ip, identity)
 
             Test.@test ip_vf_ip isa Systems.AbstractIPRHS
             Test.@test ip_vf_ip isa Systems.AbstractRHS{Traits.InPlace}
@@ -54,7 +54,7 @@ function test_rhs_functors()
 
         Test.@testset "IPVFOoPRHS — appel" begin
             vf = Data.VectorField(FakeF; is_autonomous=true, is_variable=false)
-            f = Systems.IPVFOoPRHS(vf)
+            f = Systems.IPVFOoPRHS(vf, identity)
 
             du = zeros(2)
             u = [1.0, 2.0]
@@ -71,7 +71,7 @@ function test_rhs_functors()
 
         Test.@testset "IPVFIpRHS — appel" begin
             vf = Data.VectorField(FakeFIP; is_autonomous=true, is_variable=false)
-            f = Systems.IPVFIpRHS(vf)
+            f = Systems.IPVFIpRHS(vf, identity)
 
             du = zeros(2)
             u = [1.0, 2.0]
@@ -88,7 +88,7 @@ function test_rhs_functors()
 
         Test.@testset "OoPVFOoPRHS — appel" begin
             vf = Data.VectorField(FakeF; is_autonomous=true, is_variable=false)
-            f = Systems.OoPVFOoPRHS(vf)
+            f = Systems.OoPVFOoPRHS(vf, identity)
 
             u = [1.0, 2.0]
             λ = Systems.ODEParameters(nothing)
@@ -104,7 +104,7 @@ function test_rhs_functors()
 
         Test.@testset "OoPVFIpRHS — appel" begin
             vf = Data.VectorField(FakeFIP; is_autonomous=true, is_variable=false)
-            f = Systems.OoPVFIpRHS(vf)
+            f = Systems.OoPVFIpRHS(vf, identity)
 
             u = [1.0, 2.0]
             λ = Systems.ODEParameters(nothing)
@@ -121,7 +121,7 @@ function test_rhs_functors()
 
         Test.@testset "OoPVFIpFinalizeRHS — appel SVector" begin
             vf = Data.VectorField(FakeFIP; is_autonomous=true, is_variable=false)
-            f = Systems.OoPVFIpFinalizeRHS(vf)
+            f = Systems.OoPVFIpFinalizeRHS(vf, identity)
 
             u = StaticArrays.SA[1.0, 2.0]
             λ = Systems.ODEParameters(nothing)
@@ -140,11 +140,11 @@ function test_rhs_functors()
             vf_oop = Data.VectorField(FakeF; is_autonomous=true, is_variable=false)
             vf_ip = Data.VectorField(FakeFIP; is_autonomous=true, is_variable=false)
 
-            f_ip_vf_oop = Systems.IPVFOoPRHS(vf_oop)
-            f_ip_vf_ip = Systems.IPVFIpRHS(vf_ip)
-            f_oop_vf_oop = Systems.OoPVFOoPRHS(vf_oop)
-            f_oop_vf_ip = Systems.OoPVFIpRHS(vf_ip)
-            f_oop_finalize = Systems.OoPVFIpFinalizeRHS(vf_ip)
+            f_ip_vf_oop = Systems.IPVFOoPRHS(vf_oop, identity)
+            f_ip_vf_ip = Systems.IPVFIpRHS(vf_ip, identity)
+            f_oop_vf_oop = Systems.OoPVFOoPRHS(vf_oop, identity)
+            f_oop_vf_ip = Systems.OoPVFIpRHS(vf_ip, identity)
+            f_oop_finalize = Systems.OoPVFIpFinalizeRHS(vf_ip, identity)
 
             du = zeros(2)
             u = [1.0, 2.0]
@@ -168,11 +168,11 @@ function test_rhs_functors()
             vf_oop = Data.VectorField(FakeF; is_autonomous=true, is_variable=false)
             vf_ip = Data.VectorField(FakeFIP; is_autonomous=true, is_variable=false)
 
-            f_ip_vf_oop = Systems.IPVFOoPRHS(vf_oop)
-            f_ip_vf_ip = Systems.IPVFIpRHS(vf_ip)
-            f_oop_vf_oop = Systems.OoPVFOoPRHS(vf_oop)
-            f_oop_vf_ip = Systems.OoPVFIpRHS(vf_ip)
-            f_oop_finalize = Systems.OoPVFIpFinalizeRHS(vf_ip)
+            f_ip_vf_oop = Systems.IPVFOoPRHS(vf_oop, identity)
+            f_ip_vf_ip = Systems.IPVFIpRHS(vf_ip, identity)
+            f_oop_vf_oop = Systems.OoPVFOoPRHS(vf_oop, identity)
+            f_oop_vf_ip = Systems.OoPVFIpRHS(vf_ip, identity)
+            f_oop_finalize = Systems.OoPVFIpFinalizeRHS(vf_ip, identity)
 
             Test.@test occursin("IPVFOoPRHS", sprint(show, f_ip_vf_oop))
             Test.@test occursin("converts:", sprint(show, f_ip_vf_oop))

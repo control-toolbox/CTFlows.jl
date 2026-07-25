@@ -111,6 +111,7 @@ with_api_reference(src_dir, ext_dir) do api_pages
             ],
             "Compatibility" => [
                 "Overview" => "compatibility/overview.md",
+                "Shape contract" => "compatibility/shape_contract.md",
                 "Flow(VectorField)" => "compatibility/vector_field.md",
                 "Flow(HamiltonianVectorField)" => "compatibility/hamiltonian_vector_field.md",
                 "Flow(Hamiltonian)" => "compatibility/hamiltonian.md",

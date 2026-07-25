@@ -19,7 +19,7 @@ with the default SciML integrator (`OrdinaryDiffEqTsit5`). The analytic solution
 ``x(t) = x_0\,e^{-t}``, so integrating from ``t_0 = 0`` to ``t_f = 1`` maps every initial
 condition ``x_0`` to ``x_0\,e^{-1}``.
 
-!!! note "Last probed: 2026-07-23"
+!!! note "Last probed: 2026-07-24"
     This page's table *shape* — which containers and axes are tested — reflects
     [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
     as of this date. Every ✓/⚠ cell below is still re-executed on **every** documentation
@@ -95,10 +95,16 @@ behaviours are worth calling out:
     correct but the path is slower. Prefer an out-of-place vector field, or a mutable
     `MVector` / `MMatrix`, for static states.
 
-!!! note "Scalar state: point vs trajectory shape"
-    For a **scalar** initial condition the *point* call returns a scalar, while the
-    *trajectory* call's state accessor returns a **length-1 vector** — state flows preserve
-    the vector shape of the solution. Both are shown under [Real states](#Real-states).
+!!! note "1-D = scalar, end to end"
+    A **scalar** `x0` stays a scalar in *both* call styles, and a **length-1 vector or
+    `SVector`** `x0` *collapses* to a scalar too — the point call returns a scalar `xf`,
+    and the trajectory accessor `state(sol)(t)` also returns a scalar, not a length-1
+    vector. This is the ecosystem's
+    ["1-D = scalar"](https://github.com/control-toolbox/Handbook/blob/main/philosophy/dimension-and-shape.md)
+    convention, matching what [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md)
+    already did — see the [Shape contract](shape_contract.md) page for the full
+    cross-constructor picture, and [#357](https://github.com/control-toolbox/CTFlows.jl/issues/357)
+    for the fix that brought this constructor in line with it.
 
 ---
 
@@ -112,15 +118,30 @@ The point call returns a scalar:
 flow(0.0, 1.0, 1.0)   # ≈ exp(-1)
 ```
 
-The trajectory call returns a `VectorFieldTrajectory`; its state accessor is a length-1
-vector at each time:
+The trajectory call returns a `VectorFieldTrajectory`; its state accessor is a scalar too,
+at each time:
 
 ```@repl vf_compat
 sol = flow((0.0, 1.0), 1.0);
-Trajectories.state(sol)(1.0)   # ≈ [exp(-1)]
+Trajectories.state(sol)(1.0)   # ≈ exp(-1)
+```
+
+### Length-1 `Vector`/`SVector` (collapses to scalar)
+
+A **length-1** container is not a "real" vector — it collapses to a scalar in both call
+styles, the same way a bare scalar `x0` does:
+
+```@repl vf_compat
+flow(0.0, [1.0], 1.0)         # ≈ exp(-1), a Real — not a length-1 Vector
+flow(0.0, SA[1.0], 1.0)       # ≈ exp(-1), a Real — not a length-1 SVector
+
+sol = flow((0.0, 1.0), [1.0]);
+Trajectories.state(sol)(1.0)   # ≈ exp(-1), a Real
 ```
 
 ### Vector
+
+A **length ≥ 2** vector is unaffected by the collapse above and keeps its container shape:
 
 ```@repl vf_compat
 flow(0.0, [1.0, 2.0], 1.0)
@@ -253,5 +274,6 @@ mutable `MVector` / `MMatrix`.
 - [Building a flow](../flows/building_a_flow.md) — the shortcut constructor and explicit pipeline.
 - [Integrating](../flows/integrating.md) — call styles, variable parameters, and integrator options.
 - [Compatibility overview](overview.md) — the per-constructor feature matrix and the other flow types.
+- [Shape contract](shape_contract.md) — the cross-constructor "1-D = scalar" reference.
 - [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.StateFlow`](@ref) — the flow types.
 - [`CTBase.Data.VectorField`](@extref CTBase.Data.VectorField) — the data wrapper.

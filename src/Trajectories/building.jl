@@ -5,23 +5,25 @@
 """
 $(TYPEDSIGNATURES)
 
-Default implementation for scalar point configs — return the final state.
+Default implementation for state point configs — return the final state, coerced to a
+scalar for a 1-D state.
 
-For scalar configurations (`initial_state <: Number`), unwraps the length-1 vector that was
-introduced by scalar-promotion at ODE problem construction time.
-
-This uses compile-time dispatch on the initial state type to avoid runtime type tests.
+For scalar or length-1-vector configurations, collapses the final state to a scalar
+(the "1-D = scalar" convention, issue #357); vectors of length ≥ 2 and matrices are
+left untouched.
 
 # Arguments
 - `::Type{Traits.EndPointMode}`: The point mode trait type.
 - `::Type{Traits.StateDynamics}`: The state content trait type.
-- `initial_state::Number`: The scalar initial state.
+- `config::Configs.AbstractConfig`: The state configuration (its `initial_state` drives
+  the coercion).
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
 
 # Returns
-- `Number`: The unwrapped scalar final state.
+- The final state, `isa Real`/`Complex` for a 1-D state, `isa AbstractVector`/
+  `AbstractMatrix` otherwise.
 
-See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTBase.Traits.EndPointMode`](@extref), [`CTBase.Traits.StateDynamics`](@extref).
+See also: [`CTFlows.Systems._coerce_state`](@ref), [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTBase.Traits.EndPointMode`](@extref), [`CTBase.Traits.StateDynamics`](@extref).
 """
 function build_trajectory(
     ::Type{Traits.EndPointMode},
@@ -30,11 +32,8 @@ function build_trajectory(
     result::Integrators.AbstractIntegrationResult,
     variable=Core.NotProvided,
 )
-    # State-only flows (bare VectorField, SciMLBase ODE adapters) are shape-preserving:
-    # the user's array is the contract, so a length-1 vector round-trips as a length-1
-    # vector (`make_coerce`). The "1-D = scalar" collapse applies only to Hamiltonian/OCP
-    # flows (costate/control semantics), handled by the HamiltonianDynamics methods below.
-    return Core.make_coerce(Configs.initial_state(config))(Integrators.final_state(result))
+    x0 = Configs.initial_state(config)
+    return Systems._coerce_state(x0)(Integrators.final_state(result))
 end
 
 """
@@ -46,7 +45,8 @@ in a `VectorFieldTrajectory` for future extensibility.
 # Arguments
 - `::Type{Traits.TrajectoryMode}`: The trajectory mode trait type.
 - `::Type{Traits.StateDynamics}`: The state content trait type.
-- `initial_state`: The initial state.
+- `config::Configs.AbstractConfig`: The state configuration (its `initial_state` drives
+  the "1-D = scalar" coercion applied by the resulting trajectory's accessors, issue #357).
 - `result::Integrators.AbstractIntegrationResult`: The integration result.
 
 # Returns
@@ -61,7 +61,8 @@ function build_trajectory(
     result::Integrators.AbstractIntegrationResult,
     variable=Core.NotProvided,
 )
-    return VectorFieldTrajectory(result, variable)
+    x0 = Configs.initial_state(config)
+    return VectorFieldTrajectory(result, variable, x0)
 end
 
 # =============================================================================

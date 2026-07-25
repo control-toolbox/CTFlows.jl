@@ -2,6 +2,7 @@ module TestBuildingSystems
 
 using Test: Test
 import CTFlows.Systems
+import CTFlows.Configs
 import CTBase.Data
 import CTBase.Traits
 
@@ -67,18 +68,18 @@ function test_building_systems()
         # ====================================================================
 
         Test.@testset "Integration with get_ip_rhs" begin
-            dummy_config = nothing
+            config = Configs.StateEndPointConfig(0.0, [1.0, 2.0], 1.0)
             Test.@testset "built system has working get_ip_rhs" begin
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.build_system(vf)
-                rhs = Systems.get_ip_rhs(sys, dummy_config)
+                rhs = Systems.get_ip_rhs(sys, config)
                 Test.@test rhs isa Systems.AbstractRHS
             end
 
             Test.@testset "built system get_ip_rhs computes correctly" begin
                 vf = Data.VectorField(x -> 2 .* x; is_autonomous=true, is_variable=false)
                 sys = Systems.build_system(vf)
-                rhs = Systems.get_ip_rhs(sys, dummy_config)
+                rhs = Systems.get_ip_rhs(sys, config)
                 du = zeros(2)
                 p = Systems.ODEParameters(nothing)
                 rhs(du, [1.0, 2.0], p, 0.0)

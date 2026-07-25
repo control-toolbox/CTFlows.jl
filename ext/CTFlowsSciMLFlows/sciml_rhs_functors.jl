@@ -16,18 +16,26 @@ by directly calling the function.
 
 # Fields
 - `f::F`: The wrapped SciML ODEFunction
+- `cx::CX`: coercion applied to the state before calling `f` (`_safe_only` for a 1-D
+  state, `identity` otherwise, per issue #357 — `SciMLFunctionSystem` shares
+  `VectorFieldSystem`'s `Systems`/`Trajectories` dispatch, so it gets the same
+  1-D = scalar coercion; see [`CTFlows.Systems._coerce_state`](@ref)).
 
 # Call signature
 `(r::IPSciMLIpRHS)(du, u, λ, t) -> nothing`
 
 See also: [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@ref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@ref).
 """
-struct IPSciMLIpRHS{F<:SciMLBase.AbstractODEFunction{true}} <: Systems.AbstractIPRHS
+struct IPSciMLIpRHS{
+    F<:SciMLBase.AbstractODEFunction{true},
+    CX<:Union{typeof(Systems._safe_only),typeof(identity)},
+} <: Systems.AbstractIPRHS
     f::F
+    cx::CX
 end
 
 function (r::IPSciMLIpRHS)(du, u, λ, t)
-    r.f(du, u, Systems.variable(λ), t)
+    r.f(du, r.cx(u), Systems.variable(λ), t)
     return nothing
 end
 
@@ -41,19 +49,28 @@ by allocating a temporary buffer on each call.
 
 # Fields
 - `f::F`: The wrapped SciML ODEFunction
+- `cx::CX`: coercion applied to the state before calling `f`.
 
 # Call signature
 `(r::OoPSciMLIpRHS)(u, λ, t) -> du`
 
+# Notes
+- `dx = similar(u)` already matches `u`'s actual (uncoerced) shape, so no reshaping is
+  needed even when `cx` collapses the CALL argument to a scalar.
+
 See also: [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@ref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@ref).
 """
-struct OoPSciMLIpRHS{F<:SciMLBase.AbstractODEFunction{true}} <: Systems.AbstractOoPRHS
+struct OoPSciMLIpRHS{
+    F<:SciMLBase.AbstractODEFunction{true},
+    CX<:Union{typeof(Systems._safe_only),typeof(identity)},
+} <: Systems.AbstractOoPRHS
     f::F
+    cx::CX
 end
 
 function (r::OoPSciMLIpRHS)(u, λ, t)
     dx = similar(u)
-    r.f(dx, u, Systems.variable(λ), t)
+    r.f(dx, r.cx(u), Systems.variable(λ), t)
     return dx
 end
 
@@ -67,20 +84,24 @@ that converts the result to match the input type (e.g., Vector → SVector).
 
 # Fields
 - `f::F`: The wrapped SciML ODEFunction
+- `cx::CX`: coercion applied to the state before calling `f`.
 
 # Call signature
 `(r::OoPSciMLIpFinalizeRHS)(u, λ, t) -> du`
 
 See also: [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@ref).
 """
-struct OoPSciMLIpFinalizeRHS{F<:SciMLBase.AbstractODEFunction{true}} <:
-       Systems.AbstractOoPRHS
+struct OoPSciMLIpFinalizeRHS{
+    F<:SciMLBase.AbstractODEFunction{true},
+    CX<:Union{typeof(Systems._safe_only),typeof(identity)},
+} <: Systems.AbstractOoPRHS
     f::F
+    cx::CX
 end
 
 function (r::OoPSciMLIpFinalizeRHS)(u, λ, t)
     dx = similar(u)
-    r.f(dx, u, Systems.variable(λ), t)
+    r.f(dx, r.cx(u), Systems.variable(λ), t)
     return typeof(u)(dx)
 end
 
@@ -94,18 +115,23 @@ by allocating the result into the pre-allocated `du` buffer.
 
 # Fields
 - `f::F`: The wrapped SciML ODEFunction
+- `cx::CX`: coercion applied to the state before calling `f`.
 
 # Call signature
 `(r::IPSciMLOoPRHS)(du, u, λ, t) -> nothing`
 
 See also: [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@ref).
 """
-struct IPSciMLOoPRHS{F<:SciMLBase.AbstractODEFunction{false}} <: Systems.AbstractIPRHS
+struct IPSciMLOoPRHS{
+    F<:SciMLBase.AbstractODEFunction{false},
+    CX<:Union{typeof(Systems._safe_only),typeof(identity)},
+} <: Systems.AbstractIPRHS
     f::F
+    cx::CX
 end
 
 function (r::IPSciMLOoPRHS)(du, u, λ, t)
-    du .= r.f(u, Systems.variable(λ), t)
+    du .= r.f(r.cx(u), Systems.variable(λ), t)
     return nothing
 end
 
@@ -119,18 +145,36 @@ by directly calling the function.
 
 # Fields
 - `f::F`: The wrapped SciML ODEFunction
+- `cx::CX`: coercion applied to the state before calling `f`.
 
 # Call signature
 `(r::OoPSciMLOoPRHS)(u, λ, t) -> du`
 
+# Notes
+- Unlike the Hamiltonian-family out-of-place functors, this functor has a single
+  block and nothing to reassemble: when `cx` collapses `u` to a scalar for the call,
+  `f` may return a bare scalar too, which does not match `u`'s own (uncoerced)
+  container shape. That case is reshaped back explicitly, matching
+  [`CTFlows.Systems.OoPVFOoPRHS`](@ref)'s identical handling.
+
 See also: [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@ref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@ref).
 """
-struct OoPSciMLOoPRHS{F<:SciMLBase.AbstractODEFunction{false}} <: Systems.AbstractOoPRHS
+struct OoPSciMLOoPRHS{
+    F<:SciMLBase.AbstractODEFunction{false},
+    CX<:Union{typeof(Systems._safe_only),typeof(identity)},
+} <: Systems.AbstractOoPRHS
     f::F
+    cx::CX
 end
 
 function (r::OoPSciMLOoPRHS)(u, λ, t)
-    return r.f(u, Systems.variable(λ), t)
+    du = r.f(r.cx(u), Systems.variable(λ), t)
+    if du isa Number && !(u isa Number)
+        buf = similar(u)
+        buf .= du
+        return typeof(u)(buf)
+    end
+    return du
 end
 
 # =============================================================================

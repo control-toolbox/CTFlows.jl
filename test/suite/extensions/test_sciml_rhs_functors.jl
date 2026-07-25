@@ -31,11 +31,11 @@ function test_sciml_rhs_functors()
             f_ip = ODEFunction(FakeFIP)
             f_oop = ODEFunction{false}(FakeFOoP)
 
-            ip_ip = CTFlowsSciMLFlows.IPSciMLIpRHS(f_ip)
-            oop_ip = CTFlowsSciMLFlows.OoPSciMLIpRHS(f_ip)
-            oop_finalize = CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS(f_ip)
-            ip_oop = CTFlowsSciMLFlows.IPSciMLOoPRHS(f_oop)
-            oop_oop = CTFlowsSciMLFlows.OoPSciMLOoPRHS(f_oop)
+            ip_ip = CTFlowsSciMLFlows.IPSciMLIpRHS(f_ip, identity)
+            oop_ip = CTFlowsSciMLFlows.OoPSciMLIpRHS(f_ip, identity)
+            oop_finalize = CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS(f_ip, identity)
+            ip_oop = CTFlowsSciMLFlows.IPSciMLOoPRHS(f_oop, identity)
+            oop_oop = CTFlowsSciMLFlows.OoPSciMLOoPRHS(f_oop, identity)
 
             Test.@test ip_ip isa Systems.AbstractIPRHS
             Test.@test ip_ip isa Systems.AbstractRHS{Traits.InPlace}
@@ -55,7 +55,7 @@ function test_sciml_rhs_functors()
 
         Test.@testset "IPSciMLIpRHS — call" begin
             f = ODEFunction(FakeFIP)
-            r = CTFlowsSciMLFlows.IPSciMLIpRHS(f)
+            r = CTFlowsSciMLFlows.IPSciMLIpRHS(f, identity)
 
             du = zeros(2)
             u = [1.0, 2.0]
@@ -72,7 +72,7 @@ function test_sciml_rhs_functors()
 
         Test.@testset "OoPSciMLIpRHS — call" begin
             f = ODEFunction(FakeFIP)
-            r = CTFlowsSciMLFlows.OoPSciMLIpRHS(f)
+            r = CTFlowsSciMLFlows.OoPSciMLIpRHS(f, identity)
 
             u = [1.0, 2.0]
             λ = Systems.ODEParameters(2.0)
@@ -89,7 +89,7 @@ function test_sciml_rhs_functors()
 
         Test.@testset "OoPSciMLIpFinalizeRHS — call SVector" begin
             f = ODEFunction(FakeFIP)
-            r = CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS(f)
+            r = CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS(f, identity)
 
             u = SA[1.0, 2.0]
             λ = Systems.ODEParameters(2.0)
@@ -106,7 +106,7 @@ function test_sciml_rhs_functors()
 
         Test.@testset "IPSciMLOoPRHS — call" begin
             f = ODEFunction{false}(FakeFOoP)
-            r = CTFlowsSciMLFlows.IPSciMLOoPRHS(f)
+            r = CTFlowsSciMLFlows.IPSciMLOoPRHS(f, identity)
 
             du = zeros(2)
             u = [1.0, 2.0]
@@ -123,7 +123,7 @@ function test_sciml_rhs_functors()
 
         Test.@testset "OoPSciMLOoPRHS — call" begin
             f = ODEFunction{false}(FakeFOoP)
-            r = CTFlowsSciMLFlows.OoPSciMLOoPRHS(f)
+            r = CTFlowsSciMLFlows.OoPSciMLOoPRHS(f, identity)
 
             u = [1.0, 2.0]
             λ = Systems.ODEParameters(2.0)
@@ -141,11 +141,11 @@ function test_sciml_rhs_functors()
             f_ip = ODEFunction(FakeFIP)
             f_oop = ODEFunction{false}(FakeFOoP)
 
-            ip_ip = CTFlowsSciMLFlows.IPSciMLIpRHS(f_ip)
-            oop_ip = CTFlowsSciMLFlows.OoPSciMLIpRHS(f_ip)
-            oop_finalize = CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS(f_ip)
-            ip_oop = CTFlowsSciMLFlows.IPSciMLOoPRHS(f_oop)
-            oop_oop = CTFlowsSciMLFlows.OoPSciMLOoPRHS(f_oop)
+            ip_ip = CTFlowsSciMLFlows.IPSciMLIpRHS(f_ip, identity)
+            oop_ip = CTFlowsSciMLFlows.OoPSciMLIpRHS(f_ip, identity)
+            oop_finalize = CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS(f_ip, identity)
+            ip_oop = CTFlowsSciMLFlows.IPSciMLOoPRHS(f_oop, identity)
+            oop_oop = CTFlowsSciMLFlows.OoPSciMLOoPRHS(f_oop, identity)
 
             du = zeros(2)
             u = [1.0, 2.0]
@@ -168,11 +168,11 @@ function test_sciml_rhs_functors()
             f_ip = ODEFunction(FakeFIP)
             f_oop = ODEFunction{false}(FakeFOoP)
 
-            ip_ip = CTFlowsSciMLFlows.IPSciMLIpRHS(f_ip)
-            oop_ip = CTFlowsSciMLFlows.OoPSciMLIpRHS(f_ip)
-            oop_finalize = CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS(f_ip)
-            ip_oop = CTFlowsSciMLFlows.IPSciMLOoPRHS(f_oop)
-            oop_oop = CTFlowsSciMLFlows.OoPSciMLOoPRHS(f_oop)
+            ip_ip = CTFlowsSciMLFlows.IPSciMLIpRHS(f_ip, identity)
+            oop_ip = CTFlowsSciMLFlows.OoPSciMLIpRHS(f_ip, identity)
+            oop_finalize = CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS(f_ip, identity)
+            ip_oop = CTFlowsSciMLFlows.IPSciMLOoPRHS(f_oop, identity)
+            oop_oop = CTFlowsSciMLFlows.OoPSciMLOoPRHS(f_oop, identity)
 
             Test.@test occursin("IPSciMLIpRHS", sprint(show, ip_ip))
             Test.@test occursin("converts:", sprint(show, ip_ip))

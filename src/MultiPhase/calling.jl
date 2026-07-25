@@ -558,6 +558,58 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Reshape a raw internal final state back to match `x0`'s own declared container type, for
+inter-phase handoff inside a multi-phase state flow.
+
+# Notes
+This is deliberately **not** [`CTFlows.Systems._coerce_state`](@ref): that function also
+collapses a length-1 `AbstractVector`/`SVector` to a scalar (the "1-D = scalar" convention,
+issue #357), which is the right call for a *user-facing* accessor but wrong for this
+*internal* handoff — it would silently turn a length-1-vector-sourced multi-phase state
+into a scalar mid-chain, producing a phase 2 segment with a different `x0` container type
+than phase 1's, which [`CTSolvers.Integrators.merge`](@extref) cannot concatenate. A bare
+`Number` `x0` still collapses the raw result (needed because some flows, e.g.
+`Flow(ocp, law)`, may integrate on an internally-promoted vector even when the caller
+declared a scalar `x0`); any `AbstractVector`/`AbstractMatrix` `x0`, length-1 included, is
+returned as-is.
+"""
+_reshape_to_x0(x0::Number, raw) = Systems._safe_only(raw)
+_reshape_to_x0(x0, raw) = raw
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the final state from a `VectorFieldTrajectory` segment for state dynamics,
+reshaped back to the segment's own `x0` container type (see
+[`CTFlows.MultiPhase._reshape_to_x0`](@ref)) rather than through its "1-D = scalar"
+`Integrators.final_state` accessor (issue #357).
+"""
+function _extract_final_state(
+    ::Type{Traits.StateDynamics}, segment::Trajectories.VectorFieldTrajectory, _
+)
+    return _reshape_to_x0(segment.x0, Integrators.final_state(segment.result))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Extract the final state from a `StateFlowTrajectory` segment for state dynamics
+(`Flow(fc, law)` / `Flow(ocp, law)`), reshaped back to the inner trajectory's own `x0`
+container type (see [`CTFlows.MultiPhase._reshape_to_x0`](@ref)) rather than through its
+"1-D = scalar" `Integrators.final_state` accessor — see the `VectorFieldTrajectory`
+overload above for why.
+"""
+function _extract_final_state(
+    ::Type{Traits.StateDynamics}, segment::Trajectories.StateFlowTrajectory, _
+)
+    return _reshape_to_x0(
+        segment.traj.x0, Integrators.final_state(segment.traj.result)
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Extract the final state and costate from a segment result for Hamiltonian dynamics.
 
 # Arguments

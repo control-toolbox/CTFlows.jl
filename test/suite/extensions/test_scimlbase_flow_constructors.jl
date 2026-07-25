@@ -83,19 +83,18 @@ function test_scimlbase_flow_constructors()
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
                 flow = Flows.Flow(f; reltol=1e-10)
                 xf = flow(0.0, [1.0], 1.0; variable=2.0)
-                Test.@test xf isa Vector
-                Test.@test length(xf) == 1
+                # 1-D = scalar (issue #357): a length-1 vector u0 collapses to a scalar.
+                Test.@test xf isa Real
                 # Expected: exp(-2*1) * 1 = exp(-2) ≈ 0.1353
-                Test.@test isapprox(xf[1], exp(-2.0), rtol=1e-6)
+                Test.@test isapprox(xf, exp(-2.0), rtol=1e-6)
             end
 
             Test.@testset "out-of-place function end-to-end" begin
                 f = ODEFunction{false}((u, p, t) -> -p .* u)
                 flow = Flows.Flow(f; reltol=1e-10)
                 xf = flow(0.0, [1.0], 1.0; variable=2.0)
-                Test.@test xf isa Vector
-                Test.@test length(xf) == 1
-                Test.@test isapprox(xf[1], exp(-2.0), rtol=1e-6)
+                Test.@test xf isa Real
+                Test.@test isapprox(xf, exp(-2.0), rtol=1e-6)
             end
         end
 
@@ -154,14 +153,15 @@ function test_scimlbase_flow_constructors()
             end
         end
 
-        Test.@testset "Integration: iip ODEFunction + SVector u0 (cross-adapter path)" begin
+        Test.@testset "Integration: iip ODEFunction + length-1 SVector u0 (cross-adapter path)" begin
             f = ODEFunction((du, u, p, t) -> du .= -p .* u)
             flow = Flows.Flow(f; reltol=1e-10)
             xf = Test.@test_logs (:warn, r"InPlace SciMLFunction") flow(
                 0.0, SA[1.0], 1.0; variable=2.0
             )
-            Test.@test xf isa SVector
-            Test.@test xf[1] ≈ exp(-2.0) rtol=1e-6
+            # 1-D = scalar (issue #357): a length-1 SVector u0 collapses to a scalar.
+            Test.@test xf isa Real
+            Test.@test xf ≈ exp(-2.0) rtol=1e-6
         end
     end
 end
