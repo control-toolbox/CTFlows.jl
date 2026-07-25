@@ -73,6 +73,14 @@ const E = exp(-1.0)
 _val(x) = x isa ForwardDiff.Dual ? ForwardDiff.value(x) : x
 _flat(a) = a isa Number ? [_val(a)] : _val.(vec(collect(a)))
 
+# ---------------------------------------------------------------------------
+# Shape helper (issue #357): tag the ACTUAL type of a result, not just whether
+# it is numerically correct. "Real" vs "Vec(1)" is exactly the 1-D = scalar
+# distinction the shape-convention audit needs measured, not hand-written.
+# ---------------------------------------------------------------------------
+_shape_tag(x) = x isa Number ? "Real" : x isa AbstractVector ? "Vec($(length(x)))" :
+                x isa AbstractMatrix ? "Mat$(size(x))" : string(typeof(x))
+
 function _maxerr(kind, r, x0)
     got = kind === :point ? r : Trajectories.state(r)(1.0)
     return maximum(abs.(_flat(got) .- _flat(x0 .* E)))
@@ -94,9 +102,14 @@ function cell(fl, kind, x0)
         catch
             NaN
         end
+        shape = try
+            _shape_tag(kind === :point ? r : Trajectories.state(r)(1.0))
+        catch
+            "?"
+        end
         ok = isfinite(err) && err ≤ 1e-4
         mark = ok ? (warned ? "⚠" : "✓") : "?"
-        return (mark, @sprintf("err=%.1e%s", err, warned ? " (warns)" : ""))
+        return (mark, @sprintf("err=%.1e shape=%s%s", err, shape, warned ? " (warns)" : ""))
     catch e
         return ("✗", string(nameof(typeof(e))))
     end
@@ -171,8 +184,11 @@ println("""
 
   Observed nuances (fold into docs/src/compatibility/vector_field.md):
    • Everything is green on CPU — no unsupported (✗) state type.
-   • Scalar state: the POINT call returns a scalar; the TRAJECTORY call's state(sol)(t)
-     returns a length-1 vector (state flows preserve vector shape). Both are correct.
+   • Scalar state: `shape=` MEASURES "shape=Real" on BOTH the point call and the
+     trajectory call's state(sol)(t) — 1-D = scalar end to end, matching
+     Flow(HamiltonianVectorField), since the fix for issue #357. A length-1
+     Vector/SVector x0 collapses the same way (see the length-1 row, not shown as a
+     separate table row here — see the dedicated shape_contract.md compatibility page).
    • In-place VF + scalar WORKS (scalar is promoted to a length-1 vector before the
      mutability dispatch), so it is NOT rejected via the public flow API.
    • Only ⚠ cells: SVector / SMatrix with an in-place vector field.
@@ -239,9 +255,15 @@ function cell_hvf(fl, kind, x0, p0)
         catch
             NaN
         end
+        shape = try
+            xf = kind === :point ? r[1] : Trajectories.state(r)(pi / 2)
+            _shape_tag(xf)
+        catch
+            "?"
+        end
         ok = isfinite(err) && err ≤ 1e-4
         mark = ok ? (warned ? "⚠" : "✓") : "?"
-        return (mark, @sprintf("err=%.1e%s", err, warned ? " (warns)" : ""))
+        return (mark, @sprintf("err=%.1e shape=%s%s", err, shape, warned ? " (warns)" : ""))
     catch e
         return ("✗", string(nameof(typeof(e))))
     end
@@ -303,9 +325,9 @@ println("""
   Observed nuances (fold into docs/src/compatibility/hamiltonian_vector_field.md):
    • Everything is green on CPU — no unsupported (✗) state/costate type.
    • Unlike Flow(VectorField), Flow(HamiltonianVectorField) is 1-D = scalar END TO END:
-     for a scalar (x0, p0), the TRAJECTORY accessors state(sol)(t)/costate(sol)(t) also
-     return scalars — not length-1 vectors. See issue #357 (Flow(VectorField) should
-     eventually match this).
+     for a scalar (x0, p0), `shape=Real` MEASURED on both the point call and the
+     TRAJECTORY accessor state(sol)(t) — not length-1 vectors. See issue #357
+     (Flow(VectorField) should eventually match this).
    • Only ⚠ cells: SVector / SMatrix with an in-place Hamiltonian vector field.
 """)
 
@@ -377,9 +399,15 @@ function cell_had(fl, kind, x0, p0)
         catch
             NaN
         end
+        shape = try
+            xf = kind === :point ? r[1] : Trajectories.state(r)(pi / 2)
+            _shape_tag(xf)
+        catch
+            "?"
+        end
         ok = isfinite(err) && err ≤ 1e-4
         mark = ok ? "✓" : "?"
-        return (mark, @sprintf("err=%.1e", err))
+        return (mark, @sprintf("err=%.1e shape=%s", err, shape))
     catch e
         return ("✗", _short(string(nameof(typeof(e))) * ": " * sprint(showerror, e)))
     end
@@ -431,6 +459,9 @@ println("""
   This block confirms Complex is unsupported by the default AutoForwardDiff backend
   (measured, not assumed). See the "Nested AD" section below for how to actually
   differentiate this flow with respect to (x0, p0).
+
+  Shape: for scalar (x0, p0), `shape=Real` on BOTH point and trajectory calls — same
+  end-to-end 1-D = scalar behaviour as Flow(HamiltonianVectorField) above.
 """)
 
 # =============================================================================
@@ -513,9 +544,14 @@ function cell_scf(fl, kind, x0)
         catch
             NaN
         end
+        shape = try
+            _shape_tag(kind === :point ? r : Trajectories.state(r)(1.0))
+        catch
+            "?"
+        end
         ok = isfinite(err) && err ≤ 1e-4
         mark = ok ? (warned ? "⚠" : "✓") : "?"
-        return (mark, @sprintf("err=%.1e%s", err, warned ? " (warns)" : ""))
+        return (mark, @sprintf("err=%.1e shape=%s%s", err, shape, warned ? " (warns)" : ""))
     catch e
         return ("✗", string(nameof(typeof(e))))
     end
@@ -555,7 +591,11 @@ println("""
   ✗  raised the named error type    ?  ran but result did not match analytic
 
   Observed nuances (fold into docs/src/compatibility/sciml.md):
-   • Structurally identical result to Flow(VectorField) — same dispatch, same fallback.
+   • Structurally identical result to Flow(VectorField) — same dispatch, same fallback,
+     INCLUDING the same `shape=Real` on BOTH point and trajectory calls for scalar x0
+     (1-D = scalar, since the fix for issue #357: this constructor goes through the same
+     Systems/Trajectories dispatch as VectorFieldSystem — only the genuine ODEProblem
+     bypass below stays shape-preserving).
    • variable= is mandatory here (NonAutonomous/NonFixed always), unlike VF's default Fixed.
 """)
 
@@ -598,9 +638,14 @@ function cell_prob(fl, kind, x0)
         catch
             NaN
         end
+        shape = try
+            _shape_tag(kind === :point ? r : Integrators.evaluate_at(r, 1.0))
+        catch
+            "?"
+        end
         ok = isfinite(err) && err ≤ 1e-4
         mark = ok ? "✓" : "?"
-        return (mark, @sprintf("err=%.1e", err))
+        return (mark, @sprintf("err=%.1e shape=%s", err, shape))
     catch e
         return ("✗", _short(string(nameof(typeof(e))) * ": " * sprint(showerror, e)))
     end
@@ -657,6 +702,10 @@ println("""
      constructed (its own u0/tspan/p) — shown once above, not part of the state matrix.
    • See the *** line above for the measured outcome of the flagged open question
      (IP-built ODEProblem remade with an immutable x0 at call time).
+   • Shape (issue #357): `shape=` measures Vec(1), never Real, for the scalar-x0 row on
+     BOTH point and trajectory calls — this genuine bypass is confirmed shape-preserving
+     already and is explicitly OUT of scope for the 1-D = scalar fix (unlike
+     Flow(::ODEFunction) above, which goes through CTFlows' own dispatch and IS in scope).
 """)
 
 # =============================================================================

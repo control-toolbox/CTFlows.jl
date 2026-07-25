@@ -82,7 +82,7 @@ hflow_ip = Flows.Flow(h̃vf_ip, law; reltol=1e-8)
 
 The two **call styles** are the point call `hflow(t0, x0, p0, tf)` → final `(xf, pf)`, and
 the trajectory call `hflow((t0, tf), x0, p0)` →
-[`Trajectories.HamiltonianVectorFieldTrajectory`](@extref CTFlows.Trajectories.HamiltonianVectorFieldTrajectory).
+[`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref).
 The **OOP / IP** columns are the *pseudo-Hamiltonian-vector-field kind* — independent of
 the state/costate container, exactly as for
 [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md#Compatibility-table).

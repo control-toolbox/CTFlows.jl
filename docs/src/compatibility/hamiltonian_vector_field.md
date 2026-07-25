@@ -100,14 +100,15 @@ Every state/costate type is supported on CPU — there is no unsupported (✗) c
     vector field, or mutable `MVector` / `MMatrix`, for static states.
 
 !!! note "1-D = scalar, end to end"
-    Unlike [`Flow(VectorField)`](vector_field.md#Scalar-state:-point-vs-trajectory-shape),
-    a **scalar** `(x0, p0)` stays a scalar in *both* call styles: the point call returns a
+    A **scalar** `(x0, p0)` stays a scalar in *both* call styles: the point call returns a
     scalar `(xf, pf)` pair, and the trajectory accessors `state(sol)(t)` /
-    `costate(sol)(t)` also return scalars — not length-1 vectors. This is the
-    ecosystem's ["1-D = scalar"](https://github.com/control-toolbox/Handbook/blob/main/philosophy/dimension-and-shape.md)
-    convention, already fully implemented here via the `HamiltonianVectorFieldSystem`
-    coercion machinery. See [#357](https://github.com/control-toolbox/CTFlows.jl/issues/357)
-    for bringing `Flow(VectorField)` in line with this.
+    `costate(sol)(t)` also return scalars — not length-1 vectors. A **length-1** vector or
+    `SVector` collapses the same way. This is the ecosystem's
+    ["1-D = scalar"](https://github.com/control-toolbox/Handbook/blob/main/philosophy/dimension-and-shape.md)
+    convention, implemented here via the `HamiltonianVectorFieldSystem` coercion machinery
+    — the same mechanism [`Flow(VectorField)`](vector_field.md)
+    now shares. See the [Shape contract](shape_contract.md) page for the full
+    cross-constructor picture.
 
 ---
 
@@ -262,6 +263,7 @@ or use mutable `MVector` / `MMatrix`.
 - [Building a flow](../flows/building_a_flow.md) — the shortcut constructor and explicit pipeline.
 - [Integrating](../flows/integrating.md) — call styles, variable parameters (incl. `variable_costate`), and integrator options.
 - [Compatibility overview](overview.md) — the per-constructor feature matrix and the other flow types.
+- [Shape contract](shape_contract.md) — the cross-constructor "1-D = scalar" reference.
 - [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref) — the flow types.
 - [`CTBase.Data.HamiltonianVectorField`](@extref CTBase.Data.HamiltonianVectorField) — the data wrapper.
-- [#357](https://github.com/control-toolbox/CTFlows.jl/issues/357) — bringing `Flow(VectorField)`'s shape contract in line with this page's.
+- [Shape contract](shape_contract.md) — the cross-constructor "1-D = scalar" reference ([#357](https://github.com/control-toolbox/CTFlows.jl/issues/357)).

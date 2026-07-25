@@ -7,29 +7,27 @@ $(TYPEDEF)
 
 Concrete `AbstractStateSystem` wrapping a `SciMLBase.AbstractODEFunction`.
 
-Unlike CTFlows-native systems (`VectorFieldSystem`), this system passes `p = variable`
-directly to the ODE — no `ODEParameters` wrapper — so users can pass arbitrary
-SciML parameter objects.
+Unlike a genuine SciML bypass (`SciMLProblemFlow`, wrapping an `AbstractODEProblem`),
+this system implements `Systems.AbstractSystem` (`get_ip_rhs`/`get_oop_rhs`) and shares
+`VectorFieldSystem`'s `Systems`/`Trajectories` dispatch, so per issue
+[control-toolbox/CTFlows.jl#357](https://github.com/control-toolbox/CTFlows.jl/issues/357)
+it also follows the "1-D = scalar" convention: RHS closures are built lazily by
+`get_ip_rhs`/`get_oop_rhs` based on the actual initial condition type, coercing a 1-D
+state to a scalar before calling the wrapped ODE function — mirroring
+[`CTFlows.Systems.VectorFieldSystem`](@ref).
+
+Unlike CTFlows-native systems, this system passes `p = variable` directly to the ODE —
+no `ODEParameters` wrapper — so users can pass arbitrary SciML parameter objects.
 
 The mutability trait is encoded in the `iip` type parameter of the wrapped function:
 - `AbstractODEFunction{true}` → in-place `f!(du, u, p, t)`
 - `AbstractODEFunction{false}` → out-of-place `f(u, p, t) -> du`
 
-The system pre-computes cross-adapters for both in-place and out-of-place call modes,
-similar to `VectorFieldSystem`, ensuring compatibility with the generic `build_problem`
-which dispatches based on `u0` mutability.
-
 # Type Parameters
 - `F <: SciMLBase.AbstractODEFunction`: The wrapped ODE function.
-- `RHS<:Systems.AbstractIPRHS`: Pre-computed in-place RHS functor.
-- `OOPROHS<:Systems.AbstractOoPRHS`: Pre-computed out-of-place RHS functor.
-- `FINRHS`: Finalize functor for in-place functions with immutable `u0`, or `Nothing`.
 
 # Fields
 - `f::F`: The wrapped SciML ODE function.
-- `rhs_fn::RHS`: In-place RHS with signature `(du, u, λ, t)`.
-- `rhs_oop_fn::OOPROHS`: Out-of-place RHS with signature `(u, λ, t)`.
-- `rhs_oop_finalize_fn::FINRHS`: Out-of-place RHS for immutable `u0` (iip only), or `Nothing`.
 
 # Example
 ```julia
@@ -37,76 +35,16 @@ using SciMLBase, CTFlows
 
 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
 sys = SciMLFunctionSystem(f)
-# sys.rhs_fn is pre-computed in-place closure
-# sys.rhs_oop_fn is pre-computed out-of-place closure (allocates buffer)
 ```
 """
-struct SciMLFunctionSystem{
-    F<:SciMLBase.AbstractODEFunction,
-    RHS<:Systems.AbstractIPRHS,
-    OOPROHS<:Systems.AbstractOoPRHS,
-    FINRHS,
-} <: Systems.AbstractStateSystem{Traits.NonAutonomous,Traits.NonFixed}
+struct SciMLFunctionSystem{F<:SciMLBase.AbstractODEFunction} <:
+       Systems.AbstractStateSystem{Traits.NonAutonomous,Traits.NonFixed}
     f::F
-    rhs_fn::RHS
-    rhs_oop_fn::OOPROHS
-    rhs_oop_finalize_fn::FINRHS
 end
 
-# =============================================================================
-# Constructors
-# =============================================================================
-
-"""
-$(TYPEDSIGNATURES)
-
-Construct a `SciMLFunctionSystem` from an in-place SciML ODE function.
-
-Pre-computes all three RHS functors: in-place, out-of-place (with allocation),
-and out-of-place with type conversion for immutable arrays.
-
-# Arguments
-- `f::SciMLBase.AbstractODEFunction{true}`: An in-place ODE function with signature `(du, u, p, t) -> nothing`.
-
-# Returns
-- `SciMLFunctionSystem`: The system with pre-computed RHS functors.
-
-See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@ref).
-"""
-function SciMLFunctionSystem(f::SciMLBase.AbstractODEFunction{true})
-    rhs_fn = IPSciMLIpRHS(f)
-    rhs_oop_fn = OoPSciMLIpRHS(f)
-    rhs_oop_finalize_fn = OoPSciMLIpFinalizeRHS(f)
-    return SciMLFunctionSystem{
-        typeof(f),typeof(rhs_fn),typeof(rhs_oop_fn),typeof(rhs_oop_finalize_fn)
-    }(
-        f, rhs_fn, rhs_oop_fn, rhs_oop_finalize_fn
-    )
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Construct a `SciMLFunctionSystem` from an out-of-place SciML ODE function.
-
-Pre-computes in-place and out-of-place RHS functors. No finalize functor is needed
-since the function is already out-of-place.
-
-# Arguments
-- `f::SciMLBase.AbstractODEFunction{false}`: An out-of-place ODE function with signature `(u, p, t) -> du`.
-
-# Returns
-- `SciMLFunctionSystem`: The system with pre-computed RHS functors.
-
-See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@ref).
-"""
-function SciMLFunctionSystem(f::SciMLBase.AbstractODEFunction{false})
-    rhs_fn = IPSciMLOoPRHS(f)
-    rhs_oop_fn = OoPSciMLOoPRHS(f)
-    return SciMLFunctionSystem{typeof(f),typeof(rhs_fn),typeof(rhs_oop_fn),Nothing}(
-        f, rhs_fn, rhs_oop_fn, nothing
-    )
-end
+# Note: no explicit outer constructor — Julia's auto-generated default outer
+# constructor already matches this struct's own bound exactly (the single type
+# parameter is inferable from the `f` field's type), same as VectorFieldSystem.
 
 # =============================================================================
 # Unified getters: get_ip_rhs / get_oop_rhs
@@ -115,41 +53,70 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the in-place right-hand side for a `SciMLFunctionSystem`.
+Return the in-place right-hand side for an in-place `SciMLFunctionSystem`.
 
-Eager implementation: ignores the config and returns the pre-computed closure.
+Lazy implementation: reads `x0` from the config to build a type-specific closure.
 
 # Arguments
-- `sys::SciMLFunctionSystem`: The system.
-- `_`: The configuration (ignored).
+- `sys::SciMLFunctionSystem{<:SciMLBase.AbstractODEFunction{true}}`: The in-place system.
+- `config::Configs.AbstractStateConfig`: The state configuration.
 
 # Returns
-- `Systems.AbstractIPRHS`: The pre-computed in-place closure with signature `(du, u, λ, t) -> nothing`.
+- `Systems.AbstractIPRHS`: The in-place closure with signature `(du, u, λ, t) -> nothing`.
 
-See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
-Systems.get_ip_rhs(sys::SciMLFunctionSystem, _) = sys.rhs_fn
+function Systems.get_ip_rhs(
+    sys::SciMLFunctionSystem{F}, config::Configs.AbstractStateConfig
+) where {F<:SciMLBase.AbstractODEFunction{true}}
+    x0 = Configs.initial_state(config)
+    return IPSciMLIpRHS(sys.f, Systems._coerce_state(x0))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the in-place right-hand side for an out-of-place `SciMLFunctionSystem`.
+
+Lazy implementation: reads `x0` from the config to build a type-specific closure.
+
+# Arguments
+- `sys::SciMLFunctionSystem{<:SciMLBase.AbstractODEFunction{false}}`: The out-of-place system.
+- `config::Configs.AbstractStateConfig`: The state configuration.
+
+# Returns
+- `Systems.AbstractIPRHS`: The in-place closure with signature `(du, u, λ, t) -> nothing`.
+
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
+"""
+function Systems.get_ip_rhs(
+    sys::SciMLFunctionSystem{F}, config::Configs.AbstractStateConfig
+) where {F<:SciMLBase.AbstractODEFunction{false}}
+    x0 = Configs.initial_state(config)
+    return IPSciMLOoPRHS(sys.f, Systems._coerce_state(x0))
+end
 
 """
 $(TYPEDSIGNATURES)
 
 Return the out-of-place right-hand side for an out-of-place `SciMLFunctionSystem`.
 
-Eager implementation: ignores the config and returns the pre-computed closure.
+Lazy implementation: reads `x0` from the config to build a type-specific closure.
 
 # Arguments
-- `sys::SciMLFunctionSystem{..., Nothing}`: The out-of-place system.
-- `_`: The configuration (ignored).
+- `sys::SciMLFunctionSystem{<:SciMLBase.AbstractODEFunction{false}}`: The out-of-place system.
+- `config::Configs.AbstractStateConfig`: The state configuration.
 
 # Returns
-- `Systems.AbstractOoPRHS`: The pre-computed out-of-place closure with signature `(u, λ, t) -> du`.
+- `Systems.AbstractOoPRHS`: The out-of-place closure with signature `(u, λ, t) -> du`.
 
-See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlows.Systems.get_ip_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function Systems.get_oop_rhs(
-    sys::SciMLFunctionSystem{F,RHS,OOPROHS,Nothing}, _
-) where {F,RHS,OOPROHS}
-    return sys.rhs_oop_fn
+    sys::SciMLFunctionSystem{F}, config::Configs.AbstractStateConfig
+) where {F<:SciMLBase.AbstractODEFunction{false}}
+    x0 = Configs.initial_state(config)
+    return OoPSciMLOoPRHS(sys.f, Systems._coerce_state(x0))
 end
 
 """
@@ -157,26 +124,32 @@ $(TYPEDSIGNATURES)
 
 Return the out-of-place right-hand side for an in-place `SciMLFunctionSystem`.
 
-Eager implementation: ignores the config and returns the finalize closure.
-This method is called when `!ismutable(u0)`, so always returns `rhs_oop_finalize_fn`.
+Lazy implementation: reads `x0` from the config to build a type-specific closure.
+This method is called when `!ismutable(u0)`, so the finalize path is used whenever
+`x0` is itself immutable (e.g. `SVector`).
 
 # Arguments
-- `sys::SciMLFunctionSystem{..., FINRHS}`: The in-place system.
-- `_`: The configuration (ignored).
+- `sys::SciMLFunctionSystem{<:SciMLBase.AbstractODEFunction{true}}`: The in-place system.
+- `config::Configs.AbstractStateConfig`: The state configuration.
 
 # Returns
-- `Systems.AbstractOoPRHS`: The finalize closure with signature `(u, λ, t) -> du`.
+- `Systems.AbstractOoPRHS`: The out-of-place closure with signature `(u, λ, t) -> du`.
 
 # Notes
-- Emits a performance warning since this path is suboptimal for immutable arrays.
+- Emits a performance warning when called with immutable initial conditions.
 
-See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref), [`CTFlows.Systems.get_ip_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function Systems.get_oop_rhs(
-    sys::SciMLFunctionSystem{F,RHS,OOPROHS,FINRHS}, _
-) where {F,RHS,OOPROHS,FINRHS}
-    @warn "InPlace SciMLFunction with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
-    return sys.rhs_oop_finalize_fn
+    sys::SciMLFunctionSystem{F}, config::Configs.AbstractStateConfig
+) where {F<:SciMLBase.AbstractODEFunction{true}}
+    x0 = Configs.initial_state(config)
+    cx = Systems._coerce_state(x0)
+    if !ismutable(x0)
+        @warn "InPlace SciMLFunction with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
+        return OoPSciMLIpFinalizeRHS(sys.f, cx)
+    end
+    return OoPSciMLIpRHS(sys.f, cx)
 end
 
 # =============================================================================
@@ -200,10 +173,8 @@ function Base.show(io::IO, sys::SciMLFunctionSystem{F}) where {F}
     fmt = Display.format_codes(io)
     iip = SciMLBase.isinplace(sys.f)
     wraps = "ODEFunction: non-autonomous, variable, " * (iip ? "in-place" : "out-of-place")
-    rhs = "$(nameof(typeof(sys.rhs_fn))) ($(_rhs_sciml_label(sys.rhs_fn)))"
     Display.print_header(io, "SciMLFunctionSystem"; fmt=fmt)
-    Display.print_field(io, "wraps", wraps; fmt=fmt, value_style="")
-    return Display.print_field(io, "rhs", rhs; last=true, fmt=fmt, value_style="")
+    return Display.print_field(io, "wraps", wraps; last=true, fmt=fmt, value_style="")
 end
 
 """

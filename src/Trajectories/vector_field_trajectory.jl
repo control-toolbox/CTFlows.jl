@@ -21,6 +21,11 @@ semantic accessors for time grids and state functions.
 - `result`: The integration result object (subtype of `AbstractIntegrationResult`).
 - `variable`: The variable value threaded through the flow call, or `Core.NotProvided`
   when the flow carries no variable.
+- `x0`: The initial state, or `Core.NotProvided` when built without a config (e.g. raw
+  plumbing/tests). Drives the "1-D = scalar" coercion (issue #357,
+  [`CTFlows.Systems._coerce_state`](@ref)) applied by `sol(t)` and `Integrators.final_state`
+  — a scalar or length-1-vector `x0` collapses the returned state to a scalar; anything
+  else, or `Core.NotProvided`, applies no coercion.
 
 # Accessors
 - `times(sol)`: Get the time grid (alias: `time_grid(sol)`)
@@ -39,19 +44,33 @@ x(0.5)                    # evaluate at t = 0.5
 
 See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.AbstractVectorFieldTrajectory`](@ref).
 """
-struct VectorFieldTrajectory{R<:Integrators.AbstractIntegrationResult,V} <:
+struct VectorFieldTrajectory{R<:Integrators.AbstractIntegrationResult,V,X0} <:
        AbstractVectorFieldTrajectory
     result::R
     variable::V
+    x0::X0
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Construct a `VectorFieldTrajectory` with no variable (`Core.NotProvided`).
+Construct a `VectorFieldTrajectory` with no variable and no known initial state
+(both default to `Core.NotProvided`, applying no shape coercion).
 """
 function VectorFieldTrajectory(result::Integrators.AbstractIntegrationResult)
-    return VectorFieldTrajectory(result, Core.NotProvided)
+    return VectorFieldTrajectory(result, Core.NotProvided, Core.NotProvided)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Construct a `VectorFieldTrajectory` with no known initial state (`Core.NotProvided`,
+applying no shape coercion) — kept for callers that only carry `variable`, not `x0`
+(e.g. [`CTFlows.Trajectories.merge`](@ref) on legacy segments, or direct construction
+from a raw integration result in tests).
+"""
+function VectorFieldTrajectory(result::Integrators.AbstractIntegrationResult, variable)
+    return VectorFieldTrajectory(result, variable, Core.NotProvided)
 end
 
 # =============================================================================
@@ -161,7 +180,12 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Evaluate the solution at a given time by delegating to the integration result.
+Evaluate the solution at a given time, coerced to a scalar for a 1-D state (issue #357).
+
+Delegates to the integration result, then applies
+[`CTFlows.Systems._coerce_state`](@ref)`(sol.x0)` — a scalar or length-1-vector `x0`
+collapses the returned state to a scalar; anything else (including `x0 ===
+Core.NotProvided`) applies no coercion.
 
 # Arguments
 - `sol::VectorFieldTrajectory`: The vector field solution.
@@ -170,16 +194,17 @@ Evaluate the solution at a given time by delegating to the integration result.
 # Returns
 - The solution state at time `t`.
 
-See also: [`CTSolvers.Integrators.evaluate_at`](@extref), [`CTSolvers.Integrators.times`](@extref).
+See also: [`CTFlows.Systems._coerce_state`](@ref), [`CTSolvers.Integrators.evaluate_at`](@extref), [`CTSolvers.Integrators.times`](@extref).
 """
 function (sol::VectorFieldTrajectory)(t::Real)
-    return Integrators.evaluate_at(sol.result, t)
+    return Systems._coerce_state(sol.x0)(Integrators.evaluate_at(sol.result, t))
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Return the final state from the solution by delegating to the integration result.
+Return the final state from the solution, coerced to a scalar for a 1-D state (issue
+#357) — see [`CTFlows.Systems._coerce_state`](@ref).
 
 # Arguments
 - `sol::VectorFieldTrajectory`: The vector field solution.
@@ -187,10 +212,10 @@ Return the final state from the solution by delegating to the integration result
 # Returns
 - The final state from the integration result.
 
-See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTSolvers.Integrators.final_state`](@extref).
+See also: [`CTFlows.Systems._coerce_state`](@ref), [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTSolvers.Integrators.final_state`](@extref).
 """
 function Integrators.final_state(sol::VectorFieldTrajectory)
-    return Integrators.final_state(sol.result)
+    return Systems._coerce_state(sol.x0)(Integrators.final_state(sol.result))
 end
 
 """
@@ -261,8 +286,8 @@ function Integrators.merge(segments::AbstractVector{<:VectorFieldTrajectory})
     # Merge the internal results
     merged_result = Integrators.merge(internal_results)
 
-    # Wrap in VectorFieldTrajectory, preserving the first segment's variable
-    return VectorFieldTrajectory(merged_result, segments[1].variable)
+    # Wrap in VectorFieldTrajectory, preserving the first segment's variable and x0
+    return VectorFieldTrajectory(merged_result, segments[1].variable, segments[1].x0)
 end
 
 # =============================================================================

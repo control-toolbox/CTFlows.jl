@@ -30,6 +30,7 @@ This work tracks issue
 
 | Constructor | Builds | Page | Status |
 |---|---|---|---|
+| *(cross-cutting)* | — | [Shape contract](shape_contract.md) | ✅ live |
 | `Flow(::VectorField)` | [`StateFlow`](@ref CTFlows.Flows.StateFlow) | [`Flow(VectorField)`](vector_field.md) | ✅ live |
 | `Flow(::HamiltonianVectorField)` | [`HamiltonianFlow`](@ref CTFlows.Flows.HamiltonianFlow) | [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md) | ✅ live |
 | `Flow(::Hamiltonian)` | [`HamiltonianFlow`](@ref CTFlows.Flows.HamiltonianFlow) | [`Flow(Hamiltonian)`](hamiltonian.md) | ✅ live |
@@ -49,28 +50,32 @@ This work tracks issue
   columns), `MVector` / `SVector`, `MMatrix` / `SMatrix`, with `Real`, `Complex`, or
   `ForwardDiff.Dual` elements — in both the point and trajectory call styles. The only
   caveat in both cases is that an **in-place** vector field with an **immutable** initial
-  condition (`SVector` / `SMatrix`) works but emits a performance warning.
-  `Flow(HamiltonianVectorField)` is also already
+  condition (`SVector` / `SMatrix`) works but emits a performance warning. Both are also
   ["1-D = scalar"](https://github.com/control-toolbox/Handbook/blob/main/philosophy/dimension-and-shape.md)
-  end to end (point *and* trajectory), unlike `Flow(VectorField)` — see
-  [#357](https://github.com/control-toolbox/CTFlows.jl/issues/357).
+  end to end (point *and* trajectory) — a scalar or length-1 `Vector`/`SVector` state
+  always collapses to a scalar — since the fix for
+  [#357](https://github.com/control-toolbox/CTFlows.jl/issues/357); see the
+  [Shape contract](shape_contract.md) page.
 - [`Flow(Hamiltonian)`](hamiltonian.md) (AD-backed, no in-place variant) supports every
   **real** container the same way, but its default backend (`AutoForwardDiff`) does **not**
   support `Complex` states. To differentiate the flow itself with respect to `(x0, p0)`
   (e.g. for shooting), wrap the *call* in an outer `ForwardDiff.jacobian`/`gradient` —
-  never construct a `Dual` by hand and pass it as `x0`/`p0`. It is also already
+  never construct a `Dual` by hand and pass it as `x0`/`p0`. It is also
   1-D = scalar end to end, via the same coercion machinery as
   `Flow(HamiltonianVectorField)` (see #357).
 - [`Flow(SciML)`](sciml.md) covers two constructors with very different mechanics.
   `Flow(::ODEFunction)` goes through the same CTFlows pipeline as `Flow(VectorField)` and
-  reports the identical result (every container works; in-place + immutable state warns
-  and falls back). `Flow(::ODEProblem)` bypasses that pipeline entirely — `SciMLBase.remake`
-  feeds the new state straight to the original function, with **no CTFlows-level guard**.
-  For a problem built from an **out-of-place** function, every state type remakes cleanly;
-  for one built **in-place**, remaking with an **immutable** state (including a bare
-  scalar) is a **hard, native SciML error** — not a warning with a fallback like everywhere
-  else on this site. Build the `ODEProblem` from an out-of-place function if you need to
-  call it with immutable states.
+  reports the identical result, **including** the 1-D = scalar collapse above (every
+  container works; in-place + immutable state warns and falls back). `Flow(::ODEProblem)`
+  bypasses that pipeline entirely — `SciMLBase.remake` feeds the new state straight to the
+  original function, with **no CTFlows-level guard, and no shape coercion**: a length-1
+  `Vector` state stays a length-1 `Vector`, by design (see the
+  [Shape contract](shape_contract.md) page for why this constructor is deliberately left
+  out of the fix). For a problem built from an **out-of-place** function, every state type
+  remakes cleanly; for one built **in-place**, remaking with an **immutable** state
+  (including a bare scalar) is a **hard, native SciML error** — not a warning with a
+  fallback like everywhere else on this site. Build the `ODEProblem` from an out-of-place
+  function if you need to call it with immutable states.
 - [`Flow(ocp)`](ocp_free.md) and [`Flow(ocp, law)`](ocp_control_laws.md) — unlike every flow
   above, **the state dimension is fixed at OCP construction** (`state!(pre, n)`), so no
   single flow accepts every container size; two problems (`n=1`, `n=2`) stand in for that

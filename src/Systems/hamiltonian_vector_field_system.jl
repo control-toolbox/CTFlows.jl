@@ -54,50 +54,11 @@ Traits.ad_trait(::HamiltonianVectorFieldSystem) = Traits.WithoutAD
 # parameters are inferable from the `hvf` field's type).
 
 # =============================================================================
-# Internal helpers for shape inference and coercion
-# =============================================================================
-
-"""
-    _state_dim(x0::Number) = 1
-    _state_dim(x0::AbstractVector) = length(x0)
-    _state_dim(x0::AbstractMatrix) = size(x0, 1)
-
-Infer the state dimension from the initial condition shape.
-"""
-_state_dim(::Number) = 1
-_state_dim(x::AbstractVector) = length(x)
-_state_dim(x::AbstractMatrix) = size(x, 1)
-
-"""
-    _coerce_state(::Number) = only
-    _coerce_state(::AbstractMatrix) = identity
-    _coerce_state(x::AbstractVector) = length(x) == 1 ? only : identity
-
-Return the coercion applied to a 1-D quantity (state, costate, variable costate)
-of a **Hamiltonian/OCP flow** so that it is represented as a **scalar** when it has
-length 1, and left untouched otherwise.
-
-This enforces the ecosystem convention *"a 1-dimensional quantity is a scalar"* for
-the control-theoretic layer: both `2.0` and `[2.0]` collapse to the scalar `2.0`
-via `only`, regardless of how the user supplied the initial condition. Vectors of
-length ≥ 2 and matrices (batch mode) are left untouched via `identity`.
-
-Scope: applied only on Hamiltonian paths (`HamiltonianSystem`,
-`HamiltonianVectorFieldSystem`, augmented variable-costate, and the
-`HamiltonianDynamics` trajectory builders). **State-only flows** (bare
-`VectorField`, SciMLBase ODE adapters) stay shape-preserving via
-`CTBase.Core.make_coerce`, because a raw ODE state carries no 1-D control
-convention — the user's array is the contract there.
-
-Differs from `CTBase.Core.make_coerce` only in that a length-1 vector collapses to
-a scalar (`_safe_only`, the GPU-safe `only`) instead of being kept as a 1-vector (`identity`).
-"""
-_coerce_state(::Number) = _safe_only
-_coerce_state(::AbstractMatrix) = identity
-_coerce_state(x::AbstractVector) = length(x) == 1 ? _safe_only : identity
-
-# =============================================================================
 # Internal helpers for split/assign (dispatch on array type)
+#
+# `_state_dim`/`_coerce_state` (the 1-D = scalar coercion shared by every
+# control-toolbox-sourced state flow) now live in coercion.jl, alongside
+# `_safe_only` — see that file for their definitions and scope note.
 # =============================================================================
 
 """

@@ -122,10 +122,10 @@ function test_flow_callables_sciml_vector_field()
                 Test.@test Xf ≈ X0 * exp(-1.0) atol=ATOL
             end
 
-            Test.@testset "1-D vector x0 → length-1 vector output (state flow)" begin
+            Test.@testset "length-1 vector x0 → scalar output (1-D = scalar, issue #357)" begin
                 xf = flow(0.0, [1.0], 1.0)
-                Test.@test xf isa AbstractVector && length(xf) == 1   # state flow preserves vectors
-                Test.@test xf ≈ [exp(-1.0)] atol=ATOL
+                Test.@test xf isa Real
+                Test.@test xf ≈ exp(-1.0) atol=ATOL
             end
 
             Test.@testset "1×1 matrix x0 → matrix output" begin

@@ -19,7 +19,7 @@ All examples integrate the scalar exponential decay ``\dot{x} = -p\,x`` with ``p
 (the default SciML integrator, `OrdinaryDiffEqTsit5`) — the same analytic solution as the
 [`Flow(VectorField)`](vector_field.md) page: ``x(1) = x_0\,e^{-1}``.
 
-!!! note "Last probed: 2026-07-23"
+!!! note "Last probed: 2026-07-24"
     This page's table *shape* — which containers and axes are tested — reflects
     [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
     as of this date. Every ✓/⚠/✗ cell below is still re-executed on **every** documentation
@@ -52,6 +52,15 @@ same warn-and-fallback for an in-place function called with an immutable `x0`.
 The one structural difference: a SciML function always has the uniform `(du, u, p, t)` /
 `(u, p, t)` signature, so the wrapped flow is always `NonAutonomous`/`NonFixed` — `variable`
 must be passed explicitly on every call (there is no `Fixed`-by-default case like `VectorField`'s).
+
+!!! note "1-D = scalar, end to end (issue #357)"
+    `Flow(::ODEFunction)` goes through CTFlows' own `Systems`/`Trajectories` dispatch, so it
+    follows the same ["1-D = scalar"](https://github.com/control-toolbox/Handbook/blob/main/philosophy/dimension-and-shape.md)
+    convention as [`Flow(VectorField)`](vector_field.md): a scalar
+    or length-1 `Vector`/`SVector` `x0` collapses to a scalar in both call styles. This is
+    **not** true of `Flow(::ODEProblem)` below — see the
+    [Shape contract](shape_contract.md) page for why the two constructors are allowed to
+    diverge here.
 
 ```@example sciml_compat
 f_oop = SciMLBase.ODEFunction{false}((u, p, t) -> -p .* u)         # out-of-place
@@ -102,6 +111,14 @@ x0 = ForwardDiff.Dual(1.0, 1.0)
 flow_f(0.0, x0, 1.0; variable=1.0)                       # Dual scalar
 ```
 
+A length-1 `Vector`/`SVector` `x0` collapses to a scalar, in both call styles:
+
+```@repl sciml_compat
+flow_f(0.0, [1.0], 1.0; variable=1.0)         # ≈ exp(-1), a Real — not a length-1 Vector
+sol = flow_f((0.0, 1.0), [1.0]; variable=1.0);
+Trajectories.state(sol)(1.0)                   # ≈ exp(-1), a Real
+```
+
 Trajectory calls return a `Trajectories.VectorFieldTrajectory`, exactly like `Flow(VectorField)`:
 
 ```@repl sciml_compat
@@ -133,6 +150,14 @@ CTFlows `AbstractSystem`, no `get_ip_rhs`/`get_oop_rhs`. Every call does
 `SciMLBase.remake` (to swap in a new `u0`/`tspan`/`p`) followed directly by
 `CommonSolve.solve` — the mutability dispatch that protects every other constructor on
 this page (and on [`Flow(VectorField)`](vector_field.md)) **does not exist here**.
+
+!!! note "Shape-preserving by design, not by oversight (issue #357)"
+    Because this constructor never reaches CTFlows' `Systems`/`Trajectories` dispatch, it
+    never applies the "1-D = scalar" coercion either — a length-1 `Vector` `x0` stays a
+    length-1 `Vector` `xf`, unlike every other constructor on this site. This is the
+    deliberate line issue #357 drew: the fix applies to constructors that go through
+    CTFlows' own dispatch (`Flow(VectorField)`, `Flow(::ODEFunction)` above), not to a
+    genuine SciML bypass like this one. See the [Shape contract](shape_contract.md) page.
 
 ```@example sciml_compat
 prob_oop = SciMLBase.ODEProblem(f_oop, [1.0], (0.0, 1.0), 1.0)   # built out-of-place
@@ -240,4 +265,5 @@ Integrators.final_state(result)
 - [Integrating](../flows/integrating.md) — call styles, variable parameters, and integrator options.
 - [Trajectories](../flows/trajectories.md) — the low-level `AbstractIntegrationResult` accessors.
 - [Compatibility overview](overview.md) — the per-constructor feature matrix and the other flow types.
+- [Shape contract](shape_contract.md) — the cross-constructor "1-D = scalar" reference, including why `Flow(::ODEFunction)` and `Flow(::ODEProblem)` diverge here.
 - [`CTFlows.Flows.Flow`](@ref), [`CTFlowsSciMLFlows.SciMLProblemFlow`](@ref), [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref) — the extension types.

@@ -187,4 +187,4 @@ dodge the nested `Dual`) is needed for this to work.
 - [Compatibility overview](overview.md) — the per-constructor feature matrix and the other flow types.
 - [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref) — the flow types.
 - [`CTBase.Data.Hamiltonian`](@extref CTBase.Data.Hamiltonian) — the data wrapper.
-- [#357](https://github.com/control-toolbox/CTFlows.jl/issues/357) — `Flow(Hamiltonian)` is already "1-D = scalar" end to end, via the same coercion machinery as `Flow(HamiltonianVectorField)`.
+- [Shape contract](shape_contract.md) — the cross-constructor "1-D = scalar" reference: `Flow(Hamiltonian)` is 1-D = scalar end to end, via the same coercion machinery as `Flow(HamiltonianVectorField)` ([#357](https://github.com/control-toolbox/CTFlows.jl/issues/357)).

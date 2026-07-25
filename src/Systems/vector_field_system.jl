@@ -6,11 +6,14 @@ variable for `NonFixed` vector fields is **not** stored here; it is passed at fl
 time via the `variable` kwarg and threaded through `ODEProblem`'s `p` slot
 wrapped in a `Systems.ODEParameters` struct.
 
+The system does not store pre-computed RHS closures. Instead, closures are built
+lazily by `get_ip_rhs`/`get_oop_rhs` based on the actual initial condition type,
+coercing a 1-D state to a scalar before calling the user's vector field (issue
+[control-toolbox/CTFlows.jl#357](https://github.com/control-toolbox/CTFlows.jl/issues/357))
+— mirroring [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
+
 # Fields
 - `vf::F`: the underlying vector field (any `Data.AbstractVectorField{TD,VD,MD}`).
-- `rhs::RHS`: the pre-computed in-place right-hand side closure with signature `(du, u, p, t) -> nothing`.
-- `rhs_oop::OOPROHS`: the pre-computed out-of-place right-hand side closure with signature `(u, p, t) -> du`.
-- `rhs_oop_finalize::FINRHS`: the finalize closure for in-place vector fields with immutable initial conditions, or `nothing` for out-of-place vector fields.
 
 # Example
 \`\`\`julia-repl
@@ -38,46 +41,14 @@ struct VectorFieldSystem{
     VD<:Traits.VariableDependence,
     MD<:Traits.AbstractMutabilityTrait,
     F<:Data.AbstractVectorField{TD,VD,MD},
-    RHS<:AbstractIPRHS,
-    OOPROHS<:AbstractOoPRHS,
-    FINRHS,
 } <: AbstractStateSystem{TD,VD}
     vf::F
-    rhs::RHS
-    rhs_oop::OOPROHS
-    rhs_oop_finalize::FINRHS
 end
 
-# =============================================================================
-# Constructors
-# =============================================================================
-
-# Out-of-place: accepts any AbstractVectorField (VectorField, ComposedVectorField, …).
-function VectorFieldSystem(
-    vf::Data.AbstractVectorField{TD,VD,Traits.OutOfPlace}
-) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
-    rhs = IPVFOoPRHS(vf)
-    rhs_oop = OoPVFOoPRHS(vf)
-    rhs_oop_finalize = nothing
-    return VectorFieldSystem{
-        TD,VD,Traits.OutOfPlace,typeof(vf),typeof(rhs),typeof(rhs_oop),Nothing
-    }(
-        vf, rhs, rhs_oop, rhs_oop_finalize
-    )
-end
-
-function VectorFieldSystem(
-    vf::Data.VectorField{F,TD,VD,Traits.InPlace}
-) where {F<:Function,TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
-    rhs = IPVFIpRHS(vf)
-    rhs_oop = OoPVFIpRHS(vf)
-    rhs_oop_finalize = OoPVFIpFinalizeRHS(vf)
-    return VectorFieldSystem{
-        TD,VD,Traits.InPlace,typeof(vf),typeof(rhs),typeof(rhs_oop),typeof(rhs_oop_finalize)
-    }(
-        vf, rhs, rhs_oop, rhs_oop_finalize
-    )
-end
+# Note: no explicit outer constructor — Julia's auto-generated default outer
+# constructor already matches this struct's own bounds exactly (all 4 type
+# parameters are inferable from the `vf` field's type), same as
+# HamiltonianVectorFieldSystem.
 
 # =============================================================================
 # Getter
@@ -97,123 +68,106 @@ vector_field(sys::VectorFieldSystem) = sys.vf
 """
 $(TYPEDSIGNATURES)
 
-In-place right-hand side for a `VectorFieldSystem`. Returns the pre-computed
-closure stored in the system, which has signature `(du, u, p, t) -> nothing` and
-uses the uniform `(t, x, v)` call on the underlying `VectorField`, where `p`
-is a `Systems.ODEParameters` wrapper containing the variable (or `nothing`
-for `Fixed` systems).
+Return the in-place right-hand side for an out-of-place `VectorFieldSystem`.
 
-# Arguments
-- `sys::VectorFieldSystem`: The system for which to return the RHS function.
-
-# Returns
-- `Function`: The pre-computed closure with signature `(du, u, p, t) -> nothing`.
-
-# Example
-\`\`\`julia
-using CTFlows.Systems
-
-vf = VectorField(x -> -x; autonomous=true, variable=false)
-sys = VectorFieldSystem(vf)
-rhs = Systems.get_ip_rhs(sys, config)
-
-du = zeros(2)
-u = [1.0, 2.0]
-p = Systems.ODEParameters(nothing)
-rhs(du, u, p, 0.0)
-# du is now [-1.0, -2.0]
-\`\`\`
-
-# Notes
-- The closure is computed once at construction time for performance.
-- Multiple calls to `get_ip_rhs` return the same function object.
-- The closure reads `variable(p)` to access the actual variable value.
-
-See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTFlows.Systems.ODEParameters`](@ref).
-"""
-
-"""
-$(TYPEDSIGNATURES)
-
-Return the in-place right-hand side for a `VectorFieldSystem`.
-
-Eager implementation: ignores the config and returns the pre-computed closure.
-
-# Arguments
-- `sys::VectorFieldSystem`: The vector field system.
-- `_`: The configuration (ignored).
-
-# Returns
-- `Function`: The pre-computed in-place closure with signature `(du, u, p, t) -> nothing`.
-
-See also: [`CTFlows.Systems.get_oop_rhs`](@ref), `rhs`.
-"""
-function get_ip_rhs(sys::VectorFieldSystem, _)
-    return sys.rhs
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Return the out-of-place right-hand side for a `VectorFieldSystem`.
-
-Eager implementation: ignores the config and returns the pre-computed closure.
-For `InPlace` systems, returns `rhs_oop_finalize` (the finalize path) since
-`get_oop_rhs` is only called when `!ismutable(u0)`.
+Lazy implementation: reads `x0` from the config to build a type-specific closure,
+coercing the state to a scalar before calling the user's vector field when the
+declared dimension is 1 (issue #357) — see
+[`CTFlows.Systems._coerce_state`](@ref).
 
 # Arguments
 - `sys::VectorFieldSystem{..., OutOfPlace, ...}`: The out-of-place system.
-- `_`: The configuration (ignored).
+- `config::Configs.AbstractStateConfig`: The state configuration.
 
 # Returns
-- `Function`: The pre-computed out-of-place closure with signature `(u, p, t) -> du`.
+- `IPVFOoPRHS`: An in-place RHS functor with signature `(du, u, p, t) -> nothing`.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
-function get_oop_rhs(
-    sys::VectorFieldSystem{TD,VD,Traits.OutOfPlace,F,RHS,OOPROHS,Nothing}, _
-) where {
-    TD<:Traits.TimeDependence,
-    VD<:Traits.VariableDependence,
-    F<:Data.AbstractVectorField{TD,VD,Traits.OutOfPlace},
-    RHS<:AbstractIPRHS,
-    OOPROHS<:AbstractOoPRHS,
-}
-    return sys.rhs_oop
+function get_ip_rhs(
+    sys::VectorFieldSystem{TD,VD,Traits.OutOfPlace,F}, config::Configs.AbstractStateConfig
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,F<:Data.AbstractVectorField{TD,VD,Traits.OutOfPlace}}
+    x0 = Configs.initial_state(config)
+    return IPVFOoPRHS(sys.vf, _coerce_state(x0))
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Return the out-of-place right-hand side for an `InPlace` `VectorFieldSystem`.
+Return the in-place right-hand side for an in-place `VectorFieldSystem`.
 
-Eager implementation: ignores the config and returns the finalize closure.
-This method is called when `!ismutable(u0)`, so we always return `rhs_oop_finalize`.
+Lazy implementation: reads `x0` from the config to build a type-specific closure.
 
 # Arguments
 - `sys::VectorFieldSystem{..., InPlace, ...}`: The in-place system.
-- `_`: The configuration (ignored).
+- `config::Configs.AbstractStateConfig`: The state configuration.
 
 # Returns
-- `Function`: The finalize closure with signature `(u, p, t) -> du`.
+- `IPVFIpRHS`: An in-place RHS functor with signature `(du, u, p, t) -> nothing`.
 
-# Notes
-- Emits a performance warning since this path is suboptimal for immutable arrays.
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
+"""
+function get_ip_rhs(
+    sys::VectorFieldSystem{TD,VD,Traits.InPlace,F}, config::Configs.AbstractStateConfig
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,F<:Data.AbstractVectorField{TD,VD,Traits.InPlace}}
+    x0 = Configs.initial_state(config)
+    return IPVFIpRHS(sys.vf, _coerce_state(x0))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the out-of-place right-hand side for an out-of-place `VectorFieldSystem`.
+
+Lazy implementation: reads `x0` from the config to build a type-specific closure.
+
+# Arguments
+- `sys::VectorFieldSystem{..., OutOfPlace, ...}`: The out-of-place system.
+- `config::Configs.AbstractStateConfig`: The state configuration.
+
+# Returns
+- `OoPVFOoPRHS`: An out-of-place RHS functor with signature `(u, p, t) -> du`.
 
 See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function get_oop_rhs(
-    sys::VectorFieldSystem{TD,VD,Traits.InPlace,F,RHS,OOPROHS,FINRHS}, _
-) where {
-    TD<:Traits.TimeDependence,
-    VD<:Traits.VariableDependence,
-    F<:Data.AbstractVectorField{TD,VD,Traits.InPlace},
-    RHS<:AbstractIPRHS,
-    OOPROHS<:AbstractOoPRHS,
-    FINRHS,
-}
-    @warn "InPlace VectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
-    return sys.rhs_oop_finalize
+    sys::VectorFieldSystem{TD,VD,Traits.OutOfPlace,F}, config::Configs.AbstractStateConfig
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,F<:Data.AbstractVectorField{TD,VD,Traits.OutOfPlace}}
+    x0 = Configs.initial_state(config)
+    return OoPVFOoPRHS(sys.vf, _coerce_state(x0))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the out-of-place right-hand side for an in-place `VectorFieldSystem`.
+
+Lazy implementation: reads `x0` from the config to build a type-specific closure.
+This method is called when `!ismutable(u0)`, so the finalize path is used whenever
+`x0` is itself immutable (e.g. `SVector`).
+
+# Arguments
+- `sys::VectorFieldSystem{..., InPlace, ...}`: The in-place system.
+- `config::Configs.AbstractStateConfig`: The state configuration.
+
+# Returns
+- `OoPVFIpRHS` or `OoPVFIpFinalizeRHS`: An out-of-place RHS functor.
+
+# Notes
+- Emits a performance warning when called with immutable initial conditions.
+
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
+"""
+function get_oop_rhs(
+    sys::VectorFieldSystem{TD,VD,Traits.InPlace,F}, config::Configs.AbstractStateConfig
+) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,F<:Data.AbstractVectorField{TD,VD,Traits.InPlace}}
+    x0 = Configs.initial_state(config)
+    cx = _coerce_state(x0)
+    if !ismutable(x0)
+        @warn "InPlace VectorField with immutable u0 (e.g. SVector): consider using an out-of-place function for better performance."
+        return OoPVFIpFinalizeRHS(sys.vf, cx)
+    end
+    return OoPVFIpRHS(sys.vf, cx)
 end
 
 # =============================================================================
@@ -234,22 +188,17 @@ Shows the type name and the wrapped VectorField with its traits.
 See also: [`CTFlows.Systems.VectorFieldSystem`](@ref).
 """
 function Base.show(
-    io::IO, sys::VectorFieldSystem{TD,VD,MD,F,RHS,OOPROHS,FINRHS}
+    io::IO, sys::VectorFieldSystem{TD,VD,MD,F}
 ) where {
     TD<:Traits.TimeDependence,
     VD<:Traits.VariableDependence,
     MD<:Traits.AbstractMutabilityTrait,
     F<:Data.AbstractVectorField{TD,VD,MD},
-    RHS<:AbstractIPRHS,
-    OOPROHS<:AbstractOoPRHS,
-    FINRHS,
 }
     fmt = Display.format_codes(io)
     wraps = "VectorField: $(Data._td_label(TD)), $(Data._vd_label(VD)), $(Data._md_label(MD))"
-    rhs = "$(nameof(typeof(sys.rhs))) ($(_rhs_conversion_label(sys.rhs)))"
     Display.print_header(io, "VectorFieldSystem"; fmt=fmt)
-    Display.print_field(io, "wraps", wraps; fmt=fmt, value_style="")
-    return Display.print_field(io, "rhs", rhs; last=true, fmt=fmt, value_style="")
+    return Display.print_field(io, "wraps", wraps; last=true, fmt=fmt, value_style="")
 end
 
 """

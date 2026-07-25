@@ -36,6 +36,66 @@ _safe_only(x) = only(x)
 """
 $(TYPEDSIGNATURES)
 
+Infer the state dimension from the initial condition shape.
+
+# Methods
+- `_state_dim(x0::Number) = 1`
+- `_state_dim(x0::AbstractVector) = length(x0)`
+- `_state_dim(x0::AbstractMatrix) = size(x0, 1)`
+"""
+_state_dim(::Number) = 1
+_state_dim(x::AbstractVector) = length(x)
+_state_dim(x::AbstractMatrix) = size(x, 1)
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the coercion applied to a 1-D quantity (state, costate, variable costate,
+control) so that it is represented as a **scalar** when it has length 1, and left
+untouched otherwise.
+
+# Methods
+- `_coerce_state(::Number) = _safe_only`
+- `_coerce_state(::AbstractMatrix) = identity`
+- `_coerce_state(x::AbstractVector) = length(x) == 1 ? _safe_only : identity`
+
+This enforces the ecosystem convention *"a 1-dimensional quantity is a scalar"*: both
+`2.0` and `[2.0]` collapse to the scalar `2.0` via `_safe_only`, regardless of how the
+user supplied the initial condition. Vectors of length ≥ 2 and matrices (batch mode)
+are left untouched via `identity`.
+
+# Notes
+- Scope (issue [control-toolbox/CTFlows.jl#357](https://github.com/control-toolbox/CTFlows.jl/issues/357)):
+  applied on every **control-toolbox-sourced** flow — `HamiltonianSystem`,
+  `HamiltonianVectorFieldSystem`, `PseudoHamiltonianSystem`,
+  `ConstrainedPseudoHamiltonianSystem`, `PseudoHamiltonianVectorFieldSystem`,
+  `VectorFieldSystem`, and `CTFlowsSciMLFlows.SciMLFunctionSystem` (which shares
+  `VectorFieldSystem`'s `Systems`/`Trajectories` dispatch). **`CTFlowsSciMLFlows.SciMLProblemFlow`**
+  (built directly from an `SciMLBase.AbstractODEProblem`) genuinely bypasses this dispatch
+  (`remake`+`solve` only) and stays shape-preserving instead — it never calls
+  `_coerce_state`.
+- Differs from `CTBase.Core.make_coerce` in that a length-1 **vector** also collapses
+  to a scalar (`_safe_only`, the GPU-safe `only`), not only a bare `Number`.
+
+See also: [`CTFlows.Systems._safe_only`](@ref).
+"""
+_coerce_state(::Number) = _safe_only
+_coerce_state(::AbstractMatrix) = identity
+_coerce_state(x::AbstractVector) = length(x) == 1 ? _safe_only : identity
+
+"""
+$(TYPEDSIGNATURES)
+
+No-op fallback for when the initial state is unknown (`Core.NotProvided`), e.g. a
+trajectory container built directly from a raw integration result without going
+through a `Configs.AbstractConfig` (tests, low-level plumbing). Safe default:
+apply no coercion rather than guess.
+"""
+_coerce_state(::Core.NotProvidedType) = identity
+
+"""
+$(TYPEDSIGNATURES)
+
 Return `src` in a form that can be broadcast into `dst` without a device/host mismatch.
 
 # Arguments

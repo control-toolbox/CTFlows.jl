@@ -72,11 +72,14 @@ function test_scimlbase_function_system()
         # ====================================================================
 
         Test.@testset "RHS Dispatch" begin
-            dummy_config = nothing
-            Test.@testset "in-place returns pre-computed functor" begin
+            # Lazy systems (issue #357): get_ip_rhs/get_oop_rhs read x0 from the
+            # config to build the coercion — use a real config matching u.
+            cfg(x0) = Configs.StateEndPointConfig(0.0, x0, 1.0)
+
+            Test.@testset "in-place returns functor" begin
                 f = ODEFunction((du, u, p, t) -> du .= -u)
                 sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
-                rhs_fn = Systems.get_ip_rhs(sys, dummy_config)
+                rhs_fn = Systems.get_ip_rhs(sys, cfg([1.0, 2.0]))
                 Test.@test rhs_fn !== f  # Not the raw function, but a wrapper
                 Test.@test rhs_fn isa Systems.AbstractIPRHS
                 # Test that the wrapper works
@@ -87,10 +90,10 @@ function test_scimlbase_function_system()
                 Test.@test du ≈ [-1.0, -2.0]
             end
 
-            Test.@testset "out-of-place returns pre-computed functor" begin
+            Test.@testset "out-of-place returns functor" begin
                 f = ODEFunction{false}((u, p, t) -> -u)
                 sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
-                rhs_oop_fn = Systems.get_oop_rhs(sys, dummy_config)
+                rhs_oop_fn = Systems.get_oop_rhs(sys, cfg([1.0, 2.0]))
                 Test.@test rhs_oop_fn !== f  # Not the raw function, but a wrapper
                 Test.@test rhs_oop_fn isa Systems.AbstractOoPRHS
                 # Test that the wrapper works
@@ -103,7 +106,7 @@ function test_scimlbase_function_system()
             Test.@testset "get_ip_rhs on out-of-place returns iip wrapper (cross-adapter)" begin
                 f = ODEFunction{false}((u, p, t) -> -u)
                 sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
-                rhs_fn = Systems.get_ip_rhs(sys, dummy_config)
+                rhs_fn = Systems.get_ip_rhs(sys, cfg([1.0, 2.0]))
                 Test.@test rhs_fn isa Systems.AbstractIPRHS
                 # Should return a wrapper that makes the oop function iip
                 du = zeros(2)
@@ -116,9 +119,11 @@ function test_scimlbase_function_system()
             Test.@testset "get_oop_rhs on in-place returns oop wrapper (cross-adapter)" begin
                 f = ODEFunction((du, u, p, t) -> du .= -u)
                 sys = CTFlowsSciMLFlows.SciMLFunctionSystem(f)
-                rhs_oop_fn = Test.@test_logs (:warn, r"InPlace SciMLFunction") Systems.get_oop_rhs(
-                    sys, dummy_config
-                )
+                # x0 = [1.0, 2.0] is mutable, so (per issue #357's ismutable-gated
+                # warning, matching HamiltonianVectorFieldSystem) no performance
+                # warning fires here — only an immutable x0 (e.g. SVector) warns,
+                # covered by "Integration: iip + SVector u0" below.
+                rhs_oop_fn = Systems.get_oop_rhs(sys, cfg([1.0, 2.0]))
                 Test.@test rhs_oop_fn isa Systems.AbstractOoPRHS
                 # Should return a wrapper that allocates a buffer
                 u = [1.0, 2.0]
@@ -183,19 +188,18 @@ function test_scimlbase_function_system()
             f = ODEFunction((du, u, p, t) -> du .= -p .* u)
             flow = Flows.Flow(f; reltol=1e-10)
             xf = flow(0.0, [1.0], 1.0; variable=2.0)
-            Test.@test xf isa Vector
-            Test.@test length(xf) == 1
+            # 1-D = scalar (issue #357): a length-1 vector u0 collapses to a scalar.
+            Test.@test xf isa Real
             # Expected: exp(-2*1) * 1 = exp(-2) ≈ 0.1353
-            Test.@test isapprox(xf[1], exp(-2.0), rtol=1e-6)
+            Test.@test isapprox(xf, exp(-2.0), rtol=1e-6)
         end
 
         Test.@testset "Integration: oop flow end-to-end" begin
             f = ODEFunction{false}((u, p, t) -> -p .* u)
             flow = Flows.Flow(f; reltol=1e-10)
             xf = flow(0.0, [1.0], 1.0; variable=2.0)
-            Test.@test xf isa Vector
-            Test.@test length(xf) == 1
-            Test.@test isapprox(xf[1], exp(-2.0), rtol=1e-6)
+            Test.@test xf isa Real
+            Test.@test isapprox(xf, exp(-2.0), rtol=1e-6)
         end
 
         Test.@testset "Integration: trajectory call" begin
@@ -206,14 +210,15 @@ function test_scimlbase_function_system()
             Test.@test sol(0.5)[1] ≈ exp(-2.0 * 0.5) rtol=1e-6
         end
 
-        Test.@testset "Integration: iip + SVector u0 (cross-adapter finalize path)" begin
+        Test.@testset "Integration: iip + length-1 SVector u0 (cross-adapter finalize path)" begin
             f = ODEFunction((du, u, p, t) -> du .= -p .* u)
             flow = Flows.Flow(f; reltol=1e-10)
             xf = Test.@test_logs (:warn, r"InPlace SciMLFunction") flow(
                 0.0, SA[1.0], 1.0; variable=2.0
             )
-            Test.@test xf isa SVector
-            Test.@test xf[1] ≈ exp(-2.0) rtol=1e-6
+            # 1-D = scalar (issue #357): a length-1 SVector u0 collapses to a scalar.
+            Test.@test xf isa Real
+            Test.@test xf ≈ exp(-2.0) rtol=1e-6
         end
     end
 end

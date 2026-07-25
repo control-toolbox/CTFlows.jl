@@ -2,6 +2,7 @@ module TestVectorFieldSystem
 
 using Test: Test
 import CTFlows.Systems
+import CTFlows.Configs
 import CTBase.Data
 import CTBase.Traits
 import StaticArrays: SA, StaticArrays
@@ -90,20 +91,21 @@ function test_vector_field_system()
         # ====================================================================
 
         Test.@testset "Contract Implementation" begin
-            # Dummy config for eager systems (ignored)
-            dummy_config = nothing
+            # Lazy systems (issue #357): get_ip_rhs/get_oop_rhs read x0 from the config
+            # to build the coercion — the config's x0 must match the u actually used.
+            cfg(x0) = Configs.StateEndPointConfig(0.0, x0, 1.0)
 
             Test.@testset "get_ip_rhs returns callable" begin
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                rhs = Systems.get_ip_rhs(sys, dummy_config)
+                rhs = Systems.get_ip_rhs(sys, cfg([1.0, 2.0]))
                 Test.@test rhs isa Systems.AbstractRHS
             end
 
             Test.@testset "get_ip_rhs function has correct signature (du, u, p, t)" begin
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                rhs = Systems.get_ip_rhs(sys, dummy_config)
+                rhs = Systems.get_ip_rhs(sys, cfg([1.0, 2.0]))
                 du = zeros(2)
                 u = [1.0, 2.0]
                 p = Systems.ODEParameters(nothing)
@@ -116,7 +118,7 @@ function test_vector_field_system()
             Test.@testset "get_ip_rhs function fills du in place" begin
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                rhs = Systems.get_ip_rhs(sys, dummy_config)
+                rhs = Systems.get_ip_rhs(sys, cfg([1.0, 2.0]))
                 du = zeros(2)
                 p = Systems.ODEParameters(nothing)
                 rhs(du, [1.0, 2.0], p, 0.0)
@@ -128,8 +130,8 @@ function test_vector_field_system()
                 vf2 = Data.VectorField(x -> 3 .* x; is_autonomous=true, is_variable=false)
                 sys1 = Systems.VectorFieldSystem(vf1)
                 sys2 = Systems.VectorFieldSystem(vf2)
-                rhs1 = Systems.get_ip_rhs(sys1, dummy_config)
-                rhs2 = Systems.get_ip_rhs(sys2, dummy_config)
+                rhs1 = Systems.get_ip_rhs(sys1, cfg([1.0, 1.0]))
+                rhs2 = Systems.get_ip_rhs(sys2, cfg([1.0, 1.0]))
                 du1 = zeros(2)
                 du2 = zeros(2)
                 p = Systems.ODEParameters(nothing)
@@ -142,14 +144,14 @@ function test_vector_field_system()
             Test.@testset "get_oop_rhs returns callable" begin
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                rhs_oop = Systems.get_oop_rhs(sys, dummy_config)
+                rhs_oop = Systems.get_oop_rhs(sys, cfg([1.0, 2.0]))
                 Test.@test rhs_oop isa Systems.AbstractRHS
             end
 
             Test.@testset "get_oop_rhs function has correct signature (u, p, t)" begin
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                rhs_oop = Systems.get_oop_rhs(sys, dummy_config)
+                rhs_oop = Systems.get_oop_rhs(sys, cfg([1.0, 2.0]))
                 u = [1.0, 2.0]
                 p = Systems.ODEParameters(nothing)
                 t = 0.0
@@ -157,19 +159,23 @@ function test_vector_field_system()
                 Test.@test du ≈ [-1.0, -2.0] atol=1e-10
             end
 
-            Test.@testset "get_oop_rhs stored" begin
+            Test.@testset "get_oop_rhs is lazy (not cached across calls)" begin
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                Test.@test sys.rhs_oop isa Systems.AbstractRHS
-                Test.@test Systems.get_oop_rhs(sys, dummy_config) === sys.rhs_oop
+                rhs_oop1 = Systems.get_oop_rhs(sys, cfg([1.0, 2.0]))
+                rhs_oop2 = Systems.get_oop_rhs(sys, cfg([1.0, 2.0]))
+                Test.@test rhs_oop1 isa Systems.AbstractRHS
+                Test.@test rhs_oop2 isa Systems.AbstractRHS
+                # Built fresh each call (config-driven, per issue #357), unlike the
+                # previous eager implementation which cached one closure at construction.
             end
 
             Test.@testset "get_ip_rhs with matrix" begin
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                rhs = Systems.get_ip_rhs(sys, dummy_config)
-                du = zeros(2, 3)
                 u = [1.0 2.0 3.0; 4.0 5.0 6.0]
+                rhs = Systems.get_ip_rhs(sys, cfg(u))
+                du = zeros(2, 3)
                 p = Systems.ODEParameters(nothing)
                 rhs(du, u, p, 0.0)
                 Test.@test du ≈ -u atol=1e-10
@@ -178,8 +184,8 @@ function test_vector_field_system()
             Test.@testset "get_oop_rhs with matrix" begin
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                rhs_oop = Systems.get_oop_rhs(sys, dummy_config)
                 u = [1.0 2.0 3.0; 4.0 5.0 6.0]
+                rhs_oop = Systems.get_oop_rhs(sys, cfg(u))
                 p = Systems.ODEParameters(nothing)
                 du = rhs_oop(u, p, 0.0)
                 Test.@test du ≈ -u atol=1e-10
@@ -191,11 +197,11 @@ function test_vector_field_system()
         # ====================================================================
 
         Test.@testset "Complex numbers" begin
-            dummy_config = nothing
             vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
             sys = Systems.VectorFieldSystem(vf)
-            rhs = Systems.get_ip_rhs(sys, dummy_config)
-            rhs_oop = Systems.get_oop_rhs(sys, dummy_config)
+            cplx_cfg = Configs.StateEndPointConfig(0.0, [1.0 + 2.0im, 3.0 + 4.0im], 1.0)
+            rhs = Systems.get_ip_rhs(sys, cplx_cfg)
+            rhs_oop = Systems.get_oop_rhs(sys, cplx_cfg)
             p = Systems.ODEParameters(nothing)
 
             Test.@testset "get_ip_rhs - complex vector" begin
@@ -230,12 +236,11 @@ function test_vector_field_system()
         # ====================================================================
 
         Test.@testset "SVector unit" begin
-            dummy_config = nothing
             Test.@testset "get_oop_rhs with SVector" begin
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                rhs_oop = Systems.get_oop_rhs(sys, dummy_config)
                 u = SA[1.0, 2.0]
+                rhs_oop = Systems.get_oop_rhs(sys, Configs.StateEndPointConfig(0.0, u, 1.0))
                 p = Systems.ODEParameters(nothing)
                 du = rhs_oop(u, p, 0.0)
                 Test.@test du == SA[-1.0, -2.0]
@@ -244,8 +249,8 @@ function test_vector_field_system()
             Test.@testset "get_oop_rhs with SVector complex" begin
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                rhs_oop = Systems.get_oop_rhs(sys, dummy_config)
                 u = SA[1.0 + 2.0im, 3.0 + 4.0im]
+                rhs_oop = Systems.get_oop_rhs(sys, Configs.StateEndPointConfig(0.0, u, 1.0))
                 p = Systems.ODEParameters(nothing)
                 du = rhs_oop(u, p, 0.0)
                 Test.@test du == SA[-1.0 - 2.0im, -3.0 - 4.0im]
@@ -257,19 +262,23 @@ function test_vector_field_system()
         # ====================================================================
 
         Test.@testset "InPlace VectorField" begin
-            dummy_config = nothing
-            Test.@testset "OOP: rhs_oop_finalize is Nothing" begin
+            Test.@testset "OOP: get_oop_rhs returns the plain OOP functor (no finalize path)" begin
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                Test.@test sys.rhs_oop_finalize === nothing
+                f = Systems.get_oop_rhs(sys, Configs.StateEndPointConfig(0.0, [1.0, 2.0], 1.0))
+                Test.@test f isa Systems.AbstractRHS
             end
 
-            Test.@testset "IP: rhs_oop_finalize is Function" begin
+            Test.@testset "IP: get_oop_rhs with immutable u returns finalize functor" begin
                 vf = Data.VectorField(
                     (du, x) -> (du .= -x); is_autonomous=true, is_variable=false
                 )
                 sys = Systems.VectorFieldSystem(vf)
-                Test.@test sys.rhs_oop_finalize isa Systems.AbstractRHS
+                u = SA[1.0, 2.0]
+                f = Test.@test_logs (:warn, r"InPlace VectorField") Systems.get_oop_rhs(
+                    sys, Configs.StateEndPointConfig(0.0, u, 1.0)
+                )
+                Test.@test f isa Systems.AbstractRHS
             end
 
             Test.@testset "IP: get_ip_rhs fills du via in-place call" begin
@@ -279,19 +288,9 @@ function test_vector_field_system()
                 sys = Systems.VectorFieldSystem(vf)
                 du = zeros(2)
                 p = Systems.ODEParameters(nothing)
-                Systems.get_ip_rhs(sys, dummy_config)(du, [1.0, 2.0], p, 0.0)
+                config = Configs.StateEndPointConfig(0.0, [1.0, 2.0], 1.0)
+                Systems.get_ip_rhs(sys, config)(du, [1.0, 2.0], p, 0.0)
                 Test.@test du ≈ [-1.0, -2.0]
-            end
-
-            Test.@testset "IP: get_oop_rhs returns rhs_oop_finalize and warns" begin
-                vf = Data.VectorField(
-                    (du, x) -> (du .= -x); is_autonomous=true, is_variable=false
-                )
-                sys = Systems.VectorFieldSystem(vf)
-                f = Test.@test_logs (:warn, r"InPlace VectorField") Systems.get_oop_rhs(
-                    sys, dummy_config
-                )
-                Test.@test f === sys.rhs_oop_finalize
             end
 
             Test.@testset "IP: rhs_oop_finalize returns SVector for SVector u" begin
@@ -299,8 +298,10 @@ function test_vector_field_system()
                     (du, x) -> (du .= -x); is_autonomous=true, is_variable=false
                 )
                 sys = Systems.VectorFieldSystem(vf)
-                f = sys.rhs_oop_finalize
                 u = SA[1.0, 2.0]
+                f = Test.@test_logs (:warn, r"InPlace VectorField") Systems.get_oop_rhs(
+                    sys, Configs.StateEndPointConfig(0.0, u, 1.0)
+                )
                 p = Systems.ODEParameters(nothing)
                 du = f(u, p, 0.0)
                 Test.@test du ≈ SA[-1.0, -2.0]
