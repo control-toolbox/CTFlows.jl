@@ -153,12 +153,15 @@ function Base.show(io::IO, ::MIME"text/plain", f::SciMLProblemFlow)
     Display.print_header(io, "SciMLProblemFlow"; fmt=fmt)
     Display.print_field(io, "tspan", f.prob.tspan; fmt=fmt)
     Display.print_field(io, "u0", f.prob.u0; fmt=fmt)
-    int_str = sprint(
-        f.integrator; context=IOContext(io, :color => get(io, :color, false))
-    ) do io2, i
-        print(io2, fmt.value, nameof(typeof(i)), fmt.reset)
-        return Flows._print_user_options(io2, i)
-    end
+    # Nest the integrator's own (styled, multi-line) text/plain display under the last branch.
+    int_str = chomp(
+        sprint(
+            show,
+            MIME("text/plain"),
+            f.integrator;
+            context=IOContext(io, :color => get(io, :color, false)),
+        ),
+    )
     return Display.print_field(
         io, "integrator", int_str; last=true, fmt=fmt, value_style=""
     )

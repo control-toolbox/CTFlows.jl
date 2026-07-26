@@ -38,6 +38,7 @@ end
 Strategies.id(::Type{FakeIntegrator}) = :fake_integrator
 Strategies.metadata(::Type{FakeIntegrator}) = Strategies.StrategyMetadata()
 Strategies.options(integ::FakeIntegrator) = Strategies.StrategyOptions()
+Strategies.parameter(::Type{FakeIntegrator}) = nothing
 
 """
 Fake flow for testing the AbstractFlow contract.
