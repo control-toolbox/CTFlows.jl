@@ -517,9 +517,9 @@ julia> using CTFlows.Flows
 
 julia> flow = Flow(system, integrator)
 StateFlow
-  system:     VectorFieldSystem
-                wraps: VectorField: autonomous, fixed (no variable), out-of-place
-  integrator: SciML (abstol = 1e-8, reltol = 1e-6)
+├─ system: VectorFieldSystem
+│  └─ wraps: VectorField: autonomous, fixed (no variable), out-of-place
+└─ integrator: SciML (abstol = 1e-8, reltol = 1e-6)
 ```
 """
 function Base.show(io::IO, ::MIME"text/plain", flow::AbstractFlow)

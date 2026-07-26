@@ -14,8 +14,7 @@ import Pkg
 Pkg.add("CTFlows")
 ```
 
-To integrate anything you also need an ODE solver backend. The default strategy is
-**SciML**, activated by loading an OrdinaryDiffEq solver package:
+To integrate anything you also need an ODE solver backend. The default (and unique) strategy is **SciML**, activated by loading an OrdinaryDiffEq solver package:
 
 ```julia
 Pkg.add("OrdinaryDiffEqTsit5")
@@ -25,15 +24,15 @@ Pkg.add("OrdinaryDiffEqTsit5")
 
 Three ideas explain most of the API:
 
-1. **No top-level exports.** CTFlows exports nothing at the package level. Every
+- **No top-level exports.** CTFlows exports nothing at the package level. Every
    symbol lives in a submodule and is reached via a qualified path
    (`CTFlows.Flows.Flow`) or an explicit `using CTFlows.Flows`. The same holds for
-   the data layer, which lives in CTBase (`CTBase.Data.VectorField`).
-2. **A pipeline of small layers.** Data (your functions, wrapped) → Systems (ODE
+  the data layer, which lives in CTBase (`CTBase.Data.VectorField`).
+- **A pipeline of small layers.** Data (your functions, wrapped) → Systems (ODE
    right-hand side) → Integrators (solver strategy) → Flows (the callable object) →
    Trajectories (the result). The shortcut `Flows.Flow(data; opts...)` runs the
    whole pipeline in one call.
-3. **Extension-backed features.** The actual ODE solving, plotting, and SciML
+- **Extension-backed features.** The actual ODE solving, plotting, and SciML
    interoperability are Julia package extensions: they activate when you load
    `OrdinaryDiffEqTsit5` (or another solver), `Plots`, or `SciMLBase`.
 
@@ -58,7 +57,6 @@ A vector field is any function of the state. Wrapping it as a
 
 ```@example getting_started
 vf = Data.VectorField(x -> -x)   # autonomous, fixed
-nothing # hide
 ```
 
 ### Build the flow
@@ -71,7 +69,7 @@ flow = Flows.Flow(vf; reltol=1e-8, abstol=1e-8)
 
 Point form returns only the final state:
 
-```@repl getting_started
+```@example getting_started
 xf = flow(0.0, [1.0, 0.0], 1.0)
 ```
 
@@ -100,8 +98,10 @@ The same API drives Hamiltonian dynamics on state–costate pairs
 
 ```@example getting_started
 hvf = Data.HamiltonianVectorField((x, p) -> (p, -x))
+```
+
+```@example getting_started
 hflow = Flows.Flow(hvf; reltol=1e-10)
-nothing # hide
 ```
 
 ```@repl getting_started
@@ -132,7 +132,6 @@ CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf[1])
 ocp = CTModels.Building.build(pre)
 
 f = Flows.Flow(ocp; reltol=1e-10)
-nothing # hide
 ```
 
 Point evaluation returns the final state–costate pair (Hamiltonian semantics):
@@ -171,6 +170,7 @@ Base.showable(::MIME"image/png", ::Plots.Plot) = false
 ```
 
 ```@example getting_started
+using Plots
 plot(sol)
 ```
 
