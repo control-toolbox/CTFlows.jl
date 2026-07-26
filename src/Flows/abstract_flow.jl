@@ -509,7 +509,8 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Display the flow in tree-style format with proper indentation for multi-line system displays.
+Display the flow in tree-style format with proper indentation for multi-line system and
+integrator displays.
 
 # Example
 ```julia-repl
@@ -518,8 +519,16 @@ julia> using CTFlows.Flows
 julia> flow = Flow(system, integrator)
 StateFlow
 ├─ system: VectorFieldSystem
-│  └─ wraps: VectorField: autonomous, fixed (no variable), out-of-place
-└─ integrator: SciML (abstol = 1e-8, reltol = 1e-6)
+│  ├─ time_dependence: Autonomous
+│  ├─ variable_dependence: Fixed
+│  └─ VectorField: autonomous, fixed (no variable), out-of-place
+│     natural call: f(x)
+│     uniform call: f(t, x, v)
+└─ integrator: SciML (instance, id=:sciml)
+   ├─ alg = Tsit5  [default]
+   ├─ reltol = 1.0e-8  [user]
+   └─ abstol = 1.0e-8  [user]
+   Tip: use describe(SciML) to see all available options.
 ```
 """
 function Base.show(io::IO, ::MIME"text/plain", flow::AbstractFlow)
@@ -532,13 +541,15 @@ function Base.show(io::IO, ::MIME"text/plain", flow::AbstractFlow)
     # Nest the system's own (styled, possibly multi-line) display under the `system` branch.
     Display.print_field(io, "system", sys; fmt=fmt, value_style="")
 
-    # Integrator name followed by user-supplied options, nested under the last branch.
-    int_str = sprint(
-        integ; context=IOContext(io, :color => get(io, :color, false))
-    ) do io2, i
-        print(io2, fmt.value, nameof(typeof(i)), fmt.reset)
-        return _print_user_options(io2, i)
-    end
+    # Nest the integrator's own (styled, multi-line) text/plain display under the last branch.
+    int_str = chomp(
+        sprint(
+            show,
+            MIME("text/plain"),
+            integ;
+            context=IOContext(io, :color => get(io, :color, false)),
+        ),
+    )
     return Display.print_field(
         io, "integrator", int_str; last=true, fmt=fmt, value_style=""
     )
@@ -566,43 +577,5 @@ function Base.show(io::IO, flow::AbstractFlow)
     push!(parts, "system=$(sys)")
     push!(parts, "integrator=$(nameof(typeof(integ)))")
     print(io, join(parts, ", "))
-    return print(io, ")")
-end
-
-# =============================================================================
-# Internal helpers for show
-# =============================================================================
-
-"""
-    _print_user_options(io::IO, integ::Integrators.AbstractIntegrator)
-
-Print user-supplied integrator options inline: `(key = val, …)`.
-Silently does nothing when no user options are set.
-
-# Arguments
-- `io::IO`: The IO stream to write to.
-- `integ::Integrators.AbstractIntegrator`: The integrator to inspect for user options.
-
-# Example
-\`\`\`julia
-# If user options are set: prints " (abstol = 1e-8, reltol = 1e-6)"
-# If no user options: prints nothing
-\`\`\`
-"""
-function _print_user_options(io::IO, integ::Integrators.AbstractIntegrator)
-    opts = Strategies.options(integ)
-    user_opts = sort!(
-        [
-            (k, Options.value(v)) for
-            (k, v) in pairs(opts.options) if Options.is_user(opts, k)
-        ];
-        by=x -> string(x[1]),
-    )
-    isempty(user_opts) && return nothing
-    print(io, " (")
-    for (i, (k, v)) in enumerate(user_opts)
-        i > 1 && print(io, ", ")
-        print(io, k, " = ", v)
-    end
     return print(io, ")")
 end

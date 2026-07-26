@@ -19,19 +19,18 @@ coercing a 1-D state to a scalar before calling the user's vector field (issue
 \`\`\`julia-repl
 julia> using CTFlows.Systems
 
-julia> vf = VectorField(x -> -x; autonomous=true, variable=false)
-VectorField
-  time_dependence: Autonomous
-  variable_dependence: Fixed
-  mutability: OutOfPlace
-  function: var"#1"
+julia> vf = Data.VectorField(x -> -x)
+VectorField: autonomous, fixed (no variable), out-of-place
+  natural call: f(x)
+  uniform call: f(t, x, v)
 
 julia> sys = VectorFieldSystem(vf)
 VectorFieldSystem
-  time_dependence: Autonomous
-  variable_dependence: Fixed
-  mutability: OutOfPlace
-  vector_field: VectorField{var"#1", Autonomous, Fixed, OutOfPlace}
+├─ time_dependence: Autonomous
+├─ variable_dependence: Fixed
+└─ VectorField: autonomous, fixed (no variable), out-of-place
+   natural call: f(x)
+   uniform call: f(t, x, v)
 \`\`\`
 
 See also: [`CTBase.Data.VectorField`](@extref), `TimeDependence`, [`CTBase.Traits.VariableDependence`](@extref), [`CTFlows.Systems.ODEParameters`](@ref).
@@ -212,9 +211,22 @@ function Base.show(
     F<:Data.AbstractVectorField{TD,VD,MD},
 }
     fmt = Display.format_codes(io)
-    wraps = "VectorField: $(Data._td_label(TD)), $(Data._vd_label(VD)), $(Data._md_label(MD))"
     Display.print_header(io, "VectorFieldSystem"; fmt=fmt)
-    return Display.print_field(io, "wraps", wraps; last=true, fmt=fmt, value_style="")
+    Display.print_field(
+        io,
+        "time_dependence",
+        nameof(Traits.time_dependence(sys));
+        fmt=fmt,
+        value_style=fmt.type,
+    )
+    Display.print_field(
+        io,
+        "variable_dependence",
+        nameof(Traits.variable_dependence(sys));
+        fmt=fmt,
+        value_style=fmt.type,
+    )
+    return Display.print_field(io, "", sys.vf; last=true, fmt=fmt, value_style="")
 end
 
 """

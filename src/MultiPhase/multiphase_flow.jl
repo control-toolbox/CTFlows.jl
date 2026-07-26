@@ -62,6 +62,23 @@ const MultiPhaseHamiltonianFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDep
     TD,VD,Traits.HamiltonianDynamics,FS,ST,J
 }
 
+"""
+$(TYPEDSIGNATURES)
+
+Construct a `MultiPhaseStateFlow` from a tuple of flows, switching times, and jumps.
+
+The time and variable dependence traits are inferred from the first flow.
+
+# Arguments
+- `flows::Tuple`: Tuple of phase flows (each `<: Flows.AbstractStateFlow`).
+- `switching_times::Vector{<:Real}`: Switching times between phases.
+- `jumps::Vector{<:Any}`: Jump conditions at each switching time.
+
+# Returns
+- A `MultiPhaseFlow` with `StateDynamics` trait.
+
+See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@ref), [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref).
+"""
 function MultiPhaseStateFlow(
     flows::FS, switching_times::ST, jumps::J
 ) where {FS<:Tuple,ST,J}
@@ -78,6 +95,23 @@ function MultiPhaseStateFlow(
     )
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Construct a `MultiPhaseHamiltonianFlow` from a tuple of flows, switching times, and jumps.
+
+The time and variable dependence traits are inferred from the first flow.
+
+# Arguments
+- `flows::Tuple`: Tuple of phase flows (each `<: Flows.AbstractHamiltonianFlow`).
+- `switching_times::Vector{<:Real}`: Switching times between phases.
+- `jumps::Vector{<:Any}`: Jump conditions at each switching time.
+
+# Returns
+- A `MultiPhaseFlow` with `HamiltonianDynamics` trait.
+
+See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@ref), [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref).
+"""
 function MultiPhaseHamiltonianFlow(
     flows::FS, switching_times::ST, jumps::J
 ) where {FS<:Tuple,ST,J}
@@ -278,6 +312,12 @@ function _multiphase_display_name(
 )
     return "MultiPhaseStateFlow"
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return `"MultiPhaseHamiltonianFlow"` for a `MultiPhaseFlow` with `HamiltonianDynamics`.
+"""
 function _multiphase_display_name(
     ::MultiPhaseFlow{
         <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.HamiltonianDynamics
@@ -285,6 +325,12 @@ function _multiphase_display_name(
 )
     return "MultiPhaseHamiltonianFlow"
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Fallback: return the concrete type name as a string.
+"""
 function _multiphase_display_name(mpf::MultiPhaseFlow)
     return string(nameof(typeof(mpf)))
 end

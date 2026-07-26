@@ -34,7 +34,13 @@ function _flow_families(::Type{Traits.WithoutAD})
     return (integrator=Integrators.AbstractIntegrator,)
 end
 
-# Back-compat: the full (WithAD) families.
+"""
+$(TYPEDSIGNATURES)
+
+Back-compat alias: return the full (`WithAD`) strategy families — backend + integrator.
+
+See also: [`CTFlows.Flows._flow_families`](@ref).
+"""
 _flow_families() = _flow_families(Traits.WithAD)
 
 """
@@ -44,8 +50,18 @@ Base method description for a flow plan, per AD trait. The device token (`:cpu`)
 the flow registry is parameterized (`[CPU, GPU]`), so a device token is required —
 [`CTBase.Strategies.extract_global_parameter_from_method`](@extref) throws otherwise. The bare
 `:cpu` reproduces the pre-parameterization CPU behaviour exactly (`SciML{CPU}` metadata ≡ old).
+
+See also: [`CTFlows.Flows._flow_base_description`](@ref), [`CTFlows.Flows._available_flow_methods`](@ref).
 """
 _flow_base_description(::Type{Traits.WithAD}) = (:di, :sciml, :cpu)
+"""
+$(TYPEDSIGNATURES)
+
+Base method description for an AD-free flow plan: no `:di` backend token (no scalar
+Hamiltonian is differentiated), only the `:sciml` integrator and `:cpu` device.
+
+See also: [`CTFlows.Flows._flow_base_description`](@ref), [`CTFlows.Flows._available_flow_methods`](@ref).
+"""
 _flow_base_description(::Type{Traits.WithoutAD}) = (:sciml, :cpu)
 
 """
@@ -55,6 +71,14 @@ Candidate descriptions (the `:cpu`/`:gpu` device variants) against which a user 
 completed via [`CTBase.Descriptions.complete`](@extref).
 """
 _available_flow_methods(::Type{Traits.WithAD}) = ((:di, :sciml, :cpu), (:di, :sciml, :gpu))
+"""
+$(TYPEDSIGNATURES)
+
+Candidate descriptions for an AD-free flow: only the `:sciml` integrator with `:cpu`/`:gpu`
+device variants (no `:di` backend).
+
+See also: [`CTFlows.Flows._available_flow_methods`](@ref), [`CTBase.Descriptions.complete`](@extref).
+"""
 _available_flow_methods(::Type{Traits.WithoutAD}) = ((:sciml, :cpu), (:sciml, :gpu))
 
 """
@@ -67,7 +91,21 @@ single-element tuple; a tuple of `Symbol`s is returned as-is.
 See also: [`CTFlows.Flows._flow_description`](@ref)
 """
 _as_method_tokens(::Nothing) = nothing
+"""
+$(TYPEDSIGNATURES)
+
+Wrap a bare `Symbol` (e.g. `:gpu`) into a single-element tuple.
+
+See also: [`CTFlows.Flows._as_method_tokens`](@ref), [`CTFlows.Flows._flow_description`](@ref).
+"""
 _as_method_tokens(m::Symbol) = (m,)
+"""
+$(TYPEDSIGNATURES)
+
+Return a tuple of `Symbol`s as-is — already in the normalized form.
+
+See also: [`CTFlows.Flows._as_method_tokens`](@ref), [`CTFlows.Flows._flow_description`](@ref).
+"""
 _as_method_tokens(m::Tuple{Vararg{Symbol}}) = m
 
 """
@@ -173,7 +211,13 @@ function _route_flow_options(
     )
 end
 
-# Back-compat: default to the WithAD plan (the full `:di`/`:sciml` families).
+"""
+$(TYPEDSIGNATURES)
+
+Back-compat alias: route options using the `WithAD` plan (the full `:di`/`:sciml` families).
+
+See also: [`CTFlows.Flows._route_flow_options`](@ref).
+"""
 function _route_flow_options(
     kwargs; action_defs::Vector{<:Options.OptionDefinition}=Options.OptionDefinition[]
 )
@@ -230,6 +274,13 @@ Read an action option value from a routed `action` NamedTuple entry: unwrap an
 See also: [`CTFlows.Flows._flow_action_defs`](@ref), [`CTFlows.Flows._route_flow_options`](@ref).
 """
 _unwrap_option(opt::Options.OptionValue, fallback) = opt.value
+"""
+$(TYPEDSIGNATURES)
+
+Return `opt` directly when it is not `nothing`, or `fallback` otherwise.
+
+See also: [`CTFlows.Flows._unwrap_option`](@ref), [`CTFlows.Flows._route_flow_options`](@ref).
+"""
 _unwrap_option(opt, fallback) = opt === nothing ? fallback : opt
 
 """
@@ -280,7 +331,13 @@ function _build_flow_components(ad_trait, routed; method=nothing)
     return NamedTuple{keys(families)}(built)
 end
 
-# Back-compat: default to the WithAD plan (backend + integrator).
+"""
+$(TYPEDSIGNATURES)
+
+Back-compat alias: build flow components using the `WithAD` plan (backend + integrator).
+
+See also: [`CTFlows.Flows._build_flow_components`](@ref).
+"""
 _build_flow_components(routed) = _build_flow_components(Traits.WithAD, routed)
 
 """

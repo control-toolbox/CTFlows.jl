@@ -113,10 +113,12 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                 joinpath("Flows", "building.jl"),
                 joinpath("Flows", "calling.jl"),
             ),
-            # Flows re-exports `hamiltonian_vector_field` and `vector_field` from Systems;
-            # documenting them here too would duplicate the Systems-page docstring (same
-            # canonical binding).
-            exclude=vcat(EXCLUDE_SYMBOLS, [:hamiltonian_vector_field, :vector_field]),
+            # Flows re-exports `hamiltonian`, `hamiltonian_vector_field`, and `vector_field`
+            # from Systems; documenting them here too would duplicate the Systems-page
+            # docstring (same canonical binding).
+            exclude=vcat(
+                EXCLUDE_SYMBOLS, [:hamiltonian, :hamiltonian_vector_field, :vector_field]
+            ),
         ),
         (
             mod=CTFlows.MultiPhase,

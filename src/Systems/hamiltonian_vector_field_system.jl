@@ -21,19 +21,18 @@ inputs with consistent output shapes.
 ```julia-repl
 julia> using CTFlows.Systems
 
-julia> hvf = HamiltonianVectorField((x, p) -> (x, -p); autonomous=true, variable=false)
-HamiltonianVectorField
-  time_dependence: Autonomous
-  variable_dependence: Fixed
-  mutability: OutOfPlace
-  function: var"#1"
+julia> hvf = Data.HamiltonianVectorField((x, p) -> (x, -p))
+HamiltonianVectorField: autonomous, fixed (no variable), out-of-place
+  natural call: f(x, p)
+  uniform call: f(t, x, p, v)
 
 julia> sys = HamiltonianVectorFieldSystem(hvf)
 HamiltonianVectorFieldSystem
-  time_dependence: Autonomous
-  variable_dependence: Fixed
-  mutability: OutOfPlace
-  hamiltonian_vector_field: HamiltonianVectorField{var"#1", Autonomous, Fixed, OutOfPlace}
+├─ time_dependence: Autonomous
+├─ variable_dependence: Fixed
+└─ HamiltonianVectorField: autonomous, fixed (no variable), out-of-place
+   natural call: f(x, p)
+   uniform call: f(t, x, p, v)
 ```
 
 See also: [`CTBase.Data.HamiltonianVectorField`](@extref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), `TimeDependence`, [`CTBase.Traits.VariableDependence`](@extref), `build_rhs`, `build_oop_rhs`.
@@ -47,6 +46,16 @@ struct HamiltonianVectorFieldSystem{
     hvf::Data.HamiltonianVectorField{F,TD,VD,MD}
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the AD trait of a `HamiltonianVectorFieldSystem`, which is always
+[`CTBase.Traits.WithoutAD`](@extref): the system stores the Hamiltonian vector field
+`X_H` directly and performs no automatic differentiation.
+
+See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref),
+[`CTBase.Traits.WithoutAD`](@extref).
+"""
 Traits.ad_trait(::HamiltonianVectorFieldSystem) = Traits.WithoutAD
 
 # Note: no explicit outer constructor — Julia's auto-generated default outer
@@ -82,6 +91,14 @@ Dispatches on the array type (`AbstractVector` or `AbstractMatrix`) and the know
 - The `CTFlowsStaticArrays` extension provides a type-stable method for `StaticVector`.
 """
 _ham_split(u::AbstractVector, N::Int) = (@view(u[1:N]), @view(u[(N + 1):2N]))
+
+"""
+$(TYPEDSIGNATURES)
+
+Matrix variant of [`CTFlows.Systems._ham_split`](@ref): splits each column of `u` into state and costate row-block views.
+
+See also: [`CTFlows.Systems._ham_split`](@ref).
+"""
 _ham_split(u::AbstractMatrix, N::Int) = (@view(u[1:N, :]), @view(u[(N + 1):2N, :]))
 
 """
@@ -105,6 +122,14 @@ Dispatches on the array type (`AbstractVector` or `AbstractMatrix`) and the know
 - Performs in-place assignment using broadcasting.
 """
 _ham_assign!(du::AbstractVector, dx, dp, N::Int) = (du[1:N].=dx; du[(N + 1):2N].=dp)
+
+"""
+$(TYPEDSIGNATURES)
+
+Matrix variant of [`CTFlows.Systems._ham_assign!`](@ref): assigns state and costate derivatives into the corresponding row-blocks of each column.
+
+See also: [`CTFlows.Systems._ham_assign!`](@ref).
+"""
 _ham_assign!(du::AbstractMatrix, dx, dp, N::Int) = (du[1:N, :].=dx; du[(N + 1):2N, :].=dp)
 
 # =============================================================================
@@ -142,6 +167,14 @@ function _aug_split(u::AbstractVector, n_x::Int, n_v::Int)
     pv = @view(u[(end - n_v + 1):end])
     return (x, p, pv)
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Matrix variant of [`CTFlows.Systems._aug_split`](@ref): splits each column of `u` into state, costate, and variable-costate row-block views.
+
+See also: [`CTFlows.Systems._aug_split`](@ref).
+"""
 function _aug_split(u::AbstractMatrix, n_x::Int, n_v::Int)
     return (
         @view(u[1:n_x, :]),
@@ -184,6 +217,14 @@ function _aug_assign!(du::AbstractVector, dx, dp, dpv, n_x::Int, n_v::Int)
     du[(end - n_v + 1):end] .= _device_like(du, dpv)
     return nothing
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Matrix variant of [`CTFlows.Systems._aug_assign!`](@ref): assigns state, costate, and variable-costate derivatives into the corresponding row-blocks of each column.
+
+See also: [`CTFlows.Systems._aug_assign!`](@ref).
+"""
 function _aug_assign!(du::AbstractMatrix, dx, dp, dpv, n_x::Int, n_v::Int)
     du[1:n_x, :] .= _device_like(du, dx)
     du[(n_x + 1):(2 * n_x), :] .= _device_like(du, dp)
@@ -365,11 +406,48 @@ end
 # Trait: variable_costate
 # =============================================================================
 
-# TODO: docstring
+"""
+$(TYPEDSIGNATURES)
+
+Return the variable-costate trait of a `HamiltonianVectorFieldSystem` with
+`NonFixed` variable dependence, which is
+[`CTBase.Traits.SupportsVariableCostate`](@extref): the Hamiltonian vector field
+carries a variable argument `v`, so the augmented system `ṗv = -∂H/∂v` can be
+integrated.
+
+See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref),
+[`CTBase.Traits.SupportsVariableCostate`](@extref).
+"""
 function Traits.variable_costate_trait(
     ::HamiltonianVectorFieldSystem{F,TD,Traits.NonFixed,MD}
 ) where {F<:Function,TD<:Traits.TimeDependence,MD<:Traits.AbstractMutabilityTrait}
     return Traits.SupportsVariableCostate
+end
+
+# =============================================================================
+# hamiltonian getter — informative error (no scalar Hamiltonian stored)
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Throw an `IncorrectArgument` error: a `HamiltonianVectorFieldSystem` stores the
+vector field `X_H` directly and carries no scalar Hamiltonian. Use
+[`CTFlows.Systems.hamiltonian_vector_field`](@ref) to retrieve `X_H` instead.
+
+See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref),
+[`CTFlows.Systems.hamiltonian_vector_field`](@ref).
+"""
+function hamiltonian(::HamiltonianVectorFieldSystem)
+    return throw(
+        Exceptions.IncorrectArgument(
+            "no scalar Hamiltonian available for a HamiltonianVectorFieldSystem";
+            got="a HamiltonianVectorFieldSystem (stores the vector field directly, no AD)",
+            expected="a HamiltonianSystem or PseudoHamiltonianSystem (built from a scalar Hamiltonian with AD)",
+            suggestion="use hamiltonian_vector_field(flow) to retrieve X_H, or build the flow from a scalar Hamiltonian",
+            context="hamiltonian(sys::HamiltonianVectorFieldSystem)",
+        ),
+    )
 end
 
 # =============================================================================
@@ -398,9 +476,22 @@ function Base.show(
     MD<:Traits.AbstractMutabilityTrait,
 }
     fmt = Display.format_codes(io)
-    wraps = "HamiltonianVectorField: $(Data._td_label(TD)), $(Data._vd_label(VD)), $(Data._md_label(MD))"
     Display.print_header(io, "HamiltonianVectorFieldSystem"; fmt=fmt)
-    return Display.print_field(io, "wraps", wraps; last=true, fmt=fmt, value_style="")
+    Display.print_field(
+        io,
+        "time_dependence",
+        nameof(Traits.time_dependence(sys));
+        fmt=fmt,
+        value_style=fmt.type,
+    )
+    Display.print_field(
+        io,
+        "variable_dependence",
+        nameof(Traits.variable_dependence(sys));
+        fmt=fmt,
+        value_style=fmt.type,
+    )
+    return Display.print_field(io, "", sys.hvf; last=true, fmt=fmt, value_style="")
 end
 
 """

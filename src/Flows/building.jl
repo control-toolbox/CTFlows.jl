@@ -324,8 +324,12 @@ end
 $(TYPEDSIGNATURES)
 
 Build the inner Hamiltonian flow for the `:total` mode: compose the pseudo-Hamiltonian
-with the control law into a [`CTBase.Data.ComposedHamiltonian`](@extref) and wrap it in a
-[`CTFlows.Systems.HamiltonianSystem`](@ref) (AD through the law).
+`H̃` with the control law `u(t,x,p,v)` into a [`CTBase.Data.ComposedHamiltonian`](@extref)
+`H(t,x,p,v) = H̃(t,x,p,u(t,x,p,v),v)`, wrap it in a
+[`CTFlows.Systems.HamiltonianSystem`](@ref), and build the flow.
+
+See also: [`CTFlows.Flows._build_pseudo_flow`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref),
+[`CTBase.Data.ComposedHamiltonian`](@extref).
 """
 function _build_pseudo_flow(::Val{:total}, h̃, law, components)
     H = Data.ComposedHamiltonian(h̃, law)
@@ -338,12 +342,26 @@ $(TYPEDSIGNATURES)
 
 Build the inner Hamiltonian flow for the `:partial` mode: wrap the pseudo-Hamiltonian
 and control law in a [`CTFlows.Systems.PseudoHamiltonianSystem`](@ref) (AD at fixed `u`).
+
+See also: [`CTFlows.Flows._build_pseudo_flow`](@ref),
+[`CTFlows.Systems.PseudoHamiltonianSystem`](@ref).
 """
 function _build_pseudo_flow(::Val{:partial}, h̃, law, components)
     sys = Systems.build_system(h̃, law, components.backend)
     return build_flow(sys, components.integrator)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Throw an [`CTBase.Exceptions.IncorrectArgument`](@extref) for an unknown
+`hamiltonian_type` value. Only `:total` and `:partial` are supported.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): when `ht` is not `:total` or `:partial`.
+
+See also: [`CTFlows.Flows._build_pseudo_flow`](@ref).
+"""
 function _build_pseudo_flow(::Val{ht}, h̃, law, components) where {ht}
     return throw(
         Exceptions.IncorrectArgument(
@@ -630,22 +648,21 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Collect arity issues from a convenience spec into `issues`, dispatching on the spec's
-shape: skip `nothing`; check a raw `Function` directly; check each `Function` element of a
-`Tuple` (multi-constraint/multiplier case, labelled `label1`, `label2`, …); skip anything
-else (`Symbol`, `CTBase.Data.PathConstraint`, `CTBase.Data.Multiplier` — not raw functions).
+No arity issues for a `nothing` spec — skip the check.
 
-# Arguments
-- `issues::Vector{String}`: accumulator, mutated in place.
-- `ocp::CTModels.Models.Model`: the OCP, used to infer the expected arity.
-- `spec`: the convenience spec (`nothing`, `Function`, `Tuple`, or an already-resolved
-  carrier).
-- `label::AbstractString`, `second::AbstractString`, `kind::AbstractString`: forwarded to
-  [`CTFlows.Flows._arity_issue`](@ref).
-
-See also: [`CTFlows.Flows._check_convenience_arities`](@ref).
+See also: [`CTFlows.Flows._spec_arity_issues!`](@ref).
 """
 _spec_arity_issues!(issues, ocp, ::Nothing, label, second, kind) = nothing
+
+"""
+$(TYPEDSIGNATURES)
+
+Check the arity of a single `Function` spec against the OCP's expected arity and push
+an issue string into `issues` if they differ.
+
+See also: [`CTFlows.Flows._check_convenience_arities`](@ref),
+[`CTFlows.Flows._arity_issue`](@ref).
+"""
 function _spec_arity_issues!(
     issues,
     ocp,
@@ -658,6 +675,16 @@ function _spec_arity_issues!(
     issue === nothing || push!(issues, issue)
     return nothing
 end
+"""
+$(TYPEDSIGNATURES)
+
+Check the arity of each `Function` element in a `Tuple` spec against the OCP's expected
+arity, pushing an issue string per mismatch into `issues`. Non-`Function` elements are
+skipped.
+
+See also: [`CTFlows.Flows._check_convenience_arities`](@ref),
+[`CTFlows.Flows._arity_issue`](@ref).
+"""
 function _spec_arity_issues!(
     issues,
     ocp,
@@ -673,6 +700,14 @@ function _spec_arity_issues!(
     end
     return nothing
 end
+"""
+$(TYPEDSIGNATURES)
+
+Fallback for an already-resolved spec (not a `Function` or `Tuple`): no arity check
+needed.
+
+See also: [`CTFlows.Flows._check_convenience_arities`](@ref).
+"""
 _spec_arity_issues!(issues, ocp, spec, label, second, kind) = nothing
 
 """
@@ -893,6 +928,19 @@ function _build_ocp_pseudo_flow(::Val{:total}, ocp, law, components, cspec, mspe
     return _build_pseudo_flow(Val(:total), h̃, law, components)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Build the inner flow for the `:partial` mode from an OCP pseudo-Hamiltonian and a
+control law. When a constraint spec (`cspec`) is provided, resolve it together with the
+multiplier spec (`mspec`) and build a
+[`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref); otherwise delegate to
+[`CTFlows.Flows._build_pseudo_flow`](@ref).
+
+See also: [`CTFlows.Flows._build_pseudo_flow`](@ref),
+[`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref),
+[`CTFlows.Flows._resolve_constraint`](@ref), [`CTFlows.Flows._resolve_multiplier`](@ref).
+"""
 function _build_ocp_pseudo_flow(::Val{:partial}, ocp, law, components, cspec, mspec)
     h̃ = _ocp_pseudo_hamiltonian(ocp)
     cspec === nothing && return _build_pseudo_flow(Val(:partial), h̃, law, components)
@@ -902,8 +950,14 @@ function _build_ocp_pseudo_flow(::Val{:partial}, ocp, law, components, cspec, ms
     return build_flow(sys, components.integrator)
 end
 
-# Unknown hamiltonian_type: delegate to the (throwing) unconstrained fallback so the
-# error message and type match `Flow(h̃, law; hamiltonian_type=…)`.
+"""
+$(TYPEDSIGNATURES)
+
+Unknown `hamiltonian_type`: delegate to the (throwing) unconstrained fallback so the
+error message and type match `Flow(h̃, law; hamiltonian_type=…)`.
+
+See also: [`CTFlows.Flows._build_pseudo_flow`](@ref).
+"""
 function _build_ocp_pseudo_flow(::Val{ht}, ocp, law, components, cspec, mspec) where {ht}
     return _build_pseudo_flow(Val(ht), _ocp_pseudo_hamiltonian(ocp), law, components)
 end
@@ -950,6 +1004,18 @@ function _controlled_flow(
     return ControlledFlow(build_flow(system, _build_integrator(kwargs)), ocp, law)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Reject `Flow(ocp, …)` with extra positional arguments beyond the model. Only
+`Flow(ocp; kwargs…)` (control-free) and `Flow(ocp, law; kwargs…)` (with a control law)
+are supported.
+
+# Throws
+- [`CTBase.Exceptions.PreconditionError`](@extref): when extra positional arguments are passed.
+
+See also: [`CTFlows.Flows.Flow`](@ref).
+"""
 function Flow(::CTModels.Models.Model, ::Any, args...; kwargs...)
     return throw(
         Exceptions.PreconditionError(

@@ -62,6 +62,15 @@ struct ConstrainedPseudoHamiltonianSystem{
     backend::BACKEND
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+A `ConstrainedPseudoHamiltonianSystem` is AD-backed: the constrained pseudo-Hamiltonian
+`H̃ + μ·g` is differentiated at frozen `(u, μ)` to produce the RHS.
+
+See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref),
+[`CTBase.Traits.WithAD`](@extref).
+"""
 Traits.ad_trait(::ConstrainedPseudoHamiltonianSystem) = Traits.WithAD
 
 # Note: no explicit outer constructor — Julia's auto-generated default outer
@@ -232,6 +241,16 @@ end
 # Base.show
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of a `ConstrainedPseudoHamiltonianSystem`.
+
+Shows the type name, time/variable dependence traits, and the wrapped pseudo-Hamiltonian,
+control law, constraint, multiplier, and AD backend.
+
+See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref).
+"""
 function Base.show(io::IO, sys::ConstrainedPseudoHamiltonianSystem)
     fmt = Display.format_codes(io)
     Display.print_header(io, "ConstrainedPseudoHamiltonianSystem"; fmt=fmt)

@@ -187,12 +187,46 @@ end
 # Display
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Return a descriptive label for the RHS conversion performed by a pseudo-Hamiltonian functor.
+
+Used internally by `Base.show` for display.
+
+See also: [`CTFlows.Systems.AbstractPseudoHamRHS`](@ref).
+"""
 _rhs_conversion_label(::PseudoHamIpRHS) = "PseudoHamiltonian AD → in-place interface"
+
+"""
+$(TYPEDSIGNATURES)
+
+Pseudo-Hamiltonian AD wrapped as out-of-place interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 _rhs_conversion_label(::PseudoHamOoPRHS) = "PseudoHamiltonian AD → out-of-place interface"
+
+"""
+$(TYPEDSIGNATURES)
+
+Pseudo-Hamiltonian AD wrapped as in-place augmented interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 function _rhs_conversion_label(::PseudoHamIpAugRHS)
     return "PseudoHamiltonian AD → in-place augmented interface"
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of an `AbstractPseudoHamRHS` functor.
+
+Shows the functor type name, the wrapped pseudo-Hamiltonian's traits, and the conversion label.
+
+See also: [`CTFlows.Systems.AbstractPseudoHamRHS`](@ref), [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 function Base.show(io::IO, f::AbstractPseudoHamRHS)
     fmt = Display.format_codes(io)
     td = Traits.time_dependence(f.h̃)
@@ -205,6 +239,15 @@ function Base.show(io::IO, f::AbstractPseudoHamRHS)
     )
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display an `AbstractPseudoHamRHS` functor in the REPL with `text/plain` MIME type.
+
+Delegates to the compact `show` method.
+
+See also: [`CTFlows.Systems.AbstractPseudoHamRHS`](@ref).
+"""
 function Base.show(io::IO, ::MIME"text/plain", f::AbstractPseudoHamRHS)
     return show(io, f)
 end

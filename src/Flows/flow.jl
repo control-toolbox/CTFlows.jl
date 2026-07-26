@@ -54,6 +54,20 @@ const StateFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,S<:Syste
     TD,VD,Traits.StateDynamics,S,I
 }
 
+"""
+$(TYPEDSIGNATURES)
+
+Construct a [`CTFlows.Flows.StateFlow`](@ref) from a state system and an integrator.
+
+# Arguments
+- `system::S`: a state system (`<: AbstractStateSystem`).
+- `integrator::I`: an ODE integrator (`<: AbstractIntegrator`).
+
+# Returns
+- `StateFlow`: a concrete `Flow` with `StateDynamics`.
+
+See also: [`CTFlows.Flows.StateFlow`](@ref), [`CTFlows.Flows.Flow`](@ref).
+"""
 function StateFlow(
     system::S, integrator::I
 ) where {TD,VD,S<:Systems.AbstractStateSystem{TD,VD},I<:Integrators.AbstractIntegrator}
@@ -71,6 +85,21 @@ const HamiltonianFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,S<
     TD,VD,Traits.HamiltonianDynamics,S,I
 }
 
+"""
+$(TYPEDSIGNATURES)
+
+Construct a [`CTFlows.Flows.HamiltonianFlow`](@ref) from a Hamiltonian system and an
+integrator.
+
+# Arguments
+- `system::S`: a Hamiltonian system (`<: AbstractHamiltonianSystem`).
+- `integrator::I`: an ODE integrator (`<: AbstractIntegrator`).
+
+# Returns
+- `HamiltonianFlow`: a concrete `Flow` with `HamiltonianDynamics`.
+
+See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Flows.Flow`](@ref).
+"""
 function HamiltonianFlow(
     system::S, integrator::I
 ) where {

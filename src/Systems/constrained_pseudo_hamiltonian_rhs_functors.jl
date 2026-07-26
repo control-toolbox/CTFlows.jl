@@ -253,12 +253,37 @@ end
 # Display
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Return a descriptive label for the RHS conversion performed by a constrained pseudo-Hamiltonian functor.
+
+Used internally by `Base.show` for display.
+
+See also: [`CTFlows.Systems.AbstractPseudoHamRHS`](@ref).
+"""
 function _rhs_conversion_label(::ConstrainedPseudoHamIpRHS)
     return "Constrained PseudoHamiltonian AD → in-place interface"
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Constrained pseudo-Hamiltonian AD wrapped as out-of-place interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 function _rhs_conversion_label(::ConstrainedPseudoHamOoPRHS)
     return "Constrained PseudoHamiltonian AD → out-of-place interface"
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Constrained pseudo-Hamiltonian AD wrapped as in-place augmented interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 function _rhs_conversion_label(::ConstrainedPseudoHamIpAugRHS)
     return "Constrained PseudoHamiltonian AD → in-place augmented interface"
 end

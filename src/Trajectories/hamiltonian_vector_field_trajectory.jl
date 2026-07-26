@@ -97,10 +97,30 @@ For vector/matrix x0, extracts views of the appropriate size.
 function _ham_split_solution(u::AbstractVector, x0::Number)
     return (Systems._safe_only(u[1:1]), Systems._safe_only(u[2:2]))
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Split a combined state–costate vector into two sub-vectors, using `length(x0)` as the
+state dimension `n`.
+
+# Returns
+- `(u[1:n], u[(n+1):2n])`: state and costate sub-vectors.
+"""
 _ham_split_solution(u::AbstractVector, x0::AbstractVector) =
     let n = length(x0)
         (u[1:n], u[(n + 1):2n])
     end
+
+"""
+$(TYPEDSIGNATURES)
+
+Split a combined state–costate matrix into two sub-matrices (column-wise), using
+`size(x0, 1)` as the state dimension `n`.
+
+# Returns
+- `(u[1:n, :], u[(n+1):2n, :])`: state and costate sub-matrices.
+"""
 function _ham_split_solution(u::AbstractMatrix, x0::AbstractMatrix)
     let n = size(x0, 1)
         (u[1:n, :], u[(n + 1):2n, :])
@@ -185,6 +205,15 @@ struct StateProjection{R<:Integrators.AbstractIntegrationResult,X0} <: Function
     result::R
     x0::X0
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Evaluate the state projection at time `t`: returns `x(t)`, the state component of the
+underlying `HamiltonianVectorFieldTrajectory`.
+
+Equivalent to `sol(t)[1]`.
+"""
 function (sp::StateProjection)(t::Real)
     return _ham_split_solution(Integrators.evaluate_at(sp.result, t), sp.x0)[1]
 end
@@ -210,6 +239,15 @@ struct CostateProjection{R<:Integrators.AbstractIntegrationResult,X0} <: Functio
     result::R
     x0::X0
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Evaluate the costate projection at time `t`: returns `p(t)`, the costate component of the
+underlying `HamiltonianVectorFieldTrajectory`.
+
+Equivalent to `sol(t)[2]`.
+"""
 function (cp::CostateProjection)(t::Real)
     return _ham_split_solution(Integrators.evaluate_at(cp.result, t), cp.x0)[2]
 end

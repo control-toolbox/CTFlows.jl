@@ -45,6 +45,16 @@ struct PseudoHamiltonianVectorFieldSystem{
     law::L
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the AD trait of a `PseudoHamiltonianVectorFieldSystem`, which is always
+[`CTBase.Traits.WithoutAD`](@extref): the system stores the pseudo-Hamiltonian vector
+field `X_H̃` directly and performs no automatic differentiation.
+
+See also: [`CTFlows.Systems.PseudoHamiltonianVectorFieldSystem`](@ref),
+[`CTBase.Traits.WithoutAD`](@extref).
+"""
 Traits.ad_trait(::PseudoHamiltonianVectorFieldSystem) = Traits.WithoutAD
 
 # Note: no explicit outer constructor — Julia's auto-generated default outer
@@ -216,6 +226,32 @@ function Traits.variable_costate_trait(
 end
 
 # =============================================================================
+# hamiltonian getter — informative error (no scalar Hamiltonian stored)
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Throw an `IncorrectArgument` error: a `PseudoHamiltonianVectorFieldSystem` stores the
+pseudo-Hamiltonian vector field `X_H̃` directly and carries no scalar Hamiltonian. Use
+[`CTFlows.Systems.hamiltonian_vector_field`](@ref) to retrieve `X_H̃` instead.
+
+See also: [`CTFlows.Systems.PseudoHamiltonianVectorFieldSystem`](@ref),
+[`CTFlows.Systems.hamiltonian_vector_field`](@ref).
+"""
+function hamiltonian(::PseudoHamiltonianVectorFieldSystem)
+    return throw(
+        Exceptions.IncorrectArgument(
+            "no scalar Hamiltonian available for a PseudoHamiltonianVectorFieldSystem";
+            got="a PseudoHamiltonianVectorFieldSystem (stores the vector field directly, no AD)",
+            expected="a HamiltonianSystem or PseudoHamiltonianSystem (built from a scalar Hamiltonian with AD)",
+            suggestion="use hamiltonian_vector_field(flow) to retrieve X_H̃, or build the flow from a scalar PseudoHamiltonian",
+            context="hamiltonian(sys::PseudoHamiltonianVectorFieldSystem)",
+        ),
+    )
+end
+
+# =============================================================================
 # Base.show
 # =============================================================================
 
@@ -239,9 +275,22 @@ function Base.show(
     L<:Data.ControlLaw{<:Function,Traits.DynClosedLoopFeedback},
 }
     fmt = Display.format_codes(io)
-    wraps = "PseudoHamiltonianVectorField: $(Data._td_label(TD)), $(Data._vd_label(VD)), $(Data._md_label(MD))"
     Display.print_header(io, "PseudoHamiltonianVectorFieldSystem"; fmt=fmt)
-    Display.print_field(io, "wraps", wraps; fmt=fmt, value_style="")
+    Display.print_field(
+        io,
+        "time_dependence",
+        nameof(Traits.time_dependence(sys));
+        fmt=fmt,
+        value_style=fmt.type,
+    )
+    Display.print_field(
+        io,
+        "variable_dependence",
+        nameof(Traits.variable_dependence(sys));
+        fmt=fmt,
+        value_style=fmt.type,
+    )
+    Display.print_field(io, "", sys.h̃vf; fmt=fmt, value_style="")
     return Display.print_field(io, "", sys.law; last=true, fmt=fmt, value_style="")
 end
 

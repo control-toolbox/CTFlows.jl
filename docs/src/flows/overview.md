@@ -22,11 +22,11 @@ from `Data`, the other from integrator options — and only meet when
 
 | Layer | Submodule | What it produces |
 |---|---|---|
-| **Data** | [`CTBase.Data`](@extref CTBase.Data) | Typed function wrappers (`VectorField`, `Hamiltonian`, `HamiltonianVectorField`) |
+| **Data** | [`CTBase.Data`](@extref CTBase.Data) | Typed function wrappers (`VectorField`, `Hamiltonian`, `HamiltonianVectorField`, `PseudoHamiltonian`, `PseudoHamiltonianVectorField`) |
 | **Systems** | [`Systems`](@ref CTFlows.Systems) | ODE right-hand side + traits (`VectorFieldSystem`, `HamiltonianSystem`, …) |
 | **Integrators** | [`Integrators`](@ref CTFlows.Integrators) | ODE solver strategy (`SciML`) |
 | **Flows** | [`Flows`](@ref CTFlows.Flows) | Callable integration object (`StateFlow`, `HamiltonianFlow`, `OptimalControlFlow`, `ControlledFlow`) |
-| **Trajectories** | [`Trajectories`](@ref CTFlows.Trajectories) | Result container with semantic accessors (`state`, `costate`, `control`, `time_grid`) |
+| **Trajectories** | [`Trajectories`](@ref CTFlows.Trajectories) | Result container with semantic accessors (`state`, `costate`, `control`, `time_grid`, `objective`) |
 
 ## Reading order
 
@@ -35,7 +35,7 @@ from `Data`, the other from integrator options — and only meet when
 | [Building a flow](building_a_flow.md) | Assembling the pipeline | `build_system`, `build_flow`, `Flow` |
 | [Integrating](integrating.md) | Calling a flow, configuration objects, integrator options | `StateEndPointConfig`, `StateTrajectoryConfig` |
 | [Trajectories](trajectories.md) | Reading the result | `state`, `costate`, `time_grid`, `plot` |
-| [Multi-phase flows](multiphase.md) | Concatenating flows with switching times | `MultiPhaseStateFlow`, `*` |
+| [Multi-phase flows](multiphase.md) | Concatenating flows with switching times | `MultiPhaseStateFlow`, `MultiPhaseHamiltonianFlow`, `*` |
 | [Optimal control](optimal_control.md) | Flows from optimal control problems | `OptimalControlFlow`, `Flow(ocp)` |
 | [Control laws](control_laws.md) | Flows with control laws | `ControlledFlow`, `Flow(ocp, law)`, `OpenLoop`, `ClosedLoop`, `DynClosedLoop` |
 | [Constrained flows](constrained.md) | Path-constraint terms on `Flow(ocp, law)` | `constraint`, `multiplier`, `hamiltonian_type` |
@@ -43,7 +43,7 @@ from `Data`, the other from integrator options — and only meet when
 | [GPU flows](gpu.md) | Running a flow on a device | `method=:gpu`, `CuArray` states, the GPU contract |
 
 The **data layer** (wrapping functions as `VectorField`, `Hamiltonian`,
-`HamiltonianVectorField`) and the **trait system** (`Autonomous`, `Fixed`,
+`HamiltonianVectorField`, `PseudoHamiltonian`, `PseudoHamiltonianVectorField`) and the **trait system** (`Autonomous`, `Fixed`,
 `InPlace`, …) live in CTBase — see [`CTBase.Data`](@extref CTBase.Data) and
 [`CTBase.Traits`](@extref CTBase.Traits) in the CTBase documentation. Likewise, the
 **ODE solver strategy** (`SciML`) is not implemented in CTFlows: it is provided by
@@ -96,9 +96,9 @@ sol = flow((0.0, 1.0), [1.0, 0.0])
 
 ```@example flows_overview
 # 4. Read the result
-ts = Trajectories.time_grid(sol)   # vector of time points
-x  = Trajectories.state(sol)       # callable: x(t) → state at time t
-x(0.5)                          # interpolate at t = 0.5
+ts = Trajectories.time_grid(sol) # vector of time points
+x  = Trajectories.state(sol)     # callable: x(t) → state at time t
+x(0.5)                           # interpolate at t = 0.5
 ```
 
 The shortcut `Flows.Flow(vf; opts...)` hides steps 2–3 of the pipeline

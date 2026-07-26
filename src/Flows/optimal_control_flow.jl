@@ -50,7 +50,10 @@ struct OCPHamiltonianFunction{
     n::Int
 end
 
-# Aliases to keep method signatures concise
+"""
+Const aliases for `CTModels.Components.Autonomous` / `NonAutonomous`, keeping method
+signatures concise in the call-operator dispatch below.
+"""
 const _CTM_Auton = CTModels.Components.Autonomous
 const _CTM_NonAuton = CTModels.Components.NonAutonomous
 
@@ -86,21 +89,39 @@ function _ocp_H(h::OCPHamiltonianFunction, t, x, p, v)
     return val
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Call operators for [`CTFlows.Flows.OCPHamiltonianFunction`](@ref), dispatching on the
+`(TD, VD)` trait pair for the correct arity:
+
+| `TD` / `VD` | Call signature | Effective call |
+|---|---|---|
+| `Auton` / `Fixed` | `H(x, p)` | `_ocp_H(h, 0, x, p, ∅)` |
+| `NonAuton` / `Fixed` | `H(t, x, p)` | `_ocp_H(h, t, x, p, ∅)` |
+| `Auton` / `NonFixed` | `H(x, p, v)` | `_ocp_H(h, 0, x, p, v)` |
+| `NonAuton` / `NonFixed` | `H(t, x, p, v)` | `_ocp_H(h, t, x, p, v)` |
+
+See also: [`CTFlows.Flows.OCPHamiltonianFunction`](@ref), [`CTFlows.Flows._ocp_H`](@ref).
+"""
 function (h::OCPHamiltonianFunction{_CTM_Auton,Traits.Fixed,DF,LF})(
     x, p
 ) where {DF<:Function,LF<:Union{Function,Nothing}}
     return _ocp_H(h, 0.0, x, p, nothing)
 end
+
 function (h::OCPHamiltonianFunction{_CTM_NonAuton,Traits.Fixed,DF,LF})(
     t, x, p
 ) where {DF<:Function,LF<:Union{Function,Nothing}}
     return _ocp_H(h, t, x, p, nothing)
 end
+
 function (h::OCPHamiltonianFunction{_CTM_Auton,Traits.NonFixed,DF,LF})(
     x, p, v
 ) where {DF<:Function,LF<:Union{Function,Nothing}}
     return _ocp_H(h, 0.0, x, p, v)
 end
+
 function (h::OCPHamiltonianFunction{_CTM_NonAuton,Traits.NonFixed,DF,LF})(
     t, x, p, v
 ) where {DF<:Function,LF<:Union{Function,Nothing}}
@@ -206,21 +227,40 @@ function _ocp_pseudo_H(h::OCPPseudoHamiltonianFunction, t, x, p, u, v)
     return val
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Call operators for [`CTFlows.Flows.OCPPseudoHamiltonianFunction`](@ref), dispatching on
+the `(TD, VD)` trait pair for the correct arity:
+
+| `TD` / `VD` | Call signature | Effective call |
+|---|---|---|
+| `Auton` / `Fixed` | `H̃(x, p, u)` | `_ocp_pseudo_H(h, 0, x, p, u, ∅)` |
+| `NonAuton` / `Fixed` | `H̃(t, x, p, u)` | `_ocp_pseudo_H(h, t, x, p, u, ∅)` |
+| `Auton` / `NonFixed` | `H̃(x, p, u, v)` | `_ocp_pseudo_H(h, 0, x, p, u, v)` |
+| `NonAuton` / `NonFixed` | `H̃(t, x, p, u, v)` | `_ocp_pseudo_H(h, t, x, p, u, v)` |
+
+See also: [`CTFlows.Flows.OCPPseudoHamiltonianFunction`](@ref),
+[`CTFlows.Flows._ocp_pseudo_H`](@ref).
+"""
 function (h::OCPPseudoHamiltonianFunction{_CTM_Auton,Traits.Fixed,DF,LF})(
     x, p, u
 ) where {DF<:Function,LF<:Union{Function,Nothing}}
     return _ocp_pseudo_H(h, 0.0, x, p, u, nothing)
 end
+
 function (h::OCPPseudoHamiltonianFunction{_CTM_NonAuton,Traits.Fixed,DF,LF})(
     t, x, p, u
 ) where {DF<:Function,LF<:Union{Function,Nothing}}
     return _ocp_pseudo_H(h, t, x, p, u, nothing)
 end
+
 function (h::OCPPseudoHamiltonianFunction{_CTM_Auton,Traits.NonFixed,DF,LF})(
     x, p, u, v
 ) where {DF<:Function,LF<:Union{Function,Nothing}}
     return _ocp_pseudo_H(h, 0.0, x, p, u, v)
 end
+
 function (h::OCPPseudoHamiltonianFunction{_CTM_NonAuton,Traits.NonFixed,DF,LF})(
     t, x, p, u, v
 ) where {DF<:Function,LF<:Union{Function,Nothing}}
@@ -299,8 +339,24 @@ function _resolve_constraint(ocp, spec::Symbol)
     return Data.MixedConstraint(g_oop; is_autonomous=false, is_variable=true)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return a `PathConstraint` spec as-is — it is already a resolved
+[`CTBase.Data.PathConstraint`](@extref).
+
+See also: [`CTFlows.Flows._resolve_constraint`](@ref), [`CTBase.Data.PathConstraint`](@extref).
+"""
 _resolve_constraint(::Any, spec::Data.PathConstraint) = spec
 
+"""
+$(TYPEDSIGNATURES)
+
+Resolve a `Function` constraint spec into a [`CTBase.Data.MixedConstraint`](@extref),
+inferring autonomy and variable-dependence from the OCP.
+
+See also: [`CTFlows.Flows._resolve_constraint`](@ref), [`CTBase.Data.MixedConstraint`](@extref).
+"""
 function _resolve_constraint(ocp, spec::Function)
     return Data.MixedConstraint(
         spec; is_autonomous=Traits.is_autonomous(ocp), is_variable=Traits.is_variable(ocp)
@@ -334,6 +390,18 @@ Uniform call: concatenate (`vcat`) the per-constraint values `gᵢ(t,x,u,v)` in 
 """
 (c::_CombinedConstraint)(t, x, u, v) = reduce(vcat, map(g -> g(t, x, u, v), c.parts))
 
+"""
+$(TYPEDSIGNATURES)
+
+Resolve a `Tuple` of constraint specs into a [`CTFlows.Flows._CombinedConstraint`](@ref),
+rejecting an empty tuple with [`CTBase.Exceptions.IncorrectArgument`](@extref).
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): when `spec` is an empty tuple.
+
+See also: [`CTFlows.Flows._resolve_constraint`](@ref),
+[`CTFlows.Flows._CombinedConstraint`](@ref).
+"""
 function _resolve_constraint(ocp, spec::Tuple)
     isempty(spec) && throw(
         Exceptions.IncorrectArgument(
@@ -346,6 +414,18 @@ function _resolve_constraint(ocp, spec::Tuple)
     return _CombinedConstraint(map(s -> _resolve_constraint(ocp, s), spec))
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Throw an [`CTBase.Exceptions.IncorrectArgument`](@extref) for an unsupported constraint
+spec type. Only `Symbol` (path label), `Function`, `Tuple`, and
+[`CTBase.Data.PathConstraint`](@extref) are accepted.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): when `spec` is not a supported type.
+
+See also: [`CTFlows.Flows._resolve_constraint`](@ref).
+"""
 function _resolve_constraint(::Any, spec)
     return throw(
         Exceptions.IncorrectArgument(
@@ -374,6 +454,14 @@ See also: [`CTFlows.Flows._resolve_constraint`](@ref), `CTFlows.Flows._ocp_const
 """
 _resolve_multiplier(::Any, spec::Data.Multiplier) = spec
 
+"""
+$(TYPEDSIGNATURES)
+
+Resolve a `Function` multiplier spec into a [`CTBase.Data.Multiplier`](@extref),
+inferring autonomy and variable-dependence from the OCP.
+
+See also: [`CTFlows.Flows._resolve_multiplier`](@ref), [`CTBase.Data.Multiplier`](@extref).
+"""
 function _resolve_multiplier(ocp, spec::Function)
     return Data.Multiplier(
         spec; is_autonomous=Traits.is_autonomous(ocp), is_variable=Traits.is_variable(ocp)
@@ -406,6 +494,18 @@ Uniform call: concatenate (`vcat`) the per-multiplier values `μᵢ(t,x,p,v)` in
 """
 (m::_CombinedMultiplier)(t, x, p, v) = reduce(vcat, map(μ -> μ(t, x, p, v), m.parts))
 
+"""
+$(TYPEDSIGNATURES)
+
+Resolve a `Tuple` of multiplier specs into a [`CTFlows.Flows._CombinedMultiplier`](@ref),
+rejecting an empty tuple with [`CTBase.Exceptions.IncorrectArgument`](@extref).
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): when `spec` is an empty tuple.
+
+See also: [`CTFlows.Flows._resolve_multiplier`](@ref),
+[`CTFlows.Flows._CombinedMultiplier`](@ref).
+"""
 function _resolve_multiplier(ocp, spec::Tuple)
     isempty(spec) && throw(
         Exceptions.IncorrectArgument(
@@ -418,6 +518,17 @@ function _resolve_multiplier(ocp, spec::Tuple)
     return _CombinedMultiplier(map(s -> _resolve_multiplier(ocp, s), spec))
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Throw an [`CTBase.Exceptions.IncorrectArgument`](@extref) for an unsupported multiplier
+spec type. Only `Function`, `Tuple`, and [`CTBase.Data.Multiplier`](@extref) are accepted.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): when `spec` is not a supported type.
+
+See also: [`CTFlows.Flows._resolve_multiplier`](@ref).
+"""
 function _resolve_multiplier(::Any, spec)
     return throw(
         Exceptions.IncorrectArgument(
@@ -485,15 +596,34 @@ function _constrained_pseudo_H(h::ConstrainedPseudoHamiltonianFunction, t, x, p,
     return base + sum(h.μ(t, x, p, vv) .* h.g(t, x, u, vv))
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Call operators for [`CTFlows.Flows.ConstrainedPseudoHamiltonianFunction`](@ref),
+dispatching on the `(TD, VD)` trait pair for the correct arity:
+
+| `TD` / `VD` | Call signature | Effective call |
+|---|---|---|
+| `Auton` / `Fixed` | `H(x, p, u)` | `_constrained_pseudo_H(h, 0, x, p, u, ∅)` |
+| `NonAuton` / `Fixed` | `H(t, x, p, u)` | `_constrained_pseudo_H(h, t, x, p, u, ∅)` |
+| `Auton` / `NonFixed` | `H(x, p, u, v)` | `_constrained_pseudo_H(h, 0, x, p, u, v)` |
+| `NonAuton` / `NonFixed` | `H(t, x, p, u, v)` | `_constrained_pseudo_H(h, t, x, p, u, v)` |
+
+See also: [`CTFlows.Flows.ConstrainedPseudoHamiltonianFunction`](@ref),
+[`CTFlows.Flows._constrained_pseudo_H`](@ref).
+"""
 function (h::ConstrainedPseudoHamiltonianFunction{_CTM_Auton,Traits.Fixed})(x, p, u)
     return _constrained_pseudo_H(h, 0.0, x, p, u, nothing)
 end
+
 function (h::ConstrainedPseudoHamiltonianFunction{_CTM_NonAuton,Traits.Fixed})(t, x, p, u)
     return _constrained_pseudo_H(h, t, x, p, u, nothing)
 end
+
 function (h::ConstrainedPseudoHamiltonianFunction{_CTM_Auton,Traits.NonFixed})(x, p, u, v)
     return _constrained_pseudo_H(h, 0.0, x, p, u, v)
 end
+
 function (h::ConstrainedPseudoHamiltonianFunction{_CTM_NonAuton,Traits.NonFixed})(
     t, x, p, u, v
 )
@@ -636,6 +766,15 @@ This guard is the runtime check that closes that gap, mirroring
 See also: [`CTFlows.Flows._dim_coerce`](@ref).
 """
 _apply_dim_coerce(coerce, x::AbstractMatrix) = x
+
+"""
+$(TYPEDSIGNATURES)
+
+Apply a precomputed per-dimension coercion to a non-batched value: returns `coerce(x)`
+(`only` for 1-D, `identity` otherwise).
+
+See also: [`CTFlows.Flows._apply_dim_coerce`](@ref), [`CTFlows.Flows._dim_coerce`](@ref).
+"""
 _apply_dim_coerce(coerce, x) = coerce(x)
 
 """
@@ -666,6 +805,8 @@ function _ocp_controlled_vf(h::OCPControlledVectorFieldFunction, t, x, u, v)
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Call operators for [`CTFlows.Flows.OCPControlledVectorFieldFunction`](@ref), dispatching on the
 `(TD, VD)` trait pair for the correct arity:
 
@@ -683,16 +824,19 @@ function (h::OCPControlledVectorFieldFunction{_CTM_Auton,Traits.Fixed,DF})(
 ) where {DF<:Function}
     return _ocp_controlled_vf(h, 0.0, x, u, nothing)
 end
+
 function (h::OCPControlledVectorFieldFunction{_CTM_NonAuton,Traits.Fixed,DF})(
     t, x, u
 ) where {DF<:Function}
     return _ocp_controlled_vf(h, t, x, u, nothing)
 end
+
 function (h::OCPControlledVectorFieldFunction{_CTM_Auton,Traits.NonFixed,DF})(
     x, u, v
 ) where {DF<:Function}
     return _ocp_controlled_vf(h, 0.0, x, u, v)
 end
+
 function (h::OCPControlledVectorFieldFunction{_CTM_NonAuton,Traits.NonFixed,DF})(
     t, x, u, v
 ) where {DF<:Function}
@@ -794,6 +938,8 @@ function _ocp_state_vf(h::OCPStateVectorFieldFunction, t, x, v)
 end
 
 """
+$(TYPEDSIGNATURES)
+
 Call operators for [`CTFlows.Flows.OCPStateVectorFieldFunction`](@ref), dispatching on the
 `(TD, VD)` trait pair for the correct arity:
 
@@ -811,16 +957,19 @@ function (h::OCPStateVectorFieldFunction{_CTM_Auton,Traits.Fixed,DF})(
 ) where {DF<:Function}
     return _ocp_state_vf(h, 0.0, x, nothing)
 end
+
 function (h::OCPStateVectorFieldFunction{_CTM_NonAuton,Traits.Fixed,DF})(
     t, x
 ) where {DF<:Function}
     return _ocp_state_vf(h, t, x, nothing)
 end
+
 function (h::OCPStateVectorFieldFunction{_CTM_Auton,Traits.NonFixed,DF})(
     x, v
 ) where {DF<:Function}
     return _ocp_state_vf(h, 0.0, x, v)
 end
+
 function (h::OCPStateVectorFieldFunction{_CTM_NonAuton,Traits.NonFixed,DF})(
     t, x, v
 ) where {DF<:Function}
@@ -912,11 +1061,36 @@ function OptimalControlFlow(
     )
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the inner Hamiltonian system of an [`CTFlows.Flows.OptimalControlFlow`](@ref),
+delegating to the inner flow.
+
+See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), [`CTFlows.Flows.system`](@ref).
+"""
 system(F::OptimalControlFlow) = system(F.flow)
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the integrator of an [`CTFlows.Flows.OptimalControlFlow`](@ref), delegating to
+the inner flow.
+
+See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), [`CTFlows.Flows.integrator`](@ref).
+"""
 integrator(F::OptimalControlFlow) = integrator(F.flow)
 
 # ── point eval — pure delegation ────────────────────────────────────────────
 
+"""
+$(TYPEDSIGNATURES)
+
+Point-evaluation call for [`CTFlows.Flows.OptimalControlFlow`](@ref): delegate to the
+inner Hamiltonian flow, returning `(xf, pf)` (and `pvf` when `variable_costate=true`).
+
+See also: [`CTFlows.Flows.OptimalControlFlow`](@ref).
+"""
 function (F::OptimalControlFlow)(
     t0::Real,
     x0,
@@ -931,6 +1105,16 @@ end
 
 # ── trajectory call — builds a CTModels.Solution ────────────────────────────
 
+"""
+$(TYPEDSIGNATURES)
+
+Trajectory call for [`CTFlows.Flows.OptimalControlFlow`](@ref): integrate the inner
+Hamiltonian flow over `tspan` and build a full [`CTModels.Solutions.Solution`](@extref)
+via [`CTFlows.Flows._build_ocp_solution`](@ref).
+
+See also: [`CTFlows.Flows.OptimalControlFlow`](@ref),
+[`CTFlows.Flows._build_ocp_solution`](@ref).
+"""
 function (F::OptimalControlFlow)(
     tspan::Tuple{<:Real,<:Real}, x0, p0; variable=Core.NotProvided, unsafe::Bool=false
 )
@@ -1012,6 +1196,8 @@ end
 # =============================================================================
 
 """
+$(TYPEDSIGNATURES)
+
 Convert a variable argument into a `Vector{Float64}`.
 
 Returns an empty vector when the variable was not provided (`Core.NotProvided`),
@@ -1020,7 +1206,21 @@ a 1-element vector for scalars, and a copy for vectors.
 See also: `_build_ocp_solution`, `CTFlows.Flows._flow_objective`.
 """
 _variable_vector(::Core.NotProvidedType) = Float64[]
+"""
+$(TYPEDSIGNATURES)
+
+Wrap a scalar variable into a 1-element `Vector{Float64}`.
+
+See also: [`CTFlows.Flows._variable_vector`](@ref).
+"""
 _variable_vector(v::Number) = [Float64(v)]
+"""
+$(TYPEDSIGNATURES)
+
+Copy a vector variable into a `Vector{Float64}`.
+
+See also: [`CTFlows.Flows._variable_vector`](@ref).
+"""
 _variable_vector(v::AbstractVector) = Float64.(v)
 
 """
