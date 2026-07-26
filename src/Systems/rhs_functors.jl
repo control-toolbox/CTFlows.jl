@@ -63,8 +63,9 @@ in-place interface by allocating the result into the pre-allocated `du` buffer.
   regardless of `cx` (the Handbook's documented "in-place buffer stays a vector"
   exception).
 """
-struct IPVFOoPRHS{VF<:Data.AbstractVectorField,CX<:Union{typeof(_safe_only),typeof(identity)}} <:
-       AbstractIPRHS
+struct IPVFOoPRHS{
+    VF<:Data.AbstractVectorField,CX<:Union{typeof(_safe_only),typeof(identity)}
+} <: AbstractIPRHS
     vf::VF
     cx::CX
 end
@@ -128,8 +129,9 @@ out-of-place interface by directly calling the vector field.
   returned derivative always matches `u`'s actual type, as SciML's out-of-place
   interface requires.
 """
-struct OoPVFOoPRHS{VF<:Data.AbstractVectorField,CX<:Union{typeof(_safe_only),typeof(identity)}} <:
-       AbstractOoPRHS
+struct OoPVFOoPRHS{
+    VF<:Data.AbstractVectorField,CX<:Union{typeof(_safe_only),typeof(identity)}
+} <: AbstractOoPRHS
     vf::VF
     cx::CX
 end

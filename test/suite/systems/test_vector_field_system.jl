@@ -265,7 +265,9 @@ function test_vector_field_system()
             Test.@testset "OOP: get_oop_rhs returns the plain OOP functor (no finalize path)" begin
                 vf = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
                 sys = Systems.VectorFieldSystem(vf)
-                f = Systems.get_oop_rhs(sys, Configs.StateEndPointConfig(0.0, [1.0, 2.0], 1.0))
+                f = Systems.get_oop_rhs(
+                    sys, Configs.StateEndPointConfig(0.0, [1.0, 2.0], 1.0)
+                )
                 Test.@test f isa Systems.AbstractRHS
             end
 

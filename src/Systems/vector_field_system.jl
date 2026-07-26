@@ -86,7 +86,11 @@ See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
 function get_ip_rhs(
     sys::VectorFieldSystem{TD,VD,Traits.OutOfPlace,F}, config::Configs.AbstractStateConfig
-) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,F<:Data.AbstractVectorField{TD,VD,Traits.OutOfPlace}}
+) where {
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    F<:Data.AbstractVectorField{TD,VD,Traits.OutOfPlace},
+}
     x0 = Configs.initial_state(config)
     return IPVFOoPRHS(sys.vf, _coerce_state(x0))
 end
@@ -109,7 +113,11 @@ See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
 function get_ip_rhs(
     sys::VectorFieldSystem{TD,VD,Traits.InPlace,F}, config::Configs.AbstractStateConfig
-) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,F<:Data.AbstractVectorField{TD,VD,Traits.InPlace}}
+) where {
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    F<:Data.AbstractVectorField{TD,VD,Traits.InPlace},
+}
     x0 = Configs.initial_state(config)
     return IPVFIpRHS(sys.vf, _coerce_state(x0))
 end
@@ -132,7 +140,11 @@ See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function get_oop_rhs(
     sys::VectorFieldSystem{TD,VD,Traits.OutOfPlace,F}, config::Configs.AbstractStateConfig
-) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,F<:Data.AbstractVectorField{TD,VD,Traits.OutOfPlace}}
+) where {
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    F<:Data.AbstractVectorField{TD,VD,Traits.OutOfPlace},
+}
     x0 = Configs.initial_state(config)
     return OoPVFOoPRHS(sys.vf, _coerce_state(x0))
 end
@@ -160,7 +172,11 @@ See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function get_oop_rhs(
     sys::VectorFieldSystem{TD,VD,Traits.InPlace,F}, config::Configs.AbstractStateConfig
-) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,F<:Data.AbstractVectorField{TD,VD,Traits.InPlace}}
+) where {
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    F<:Data.AbstractVectorField{TD,VD,Traits.InPlace},
+}
     x0 = Configs.initial_state(config)
     cx = _coerce_state(x0)
     if !ismutable(x0)

@@ -602,9 +602,7 @@ overload above for why.
 function _extract_final_state(
     ::Type{Traits.StateDynamics}, segment::Trajectories.StateFlowTrajectory, _
 )
-    return _reshape_to_x0(
-        segment.traj.x0, Integrators.final_state(segment.traj.result)
-    )
+    return _reshape_to_x0(segment.traj.x0, Integrators.final_state(segment.traj.result))
 end
 
 """
