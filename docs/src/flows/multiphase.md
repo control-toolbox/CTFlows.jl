@@ -152,12 +152,14 @@ MultiPhase.n_phases(mpf)                 # number of phases
 MultiPhase.get_flow(mpf, 1)              # flow for phase 1
 MultiPhase.get_switching_time(mpf, 1)    # switching time after phase 1
 MultiPhase.get_jump(mpf, 1)              # jump at that switching time (nothing here)
+nothing # hide
 ```
 
 ```@example flows_multiphase
 MultiPhase.get_flows(mpf)                # tuple of all phase flows
 MultiPhase.get_switching_times(mpf)      # all switching times
 MultiPhase.get_jumps(mpf)                # all jump functions
+nothing # hide
 ```
 
 ---
@@ -168,7 +170,6 @@ The same operators work for Hamiltonian flows:
 
 ```@example flows_multiphase
 hmpf = hflow1 * (1.0, hflow2)
-typeof(hmpf)
 ```
 
 ```@example flows_multiphase
