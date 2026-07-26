@@ -188,9 +188,7 @@ function test_pseudo_hvf_rhs_functors()
             phvf = Data.PseudoHamiltonianVectorField(
                 FakePHVFAug; is_autonomous=true, is_variable=true
             )
-            r = Systems.IPPseudoHVFOoPAugRHS(
-                phvf, _law_nonfixed, 2, 1, identity, identity
-            )
+            r = Systems.IPPseudoHVFOoPAugRHS(phvf, _law_nonfixed, 2, 1, identity, identity)
 
             du = zeros(5)
             u = [1.0, 2.0, 3.0, 4.0, 0.0]
@@ -223,9 +221,7 @@ function test_pseudo_hvf_rhs_functors()
             phvf = Data.PseudoHamiltonianVectorField(
                 FakePHVFAugIP; is_autonomous=true, is_variable=true, is_inplace=true
             )
-            r = Systems.IPPseudoHVFIpAugRHS(
-                phvf, _law_nonfixed, 2, 1, identity, identity
-            )
+            r = Systems.IPPseudoHVFIpAugRHS(phvf, _law_nonfixed, 2, 1, identity, identity)
 
             du = zeros(5)
             u = [1.0, 2.0, 3.0, 4.0, 0.0]

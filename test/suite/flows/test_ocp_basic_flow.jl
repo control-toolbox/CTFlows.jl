@@ -85,7 +85,7 @@ function _build_cf_fixed_2d_broadcast()
     CTModels.Building.time_dependence!(pre; autonomous=true)
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 2)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= -λ_TEST .* x; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r.=(-λ_TEST .* x); nothing))
     CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf[1])
     return CTModels.Building.build(pre)
 end

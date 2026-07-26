@@ -7,7 +7,7 @@ import CTFlows.Integrators
 import CTFlows.Trajectories
 import CTBase.Data
 
-import SciMLBase
+using SciMLBase: SciMLBase
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 using StaticArrays: SA, SVector
 

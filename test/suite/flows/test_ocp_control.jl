@@ -172,7 +172,7 @@ function _build_ctrl_2d()
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 2)
     CTModels.Building.control!(pre, 2)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= u .- x; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r.=u .- x; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * sum(abs2, u))
     return CTModels.Building.build(pre)
 end
