@@ -32,6 +32,7 @@ import CTBase.Options
 Strategies.id(::Type{FakeIntegrator}) = :fake_integrator
 Strategies.metadata(::Type{FakeIntegrator}) = Strategies.StrategyMetadata()
 Strategies.options(integ::FakeIntegrator) = Options.StrategyOptions()
+Strategies.parameter(::Type{FakeIntegrator}) = nothing
 
 # ==============================================================================
 # Test function

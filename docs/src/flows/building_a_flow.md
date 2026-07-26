@@ -22,6 +22,7 @@ using CTFlows.Systems
 using CTFlows.Integrators
 using CTFlows.Flows
 using CTFlows.Trajectories
+using CTFlows.Configs
 import OrdinaryDiffEqTsit5
 ```
 
@@ -33,22 +34,21 @@ The simplest way to build a flow is to pass data directly to `Flows.Flow`:
 
 ```@example flows_building
 # From a VectorField → StateFlow
-vf   = Data.VectorField(x -> -x)
+vf = Data.VectorField(x -> -x)
 flow = Flows.Flow(vf; reltol=1e-8, abstol=1e-8)
 ```
 
 ```@example flows_building
 # From a HamiltonianVectorField → HamiltonianFlow
-hvf  = Data.HamiltonianVectorField((x, p) -> (p, -x))
+hvf = Data.HamiltonianVectorField((x, p) -> (p, -x))
 hflow = Flows.Flow(hvf; reltol=1e-10)
 ```
 
 ```@example flows_building
-using LinearAlgebra
-
 # From a scalar Hamiltonian (AD computes the derivatives) → HamiltonianFlow
 import DifferentiationInterface, ForwardDiff
-h    = Data.Hamiltonian((x, p) -> 0.5 * (dot(x, x) + dot(p, p)))
+using LinearAlgebra
+h = Data.Hamiltonian((x, p) -> 0.5 * (dot(x, x) + dot(p, p)))
 hflow_ad = Flows.Flow(h; reltol=1e-10)
 ```
 
@@ -77,9 +77,23 @@ hsys = Systems.build_system(hvf)
 ```
 
 A system exposes:
-- `Systems.get_ip_rhs(sys, config)` — the in-place ODE right-hand side `(du, u, p, t) -> nothing`
-- `Systems.get_oop_rhs(sys, config)` — the out-of-place variant `(u, p, t) -> du`
-- `Traits.time_dependence(sys)`, `Traits.variable_dependence(sys)` — delegated from the data
+
+```@repl flows_building
+Traits.time_dependence(sys)
+Traits.variable_dependence(sys)
+```
+
+```@example flows_building
+config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
+```
+
+```@example flows_building
+Systems.get_ip_rhs(sys, config)
+```
+
+```@example flows_building
+Systems.get_oop_rhs(sys, config)
+```
 
 ### Step 2 — Build the integrator
 
@@ -115,6 +129,7 @@ typeof(flow_explicit) == typeof(flow)
 | `HamiltonianVectorField` | `HamiltonianFlow` |
 | `Hamiltonian` (with AD) | `HamiltonianFlow` |
 | `PseudoHamiltonian` + `DynClosedLoop` law | `HamiltonianFlow` |
+| `PseudoHamiltonianVectorField` + `DynClosedLoop` law | `HamiltonianFlow` |
 | `ControlledVectorField` + `OpenLoop`/`ClosedLoop` law | `ControlledFlow` |
 | OCP (control-free) | `OptimalControlFlow` |
 | OCP (with control) + `DynClosedLoop` law | `OptimalControlFlow` |
@@ -128,7 +143,7 @@ Both `StateFlow` and `HamiltonianFlow` are concrete subtypes of `AbstractFlow`.
 [Optimal control](optimal_control.md)).
 Their trait parameters mirror the underlying data:
 
-```@example flows_building
+```@repl flows_building
 Traits.time_dependence(flow)      # Autonomous (inherited from vf)
 Traits.variable_dependence(flow)  # Fixed
 ```
@@ -177,50 +192,38 @@ Every flow answers a small, uniform set of getters. Which ones are meaningful de
 on how the flow was built; calling an inapplicable getter raises a clear
 `IncorrectArgument`.
 
-| Getter | Available on | Returns |
-|---|---|---|
-| `system(f)` / `integrator(f)` | all flows | the wrapped `AbstractSystem` / `AbstractIntegrator` |
-| `vector_field(f)` | all flows | the integrated vector field (for a Hamiltonian flow, ``X_H`` — an alias of `hamiltonian_vector_field`) |
-| `hamiltonian_vector_field(f)` | Hamiltonian flows | ``X_H = (\partial_p H, -\partial_x H)`` |
-| `hamiltonian(f)` | Hamiltonian flows | the scalar ``H(t, x, p, v)`` |
-| `hamiltonian_gradient(f)` / `variable_gradient(f)` | Hamiltonian flows | functors ``(\partial_x H, \partial_p H)`` / ``\partial_v H`` |
-| `pseudo_hamiltonian(f)` / `control_law(f)` | flows built with a control law | ``\tilde H(t, x, p, u, v)`` / the feedback ``u`` |
-| `pseudo_hamiltonian_gradient(f)` / `pseudo_variable_gradient(f)` | flows built with a control law | functors of ``\tilde H`` |
+`system`, `integrator`, and `vector_field` are available on all flows (the first two
+are shown in the `AbstractFlow` contract above). For a `StateFlow`, `vector_field`
+returns the underlying `AbstractVectorField` directly:
 
-The Hamiltonian getters are shown executed on [Integrating](integrating.md), the
-pseudo-Hamiltonian ones on [Control laws](control_laws.md). This page covers the
-vector-field getters.
-
-### Vector field
-
-`Systems.vector_field(f)` is the uniform entry point across flow kinds — for a
-`HamiltonianFlow` it returns the (symplectic) Hamiltonian vector field
-``X_H = (\partial_p H, -\partial_x H)``, an alias of `hamiltonian_vector_field(f)`;
-for a state `Flow` it returns the underlying `AbstractVectorField` integrated by
-the flow:
-
-```@example flows_building
-# State flow → the underlying VectorField
+```@repl flows_building
 Flows.vector_field(flow)
 ```
 
-```@example flows_building
-# HamiltonianVectorField-backed flow → X_H (vector_field is an alias)
-hvf_back = Flows.hamiltonian_vector_field(hflow)
-Flows.vector_field(hflow) === hvf_back
+For a `HamiltonianFlow`, `vector_field` is an alias of `hamiltonian_vector_field` and
+returns ``X_H = (\partial_p H, -\partial_x H)``:
+
+```@repl flows_building
+Flows.vector_field(hflow)
+Flows.hamiltonian_vector_field(hflow)
+Flows.vector_field(hflow) === Flows.hamiltonian_vector_field(hflow)
 ```
 
-For an AD-backed flow (built from `Hamiltonian`), the getter materialises the
-vector field on demand:
+For an AD-backed `HamiltonianFlow` (built from a scalar `Hamiltonian`), the Hamiltonian
+itself is also available:
 
-```@example flows_building
-hvf_ad = Flows.hamiltonian_vector_field(hflow_ad)
+```@repl flows_building
+Flows.hamiltonian(hflow_ad)
+Flows.hamiltonian_vector_field(hflow_ad)
 ```
 
 `hamiltonian_vector_field` (and therefore `vector_field`) also covers flows built
 from a pseudo-Hamiltonian or an OCP together with a control law — the Hamiltonian is
 then a `CTBase.Data.ComposedHamiltonian` (`:total` mode) or reconstructed from a
-`PseudoHamiltonianSystem` (`:partial` mode); see [Control laws](control_laws.md).
+`PseudoHamiltonianSystem` (`:partial` mode). The pseudo-Hamiltonian getters
+(`pseudo_hamiltonian`, `control_law`, `pseudo_hamiltonian_gradient`,
+`pseudo_variable_gradient`) and `variable_gradient` are shown on
+[Control laws](control_laws.md) and [Integrating](integrating.md) respectively.
 
 ---
 

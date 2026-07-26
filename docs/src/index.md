@@ -27,7 +27,7 @@ using CTBase.Data, CTFlows.Flows, CTFlows.Trajectories
 import OrdinaryDiffEqTsit5   # activates the SciML integrator extension
 
 # 1. Wrap the dynamics
-vf = Data.VectorField(x -> -x)          # autonomous, fixed, out-of-place
+vf = Data.VectorField(x -> -x)     # autonomous, fixed, out-of-place
 
 # 2. Build the flow
 flow = Flows.Flow(vf; reltol=1e-8)
@@ -38,8 +38,8 @@ xf = flow(0.0, [1.0, 0.0], 1.0)
 # 4. Integrate — trajectory form (full history)
 sol = flow((0.0, 1.0), [1.0, 0.0])
 t   = Trajectories.time_grid(sol)
-x   = Trajectories.state(sol)           # callable: x(t) → state at time t
-x(0.5)                                  # interpolate
+x   = Trajectories.state(sol)      # callable: x(t) → state at time t
+x(0.5)                             # interpolate
 ```
 
 !!! note "Qualified access"
@@ -64,13 +64,13 @@ Data → Systems → Integrators → Flows → Trajectories
 
 | Layer | Submodule | Key types |
 |---|---|---|
-| Data | [`CTBase.Data`](@extref CTBase.Data) | `VectorField`, `Hamiltonian`, `HamiltonianVectorField`, `PseudoHamiltonian`, `ControlledVectorField`, `OpenLoop`, `ClosedLoop`, `DynClosedLoop` |
-| Configs | [`CTFlows.Configs`](@ref CTFlows.Configs) | `StateEndPointConfig`, `HamiltonianTrajectoryConfig`, `AugmentedHamiltonianEndPointConfig` |
-| Systems | [`CTFlows.Systems`](@ref CTFlows.Systems) | `VectorFieldSystem`, `HamiltonianSystem`, `PseudoHamiltonianSystem` |
+| Data | [`CTBase.Data`](@extref CTBase.Data) | `VectorField`, `Hamiltonian`, `HamiltonianVectorField`, `PseudoHamiltonian`, `PseudoHamiltonianVectorField`, `ControlledVectorField`, `OpenLoop`, `ClosedLoop`, `DynClosedLoop` |
+| Configs | [`CTFlows.Configs`](@ref CTFlows.Configs) | `StateEndPointConfig`, `StateTrajectoryConfig`, `HamiltonianEndPointConfig`, `HamiltonianTrajectoryConfig`, `AugmentedHamiltonianEndPointConfig` |
+| Systems | [`CTFlows.Systems`](@ref CTFlows.Systems) | `VectorFieldSystem`, `HamiltonianVectorFieldSystem`, `HamiltonianSystem`, `PseudoHamiltonianSystem`, `PseudoHamiltonianVectorFieldSystem`, `ConstrainedPseudoHamiltonianSystem` |
 | Integrators | [`CTFlows.Integrators`](@ref CTFlows.Integrators) | `SciML` |
 | Flows | [`CTFlows.Flows`](@ref CTFlows.Flows) | `StateFlow`, `HamiltonianFlow`, `OptimalControlFlow`, `ControlledFlow` |
 | Trajectories | [`CTFlows.Trajectories`](@ref CTFlows.Trajectories) | `VectorFieldTrajectory`, `HamiltonianVectorFieldTrajectory`, `StateFlowTrajectory` |
-| Multi-phase | [`CTFlows.MultiPhase`](@ref CTFlows.MultiPhase) | `MultiPhaseStateFlow` |
+| Multi-phase | [`CTFlows.MultiPhase`](@ref CTFlows.MultiPhase) | `MultiPhaseStateFlow`, `MultiPhaseHamiltonianFlow` |
 
 The data layer (`VectorField`, `Hamiltonian`, `HamiltonianVectorField`) lives in [`CTBase.Data`](@extref CTBase.Data); the ODE integrator
 strategy is provided by

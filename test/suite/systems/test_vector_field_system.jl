@@ -354,10 +354,13 @@ function test_vector_field_system()
                 show(io, sys)
                 str = String(take!(io))
                 Test.@test occursin("VectorFieldSystem", str)
-                Test.@test occursin("wraps:", str)
+                Test.@test occursin("time_dependence", str)
+                Test.@test occursin("variable_dependence", str)
                 Test.@test occursin("autonomous", str)
                 Test.@test occursin("fixed (no variable)", str)
                 Test.@test occursin("out-of-place", str)
+                Test.@test occursin("natural call", str)
+                Test.@test occursin("uniform call", str)
             end
 
             Test.@testset "Base.show (text/plain)" begin
@@ -365,7 +368,7 @@ function test_vector_field_system()
                 show(io, MIME("text/plain"), sys)
                 str = String(take!(io))
                 Test.@test occursin("VectorFieldSystem", str)
-                Test.@test occursin("wraps:", str)
+                Test.@test occursin("time_dependence", str)
             end
         end
 

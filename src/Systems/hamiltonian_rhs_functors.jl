@@ -309,24 +309,43 @@ end
 # =============================================================================
 
 """
+$(TYPEDSIGNATURES)
+
 Return a descriptive label for the RHS conversion performed by a Hamiltonian functor.
 
-# Arguments
-- `f::AbstractHamRHS`: The Hamiltonian RHS functor.
+Used internally by `Base.show` for display.
 
-# Returns
-- `String`: Description of the conversion (e.g., "Hamiltonian AD → in-place interface").
-
-# Notes
-- Used internally by `Base.show` for display.
-- Different functors have different conversion labels.
-
-See also: [`CTFlows.Systems.AbstractHamRHS`](@ref), [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamOoPRHS`](@ref).
+See also: [`CTFlows.Systems.AbstractHamRHS`](@ref).
 """
 _rhs_conversion_label(::HamIpRHS) = "Hamiltonian AD → in-place interface"
+
+"""
+$(TYPEDSIGNATURES)
+
+Hamiltonian AD wrapped as out-of-place interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 _rhs_conversion_label(::HamOoPRHS) = "Hamiltonian AD → out-of-place interface"
+
+"""
+$(TYPEDSIGNATURES)
+
+Hamiltonian AD wrapped as in-place augmented interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 _rhs_conversion_label(::HamIpAugRHS) = "Hamiltonian AD → in-place augmented interface"
 
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of an `AbstractHamRHS` functor.
+
+Shows the functor type name, the wrapped Hamiltonian's traits, and the conversion label.
+
+See also: [`CTFlows.Systems.AbstractHamRHS`](@ref), [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 function Base.show(io::IO, f::AbstractHamRHS)
     fmt = Display.format_codes(io)
     td = Traits.time_dependence(f.h)
@@ -339,6 +358,15 @@ function Base.show(io::IO, f::AbstractHamRHS)
     )
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display an `AbstractHamRHS` functor in the REPL with `text/plain` MIME type.
+
+Delegates to the compact `show` method.
+
+See also: [`CTFlows.Systems.AbstractHamRHS`](@ref).
+"""
 function Base.show(io::IO, ::MIME"text/plain", f::AbstractHamRHS)
     return show(io, f)
 end

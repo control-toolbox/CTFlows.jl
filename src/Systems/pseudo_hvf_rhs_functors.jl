@@ -378,20 +378,86 @@ end
 # Display
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Return a descriptive label for the RHS conversion performed by a pseudo-Hamiltonian vector field functor.
+
+Used internally by `Base.show` for display.
+
+See also: [`CTFlows.Systems.AbstractPseudoHVFRHS`](@ref).
+"""
 _rhs_conversion_label(::IPPseudoHVFOoPRHS) = "out-of-place PHVF → in-place interface"
+
+"""
+$(TYPEDSIGNATURES)
+
+In-place PHVF wrapped as in-place interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 _rhs_conversion_label(::IPPseudoHVFIpRHS) = "in-place PHVF → in-place interface"
+
+"""
+$(TYPEDSIGNATURES)
+
+Out-of-place PHVF wrapped as out-of-place interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 _rhs_conversion_label(::OoPPseudoHVFOoPRHS) = "out-of-place PHVF → out-of-place interface"
+
+"""
+$(TYPEDSIGNATURES)
+
+In-place PHVF wrapped as out-of-place interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 _rhs_conversion_label(::OoPPseudoHVFIpRHS) = "in-place PHVF → out-of-place interface"
+
+"""
+$(TYPEDSIGNATURES)
+
+In-place PHVF wrapped as out-of-place interface with type-finalize conversion.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 function _rhs_conversion_label(::OoPPseudoHVFIpFinalizeRHS)
     return "in-place PHVF → out-of-place interface + finalize"
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Out-of-place PHVF wrapped as in-place augmented interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 function _rhs_conversion_label(::IPPseudoHVFOoPAugRHS)
     return "out-of-place PHVF → in-place augmented interface"
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+In-place PHVF wrapped as in-place augmented interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 function _rhs_conversion_label(::IPPseudoHVFIpAugRHS)
     return "in-place PHVF → in-place augmented interface"
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of an `AbstractPseudoHVFRHS` functor.
+
+Shows the functor type name, the wrapped PseudoHamiltonianVectorField's traits, and the conversion label.
+
+See also: [`CTFlows.Systems.AbstractPseudoHVFRHS`](@ref), [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 function Base.show(io::IO, f::AbstractPseudoHVFRHS)
     fmt = Display.format_codes(io)
     td = Traits.time_dependence(f.h̃vf)
@@ -405,6 +471,15 @@ function Base.show(io::IO, f::AbstractPseudoHVFRHS)
     )
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display an `AbstractPseudoHVFRHS` functor in the REPL with `text/plain` MIME type.
+
+Delegates to the compact `show` method.
+
+See also: [`CTFlows.Systems.AbstractPseudoHVFRHS`](@ref).
+"""
 function Base.show(io::IO, ::MIME"text/plain", f::AbstractPseudoHVFRHS)
     return show(io, f)
 end

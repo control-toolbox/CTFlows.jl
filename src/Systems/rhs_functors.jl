@@ -217,14 +217,64 @@ end
 # Display helpers
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Return a descriptive label for the RHS conversion performed by a vector-field functor.
+
+Used internally by `Base.show` for display.
+
+See also: [`CTFlows.Systems.AbstractRHS`](@ref).
+"""
 _rhs_conversion_label(f::IPVFOoPRHS) = "out-of-place VF → in-place interface"
+
+"""
+$(TYPEDSIGNATURES)
+
+In-place VF wrapped as in-place interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 _rhs_conversion_label(f::IPVFIpRHS) = "in-place VF → in-place interface"
+
+"""
+$(TYPEDSIGNATURES)
+
+Out-of-place VF wrapped as out-of-place interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 _rhs_conversion_label(f::OoPVFOoPRHS) = "out-of-place VF → out-of-place interface"
+
+"""
+$(TYPEDSIGNATURES)
+
+In-place VF wrapped as out-of-place interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 _rhs_conversion_label(f::OoPVFIpRHS) = "in-place VF → out-of-place interface"
+
+"""
+$(TYPEDSIGNATURES)
+
+In-place VF wrapped as out-of-place interface with type-finalize conversion.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 function _rhs_conversion_label(f::OoPVFIpFinalizeRHS)
     return "in-place VF → out-of-place interface + finalize"
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of an `AbstractRHS` functor.
+
+Shows the functor type name, the wrapped vector field's traits, and the conversion label.
+
+See also: [`CTFlows.Systems.AbstractRHS`](@ref), [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 function Base.show(io::IO, f::AbstractRHS)
     fmt = Display.format_codes(io)
     td = Traits.time_dependence(f.vf)
@@ -238,6 +288,15 @@ function Base.show(io::IO, f::AbstractRHS)
     )
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display an `AbstractRHS` functor in the REPL with `text/plain` MIME type.
+
+Delegates to the compact `show` method.
+
+See also: [`CTFlows.Systems.AbstractRHS`](@ref).
+"""
 function Base.show(io::IO, ::MIME"text/plain", f::AbstractRHS)
     return show(io, f)
 end

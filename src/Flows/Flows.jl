@@ -31,7 +31,7 @@ import CommonSolve: CommonSolve
 
 import ..Display: Display
 import ..Configs: Configs
-import ..Systems: Systems, hamiltonian_vector_field, vector_field
+import ..Systems: Systems, hamiltonian, hamiltonian_vector_field, vector_field
 import ..Integrators: Integrators
 import ..Trajectories: Trajectories
 
@@ -60,7 +60,7 @@ export AbstractFlow,
 export OptimalControlFlow, ControlledFlow
 export system, integrator
 export build_flow
-export hamiltonian_vector_field, vector_field
+export hamiltonian, hamiltonian_vector_field, vector_field
 export flow_registry
 
 end # module Flows

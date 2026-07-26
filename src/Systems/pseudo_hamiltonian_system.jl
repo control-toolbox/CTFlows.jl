@@ -183,6 +183,16 @@ end
 # Base.show
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of a `PseudoHamiltonianSystem`.
+
+Shows the type name, time/variable dependence traits, and the wrapped pseudo-Hamiltonian,
+control law, and AD backend.
+
+See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@ref).
+"""
 function Base.show(io::IO, sys::PseudoHamiltonianSystem)
     fmt = Display.format_codes(io)
     Display.print_header(io, "PseudoHamiltonianSystem"; fmt=fmt)

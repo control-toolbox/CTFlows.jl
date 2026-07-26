@@ -375,7 +375,25 @@ every phase kind with no forgotten case.
 - The raw inner flow to integrate for this phase.
 """
 _raw_flow(f::Flows.AbstractFlow) = f
+
+"""
+$(TYPEDSIGNATURES)
+
+Unwrap an [`CTFlows.Flows.OptimalControlFlow`](@ref) to its inner flow.
+
+# Returns
+- `f.flow`: the inner `StateFlow`/`HamiltonianFlow`.
+"""
 _raw_flow(f::Flows.OptimalControlFlow) = f.flow
+
+"""
+$(TYPEDSIGNATURES)
+
+Unwrap a [`CTFlows.Flows.ControlledFlow`](@ref) to its inner flow.
+
+# Returns
+- `f.flow`: the inner `StateFlow`/`HamiltonianFlow`.
+"""
 _raw_flow(f::Flows.ControlledFlow) = f.flow
 
 """
@@ -574,6 +592,15 @@ declared a scalar `x0`); any `AbstractVector`/`AbstractMatrix` `x0`, length-1 in
 returned as-is.
 """
 _reshape_to_x0(x0::Number, raw) = Systems._safe_only(raw)
+
+"""
+$(TYPEDSIGNATURES)
+
+Fallback for `AbstractVector`/`AbstractMatrix` `x0`: return `raw` unchanged.
+
+Unlike the `Number` method, no collapsing is needed — the container type already
+matches what [`CTSolvers.Integrators.merge`](@extref) expects.
+"""
 _reshape_to_x0(x0, raw) = raw
 
 """
@@ -627,6 +654,18 @@ function _extract_final_state(::Type{Traits.HamiltonianDynamics}, segment, curre
     return (final[1:nx], final[(nx + 1):end])
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Extract the final state and costate from a `HamiltonianVectorFieldTrajectory` segment.
+
+Unlike the generic `HamiltonianDynamics` method, no manual splitting is needed because
+`HamiltonianVectorFieldTrajectory` already stores the combined `(x, p)` vector and
+`Integrators.final_state` returns it directly.
+
+# Returns
+- The final combined `(state, costate)` vector from the segment.
+"""
 function _extract_final_state(
     ::Type{Traits.HamiltonianDynamics},
     segment::Trajectories.HamiltonianVectorFieldTrajectory,

@@ -22,8 +22,33 @@ Dispatched on the control law and the available data:
 See also: `CTFlows.Flows._flow_objective`, [`CTFlows.Trajectories._controlled_u`](@ref).
 """
 _control_of(::Nothing, x, v) = (_ -> Float64[])
+
+"""
+$(TYPEDSIGNATURES)
+
+Control-free OCP with costate projection: returns `t -> Float64[]` (no control to reconstruct).
+
+See also: [`CTFlows.Flows._control_of`](@ref).
+"""
 _control_of(::Nothing, x, p, v) = (_ -> Float64[])
+
+"""
+$(TYPEDSIGNATURES)
+
+DynClosedLoop law with costate: returns `t -> law(t, x(t), p(t), v)` (Hamiltonian path).
+
+See also: [`CTFlows.Flows._control_of`](@ref).
+"""
 _control_of(law, x, p, v) = (t -> law(t, x(t), p(t), v))
+
+"""
+$(TYPEDSIGNATURES)
+
+OpenLoop/ClosedLoop law with state only: returns `t -> u(t)` via
+[`CTFlows.Trajectories._controlled_u`](@ref) (state path, no costate).
+
+See also: [`CTFlows.Flows._control_of`](@ref), [`CTFlows.Trajectories._controlled_u`](@ref).
+"""
 _control_of(law, x, v) = (t -> Trajectories._controlled_u(law, t, x(t), v))
 
 """

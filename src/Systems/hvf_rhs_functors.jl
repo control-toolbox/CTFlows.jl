@@ -363,16 +363,81 @@ end
 # Display helpers
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+Return a descriptive label for the RHS conversion performed by a Hamiltonian vector field functor.
+
+Used internally by `Base.show` for display.
+
+See also: [`CTFlows.Systems.AbstractHVFRHS`](@ref).
+"""
 _rhs_conversion_label(::IPHVFOoPRHS) = "out-of-place HVF → in-place interface"
+
+"""
+$(TYPEDSIGNATURES)
+
+In-place HVF wrapped as in-place interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 _rhs_conversion_label(::IPHVFIpRHS) = "in-place HVF → in-place interface"
+
+"""
+$(TYPEDSIGNATURES)
+
+Out-of-place HVF wrapped as out-of-place interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 _rhs_conversion_label(::OoPHVFOoPRHS) = "out-of-place HVF → out-of-place interface"
+
+"""
+$(TYPEDSIGNATURES)
+
+In-place HVF wrapped as out-of-place interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 _rhs_conversion_label(::OoPHVFIpRHS) = "in-place HVF → out-of-place interface"
+
+"""
+$(TYPEDSIGNATURES)
+
+In-place HVF wrapped as out-of-place interface with type-finalize conversion.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 function _rhs_conversion_label(::OoPHVFIpFinalizeRHS)
     return "in-place HVF → out-of-place interface + finalize"
 end
+"""
+$(TYPEDSIGNATURES)
+
+Out-of-place HVF wrapped as in-place augmented interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 _rhs_conversion_label(::IPHVFOoPAugRHS) = "out-of-place HVF → in-place augmented interface"
+
+"""
+$(TYPEDSIGNATURES)
+
+In-place HVF wrapped as in-place augmented interface.
+
+See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 _rhs_conversion_label(::IPHVFIpAugRHS) = "in-place HVF → in-place augmented interface"
 
+"""
+$(TYPEDSIGNATURES)
+
+Display a compact representation of an `AbstractHVFRHS` functor.
+
+Shows the functor type name, the wrapped HamiltonianVectorField's traits, and the conversion label.
+
+See also: [`CTFlows.Systems.AbstractHVFRHS`](@ref), [`CTFlows.Systems._rhs_conversion_label`](@ref).
+"""
 function Base.show(io::IO, f::AbstractHVFRHS)
     fmt = Display.format_codes(io)
     td = Traits.time_dependence(f.hvf)
@@ -386,6 +451,15 @@ function Base.show(io::IO, f::AbstractHVFRHS)
     )
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Display an `AbstractHVFRHS` functor in the REPL with `text/plain` MIME type.
+
+Delegates to the compact `show` method.
+
+See also: [`CTFlows.Systems.AbstractHVFRHS`](@ref).
+"""
 function Base.show(io::IO, ::MIME"text/plain", f::AbstractHVFRHS)
     return show(io, f)
 end

@@ -77,10 +77,9 @@ value uses `value_style` (the `value` role by default). Pass `value_style = ""` 
 value unstyled.
 
 When `value` renders on several lines (e.g. a nested object whose own `show` is multi-line),
-continuation lines are aligned under the value column and prefixed with a `│` pipe (blanks
-when `last`), mirroring the multi-line field convention used across the control-toolbox
-ecosystem. `value` is rendered through `print` (so strings/symbols keep their plain form and
-objects use their own `show`), preserving colour from `io`.
+continuation lines are indented under the branch character and prefixed with a `│` pipe
+(blanks when `last`). `value` is rendered through `print` (so strings/symbols keep their
+plain form and objects use their own `show`), preserving colour from `io`.
 """
 function print_field(
     io::IO, label, value; last::Bool=false, fmt=format_codes(io), value_style=nothing
@@ -99,9 +98,8 @@ function print_field(
     print(io, style, lines[1], reset)
     if length(lines) > 1
         cont = last ? "   " : string(fmt.muted, "│", fmt.reset, "  ")
-        pad = isempty(string(label)) ? "" : " "^(length(string(label)) + 2)   # label + ": "
         for l in @view lines[2:end]
-            print(io, "\n", cont, pad, style, l, reset)
+            print(io, "\n", cont, style, l, reset)
         end
     end
     return nothing

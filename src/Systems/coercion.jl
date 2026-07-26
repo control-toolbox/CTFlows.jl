@@ -31,6 +31,14 @@ Collapse a length-1 array to its single scalar element, GPU-safely.
 See also: [`CTFlows.Systems._coerce_state`](@ref).
 """
 _safe_only(x::GPUArraysCore.AbstractGPUArray) = GPUArraysCore.@allowscalar only(x)
+
+"""
+$(TYPEDSIGNATURES)
+
+Host-array fallback: exactly `only(x)`.
+
+See also: [`CTFlows.Systems._safe_only`](@ref).
+"""
 _safe_only(x) = only(x)
 
 """
@@ -44,7 +52,23 @@ Infer the state dimension from the initial condition shape.
 - `_state_dim(x0::AbstractMatrix) = size(x0, 1)`
 """
 _state_dim(::Number) = 1
+
+"""
+$(TYPEDSIGNATURES)
+
+State dimension of a vector initial condition: `length(x)`.
+
+See also: [`CTFlows.Systems._state_dim`](@ref).
+"""
 _state_dim(x::AbstractVector) = length(x)
+
+"""
+$(TYPEDSIGNATURES)
+
+State dimension of a batched `Matrix` initial condition: `size(x, 1)` (per-column batch).
+
+See also: [`CTFlows.Systems._state_dim`](@ref).
+"""
 _state_dim(x::AbstractMatrix) = size(x, 1)
 
 """
@@ -80,7 +104,23 @@ are left untouched via `identity`.
 See also: [`CTFlows.Systems._safe_only`](@ref).
 """
 _coerce_state(::Number) = _safe_only
+
+"""
+$(TYPEDSIGNATURES)
+
+Batched `Matrix` states are always left untouched (`identity`): batch mode never collapses to a scalar.
+
+See also: [`CTFlows.Systems._coerce_state`](@ref).
+"""
 _coerce_state(::AbstractMatrix) = identity
+
+"""
+$(TYPEDSIGNATURES)
+
+Vector states: `_safe_only` for length 1 (1-D = scalar convention), `identity` otherwise.
+
+See also: [`CTFlows.Systems._coerce_state`](@ref), [`CTFlows.Systems._safe_only`](@ref).
+"""
 _coerce_state(x::AbstractVector) = length(x) == 1 ? _safe_only : identity
 
 """
@@ -121,7 +161,23 @@ Return `src` in a form that can be broadcast into `dst` without a device/host mi
 See also: [`CTFlows.Systems._aug_assign!`](@ref), [`CTFlows.Systems._safe_only`](@ref).
 """
 _device_like(::AbstractArray, src) = src
+
+"""
+$(TYPEDSIGNATURES)
+
+Scalar source is always compatible with any destination: return `src` as-is.
+
+See also: [`CTFlows.Systems._device_like`](@ref).
+"""
 _device_like(::GPUArraysCore.AbstractGPUArray, src::Number) = src
+
+"""
+$(TYPEDSIGNATURES)
+
+Device-resident source on a matching device destination: return `src` as-is (no copy).
+
+See also: [`CTFlows.Systems._device_like`](@ref).
+"""
 _device_like(::GPUArraysCore.AbstractGPUArray, src::GPUArraysCore.AbstractGPUArray) = src
 function _device_like(dst::GPUArraysCore.AbstractGPUArray, src::AbstractArray)
     return copyto!(similar(dst, eltype(src), size(src)), src)
@@ -158,6 +214,14 @@ Allocate an uninitialised length-`n` buffer of eltype `T` in `template`'s array 
 See also: [`CTFlows.Systems._device_like`](@ref), [`CTFlows.Systems._safe_only`](@ref).
 """
 _buffer_like(template::AbstractArray, ::Type{T}, n::Int) where {T} = similar(template, T, n)
+
+"""
+$(TYPEDSIGNATURES)
+
+Scalar fallback: allocate a host `Vector{T}(undef, n)` — `similar` is undefined for `Number`.
+
+See also: [`CTFlows.Systems._buffer_like`](@ref).
+"""
 _buffer_like(::Any, ::Type{T}, n::Int) where {T} = Vector{T}(undef, n)
 
 """

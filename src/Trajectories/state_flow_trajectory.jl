@@ -202,6 +202,16 @@ projection (`cp === nothing`, a basic control-free `Flow(ocp)`). Dispatch helper
 [`CTFlows.Trajectories.control`](@ref).
 """
 _sft_control(cp::ControlProjection) = cp
+
+"""
+$(TYPEDSIGNATURES)
+
+Throw a `PreconditionError` because the `StateFlowTrajectory` has no control projection
+(`cp === nothing`, a basic control-free `Flow(ocp)`).
+
+This happens when the flow was built without a control law (e.g. for direct shooting),
+so there is no control to reconstruct.
+"""
 function _sft_control(::Nothing)
     return throw(
         Exceptions.PreconditionError(

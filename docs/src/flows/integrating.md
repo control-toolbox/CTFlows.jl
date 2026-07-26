@@ -71,8 +71,13 @@ For a `NonFixed` flow, pass the variable ``v`` via the `variable` keyword:
 
 ```@example flows_integrating
 vf_v = Data.VectorField((x, v) -> -v[1] .* x; is_variable=true)
-flow_v = Flows.Flow(vf_v)
+```
 
+```@example flows_integrating
+flow_v = Flows.Flow(vf_v)
+```
+
+```@example flows_integrating
 xf_v = flow_v(0.0, [1.0, 0.0], 1.0; variable=[2.0])
 ```
 
@@ -90,10 +95,17 @@ augmented adjoint ``\dot{p}_v = -\partial H/\partial v`` (initialized at
 
 ```@example flows_integrating
 h_v = Data.Hamiltonian((x, p, v) -> v[1] * p^2 / 2; is_variable=true)
-hflow_v = Flows.Flow(h_v)
+```
 
-xf, pf, pvf = hflow_v(0.0, 1.0, 0.5, 1.0; variable=[2.0], variable_costate=true)
-(xf, pf, pvf)
+```@example flows_integrating
+hflow_v = Flows.Flow(h_v)
+```
+
+```@repl flows_integrating
+xf, pf, pvf = hflow_v(0.0, 1.0, 0.5, 1.0; variable=[2.0], variable_costate=true);
+xf
+pf
+pvf
 ```
 
 This is only available for point evaluation, and only when `variable` is provided
@@ -134,7 +146,13 @@ from a control law — its pseudo-Hamiltonian, control law, and their gradients:
 
 ```@example flows_integrating
 Systems.hamiltonian(hflow_v)          # the callable H(t, x, p, v)
+```
+
+```@example flows_integrating
 Systems.hamiltonian_gradient(hflow_v) # functor: (t, x, p, v) -> (∂H/∂x, ∂H/∂p)
+```
+
+```@example flows_integrating
 Systems.variable_gradient(hflow_v)    # functor: (t, x, p, v) -> ∂H/∂v
 ```
 
@@ -161,6 +179,9 @@ pass them to `Flows._invoke_flow`:
 
 ```@example flows_integrating
 cfg = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+```
+
+```@example flows_integrating
 Configs.tspan(cfg)
 ```
 
