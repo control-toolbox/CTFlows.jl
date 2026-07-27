@@ -19,16 +19,16 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # Goddard problem physics constants and dynamics (module-level)
 # ==============================================================================
 
-const _GODD_t0 = 0.0;
-const _GODD_r0 = 1.0;
+const _GODD_t0 = 0.0
+const _GODD_r0 = 1.0
 const _GODD_v0 = 0.0
-const _GODD_m0 = 1.0;
-const _GODD_vmax = 0.1;
+const _GODD_m0 = 1.0
+const _GODD_vmax = 0.1
 const _GODD_mf = 0.6
 const _GODD_x0 = [_GODD_r0, _GODD_v0, _GODD_m0]
-const _GODD_Cd = 310;
-const _GODD_Tmax = 3.5;
-const _GODD_β = 500;
+const _GODD_Cd = 310
+const _GODD_Tmax = 3.5
+const _GODD_β = 500
 const _GODD_b = 2
 
 # Dynamics

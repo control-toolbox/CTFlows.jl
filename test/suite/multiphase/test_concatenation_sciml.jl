@@ -34,8 +34,8 @@ function test_concatenation_sciml()
 
             mpf = flow1 * (0.5, flow2)
 
-            t0 = 0.0;
-            tf = 1.0;
+            t0 = 0.0
+            tf = 1.0
             x0 = [1.0]
             xf = mpf(t0, x0, tf)
 

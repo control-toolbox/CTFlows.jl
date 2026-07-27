@@ -26,8 +26,7 @@ const FakeHVFAugIP =
         dx .= p
         dp .= -x
         if dpv !== nothing
-            ;
-            dpv .= zeros(1);
+            dpv .= zeros(1)
         end
         nothing
     end
@@ -36,11 +35,10 @@ const FakeHVFAugIP =
 const FakeHVFAugNA = (t, x, p, v; variable_costate::Bool=false) -> (p, -x, zeros(1))
 const FakeHVFAugIPNA =
     (dx, dp, t, x, p, v; dpv=nothing, variable_costate::Bool=false) -> begin
-        dx .= p;
+        dx .= p
         dp .= -x
         if dpv !== nothing
-            ;
-            dpv .= zeros(1);
+            dpv .= zeros(1)
         end
         nothing
     end
