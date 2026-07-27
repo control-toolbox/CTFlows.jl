@@ -133,44 +133,44 @@ function test_ocp_hamiltonian()
         # ── call methods ──────────────────────────────────────────────────────
 
         Test.@testset "Unit: Auton/Fixed (x,p) — no lagrange" begin
-            x = [2.0];
+            x = [2.0]
             p = [3.0]
             val = H_AF_NL(x, p)
             Test.@test val ≈ p[1] * λ_TEST * x[1]
         end
 
         Test.@testset "Unit: Auton/Fixed (x,p) — with lagrange (min, sp0=-1)" begin
-            x = [2.0];
+            x = [2.0]
             p = [3.0]
             expected = p[1] * λ_TEST * x[1] + (-1.0) * x[1]^2
             Test.@test H_AF_LAG(x, p) ≈ expected
         end
 
         Test.@testset "Unit: Auton/Fixed (x,p) — with lagrange (max, sp0=+1)" begin
-            x = [2.0];
+            x = [2.0]
             p = [3.0]
             expected = p[1] * λ_TEST * x[1] + (+1.0) * x[1]^2
             Test.@test H_AF_LAG_MAX(x, p) ≈ expected
         end
 
         Test.@testset "Unit: NonAuton/Fixed (t,x,p)" begin
-            t = 2.0;
-            x = [3.0];
+            t = 2.0
+            x = [3.0]
             p = [5.0]
             Test.@test H_NAF_NL(t, x, p) ≈ p[1] * t * x[1]
         end
 
         Test.@testset "Unit: Auton/NonFixed (x,p,v)" begin
-            x = [2.0];
-            p = [3.0];
+            x = [2.0]
+            p = [3.0]
             v = [4.0]
             Test.@test H_ANF_NL(x, p, v) ≈ p[1] * v[1] * x[1]
         end
 
         Test.@testset "Unit: NonAuton/NonFixed (t,x,p,v)" begin
-            t = 2.0;
-            x = [3.0];
-            p = [5.0];
+            t = 2.0
+            x = [3.0]
+            p = [5.0]
             v = [4.0]
             Test.@test H_NANF_NL(t, x, p, v) ≈ p[1] * t * v[1] * x[1]
         end
@@ -178,19 +178,19 @@ function test_ocp_hamiltonian()
         # ── scalar inputs (n_x=1 — _asvec rewraps) ──────────────────────────
 
         Test.@testset "Unit: scalar x and p give same result as 1-vector" begin
-            x_s = 2.0;
+            x_s = 2.0
             p_s = 3.0
-            x_v = [2.0];
+            x_v = [2.0]
             p_v = [3.0]
             Test.@test H_AF_NL(x_s, p_s) ≈ H_AF_NL(x_v, p_v)
         end
 
         Test.@testset "Unit: scalar x,p,v give same result as 1-vectors (NonFixed)" begin
-            x_s = 2.0;
-            p_s = 3.0;
+            x_s = 2.0
+            p_s = 3.0
             v_s = 4.0
-            x_v = [2.0];
-            p_v = [3.0];
+            x_v = [2.0]
+            p_v = [3.0]
             v_v = [4.0]
             Test.@test H_ANF_NL(x_s, p_s, v_s) ≈ H_ANF_NL(x_v, p_v, v_v)
         end
@@ -198,7 +198,7 @@ function test_ocp_hamiltonian()
         # ── lagrange=nothing branch ───────────────────────────────────────────
 
         Test.@testset "Unit: lagrange=nothing → H = p·f exactly" begin
-            x = [1.5];
+            x = [1.5]
             p = [2.5]
             Test.@test H_AF_NL(x, p) == p[1] * λ_TEST * x[1]
         end
@@ -206,13 +206,13 @@ function test_ocp_hamiltonian()
         # ── criterion sign ────────────────────────────────────────────────────
 
         Test.@testset "Unit: min criterion → sp0 = -1.0" begin
-            x = [1.0];
+            x = [1.0]
             p = [0.0]
             Test.@test H_AF_LAG(x, p) ≈ -1.0 * x[1]^2
         end
 
         Test.@testset "Unit: max criterion → sp0 = +1.0" begin
-            x = [1.0];
+            x = [1.0]
             p = [0.0]
             Test.@test H_AF_LAG_MAX(x, p) ≈ +1.0 * x[1]^2
         end
@@ -250,7 +250,7 @@ function test_ocp_hamiltonian()
         Test.@testset "Unit: _ocp_hamiltonian min vs max sp0" begin
             h_min = Flows._ocp_hamiltonian(OCP_AF_LAG_MIN)
             h_max = Flows._ocp_hamiltonian(OCP_AF_LAG_MAX)
-            x = [2.0];
+            x = [2.0]
             p = [0.0]
             val_min = h_min.f(x, p)
             val_max = h_max.f(x, p)

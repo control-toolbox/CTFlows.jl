@@ -418,8 +418,8 @@ function test_hamiltonian_vector_field_trajectory()
             x_func = Trajectories.state(sol)
             p_func = Trajectories.costate(sol)
             # warm-up (force compilation)
-            x_func(0.0);
-            p_func(0.0);
+            x_func(0.0)
+            p_func(0.0)
             sol(0.0)
 
             Test.@testset "StateProjection matches direct sol(t)[1]" begin

@@ -106,33 +106,33 @@ function test_ocp_pseudo_hamiltonian()
         # ── call methods, all four (TD, VD) arities ──────────────────────────
 
         Test.@testset "Unit: Auton/Fixed (x,p,u) — no lagrange" begin
-            x = [2.0];
-            p = [3.0];
+            x = [2.0]
+            p = [3.0]
             u = [4.0]
             Test.@test HT_AF_NL(x, p, u) ≈ p[1] * (λ_TEST * x[1] + u[1])
         end
 
         Test.@testset "Unit: NonAuton/Fixed (t,x,p,u)" begin
-            t = 2.0;
-            x = [3.0];
-            p = [5.0];
+            t = 2.0
+            x = [3.0]
+            p = [5.0]
             u = [1.5]
             Test.@test HT_NAF_NL(t, x, p, u) ≈ p[1] * (t * x[1] + u[1])
         end
 
         Test.@testset "Unit: Auton/NonFixed (x,p,u,v)" begin
-            x = [2.0];
-            p = [3.0];
-            u = [1.0];
+            x = [2.0]
+            p = [3.0]
+            u = [1.0]
             v = [4.0]
             Test.@test HT_ANF_NL(x, p, u, v) ≈ p[1] * (v[1] * x[1] + u[1])
         end
 
         Test.@testset "Unit: NonAuton/NonFixed (t,x,p,u,v)" begin
-            t = 2.0;
-            x = [3.0];
-            p = [5.0];
-            u = [1.0];
+            t = 2.0
+            x = [3.0]
+            p = [5.0]
+            u = [1.0]
             v = [4.0]
             Test.@test HT_NANF_NL(t, x, p, u, v) ≈ p[1] * (t * v[1] * x[1] + u[1])
         end
@@ -140,24 +140,24 @@ function test_ocp_pseudo_hamiltonian()
         # ── criterion sign (min ⇒ sp0=-1, max ⇒ sp0=+1) ──────────────────────
 
         Test.@testset "Unit: min criterion ⇒ sp0 = -1" begin
-            x = [2.0];
-            p = [3.0];
+            x = [2.0]
+            p = [3.0]
             u = [4.0]
             Test.@test HT_AF_LAG_MIN(x, p, u) ≈
                 p[1] * (λ_TEST * x[1] + u[1]) - (x[1]^2 + u[1]^2)
         end
 
         Test.@testset "Unit: max criterion ⇒ sp0 = +1" begin
-            x = [2.0];
-            p = [3.0];
+            x = [2.0]
+            p = [3.0]
             u = [4.0]
             Test.@test HT_AF_LAG_MAX(x, p, u) ≈
                 p[1] * (λ_TEST * x[1] + u[1]) + (x[1]^2 + u[1]^2)
         end
 
         Test.@testset "Unit: lagrange === nothing ⇒ H̃ = p·f exactly" begin
-            x = [1.5];
-            p = [2.5];
+            x = [1.5]
+            p = [2.5]
             u = [0.5]
             Test.@test HT_AF_NL(x, p, u) == p[1] * (λ_TEST * x[1] + u[1])
         end
@@ -193,8 +193,8 @@ function test_ocp_pseudo_hamiltonian()
             h̃_min = Flows._ocp_pseudo_hamiltonian(OCP_MIN_LAG)
             h̃_max = Flows._ocp_pseudo_hamiltonian(OCP_MAX_LAG)
             # f(x,u)=x+u, ℓ=0.5u² ; H̃ = p(x+u) + sp0·0.5u²
-            x = [2.0];
-            p = [0.0];
+            x = [2.0]
+            p = [0.0]
             u = [3.0]   # p=0 isolates the sp0·ℓ term
             Test.@test h̃_min(x, p, u) ≈ -0.5 * u[1]^2
             Test.@test h̃_max(x, p, u) ≈ +0.5 * u[1]^2
@@ -202,8 +202,8 @@ function test_ocp_pseudo_hamiltonian()
 
         Test.@testset "Unit: _ocp_pseudo_hamiltonian without lagrange ⇒ H̃ = p·f" begin
             h̃ = Flows._ocp_pseudo_hamiltonian(OCP_MIN_MAYER)   # Mayer only, no lagrange
-            x = [2.0];
-            p = [3.0];
+            x = [2.0]
+            p = [3.0]
             u = [4.0]
             Test.@test h̃(x, p, u) ≈ p[1] * (x[1] + u[1])   # f(x,u)=x+u, no running cost
         end
@@ -217,7 +217,7 @@ function test_ocp_pseudo_hamiltonian()
             law = Data.DynClosedLoop((x, p) -> -p)
             H = Data.ComposedHamiltonian(h̃, law)
             Test.@test H isa Data.AbstractHamiltonian
-            x = [2.0];
+            x = [2.0]
             p = [3.0]
             Test.@test H(x, p) ≈ p[1] * (x[1] - p[1]) - 0.5 * p[1]^2
         end
@@ -227,7 +227,7 @@ function test_ocp_pseudo_hamiltonian()
             h̃ = Flows._ocp_pseudo_hamiltonian(OCP_MAX_LAG)
             law = Data.DynClosedLoop((x, p) -> -p)
             H = Data.ComposedHamiltonian(h̃, law)
-            x = [2.0];
+            x = [2.0]
             p = [3.0]
             Test.@test H(x, p) ≈ p[1] * (x[1] - p[1]) + 0.5 * p[1]^2
         end
@@ -240,9 +240,9 @@ function test_ocp_pseudo_hamiltonian()
                 (t, x, p, v) -> v[1] * p; is_autonomous=false, is_variable=true
             )
             H = Data.ComposedHamiltonian(h̃, law)
-            t = 0.7;
-            x = [2.0];
-            p = [3.0];
+            t = 0.7
+            x = [2.0]
+            p = [3.0]
             v = [1.5]
             u = v[1] * p[1]
             Test.@test H(t, x, p, v) ≈ p[1] * (x[1] + u) - u^2

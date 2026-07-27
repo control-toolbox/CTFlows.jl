@@ -589,11 +589,11 @@ function test_hamiltonian_getter()
                 ad_backend=ADTypes.AutoForwardDiff()
             )
             hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend, inplace=true)
-            x = [1.0, 2.0];
-            p = [0.5, 1.5];
+            x = [1.0, 2.0]
+            p = [0.5, 1.5]
             v = [0.1, 0.2]
-            dx = similar(x);
-            dp = similar(p);
+            dx = similar(x)
+            dp = similar(p)
             dpv = similar(v)
             hvf.f(dx, dp, x, p, v; dpv=dpv, variable_costate=true)
             Test.@test dx ≈ p
@@ -611,12 +611,12 @@ function test_hamiltonian_getter()
                 ad_backend=ADTypes.AutoForwardDiff()
             )
             hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend, inplace=true)
-            t = 1.0;
-            x = [1.0, 2.0];
-            p = [0.5, 1.5];
+            t = 1.0
+            x = [1.0, 2.0]
+            p = [0.5, 1.5]
             v = [0.1, 0.2]
-            dx = similar(x);
-            dp = similar(p);
+            dx = similar(x)
+            dp = similar(p)
             dpv = similar(v)
             hvf.f(dx, dp, t, x, p, v; dpv=dpv, variable_costate=true)
             Test.@test dx ≈ p
@@ -634,10 +634,10 @@ function test_hamiltonian_getter()
                 ad_backend=ADTypes.AutoForwardDiff()
             )
             hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend, inplace=true)
-            x = [1.0, 2.0];
-            p = [0.5, 1.5];
+            x = [1.0, 2.0]
+            p = [0.5, 1.5]
             v = [0.1, 0.2]
-            dx = similar(x);
+            dx = similar(x)
             dp = similar(p)
             result = hvf.f(dx, dp, x, p, v)
             Test.@test result === nothing
@@ -655,10 +655,10 @@ function test_hamiltonian_getter()
                 ad_backend=ADTypes.AutoForwardDiff()
             )
             hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend, inplace=true)
-            x = [1.0, 2.0];
-            p = [0.5, 1.5];
+            x = [1.0, 2.0]
+            p = [0.5, 1.5]
             v = [0.1, 0.2]
-            dx = similar(x);
+            dx = similar(x)
             dp = similar(p)
             Test.@test_throws Exception hvf.f(dx, dp, x, p, v; variable_costate=true)
         end
@@ -674,8 +674,8 @@ function test_hamiltonian_getter()
                 is_variable=true,
             )
             hvf = Systems.hamiltonian_vector_field(h)
-            x = [1.0];
-            p = [0.5];
+            x = [1.0]
+            p = [0.5]
             v = [0.1]
             Test.@test hasmethod(
                 hvf.f, Tuple{typeof(x),typeof(p),typeof(v)}, (:variable_costate,)
@@ -689,7 +689,7 @@ function test_hamiltonian_getter()
                 is_variable=false,
             )
             hvf = Systems.hamiltonian_vector_field(h)
-            x = [1.0];
+            x = [1.0]
             p = [0.5]
             Test.@test !hasmethod(hvf.f, Tuple{typeof(x),typeof(p)}, (:variable_costate,))
         end
@@ -701,10 +701,10 @@ function test_hamiltonian_getter()
                 is_variable=true,
             )
             hvf = Systems.hamiltonian_vector_field(h; inplace=true)
-            x = [1.0];
-            p = [0.5];
+            x = [1.0]
+            p = [0.5]
             v = [0.1]
-            dx = similar(x);
+            dx = similar(x)
             dp = similar(p)
             Test.@test hasmethod(
                 hvf.f,
@@ -727,8 +727,8 @@ function test_hamiltonian_getter()
                 ad_backend=ADTypes.AutoForwardDiff()
             )
             hvf = Systems.hamiltonian_vector_field(h; ad_backend=backend)
-            x = [1.0, 2.0];
-            p = [0.5, 1.5];
+            x = [1.0, 2.0]
+            p = [0.5, 1.5]
             v = [0.1, 0.2]
             result_default = hvf.f(x, p, v)
             result_false = hvf.f(x, p, v; variable_costate=false)

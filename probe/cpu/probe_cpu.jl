@@ -1497,7 +1497,7 @@ println(
   This block settles the hypothesis above — read the totals literally, do not assume the
   Flow(Hamiltonian) profile carries over without checking Complex/Dual rows specifically.
   Fold whatever is measured into docs/src/compatibility/pseudo_hamiltonian.md.
-"""
+""",
 )
 
 # =============================================================================
@@ -1616,7 +1616,7 @@ println(
 
   This block settles the hypothesis above — read the totals literally. Fold whatever is
   measured into docs/src/compatibility/pseudo_hamiltonian_vector_field.md.
-"""
+""",
 )
 
 # =============================================================================
