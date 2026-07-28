@@ -27,7 +27,7 @@ Configuration types encode these choices as type parameters for compile-time dis
 - [`CTFlows.Configs.initial_costate`](@ref): Initial costate (Hamiltonian configs)
 - [`CTFlows.Configs.initial_variable_costate`](@ref): Initial variable costate (augmented configs)
 - [`CTFlows.Configs.mode_trait`](@ref): Integration mode trait
-- [`CTFlows.Configs.dynamics_trait`](@ref): Dynamics trait
+- [`CTBase.Traits.dynamics_trait`](@extref): Dynamics trait
 
 See also: [`CTFlows.Flows.build_flow`](@ref), [`CTFlows.Trajectories.build_trajectory`](@ref).
 """
@@ -68,6 +68,6 @@ export StateEndPointConfig, StateTrajectoryConfig
 export HamiltonianEndPointConfig,
     HamiltonianTrajectoryConfig, AugmentedHamiltonianEndPointConfig
 export tspan, initial_condition, initial_state, initial_costate, initial_variable_costate
-export initial_time, final_time, mode_trait, dynamics_trait
+export initial_time, final_time, mode_trait
 
 end # module Configs
