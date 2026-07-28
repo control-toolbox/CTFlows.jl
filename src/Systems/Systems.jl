@@ -78,8 +78,8 @@ export ConstrainedPseudoHamiltonianSystem
 export build_system
 export hamiltonian, backend
 export pseudo_hamiltonian, control_law
-export hamiltonian_gradient, variable_gradient
-export pseudo_hamiltonian_gradient, pseudo_variable_gradient
+export get_hamiltonian_gradient, get_variable_gradient
+export get_pseudo_hamiltonian_gradient, get_pseudo_variable_gradient
 export HamiltonianGradient, HamiltonianVariableGradient
 export PseudoHamiltonianGradient, PseudoHamiltonianVariableGradient
 

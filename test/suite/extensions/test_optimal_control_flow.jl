@@ -360,15 +360,15 @@ function test_optimal_control_flow()
             Test.@test H(0.0, 2.0, 0.5, [3.0]) ≈ 0.5 * 3.0 * 2.0 atol=ATOL
         end
 
-        Test.@testset "Unit: hamiltonian_gradient(flow) → (∂H/∂x, ∂H/∂p)" begin
-            ∇H = Systems.hamiltonian_gradient(FLOW_ANF)
+        Test.@testset "Unit: get_hamiltonian_gradient(flow) → (∂H/∂x, ∂H/∂p)" begin
+            ∇H = Systems.get_hamiltonian_gradient(FLOW_ANF)
             ∂x, ∂p = ∇H(0.0, 2.0, 0.5, [3.0])
             Test.@test ∂x[1] ≈ 0.5 * 3.0 atol=ATOL   # ∂H/∂x = p·v
             Test.@test ∂p[1] ≈ 3.0 * 2.0 atol=ATOL   # ∂H/∂p = v·x
         end
 
-        Test.@testset "Unit: variable_gradient(flow) → ∂H/∂v = p·x" begin
-            ∇vH = Systems.variable_gradient(FLOW_ANF)
+        Test.@testset "Unit: get_variable_gradient(flow) → ∂H/∂v = p·x" begin
+            ∇vH = Systems.get_variable_gradient(FLOW_ANF)
             gv = ∇vH(0.0, 2.0, 0.5, [3.0])
             Test.@test gv[1] ≈ 0.5 * 2.0 atol=ATOL   # ∂H/∂v = p·x
         end

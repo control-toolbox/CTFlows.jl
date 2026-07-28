@@ -221,8 +221,8 @@ Flows.hamiltonian_vector_field(hflow_ad)
 from a pseudo-Hamiltonian or an OCP together with a control law — the Hamiltonian is
 then a `CTBase.Data.ComposedHamiltonian` (`:total` mode) or reconstructed from a
 `PseudoHamiltonianSystem` (`:partial` mode). The pseudo-Hamiltonian getters
-(`pseudo_hamiltonian`, `control_law`, `pseudo_hamiltonian_gradient`,
-`pseudo_variable_gradient`) and `variable_gradient` are shown on
+(`pseudo_hamiltonian`, `control_law`, `get_pseudo_hamiltonian_gradient`,
+`get_pseudo_variable_gradient`) and `get_variable_gradient` are shown on
 [Control laws](control_laws.md) and [Integrating](integrating.md) respectively.
 
 ---
