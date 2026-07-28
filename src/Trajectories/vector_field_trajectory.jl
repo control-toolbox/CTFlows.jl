@@ -113,7 +113,8 @@ $(TYPEDSIGNATURES)
 
 Return the solution itself as a state function of time.
 
-This is a semantic accessor that returns `sol` itself (which is already callable),
+This is a method of the [`CTModels.Components.state`](@extref) generic, contributed by
+CTFlows for `VectorFieldTrajectory`. It returns `sol` itself (which is already callable),
 providing a clear, self-documenting way to obtain the trajectory function.
 
 # Arguments
@@ -138,9 +139,9 @@ x.(0.0:0.1:1.0)   # broadcast over time grid
   `state(sol)`, `costate(sol)`, `control(sol)` when extended to Hamiltonian systems.
 - No allocation occurs — returns `sol` directly.
 
-See also: [`CTSolvers.Integrators.times`](@extref), [`CTSolvers.Integrators.evaluate_at`](@extref), [`CTFlows.Trajectories.time_grid`](@ref).
+See also: [`CTSolvers.Integrators.times`](@extref), [`CTSolvers.Integrators.evaluate_at`](@extref), [`CTFlows.Trajectories.time_grid`](@ref), [`CTModels.Components.state`](@extref).
 """
-function state(sol::VectorFieldTrajectory)
+function Components.state(sol::VectorFieldTrajectory)
     return sol
 end
 
@@ -149,8 +150,9 @@ $(TYPEDSIGNATURES)
 
 Alias for `times(sol)` — returns the time grid from the solution.
 
-This is an alternative, more explicit name for `times` in numerical contexts
-where "time grid" is the standard terminology.
+This is a method of the [`CTModels.Components.time_grid`](@extref) generic, contributed by
+CTFlows for `VectorFieldTrajectory`: an alternative, more explicit name for `times` in
+numerical contexts where "time grid" is the standard terminology.
 
 # Arguments
 - `sol::VectorFieldTrajectory`: The vector field solution.
@@ -171,9 +173,9 @@ tg = time_grid(sol)  # same as times(sol)
 - Use `time_grid` when "grid" terminology is clearer in context.
 - Use `times` for brevity in everyday use.
 
-See also: [`CTSolvers.Integrators.times`](@extref), [`CTFlows.Trajectories.state`](@ref).
+See also: [`CTSolvers.Integrators.times`](@extref), [`CTFlows.Trajectories.state`](@ref), [`CTModels.Components.time_grid`](@extref).
 """
-function time_grid(sol::VectorFieldTrajectory)
+function Components.time_grid(sol::VectorFieldTrajectory)
     return Integrators.times(sol)
 end
 

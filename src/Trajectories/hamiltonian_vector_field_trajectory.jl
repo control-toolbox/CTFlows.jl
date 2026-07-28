@@ -155,8 +155,9 @@ $(TYPEDSIGNATURES)
 
 Alias for `times(sol)` — returns the time grid from the solution.
 
-This is an alternative, more explicit name for `times` in numerical contexts
-where "time grid" is the standard terminology.
+This is a method of the [`CTModels.Components.time_grid`](@extref) generic, contributed by
+CTFlows for `HamiltonianVectorFieldTrajectory`: an alternative, more explicit name for
+`times` in numerical contexts where "time grid" is the standard terminology.
 
 # Arguments
 - `sol::HamiltonianVectorFieldTrajectory`: The Hamiltonian vector field solution.
@@ -164,9 +165,9 @@ where "time grid" is the standard terminology.
 # Returns
 - `AbstractVector`: The vector of time points.
 
-See also: [`CTSolvers.Integrators.times`](@extref), [`CTFlows.Trajectories.state`](@ref).
+See also: [`CTSolvers.Integrators.times`](@extref), [`CTFlows.Trajectories.state`](@ref), [`CTModels.Components.time_grid`](@extref).
 """
-function time_grid(sol::HamiltonianVectorFieldTrajectory)
+function Components.time_grid(sol::HamiltonianVectorFieldTrajectory)
     return Integrators.times(sol)
 end
 
@@ -266,7 +267,9 @@ $(TYPEDSIGNATURES)
 
 Return the solution as a state function of time `x(t)`.
 
-Returns a [`CTFlows.Trajectories.StateProjection`](@ref) wrapping the solution, callable as `x(t)`.
+This is a method of the [`CTModels.Components.state`](@extref) generic, contributed by
+CTFlows for `HamiltonianVectorFieldTrajectory`. Returns a
+[`CTFlows.Trajectories.StateProjection`](@ref) wrapping the solution, callable as `x(t)`.
 
 # Arguments
 - `sol::HamiltonianVectorFieldTrajectory`: The Hamiltonian vector field solution.
@@ -284,9 +287,9 @@ x(0.0)            # initial state
 x(0.5)            # interpolated state at t = 0.5
 ```
 
-See also: [`CTFlows.Trajectories.costate`](@ref), [`CTSolvers.Integrators.times`](@extref).
+See also: [`CTFlows.Trajectories.costate`](@ref), [`CTSolvers.Integrators.times`](@extref), [`CTModels.Components.state`](@extref).
 """
-function state(sol::HamiltonianVectorFieldTrajectory)
+function Components.state(sol::HamiltonianVectorFieldTrajectory)
     return sol.state_proj
 end
 
@@ -295,7 +298,9 @@ $(TYPEDSIGNATURES)
 
 Return the solution as a costate function of time `p(t)`.
 
-Returns a [`CTFlows.Trajectories.CostateProjection`](@ref) wrapping the solution, callable as `p(t)`.
+This is a method of the [`CTModels.Components.costate`](@extref) generic, contributed by
+CTFlows for `HamiltonianVectorFieldTrajectory`. Returns a
+[`CTFlows.Trajectories.CostateProjection`](@ref) wrapping the solution, callable as `p(t)`.
 
 # Arguments
 - `sol::HamiltonianVectorFieldTrajectory`: The Hamiltonian vector field solution.
@@ -313,9 +318,9 @@ p(0.0)            # initial costate
 p(0.5)            # interpolated costate at t = 0.5
 ```
 
-See also: [`CTFlows.Trajectories.state`](@ref), [`CTSolvers.Integrators.times`](@extref).
+See also: [`CTFlows.Trajectories.state`](@ref), [`CTSolvers.Integrators.times`](@extref), [`CTModels.Components.costate`](@extref).
 """
-function costate(sol::HamiltonianVectorFieldTrajectory)
+function Components.costate(sol::HamiltonianVectorFieldTrajectory)
     return sol.costate_proj
 end
 
