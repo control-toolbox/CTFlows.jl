@@ -172,12 +172,13 @@ $(TYPEDSIGNATURES)
 
 Return the state function `x(t)` of a `StateFlowTrajectory` (scalar for a 1-D state).
 
-Returns the stored [`CTFlows.Trajectories.ControlledStateProjection`](@ref) precomputed at
-construction.
+This is a method of the [`CTModels.Components.state`](@extref) generic, contributed by
+CTFlows for `StateFlowTrajectory`. Returns the stored
+[`CTFlows.Trajectories.ControlledStateProjection`](@ref) precomputed at construction.
 
-See also: [`CTFlows.Trajectories.control`](@ref).
+See also: [`CTFlows.Trajectories.control`](@ref), [`CTModels.Components.state`](@extref).
 """
-state(sol::StateFlowTrajectory) = sol.state_proj
+Components.state(sol::StateFlowTrajectory) = sol.state_proj
 
 """
 $(TYPEDSIGNATURES)
@@ -185,13 +186,16 @@ $(TYPEDSIGNATURES)
 Return the reconstructed control function `u(t) = law(t, x(t), v)` of a
 `StateFlowTrajectory`, as the stored [`CTFlows.Trajectories.ControlProjection`](@ref).
 
+This is a method of the [`CTModels.Components.control`](@extref) generic, contributed by
+CTFlows for `StateFlowTrajectory`.
+
 Raises a [`CTBase.Exceptions.PreconditionError`](@extref) when the trajectory was built
 without a control law (a basic control-free `Flow(ocp)`), which has no control to
 reconstruct.
 
-See also: [`CTFlows.Trajectories.state`](@ref).
+See also: [`CTFlows.Trajectories.state`](@ref), [`CTModels.Components.control`](@extref).
 """
-control(sol::StateFlowTrajectory) = _sft_control(sol.control_proj)
+Components.control(sol::StateFlowTrajectory) = _sft_control(sol.control_proj)
 
 """
 $(TYPEDSIGNATURES)
@@ -235,8 +239,11 @@ Integrators.times(sol::StateFlowTrajectory) = Integrators.times(sol.traj)
 $(TYPEDSIGNATURES)
 
 Alias for `times(sol)` — the time grid of a `StateFlowTrajectory`.
+
+This is a method of the [`CTModels.Components.time_grid`](@extref) generic, contributed by
+CTFlows for `StateFlowTrajectory`.
 """
-time_grid(sol::StateFlowTrajectory) = Integrators.times(sol.traj)
+Components.time_grid(sol::StateFlowTrajectory) = Integrators.times(sol.traj)
 
 """
 $(TYPEDSIGNATURES)
@@ -275,9 +282,12 @@ Return the objective value of a `StateFlowTrajectory` (Mayer + Lagrange, with th
 control reconstructed from the law). Available only when the trajectory was built from
 an OCP (trajectory mode); otherwise a clear error is raised.
 
-See also: [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.control`](@ref).
+This is a method of the [`CTModels.Components.objective`](@extref) generic, contributed by
+CTFlows for `StateFlowTrajectory`.
+
+See also: [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.control`](@ref), [`CTModels.Components.objective`](@extref).
 """
-function objective(
+function Components.objective(
     sol::StateFlowTrajectory{T,L,V,<:Real}
 ) where {T<:VectorFieldTrajectory,L,V}
     return sol.objective
@@ -289,9 +299,12 @@ $(TYPEDSIGNATURES)
 Throw a [`CTBase.Exceptions.PreconditionError`](@extref) when the objective is not
 available (the trajectory was built without an OCP, e.g. from `Flow(fc, law)`).
 
-See also: [`CTFlows.Trajectories.objective`](@ref).
+This is a method of the [`CTModels.Components.objective`](@extref) generic, contributed by
+CTFlows for `StateFlowTrajectory`.
+
+See also: [`CTFlows.Trajectories.objective`](@ref), [`CTModels.Components.objective`](@extref).
 """
-function objective(
+function Components.objective(
     sol::StateFlowTrajectory{T,L,V,Nothing}
 ) where {T<:VectorFieldTrajectory,L,V}
     return throw(
@@ -313,9 +326,12 @@ A `StateFlowTrajectory` has **no costate** — it is the trajectory of a control
 state flow (`OpenLoop`/`ClosedLoop`), not a Hamiltonian flow. Raises a
 `PreconditionError` pointing at the available getters.
 
-See also: [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.control`](@ref).
+This is a method of the [`CTModels.Components.costate`](@extref) generic, contributed by
+CTFlows for `StateFlowTrajectory`.
+
+See also: [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.control`](@ref), [`CTModels.Components.costate`](@extref).
 """
-function costate(sol::StateFlowTrajectory)
+function Components.costate(sol::StateFlowTrajectory)
     return throw(
         Exceptions.PreconditionError(
             "a StateFlowTrajectory has no costate";

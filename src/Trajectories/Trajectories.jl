@@ -8,7 +8,9 @@ This module provides:
 - `VectorFieldTrajectory`: Trajectory type wrapping integration results
 - `build_trajectory`: Trajectory building functions for different configuration types
 - `final_state`, `times`, `evaluate_at`: Semantic accessors for integration results
-- `state`, `time_grid`: Semantic accessors for VectorFieldTrajectory
+- `state`, `control`, `costate`, `objective`, `time_grid`: methods on the
+  [`CTModels.Components`](@extref) generics, contributed here for `VectorFieldTrajectory`,
+  `HamiltonianVectorFieldTrajectory` and `StateFlowTrajectory`
 - `Trajectories.plot`: plotting for trajectories via the Plots extension (a `RecipesBase.plot`
   method; not re-exported — call it qualified or load `Plots`)
 
@@ -25,6 +27,7 @@ import CTBase.Core
 import CTBase.Data
 import CTBase.Exceptions
 import CTBase.Traits
+import CTModels.Components: Components, state, control, costate, objective, time_grid
 import RecipesBase: RecipesBase, plot
 
 # ==============================================================================

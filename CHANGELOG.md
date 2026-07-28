@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.1-beta] - 2026-07-28
+
+### Changed
+
+- **`Trajectories.{state,control,costate,objective,time_grid}` are now methods of the
+  `CTModels.Components` generics of the same name** ([#370]), instead of distinct
+  CTFlows-local generics that happened to share a spelling. `VectorFieldTrajectory`,
+  `HamiltonianVectorFieldTrajectory` and `StateFlowTrajectory` contribute methods to
+  `CTModels.Components.{state,control,costate,objective,time_grid}` rather than shadowing
+  them. Non-breaking for callers: every existing call site and export keeps working
+  unchanged; the only observable difference is that `parentmodule` changes and that
+  importing both `CTFlows.Trajectories` and `CTModels.Components` accessors into one
+  module now succeeds instead of erroring.
+
 ## [0.16.0-beta] - 2026-07-25
 
 ### Fixed
