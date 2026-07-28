@@ -393,18 +393,18 @@ end
 $(TYPEDSIGNATURES)
 
 Return a callable `(t, x, p, v) -> (∂H/∂x, ∂H/∂p)` for the true Hamiltonian of a
-Hamiltonian flow. Delegates to [`CTFlows.Systems.hamiltonian_gradient`](@ref); the
+Hamiltonian flow. Delegates to [`CTFlows.Systems.get_hamiltonian_gradient`](@ref); the
 `ad_backend` keyword (default: the system's backend) selects the AD backend.
 
-See also: [`CTFlows.Systems.hamiltonian`](@ref), [`CTFlows.Systems.variable_gradient`](@ref).
+See also: [`CTFlows.Systems.hamiltonian`](@ref), [`CTFlows.Systems.get_variable_gradient`](@ref).
 """
-function Systems.hamiltonian_gradient(
+function Systems.get_hamiltonian_gradient(
     f::AbstractFlow{
         <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.HamiltonianDynamics
     };
     kwargs...,
 )
-    return Systems.hamiltonian_gradient(system(f); kwargs...)
+    return Systems.get_hamiltonian_gradient(system(f); kwargs...)
 end
 
 """
@@ -412,18 +412,18 @@ $(TYPEDSIGNATURES)
 
 Return a callable `(t, x, p, v) -> ∂H/∂v` for the true Hamiltonian of a Hamiltonian
 flow — the quantity (before negation) driving `ṗv = -∂H/∂v`. Delegates to
-[`CTFlows.Systems.variable_gradient`](@ref); the `ad_backend` keyword (default: the
+[`CTFlows.Systems.get_variable_gradient`](@ref); the `ad_backend` keyword (default: the
 system's backend) selects the AD backend.
 
-See also: [`CTFlows.Systems.hamiltonian_gradient`](@ref).
+See also: [`CTFlows.Systems.get_hamiltonian_gradient`](@ref).
 """
-function Systems.variable_gradient(
+function Systems.get_variable_gradient(
     f::AbstractFlow{
         <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.HamiltonianDynamics
     };
     kwargs...,
 )
-    return Systems.variable_gradient(system(f); kwargs...)
+    return Systems.get_variable_gradient(system(f); kwargs...)
 end
 
 """
@@ -431,18 +431,18 @@ $(TYPEDSIGNATURES)
 
 Return a callable `(t, x, p, u, v) -> (∂H̃/∂x, ∂H̃/∂p)` for the pseudo-Hamiltonian of a
 Hamiltonian flow (differentiated at fixed control), when available. Delegates to
-[`CTFlows.Systems.pseudo_hamiltonian_gradient`](@ref); the `ad_backend` keyword
+[`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@ref); the `ad_backend` keyword
 (default: the system's backend) selects the AD backend.
 
-See also: [`CTFlows.Systems.pseudo_hamiltonian`](@ref), [`CTFlows.Systems.pseudo_variable_gradient`](@ref).
+See also: [`CTFlows.Systems.pseudo_hamiltonian`](@ref), [`CTFlows.Systems.get_pseudo_variable_gradient`](@ref).
 """
-function Systems.pseudo_hamiltonian_gradient(
+function Systems.get_pseudo_hamiltonian_gradient(
     f::AbstractFlow{
         <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.HamiltonianDynamics
     };
     kwargs...,
 )
-    return Systems.pseudo_hamiltonian_gradient(system(f); kwargs...)
+    return Systems.get_pseudo_hamiltonian_gradient(system(f); kwargs...)
 end
 
 """
@@ -450,18 +450,18 @@ $(TYPEDSIGNATURES)
 
 Return a callable `(t, x, p, u, v) -> ∂H̃/∂v` for the pseudo-Hamiltonian of a
 Hamiltonian flow (differentiated at fixed control), when available. Delegates to
-[`CTFlows.Systems.pseudo_variable_gradient`](@ref); the `ad_backend` keyword
+[`CTFlows.Systems.get_pseudo_variable_gradient`](@ref); the `ad_backend` keyword
 (default: the system's backend) selects the AD backend.
 
-See also: [`CTFlows.Systems.pseudo_hamiltonian_gradient`](@ref).
+See also: [`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@ref).
 """
-function Systems.pseudo_variable_gradient(
+function Systems.get_pseudo_variable_gradient(
     f::AbstractFlow{
         <:Traits.TimeDependence,<:Traits.VariableDependence,Traits.HamiltonianDynamics
     };
     kwargs...,
 )
-    return Systems.pseudo_variable_gradient(system(f); kwargs...)
+    return Systems.get_pseudo_variable_gradient(system(f); kwargs...)
 end
 
 """

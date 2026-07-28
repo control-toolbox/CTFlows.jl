@@ -149,15 +149,15 @@ Systems.hamiltonian(hflow_v)          # the callable H(t, x, p, v)
 ```
 
 ```@example flows_integrating
-Systems.hamiltonian_gradient(hflow_v) # functor: (t, x, p, v) -> (∂H/∂x, ∂H/∂p)
+Systems.get_hamiltonian_gradient(hflow_v) # functor: (t, x, p, v) -> (∂H/∂x, ∂H/∂p)
 ```
 
 ```@example flows_integrating
-Systems.variable_gradient(hflow_v)    # functor: (t, x, p, v) -> ∂H/∂v
+Systems.get_variable_gradient(hflow_v)    # functor: (t, x, p, v) -> ∂H/∂v
 ```
 
-`Systems.pseudo_hamiltonian`, `Systems.control_law`, `Systems.pseudo_hamiltonian_gradient`
-and `Systems.pseudo_variable_gradient` are available on flows built from a
+`Systems.pseudo_hamiltonian`, `Systems.control_law`, `Systems.get_pseudo_hamiltonian_gradient`
+and `Systems.get_pseudo_variable_gradient` are available on flows built from a
 pseudo-Hamiltonian (or an OCP) and a control law — see [Control laws](control_laws.md).
 Calling them on a flow with no associated control law throws `IncorrectArgument`.
 

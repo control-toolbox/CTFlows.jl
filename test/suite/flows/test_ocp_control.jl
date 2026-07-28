@@ -396,7 +396,7 @@ function test_ocp_control()
             Test.@test pvf isa Number
             # pvf = -∫ ∂H̃/∂v dt (u held at the law value) — quadrature on the flow's own
             # (x(t), p(t)) trajectory, using the pseudo variable-gradient getter.
-            ∇ṽ = Systems.pseudo_variable_gradient(fp)
+            ∇ṽ = Systems.get_pseudo_variable_gradient(fp)
             ts = range(t0, tf; length=101)
             ys = map(ts) do t
                 x, p = t == t0 ? (x0, p0) : fp(t0, x0, p0, t; variable=v)
@@ -426,7 +426,7 @@ function test_ocp_control()
             # non-stationary law ⇒ chain term ≠ 0 ⇒ the two modes give different pv
             Test.@test !isapprox(pvt, pvp; atol=1e-4)
             # absolute check on :total via quadrature of the total ∂H/∂v (through the law)
-            ∇v = Systems.variable_gradient(ft)
+            ∇v = Systems.get_variable_gradient(ft)
             ts = range(t0, tf; length=101)
             ys = map(ts) do t
                 x, p = t == t0 ? (x0, p0) : ft(t0, x0, p0, t; variable=v)
@@ -453,13 +453,13 @@ function test_ocp_control()
             Test.@test Systems.hamiltonian(fp) isa Data.AbstractHamiltonian
             Test.@test Systems.hamiltonian(ft) isa Data.AbstractHamiltonian
             # gradient getters return callable functors (not closures)
-            Test.@test Systems.pseudo_hamiltonian_gradient(fp) isa
+            Test.@test Systems.get_pseudo_hamiltonian_gradient(fp) isa
                 Systems.PseudoHamiltonianGradient
-            Test.@test Systems.hamiltonian_gradient(ft) isa Systems.HamiltonianGradient
+            Test.@test Systems.get_hamiltonian_gradient(ft) isa Systems.HamiltonianGradient
             # the AD backend can be provided explicitly (forwarded flow → system)
             be = Systems.backend(Flows.system(ft))
-            g_default = Systems.hamiltonian_gradient(ft)
-            g_custom = Systems.hamiltonian_gradient(ft; ad_backend=be)
+            g_default = Systems.get_hamiltonian_gradient(ft)
+            g_custom = Systems.get_hamiltonian_gradient(ft; ad_backend=be)
             Test.@test g_custom isa Systems.HamiltonianGradient
             Test.@test all(g_default(0.0, 1.0, 0.5, 0.5) .≈ g_custom(0.0, 1.0, 0.5, 0.5))
         end
@@ -648,13 +648,13 @@ function test_ocp_control()
                 c * x0 atol = 1e-10
 
             # (3) total gradient ∇H = (∂ₓH, ∂ₚH) = (-p+c, -x+p) — chain-rule through law
-            ∇H = Systems.hamiltonian_gradient(f)
+            ∇H = Systems.get_hamiltonian_gradient(f)
             dxH, dpH = ∇H(0.0, x0, p0, Float64[])
             Test.@test dxH ≈ -p0 + c atol = 1e-8
             Test.@test dpH ≈ -x0 + p0 atol = 1e-8
 
             # (4) pseudo gradient at fixed u: ∂ₓH̃_c = -p+c, ∂ₚH̃_c = -x+u
-            ∇H̃ = Systems.pseudo_hamiltonian_gradient(f)
+            ∇H̃ = Systems.get_pseudo_hamiltonian_gradient(f)
             dxH̃, dpH̃ = ∇H̃(0.0, x0, p0, u0, Float64[])
             Test.@test dxH̃ ≈ -p0 + c atol = 1e-8
             Test.@test dpH̃ ≈ -x0 + u0 atol = 1e-8
@@ -682,7 +682,7 @@ function test_ocp_control()
             law = Data.DynClosedLoop((x, p, v) -> p; is_variable=true)
             f = Flows.Flow(OCP_VAR, law; constraint=g, multiplier=μ, _opts()...)
             x0, p0, vv = 0.7, 0.4, 0.5
-            ∇vH = Systems.variable_gradient(f)
+            ∇vH = Systems.get_variable_gradient(f)
             Test.@test first(∇vH(0.0, x0, p0, vv)) ≈ -p0 * x0 atol = 1e-8
         end
 

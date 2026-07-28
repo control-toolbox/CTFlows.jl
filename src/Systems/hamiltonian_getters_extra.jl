@@ -90,7 +90,7 @@ Functor returning the gradient `(∂H/∂x, ∂H/∂p)` of a true Hamiltonian, e
 - `h::H`: the Hamiltonian to differentiate.
 - `backend::B`: the AD backend.
 
-See also: [`CTFlows.Systems.hamiltonian_gradient`](@ref), [`CTFlows.Systems.HamiltonianVariableGradient`](@ref).
+See also: [`CTFlows.Systems.get_hamiltonian_gradient`](@ref), [`CTFlows.Systems.HamiltonianVariableGradient`](@ref).
 """
 struct HamiltonianGradient{H<:Data.AbstractHamiltonian,B<:Differentiation.AbstractADBackend}
     h::H
@@ -112,7 +112,7 @@ variable-costate equation `ṗv = -∂H/∂v`. Non-negated.
 - `h::H`: the Hamiltonian to differentiate.
 - `backend::B`: the AD backend.
 
-See also: [`CTFlows.Systems.variable_gradient`](@ref), [`CTFlows.Systems.HamiltonianGradient`](@ref).
+See also: [`CTFlows.Systems.get_variable_gradient`](@ref), [`CTFlows.Systems.HamiltonianGradient`](@ref).
 """
 struct HamiltonianVariableGradient{
     H<:Data.AbstractHamiltonian,B<:Differentiation.AbstractADBackend
@@ -135,7 +135,7 @@ Functor returning the gradient `(∂H̃/∂x, ∂H̃/∂p)` of a pseudo-Hamilton
 - `h̃::H`: the pseudo-Hamiltonian to differentiate.
 - `backend::B`: the AD backend.
 
-See also: [`CTFlows.Systems.pseudo_hamiltonian_gradient`](@ref), [`CTFlows.Systems.PseudoHamiltonianVariableGradient`](@ref).
+See also: [`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@ref), [`CTFlows.Systems.PseudoHamiltonianVariableGradient`](@ref).
 """
 struct PseudoHamiltonianGradient{
     H<:Data.AbstractPseudoHamiltonian,B<:Differentiation.AbstractADBackend
@@ -158,7 +158,7 @@ Functor returning the variable gradient `∂H̃/∂v` of a pseudo-Hamiltonian, e
 - `h̃::H`: the pseudo-Hamiltonian to differentiate.
 - `backend::B`: the AD backend.
 
-See also: [`CTFlows.Systems.pseudo_variable_gradient`](@ref), [`CTFlows.Systems.PseudoHamiltonianGradient`](@ref).
+See also: [`CTFlows.Systems.get_pseudo_variable_gradient`](@ref), [`CTFlows.Systems.PseudoHamiltonianGradient`](@ref).
 """
 struct PseudoHamiltonianVariableGradient{
     H<:Data.AbstractPseudoHamiltonian,B<:Differentiation.AbstractADBackend
@@ -183,9 +183,9 @@ The `ad_backend` keyword selects the AD backend used to differentiate; it defaul
 the system's own backend but can be overridden (e.g. to use reverse mode for the
 gradient).
 
-See also: [`CTFlows.Systems.hamiltonian`](@ref), [`CTFlows.Systems.variable_gradient`](@ref).
+See also: [`CTFlows.Systems.hamiltonian`](@ref), [`CTFlows.Systems.get_variable_gradient`](@ref).
 """
-function hamiltonian_gradient(
+function get_hamiltonian_gradient(
     sys::Union{HamiltonianSystem,PseudoHamiltonianSystem};
     ad_backend::Differentiation.AbstractADBackend=backend(sys),
 )
@@ -201,9 +201,9 @@ Return a [`CTFlows.Systems.HamiltonianVariableGradient`](@ref) functor `(t, x, p
 
 The `ad_backend` keyword selects the AD backend (default: the system's own backend).
 
-See also: [`CTFlows.Systems.hamiltonian_gradient`](@ref).
+See also: [`CTFlows.Systems.get_hamiltonian_gradient`](@ref).
 """
-function variable_gradient(
+function get_variable_gradient(
     sys::Union{HamiltonianSystem,PseudoHamiltonianSystem};
     ad_backend::Differentiation.AbstractADBackend=backend(sys),
 )
@@ -220,9 +220,9 @@ wrapping a `ComposedHamiltonian`.
 
 The `ad_backend` keyword selects the AD backend (default: the system's own backend).
 
-See also: [`CTFlows.Systems.pseudo_hamiltonian`](@ref), [`CTFlows.Systems.pseudo_variable_gradient`](@ref).
+See also: [`CTFlows.Systems.pseudo_hamiltonian`](@ref), [`CTFlows.Systems.get_pseudo_variable_gradient`](@ref).
 """
-function pseudo_hamiltonian_gradient(
+function get_pseudo_hamiltonian_gradient(
     sys::Union{HamiltonianSystem,PseudoHamiltonianSystem};
     ad_backend::Differentiation.AbstractADBackend=backend(sys),
 )
@@ -238,9 +238,9 @@ control** `u`.
 
 The `ad_backend` keyword selects the AD backend (default: the system's own backend).
 
-See also: [`CTFlows.Systems.pseudo_hamiltonian_gradient`](@ref).
+See also: [`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@ref).
 """
-function pseudo_variable_gradient(
+function get_pseudo_variable_gradient(
     sys::Union{HamiltonianSystem,PseudoHamiltonianSystem};
     ad_backend::Differentiation.AbstractADBackend=backend(sys),
 )
