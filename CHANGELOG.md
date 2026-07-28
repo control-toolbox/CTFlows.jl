@@ -8,6 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.2-beta] - 2026-07-29
+
+### Fixed
+
+- **`Configs.dynamics_trait` now extends `CTBase.Traits.dynamics_trait` instead of
+  shadowing it** ([#369]): `Configs.dynamics_trait` was a separate generic, homonymous
+  with but disjoint from `CTBase.Traits.dynamics_trait`, even though CTBase's own
+  docstring documents that `Configs` contributes methods to it (like `Systems` and
+  `Flows` already do). Folded in as a `Traits.dynamics_trait` method; the redundant
+  `Configs` export was dropped. Non-breaking for callers: every existing call site
+  keeps working via the `CTBase.Traits` generic.
+
+### Changed
+
+- **BREAKING — `Systems` gradient accessors renamed to `get_*`** ([#368]):
+  `Systems.{hamiltonian,variable,pseudo_hamiltonian,pseudo_variable}_gradient` shared
+  their name with the unrelated `CTBase.Differentiation` compute functions of the same
+  name, forcing readers to track qualification at every call site to tell accessor from
+  compute function apart. Renamed to
+  `get_{hamiltonian,variable,pseudo_hamiltonian,pseudo_variable}_gradient`, matching
+  the `get_*` accessor convention already used by `CTFlows.MultiPhase`.
+
 ## [0.16.1-beta] - 2026-07-28
 
 ### Changed
