@@ -5,6 +5,7 @@ import CTFlows.Trajectories
 import CTFlows.Systems
 import CTFlows.Configs
 import CTBase.Data
+import CTBase.Traits: Traits
 import CTFlows.Integrators
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
@@ -44,7 +45,7 @@ function test_building_trajectories()
 
                 output = Trajectories.build_trajectory(
                     Configs.mode_trait(config),
-                    Configs.dynamics_trait(config),
+                    Traits.dynamics_trait(config),
                     config,
                     result,
                 )
@@ -62,7 +63,7 @@ function test_building_trajectories()
 
                 output = Trajectories.build_trajectory(
                     Configs.mode_trait(config),
-                    Configs.dynamics_trait(config),
+                    Traits.dynamics_trait(config),
                     config,
                     result,
                 )
@@ -86,7 +87,7 @@ function test_building_trajectories()
 
                 output = Trajectories.build_trajectory(
                     Configs.mode_trait(config),
-                    Configs.dynamics_trait(config),
+                    Traits.dynamics_trait(config),
                     config,
                     result,
                 )
@@ -102,7 +103,7 @@ function test_building_trajectories()
 
                 output = Trajectories.build_trajectory(
                     Configs.mode_trait(config),
-                    Configs.dynamics_trait(config),
+                    Traits.dynamics_trait(config),
                     config,
                     result,
                 )
@@ -126,7 +127,7 @@ function test_building_trajectories()
 
                 output = Trajectories.build_trajectory(
                     Configs.mode_trait(config),
-                    Configs.dynamics_trait(config),
+                    Traits.dynamics_trait(config),
                     config,
                     result,
                 )
@@ -149,7 +150,7 @@ function test_building_trajectories()
 
                 output = Trajectories.build_trajectory(
                     Configs.mode_trait(config),
-                    Configs.dynamics_trait(config),
+                    Traits.dynamics_trait(config),
                     config,
                     result,
                 )
@@ -176,7 +177,7 @@ function test_building_trajectories()
 
                 output = Trajectories.build_trajectory(
                     Configs.mode_trait(config),
-                    Configs.dynamics_trait(config),
+                    Traits.dynamics_trait(config),
                     config,
                     result,
                 )
@@ -205,7 +206,7 @@ function test_building_trajectories()
 
                 output = Trajectories.build_trajectory(
                     Configs.mode_trait(config),
-                    Configs.dynamics_trait(config),
+                    Traits.dynamics_trait(config),
                     config,
                     result,
                 )
@@ -227,7 +228,7 @@ function test_building_trajectories()
 
                 output = Trajectories.build_trajectory(
                     Configs.mode_trait(config),
-                    Configs.dynamics_trait(config),
+                    Traits.dynamics_trait(config),
                     config,
                     result,
                 )

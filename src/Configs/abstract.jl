@@ -99,7 +99,7 @@ config = Configs.HamiltonianEndPointConfig(0.0, [1.0], [0.5], 1.0)
 Configs.mode_trait(config) === Traits.EndPointMode  # true
 \`\`\`
 
-See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@ref), [`CTBase.Traits.EndPointMode`](@extref), [`CTBase.Traits.TrajectoryMode`](@extref), [`CTFlows.Configs.dynamics_trait`](@ref).
+See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@ref), [`CTBase.Traits.EndPointMode`](@extref), [`CTBase.Traits.TrajectoryMode`](@extref), [`CTBase.Traits.dynamics_trait`](@extref).
 """
 function mode_trait(
     ::AbstractConfigWithMaC{X0,Mode,Dyn}
@@ -124,12 +124,12 @@ enabling trait-based dispatch on the integration dynamics (state, Hamiltonian, a
 # Example
 \`\`\`julia
 config = Configs.HamiltonianEndPointConfig(0.0, [1.0], [0.5], 1.0)
-Configs.dynamics_trait(config) === Traits.HamiltonianDynamics  # true
+Traits.dynamics_trait(config) === Traits.HamiltonianDynamics  # true
 \`\`\`
 
-See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@ref), [`CTBase.Traits.StateDynamics`](@extref), [`CTBase.Traits.HamiltonianDynamics`](@extref), [`CTBase.Traits.AugmentedHamiltonianDynamics`](@extref), [`CTFlows.Configs.mode_trait`](@ref).
+See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@ref), [`CTBase.Traits.dynamics_trait`](@extref), [`CTBase.Traits.StateDynamics`](@extref), [`CTBase.Traits.HamiltonianDynamics`](@extref), [`CTBase.Traits.AugmentedHamiltonianDynamics`](@extref), [`CTFlows.Configs.mode_trait`](@ref).
 """
-function dynamics_trait(
+function Traits.dynamics_trait(
     ::AbstractConfigWithMaC{X0,Mode,Dyn}
 ) where {X0,Mode<:Traits.AbstractModeTrait,Dyn<:Traits.AbstractDynamicsTrait}
     return Dyn

@@ -132,7 +132,7 @@ function test_variable_costate_flows()
             result = FakeIntegrationResult(u_final)
 
             xf, pf, pvf = Trajectories.build_trajectory(
-                Configs.mode_trait(config), Configs.dynamics_trait(config), config, result
+                Configs.mode_trait(config), Traits.dynamics_trait(config), config, result
             )
 
             Test.@test xf == [1.0, 2.0]

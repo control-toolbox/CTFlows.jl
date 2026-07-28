@@ -139,12 +139,12 @@ function test_abstract_configs()
             Test.@testset "dynamics_trait" begin
                 Test.@testset "dynamics_trait for StateEndPointConfig" begin
                     config = Configs.StateEndPointConfig(0.0, [1.0], 1.0)
-                    Test.@test Configs.dynamics_trait(config) === Traits.StateDynamics
+                    Test.@test Traits.dynamics_trait(config) === Traits.StateDynamics
                 end
 
                 Test.@testset "dynamics_trait for HamiltonianEndPointConfig" begin
                     config = Configs.HamiltonianEndPointConfig(0.0, [1.0], [0.5], 1.0)
-                    Test.@test Configs.dynamics_trait(config) === Traits.HamiltonianDynamics
+                    Test.@test Traits.dynamics_trait(config) === Traits.HamiltonianDynamics
                 end
             end
         end

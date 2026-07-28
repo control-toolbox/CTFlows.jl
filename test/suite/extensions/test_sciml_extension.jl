@@ -2,6 +2,7 @@ module TestSciMLExtension
 
 using Test: Test
 import CTBase.Data: Data
+import CTBase.Traits: Traits
 import CTFlows: CTFlows
 import CTFlows.Configs: Configs
 import CTFlows.Systems: Systems
@@ -219,7 +220,7 @@ function test_sciml_extension()
                 result = CommonSolve.solve(prob, integ; options=opts)
                 flow_sol = Trajectories.build_trajectory(
                     Configs.mode_trait(config),
-                    Configs.dynamics_trait(config),
+                    Traits.dynamics_trait(config),
                     config,
                     result,
                 )
@@ -239,7 +240,7 @@ function test_sciml_extension()
                 result = CommonSolve.solve(prob, integ; options=opts)
                 flow_sol = Trajectories.build_trajectory(
                     Configs.mode_trait(config),
-                    Configs.dynamics_trait(config),
+                    Traits.dynamics_trait(config),
                     config,
                     result,
                 )

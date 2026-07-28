@@ -275,7 +275,7 @@ function _core_invoke_flow(
 
     # build flow solution
     flow_sol = Trajectories.build_trajectory(
-        Configs.mode_trait(config), Configs.dynamics_trait(config), config, result, variable
+        Configs.mode_trait(config), Traits.dynamics_trait(config), config, result, variable
     )
 
     return flow_sol
