@@ -173,7 +173,8 @@ function test_trajectories_module()
 
         Test.@testset "CTModels.Components generic identity" begin
             for f in (:state, :control, :costate, :objective, :time_grid)
-                Test.@test getproperty(Trajectories, f) === getproperty(CTModels.Components, f)
+                Test.@test getproperty(Trajectories, f) ===
+                    getproperty(CTModels.Components, f)
             end
         end
 
@@ -187,7 +188,9 @@ function test_trajectories_module()
             Test.@test traj isa Trajectories.HamiltonianVectorFieldTrajectory
 
             # Flow(ocp, law) → genuine CTModels.Solution
-            fo = Flows.Flow(_OCP_DI_UNIFY, _LAW_UNIFY; alg=Tsit5(), reltol=1e-10, abstol=1e-10)
+            fo = Flows.Flow(
+                _OCP_DI_UNIFY, _LAW_UNIFY; alg=Tsit5(), reltol=1e-10, abstol=1e-10
+            )
             sol = fo((0.0, 1.0), [-1.0, 0.0], [12.0, 6.0])
             Test.@test sol isa CTModels.Solutions.Solution
 
