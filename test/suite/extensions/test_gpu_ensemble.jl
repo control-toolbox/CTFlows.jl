@@ -32,7 +32,8 @@ import StaticArrays: StaticArrays                 # SVector for the EnsembleGPUK
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
-is_cuda_on() = CUDA.functional()
+# CUDA availability — read from Main.TestCapabilities (consolidated in runtests.jl)
+_cuda_on() = isdefined(Main, :TestCapabilities) ? Main.TestCapabilities.CUDA_FUNCTIONAL : false
 
 # N independent trajectories of ẋ = -x, trajectory i starting at [i, 2i] ⇒ x(1) = [i, 2i]·e⁻¹.
 const _N_ENS = 8
@@ -42,8 +43,13 @@ _expected(i) = _u0(i) .* exp(-1.0)
 function test_gpu_ensemble()
     Test.@testset "GPU ensemble (Family-C, DiffEqGPU tooling PoC)" verbose = VERBOSE showtiming =
         SHOWTIMING begin
-        if !is_cuda_on()
+        on_gpu_runner() = get(ENV, "RUNNER_NAME", "") == "kkt"
+
+        if on_gpu_runner()
+            Test.@test _cuda_on()   # fails loudly if kkt lost its device
+        elseif !_cuda_on()
             @info "CUDA not functional — GPU ensemble tests skipped (run on the kkt runner)"
+            Test.@test_skip false   # shows as Broken, not Pass 0
             return nothing
         end
 

@@ -8,6 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.3-beta] - 2026-07-29
+
+### Fixed
+
+- **GPU test suites now skip explicitly instead of silently** ([#375]): the GPU
+  `test_gpu_flows.jl` and `test_gpu_ensemble.jl` suites used a local `is_cuda_on()`
+  early-return that produced `Pass 0` on CPU — indistinguishable from having run and
+  passed. Consolidated `is_cuda_on()` into a `Main.TestCapabilities` module (pattern
+  from [CTSolvers.jl#190]), replaced the silent return with `Test.@test_skip false`
+  (shows as `Broken`), and added an `on_gpu_runner()` guard that fails loudly if the
+  `kkt` runner lost its device.
+
+### Added
+
+- **`test/suite/environment/test_environment_contract.jl`** ([#375]): environment
+  contract tests verifying that (1) the SciML extensions are armed, (2) the GPU driver
+  is functional when running on the `kkt` runner, and (3) the local `is_cuda_on()`
+  anti-pattern has not been reintroduced anywhere under `test/suite/`.
+
+### Testing
+
+- Full suite green: **3033 pass, 2 broken** (the 2 `Broken` are the GPU testsets
+  correctly marked as skipped on CPU).
+
 ## [0.16.2-beta] - 2026-07-29
 
 ### Fixed

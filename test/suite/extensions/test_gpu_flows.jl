@@ -45,9 +45,8 @@ import Zygote: Zygote      # backs the rows that pass `ad_backend=AutoZygote()` 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
-is_cuda_on() = CUDA.functional()
-
-# Move a host array onto the device. Only ever called inside an `is_cuda_on()` guard.
+# Move a host array onto the device. Only ever called inside a CUDA_FUNCTIONAL guard.
+_cuda_on() = isdefined(Main, :TestCapabilities) ? Main.TestCapabilities.CUDA_FUNCTIONAL : false
 _dev(x) = CUDA.CuArray(x)
 
 # Analytic references (tf = 1).
@@ -109,8 +108,13 @@ const OCP_GPU_CTRL = _build_gpu_ctrl_ocp()
 
 function test_gpu_flows()
     Test.@testset "GPU flows (Family-B, device execution)" verbose=VERBOSE showtiming=SHOWTIMING begin
-        if !is_cuda_on()
+        on_gpu_runner() = get(ENV, "RUNNER_NAME", "") == "kkt"
+
+        if on_gpu_runner()
+            Test.@test _cuda_on()   # fails loudly if kkt lost its device
+        elseif !_cuda_on()
             @info "CUDA not functional — GPU flow tests skipped (run on the kkt runner)"
+            Test.@test_skip false   # shows as Broken, not Pass 0
             return nothing
         end
 
