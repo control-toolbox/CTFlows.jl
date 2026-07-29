@@ -19,12 +19,16 @@ using Test
 using CTBase
 using CTFlows
 
-# CUDA availability check — GPU execution tests (suite/extensions/test_gpu_flows.jl) self-gate
-# on `is_cuda_on()` and skip cleanly when no functional device is present (e.g. CI CPU runners,
-# dev machines). The real GPU run is the `test-gpu-kkt` job on the kkt NVIDIA runner.
+# Capability constants computed once, here, where a top-level `using` is guaranteed
+# to bind into Main. Suite files read Main.TestCapabilities.* instead of redefining
+# is_cuda_on() locally (see issue #375 / CTSolvers.jl#190).
 using CUDA
-is_cuda_on() = CUDA.functional()
-if is_cuda_on()
+module TestCapabilities
+using CUDA: CUDA
+const CUDA_FUNCTIONAL = CUDA.functional()
+end
+
+if Main.TestCapabilities.CUDA_FUNCTIONAL
     println("✓ CUDA functional, GPU tests enabled")
 else
     println("⚠️  CUDA not functional, GPU tests will be skipped")
