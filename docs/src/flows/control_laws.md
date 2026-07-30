@@ -242,8 +242,8 @@ calls return the final state (no costate); trajectory calls return a
 state, reconstructed control, and objective (Mayer + Lagrange).
 
 ```@example flows_laws
-# OpenLoop law: u() = 1 (constant, autonomous ⇒ no time argument)
-law_ol = Data.OpenLoop(() -> 1.0)
+# OpenLoop law: u(t) = 1 (constant control, always takes t)
+law_ol = Data.OpenLoop(t -> 1.0)
 f_cflow = Flows.Flow(ocp, law_ol; reltol=1e-8)
 ```
 

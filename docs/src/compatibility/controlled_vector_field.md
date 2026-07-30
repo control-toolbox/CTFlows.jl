@@ -56,7 +56,7 @@ using ForwardDiff: ForwardDiff
 fc = Data.ControlledVectorField((x, u) -> u .- x)
 
 law_cl = Data.ClosedLoop(x -> -x)
-law_ol = Data.OpenLoop(() -> 1.0)
+law_ol = Data.OpenLoop(t -> 1.0)
 
 flow_cl = Flows.Flow(fc, law_cl; reltol=1e-8)
 flow_ol = Flows.Flow(fc, law_ol; reltol=1e-8)
