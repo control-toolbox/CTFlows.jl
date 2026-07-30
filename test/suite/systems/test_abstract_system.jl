@@ -1,9 +1,9 @@
 module TestAbstractSystem
 
 using Test: Test
-import CTBase.Exceptions
-import CTFlows.Systems
-import CTBase.Traits
+using CTBase: Exceptions
+using CTFlows: Systems
+using CTBase: Traits
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

@@ -7,18 +7,18 @@ integration of the augmented state `[x; p; pv]` where `pv` is the costate of the
 module TestVariableCostateFlows
 
 using Test: Test
-import CTBase: CTBase
-import CTBase.Core
-import CTBase.Data: Data
-import CTBase.Exceptions: Exceptions
-import CTBase.Traits: Traits
-import CTFlows: CTFlows
-import CTFlows.Configs: Configs
-import CTFlows.Systems: Systems
-import CTFlows.Flows: Flows
-import CTFlows.Trajectories: Trajectories
-import CTFlows.Integrators: Integrators
-import CTBase.Differentiation
+using CTBase: CTBase
+using CTBase: Core
+using CTBase: Data
+using CTBase: Exceptions
+using CTBase: Traits
+using CTFlows: CTFlows
+using CTFlows: Configs
+using CTFlows: Systems
+using CTFlows: Flows
+using CTFlows: Trajectories
+using CTFlows: Integrators
+using CTBase: Differentiation
 
 using SciMLBase: SciMLBase
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5

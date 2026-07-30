@@ -17,11 +17,11 @@ instead of surfacing as a mysterious dispatch bug elsewhere.
 module TestAliasSubtyping
 
 using Test: Test
-import CTBase.Data: Data
-import CTFlows.Configs
-import CTFlows.Flows
-import CTFlows.Systems
-import CTFlows.MultiPhase
+using CTBase: Data
+using CTFlows: Configs
+using CTFlows: Flows
+using CTFlows: Systems
+using CTFlows: MultiPhase
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

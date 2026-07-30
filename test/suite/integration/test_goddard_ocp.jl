@@ -11,17 +11,17 @@ exercises the `*` multi-phase reconstruction (a `CTModels.Solution`, PR 5 D3) an
 module TestGoddardOCP
 
 using Test: Test
-import CTBase.Data
-import CTBase.Traits
-import CTLie: CTLie
-import CTModels: CTModels
-import CTFlows.Flows
-import CTFlows.Trajectories
+using CTBase: Data
+using CTBase: Traits
+using CTLie: CTLie
+using CTModels: CTModels
+using CTFlows: Flows
+using CTFlows: Trajectories
 using ForwardDiff: ForwardDiff  # triggers DifferentiationInterfaceForwardDiff
 using OrdinaryDiffEqTsit5
 using NonlinearSolve: NonlinearProblem, SimpleNewtonRaphson, solve
 
-import CTBase: CTBase # For generated code by the @Lie macro (CTBase.Traits.*)
+using CTBase: CTBase # For generated code by the @Lie macro (CTBase.Traits.*)
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

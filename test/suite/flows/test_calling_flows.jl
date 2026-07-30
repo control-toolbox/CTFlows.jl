@@ -1,20 +1,20 @@
 module TestCallingFlows
 
 using Test: Test
-import CTFlows.Systems
-import CTBase.Data
-import CTBase.Differentiation
-import CTFlows.Flows
-import CTFlows.Integrators
-import CTFlows.Trajectories
-import CTBase.Core
-import CTFlows.Configs
-import CTBase.Traits
+using CTFlows: Systems
+using CTBase: Data
+using CTBase: Differentiation
+using CTFlows: Flows
+using CTFlows: Integrators
+using CTFlows: Trajectories
+using CTBase: Core
+using CTFlows: Configs
+using CTBase: Traits
 using CommonSolve: CommonSolve
 using ADTypes: ADTypes
 using DifferentiationInterface: DifferentiationInterface
 using ForwardDiff: ForwardDiff  # triggers DifferentiationInterfaceForwardDiff (provides PushforwardFast)
-import CTBase.Exceptions
+using CTBase: Exceptions
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

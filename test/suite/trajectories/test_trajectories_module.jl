@@ -14,11 +14,11 @@ module TestTrajectoriesModule
 
 using Test: Test
 using CTFlows: CTFlows
-import CTFlows.Trajectories
+using CTFlows: Trajectories
 using CTFlows.Trajectories  # For testing exported symbols
-import CTFlows.Flows: Flows
-import CTModels: CTModels
-import CTBase.Data: Data
+using CTFlows: Flows
+using CTModels: CTModels
+using CTBase: Data
 using OrdinaryDiffEqTsit5: Tsit5
 using ForwardDiff: ForwardDiff  # triggers the DI ForwardDiff extension (AutoForwardDiff)
 

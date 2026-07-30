@@ -1,10 +1,10 @@
 module TestSciMLBaseProblemFlow
 
 using Test: Test
-import CTBase.Exceptions: Exceptions
-import CTFlows: CTFlows
-import CTFlows.Integrators: Integrators
-import CTFlows.Flows: Flows, AbstractFlow
+using CTBase: Exceptions
+using CTFlows: CTFlows
+using CTFlows: Integrators
+using CTFlows: Flows
 
 # Get extension to access SciML integrator
 using SciMLBase: SciMLBase, ODEProblem, ODEFunction
@@ -32,7 +32,7 @@ function test_scimlbase_problem_flow()
                 integ = Integrators.SciML()
                 flow = CTFlowsSciMLFlows.SciMLProblemFlow(prob, integ)
                 Test.@test flow isa CTFlowsSciMLFlows.SciMLProblemFlow
-                Test.@test flow isa AbstractFlow
+                Test.@test flow isa Flows.AbstractFlow
                 Test.@test flow.prob === prob
                 Test.@test flow.integrator === integ
             end
@@ -43,7 +43,7 @@ function test_scimlbase_problem_flow()
                 integ = Integrators.SciML()
                 flow = CTFlowsSciMLFlows.SciMLProblemFlow(prob, integ)
                 Test.@test flow isa CTFlowsSciMLFlows.SciMLProblemFlow
-                Test.@test flow isa AbstractFlow
+                Test.@test flow isa Flows.AbstractFlow
                 Test.@test flow.prob === prob
                 Test.@test flow.integrator === integ
             end

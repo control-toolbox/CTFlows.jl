@@ -1,12 +1,12 @@
 module TestHamiltonianVFTrajectoryShapes
 
 using Test: Test
-import CTFlows.Systems
-import CTFlows.Flows
-import CTFlows.Integrators
-import CTFlows.Trajectories
-import CTBase.Data
-import CTBase.Traits
+using CTFlows: Systems
+using CTFlows: Flows
+using CTFlows: Integrators
+using CTFlows: Trajectories
+using CTBase: Data
+using CTBase: Traits
 
 using SciMLBase: SciMLBase
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5

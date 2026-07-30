@@ -14,8 +14,8 @@ Both `:total` and `:partial` are tested — the control is constant on each arc
 module TestSimpleIntegratorNonsmoothTurnpike
 
 using Test: Test
-import CTModels: CTModels
-import CTFlows.Flows
+using CTModels: CTModels
+using CTFlows: Flows
 using OrdinaryDiffEqTsit5
 using ForwardDiff: ForwardDiff
 using NonlinearSolve: NonlinearProblem, SimpleNewtonRaphson, solve

@@ -4,10 +4,10 @@ using Test: Test
 using ADTypes: ADTypes
 using DifferentiationInterface: DifferentiationInterface
 using ForwardDiff: ForwardDiff  # triggers DifferentiationInterfaceForwardDiff (provides PushforwardFast)
-import CTBase.Traits
-import CTBase.Data
-import CTFlows.Systems
-import CTBase.Differentiation
+using CTBase: Traits
+using CTBase: Data
+using CTFlows: Systems
+using CTBase: Differentiation
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

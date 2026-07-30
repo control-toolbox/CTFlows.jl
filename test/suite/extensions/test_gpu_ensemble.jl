@@ -23,11 +23,11 @@ Accessor discipline (probe runs 9–10): read a trajectory's final state via the
 module TestGPUEnsemble
 
 using Test: Test
-import CUDA: CUDA
-import SciMLBase: SciMLBase
-import DiffEqGPU: DiffEqGPU
-import OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5   # Tsit5 for the CPU/EnsembleGPUArray paths
-import StaticArrays: StaticArrays                 # SVector for the EnsembleGPUKernel path
+using CUDA: CUDA
+using SciMLBase: SciMLBase
+using DiffEqGPU: DiffEqGPU
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5   # Tsit5 for the CPU/EnsembleGPUArray paths
+using StaticArrays: StaticArrays                 # SVector for the EnsembleGPUKernel path
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

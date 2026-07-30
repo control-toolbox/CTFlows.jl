@@ -1,10 +1,10 @@
 module TestPseudoHVFRHSFunctors
 
 using Test: Test
-import CTBase.Data: Data
-import CTFlows.Systems: Systems
-import CTBase.Traits: Traits
-import StaticArrays: SA, SVector
+using CTBase: Data
+using CTFlows: Systems
+using CTBase: Traits
+using StaticArrays: SA, SVector
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

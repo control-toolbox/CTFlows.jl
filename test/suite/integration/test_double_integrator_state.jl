@@ -16,10 +16,10 @@ boundary control). Also exercises the `*` multi-phase reconstruction with jumps
 module TestDoubleIntegratorState
 
 using Test: Test
-import CTBase.Data
-import CTModels: CTModels
-import CTFlows.Flows
-import CTFlows.Trajectories
+using CTBase: Data
+using CTModels: CTModels
+using CTFlows: Flows
+using CTFlows: Trajectories
 using OrdinaryDiffEqTsit5
 using ForwardDiff: ForwardDiff
 using NonlinearSolve: NonlinearProblem, SimpleNewtonRaphson, solve

@@ -1,10 +1,10 @@
 module TestSciMLRHSFunctors
 
 using Test: Test
-import CTFlows: CTFlows
-import CTBase.Traits: Traits
-import CTFlows.Systems: Systems
-import SciMLBase: SciMLBase, ODEFunction
+using CTFlows: CTFlows
+using CTBase: Traits
+using CTFlows: Systems
+using SciMLBase: SciMLBase, ODEFunction
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
 using StaticArrays: SA, SVector
 

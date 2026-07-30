@@ -1,10 +1,10 @@
 module TestHamiltonianVectorFieldTrajectory
 
 using Test: Test
-import CTFlows.Integrators: Integrators
-import CTFlows.Trajectories: Trajectories
-import CTBase.Exceptions
-import GPUArraysCore: GPUArraysCore
+using CTFlows: Integrators
+using CTFlows: Trajectories
+using CTBase: Exceptions
+using GPUArraysCore: GPUArraysCore
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

@@ -9,8 +9,8 @@ integration tests (`test_ocp_control`, `test_optimal_control_flow`, `test_ocp_co
 module TestOCPReadouts
 
 using Test: Test
-import CTBase.Data: Data
-import CTFlows.Flows: Flows
+using CTBase: Data
+using CTFlows: Flows
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

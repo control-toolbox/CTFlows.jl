@@ -5,13 +5,13 @@ Mirror of test_flow_callables_sciml_hamiltonian_system.jl using real Differentia
 module TestFlowCallablesSciMLHamiltonianSystemDI
 
 using Test: Test
-import CTBase.Exceptions
-import CTBase.Data: Data
-import CTFlows.Systems: Systems
-import CTFlows.Flows: Flows
-import CTFlows.Integrators: Integrators
-import CTBase.Differentiation
-import CTFlows.Trajectories: Trajectories
+using CTBase: Exceptions
+using CTBase: Data
+using CTFlows: Systems
+using CTFlows: Flows
+using CTFlows: Integrators
+using CTBase: Differentiation
+using CTFlows: Trajectories
 
 using SciMLBase: SciMLBase
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5

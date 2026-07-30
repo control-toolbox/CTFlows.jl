@@ -1,8 +1,8 @@
 module TestConcreteConfigs
 
 using Test: Test
-import CTFlows.Configs
-import CTBase.Traits
+using CTFlows: Configs
+using CTBase: Traits
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

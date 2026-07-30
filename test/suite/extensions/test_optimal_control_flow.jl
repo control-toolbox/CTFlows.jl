@@ -18,16 +18,16 @@ module TestOptimalControlFlow
 
 using Test: Test
 using CTModels: CTModels
-import CTBase: CTBase
-import CTBase.Exceptions: Exceptions
-import CTFlows: CTFlows
-import CTFlows.Flows: Flows
-import CTFlows.Systems: Systems
-import CTFlows.Integrators: Integrators
-import CTFlows.Configs: Configs
-import CTBase.Differentiation
-import CTBase.Data: Data
-import CTBase.Traits: Traits
+using CTBase: CTBase
+using CTBase: Exceptions
+using CTFlows: CTFlows
+using CTFlows: Flows
+using CTFlows: Systems
+using CTFlows: Integrators
+using CTFlows: Configs
+using CTBase: Differentiation
+using CTBase: Data
+using CTBase: Traits
 
 using SciMLBase: SciMLBase
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5

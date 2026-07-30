@@ -1,14 +1,14 @@
 module TestHamiltonianVectorFieldSystem
 
 using Test: Test
-import CTBase.Exceptions
-import CTBase.Data: Data
-import CTBase.Traits: Traits
-import CTFlows.Systems: Systems
-import CTFlows.Configs: Configs
-import CTFlows.Trajectories: Trajectories
-import StaticArrays: SA, StaticArrays
-import GPUArraysCore: GPUArraysCore
+using CTBase: Exceptions
+using CTBase: Data
+using CTBase: Traits
+using CTFlows: Systems
+using CTFlows: Configs
+using CTFlows: Trajectories
+using StaticArrays: SA, StaticArrays
+using GPUArraysCore: GPUArraysCore
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

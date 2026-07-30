@@ -1,10 +1,10 @@
 module TestForwardDiffExtension
 
 using Test: Test
-import CTFlows: CTFlows
-import CTBase.Data: Data
-import CTFlows.Integrators: Integrators
-import CTFlows.Flows: Flows
+using CTFlows: CTFlows
+using CTBase: Data
+using CTFlows: Integrators
+using CTFlows: Flows
 
 using SciMLBase: SciMLBase
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5

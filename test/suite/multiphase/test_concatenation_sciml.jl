@@ -1,12 +1,12 @@
 module TestConcatenationSciML
 
 using Test: Test
-import CTFlows.MultiPhase
-import CTFlows.Systems
-import CTFlows.Integrators
-import CTFlows.Flows
-import CTBase.Data
-import CTFlows.Trajectories
+using CTFlows: MultiPhase
+using CTFlows: Systems
+using CTFlows: Integrators
+using CTFlows: Flows
+using CTBase: Data
+using CTFlows: Trajectories
 
 using OrdinaryDiffEqTsit5
 using Plots

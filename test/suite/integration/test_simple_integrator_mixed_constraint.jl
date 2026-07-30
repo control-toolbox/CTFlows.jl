@@ -17,8 +17,8 @@ The control law `u = -x` has no explicit `p`-dependence (the constraint determin
 module TestSimpleIntegratorMixedConstraint
 
 using Test: Test
-import CTModels: CTModels
-import CTFlows.Flows
+using CTModels: CTModels
+using CTFlows: Flows
 using OrdinaryDiffEqTsit5
 using ForwardDiff: ForwardDiff
 using NonlinearSolve: NonlinearProblem, SimpleNewtonRaphson, solve

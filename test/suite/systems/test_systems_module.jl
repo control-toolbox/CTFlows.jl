@@ -22,7 +22,7 @@ module TestSystemsModule
 
 using Test: Test
 using CTFlows: CTFlows
-import CTFlows.Systems
+using CTFlows: Systems
 using CTFlows.Systems  # For testing exported symbols
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true

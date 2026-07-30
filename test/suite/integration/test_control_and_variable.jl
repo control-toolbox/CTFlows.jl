@@ -5,8 +5,8 @@ Based on OptimalControl.jl `example-control-and-variable`.
 module TestControlAndVariable
 
 using Test: Test
-import CTModels: CTModels
-import CTFlows.Flows
+using CTModels: CTModels
+using CTFlows: Flows
 using OrdinaryDiffEqTsit5
 using NonlinearSolve: NonlinearProblem, SimpleNewtonRaphson, solve
 

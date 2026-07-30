@@ -1,15 +1,15 @@
 module TestSciMLBaseFunctionSystem
 
 using Test: Test
-import CTBase.Core
-import CTBase.Exceptions: Exceptions
-import CTBase.Strategies: Strategies
-import CTFlows: CTFlows
-import CTFlows.Configs: Configs
-import CTFlows.Systems: Systems
-import CTFlows.Integrators: Integrators
-import CTFlows.Flows: Flows
-import CTFlows.Trajectories: Trajectories
+using CTBase: Core
+using CTBase: Exceptions
+using CTBase: Strategies
+using CTFlows: CTFlows
+using CTFlows: Configs
+using CTFlows: Systems
+using CTFlows: Integrators
+using CTFlows: Flows
+using CTFlows: Trajectories
 
 # Fake tag type for testing stub behavior
 struct FakeTag <: Core.AbstractTag end

@@ -1,14 +1,14 @@
 module TestAbstractFlow
 
 using Test: Test
-import CTBase.Exceptions
-import CTBase.Strategies
-import CTFlows.Systems
-import CTFlows.Flows
-import CTFlows.Configs
-import CTBase.Traits
-import CTFlows.Integrators
-import CTBase.Data
+using CTBase: Exceptions
+using CTBase: Strategies
+using CTFlows: Systems
+using CTFlows: Flows
+using CTFlows: Configs
+using CTBase: Traits
+using CTFlows: Integrators
+using CTBase: Data
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

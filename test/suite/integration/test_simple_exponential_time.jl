@@ -15,8 +15,8 @@ The bang control is piecewise constant on the arc so ∂H̃/∂u ≡ 0 trivially
 module TestSimpleExponentialTime
 
 using Test: Test
-import CTModels: CTModels
-import CTFlows.Flows
+using CTModels: CTModels
+using CTFlows: Flows
 using OrdinaryDiffEqTsit5
 using ForwardDiff: ForwardDiff
 using NonlinearSolve: NonlinearProblem, SimpleNewtonRaphson, solve

@@ -13,9 +13,9 @@ module TestOCPPseudoHamiltonianFunction
 
 using Test: Test
 using CTModels: CTModels
-import CTFlows.Flows: Flows
-import CTBase.Traits: Traits
-import CTBase.Data: Data
+using CTFlows: Flows
+using CTBase: Traits
+using CTBase: Data
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

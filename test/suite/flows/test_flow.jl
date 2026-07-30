@@ -1,12 +1,12 @@
 module TestFlow
 
 using Test: Test
-import CTFlows.Systems
-import CTFlows.Flows
-import CTFlows.Integrators
-import CTFlows.Configs
-import CTBase.Traits
-import CTBase.Strategies
+using CTFlows: Systems
+using CTFlows: Flows
+using CTFlows: Integrators
+using CTFlows: Configs
+using CTBase: Traits
+using CTBase: Strategies
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

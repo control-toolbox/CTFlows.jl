@@ -7,12 +7,12 @@ module TestOCPControl
 
 using Test: Test
 using StaticArrays: SA, SVector
-import CTBase.Data: Data
-import CTBase.Traits: Traits
-import CTBase.Exceptions: Exceptions
-import CTModels: CTModels
-import CTFlows.Flows: Flows
-import CTFlows.Systems: Systems
+using CTBase: Data
+using CTBase: Traits
+using CTBase: Exceptions
+using CTModels: CTModels
+using CTFlows: Flows
+using CTFlows: Systems
 using OrdinaryDiffEqTsit5: Tsit5
 using ForwardDiff: ForwardDiff  # triggers the DI ForwardDiff extension (AutoForwardDiff)
 

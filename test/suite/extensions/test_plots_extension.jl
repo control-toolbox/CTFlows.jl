@@ -7,13 +7,13 @@ in `CTBase.Plotting` and is tested there.
 module TestPlotsExtension
 
 using Test: Test
-import CTFlows: CTFlows
-import CTFlows.Integrators: Integrators
-import CTFlows.Trajectories: Trajectories
-import CTBase.Data: Data
-import CTBase.Core: Core
-import CTBase.Exceptions: Exceptions
-import CTModels: CTModels
+using CTFlows: CTFlows
+using CTFlows: Integrators
+using CTFlows: Trajectories
+using CTBase: Data
+using CTBase: Core
+using CTBase: Exceptions
+using CTModels: CTModels
 
 using Plots
 

@@ -8,12 +8,12 @@ Integration tests for the concatenation (`*`) of controlled (state) flows: a mul
 module TestControlledConcatenation
 
 using Test: Test
-import CTBase.Data: Data
-import CTBase.Exceptions: Exceptions
-import CTModels: CTModels
-import CTFlows.Flows: Flows
-import CTFlows.Trajectories: Trajectories
-import CTFlows.MultiPhase: MultiPhase
+using CTBase: Data
+using CTBase: Exceptions
+using CTModels: CTModels
+using CTFlows: Flows
+using CTFlows: Trajectories
+using CTFlows: MultiPhase
 using OrdinaryDiffEqTsit5: Tsit5
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true

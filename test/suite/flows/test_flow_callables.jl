@@ -1,13 +1,13 @@
 module TestFlowCallables
 
 using Test: Test
-import CTFlows.Systems
-import CTFlows.Flows
-import CTFlows.Integrators
-import CTFlows.Trajectories
-import CTFlows.Configs
-import CTBase.Traits
-import CTBase.Exceptions
+using CTFlows: Systems
+using CTFlows: Flows
+using CTFlows: Integrators
+using CTFlows: Trajectories
+using CTFlows: Configs
+using CTBase: Traits
+using CTBase: Exceptions
 using CommonSolve: CommonSolve
 
 using StaticArrays: SA

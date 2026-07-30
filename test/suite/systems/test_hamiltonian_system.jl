@@ -1,12 +1,12 @@
 module TestHamiltonianSystem
 
 using Test: Test
-import CTBase.Exceptions
-import CTBase.Data: Data
-import CTBase.Traits: Traits
-import CTFlows.Systems: Systems
-import CTBase.Differentiation
-import CTFlows.Configs: Configs
+using CTBase: Exceptions
+using CTBase: Data
+using CTBase: Traits
+using CTFlows: Systems
+using CTBase: Differentiation
+using CTFlows: Configs
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

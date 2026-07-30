@@ -1,11 +1,11 @@
 module TestMultiPhaseFlow
 
 using Test: Test
-import CTFlows.MultiPhase
-import CTFlows.Systems
-import CTFlows.Integrators
-import CTFlows.Flows
-import CTBase.Traits
+using CTFlows: MultiPhase
+using CTFlows: Systems
+using CTFlows: Integrators
+using CTFlows: Flows
+using CTBase: Traits
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
@@ -26,8 +26,8 @@ struct FakeIntegrator <: Integrators.AbstractIntegrator
     result::Any
 end
 
-import CTBase.Strategies
-import CTBase.Options
+using CTBase: Strategies
+using CTBase: Options
 
 Strategies.id(::Type{FakeIntegrator}) = :fake_integrator
 Strategies.metadata(::Type{FakeIntegrator}) = Strategies.StrategyMetadata()

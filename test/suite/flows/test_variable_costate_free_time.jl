@@ -18,11 +18,11 @@ autonomous / NonFixed Hamiltonians.
 module TestVariableCostateFreeTime
 
 using Test: Test
-import CTBase.Data: Data
-import CTBase.Traits: Traits
-import CTBase.Exceptions: Exceptions
-import CTFlows.Flows: Flows
-import CTFlows.Systems: Systems
+using CTBase: Data
+using CTBase: Traits
+using CTBase: Exceptions
+using CTFlows: Flows
+using CTFlows: Systems
 using OrdinaryDiffEqTsit5: Tsit5
 using ForwardDiff: ForwardDiff  # triggers the DI ForwardDiff extension (AutoForwardDiff)
 

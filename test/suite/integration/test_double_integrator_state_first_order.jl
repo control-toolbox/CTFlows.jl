@@ -15,8 +15,8 @@ Analytic solution: `p0 = [38.4, 9.6]`, `t1 = 0.25`, `t2 = 0.75`.
 module TestDoubleIntegratorStateFirstOrder
 
 using Test: Test
-import CTModels: CTModels
-import CTFlows.Flows
+using CTModels: CTModels
+using CTFlows: Flows
 using OrdinaryDiffEqTsit5
 using ForwardDiff: ForwardDiff
 using NonlinearSolve: NonlinearProblem, SimpleNewtonRaphson, solve
