@@ -27,20 +27,23 @@ using DocStringExtensions: TYPEDSIGNATURES
 using CTBase: Exceptions
 
 # Re-home the CTSolvers integrator surface consumed inside CTFlows so that
-# `Integrators.<symbol>` call sites resolve to CTSolvers.
+# `Integrators.<symbol>` call sites resolve to CTSolvers. The two-step alias + relative
+# `using` (rather than `const sym = CTSolversIntegrators.sym`) keeps each binding's doc
+# origin traceable to CTSolvers.Integrators, so `@doc CTFlows.Integrators.SciML` (and the
+# API reference build) still finds the docstring.
 using CTSolvers: Integrators as CTSolversIntegrators
-
-const AbstractIntegrator = CTSolversIntegrators.AbstractIntegrator
-const SciML = CTSolversIntegrators.SciML
-const AbstractIntegrationResult = CTSolversIntegrators.AbstractIntegrationResult
-const final_state = CTSolversIntegrators.final_state
-const times = CTSolversIntegrators.times
-const evaluate_at = CTSolversIntegrators.evaluate_at
-const status = CTSolversIntegrators.status
-const successful = CTSolversIntegrators.successful
-const merge = CTSolversIntegrators.merge
-const options_point = CTSolversIntegrators.options_point
-const options_trajectory = CTSolversIntegrators.options_trajectory
+using .CTSolversIntegrators:
+    AbstractIntegrator,
+    SciML,
+    AbstractIntegrationResult,
+    final_state,
+    times,
+    evaluate_at,
+    status,
+    successful,
+    merge,
+    options_point,
+    options_trajectory
 
 # ==============================================================================
 # Internal sibling-submodule imports (used by the glue-function signatures)
