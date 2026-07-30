@@ -33,7 +33,13 @@ const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # CUDA availability — read from Main.TestCapabilities (consolidated in runtests.jl)
-_cuda_on() = isdefined(Main, :TestCapabilities) ? Main.TestCapabilities.CUDA_FUNCTIONAL : false
+function _cuda_on()
+    return if isdefined(Main, :TestCapabilities)
+        Main.TestCapabilities.CUDA_FUNCTIONAL
+    else
+        false
+    end
+end
 
 # N independent trajectories of ẋ = -x, trajectory i starting at [i, 2i] ⇒ x(1) = [i, 2i]·e⁻¹.
 const _N_ENS = 8
