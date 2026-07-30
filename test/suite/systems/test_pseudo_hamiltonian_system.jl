@@ -143,7 +143,7 @@ function test_pseudo_hamiltonian_system()
             h̃ = Data.PseudoHamiltonian((x, p, u) -> p * u)
             be = _backend()
             Test.@test_throws MethodError Systems.build_system(
-                h̃, Data.OpenLoop(() -> 1.0), be
+                h̃, Data.OpenLoop(t -> 1.0), be
             )
             Test.@test_throws MethodError Systems.build_system(
                 h̃, Data.ClosedLoop(x -> -x), be

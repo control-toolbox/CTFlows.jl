@@ -43,7 +43,7 @@ function test_ocp_readouts()
 
         # OpenLoop (state path): u(t, v) — ignores the state
         Test.@testset "OpenLoop ignores the state" begin
-            law = Data.OpenLoop(() -> 1.0)
+            law = Data.OpenLoop(t -> 1.0)
             u = Flows._control_of(law, x, v)
             Test.@test u(0.0) ≈ 1.0
         end

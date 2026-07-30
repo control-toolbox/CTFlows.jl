@@ -133,7 +133,7 @@ function test_state_control_flows()
         # ── OpenLoop from an OCP: g(x) = -x + 1 ⇒ x(t) = 1 + (x0-1)e^{-t} ──────
 
         Test.@testset "Integration: OpenLoop OCP flow" begin
-            f = Flows.Flow(OCP, Data.OpenLoop(() -> 1.0); _opts()...)
+            f = Flows.Flow(OCP, Data.OpenLoop(t -> 1.0); _opts()...)
             t0, tf, x0 = 0.0, 1.0, 0.0
             xf = f(t0, x0, tf)
             Test.@test xf ≈ 1 + (x0 - 1) * exp(-tf) atol = 1e-6
@@ -172,7 +172,7 @@ function test_state_control_flows()
 
         Test.@testset "Error: control-free OCP with an OpenLoop law" begin
             Test.@test_throws Exceptions.PreconditionError Flows.Flow(
-                OCP_CF, Data.OpenLoop(() -> 1.0); _opts()...
+                OCP_CF, Data.OpenLoop(t -> 1.0); _opts()...
             )
         end
     end
