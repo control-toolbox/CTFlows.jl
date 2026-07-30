@@ -47,10 +47,10 @@ using Enzyme: Enzyme                             # activates DI AutoEnzyme    (B
 using DiffEqGPU: DiffEqGPU                        # ensemble GPU tooling (Block 6)
 using StaticArrays: SVector                       # for the EnsembleGPUKernel path
 
-import CTBase.Data
-import CTBase.Differentiation
-import CTFlows.Flows
-import CTModels: CTModels                        # OCP fixture for Block 8
+using CTBase: Data
+using CTBase: Differentiation
+using CTFlows: Flows
+using CTModels: CTModels                        # OCP fixture for Block 8
 
 # ---------------------------------------------------------------------------
 # Probe harness: run a labelled experiment, catch everything, record + print
