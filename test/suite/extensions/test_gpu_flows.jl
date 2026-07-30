@@ -46,7 +46,13 @@ const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 # Move a host array onto the device. Only ever called inside a CUDA_FUNCTIONAL guard.
-_cuda_on() = isdefined(Main, :TestCapabilities) ? Main.TestCapabilities.CUDA_FUNCTIONAL : false
+function _cuda_on()
+    return if isdefined(Main, :TestCapabilities)
+        Main.TestCapabilities.CUDA_FUNCTIONAL
+    else
+        false
+    end
+end
 _dev(x) = CUDA.CuArray(x)
 
 # Analytic references (tf = 1).
