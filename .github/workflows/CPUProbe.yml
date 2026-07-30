@@ -8,7 +8,7 @@ name: CPU probe
 on:
   workflow_dispatch:
   pull_request:
-    types: [labeled, synchronize, opened, reopened]
+    types: [labeled, synchronize, reopened]
 
 jobs:
   cpu-probe:
