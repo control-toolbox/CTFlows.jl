@@ -1627,7 +1627,7 @@ println(
 #
 # fc(x,u) = u - x (same dynamics as flows/control_laws.md / ocp_control_laws.md).
 # law_cl = ClosedLoop(x -> -x) ⇒ ẋ = -2x ⇒ xf = x0·e⁻² at t=1 (same reference already used
-# in the OCP block above). law_ol = OpenLoop(() -> 1.0) (constant u=1) ⇒ ẋ = 1-x ⇒
+# in the OCP block above). law_ol = OpenLoop(t -> 1.0) (constant u=1) ⇒ ẋ = 1-x ⇒
 # xf = 1+(x0-1)·e⁻¹ at t=1 — covers the OTHER feedback branch, which ocp_control_laws.md
 # only ever exercised through ClosedLoop.
 #
@@ -1641,7 +1641,7 @@ println(
 
 fc_cvf = Data.ControlledVectorField((x, u) -> u .- x)
 law_cl = Data.ClosedLoop(x -> -x)
-law_ol = Data.OpenLoop(() -> 1.0)
+law_ol = Data.OpenLoop(t -> 1.0)
 
 fclow_cl = Flows.Flow(fc_cvf, law_cl; reltol=1e-8)
 fclow_ol = Flows.Flow(fc_cvf, law_ol; reltol=1e-8)

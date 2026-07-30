@@ -1088,7 +1088,7 @@ function test_ocp_control()
         Test.@testset "Error: OpenLoop law into Flow(h̃, law) → PreconditionError" begin
             h̃ = Data.PseudoHamiltonian((x, p, u) -> p * u)
             Test.@test_throws Exceptions.PreconditionError Flows.Flow(
-                h̃, Data.OpenLoop(() -> 1.0); _opts()...
+                h̃, Data.OpenLoop(t -> 1.0); _opts()...
             )
         end
     end

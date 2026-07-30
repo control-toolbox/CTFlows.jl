@@ -82,8 +82,8 @@ function test_controlled_concatenation()
         # Phase 2 [0.5,1]: u = 2 ⇒ ẋ = -x + 2
 
         Test.@testset "OpenLoop OCP: piecewise-constant control" begin
-            f1 = Flows.Flow(OCP, Data.OpenLoop(() -> 1.0); _opts()...)
-            f2 = Flows.Flow(OCP, Data.OpenLoop(() -> 2.0); _opts()...)
+            f1 = Flows.Flow(OCP, Data.OpenLoop(t -> 1.0); _opts()...)
+            f2 = Flows.Flow(OCP, Data.OpenLoop(t -> 2.0); _opts()...)
             φ = f1 * (0.5, f2)
             sol = φ((0.0, 1.0), 0.0)
             Test.@test sol isa Trajectories.StateFlowTrajectory
