@@ -11,11 +11,11 @@ of one phase becomes the initial condition of the next.
 
 ```@setup flows_multiphase
 using CTFlows
-using CTBase.Data
-using CTFlows.Flows
-using CTFlows.MultiPhase
-using CTFlows.Trajectories
-import OrdinaryDiffEqTsit5
+using CTBase: Data
+using CTFlows: Flows
+using CTFlows: MultiPhase
+using CTFlows: Trajectories
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
 
 f_dyn(x) = -x
 vf = Data.VectorField(f_dyn)

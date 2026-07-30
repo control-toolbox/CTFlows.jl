@@ -11,14 +11,15 @@ three kinds of control laws, each leading to a different flow type.
 
 ```@setup flows_laws
 using CTFlows
-using CTBase.Data
-using CTBase.Traits
-using CTFlows.Flows
-using CTFlows.Systems
-using CTFlows.Trajectories
+using CTBase: Data
+using CTBase: Traits
+using CTFlows: Flows
+using CTFlows: Systems
+using CTFlows: Trajectories
 using CTModels
-import OrdinaryDiffEqTsit5
-import DifferentiationInterface, ForwardDiff
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
+using DifferentiationInterface: DifferentiationInterface
+using ForwardDiff: ForwardDiff
 ```
 
 ---

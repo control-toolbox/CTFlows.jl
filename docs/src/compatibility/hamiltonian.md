@@ -37,10 +37,10 @@ identical: ``(x_f, p_f) = (p_0, -x_0)`` at ``t_f = \pi/2``.
 
 ```@setup h_compat
 using CTFlows
-using CTBase.Data
-using CTFlows.Flows
-using CTFlows.Trajectories
-import OrdinaryDiffEqTsit5
+using CTBase: Data
+using CTFlows: Flows
+using CTFlows: Trajectories
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
 using StaticArrays: SA, SVector, MVector, SMatrix, MMatrix
 using ForwardDiff: ForwardDiff
 ```

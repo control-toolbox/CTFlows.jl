@@ -19,11 +19,11 @@ every other page in this section.
 
 ```@setup shape_compat
 using CTFlows
-using CTBase.Data
-using CTFlows.Flows
-using CTFlows.Trajectories
+using CTBase: Data
+using CTFlows: Flows
+using CTFlows: Trajectories
 using SciMLBase: SciMLBase
-import OrdinaryDiffEqTsit5
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
 ```
 
 ---

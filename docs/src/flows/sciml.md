@@ -19,10 +19,10 @@ interface (point/trajectory styles, configs, multi-phase concatenation).
 
 ```@setup flows_sciml
 using CTFlows
-using CTFlows.Flows
-using CTFlows.Integrators
+using CTFlows: Flows
+using CTFlows: Integrators
 using SciMLBase
-import OrdinaryDiffEqTsit5
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
 ```
 
 ---

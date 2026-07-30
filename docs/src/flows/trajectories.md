@@ -10,11 +10,11 @@ submodule provides these wrappers.
 
 ```@setup flows_solutions
 using CTFlows
-using CTBase.Data
-using CTFlows.Flows
-using CTFlows.Trajectories
-using CTFlows.Integrators
-import OrdinaryDiffEqTsit5
+using CTBase: Data
+using CTFlows: Flows
+using CTFlows: Trajectories
+using CTFlows: Integrators
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
 
 vf  = Data.VectorField(x -> -x)
 flow = Flows.Flow(vf; reltol=1e-8)

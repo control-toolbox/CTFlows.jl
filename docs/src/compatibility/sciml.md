@@ -28,11 +28,11 @@ All examples integrate the scalar exponential decay ``\dot{x} = -p\,x`` with ``p
 
 ```@setup sciml_compat
 using CTFlows
-using CTFlows.Flows
-using CTFlows.Integrators
-using CTFlows.Trajectories
+using CTFlows: Flows
+using CTFlows: Integrators
+using CTFlows: Trajectories
 using SciMLBase: SciMLBase
-import OrdinaryDiffEqTsit5
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
 using StaticArrays: SA, SVector, MVector, SMatrix, MMatrix
 using ForwardDiff: ForwardDiff
 ```
