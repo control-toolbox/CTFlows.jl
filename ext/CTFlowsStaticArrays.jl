@@ -36,8 +36,7 @@ Xf, Pf = flow(0.0, X0, P0, π/2)
 """
 module CTFlowsStaticArrays
 
-using CTFlows
-import CTFlows.Systems: _ham_split
+using CTFlows: CTFlows, Systems
 using StaticArrays: SVector, SMatrix
 
 """
@@ -54,7 +53,7 @@ Type-stable split of a `SVector` into state and costate components.
 - This method provides type stability for SciML's out-of-place ODE solvers when using `StaticArrays`.
 - Used automatically when the `CTFlowsStaticArrays` extension is loaded.
 """
-function _ham_split(u::SVector{NN,T}, N::Int) where {NN,T}
+function Systems._ham_split(u::SVector{NN,T}, N::Int) where {NN,T}
     x = SVector{N,T}(ntuple(i -> u[i], Val(N)))
     pk = SVector{N,T}(ntuple(i -> u[N + i], Val(N)))
     return (x, pk)
@@ -77,7 +76,7 @@ Type-stable split of a `SMatrix` into state and costate components.
   row = `(k-1) % N + 1`, col = `(k-1) ÷ N + 1`.
 - Used automatically when the `CTFlowsStaticArrays` extension is loaded.
 """
-function _ham_split(u::SMatrix{NN,M,T}, N::Int) where {NN,M,T}
+function Systems._ham_split(u::SMatrix{NN,M,T}, N::Int) where {NN,M,T}
     # Enumerate result elements in column-major order via single index k
     X = SMatrix{N,M,T}(ntuple(k -> u[(k - 1) % N + 1, (k - 1) ÷ N + 1], Val(N*M)))
     P = SMatrix{N,M,T}(ntuple(k -> u[N + (k - 1) % N + 1, (k - 1) ÷ N + 1], Val(N*M)))

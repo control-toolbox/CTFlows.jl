@@ -19,7 +19,7 @@ Hamiltonian systems supporting variable-costate integration additionally impleme
 # Example
 
 \`\`\`julia
-using CTFlows.Systems
+using CTFlows: Systems
 
 # Define a concrete system
 struct MySystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
@@ -55,9 +55,9 @@ Matches any `AbstractSystem` with `StateDynamics` as the dynamics parameter.
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Systems
+julia> using CTFlows: Systems
 
-julia> VectorFieldSystem <: Systems.AbstractStateSystem
+julia> Systems.VectorFieldSystem <: Systems.AbstractStateSystem
 true
 \`\`\`
 
@@ -82,9 +82,9 @@ not as a type parameter of this alias.
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Systems
+julia> using CTFlows: Systems
 
-julia> HamiltonianSystem <: Systems.AbstractHamiltonianSystem
+julia> Systems.HamiltonianSystem <: Systems.AbstractHamiltonianSystem
 true
 \`\`\`
 
@@ -105,7 +105,7 @@ Concrete subtypes must implement `time_dependence` to return the specific trait 
 # Example
 
 \`\`\`julia
-using CTFlows.Systems
+using CTFlows: Systems
 
 struct MySystem <: Systems.AbstractSystem end
 
@@ -133,7 +133,7 @@ Concrete subtypes must implement `variable_dependence` to return the specific tr
 # Example
 
 \`\`\`julia
-using CTFlows.Systems
+using CTFlows: Systems
 
 struct MySystem <: Systems.AbstractSystem end
 
@@ -160,7 +160,7 @@ Extract the time dependence trait from an `AbstractSystem`.
 
 # Example
 \`\`\`julia
-using CTFlows.Systems
+using CTFlows: Systems
 
 struct MySystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
     data::Vector{Float64}
@@ -187,7 +187,7 @@ Extract the variable dependence trait from an `AbstractSystem`.
 
 # Example
 \`\`\`julia
-using CTFlows.Systems
+using CTFlows: Systems
 
 struct MySystem <: Systems.AbstractSystem{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
     data::Vector{Float64}

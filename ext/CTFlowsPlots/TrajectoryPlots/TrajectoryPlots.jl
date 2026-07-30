@@ -16,13 +16,13 @@ and its `CTBasePlots` backend.
 """
 module TrajectoryPlots
 
-import DocStringExtensions: TYPEDSIGNATURES, TYPEDEF
-import CTBase.Exceptions
-import CTBase.Plotting
+using DocStringExtensions: TYPEDSIGNATURES, TYPEDEF
+using CTBase: Exceptions
+using CTBase: Plotting
 using Plots: Plots
 
-using CTFlows.Trajectories: Trajectories
-using CTFlows.Integrators: Integrators
+using CTFlows: Trajectories
+using CTFlows: Integrators
 using CTModels: CTModels
 
 include("description.jl")

@@ -22,22 +22,32 @@ module Trajectories
 # External package imports
 # ==============================================================================
 
-import DocStringExtensions: TYPEDSIGNATURES, TYPEDEF
-import CTBase.Core
-import CTBase.Data
-import CTBase.Exceptions
-import CTBase.Traits
-import CTModels.Components: Components, state, control, costate, objective, time_grid
-import RecipesBase: RecipesBase, plot
+using DocStringExtensions: TYPEDSIGNATURES, TYPEDEF
+using CTBase: Core
+using CTBase: Data
+using CTBase: Exceptions
+using CTBase: Traits
+using CTModels: Components
+using RecipesBase: RecipesBase, plot
+
+# `Components.state`/`control`/`costate`/`objective`/`time_grid` are re-homed here
+# (const-bound) so that `Trajectories.<symbol>` resolves and can be exported below;
+# methods are contributed for VectorFieldTrajectory / HamiltonianVectorFieldTrajectory /
+# StateFlowTrajectory in the included files.
+const state = Components.state
+const control = Components.control
+const costate = Components.costate
+const objective = Components.objective
+const time_grid = Components.time_grid
 
 # ==============================================================================
 # Internal submodule imports
 # ==============================================================================
 
-import ..Display: Display
-import ..Configs: Configs
-import ..Systems: Systems
-import ..Integrators: Integrators
+using ..Display: Display
+using ..Configs: Configs
+using ..Systems: Systems
+using ..Integrators: Integrators
 
 # ==============================================================================
 # Include files

@@ -17,14 +17,14 @@ coercing a 1-D state to a scalar before calling the user's vector field (issue
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Systems
+julia> using CTFlows: Systems
 
 julia> vf = Data.VectorField(x -> -x)
 VectorField: autonomous, fixed (no variable), out-of-place
   natural call: f(x)
   uniform call: f(t, x, v)
 
-julia> sys = VectorFieldSystem(vf)
+julia> sys = Systems.VectorFieldSystem(vf)
 VectorFieldSystem
 ├─ time_dependence: Autonomous
 ├─ variable_dependence: Fixed

@@ -12,28 +12,28 @@ This module defines the `AbstractFlow` type and its required methods:
 module Flows
 
 # 1. External-package imports (qualified, pollution-free)
-import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
-import CTBase.Core
-import CTBase.Data
-import CTBase.Descriptions
-import CTBase.Differentiation
-import CTBase.Exceptions
-import CTBase.Strategies
-import CTBase.Options
-import CTBase.Orchestration
-import CTBase.Traits
+using DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
+using CTBase: Core
+using CTBase: Data
+using CTBase: Descriptions
+using CTBase: Differentiation
+using CTBase: Exceptions
+using CTBase: Strategies
+using CTBase: Options
+using CTBase: Orchestration
+using CTBase: Traits
 using CTModels: CTModels
-import CommonSolve: CommonSolve
+using CommonSolve: CommonSolve
 
 # ==============================================================================
 # Internal sibling-submodule imports
 # ==============================================================================
 
-import ..Display: Display
-import ..Configs: Configs
-import ..Systems: Systems, hamiltonian, hamiltonian_vector_field, vector_field
-import ..Integrators: Integrators
-import ..Trajectories: Trajectories
+using ..Display: Display
+using ..Configs: Configs
+using ..Systems: Systems, hamiltonian, hamiltonian_vector_field, vector_field
+using ..Integrators: Integrators
+using ..Trajectories: Trajectories
 
 # ==============================================================================
 # Include files

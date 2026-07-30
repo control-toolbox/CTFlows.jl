@@ -27,12 +27,14 @@ inputs with consistent output shapes.
 
 # Example
 ```julia-repl
-julia> using CTFlows.Systems, CTBase.Data
+julia> using CTFlows: Systems
 
-julia> h = Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); autonomous=true, variable=false)
+julia> using CTBase: Data
+
+julia> h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); autonomous=true, variable=false)
 Hamiltonian{var"#1", Autonomous, Fixed}
 
-julia> sys = HamiltonianSystem(h, AutoForwardDiff())
+julia> sys = Systems.HamiltonianSystem(h, AutoForwardDiff())
 HamiltonianSystem
   time_dependence: Autonomous
   variable_dependence: Fixed

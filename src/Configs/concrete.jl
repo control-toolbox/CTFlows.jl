@@ -17,9 +17,9 @@ integration from a single initial condition to a specific final time.
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Configs
+julia> using CTFlows: Configs
 
-julia> config = StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
+julia> config = Configs.StateEndPointConfig(0.0, [1.0, 0.0], 1.0)
 StateEndPointConfig
   t0: 0.0
   x0: [1.0, 0.0]
@@ -58,9 +58,9 @@ time interval, useful for generating full trajectories.
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Configs
+julia> using CTFlows: Configs
 
-julia> config = StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
+julia> config = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
 StateTrajectoryConfig
   tspan: (0.0, 1.0)
   x0: [1.0, 0.0]
@@ -99,9 +99,9 @@ Hamiltonian framework.
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Configs
+julia> using CTFlows: Configs
 
-julia> config = HamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
+julia> config = Configs.HamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 HamiltonianEndPointConfig
   t0: 0.0
   x0: [1.0, 0.0]
@@ -147,9 +147,9 @@ full Hamiltonian trajectories.
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Configs
+julia> using CTFlows: Configs
 
-julia> config = HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
+julia> config = Configs.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
 HamiltonianTrajectoryConfig
   tspan: (0.0, 1.0)
   x0: [1.0, 0.0]
@@ -194,9 +194,9 @@ final time in the augmented Hamiltonian framework.
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Configs
+julia> using CTFlows: Configs
 
-julia> config = AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
+julia> config = Configs.AugmentedHamiltonianEndPointConfig(0.0, [1.0, 0.0], [0.5, 0.3], [0.0, 0.0], 1.0)
 AugmentedHamiltonianEndPointConfig
   t0: 0.0
   x0: [1.0, 0.0]

@@ -24,15 +24,15 @@ All subtypes must implement:
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Configs
+julia> using CTFlows: Configs
 
-julia> StateEndPointConfig <: Configs.AbstractConfig
+julia> Configs.StateEndPointConfig <: Configs.AbstractConfig
 true
 
-julia> StateEndPointConfig <: Configs.AbstractEndPointConfig
+julia> Configs.StateEndPointConfig <: Configs.AbstractEndPointConfig
 true
 
-julia> StateEndPointConfig <: Configs.AbstractStateConfig
+julia> Configs.StateEndPointConfig <: Configs.AbstractStateConfig
 true
 \`\`\`
 
@@ -64,12 +64,12 @@ All subtypes must implement:
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Configs
+julia> using CTFlows: Configs
 
-julia> StateEndPointConfig <: Configs.AbstractConfigWithMaC
+julia> Configs.StateEndPointConfig <: Configs.AbstractConfigWithMaC
 true
 
-julia> HamiltonianEndPointConfig <: Configs.AbstractConfigWithMaC
+julia> Configs.HamiltonianEndPointConfig <: Configs.AbstractConfigWithMaC
 true
 \`\`\`
 

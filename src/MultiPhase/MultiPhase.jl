@@ -9,22 +9,22 @@ and optional jumps, implementing exact sequential integration.
 module MultiPhase
 
 # 1. External-package imports (qualified, pollution-free)
-import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
-import CTBase.Exceptions
-import CTBase.Strategies
-import CTBase.Options
-import CTBase.Traits
+using DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
+using CTBase: Exceptions
+using CTBase: Strategies
+using CTBase: Options
+using CTBase: Traits
 
 # ==============================================================================
 # Internal sibling-submodule imports
 # ==============================================================================
 
-import ..Display: Display
-import ..Configs: Configs
-import ..Systems: Systems
-import ..Integrators: Integrators
-import ..Flows: Flows
-import ..Trajectories: Trajectories
+using ..Display: Display
+using ..Configs: Configs
+using ..Systems: Systems
+using ..Integrators: Integrators
+using ..Flows: Flows
+using ..Trajectories: Trajectories
 
 # ==============================================================================
 # Include files

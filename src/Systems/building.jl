@@ -15,7 +15,7 @@ with flow integration pipelines.
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Systems
+julia> using CTFlows: Systems
 
 julia> vf = VectorField(x -> -x; autonomous=true, variable=false)
 VectorField
@@ -23,7 +23,7 @@ VectorField
   variable_dependence: Fixed
   function: var"#1"
 
-julia> sys = build_system(vf)
+julia> sys = Systems.build_system(vf)
 VectorFieldSystem
   time_dependence: Autonomous
   variable_dependence: Fixed
@@ -52,7 +52,7 @@ RHS closures are built lazily based on actual initial condition types during flo
 
 # Example
 ```julia-repl
-julia> using CTFlows.Systems
+julia> using CTFlows: Systems
 
 julia> hvf = HamiltonianVectorField((x, p) -> (x, -p); autonomous=true, variable=false)
 HamiltonianVectorField
@@ -60,7 +60,7 @@ HamiltonianVectorField
   variable_dependence: Fixed
   function: var"#1"
 
-julia> sys = build_system(hvf)
+julia> sys = Systems.build_system(hvf)
 HamiltonianVectorFieldSystem
   time_dependence: Autonomous
   variable_dependence: Fixed
@@ -90,12 +90,14 @@ RHS closures are built lazily based on actual initial condition types during flo
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Systems, CTBase.Data
+julia> using CTFlows: Systems
 
-julia> h = Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); autonomous=true, variable=false)
+julia> using CTBase: Data
+
+julia> h = Data.Hamiltonian((t, x, p, v) -> 0.5 * sum(x.^2) + sum(p.^2); autonomous=true, variable=false)
 Hamiltonian{var"#1", Autonomous, Fixed}
 
-julia> sys = build_system(h, AutoForwardDiff())
+julia> sys = Systems.build_system(h, AutoForwardDiff())
 HamiltonianSystem
   time_dependence: Autonomous
   variable_dependence: Fixed
