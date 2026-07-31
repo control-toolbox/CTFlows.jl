@@ -1,0 +1,62 @@
+name: Cron integration tests
+
+# Runs the slow end-to-end integration tests (test/cron/) that are excluded from
+# regular CI. See test/runtests.jl for the "cron" test_args sentinel and
+# .reports/2026-07-31_plan-cron-integration-tests.md / issue #389 for the rationale.
+
+on:
+  schedule:
+    - cron: '0 3 * * 1' # every Monday 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  test-cpu-github:
+    uses: control-toolbox/CTActions/.github/workflows/ci.yml@main
+    with:
+      runs_on: '["ubuntu-latest", "macos-latest", "windows-latest"]'
+      runner_type: 'github'
+      use_ct_registry: true
+      test_args: 'cron'
+    secrets:
+      SSH_KEY: ${{ secrets.SSH_KEY }}
+
+  test-gpu-kkt:
+    uses: control-toolbox/CTActions/.github/workflows/ci.yml@main
+    with:
+      versions: '["1"]'
+      runs_on: '[["kkt"]]'
+      runner_type: 'self-hosted'
+      use_ct_registry: true
+      test_args: 'cron'
+    secrets:
+      SSH_KEY: ${{ secrets.SSH_KEY }}
+
+  notify-on-failure:
+    needs: [test-cpu-github, test-gpu-kkt]
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open an issue if none is already open
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = "Weekly cron integration tests failing";
+            const { data: existing } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: "cron-failure",
+            });
+            if (existing.length > 0) {
+              console.log(`An open cron-failure issue already exists (#${existing[0].number}); not creating a new one.`);
+              return;
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              labels: ["cron-failure"],
+              body: `The weekly cron integration run failed. See: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            });

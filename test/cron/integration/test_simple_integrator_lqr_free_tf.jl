@@ -21,7 +21,7 @@ using OrdinaryDiffEqTsit5
 using ForwardDiff: ForwardDiff
 using NonlinearSolve: NonlinearProblem, SimpleNewtonRaphson, solve
 
-include(joinpath(@__DIR__, "utils.jl"))
+include(joinpath(@__DIR__, "..", "..", "suite", "integration", "utils.jl"))
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
