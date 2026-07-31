@@ -1,11 +1,11 @@
 module TestVectorFieldSystem
 
 using Test: Test
-import CTFlows.Systems
-import CTFlows.Configs
-import CTBase.Data
-import CTBase.Traits
-import StaticArrays: SA, StaticArrays
+using CTFlows: Systems
+using CTFlows: Configs
+using CTBase: Data
+using CTBase: Traits
+using StaticArrays: SA, StaticArrays
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

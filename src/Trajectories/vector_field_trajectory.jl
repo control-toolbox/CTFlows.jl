@@ -34,11 +34,11 @@ semantic accessors for time grids and state functions.
 
 # Example
 \`\`\`julia
-using CTFlows.Trajectories
+using CTFlows: Trajectories
 
-sol = VectorFieldTrajectory(result)
-ts = times(sol)           # or time_grid(sol)
-x = state(sol)            # callable state function
+sol = Trajectories.VectorFieldTrajectory(result)
+ts = times(sol)           # or Trajectories.time_grid(sol)
+x = Trajectories.state(sol)            # callable state function
 x(0.5)                    # evaluate at t = 0.5
 \`\`\`
 
@@ -125,10 +125,10 @@ providing a clear, self-documenting way to obtain the trajectory function.
 
 # Example
 \`\`\`julia
-using CTFlows.Trajectories
+using CTFlows: Trajectories
 
-sol = VectorFieldTrajectory(result)
-x = state(sol)    # x is a function of time
+sol = Trajectories.VectorFieldTrajectory(result)
+x = Trajectories.state(sol)    # x is a function of time
 x(0.0)            # initial state
 x(0.5)            # interpolated state at t = 0.5
 x.(0.0:0.1:1.0)   # broadcast over time grid
@@ -162,10 +162,10 @@ numerical contexts where "time grid" is the standard terminology.
 
 # Example
 \`\`\`julia
-using CTFlows.Trajectories
+using CTFlows: Trajectories
 
-sol = VectorFieldTrajectory(result)
-tg = time_grid(sol)  # same as times(sol)
+sol = Trajectories.VectorFieldTrajectory(result)
+tg = Trajectories.time_grid(sol)  # same as times(sol)
 \`\`\`
 
 # Notes

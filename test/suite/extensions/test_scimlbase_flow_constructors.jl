@@ -1,13 +1,13 @@
 module TestSciMLBaseFlowConstructors
 
 using Test: Test
-import CTBase.Exceptions: Exceptions
-import CTFlows: CTFlows
-import CTFlows.Systems: Systems
-import CTFlows.Integrators: Integrators
-import CTFlows.Flows: Flows, AbstractFlow, StateFlow, build_flow
-import CTFlows.Trajectories: Trajectories
-import SciMLBase: SciMLBase, ODEProblem, ODEFunction
+using CTBase: Exceptions
+using CTFlows: CTFlows
+using CTFlows: Systems
+using CTFlows: Integrators
+using CTFlows: Flows
+using CTFlows: Trajectories
+using SciMLBase: SciMLBase, ODEProblem, ODEFunction
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 using StaticArrays: SA, SVector
 
@@ -31,16 +31,16 @@ function test_scimlbase_flow_constructors()
             Test.@testset "in-place function returns StateFlow" begin
                 f = ODEFunction((du, u, p, t) -> du .= -p .* u)
                 flow = Flows.Flow(f; reltol=1e-10)
-                Test.@test flow isa StateFlow
-                Test.@test flow isa AbstractFlow
+                Test.@test flow isa Flows.StateFlow
+                Test.@test flow isa Flows.AbstractFlow
                 Test.@test Flows.system(flow) isa CTFlowsSciMLFlows.SciMLFunctionSystem
             end
 
             Test.@testset "out-of-place function returns StateFlow" begin
                 f = ODEFunction{false}((u, p, t) -> -p .* u)
                 flow = Flows.Flow(f; reltol=1e-10)
-                Test.@test flow isa StateFlow
-                Test.@test flow isa AbstractFlow
+                Test.@test flow isa Flows.StateFlow
+                Test.@test flow isa Flows.AbstractFlow
                 Test.@test Flows.system(flow) isa CTFlowsSciMLFlows.SciMLFunctionSystem
             end
 
@@ -62,7 +62,7 @@ function test_scimlbase_flow_constructors()
                 prob = ODEProblem(f, [1.0], (0.0, 1.0), 2.0)
                 flow = Flows.Flow(prob; reltol=1e-10)
                 Test.@test flow isa CTFlowsSciMLFlows.SciMLProblemFlow
-                Test.@test flow isa AbstractFlow
+                Test.@test flow isa Flows.AbstractFlow
             end
 
             Test.@testset "kwargs passed to integrator" begin

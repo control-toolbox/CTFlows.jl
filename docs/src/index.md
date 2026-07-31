@@ -23,8 +23,10 @@ optional automatic differentiation.
 
 ```julia
 using CTFlows
-using CTBase.Data, CTFlows.Flows, CTFlows.Trajectories
-import OrdinaryDiffEqTsit5   # activates the SciML integrator extension
+using CTBase: Data
+using CTFlows: Flows
+using CTFlows: Trajectories
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5   # activates the SciML integrator extension
 
 # 1. Wrap the dynamics
 vf = Data.VectorField(x -> -x)     # autonomous, fixed, out-of-place
@@ -44,8 +46,8 @@ x(0.5)                             # interpolate
 
 !!! note "Qualified access"
     CTFlows exports nothing at the package level. Every symbol lives in a submodule
-    (`CTBase.Data`, `CTFlows.Flows`, …) and is reached via a qualified path or a
-    `using CTFlows.SubModule` import.
+    (`CTBase.Data`, `CTFlows.Flows`, …) and is reached via a qualified path after a
+    `using CTFlows: SubModule` import.
 
 The same `Flow` constructor also builds directly from an **optimal control
 problem** — a [`CTModels.Models.Model`](@extref CTModels.Models.Model) — with no

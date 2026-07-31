@@ -19,14 +19,14 @@ inputs with consistent output shapes.
 
 # Example
 ```julia-repl
-julia> using CTFlows.Systems
+julia> using CTFlows: Systems
 
 julia> hvf = Data.HamiltonianVectorField((x, p) -> (x, -p))
 HamiltonianVectorField: autonomous, fixed (no variable), out-of-place
   natural call: f(x, p)
   uniform call: f(t, x, p, v)
 
-julia> sys = HamiltonianVectorFieldSystem(hvf)
+julia> sys = Systems.HamiltonianVectorFieldSystem(hvf)
 HamiltonianVectorFieldSystem
 ├─ time_dependence: Autonomous
 ├─ variable_dependence: Fixed

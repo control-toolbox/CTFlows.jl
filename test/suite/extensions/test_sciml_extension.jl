@@ -1,19 +1,19 @@
 module TestSciMLExtension
 
 using Test: Test
-import CTBase.Data: Data
-import CTBase.Traits: Traits
-import CTFlows: CTFlows
-import CTFlows.Configs: Configs
-import CTFlows.Systems: Systems
-import CTFlows.Integrators: Integrators
-import CTFlows.Trajectories: Trajectories
+using CTBase: Data
+using CTBase: Traits
+using CTFlows: CTFlows
+using CTFlows: Configs
+using CTFlows: Systems
+using CTFlows: Integrators
+using CTFlows: Trajectories
 using CommonSolve: CommonSolve
 
 # Get extensions to check they are loaded
 using SciMLBase: SciMLBase, ODEProblem
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
-import StaticArrays: SA
+using StaticArrays: SA
 const CTFlowsSciMLIntegrator = Base.get_extension(CTFlows, :CTFlowsSciMLIntegrator)
 const CTFlowsSciMLFlows = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
 

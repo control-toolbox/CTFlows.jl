@@ -15,18 +15,18 @@ integration itself is `CommonSolve.solve(prob, integrator)`, implemented by the
 """
 module CTFlowsSciMLFlows
 
-import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
-import CTBase.Exceptions
-import CTBase.Core
-import CommonSolve: CommonSolve
+using DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
+using CTBase: Exceptions
+using CTBase: Core
+using CommonSolve: CommonSolve
 
 using CTFlows: CTFlows
-using CTFlows.Display: Display
-using CTFlows.Configs: Configs
-using CTBase.Traits: Traits
-using CTFlows.Systems: Systems
-using CTFlows.Integrators: Integrators
-using CTFlows.Flows: Flows, AbstractFlow, build_flow
+using CTFlows: Display
+using CTFlows: Configs
+using CTBase: Traits
+using CTFlows: Systems
+using CTFlows: Integrators
+using CTFlows: Flows
 using SciMLBase: SciMLBase, ODEProblem
 
 # =============================================================================

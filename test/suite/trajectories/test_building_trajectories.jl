@@ -1,12 +1,12 @@
 module TestBuildingTrajectories
 
 using Test: Test
-import CTFlows.Trajectories
-import CTFlows.Systems
-import CTFlows.Configs
-import CTBase.Data
-import CTBase.Traits: Traits
-import CTFlows.Integrators
+using CTFlows: Trajectories
+using CTFlows: Systems
+using CTFlows: Configs
+using CTBase: Data
+using CTBase: Traits
+using CTFlows: Integrators
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

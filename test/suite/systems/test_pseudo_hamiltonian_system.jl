@@ -1,10 +1,10 @@
 module TestPseudoHamiltonianSystem
 
 using Test: Test
-import CTBase.Data: Data
-import CTBase.Traits: Traits
-import CTBase.Differentiation: Differentiation
-import CTFlows.Systems: Systems
+using CTBase: Data
+using CTBase: Traits
+using CTBase: Differentiation
+using CTFlows: Systems
 using ADTypes: ADTypes
 using DifferentiationInterface: DifferentiationInterface
 using ForwardDiff: ForwardDiff

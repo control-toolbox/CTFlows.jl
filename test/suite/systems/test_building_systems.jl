@@ -1,10 +1,10 @@
 module TestBuildingSystems
 
 using Test: Test
-import CTFlows.Systems
-import CTFlows.Configs
-import CTBase.Data
-import CTBase.Traits
+using CTFlows: Systems
+using CTFlows: Configs
+using CTBase: Data
+using CTBase: Traits
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

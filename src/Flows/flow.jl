@@ -20,13 +20,13 @@ The dynamics axis is encoded in the type parameter `D`:
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Flows, CTFlows.Systems, CTFlows.Integrators
+julia> using CTFlows: Flows, Systems, Integrators
 
-julia> system = VectorFieldSystem(VectorField(x -> -x))
+julia> system = Systems.VectorFieldSystem(VectorField(x -> -x))
 
-julia> integrator = SciML()
+julia> integrator = Integrators.SciML()
 
-julia> flow = StateFlow(system, integrator)
+julia> flow = Flows.StateFlow(system, integrator)
 StateFlow{...}
 \`\`\`
 

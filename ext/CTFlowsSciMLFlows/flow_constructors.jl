@@ -31,7 +31,7 @@ xf = flow(0.0, [1.0], 1.0; variable=2.0)
 function Flows.Flow(f::SciMLBase.AbstractODEFunction; opts...)
     sys = SciMLFunctionSystem(f)
     integ = Flows._build_integrator(opts)
-    return build_flow(sys, integ)
+    return Flows.build_flow(sys, integ)
 end
 
 """

@@ -10,7 +10,7 @@ minutes.
 ## Installation
 
 ```julia
-import Pkg
+using Pkg: Pkg
 Pkg.add("CTFlows")
 ```
 
@@ -26,7 +26,7 @@ Three ideas explain most of the API:
 
 - **No top-level exports.** CTFlows exports nothing at the package level. Every
    symbol lives in a submodule and is reached via a qualified path
-   (`CTFlows.Flows.Flow`) or an explicit `using CTFlows.Flows`. The same holds for
+   (`CTFlows.Flows.Flow`) or an explicit `using CTFlows: Flows`. The same holds for
   the data layer, which lives in CTBase (`CTBase.Data.VectorField`).
 - **A pipeline of small layers.** Data (your functions, wrapped) → Systems (ODE
    right-hand side) → Integrators (solver strategy) → Flows (the callable object) →
@@ -42,10 +42,10 @@ Bring the relevant submodules into scope and load a solver:
 
 ```@example getting_started
 using CTFlows
-using CTBase.Data          # VectorField, Hamiltonian, HamiltonianVectorField
-using CTFlows.Flows        # Flow
-using CTFlows.Trajectories # time_grid, state, costate
-import OrdinaryDiffEqTsit5 # activates the SciML integrator extension
+using CTBase: Data          # VectorField, Hamiltonian, HamiltonianVectorField
+using CTFlows: Flows        # Flow
+using CTFlows: Trajectories # time_grid, state, costate
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5 # activates the SciML integrator extension
 nothing # hide
 ```
 

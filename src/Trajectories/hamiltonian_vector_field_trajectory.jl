@@ -29,12 +29,12 @@ semantic accessors for time grids, state functions, and costate functions.
 
 # Example
 ```julia
-using CTFlows.Trajectories
+using CTFlows: Trajectories
 
-sol = HamiltonianVectorFieldTrajectory(result)
-ts = times(sol)           # or time_grid(sol)
-x = state(sol)            # callable state function x(t)
-p = costate(sol)          # callable costate function p(t)
+sol = Trajectories.HamiltonianVectorFieldTrajectory(result)
+ts = times(sol)           # or Trajectories.time_grid(sol)
+x = Trajectories.state(sol)            # callable state function x(t)
+p = Trajectories.costate(sol)          # callable costate function p(t)
 x(0.5), p(0.5)           # evaluate at t = 0.5
 x0, p0 = sol(0.0)        # returns tuple (x(0), p(0))
 ```
@@ -279,10 +279,10 @@ CTFlows for `HamiltonianVectorFieldTrajectory`. Returns a
 
 # Example
 ```julia
-using CTFlows.Trajectories
+using CTFlows: Trajectories
 
-sol = HamiltonianVectorFieldTrajectory(result)
-x = state(sol)    # x is a callable StateProjection
+sol = Trajectories.HamiltonianVectorFieldTrajectory(result)
+x = Trajectories.state(sol)    # x is a callable StateProjection
 x(0.0)            # initial state
 x(0.5)            # interpolated state at t = 0.5
 ```
@@ -310,10 +310,10 @@ CTFlows for `HamiltonianVectorFieldTrajectory`. Returns a
 
 # Example
 ```julia
-using CTFlows.Trajectories
+using CTFlows: Trajectories
 
-sol = HamiltonianVectorFieldTrajectory(result)
-p = costate(sol)  # p is a callable CostateProjection
+sol = Trajectories.HamiltonianVectorFieldTrajectory(result)
+p = Trajectories.costate(sol)  # p is a callable CostateProjection
 p(0.0)            # initial costate
 p(0.5)            # interpolated costate at t = 0.5
 ```

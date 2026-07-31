@@ -16,14 +16,14 @@ call. This page explains both paths.
 
 ```@setup flows_building
 using CTFlows
-using CTBase.Data
-using CTBase.Traits
-using CTFlows.Systems
-using CTFlows.Integrators
-using CTFlows.Flows
-using CTFlows.Trajectories
-using CTFlows.Configs
-import OrdinaryDiffEqTsit5
+using CTBase: Data
+using CTBase: Traits
+using CTFlows: Systems
+using CTFlows: Integrators
+using CTFlows: Flows
+using CTFlows: Trajectories
+using CTFlows: Configs
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
 ```
 
 ---
@@ -46,7 +46,8 @@ hflow = Flows.Flow(hvf; reltol=1e-10)
 
 ```@example flows_building
 # From a scalar Hamiltonian (AD computes the derivatives) → HamiltonianFlow
-import DifferentiationInterface, ForwardDiff
+using DifferentiationInterface: DifferentiationInterface
+using ForwardDiff: ForwardDiff
 using LinearAlgebra
 h = Data.Hamiltonian((x, p) -> 0.5 * (dot(x, x) + dot(p, p)))
 hflow_ad = Flows.Flow(h; reltol=1e-10)

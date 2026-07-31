@@ -49,10 +49,10 @@ Move the state to the device and call the flow as usual.
 
 ```julia
 using CTFlows
-using CTFlows.Flows
-using CTBase.Data
-import OrdinaryDiffEqTsit5
-import CUDA
+using CTFlows: Flows
+using CTBase: Data
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
+using CUDA: CUDA
 
 x0 = CUDA.CuArray([1.0, 2.0])
 
@@ -128,10 +128,10 @@ runs on both:
 
 ```@setup flows_gpu
 using CTFlows
-using CTFlows.Flows
-using CTBase.Data
-using CTBase.Strategies
-import OrdinaryDiffEqTsit5
+using CTFlows: Flows
+using CTBase: Data
+using CTBase: Strategies
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
 ```
 
 ```@example flows_gpu
@@ -246,8 +246,8 @@ Strategies.describe(:di, Flows.flow_registry())
 You can always override the backend explicitly:
 
 ```julia
-import ADTypes
-import Zygote   # the package must be loaded: AutoZygote() is only a marker type
+using ADTypes: ADTypes
+using Zygote: Zygote   # the package must be loaded: AutoZygote() is only a marker type
 flow = Flows.Flow(h; ad_backend=ADTypes.AutoZygote())
 ```
 
@@ -277,8 +277,11 @@ flow = Flows.Flow(h; ad_backend=ADTypes.AutoZygote())
 Two algorithms from DiffEqGPU.jl, with **different requirements on the right-hand side**:
 
 ```julia
-import CUDA, DiffEqGPU, SciMLBase
-import OrdinaryDiffEqTsit5, StaticArrays
+using CUDA: CUDA
+using DiffEqGPU: DiffEqGPU
+using SciMLBase: SciMLBase
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
+using StaticArrays: StaticArrays
 
 N = 8
 init(i) = [Float64(i), 2.0 * i]   # trajectory i starts at [i, 2i]
@@ -341,7 +344,7 @@ the final state vector — a bug that looks like a numerical error.
 The pattern CTFlows uses for its own device tests transfers directly:
 
 ```julia
-import CUDA
+using CUDA: CUDA
 CUDA.functional() || return          # skip cleanly on machines without a device
 CUDA.allowscalar(false)              # make every pass genuinely scalar-index-free
 ```

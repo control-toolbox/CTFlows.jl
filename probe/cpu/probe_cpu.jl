@@ -45,10 +45,10 @@ using StaticArrays: SA, SVector, MVector, SMatrix, MMatrix
 using ForwardDiff: ForwardDiff
 using SciMLBase: SciMLBase
 
-import CTBase.Data
-import CTFlows.Flows
-import CTFlows.Trajectories
-import CTFlows.Integrators
+using CTBase: Data
+using CTFlows: Flows
+using CTFlows: Trajectories
+using CTFlows: Integrators
 using CTModels: CTModels
 
 # ---------------------------------------------------------------------------

@@ -1,11 +1,11 @@
 module TestHamRHSFunctors
 
 using Test: Test
-import CTBase.Exceptions
-import CTBase.Data: Data
-import CTFlows.Systems: Systems
-import CTBase.Traits: Traits
-import CTBase.Differentiation
+using CTBase: Exceptions
+using CTBase: Data
+using CTFlows: Systems
+using CTBase: Traits
+using CTBase: Differentiation
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

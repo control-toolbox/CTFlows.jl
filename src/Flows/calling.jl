@@ -18,9 +18,9 @@ Builds a `StateEndPointConfig` internally and calls the flow with it.
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Flows
+julia> using CTFlows: Flows
 
-julia> flow = StateFlow(system, integrator)
+julia> flow = Flows.StateFlow(system, integrator)
 
 julia> sol = flow(0.0, [1.0, 0.0], 1.0)
 \`\`\`
@@ -74,9 +74,9 @@ with `H` obtained from [`CTFlows.Systems.hamiltonian`](@ref).
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Flows
+julia> using CTFlows: Flows
 
-julia> flow = HamiltonianFlow(system, integrator)
+julia> flow = Flows.HamiltonianFlow(system, integrator)
 
 julia> sol = flow(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 \`\`\`
@@ -117,9 +117,9 @@ Builds a `StateTrajectoryConfig` internally and calls the flow with it.
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Flows
+julia> using CTFlows: Flows
 
-julia> flow = StateFlow(system, integrator)
+julia> flow = Flows.StateFlow(system, integrator)
 
 julia> sol = flow((0.0, 1.0), [1.0, 0.0])
 \`\`\`
@@ -154,9 +154,9 @@ Builds a `HamiltonianTrajectoryConfig` internally and calls the flow with it.
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Flows
+julia> using CTFlows: Flows
 
-julia> flow = HamiltonianFlow(system, integrator)
+julia> flow = Flows.HamiltonianFlow(system, integrator)
 
 julia> sol = flow((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
 \`\`\`

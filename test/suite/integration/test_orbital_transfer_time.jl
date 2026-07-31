@@ -16,8 +16,8 @@ The bang control depends only on `p` (not `x`), so `:total` and `:partial` coinc
 module TestOrbitalTransferTime
 
 using Test: Test
-import CTModels: CTModels
-import CTFlows.Flows
+using CTModels: CTModels
+using CTFlows: Flows
 using OrdinaryDiffEqTsit5
 using ForwardDiff: ForwardDiff
 using NonlinearSolve: NonlinearProblem, SimpleNewtonRaphson, solve

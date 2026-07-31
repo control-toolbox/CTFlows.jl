@@ -14,10 +14,11 @@ trajectory calls return a full
 ```@setup flows_ocp
 using CTFlows
 using CTModels
-using CTFlows.Flows
-using CTBase.Traits
-import OrdinaryDiffEqTsit5
-import DifferentiationInterface, ForwardDiff
+using CTFlows: Flows
+using CTBase: Traits
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
+using DifferentiationInterface: DifferentiationInterface
+using ForwardDiff: ForwardDiff
 ```
 
 ---
@@ -170,7 +171,7 @@ sol_basic = f((0.0, 1.0), x0)
 ```
 
 ```@repl flows_ocp
-using CTFlows.Trajectories
+using CTFlows: Trajectories
 Trajectories.state(sol_basic)(0.5)
 Trajectories.objective(sol_basic)   # ≈ exp(λ)
 ```

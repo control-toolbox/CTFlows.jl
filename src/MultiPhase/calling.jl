@@ -940,7 +940,7 @@ Builds a `StateEndPointConfig` internally and evaluates the multi-phase flow.
 
 # Example
 \`\`\`julia
-using CTFlows.MultiPhase
+using CTFlows: MultiPhase
 
 mpf = flow1 * (1.0, flow2) * (2.0, flow3)
 sol = mpf(0.0, [1.0, 0.0], 3.0)
@@ -976,7 +976,7 @@ returning a merged trajectory from all phases.
 
 # Example
 \`\`\`julia
-using CTFlows.MultiPhase
+using CTFlows: MultiPhase
 
 mpf = flow1 * (1.0, flow2) * (2.0, flow3)
 sol = mpf((0.0, 3.0), [1.0, 0.0])
@@ -1012,7 +1012,7 @@ Builds a `HamiltonianEndPointConfig` internally and evaluates the multi-phase fl
 
 # Example
 \`\`\`julia
-using CTFlows.MultiPhase
+using CTFlows: MultiPhase
 
 mpf = flow1 * (1.0, flow2) * (2.0, flow3)
 sol = mpf(0.0, [1.0, 0.0], [0.5, 0.3], 3.0)
@@ -1048,7 +1048,7 @@ returning a merged trajectory from all phases.
 
 # Example
 \`\`\`julia
-using CTFlows.MultiPhase
+using CTFlows: MultiPhase
 
 mpf = flow1 * (1.0, flow2) * (2.0, flow3)
 sol = mpf((0.0, 3.0), [1.0, 0.0], [0.5, 0.3])

@@ -6,10 +6,10 @@ Tests for the arity-checking guard on the OCP convenience constructors:
 module TestConvenienceArity
 
 using Test: Test
-import CTBase.Data: Data
-import CTBase.Exceptions: Exceptions
-import CTModels: CTModels
-import CTFlows.Flows: Flows
+using CTBase: Data
+using CTBase: Exceptions
+using CTModels: CTModels
+using CTFlows: Flows
 using OrdinaryDiffEqTsit5: Tsit5
 using ForwardDiff: ForwardDiff  # triggers the DI ForwardDiff extension (AutoForwardDiff)
 

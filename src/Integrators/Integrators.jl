@@ -23,12 +23,16 @@ module Integrators
 # External package imports
 # ==============================================================================
 
-import DocStringExtensions: TYPEDSIGNATURES
-import CTBase.Exceptions
+using DocStringExtensions: TYPEDSIGNATURES
+using CTBase: Exceptions
 
 # Re-home the CTSolvers integrator surface consumed inside CTFlows so that
-# `Integrators.<symbol>` call sites resolve to CTSolvers.
-using CTSolvers.Integrators:
+# `Integrators.<symbol>` call sites resolve to CTSolvers. The two-step alias + relative
+# `using` (rather than `const sym = CTSolversIntegrators.sym`) keeps each binding's doc
+# origin traceable to CTSolvers.Integrators, so `@doc CTFlows.Integrators.SciML` (and the
+# API reference build) still finds the docstring.
+using CTSolvers: Integrators as CTSolversIntegrators
+using .CTSolversIntegrators:
     AbstractIntegrator,
     SciML,
     AbstractIntegrationResult,
@@ -45,8 +49,8 @@ using CTSolvers.Integrators:
 # Internal sibling-submodule imports (used by the glue-function signatures)
 # ==============================================================================
 
-import ..Configs: Configs
-import ..Systems: Systems
+using ..Configs: Configs
+using ..Systems: Systems
 
 # ==============================================================================
 # CTFlows-owned glue generics (domain-specific; concrete methods in the ext)

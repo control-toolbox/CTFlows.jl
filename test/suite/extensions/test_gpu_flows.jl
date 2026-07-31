@@ -30,17 +30,17 @@ Out of scope here: the ensemble path (phase 4b, `test_gpu_ensemble.jl`).
 module TestGPUFlows
 
 using Test: Test
-import CUDA: CUDA
-import CTBase.Data: Data
-import CTFlows.Flows: Flows
-import CTFlows.Trajectories: Trajectories
-import CTModels: CTModels
-import ADTypes: ADTypes
-import SciMLBase: SciMLBase
+using CUDA: CUDA
+using CTBase: Data
+using CTFlows: Flows
+using CTFlows: Trajectories
+using CTModels: CTModels
+using ADTypes: ADTypes
+using SciMLBase: SciMLBase
 # Both AD backends are ADTypes *markers*: they construct without their package, but evaluating a
 # gradient needs the package loaded so DI can dispatch.
-import Mooncake: Mooncake  # backs the `method=:gpu` default (AutoMooncake, CTBase 0.28.2-beta)
-import Zygote: Zygote      # backs the rows that pass `ad_backend=AutoZygote()` explicitly
+using Mooncake: Mooncake  # backs the `method=:gpu` default (AutoMooncake, CTBase 0.28.2-beta)
+using Zygote: Zygote      # backs the rows that pass `ad_backend=AutoZygote()` explicitly
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

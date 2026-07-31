@@ -10,12 +10,12 @@ using Test: Test
 using DifferentiationInterface: DifferentiationInterface
 using ForwardDiff: ForwardDiff  # triggers DifferentiationInterfaceForwardDiff (provides PushforwardFast)
 using StaticArrays: SA, SVector
-import CTBase.Data: Data
-import CTBase.Exceptions: Exceptions
-import CTModels: CTModels
-import CTFlows.Flows: Flows
-import CTFlows.Trajectories: Trajectories
-import CTFlows.Integrators: Integrators
+using CTBase: Data
+using CTBase: Exceptions
+using CTModels: CTModels
+using CTFlows: Flows
+using CTFlows: Trajectories
+using CTFlows: Integrators
 using OrdinaryDiffEqTsit5: Tsit5
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true

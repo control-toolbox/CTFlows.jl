@@ -5,14 +5,14 @@ Unit and integration tests for flow routing via CTBase.Strategies.
 module TestFlowRouting
 
 using Test: Test
-import CTBase.Exceptions
-import CTBase.Strategies
-import CTFlows.Flows
-import CTBase.Differentiation
-import CTFlows.Integrators
-import CTBase.Data
-import CTFlows.Systems
-import CTBase.Traits
+using CTBase: Exceptions
+using CTBase: Strategies
+using CTFlows: Flows
+using CTBase: Differentiation
+using CTFlows: Integrators
+using CTBase: Data
+using CTFlows: Systems
+using CTBase: Traits
 using ADTypes: ADTypes
 using OrdinaryDiffEqTsit5
 

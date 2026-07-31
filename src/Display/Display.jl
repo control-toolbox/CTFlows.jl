@@ -21,8 +21,8 @@ module Display
 # External package imports
 # ==============================================================================
 
-import DocStringExtensions: TYPEDSIGNATURES
-import CTBase.Core
+using DocStringExtensions: TYPEDSIGNATURES
+using CTBase: Core
 
 # ==============================================================================
 # Tree characters (styled with the `muted` palette role at print time)

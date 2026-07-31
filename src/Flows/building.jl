@@ -22,7 +22,8 @@ This constructor builds a complete flow by:
 
 # Example
 \`\`\`julia
-using CTBase.Data, CTFlows.Flows
+using CTBase: Data
+using CTFlows: Flows
 
 vf = Data.VectorField((t, x, v) -> x, Traits.Autonomous(), Traits.Fixed())
 flow = Flows.Flow(vf; reltol=1e-8)
@@ -55,7 +56,8 @@ This constructor builds a complete Hamiltonian flow by:
 
 # Example
 ```julia
-using CTBase.Data, CTFlows.Flows
+using CTBase: Data
+using CTFlows: Flows
 
 hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_variable=false)
 flow = Flows.Flow(hvf; reltol=1e-8)
@@ -100,7 +102,8 @@ This constructor builds a complete Hamiltonian flow by:
 
 # Example
 ```julia
-using CTBase.Data, CTFlows.Flows
+using CTBase: Data
+using CTFlows: Flows
 
 h = Data.Hamiltonian((t, x, p, v) -> 0.5 * (x[1]^2 + p[1]^2); is_autonomous=true, is_variable=false)
 flow = Flows.Flow(h; reltol=1e-8, ad_backend=ADTypes.AutoForwardDiff())

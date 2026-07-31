@@ -8,11 +8,11 @@ routing/resolution without executing on a device.
 module TestGPURouting
 
 using Test: Test
-import CTBase.Exceptions
-import CTBase.Strategies
-import CTFlows.Flows
-import CTBase.Data
-import CTBase.Traits
+using CTBase: Exceptions
+using CTBase: Strategies
+using CTFlows: Flows
+using CTBase: Data
+using CTBase: Traits
 using ADTypes: ADTypes
 using OrdinaryDiffEqTsit5
 

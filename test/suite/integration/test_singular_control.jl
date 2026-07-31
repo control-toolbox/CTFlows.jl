@@ -20,8 +20,8 @@ Shooting (5 equations, 5 unknowns [p₁₀, p₂₀, p₃₀, θ₀, tf]):
 module TestSingularControl
 
 using Test: Test
-import CTModels: CTModels
-import CTFlows.Flows
+using CTModels: CTModels
+using CTFlows: Flows
 using OrdinaryDiffEqTsit5
 using NonlinearSolve: NonlinearProblem, SimpleNewtonRaphson, solve
 

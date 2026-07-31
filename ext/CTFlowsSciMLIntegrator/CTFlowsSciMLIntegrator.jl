@@ -18,14 +18,14 @@ in `CTSolvers.Integrators` and its `CTSolversSciMLIntegrator` extension. The use
 """
 module CTFlowsSciMLIntegrator
 
-import DocStringExtensions: TYPEDSIGNATURES
-import CTBase.Exceptions
+using DocStringExtensions: TYPEDSIGNATURES
+using CTBase: Exceptions
 
 using CTFlows: CTFlows
-using CTFlows.Configs: Configs
-using CTFlows.Systems: Systems
-using CTBase.Traits: Traits
-using CTFlows.Integrators: Integrators
+using CTFlows: Configs
+using CTFlows: Systems
+using CTBase: Traits
+using CTFlows: Integrators
 using SciMLBase: SciMLBase, ODEProblem
 
 # =============================================================================

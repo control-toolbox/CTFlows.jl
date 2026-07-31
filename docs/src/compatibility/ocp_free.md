@@ -37,9 +37,9 @@ containers against the first and the vector-family containers against the second
 ```@setup ocp_free_compat
 using CTFlows
 using CTModels
-using CTFlows.Flows
-using CTFlows.Trajectories
-import OrdinaryDiffEqTsit5
+using CTFlows: Flows
+using CTFlows: Trajectories
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
 using StaticArrays: SA, SVector, MVector, SMatrix, MMatrix
 using ForwardDiff: ForwardDiff
 ```

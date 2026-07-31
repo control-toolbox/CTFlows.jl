@@ -1,10 +1,10 @@
 module TestDefault
 
 using Test: Test
-import CTBase.Data
-import CTFlows.Flows
-import CTFlows.Systems
-import CTBase.Core
+using CTBase: Data
+using CTFlows: Flows
+using CTFlows: Systems
+using CTBase: Core
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

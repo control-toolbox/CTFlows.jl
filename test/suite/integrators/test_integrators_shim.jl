@@ -1,8 +1,8 @@
 module TestIntegratorsShim
 
 using Test: Test
-import CTFlows.Integrators: Integrators
-import CTSolvers.Integrators as CTSI
+using CTFlows: Integrators
+using CTSolvers: Integrators as CTSI
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

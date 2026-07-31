@@ -12,20 +12,20 @@ This module defines the `AbstractSystem` type and its required methods:
 module Systems
 
 # 1. External-package imports (qualified, pollution-free)
-import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
+using DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
 using GPUArraysCore: GPUArraysCore
-import CTBase.Core
-import CTBase.Data
-import CTBase.Differentiation
-import CTBase.Exceptions
-import CTBase.Traits
+using CTBase: Core
+using CTBase: Data
+using CTBase: Differentiation
+using CTBase: Exceptions
+using CTBase: Traits
 
 # ==============================================================================
 # Internal sibling-submodule imports
 # ==============================================================================
 
-import ..Display: Display
-import ..Configs: Configs
+using ..Display: Display
+using ..Configs: Configs
 
 # ==============================================================================
 # Include files

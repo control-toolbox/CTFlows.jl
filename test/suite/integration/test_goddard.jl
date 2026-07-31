@@ -1,16 +1,16 @@
 module TestGoddard
 
 using Test: Test
-import CTBase.Data
-import CTLie: CTLie
-import CTFlows.Flows
-import CTFlows.Trajectories
+using CTBase: Data
+using CTLie: CTLie
+using CTFlows: Flows
+using CTFlows: Trajectories
 using DifferentiationInterface: DifferentiationInterface
 using ForwardDiff: ForwardDiff  # triggers DifferentiationInterfaceForwardDiff (provides PushforwardFast)
 using OrdinaryDiffEqTsit5
 using NonlinearSolve: NonlinearSolve, NonlinearProblem, SimpleNewtonRaphson, solve
 
-import CTBase: CTBase # For generated code by the @Lie macro (CTBase.Traits.*)
+using CTBase: CTBase # For generated code by the @Lie macro (CTBase.Traits.*)
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

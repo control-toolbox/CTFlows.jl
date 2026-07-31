@@ -5,8 +5,8 @@ via an augmented costate. Based on OptimalControl.jl `example-control-free`.
 module TestControlFree
 
 using Test: Test
-import CTModels: CTModels
-import CTFlows.Flows
+using CTModels: CTModels
+using CTFlows: Flows
 using OrdinaryDiffEqTsit5
 using NonlinearSolve: NonlinearProblem, SimpleNewtonRaphson, solve
 

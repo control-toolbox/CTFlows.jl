@@ -21,16 +21,16 @@ can be added later (callbacks, extra data) without breaking existing code.
 
 # Example
 \`\`\`julia
-using CTFlows.Systems
+using CTFlows: Systems
 
 # Fixed system: variable is nothing
-params_fixed = ODEParameters(nothing)
+params_fixed = Systems.ODEParameters(nothing)
 
 # NonFixed system: variable is a value
-params_nonfixed = ODEParameters(0.5)
+params_nonfixed = Systems.ODEParameters(0.5)
 
 # NonFixed system: variable is a vector
-params_vector = ODEParameters([1.0, 2.0])
+params_vector = Systems.ODEParameters([1.0, 2.0])
 \`\`\`
 
 # Notes
@@ -61,18 +61,18 @@ the actual variable value (scalar or vector).
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Systems
+julia> using CTFlows: Systems
 
-julia> params_fixed = ODEParameters(nothing)
+julia> params_fixed = Systems.ODEParameters(nothing)
 ODEParameters{Nothing}(nothing)
 
-julia> variable(params_fixed)
+julia> Systems.variable(params_fixed)
 nothing
 
-julia> params_nonfixed = ODEParameters(0.5)
+julia> params_nonfixed = Systems.ODEParameters(0.5)
 ODEParameters{Float64}(0.5)
 
-julia> variable(params_nonfixed)
+julia> Systems.variable(params_nonfixed)
 0.5
 \`\`\`
 

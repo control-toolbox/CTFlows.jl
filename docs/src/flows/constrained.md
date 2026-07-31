@@ -12,12 +12,13 @@ agree on a constrained arc), and two worked examples.
 
 ```@setup flows_constrained
 using CTFlows
-using CTBase.Data
-using CTBase.Traits
-using CTFlows.Flows
+using CTBase: Data
+using CTBase: Traits
+using CTFlows: Flows
 using CTModels
-import OrdinaryDiffEqTsit5
-import DifferentiationInterface, ForwardDiff
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
+using DifferentiationInterface: DifferentiationInterface
+using ForwardDiff: ForwardDiff
 ```
 
 ---

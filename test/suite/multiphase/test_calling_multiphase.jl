@@ -1,13 +1,13 @@
 module TestCallingMultiphase
 
 using Test: Test
-import CTFlows.MultiPhase
-import CTFlows.Systems
-import CTFlows.Integrators
-import CTFlows.Flows
-import CTFlows.Configs
-import CTBase.Traits
-import CTFlows.Trajectories
+using CTFlows: MultiPhase
+using CTFlows: Systems
+using CTFlows: Integrators
+using CTFlows: Flows
+using CTFlows: Configs
+using CTBase: Traits
+using CTFlows: Trajectories
 using CommonSolve: CommonSolve
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
@@ -59,8 +59,8 @@ struct MockIntegrationResult <: Integrators.AbstractIntegrationResult
     t::Vector{Float64}
 end
 
-import CTBase.Strategies
-import CTBase.Options
+using CTBase: Strategies
+using CTBase: Options
 
 Strategies.id(::Type{FakeIntegrator}) = :fake_integrator
 Strategies.metadata(::Type{FakeIntegrator}) = Strategies.StrategyMetadata()

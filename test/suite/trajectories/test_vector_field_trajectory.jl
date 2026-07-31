@@ -1,9 +1,9 @@
 module TestVectorFieldTrajectory
 
 using Test: Test
-import CTFlows.Trajectories
-import CTBase.Exceptions
-import CTFlows.Integrators
+using CTFlows: Trajectories
+using CTBase: Exceptions
+using CTFlows: Integrators
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

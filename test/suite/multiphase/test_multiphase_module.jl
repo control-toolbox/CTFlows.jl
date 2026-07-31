@@ -15,7 +15,7 @@ module TestMultiPhaseModule
 
 using Test: Test
 using CTFlows: CTFlows
-import CTFlows.MultiPhase
+using CTFlows: MultiPhase
 using CTFlows.MultiPhase  # For testing exported symbols
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true

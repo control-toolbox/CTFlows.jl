@@ -1,14 +1,14 @@
 module TestConcatenation
 
 using Test: Test
-import CTBase.Exceptions
-import CTFlows.MultiPhase
-import CTFlows.Systems
-import CTFlows.Integrators
-import CTFlows.Flows
-import CTBase.Traits
-import CTBase.Strategies
-import CTBase.Options
+using CTBase: Exceptions
+using CTFlows: MultiPhase
+using CTFlows: Systems
+using CTFlows: Integrators
+using CTFlows: Flows
+using CTBase: Traits
+using CTBase: Strategies
+using CTBase: Options
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true

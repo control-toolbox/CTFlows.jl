@@ -24,7 +24,7 @@ trait queries encoded in their type parameters:
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Flows
+julia> using CTFlows: Flows
 
 julia> MyFlow <: Flows.AbstractFlow
 true
@@ -49,9 +49,9 @@ Matches any `AbstractFlow` with `StateDynamics` as the dynamics parameter.
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Flows
+julia> using CTFlows: Flows
 
-julia> Flow(vf) isa Flows.AbstractStateFlow
+julia> Flows.Flow(vf) isa Flows.AbstractStateFlow
 true
 \`\`\`
 
@@ -74,9 +74,9 @@ Matches any `AbstractFlow` with `HamiltonianDynamics` as the dynamics parameter.
 
 # Example
 \`\`\`julia-repl
-julia> using CTFlows.Flows
+julia> using CTFlows: Flows
 
-julia> Flow(hvf) isa Flows.AbstractHamiltonianFlow
+julia> Flows.Flow(hvf) isa Flows.AbstractHamiltonianFlow
 true
 \`\`\`
 
@@ -120,7 +120,7 @@ Extract the time dependence trait from an `AbstractFlow`.
 
 # Example
 \`\`\`julia
-using CTFlows.Flows
+using CTFlows: Flows
 
 struct MyFlow <: Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
     data::Vector{Float64}
@@ -147,7 +147,7 @@ Extract the variable dependence trait from an `AbstractFlow`.
 
 # Example
 \`\`\`julia
-using CTFlows.Flows
+using CTFlows: Flows
 
 struct MyFlow <: Flows.AbstractFlow{Traits.Autonomous, Traits.Fixed, Traits.StateDynamics}
     data::Vector{Float64}
@@ -514,9 +514,9 @@ integrator displays.
 
 # Example
 ```julia-repl
-julia> using CTFlows.Flows
+julia> using CTFlows: Flows
 
-julia> flow = Flow(system, integrator)
+julia> flow = Flows.Flow(system, integrator)
 StateFlow
 ├─ system: VectorFieldSystem
 │  ├─ time_dependence: Autonomous
@@ -562,9 +562,9 @@ Compact display of the flow.
 
 # Example
 ```julia-repl
-julia> using CTFlows.Flows
+julia> using CTFlows: Flows
 
-julia> flow = Flow(system, integrator)
+julia> flow = Flows.Flow(system, integrator)
 Flow(system=FakeSystem(n_x=2, n_p=2), integrator=FakeIntegrator)
 ```
 """

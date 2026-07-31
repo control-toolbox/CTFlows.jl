@@ -1,9 +1,9 @@
 module TestRhsFunctors
 
 using Test: Test
-import CTBase.Data
-import CTFlows.Systems
-import CTBase.Traits
+using CTBase: Data
+using CTFlows: Systems
+using CTBase: Traits
 using StaticArrays: StaticArrays
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true

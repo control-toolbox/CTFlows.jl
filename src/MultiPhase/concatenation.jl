@@ -51,7 +51,7 @@ Creates a multi-phase flow with no jump at the switching time.
 
 # Example
 \`\`\`julia
-using CTFlows.Flows, CTFlows.MultiPhase
+using CTFlows: Flows, MultiPhase
 
 mpf = flow1 * (1.0, flow2)
 \`\`\`
@@ -87,7 +87,7 @@ Concatenate two state flows with a switching time and a state jump using the `*`
 
 # Example
 \`\`\`julia
-using CTFlows.Flows, CTFlows.MultiPhase
+using CTFlows: Flows, MultiPhase
 
 # additive jump
 mpf = flow1 * (1.0, [0.1, 0.2], flow2)   # x ← x + [0.1, 0.2] at t = 1.0
@@ -126,7 +126,7 @@ Creates a multi-phase Hamiltonian flow with no jump at the switching time.
 
 # Example
 \`\`\`julia
-using CTFlows.Flows, CTFlows.MultiPhase
+using CTFlows: Flows, MultiPhase
 
 mpf = flow1 * (1.0, flow2)
 \`\`\`
@@ -163,7 +163,7 @@ Concatenate two Hamiltonian flows with a switching time and a jump using the `*`
 
 # Example
 \`\`\`julia
-using CTFlows.Flows, CTFlows.MultiPhase
+using CTFlows: Flows, MultiPhase
 
 # additive costate jump
 mpf = flow1 * (1.0, [0.5, 0.0], flow2)   # p ← p + [0.5, 0.0] at t = 1.0
@@ -208,7 +208,7 @@ switching time. Three forms are accepted per component:
 
 # Example
 \`\`\`julia
-using CTFlows.Flows, CTFlows.MultiPhase
+using CTFlows: Flows, MultiPhase
 
 # additive on both
 mpf = flow1 * (1.0, [0.1, 0.0], [0.0, 0.5], flow2)

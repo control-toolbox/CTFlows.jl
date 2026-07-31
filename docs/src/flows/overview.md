@@ -58,14 +58,14 @@ CTFlows exports nothing at the package level. Bring submodules into scope explic
 
 ```@example flows_overview
 using CTFlows
-using CTFlows.Flows        # StateFlow, HamiltonianFlow, Flow, build_flow
-using CTBase.Data          # VectorField, Hamiltonian, HamiltonianVectorField
-using CTFlows.Systems      # build_system
-using CTFlows.Integrators  # SciML, build_problem, build_options
-using CTFlows.Trajectories # VectorFieldTrajectory, state, time_grid
-using CTBase.Traits        # Autonomous, NonAutonomous, Fixed, NonFixed, InPlace, OutOfPlace
-using CTFlows.Configs      # StateEndPointConfig, StateTrajectoryConfig, …
-import OrdinaryDiffEqTsit5 # activates the SciML extension
+using CTFlows: Flows        # StateFlow, HamiltonianFlow, Flow, build_flow
+using CTBase: Data          # VectorField, Hamiltonian, HamiltonianVectorField
+using CTFlows: Systems      # build_system
+using CTFlows: Integrators  # SciML, build_problem, build_options
+using CTFlows: Trajectories # VectorFieldTrajectory, state, time_grid
+using CTBase: Traits        # Autonomous, NonAutonomous, Fixed, NonFixed, InPlace, OutOfPlace
+using CTFlows: Configs      # StateEndPointConfig, StateTrajectoryConfig, …
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5 # activates the SciML extension
 nothing # hide
 ```
 

@@ -34,10 +34,10 @@ second.
 ```@setup ocp_laws_compat
 using CTFlows
 using CTModels
-using CTBase.Data
-using CTFlows.Flows
-using CTFlows.Trajectories
-import OrdinaryDiffEqTsit5
+using CTBase: Data
+using CTFlows: Flows
+using CTFlows: Trajectories
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
 using StaticArrays: SA, SVector, MVector
 using ForwardDiff: ForwardDiff
 ```

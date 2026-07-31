@@ -9,15 +9,15 @@ styles depending on whether you need the **full trajectory** or just the **final
 
 ```@setup flows_integrating
 using CTFlows
-using CTBase.Data
-using CTBase.Traits
-using CTFlows.Systems
-using CTFlows.Integrators
-using CTFlows.Flows
-using CTFlows.Trajectories
-using CTFlows.Configs
-import OrdinaryDiffEqTsit5
-import ForwardDiff  # triggers the DifferentiationInterface ForwardDiff extension
+using CTBase: Data
+using CTBase: Traits
+using CTFlows: Systems
+using CTFlows: Integrators
+using CTFlows: Flows
+using CTFlows: Trajectories
+using CTFlows: Configs
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
+using ForwardDiff: ForwardDiff  # triggers the DifferentiationInterface ForwardDiff extension
 
 vf = Data.VectorField(x -> -x)
 flow = Flows.Flow(vf; reltol=1e-8)
@@ -196,7 +196,7 @@ Options are passed as keyword arguments to `Flows.Flow(data; opts...)` or, when 
 the integrator explicitly, to `Integrators.SciML(; opts...)`.
 
 The default integrator is **SciML** backed by `OrdinaryDiffEqTsit5` (loaded when
-`import OrdinaryDiffEqTsit5` appears in your session).
+`using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5` appears in your session).
 
 ### Common options
 

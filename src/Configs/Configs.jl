@@ -37,15 +37,15 @@ module Configs
 # External package imports
 # ==============================================================================
 
-import DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
-import CTBase.Exceptions
-import CTBase.Traits
+using DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
+using CTBase: Exceptions
+using CTBase: Traits
 
 # ==============================================================================
 # Internal sibling-submodule imports
 # ==============================================================================
 
-import ..Display: Display
+using ..Display: Display
 
 # ==============================================================================
 # Includes

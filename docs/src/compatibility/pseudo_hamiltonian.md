@@ -44,10 +44,10 @@ x_f = x_0 + p_0, \qquad p_f = p_0 \quad\text{at } t_f = 1.
 
 ```@setup ph_compat
 using CTFlows
-using CTBase.Data
-using CTFlows.Flows
-using CTFlows.Trajectories
-import OrdinaryDiffEqTsit5
+using CTBase: Data
+using CTFlows: Flows
+using CTFlows: Trajectories
+using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
 using StaticArrays: SA, SVector, MVector, SMatrix, MMatrix
 using ForwardDiff: ForwardDiff
 ```
