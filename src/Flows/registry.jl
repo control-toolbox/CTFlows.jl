@@ -13,10 +13,10 @@ types to their concrete implementations for flow construction:
 
 # Notes
 - Created at module load time via [`CTBase.Strategies.create_registry`](@extref).
-- Used by [`CTFlows.Flows.flow_registry`](@extref) to provide the registry to routing functions.
+- Used by [`CTFlows.Flows.flow_registry`](@ref) to provide the registry to routing functions.
 - The registry is cached for performance.
 
-See also: [`CTFlows.Flows.flow_registry`](@extref), [`CTFlows.Flows._route_flow_options`](@extref), [`CTBase.Strategies.create_registry`](@extref).
+See also: [`CTFlows.Flows.flow_registry`](@ref), [`CTFlows.Flows._route_flow_options`](@ref), [`CTBase.Strategies.create_registry`](@extref).
 """
 const _FLOW_REGISTRY = Strategies.create_registry(
     Differentiation.AbstractADBackend =>
@@ -38,11 +38,11 @@ for automatic differentiation backends and ODE integrators.
   and `:sciml` (SciML) strategies registered.
 
 # Notes
-- This registry is used by [`CTFlows.Flows._route_flow_options`](@extref) to resolve and build
+- This registry is used by [`CTFlows.Flows._route_flow_options`](@ref) to resolve and build
   concrete strategy instances from keyword arguments.
 - The registry is precomputed and cached in `_FLOW_REGISTRY` for performance.
 
-See also: [`CTFlows.Flows._route_flow_options`](@extref), [`CTFlows.Flows._build_flow_components`](@extref),
+See also: [`CTFlows.Flows._route_flow_options`](@ref), [`CTFlows.Flows._build_flow_components`](@ref),
 [`CTBase.Strategies.create_registry`](@extref)
 """
 function flow_registry()

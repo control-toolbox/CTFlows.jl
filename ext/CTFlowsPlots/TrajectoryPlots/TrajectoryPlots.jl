@@ -10,7 +10,7 @@ and assembles them into a `Plotting.Figure`, and defines the `Plots.plot` /
 Design: the public `Plots.plot` methods dispatch on the concrete trajectory types (the
 minimal plumbing Julia's extension specificity needs so they win over the abstract
 `ExtensionError` stubs), but all logic is written against the **abstract** trajectory
-types and small **contracts** ([`_default_description`](@extref)), so the same code serves
+types and small **contracts** ([`_default_description`](@ref)), so the same code serves
 every subtype. This module holds no rendering geometry — that lives in `CTBase.Plotting`
 and its `CTBasePlots` backend.
 """

@@ -14,7 +14,7 @@ This module provides:
 - `Trajectories.plot`: plotting for trajectories via the Plots extension (a `RecipesBase.plot`
   method; not re-exported — call it qualified or load `Plots`)
 
-See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.VectorFieldTrajectory`](@extref), [`CTFlows.Trajectories.build_trajectory`](@extref).
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.build_trajectory`](@ref).
 """
 module Trajectories
 

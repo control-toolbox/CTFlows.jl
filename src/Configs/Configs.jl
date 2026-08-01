@@ -13,23 +13,23 @@ scenarios including:
 Configuration types encode these choices as type parameters for compile-time dispatch.
 
 # Main Types
-- [`CTFlows.Configs.AbstractConfig`](@extref): Base configuration type
-- [`CTFlows.Configs.AbstractConfigWithMaC`](@extref): Configuration with mode and content traits
-- [`CTFlows.Configs.StateEndPointConfig`](@extref): Point-to-point state integration
-- [`CTFlows.Configs.StateTrajectoryConfig`](@extref): Trajectory state integration
-- [`CTFlows.Configs.HamiltonianEndPointConfig`](@extref): Point-to-point Hamiltonian integration
-- [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@extref): Trajectory Hamiltonian integration
-- [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@extref): Augmented Hamiltonian for variable costate
+- [`CTFlows.Configs.AbstractConfig`](@ref): Base configuration type
+- [`CTFlows.Configs.AbstractConfigWithMaC`](@ref): Configuration with mode and content traits
+- [`CTFlows.Configs.StateEndPointConfig`](@ref): Point-to-point state integration
+- [`CTFlows.Configs.StateTrajectoryConfig`](@ref): Trajectory state integration
+- [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref): Point-to-point Hamiltonian integration
+- [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref): Trajectory Hamiltonian integration
+- [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@ref): Augmented Hamiltonian for variable costate
 
 # Accessors
-- [`CTFlows.Configs.tspan`](@extref): Time span `(t0, tf)`
-- [`CTFlows.Configs.initial_state`](@extref): Initial state
-- [`CTFlows.Configs.initial_costate`](@extref): Initial costate (Hamiltonian configs)
-- [`CTFlows.Configs.initial_variable_costate`](@extref): Initial variable costate (augmented configs)
-- [`CTFlows.Configs.mode_trait`](@extref): Integration mode trait
+- [`CTFlows.Configs.tspan`](@ref): Time span `(t0, tf)`
+- [`CTFlows.Configs.initial_state`](@ref): Initial state
+- [`CTFlows.Configs.initial_costate`](@ref): Initial costate (Hamiltonian configs)
+- [`CTFlows.Configs.initial_variable_costate`](@ref): Initial variable costate (augmented configs)
+- [`CTFlows.Configs.mode_trait`](@ref): Integration mode trait
 - [`CTBase.Traits.dynamics_trait`](@extref): Dynamics trait
 
-See also: [`CTFlows.Flows.build_flow`](@extref), [`CTFlows.Trajectories.build_trajectory`](@extref).
+See also: [`CTFlows.Flows.build_flow`](@ref), [`CTFlows.Trajectories.build_trajectory`](@ref).
 """
 module Configs
 

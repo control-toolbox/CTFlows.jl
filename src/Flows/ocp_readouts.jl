@@ -14,12 +14,12 @@ Dispatched on the control law and the available data:
 - a law with the state and costate projections `(x, p, v)` → `t -> law(t, x(t), p(t), v)`
   (the `DynClosedLoop` / Hamiltonian path, which uses the costate).
 - a law with only the state projection `(x, v)` → `t -> u(t)` via
-  [`CTFlows.Trajectories._controlled_u`](@extref) (the `OpenLoop` / `ClosedLoop` state
+  [`CTFlows.Trajectories._controlled_u`](@ref) (the `OpenLoop` / `ClosedLoop` state
   path, no costate).
 
 `x` and `p` are callables `t -> x(t)` / `t -> p(t)`; `v` is the variable.
 
-See also: `CTFlows.Flows._flow_objective`, [`CTFlows.Trajectories._controlled_u`](@extref).
+See also: `CTFlows.Flows._flow_objective`, [`CTFlows.Trajectories._controlled_u`](@ref).
 """
 _control_of(::Nothing, x, v) = (_ -> Float64[])
 
@@ -28,7 +28,7 @@ $(TYPEDSIGNATURES)
 
 Control-free OCP with costate projection: returns `t -> Float64[]` (no control to reconstruct).
 
-See also: [`CTFlows.Flows._control_of`](@extref).
+See also: [`CTFlows.Flows._control_of`](@ref).
 """
 _control_of(::Nothing, x, p, v) = (_ -> Float64[])
 
@@ -37,7 +37,7 @@ $(TYPEDSIGNATURES)
 
 DynClosedLoop law with costate: returns `t -> law(t, x(t), p(t), v)` (Hamiltonian path).
 
-See also: [`CTFlows.Flows._control_of`](@extref).
+See also: [`CTFlows.Flows._control_of`](@ref).
 """
 _control_of(law, x, p, v) = (t -> law(t, x(t), p(t), v))
 
@@ -45,9 +45,9 @@ _control_of(law, x, p, v) = (t -> law(t, x(t), p(t), v))
 $(TYPEDSIGNATURES)
 
 OpenLoop/ClosedLoop law with state only: returns `t -> u(t)` via
-[`CTFlows.Trajectories._controlled_u`](@extref) (state path, no costate).
+[`CTFlows.Trajectories._controlled_u`](@ref) (state path, no costate).
 
-See also: [`CTFlows.Flows._control_of`](@extref), [`CTFlows.Trajectories._controlled_u`](@extref).
+See also: [`CTFlows.Flows._control_of`](@ref), [`CTFlows.Trajectories._controlled_u`](@ref).
 """
 _control_of(law, x, v) = (t -> Trajectories._controlled_u(law, t, x(t), v))
 

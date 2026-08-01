@@ -17,7 +17,7 @@ their specific time span format.
 # Throws
 - `Exceptions.NotImplemented`: Always thrown for the base abstract type.
 
-See also: [`CTFlows.Configs.AbstractConfig`](@extref).
+See also: [`CTFlows.Configs.AbstractConfig`](@ref).
 """
 function tspan(c::AbstractConfig)
     return throw(
@@ -45,7 +45,7 @@ their specific initial time.
 # Throws
 - `Exceptions.NotImplemented`: Always thrown for the base abstract type.
 
-See also: [`CTFlows.Configs.AbstractConfig`](@extref), [`CTFlows.Configs.final_time`](@extref).
+See also: [`CTFlows.Configs.AbstractConfig`](@ref), [`CTFlows.Configs.final_time`](@ref).
 """
 function initial_time(c::AbstractConfig)
     return throw(
@@ -73,7 +73,7 @@ their specific final time.
 # Throws
 - `Exceptions.NotImplemented`: Always thrown for the base abstract type.
 
-See also: [`CTFlows.Configs.AbstractConfig`](@extref), [`CTFlows.Configs.initial_time`](@extref).
+See also: [`CTFlows.Configs.AbstractConfig`](@ref), [`CTFlows.Configs.initial_time`](@ref).
 """
 function final_time(c::AbstractConfig)
     return throw(
@@ -101,7 +101,7 @@ their specific initial condition format.
 # Throws
 - `Exceptions.NotImplemented`: Always thrown for the base abstract type.
 
-See also: [`CTFlows.Configs.AbstractConfig`](@extref).
+See also: [`CTFlows.Configs.AbstractConfig`](@ref).
 """
 function initial_condition(c::AbstractConfig)
     return throw(
@@ -129,7 +129,7 @@ their specific initial state.
 # Throws
 - `Exceptions.NotImplemented`: Always thrown for the base abstract type.
 
-See also: [`CTFlows.Configs.AbstractConfig`](@extref).
+See also: [`CTFlows.Configs.AbstractConfig`](@ref).
 """
 function initial_state(c::AbstractConfig)
     return throw(
@@ -157,7 +157,7 @@ their specific initial costate (if applicable).
 # Throws
 - `Exceptions.NotImplemented`: Always thrown for the base abstract type.
 
-See also: [`CTFlows.Configs.AbstractConfig`](@extref).
+See also: [`CTFlows.Configs.AbstractConfig`](@ref).
 """
 function initial_costate(c::AbstractConfig)
     return throw(
@@ -185,7 +185,7 @@ their specific initial variable costate (if applicable).
 # Throws
 - `Exceptions.NotImplemented`: Always thrown for the base abstract type.
 
-See also: [`CTFlows.Configs.AbstractConfig`](@extref).
+See also: [`CTFlows.Configs.AbstractConfig`](@ref).
 """
 function initial_variable_costate(c::AbstractConfig)
     return throw(

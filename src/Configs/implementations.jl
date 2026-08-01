@@ -16,7 +16,7 @@ For point configurations, extracts the initial and final times from the
 # Returns
 - `Tuple{Real, Real}`: Time span as (t0, tf).
 
-See also: [`CTFlows.Configs.AbstractEndPointConfig`](@extref), [`CTFlows.Configs.tspan`](@extref).
+See also: [`CTFlows.Configs.AbstractEndPointConfig`](@ref), [`CTFlows.Configs.tspan`](@ref).
 """
 function tspan(c::AbstractEndPointConfig)::Tuple{Real,Real}
     return (c.t0, c.tf)
@@ -35,7 +35,7 @@ For trajectory configurations, returns the stored `tspan` field directly.
 # Returns
 - `Tuple{Real, Real}`: Time span as (t0, tf).
 
-See also: [`CTFlows.Configs.AbstractTrajectoryConfig`](@extref), [`CTFlows.Configs.tspan`](@extref).
+See also: [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref), [`CTFlows.Configs.tspan`](@ref).
 """
 function tspan(c::AbstractTrajectoryConfig)::Tuple{Real,Real}
     return c.tspan
@@ -54,7 +54,7 @@ For point configurations, returns the stored `t0` field directly.
 # Returns
 - `Real`: Initial time t0.
 
-See also: [`CTFlows.Configs.AbstractEndPointConfig`](@extref), [`CTFlows.Configs.initial_time`](@extref).
+See also: [`CTFlows.Configs.AbstractEndPointConfig`](@ref), [`CTFlows.Configs.initial_time`](@ref).
 """
 function initial_time(c::AbstractEndPointConfig)::Real
     return c.t0
@@ -73,7 +73,7 @@ For trajectory configurations, returns the first element of the stored `tspan` f
 # Returns
 - `Real`: Initial time t0.
 
-See also: [`CTFlows.Configs.AbstractTrajectoryConfig`](@extref), [`CTFlows.Configs.initial_time`](@extref).
+See also: [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref), [`CTFlows.Configs.initial_time`](@ref).
 """
 function initial_time(c::AbstractTrajectoryConfig)::Real
     return c.tspan[1]
@@ -92,7 +92,7 @@ For point configurations, returns the stored `tf` field directly.
 # Returns
 - `Real`: Final time tf.
 
-See also: [`CTFlows.Configs.AbstractEndPointConfig`](@extref), [`CTFlows.Configs.final_time`](@extref).
+See also: [`CTFlows.Configs.AbstractEndPointConfig`](@ref), [`CTFlows.Configs.final_time`](@ref).
 """
 function final_time(c::AbstractEndPointConfig)::Real
     return c.tf
@@ -111,7 +111,7 @@ For trajectory configurations, returns the second element of the stored `tspan` 
 # Returns
 - `Real`: Final time tf.
 
-See also: [`CTFlows.Configs.AbstractTrajectoryConfig`](@extref), [`CTFlows.Configs.final_time`](@extref).
+See also: [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref), [`CTFlows.Configs.final_time`](@ref).
 """
 function final_time(c::AbstractTrajectoryConfig)::Real
     return c.tspan[2]
@@ -131,7 +131,7 @@ maintain consistent vector-based ODE problem construction.
 # Returns
 - `Vector{<:Number}`: Length-1 vector containing the scalar initial state.
 
-See also: [`CTFlows.Configs.AbstractStateConfig`](@extref), [`CTFlows.Configs.initial_condition`](@extref).
+See also: [`CTFlows.Configs.AbstractStateConfig`](@ref), [`CTFlows.Configs.initial_condition`](@ref).
 """
 function initial_condition(
     c::AbstractStateConfig{<:Number,M}
@@ -152,7 +152,7 @@ For vector initial conditions, returns the state vector directly.
 # Returns
 - The initial state vector.
 
-See also: [`CTFlows.Configs.AbstractStateConfig`](@extref).
+See also: [`CTFlows.Configs.AbstractStateConfig`](@ref).
 """
 function initial_condition(c::AbstractStateConfig)
     return c.x0
@@ -172,7 +172,7 @@ initial state and initial costate: `vcat(x0, p0)`.
 # Returns
 - Concatenated vector `[x0; p0]`.
 
-See also: [`CTFlows.Configs.AbstractHamiltonianConfig`](@extref), [`CTFlows.Configs.initial_state`](@extref), [`CTFlows.Configs.initial_costate`](@extref).
+See also: [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref), [`CTFlows.Configs.initial_state`](@ref), [`CTFlows.Configs.initial_costate`](@ref).
 """
 function initial_condition(c::AbstractHamiltonianConfig)
     return vcat(c.x0, c.p0)
@@ -191,7 +191,7 @@ Extracts the initial state field from the configuration.
 # Returns
 - The initial state vector.
 
-See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@extref).
+See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@ref).
 """
 function initial_state(c::AbstractConfigWithMaC)
     return c.x0
@@ -212,7 +212,7 @@ defined for Hamiltonian configurations.
 # Throws
 - `Exceptions.PreconditionError`: Always thrown for state configurations.
 
-See also: [`CTFlows.Configs.AbstractStateConfig`](@extref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@extref), [`CTFlows.Configs.initial_costate`](@extref).
+See also: [`CTFlows.Configs.AbstractStateConfig`](@ref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref), [`CTFlows.Configs.initial_costate`](@ref).
 """
 function initial_costate(c::AbstractStateConfig)
     return throw(
@@ -238,7 +238,7 @@ Extracts the initial costate field from the Hamiltonian configuration.
 # Returns
 - The initial costate vector.
 
-See also: [`CTFlows.Configs.AbstractHamiltonianConfig`](@extref).
+See also: [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref).
 """
 function initial_costate(c::AbstractHamiltonianConfig)
     return c.p0

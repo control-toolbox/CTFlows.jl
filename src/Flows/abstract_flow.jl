@@ -30,7 +30,7 @@ julia> MyFlow <: Flows.AbstractFlow
 true
 \`\`\`
 
-See also: [`CTFlows.Flows.Flow`](@extref), [`CTFlows.Systems.AbstractSystem`](@extref), [`CTSolvers.Integrators.AbstractIntegrator`](@extref).
+See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref), [`CTSolvers.Integrators.AbstractIntegrator`](@extref).
 """
 abstract type AbstractFlow{
     TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,D<:Traits.AbstractDynamicsTrait
@@ -55,7 +55,7 @@ julia> Flows.Flow(vf) isa Flows.AbstractStateFlow
 true
 \`\`\`
 
-See also: [`CTFlows.Flows.AbstractFlow`](@extref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@extref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@ref).
 """
 const AbstractStateFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence} = AbstractFlow{
     TD,VD,Traits.StateDynamics
@@ -80,7 +80,7 @@ julia> Flows.Flow(hvf) isa Flows.AbstractHamiltonianFlow
 true
 \`\`\`
 
-See also: [`CTFlows.Flows.AbstractFlow`](@extref), [`CTFlows.Flows.AbstractStateFlow`](@extref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.AbstractStateFlow`](@ref).
 """
 const AbstractHamiltonianFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence} = AbstractFlow{
     TD,VD,Traits.HamiltonianDynamics
@@ -129,7 +129,7 @@ end
 Traits.time_dependence(MyFlow)  # Returns Autonomous
 \`\`\`
 
-See also: [`CTBase.Traits.has_time_dependence_trait`](@extref), `is_autonomous`, [`CTFlows.Flows.AbstractFlow`](@extref).
+See also: [`CTBase.Traits.has_time_dependence_trait`](@extref), `is_autonomous`, [`CTFlows.Flows.AbstractFlow`](@ref).
 """
 function Traits.time_dependence(
     ::AbstractFlow{TD,<:Traits.VariableDependence,<:Traits.AbstractDynamicsTrait}
@@ -156,7 +156,7 @@ end
 Traits.variable_dependence(MyFlow)  # Returns Fixed
 \`\`\`
 
-See also: [`CTBase.Traits.has_variable_dependence_trait`](@extref), `is_variable`, [`CTFlows.Flows.AbstractFlow`](@extref).
+See also: [`CTBase.Traits.has_variable_dependence_trait`](@extref), `is_variable`, [`CTFlows.Flows.AbstractFlow`](@ref).
 """
 function Traits.variable_dependence(
     ::AbstractFlow{<:Traits.TimeDependence,VD,<:Traits.AbstractDynamicsTrait}
@@ -172,7 +172,7 @@ Extract the dynamics trait from an `AbstractFlow`.
 # Returns
 - `Type{<:AbstractDynamicsTrait}`: `StateDynamics` or `HamiltonianDynamics`.
 
-See also: [`CTBase.Traits.AbstractDynamicsTrait`](@extref), [`CTFlows.Flows.AbstractStateFlow`](@extref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@extref).
+See also: [`CTBase.Traits.AbstractDynamicsTrait`](@extref), [`CTFlows.Flows.AbstractStateFlow`](@ref), [`CTFlows.Flows.AbstractHamiltonianFlow`](@ref).
 """
 function Traits.dynamics_trait(
     ::AbstractFlow{<:Traits.TimeDependence,<:Traits.VariableDependence,D}
@@ -209,7 +209,7 @@ Return the automatic differentiation capability trait of a Hamiltonian flow.
 - Delegates to the system's AD trait via `ad_trait(system(flow))`
 - This enables dispatch based on whether the flow was built from a scalar Hamiltonian or a vector field
 
-See also: [`CTBase.Traits.AbstractADTrait`](@extref), [`CTBase.Traits.ad_trait`](@extref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@extref).
+See also: [`CTBase.Traits.AbstractADTrait`](@extref), [`CTBase.Traits.ad_trait`](@extref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
 """
 function Traits.ad_trait(
     f::AbstractFlow{
@@ -249,7 +249,7 @@ Return the variable costate capability trait of a Hamiltonian flow.
 - Delegates to the system's variable costate trait via `variable_costate_trait(system(flow))`
 - This enables dispatch based on whether the flow's system can compute ∂H/∂v
 
-See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@extref), [`CTBase.Traits.variable_costate_trait`](@extref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@extref).
+See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@extref), [`CTBase.Traits.variable_costate_trait`](@extref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref).
 """
 function Traits.variable_costate_trait(
     f::AbstractFlow{
@@ -264,7 +264,7 @@ $(TYPEDSIGNATURES)
 
 Return the Hamiltonian `H(t, x, p, v)` underlying a Hamiltonian flow.
 
-Delegates to the system-level getter [`CTFlows.Systems.hamiltonian`](@extref). The
+Delegates to the system-level getter [`CTFlows.Systems.hamiltonian`](@ref). The
 returned object is callable as a scalar function of `(t, x, p, v)` (or the shorter
 signatures allowed by the flow's time/variable dependence). It is available for flows
 built from a scalar Hamiltonian — `HamiltonianSystem` (including the `:total` mode of
@@ -284,7 +284,7 @@ xf, pf, pvf = flow(t0, x0, p0, tf; variable = v, variable_costate = true)
 s = pvf[idx_tf] - H(tf, xf, pf, v)   # transversality for free final time
 \`\`\`
 
-See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Flows.system`](@extref).
+See also: [`CTFlows.Systems.hamiltonian`](@ref), [`CTFlows.Flows.system`](@ref).
 """
 function Systems.hamiltonian(
     f::AbstractFlow{
@@ -299,11 +299,11 @@ $(TYPEDSIGNATURES)
 
 Return the (symplectic) Hamiltonian vector field `X_H = (∂H/∂p, -∂H/∂x)` of a Hamiltonian
 flow, as a [`CTBase.Data.HamiltonianVectorField`](@extref). Delegates to the system-level
-[`CTFlows.Systems.hamiltonian_vector_field`](@extref), so it also covers flows built from a
+[`CTFlows.Systems.hamiltonian_vector_field`](@ref), so it also covers flows built from a
 pseudo-Hamiltonian (or an OCP) and a control law (`:partial` / `:total`), whose Hamiltonian
 is a `CTBase.Data.ComposedHamiltonian`.
 
-See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Systems.vector_field`](@extref).
+See also: [`CTFlows.Systems.hamiltonian`](@ref), [`CTFlows.Systems.vector_field`](@ref).
 """
 function Systems.hamiltonian_vector_field(
     f::AbstractFlow{
@@ -318,10 +318,10 @@ end
 $(TYPEDSIGNATURES)
 
 Return the vector field of a flow: the (symplectic) Hamiltonian vector field `X_H` for a
-Hamiltonian flow. Alias of [`CTFlows.Systems.hamiltonian_vector_field`](@extref) on the
+Hamiltonian flow. Alias of [`CTFlows.Systems.hamiltonian_vector_field`](@ref) on the
 Hamiltonian side; see the `StateDynamics` method for state flows.
 
-See also: [`CTFlows.Systems.hamiltonian_vector_field`](@extref).
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 """
 function Systems.vector_field(
     f::AbstractFlow{
@@ -337,9 +337,9 @@ $(TYPEDSIGNATURES)
 
 Return the underlying vector field `X(t, x, v)` of a state flow, as a
 [`CTBase.Data.AbstractVectorField`](@extref). Delegates to the system-level
-[`CTFlows.Systems.vector_field`](@extref).
+[`CTFlows.Systems.vector_field`](@ref).
 
-See also: [`CTFlows.Systems.hamiltonian_vector_field`](@extref).
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 """
 function Systems.vector_field(
     f::AbstractFlow{
@@ -355,12 +355,12 @@ $(TYPEDSIGNATURES)
 Return the pseudo-Hamiltonian `H̃(t, x, p, u, v)` underlying a Hamiltonian flow, when
 available — i.e. when the flow was built from a pseudo-Hamiltonian (or an OCP) and a
 control law, in either the `:partial` or the `:total` mode. Delegates to
-[`CTFlows.Systems.pseudo_hamiltonian`](@extref).
+[`CTFlows.Systems.pseudo_hamiltonian`](@ref).
 
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: for a flow that carries no control law.
 
-See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Systems.control_law`](@extref).
+See also: [`CTFlows.Systems.hamiltonian`](@ref), [`CTFlows.Systems.control_law`](@ref).
 """
 function Systems.pseudo_hamiltonian(
     f::AbstractFlow{
@@ -374,12 +374,12 @@ end
 $(TYPEDSIGNATURES)
 
 Return the control law `u(t, x, p, v)` carried by a Hamiltonian flow built from a
-control law. Delegates to [`CTFlows.Systems.control_law`](@extref).
+control law. Delegates to [`CTFlows.Systems.control_law`](@ref).
 
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: for a flow that carries no control law.
 
-See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref).
+See also: [`CTFlows.Systems.pseudo_hamiltonian`](@ref).
 """
 function Systems.control_law(
     f::AbstractFlow{
@@ -393,10 +393,10 @@ end
 $(TYPEDSIGNATURES)
 
 Return a callable `(t, x, p, v) -> (∂H/∂x, ∂H/∂p)` for the true Hamiltonian of a
-Hamiltonian flow. Delegates to [`CTFlows.Systems.get_hamiltonian_gradient`](@extref); the
+Hamiltonian flow. Delegates to [`CTFlows.Systems.get_hamiltonian_gradient`](@ref); the
 `ad_backend` keyword (default: the system's backend) selects the AD backend.
 
-See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Systems.get_variable_gradient`](@extref).
+See also: [`CTFlows.Systems.hamiltonian`](@ref), [`CTFlows.Systems.get_variable_gradient`](@ref).
 """
 function Systems.get_hamiltonian_gradient(
     f::AbstractFlow{
@@ -412,10 +412,10 @@ $(TYPEDSIGNATURES)
 
 Return a callable `(t, x, p, v) -> ∂H/∂v` for the true Hamiltonian of a Hamiltonian
 flow — the quantity (before negation) driving `ṗv = -∂H/∂v`. Delegates to
-[`CTFlows.Systems.get_variable_gradient`](@extref); the `ad_backend` keyword (default: the
+[`CTFlows.Systems.get_variable_gradient`](@ref); the `ad_backend` keyword (default: the
 system's backend) selects the AD backend.
 
-See also: [`CTFlows.Systems.get_hamiltonian_gradient`](@extref).
+See also: [`CTFlows.Systems.get_hamiltonian_gradient`](@ref).
 """
 function Systems.get_variable_gradient(
     f::AbstractFlow{
@@ -431,10 +431,10 @@ $(TYPEDSIGNATURES)
 
 Return a callable `(t, x, p, u, v) -> (∂H̃/∂x, ∂H̃/∂p)` for the pseudo-Hamiltonian of a
 Hamiltonian flow (differentiated at fixed control), when available. Delegates to
-[`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@extref); the `ad_backend` keyword
+[`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@ref); the `ad_backend` keyword
 (default: the system's backend) selects the AD backend.
 
-See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref), [`CTFlows.Systems.get_pseudo_variable_gradient`](@extref).
+See also: [`CTFlows.Systems.pseudo_hamiltonian`](@ref), [`CTFlows.Systems.get_pseudo_variable_gradient`](@ref).
 """
 function Systems.get_pseudo_hamiltonian_gradient(
     f::AbstractFlow{
@@ -450,10 +450,10 @@ $(TYPEDSIGNATURES)
 
 Return a callable `(t, x, p, u, v) -> ∂H̃/∂v` for the pseudo-Hamiltonian of a
 Hamiltonian flow (differentiated at fixed control), when available. Delegates to
-[`CTFlows.Systems.get_pseudo_variable_gradient`](@extref); the `ad_backend` keyword
+[`CTFlows.Systems.get_pseudo_variable_gradient`](@ref); the `ad_backend` keyword
 (default: the system's backend) selects the AD backend.
 
-See also: [`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@extref).
+See also: [`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@ref).
 """
 function Systems.get_pseudo_variable_gradient(
     f::AbstractFlow{
@@ -472,7 +472,7 @@ Return the associated `AbstractSystem` for the flow.
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
 
-See also: [`CTFlows.Flows.AbstractFlow`](@extref), [`CTFlows.Systems.AbstractSystem`](@extref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Systems.AbstractSystem`](@ref).
 """
 function system(flow::AbstractFlow)
     return throw(
@@ -493,7 +493,7 @@ Return the associated `AbstractIntegrator` for the flow.
 # Throws
 - `CTBase.Exceptions.NotImplemented`: If not implemented by the concrete type.
 
-See also: [`CTFlows.Flows.AbstractFlow`](@extref), [`CTSolvers.Integrators.AbstractIntegrator`](@extref).
+See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTSolvers.Integrators.AbstractIntegrator`](@extref).
 """
 function integrator(flow::AbstractFlow)
     return throw(

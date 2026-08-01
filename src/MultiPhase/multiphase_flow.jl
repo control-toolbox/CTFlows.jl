@@ -24,8 +24,8 @@ constraint: phases may wrap systems and integrators of different concrete types.
 - `switching_times::ST`: Switching times between phases
 - `jumps::J`: Optional jump functions applied at switching times
 
-See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@extref),
-[`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@extref), [`CTFlows.Flows.Flow`](@extref).
+See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref),
+[`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Flows.Flow`](@ref).
 """
 struct MultiPhaseFlow{
     TD<:Traits.TimeDependence,
@@ -45,7 +45,7 @@ $(TYPEDEF)
 
 Alias for state multi-phase flows: `MultiPhaseFlow{TD,VD,StateDynamics,FS,ST,J}`.
 
-See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@extref), [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@extref).
+See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@ref), [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref).
 """
 const MultiPhaseStateFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,FS<:Tuple,ST<:Vector{<:Real},J<:Vector{<:Any}} = MultiPhaseFlow{
     TD,VD,Traits.StateDynamics,FS,ST,J
@@ -56,7 +56,7 @@ $(TYPEDEF)
 
 Alias for Hamiltonian multi-phase flows: `MultiPhaseFlow{TD,VD,HamiltonianDynamics,FS,ST,J}`.
 
-See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@extref), [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@extref).
+See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@ref), [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref).
 """
 const MultiPhaseHamiltonianFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,FS<:Tuple,ST<:Vector{<:Real},J<:Vector{<:Any}} = MultiPhaseFlow{
     TD,VD,Traits.HamiltonianDynamics,FS,ST,J
@@ -77,7 +77,7 @@ The time and variable dependence traits are inferred from the first flow.
 # Returns
 - A `MultiPhaseFlow` with `StateDynamics` trait.
 
-See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@extref), [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@extref).
+See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@ref), [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref).
 """
 function MultiPhaseStateFlow(
     flows::FS, switching_times::ST, jumps::J
@@ -110,7 +110,7 @@ The time and variable dependence traits are inferred from the first flow.
 # Returns
 - A `MultiPhaseFlow` with `HamiltonianDynamics` trait.
 
-See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@extref), [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@extref).
+See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@ref), [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref).
 """
 function MultiPhaseHamiltonianFlow(
     flows::FS, switching_times::ST, jumps::J
@@ -133,7 +133,7 @@ $(TYPEDEF)
 
 Type alias for any multi-phase flow.
 
-See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@extref), [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@extref).
+See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref).
 """
 const AnyMultiPhaseFlow = MultiPhaseFlow
 
@@ -142,7 +142,7 @@ $(TYPEDSIGNATURES)
 
 Return the systems associated with a multi-phase flow as a tuple.
 
-See also: [`CTFlows.Flows.system`](@extref).
+See also: [`CTFlows.Flows.system`](@ref).
 """
 function Flows.system(mpsf::MultiPhaseFlow)
     return map(Flows.system, mpsf.flows)
@@ -153,7 +153,7 @@ $(TYPEDSIGNATURES)
 
 Return the integrators associated with a multi-phase flow as a tuple.
 
-See also: [`CTFlows.Flows.integrator`](@extref).
+See also: [`CTFlows.Flows.integrator`](@ref).
 """
 function Flows.integrator(mpsf::MultiPhaseFlow)
     return map(Flows.integrator, mpsf.flows)
@@ -174,7 +174,7 @@ Return the number of phases in a multi-phase flow.
 # Returns
 - `Int`: Number of phases.
 
-See also: [`CTFlows.MultiPhase.get_flow`](@extref), [`CTFlows.MultiPhase.get_switching_time`](@extref).
+See also: [`CTFlows.MultiPhase.get_flow`](@ref), [`CTFlows.MultiPhase.get_switching_time`](@ref).
 """
 function n_phases(mpf::MultiPhaseFlow)
     return length(mpf.flows)
@@ -192,7 +192,7 @@ Return the flow for a specific phase.
 # Returns
 - `AbstractFlow`: The flow for phase `i`.
 
-See also: [`CTFlows.MultiPhase.n_phases`](@extref), [`CTFlows.MultiPhase.get_switching_time`](@extref).
+See also: [`CTFlows.MultiPhase.n_phases`](@ref), [`CTFlows.MultiPhase.get_switching_time`](@ref).
 """
 function get_flow(mpf::MultiPhaseFlow, i::Int)
     return mpf.flows[i]
@@ -210,7 +210,7 @@ Return the switching time at a specific phase boundary.
 # Returns
 - `Real`: The switching time.
 
-See also: [`CTFlows.MultiPhase.n_phases`](@extref), [`CTFlows.MultiPhase.get_flow`](@extref).
+See also: [`CTFlows.MultiPhase.n_phases`](@ref), [`CTFlows.MultiPhase.get_flow`](@ref).
 """
 function get_switching_time(mpf::MultiPhaseFlow, i::Int)
     return mpf.switching_times[i]
@@ -228,7 +228,7 @@ Return the jump function at a specific phase boundary.
 # Returns
 - `Union{Nothing, Function, Tuple}`: The jump function, or `nothing` if no jump is defined.
 
-See also: [`CTFlows.MultiPhase.n_phases`](@extref), [`CTFlows.MultiPhase.get_flow`](@extref).
+See also: [`CTFlows.MultiPhase.n_phases`](@ref), [`CTFlows.MultiPhase.get_flow`](@ref).
 """
 function get_jump(mpf::MultiPhaseFlow, i::Int)
     return mpf.jumps[i]
@@ -303,7 +303,7 @@ Return a human-readable display name for a `MultiPhaseFlow`, dispatching on the 
 - `HamiltonianDynamics` → `"MultiPhaseHamiltonianFlow"`
 - Fallback → `string(nameof(typeof(mpf)))`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@extref).
+See also: [`CTFlows.MultiPhase.MultiPhaseFlow`](@ref).
 """
 function _multiphase_display_name(
     ::MultiPhaseFlow{

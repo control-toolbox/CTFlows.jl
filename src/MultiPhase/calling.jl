@@ -13,7 +13,7 @@ Extract the initial state from a state configuration.
 # Returns
 - Initial state vector.
 
-See also: [`CTFlows.Configs.initial_state`](@extref), [`CTFlows.Configs.AbstractStateConfig`](@extref).
+See also: [`CTFlows.Configs.initial_state`](@ref), [`CTFlows.Configs.AbstractStateConfig`](@ref).
 """
 function _extract_initial_state(config::Configs.AbstractStateConfig)
     return Configs.initial_state(config)
@@ -30,7 +30,7 @@ Extract the initial state and costate from a Hamiltonian configuration.
 # Returns
 - Tuple of (initial_state, initial_costate).
 
-See also: [`CTFlows.Configs.initial_state`](@extref), [`CTFlows.Configs.initial_costate`](@extref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@extref).
+See also: [`CTFlows.Configs.initial_state`](@ref), [`CTFlows.Configs.initial_costate`](@ref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref).
 """
 function _extract_initial_state(config::Configs.AbstractHamiltonianConfig)
     return (Configs.initial_state(config), Configs.initial_costate(config))
@@ -52,7 +52,7 @@ Iterates through all phases sequentially, applying jumps at switching times.
 # Returns
 - Final state after all phases.
 
-See also: [`CTFlows.MultiPhase._evaluate_phase`](@extref), [`CTFlows.MultiPhase._apply_jump`](@extref).
+See also: [`CTFlows.MultiPhase._evaluate_phase`](@ref), [`CTFlows.MultiPhase._apply_jump`](@ref).
 """
 function _evaluate_multiphase(mpf, config::Configs.AbstractEndPointConfig; variable, unsafe)
     t0, tf = Configs.tspan(config)
@@ -102,7 +102,7 @@ Iterates through all phases sequentially, collecting segment results and applyin
 # Returns
 - Merged trajectory solution after all phases.
 
-See also: [`CTSolvers.Integrators.merge`](@extref), [`CTFlows.MultiPhase._evaluate_phase`](@extref), [`CTFlows.MultiPhase._apply_jump`](@extref).
+See also: [`CTSolvers.Integrators.merge`](@extref), [`CTFlows.MultiPhase._evaluate_phase`](@ref), [`CTFlows.MultiPhase._apply_jump`](@ref).
 """
 function _evaluate_multiphase(
     mpf, config::Configs.AbstractTrajectoryConfig; variable, unsafe
@@ -171,8 +171,8 @@ plotting and to objective integration.
 - `laws::L`: tuple of the per-phase control laws (each a `CTBase.Data.ControlLaw`).
 - `switches::S`: the `n-1` sorted switching times.
 
-See also: [`CTFlows.MultiPhase._reconstruct_ocp_solution`](@extref),
-[`CTFlows.MultiPhase._reconstruct_controlled_trajectory`](@extref).
+See also: [`CTFlows.MultiPhase._reconstruct_ocp_solution`](@ref),
+[`CTFlows.MultiPhase._reconstruct_controlled_trajectory`](@ref).
 """
 struct _PiecewiseControlLaw{L,S}
     laws::L      # tuple of per-phase Data.ControlLaw
@@ -238,9 +238,9 @@ $(TYPEDSIGNATURES)
 Finalize a merged multi-phase trajectory into the type a single-phase flow would return.
 
 All-`OptimalControlFlow` phases rebuild a [`CTModels.Solutions.Solution`](@extref) (via
-[`CTFlows.MultiPhase._reconstruct_ocp_solution`](@extref)); all-`ControlledFlow` phases rebuild a
-[`CTFlows.Trajectories.StateFlowTrajectory`](@extref) (via
-[`CTFlows.MultiPhase._reconstruct_controlled_trajectory`](@extref)); any other case (plain flows
+[`CTFlows.MultiPhase._reconstruct_ocp_solution`](@ref)); all-`ControlledFlow` phases rebuild a
+[`CTFlows.Trajectories.StateFlowTrajectory`](@ref) (via
+[`CTFlows.MultiPhase._reconstruct_controlled_trajectory`](@ref)); any other case (plain flows
 carrying no law) returns the merged raw trajectory unchanged.
 
 The branch is a runtime `isa` test on the phase types rather than dispatch: a parametric alias
@@ -255,7 +255,7 @@ cannot select a method here.
 # Returns
 - A `CTModels.Solution`, a `StateFlowTrajectory`, or the merged trajectory (see above).
 
-See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@extref).
+See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@ref).
 """
 function _finalize_multiphase_trajectory(mpf::MultiPhaseFlow, merged, variable)
     phases = get_flows(mpf)
@@ -302,7 +302,7 @@ end
 $(TYPEDSIGNATURES)
 
 Rebuild a [`CTModels.Solutions.Solution`](@extref) from an all-`OptimalControlFlow` multi-phase
-trajectory, reconstructing the control as a [`CTFlows.MultiPhase._PiecewiseControlLaw`](@extref)
+trajectory, reconstructing the control as a [`CTFlows.MultiPhase._PiecewiseControlLaw`](@ref)
 over the per-phase laws.
 
 # Arguments
@@ -313,7 +313,7 @@ over the per-phase laws.
 # Returns
 - A [`CTModels.Solutions.Solution`](@extref) with the piecewise-reconstructed control.
 
-See also: [`CTFlows.MultiPhase._reconstruct_controlled_trajectory`](@extref), `CTFlows.Flows._build_ocp_solution`.
+See also: [`CTFlows.MultiPhase._reconstruct_controlled_trajectory`](@ref), `CTFlows.Flows._build_ocp_solution`.
 """
 function _reconstruct_ocp_solution(mpf, merged, variable)
     phases = get_flows(mpf)
@@ -326,9 +326,9 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Rebuild a [`CTFlows.Trajectories.StateFlowTrajectory`](@extref) from an all-`ControlledFlow`
+Rebuild a [`CTFlows.Trajectories.StateFlowTrajectory`](@ref) from an all-`ControlledFlow`
 multi-phase trajectory, reconstructing the control as a
-[`CTFlows.MultiPhase._PiecewiseControlLaw`](@extref) and recomputing the objective (Mayer +
+[`CTFlows.MultiPhase._PiecewiseControlLaw`](@ref) and recomputing the objective (Mayer +
 Lagrange) over the merged trajectory when the phases carry an OCP (`nothing` objective for
 `Flow(fc, law)` phases).
 
@@ -338,9 +338,9 @@ Lagrange) over the merged trajectory when the phases carry an OCP (`nothing` obj
 - `variable`: The variable parameter value (for NonFixed systems).
 
 # Returns
-- A [`CTFlows.Trajectories.StateFlowTrajectory`](@extref) with the piecewise-reconstructed control.
+- A [`CTFlows.Trajectories.StateFlowTrajectory`](@ref) with the piecewise-reconstructed control.
 
-See also: [`CTFlows.MultiPhase._reconstruct_ocp_solution`](@extref), `CTFlows.Flows._state_flow_objective`.
+See also: [`CTFlows.MultiPhase._reconstruct_ocp_solution`](@ref), `CTFlows.Flows._state_flow_objective`.
 """
 function _reconstruct_controlled_trajectory(mpf, merged, variable)
     phases = get_flows(mpf)
@@ -360,9 +360,9 @@ end
 $(TYPEDSIGNATURES)
 
 Return the raw inner flow of a phase, unwrapping the decorator flows
-([`CTFlows.Flows.OptimalControlFlow`](@extref) / [`CTFlows.Flows.ControlledFlow`](@extref)) to the
+([`CTFlows.Flows.OptimalControlFlow`](@ref) / [`CTFlows.Flows.ControlledFlow`](@ref)) to the
 inner `HamiltonianFlow`/`StateFlow` that yields a mergeable raw segment; any other
-[`CTFlows.Flows.AbstractFlow`](@extref) (a plain `HamiltonianFlow`/`StateFlow` or a nested
+[`CTFlows.Flows.AbstractFlow`](@ref) (a plain `HamiltonianFlow`/`StateFlow` or a nested
 `MultiPhaseFlow`) is returned unchanged.
 
 Dispatching on the abstract flow type — one method per decorator plus the fallback — covers
@@ -379,7 +379,7 @@ _raw_flow(f::Flows.AbstractFlow) = f
 """
 $(TYPEDSIGNATURES)
 
-Unwrap an [`CTFlows.Flows.OptimalControlFlow`](@extref) to its inner flow.
+Unwrap an [`CTFlows.Flows.OptimalControlFlow`](@ref) to its inner flow.
 
 # Returns
 - `f.flow`: the inner `StateFlow`/`HamiltonianFlow`.
@@ -389,7 +389,7 @@ _raw_flow(f::Flows.OptimalControlFlow) = f.flow
 """
 $(TYPEDSIGNATURES)
 
-Unwrap a [`CTFlows.Flows.ControlledFlow`](@extref) to its inner flow.
+Unwrap a [`CTFlows.Flows.ControlledFlow`](@ref) to its inner flow.
 
 # Returns
 - `f.flow`: the inner `StateFlow`/`HamiltonianFlow`.
@@ -402,7 +402,7 @@ $(TYPEDSIGNATURES)
 Evaluate a single phase for a state flow with point configuration.
 
 Dispatches on the abstract dynamics axis (`AbstractStateFlow`) and unwraps decorator flows via
-[`CTFlows.MultiPhase._raw_flow`](@extref) before integrating.
+[`CTFlows.MultiPhase._raw_flow`](@ref) before integrating.
 
 # Arguments
 - `flow::Flows.AbstractStateFlow`: The state (or decorated state) flow to evaluate.
@@ -416,7 +416,7 @@ Dispatches on the abstract dynamics axis (`AbstractStateFlow`) and unwraps decor
 # Returns
 - Final state at time tf.
 
-See also: [`CTFlows.MultiPhase._raw_flow`](@extref), [`CTFlows.Flows.StateFlow`](@extref).
+See also: [`CTFlows.MultiPhase._raw_flow`](@ref), [`CTFlows.Flows.StateFlow`](@ref).
 """
 function _evaluate_phase(
     flow::Flows.AbstractStateFlow,
@@ -436,7 +436,7 @@ $(TYPEDSIGNATURES)
 Evaluate a single phase for a state flow with trajectory configuration.
 
 Dispatches on the abstract dynamics axis (`AbstractStateFlow`) and unwraps decorator flows via
-[`CTFlows.MultiPhase._raw_flow`](@extref) before integrating.
+[`CTFlows.MultiPhase._raw_flow`](@ref) before integrating.
 
 # Arguments
 - `flow::Flows.AbstractStateFlow`: The state (or decorated state) flow to evaluate.
@@ -450,7 +450,7 @@ Dispatches on the abstract dynamics axis (`AbstractStateFlow`) and unwraps decor
 # Returns
 - Trajectory solution from t0 to tf.
 
-See also: [`CTFlows.MultiPhase._raw_flow`](@extref), [`CTFlows.Flows.StateFlow`](@extref).
+See also: [`CTFlows.MultiPhase._raw_flow`](@ref), [`CTFlows.Flows.StateFlow`](@ref).
 """
 function _evaluate_phase(
     flow::Flows.AbstractStateFlow,
@@ -470,7 +470,7 @@ $(TYPEDSIGNATURES)
 Evaluate a single phase for a Hamiltonian flow with point configuration.
 
 Dispatches on the abstract dynamics axis (`AbstractHamiltonianFlow`) and unwraps decorator
-flows via [`CTFlows.MultiPhase._raw_flow`](@extref) before integrating.
+flows via [`CTFlows.MultiPhase._raw_flow`](@ref) before integrating.
 
 # Arguments
 - `flow::Flows.AbstractHamiltonianFlow`: The Hamiltonian (or decorated Hamiltonian) flow to evaluate.
@@ -484,7 +484,7 @@ flows via [`CTFlows.MultiPhase._raw_flow`](@extref) before integrating.
 # Returns
 - Tuple of (final_state, final_costate) at time tf.
 
-See also: [`CTFlows.MultiPhase._raw_flow`](@extref), [`CTFlows.Flows.HamiltonianFlow`](@extref).
+See also: [`CTFlows.MultiPhase._raw_flow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref).
 """
 function _evaluate_phase(
     flow::Flows.AbstractHamiltonianFlow,
@@ -505,7 +505,7 @@ $(TYPEDSIGNATURES)
 Evaluate a single phase for a Hamiltonian flow with trajectory configuration.
 
 Dispatches on the abstract dynamics axis (`AbstractHamiltonianFlow`) and unwraps decorator
-flows via [`CTFlows.MultiPhase._raw_flow`](@extref) before integrating.
+flows via [`CTFlows.MultiPhase._raw_flow`](@ref) before integrating.
 
 # Arguments
 - `flow::Flows.AbstractHamiltonianFlow`: The Hamiltonian (or decorated Hamiltonian) flow to evaluate.
@@ -519,7 +519,7 @@ flows via [`CTFlows.MultiPhase._raw_flow`](@extref) before integrating.
 # Returns
 - Trajectory solution from t0 to tf.
 
-See also: [`CTFlows.MultiPhase._raw_flow`](@extref), [`CTFlows.Flows.HamiltonianFlow`](@extref).
+See also: [`CTFlows.MultiPhase._raw_flow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref).
 """
 function _evaluate_phase(
     flow::Flows.AbstractHamiltonianFlow,
@@ -580,7 +580,7 @@ Reshape a raw internal final state back to match `x0`'s own declared container t
 inter-phase handoff inside a multi-phase state flow.
 
 # Notes
-This is deliberately **not** [`CTFlows.Systems._coerce_state`](@extref): that function also
+This is deliberately **not** [`CTFlows.Systems._coerce_state`](@ref): that function also
 collapses a length-1 `AbstractVector`/`SVector` to a scalar (the "1-D = scalar" convention,
 issue #357), which is the right call for a *user-facing* accessor but wrong for this
 *internal* handoff — it would silently turn a length-1-vector-sourced multi-phase state
@@ -608,7 +608,7 @@ $(TYPEDSIGNATURES)
 
 Extract the final state from a `VectorFieldTrajectory` segment for state dynamics,
 reshaped back to the segment's own `x0` container type (see
-[`CTFlows.MultiPhase._reshape_to_x0`](@extref)) rather than through its "1-D = scalar"
+[`CTFlows.MultiPhase._reshape_to_x0`](@ref)) rather than through its "1-D = scalar"
 `Integrators.final_state` accessor (issue #357).
 """
 function _extract_final_state(
@@ -622,7 +622,7 @@ $(TYPEDSIGNATURES)
 
 Extract the final state from a `StateFlowTrajectory` segment for state dynamics
 (`Flow(fc, law)` / `Flow(ocp, law)`), reshaped back to the inner trajectory's own `x0`
-container type (see [`CTFlows.MultiPhase._reshape_to_x0`](@extref)) rather than through its
+container type (see [`CTFlows.MultiPhase._reshape_to_x0`](@ref)) rather than through its
 "1-D = scalar" `Integrators.final_state` accessor — see the `VectorFieldTrajectory`
 overload above for why.
 """
@@ -686,7 +686,7 @@ Apply an additive jump to a single component.
 # Returns
 - `v .+ j`.
 
-See also: [`CTFlows.MultiPhase._apply_jump`](@extref).
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref).
 """
 _apply_component_jump(v, j) = v .+ j
 
@@ -702,7 +702,7 @@ Apply a callable jump to a single component.
 # Returns
 - `j(v)`.
 
-See also: [`CTFlows.MultiPhase._apply_jump`](@extref).
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref).
 """
 _apply_component_jump(v, j::Function) = j(v)
 
@@ -718,7 +718,7 @@ Identity jump — leave the component unchanged.
 # Returns
 - `v` unchanged.
 
-See also: [`CTFlows.MultiPhase._apply_jump`](@extref).
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref).
 """
 _apply_component_jump(v, ::Nothing) = v
 
@@ -735,7 +735,7 @@ Apply a jump to the state for state flows.
 # Returns
 - State after applying the jump.
 
-See also: [`CTFlows.MultiPhase.get_jump`](@extref).
+See also: [`CTFlows.MultiPhase.get_jump`](@ref).
 """
 function _apply_jump(mpf::MultiPhaseFlow, i, state)
     return _apply_jump(Traits.dynamics_trait(mpf), mpf, i, state)
@@ -757,7 +757,7 @@ Apply a jump to the state for state dynamics.
 
 # Notes
 This is an internal dispatch method for the `_apply_jump` function.
-Delegates to [`CTFlows.MultiPhase._apply_component_jump`](@extref), which supports
+Delegates to [`CTFlows.MultiPhase._apply_component_jump`](@ref), which supports
 additive offsets (`j` a vector/scalar), callables (`j(state)`), and `nothing`
 (identity).
 """
@@ -792,7 +792,7 @@ $(TYPEDSIGNATURES)
 Apply per-component jumps to a Hamiltonian state tuple.
 
 Each component (`jump[1]` for state, `jump[2]` for costate) is handled
-independently by [`CTFlows.MultiPhase._apply_component_jump`](@extref): a
+independently by [`CTFlows.MultiPhase._apply_component_jump`](@ref): a
 vector/scalar is added, a callable is applied, and `nothing` leaves the
 component unchanged.
 
@@ -804,8 +804,8 @@ component unchanged.
 # Returns
 - Tuple of updated (state, costate).
 
-See also: [`CTFlows.MultiPhase._apply_jump`](@extref),
-  [`CTFlows.MultiPhase._apply_component_jump`](@extref).
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref),
+  [`CTFlows.MultiPhase._apply_component_jump`](@ref).
 """
 function _apply_hamiltonian_jump(state_tuple::Tuple, jump::Tuple)
     x, p = state_tuple
@@ -827,8 +827,8 @@ The callable receives both components and must return an updated
 # Returns
 - Tuple `(x', p')` returned by `jump`.
 
-See also: [`CTFlows.MultiPhase._apply_jump`](@extref),
-  [`CTFlows.MultiPhase._apply_component_jump`](@extref).
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref),
+  [`CTFlows.MultiPhase._apply_component_jump`](@ref).
 """
 function _apply_hamiltonian_jump(state_tuple::Tuple, jump::Function)
     x, p = state_tuple
@@ -851,8 +851,8 @@ a vector for an n-D costate.
 # Returns
 - Tuple of `(state, costate .+ jump)`.
 
-See also: [`CTFlows.MultiPhase._apply_jump`](@extref),
-  [`CTFlows.MultiPhase._apply_component_jump`](@extref).
+See also: [`CTFlows.MultiPhase._apply_jump`](@ref),
+  [`CTFlows.MultiPhase._apply_component_jump`](@ref).
 """
 function _apply_hamiltonian_jump(state_tuple::Tuple, jump)
     x, p = state_tuple
@@ -871,7 +871,7 @@ Format the final output for state flows.
 # Returns
 - The final state (no formatting needed).
 
-See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@extref).
+See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@ref).
 """
 function _format_final_output(mpf::MultiPhaseFlow, state)
     return _format_final_output(Traits.dynamics_trait(mpf), state)
@@ -946,7 +946,7 @@ mpf = flow1 * (1.0, flow2) * (2.0, flow3)
 sol = mpf(0.0, [1.0, 0.0], 3.0)
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@extref), [`CTFlows.Configs.StateEndPointConfig`](@extref).
+See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Configs.StateEndPointConfig`](@ref).
 """
 function (mpf::MultiPhaseFlow{TD,VD,Traits.StateDynamics})(
     t0::Real, x0, tf::Real; variable=Flows.__variable(), unsafe=Flows.__unsafe()
@@ -982,7 +982,7 @@ mpf = flow1 * (1.0, flow2) * (2.0, flow3)
 sol = mpf((0.0, 3.0), [1.0, 0.0])
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@extref), [`CTFlows.Configs.StateTrajectoryConfig`](@extref).
+See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref).
 """
 function (mpf::MultiPhaseFlow{TD,VD,Traits.StateDynamics})(
     tspan::Tuple{Real,Real}, x0; variable=Flows.__variable(), unsafe=Flows.__unsafe()
@@ -1018,7 +1018,7 @@ mpf = flow1 * (1.0, flow2) * (2.0, flow3)
 sol = mpf(0.0, [1.0, 0.0], [0.5, 0.3], 3.0)
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@extref), [`CTFlows.Configs.HamiltonianEndPointConfig`](@extref).
+See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref).
 """
 function (mpf::MultiPhaseFlow{TD,VD,Traits.HamiltonianDynamics})(
     t0::Real, x0, p0, tf::Real; variable=Flows.__variable(), unsafe=Flows.__unsafe()
@@ -1054,7 +1054,7 @@ mpf = flow1 * (1.0, flow2) * (2.0, flow3)
 sol = mpf((0.0, 3.0), [1.0, 0.0], [0.5, 0.3])
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@extref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@extref).
+See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref).
 """
 function (mpf::MultiPhaseFlow{TD,VD,Traits.HamiltonianDynamics})(
     tspan::Tuple{Real,Real}, x0, p0; variable=Flows.__variable(), unsafe=Flows.__unsafe()

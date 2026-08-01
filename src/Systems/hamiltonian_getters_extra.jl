@@ -26,7 +26,7 @@ control is *not* eliminated: `H̃(t, x, p, u, v)` keeps `u` as an independent ar
 - `CTBase.Exceptions.IncorrectArgument`: if the system wraps a plain Hamiltonian with
   no associated control law (no pseudo-Hamiltonian to recover).
 
-See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Systems.control_law`](@extref).
+See also: [`CTFlows.Systems.hamiltonian`](@ref), [`CTFlows.Systems.control_law`](@ref).
 """
 function pseudo_hamiltonian(sys::HamiltonianSystem)
     h = sys.h
@@ -52,7 +52,7 @@ mode (wrapping a [`CTBase.Data.ComposedHamiltonian`](@extref)).
 - `CTBase.Exceptions.IncorrectArgument`: if the system wraps a plain Hamiltonian with
   no associated control law.
 
-See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref).
+See also: [`CTFlows.Systems.pseudo_hamiltonian`](@ref).
 """
 function control_law(sys::HamiltonianSystem)
     h = sys.h
@@ -90,7 +90,7 @@ Functor returning the gradient `(∂H/∂x, ∂H/∂p)` of a true Hamiltonian, e
 - `h::H`: the Hamiltonian to differentiate.
 - `backend::B`: the AD backend.
 
-See also: [`CTFlows.Systems.get_hamiltonian_gradient`](@extref), [`CTFlows.Systems.HamiltonianVariableGradient`](@extref).
+See also: [`CTFlows.Systems.get_hamiltonian_gradient`](@ref), [`CTFlows.Systems.HamiltonianVariableGradient`](@ref).
 """
 struct HamiltonianGradient{H<:Data.AbstractHamiltonian,B<:Differentiation.AbstractADBackend}
     h::H
@@ -112,7 +112,7 @@ variable-costate equation `ṗv = -∂H/∂v`. Non-negated.
 - `h::H`: the Hamiltonian to differentiate.
 - `backend::B`: the AD backend.
 
-See also: [`CTFlows.Systems.get_variable_gradient`](@extref), [`CTFlows.Systems.HamiltonianGradient`](@extref).
+See also: [`CTFlows.Systems.get_variable_gradient`](@ref), [`CTFlows.Systems.HamiltonianGradient`](@ref).
 """
 struct HamiltonianVariableGradient{
     H<:Data.AbstractHamiltonian,B<:Differentiation.AbstractADBackend
@@ -135,7 +135,7 @@ Functor returning the gradient `(∂H̃/∂x, ∂H̃/∂p)` of a pseudo-Hamilton
 - `h̃::H`: the pseudo-Hamiltonian to differentiate.
 - `backend::B`: the AD backend.
 
-See also: [`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@extref), [`CTFlows.Systems.PseudoHamiltonianVariableGradient`](@extref).
+See also: [`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@ref), [`CTFlows.Systems.PseudoHamiltonianVariableGradient`](@ref).
 """
 struct PseudoHamiltonianGradient{
     H<:Data.AbstractPseudoHamiltonian,B<:Differentiation.AbstractADBackend
@@ -158,7 +158,7 @@ Functor returning the variable gradient `∂H̃/∂v` of a pseudo-Hamiltonian, e
 - `h̃::H`: the pseudo-Hamiltonian to differentiate.
 - `backend::B`: the AD backend.
 
-See also: [`CTFlows.Systems.get_pseudo_variable_gradient`](@extref), [`CTFlows.Systems.PseudoHamiltonianGradient`](@extref).
+See also: [`CTFlows.Systems.get_pseudo_variable_gradient`](@ref), [`CTFlows.Systems.PseudoHamiltonianGradient`](@ref).
 """
 struct PseudoHamiltonianVariableGradient{
     H<:Data.AbstractPseudoHamiltonian,B<:Differentiation.AbstractADBackend
@@ -174,7 +174,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return a [`CTFlows.Systems.HamiltonianGradient`](@extref) functor `(t, x, p, v) ->
+Return a [`CTFlows.Systems.HamiltonianGradient`](@ref) functor `(t, x, p, v) ->
 (∂H/∂x, ∂H/∂p)` for the true Hamiltonian of an AD-backed Hamiltonian system. For a
 `PseudoHamiltonianSystem` (or a `:total` `HamiltonianSystem`), the gradient is the
 **total** derivative — it differentiates through the control law.
@@ -183,7 +183,7 @@ The `ad_backend` keyword selects the AD backend used to differentiate; it defaul
 the system's own backend but can be overridden (e.g. to use reverse mode for the
 gradient).
 
-See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Systems.get_variable_gradient`](@extref).
+See also: [`CTFlows.Systems.hamiltonian`](@ref), [`CTFlows.Systems.get_variable_gradient`](@ref).
 """
 function get_hamiltonian_gradient(
     sys::Union{HamiltonianSystem,PseudoHamiltonianSystem};
@@ -195,13 +195,13 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return a [`CTFlows.Systems.HamiltonianVariableGradient`](@extref) functor `(t, x, p, v) ->
+Return a [`CTFlows.Systems.HamiltonianVariableGradient`](@ref) functor `(t, x, p, v) ->
 ∂H/∂v` for the true Hamiltonian of an AD-backed Hamiltonian system — the same quantity
 (before negation) that drives the augmented variable-costate equation `ṗv = -∂H/∂v`.
 
 The `ad_backend` keyword selects the AD backend (default: the system's own backend).
 
-See also: [`CTFlows.Systems.get_hamiltonian_gradient`](@extref).
+See also: [`CTFlows.Systems.get_hamiltonian_gradient`](@ref).
 """
 function get_variable_gradient(
     sys::Union{HamiltonianSystem,PseudoHamiltonianSystem};
@@ -213,14 +213,14 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return a [`CTFlows.Systems.PseudoHamiltonianGradient`](@extref) functor `(t, x, p, u, v) ->
+Return a [`CTFlows.Systems.PseudoHamiltonianGradient`](@ref) functor `(t, x, p, u, v) ->
 (∂H̃/∂x, ∂H̃/∂p)` for the pseudo-Hamiltonian, differentiated at **fixed control** `u`.
 Available for a `PseudoHamiltonianSystem` and for a `:total` `HamiltonianSystem`
 wrapping a `ComposedHamiltonian`.
 
 The `ad_backend` keyword selects the AD backend (default: the system's own backend).
 
-See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref), [`CTFlows.Systems.get_pseudo_variable_gradient`](@extref).
+See also: [`CTFlows.Systems.pseudo_hamiltonian`](@ref), [`CTFlows.Systems.get_pseudo_variable_gradient`](@ref).
 """
 function get_pseudo_hamiltonian_gradient(
     sys::Union{HamiltonianSystem,PseudoHamiltonianSystem};
@@ -232,13 +232,13 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return a [`CTFlows.Systems.PseudoHamiltonianVariableGradient`](@extref) functor
+Return a [`CTFlows.Systems.PseudoHamiltonianVariableGradient`](@ref) functor
 `(t, x, p, u, v) -> ∂H̃/∂v` for the pseudo-Hamiltonian, differentiated at **fixed
 control** `u`.
 
 The `ad_backend` keyword selects the AD backend (default: the system's own backend).
 
-See also: [`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@extref).
+See also: [`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@ref).
 """
 function get_pseudo_variable_gradient(
     sys::Union{HamiltonianSystem,PseudoHamiltonianSystem};

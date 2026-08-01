@@ -23,7 +23,7 @@ left untouched.
 - The final state, `isa Real`/`Complex` for a 1-D state, `isa AbstractVector`/
   `AbstractMatrix` otherwise.
 
-See also: [`CTFlows.Systems._coerce_state`](@extref), [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTBase.Traits.EndPointMode`](@extref), [`CTBase.Traits.StateDynamics`](@extref).
+See also: [`CTFlows.Systems._coerce_state`](@ref), [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTBase.Traits.EndPointMode`](@extref), [`CTBase.Traits.StateDynamics`](@extref).
 """
 function build_trajectory(
     ::Type{Traits.EndPointMode},
@@ -52,7 +52,7 @@ in a `VectorFieldTrajectory` for future extensibility.
 # Returns
 - `VectorFieldTrajectory`: The wrapped integration result.
 
-See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.VectorFieldTrajectory`](@extref), [`CTBase.Traits.TrajectoryMode`](@extref), [`CTBase.Traits.StateDynamics`](@extref).
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTBase.Traits.TrajectoryMode`](@extref), [`CTBase.Traits.StateDynamics`](@extref).
 """
 function build_trajectory(
     ::Type{Traits.TrajectoryMode},
@@ -152,7 +152,7 @@ Wraps the integration result in a `HamiltonianVectorFieldTrajectory` for future 
 # Returns
 - `HamiltonianVectorFieldTrajectory`: The wrapped integration result.
 
-See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@extref), [`CTBase.Traits.TrajectoryMode`](@extref), [`CTBase.Traits.HamiltonianDynamics`](@extref).
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTBase.Traits.TrajectoryMode`](@extref), [`CTBase.Traits.HamiltonianDynamics`](@extref).
 """
 function build_trajectory(
     ::Type{Traits.TrajectoryMode},

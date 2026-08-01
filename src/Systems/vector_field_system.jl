@@ -10,7 +10,7 @@ The system does not store pre-computed RHS closures. Instead, closures are built
 lazily by `get_ip_rhs`/`get_oop_rhs` based on the actual initial condition type,
 coercing a 1-D state to a scalar before calling the user's vector field (issue
 [control-toolbox/CTFlows.jl#357](https://github.com/control-toolbox/CTFlows.jl/issues/357))
-— mirroring [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@extref).
+— mirroring [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
 
 # Fields
 - `vf::F`: the underlying vector field (any `Data.AbstractVectorField{TD,VD,MD}`).
@@ -33,7 +33,7 @@ VectorFieldSystem
    uniform call: f(t, x, v)
 \`\`\`
 
-See also: [`CTBase.Data.VectorField`](@extref), `TimeDependence`, [`CTBase.Traits.VariableDependence`](@extref), [`CTFlows.Systems.ODEParameters`](@extref).
+See also: [`CTBase.Data.VectorField`](@extref), `TimeDependence`, [`CTBase.Traits.VariableDependence`](@extref), [`CTFlows.Systems.ODEParameters`](@ref).
 """
 struct VectorFieldSystem{
     TD<:Traits.TimeDependence,
@@ -60,7 +60,7 @@ Return the underlying vector field of a `VectorFieldSystem`, as a
 [`CTBase.Data.AbstractVectorField`](@extref) — the field `X(t, x, v)` integrated by the
 state flow.
 
-See also: [`CTFlows.Systems.VectorFieldSystem`](@extref), [`CTFlows.Systems.hamiltonian_vector_field`](@extref).
+See also: [`CTFlows.Systems.VectorFieldSystem`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
 """
 vector_field(sys::VectorFieldSystem) = sys.vf
 
@@ -72,7 +72,7 @@ Return the in-place right-hand side for an out-of-place `VectorFieldSystem`.
 Lazy implementation: reads `x0` from the config to build a type-specific closure,
 coercing the state to a scalar before calling the user's vector field when the
 declared dimension is 1 (issue #357) — see
-[`CTFlows.Systems._coerce_state`](@extref).
+[`CTFlows.Systems._coerce_state`](@ref).
 
 # Arguments
 - `sys::VectorFieldSystem{..., OutOfPlace, ...}`: The out-of-place system.
@@ -81,7 +81,7 @@ declared dimension is 1 (issue #357) — see
 # Returns
 - `IPVFOoPRHS`: An in-place RHS functor with signature `(du, u, p, t) -> nothing`.
 
-See also: [`CTFlows.Systems.get_oop_rhs`](@extref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
 function get_ip_rhs(
     sys::VectorFieldSystem{TD,VD,Traits.OutOfPlace,F}, config::Configs.AbstractStateConfig
@@ -108,7 +108,7 @@ Lazy implementation: reads `x0` from the config to build a type-specific closure
 # Returns
 - `IPVFIpRHS`: An in-place RHS functor with signature `(du, u, p, t) -> nothing`.
 
-See also: [`CTFlows.Systems.get_oop_rhs`](@extref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
 function get_ip_rhs(
     sys::VectorFieldSystem{TD,VD,Traits.InPlace,F}, config::Configs.AbstractStateConfig
@@ -135,7 +135,7 @@ Lazy implementation: reads `x0` from the config to build a type-specific closure
 # Returns
 - `OoPVFOoPRHS`: An out-of-place RHS functor with signature `(u, p, t) -> du`.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@extref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function get_oop_rhs(
     sys::VectorFieldSystem{TD,VD,Traits.OutOfPlace,F}, config::Configs.AbstractStateConfig
@@ -167,7 +167,7 @@ This method is called when `!ismutable(u0)`, so the finalize path is used whenev
 # Notes
 - Emits a performance warning when called with immutable initial conditions.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@extref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function get_oop_rhs(
     sys::VectorFieldSystem{TD,VD,Traits.InPlace,F}, config::Configs.AbstractStateConfig
@@ -200,7 +200,7 @@ Shows the type name and the wrapped VectorField with its traits.
 - `io::IO`: The IO stream to write to.
 - `sys::VectorFieldSystem`: The VectorFieldSystem to display.
 
-See also: [`CTFlows.Systems.VectorFieldSystem`](@extref).
+See also: [`CTFlows.Systems.VectorFieldSystem`](@ref).
 """
 function Base.show(
     io::IO, sys::VectorFieldSystem{TD,VD,MD,F}
@@ -241,7 +241,7 @@ Delegates to the compact show method.
 - `::MIME"text/plain"`: The MIME type for REPL display.
 - `sys::VectorFieldSystem`: The VectorFieldSystem to display.
 
-See also: [`CTFlows.Systems.VectorFieldSystem`](@extref).
+See also: [`CTFlows.Systems.VectorFieldSystem`](@ref).
 """
 function Base.show(io::IO, ::MIME"text/plain", sys::VectorFieldSystem)
     return show(io, sys)

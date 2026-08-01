@@ -42,7 +42,7 @@ HamiltonianSystem
   backend: AutoForwardDiff()
 ```
 
-See also: [`CTBase.Data.Hamiltonian`](@extref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@extref), [`CTBase.Traits.AbstractADTrait`](@extref), `build_rhs`, `build_oop_rhs`.
+See also: [`CTBase.Data.Hamiltonian`](@extref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), [`CTBase.Traits.AbstractADTrait`](@extref), `build_rhs`, `build_oop_rhs`.
 """
 struct HamiltonianSystem{
     TD<:Traits.TimeDependence,
@@ -67,7 +67,7 @@ Return the Hamiltonian function from a HamiltonianSystem.
 # Returns
 - `Data.Hamiltonian`: The Hamiltonian function wrapped by the system.
 
-See also: [`CTFlows.Systems.HamiltonianSystem`](@extref), [`CTFlows.Systems.backend`](@extref).
+See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.backend`](@ref).
 """
 function hamiltonian(sys::HamiltonianSystem)
     return sys.h
@@ -84,7 +84,7 @@ Return the automatic differentiation backend from a HamiltonianSystem.
 # Returns
 - `Differentiation.AbstractADBackend`: The AD backend used for gradient computation.
 
-See also: [`CTFlows.Systems.HamiltonianSystem`](@extref), [`CTFlows.Systems.hamiltonian`](@extref).
+See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.hamiltonian`](@ref).
 """
 function backend(sys::HamiltonianSystem)
     return sys.backend
@@ -116,7 +116,7 @@ Lazy implementation: reads `x0`/`p0` from the config to build type-specific clos
 # Returns
 - `HamIpRHS`: An in-place RHS functor with embedded AD cache.
 
-See also: [`CTFlows.Systems.get_oop_rhs`](@extref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
 function get_ip_rhs(sys::HamiltonianSystem, config::Configs.AbstractHamiltonianConfig)
     x0 = Configs.initial_state(config)
@@ -142,7 +142,7 @@ Lazy implementation: reads `x0`/`p0` from the config to build type-specific clos
 # Returns
 - `HamOoPRHS`: An out-of-place RHS functor with embedded AD cache.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@extref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
 """
 function get_oop_rhs(sys::HamiltonianSystem, config::Configs.AbstractHamiltonianConfig)
     x0 = Configs.initial_state(config)
@@ -168,7 +168,7 @@ Lazy implementation: reads `x0`/`p0`/`pv0` from the config to build the augmente
 # Returns
 - `HamIpAugRHS`: An augmented in-place RHS functor with embedded AD cache.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@extref), [`CTFlows.Systems.get_oop_rhs`](@extref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref).
 """
 function get_ip_rhs_augmented(
     sys::HamiltonianSystem, config::Configs.AbstractAugmentedHamiltonianConfig

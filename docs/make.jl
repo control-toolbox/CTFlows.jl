@@ -48,12 +48,12 @@ draft = false # Draft mode: if true, @example blocks in markdown are not execute
 # ═══════════════════════════════════════════════════════════════════════════════
 # Cross-package links (InterLinks)
 # ═══════════════════════════════════════════════════════════════════════════════
+# Only for symbols that live in OTHER control-toolbox packages (@extref in
+# docstrings/pages). CTFlows' own symbols — including its own extensions —
+# are part of this same `makedocs` build and must use `@ref`, not `@extref`:
+# a self-referencing entry here would need this build's own (not-yet-built)
+# objects.inv, which doesn't exist yet on a fresh build.
 links = InterLinks(
-    "CTFlows" => (
-        "https://control-toolbox.org/CTFlows.jl/stable/",
-        joinpath(@__DIR__, "build", "1", "objects.inv"),
-        "https://control-toolbox.org/CTFlows.jl/stable/objects.inv",
-    ),
     "CTBase" => (
         "https://control-toolbox.org/CTBase.jl/stable/",
         "https://control-toolbox.org/CTBase.jl/stable/objects.inv",

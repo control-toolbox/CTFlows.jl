@@ -16,7 +16,7 @@ fam = Flows._flow_families()
 # Returns: (backend = CTBase.Differentiation.AbstractADBackend, integrator = CTFlows.Integrators.AbstractIntegrator)
 ```
 
-See also: [`CTFlows.Flows._route_flow_options`](@extref), [`CTFlows.Flows.flow_registry`](@extref)
+See also: [`CTFlows.Flows._route_flow_options`](@ref), [`CTFlows.Flows.flow_registry`](@ref)
 """
 function _flow_families(::Type{Traits.WithAD})
     return (
@@ -39,7 +39,7 @@ $(TYPEDSIGNATURES)
 
 Back-compat alias: return the full (`WithAD`) strategy families — backend + integrator.
 
-See also: [`CTFlows.Flows._flow_families`](@extref).
+See also: [`CTFlows.Flows._flow_families`](@ref).
 """
 _flow_families() = _flow_families(Traits.WithAD)
 
@@ -51,7 +51,7 @@ the flow registry is parameterized (`[CPU, GPU]`), so a device token is required
 [`CTBase.Strategies.extract_global_parameter_from_method`](@extref) throws otherwise. The bare
 `:cpu` reproduces the pre-parameterization CPU behaviour exactly (`SciML{CPU}` metadata ≡ old).
 
-See also: [`CTFlows.Flows._flow_base_description`](@extref), [`CTFlows.Flows._available_flow_methods`](@extref).
+See also: [`CTFlows.Flows._flow_base_description`](@ref), [`CTFlows.Flows._available_flow_methods`](@ref).
 """
 _flow_base_description(::Type{Traits.WithAD}) = (:di, :sciml, :cpu)
 """
@@ -60,7 +60,7 @@ $(TYPEDSIGNATURES)
 Base method description for an AD-free flow plan: no `:di` backend token (no scalar
 Hamiltonian is differentiated), only the `:sciml` integrator and `:cpu` device.
 
-See also: [`CTFlows.Flows._flow_base_description`](@extref), [`CTFlows.Flows._available_flow_methods`](@extref).
+See also: [`CTFlows.Flows._flow_base_description`](@ref), [`CTFlows.Flows._available_flow_methods`](@ref).
 """
 _flow_base_description(::Type{Traits.WithoutAD}) = (:sciml, :cpu)
 
@@ -77,7 +77,7 @@ $(TYPEDSIGNATURES)
 Candidate descriptions for an AD-free flow: only the `:sciml` integrator with `:cpu`/`:gpu`
 device variants (no `:di` backend).
 
-See also: [`CTFlows.Flows._available_flow_methods`](@extref), [`CTBase.Descriptions.complete`](@extref).
+See also: [`CTFlows.Flows._available_flow_methods`](@ref), [`CTBase.Descriptions.complete`](@extref).
 """
 _available_flow_methods(::Type{Traits.WithoutAD}) = ((:sciml, :cpu), (:sciml, :gpu))
 
@@ -88,7 +88,7 @@ Normalize a user-supplied `method` into a token tuple, or return `nothing` when 
 method was given (the default). A bare `Symbol` (e.g. `:gpu`) is wrapped into a
 single-element tuple; a tuple of `Symbol`s is returned as-is.
 
-See also: [`CTFlows.Flows._flow_description`](@extref)
+See also: [`CTFlows.Flows._flow_description`](@ref)
 """
 _as_method_tokens(::Nothing) = nothing
 """
@@ -96,7 +96,7 @@ $(TYPEDSIGNATURES)
 
 Wrap a bare `Symbol` (e.g. `:gpu`) into a single-element tuple.
 
-See also: [`CTFlows.Flows._as_method_tokens`](@extref), [`CTFlows.Flows._flow_description`](@extref).
+See also: [`CTFlows.Flows._as_method_tokens`](@ref), [`CTFlows.Flows._flow_description`](@ref).
 """
 _as_method_tokens(m::Symbol) = (m,)
 """
@@ -104,7 +104,7 @@ $(TYPEDSIGNATURES)
 
 Return a tuple of `Symbol`s as-is — already in the normalized form.
 
-See also: [`CTFlows.Flows._as_method_tokens`](@extref), [`CTFlows.Flows._flow_description`](@extref).
+See also: [`CTFlows.Flows._as_method_tokens`](@ref), [`CTFlows.Flows._flow_description`](@ref).
 """
 _as_method_tokens(m::Tuple{Vararg{Symbol}}) = m
 
@@ -114,7 +114,7 @@ $(TYPEDSIGNATURES)
 Resolve the effective method description for a flow from its AD trait and an optional user
 `method` (a `Symbol` such as `:gpu`, or a token tuple). `method === nothing` yields the base
 (CPU) description; otherwise the tokens are completed against
-[`CTFlows.Flows._available_flow_methods`](@extref).
+[`CTFlows.Flows._available_flow_methods`](@ref).
 """
 function _flow_description(ad_trait, method)
     tokens = _as_method_tokens(method)
@@ -130,7 +130,7 @@ Split a flow constructor's keyword arguments into `(method, rest)`: the device s
 options. `method` rides along in every constructor's `kwargs...` and is popped here, at the
 routing boundary, so it is never mistaken for a strategy option.
 
-See also: [`CTFlows.Flows._flow_description`](@extref), [`CTFlows.Flows._route_flow_options`](@extref).
+See also: [`CTFlows.Flows._flow_description`](@ref), [`CTFlows.Flows._route_flow_options`](@ref).
 """
 function _pop_method(kwargs)
     nt = (; kwargs...)
@@ -151,10 +151,10 @@ This constant identifies the strategy families used in flow construction:
 - `Tuple{Symbol, Symbol}`: Tuple of strategy family identifiers.
 
 # Notes
-- Used by [`CTFlows.Flows._route_flow_options`](@extref) and [`CTFlows.Flows._build_flow_components`](@extref).
+- Used by [`CTFlows.Flows._route_flow_options`](@ref) and [`CTFlows.Flows._build_flow_components`](@ref).
 - Passed to [`CTBase.Orchestration.route_all_options`](@extref) and [`CTBase.Orchestration.resolve_method`](@extref).
 
-See also: [`CTFlows.Flows._route_flow_options`](@extref), [`CTFlows.Flows._build_flow_components`](@extref), [`CTFlows.Flows._flow_families`](@extref).
+See also: [`CTFlows.Flows._route_flow_options`](@ref), [`CTFlows.Flows._build_flow_components`](@ref), [`CTFlows.Flows._flow_families`](@ref).
 """
 const _FLOW_DESCRIPTION = _flow_base_description(Traits.WithAD)
 
@@ -192,7 +192,7 @@ routed = Flows._route_flow_options((; reltol=1e-8, ad_backend=ADTypes.AutoForwar
 - This function uses `:description` source mode for user-friendly error messages.
 - No action-level options are defined for flows (empty `OptionDefinition` array).
 
-See also: [`CTFlows.Flows._flow_families`](@extref), [`CTFlows.Flows._build_flow_components`](@extref),
+See also: [`CTFlows.Flows._flow_families`](@ref), [`CTFlows.Flows._build_flow_components`](@ref),
 [`CTBase.Orchestration.route_all_options`](@extref)
 """
 function _route_flow_options(
@@ -216,7 +216,7 @@ $(TYPEDSIGNATURES)
 
 Back-compat alias: route options using the `WithAD` plan (the full `:di`/`:sciml` families).
 
-See also: [`CTFlows.Flows._route_flow_options`](@extref).
+See also: [`CTFlows.Flows._route_flow_options`](@ref).
 """
 function _route_flow_options(
     kwargs; action_defs::Vector{<:Options.OptionDefinition}=Options.OptionDefinition[]
@@ -233,7 +233,7 @@ the flow into a constrained pseudo-Hamiltonian flow. All three are routed as fir
 action options so they are accepted only where meaningful (the control-law flow
 constructors) and rejected as unknown options elsewhere.
 
-See also: [`CTFlows.Flows._route_flow_options`](@extref), [`CTFlows.Flows._unwrap_option`](@extref).
+See also: [`CTFlows.Flows._route_flow_options`](@ref), [`CTFlows.Flows._unwrap_option`](@ref).
 """
 function _flow_action_defs()
     return [
@@ -271,7 +271,7 @@ $(TYPEDSIGNATURES)
 Read an action option value from a routed `action` NamedTuple entry: unwrap an
 [`CTBase.Options.OptionValue`](@extref), or fall back when the entry is `nothing`.
 
-See also: [`CTFlows.Flows._flow_action_defs`](@extref), [`CTFlows.Flows._route_flow_options`](@extref).
+See also: [`CTFlows.Flows._flow_action_defs`](@ref), [`CTFlows.Flows._route_flow_options`](@ref).
 """
 _unwrap_option(opt::Options.OptionValue, fallback) = opt.value
 """
@@ -279,7 +279,7 @@ $(TYPEDSIGNATURES)
 
 Return `opt` directly when it is not `nothing`, or `fallback` otherwise.
 
-See also: [`CTFlows.Flows._unwrap_option`](@extref), [`CTFlows.Flows._route_flow_options`](@extref).
+See also: [`CTFlows.Flows._unwrap_option`](@ref), [`CTFlows.Flows._route_flow_options`](@ref).
 """
 _unwrap_option(opt, fallback) = opt === nothing ? fallback : opt
 
@@ -290,12 +290,12 @@ Build concrete strategy instances from routed options.
 
 Each strategy is constructed via
 [`CTBase.Orchestration.build_strategy_from_resolved`](@extref) using the options
-that were routed to its family by [`CTFlows.Flows._route_flow_options`](@extref).
+that were routed to its family by [`CTFlows.Flows._route_flow_options`](@ref).
 
 # Arguments
 - `ad_trait`: `Traits.WithAD` (builds `:di` backend + `:sciml` integrator) or `Traits.WithoutAD`
   (builds only the `:sciml` integrator).
-- `routed`: Result of [`CTFlows.Flows._route_flow_options`](@extref) containing routed option values.
+- `routed`: Result of [`CTFlows.Flows._route_flow_options`](@ref) containing routed option values.
 - `method`: Optional device selection (`Symbol`/token tuple, e.g. `:gpu`) threaded into the
   resolved global strategy parameter (`CPU`/`GPU`) for **all** families at once.
 
@@ -311,7 +311,7 @@ components = Flows._build_flow_components(Traits.WithAD, routed)
 # components.integrator isa CTFlows.Integrators.SciML
 ```
 
-See also: [`CTFlows.Flows._route_flow_options`](@extref), [`CTFlows.Flows.flow_registry`](@extref),
+See also: [`CTFlows.Flows._route_flow_options`](@ref), [`CTFlows.Flows.flow_registry`](@ref),
 [`CTBase.Orchestration.build_strategy_from_resolved`](@extref)
 """
 function _build_flow_components(ad_trait, routed; method=nothing)
@@ -336,7 +336,7 @@ $(TYPEDSIGNATURES)
 
 Back-compat alias: build flow components using the `WithAD` plan (backend + integrator).
 
-See also: [`CTFlows.Flows._build_flow_components`](@extref).
+See also: [`CTFlows.Flows._build_flow_components`](@ref).
 """
 _build_flow_components(routed) = _build_flow_components(Traits.WithAD, routed)
 
@@ -351,7 +351,7 @@ controlled-vector-field flows, `Flow(ODEFunction)`, `Flow(ODEProblem)`), which b
 integrator (no `:di` AD backend). Routing through the `WithoutAD` plan means an `ad_backend`
 option is correctly rejected here as unknown (there is no AD backend to configure).
 
-See also: [`CTFlows.Flows._build_flow_components`](@extref), [`CTFlows.Flows._pop_method`](@extref).
+See also: [`CTFlows.Flows._build_flow_components`](@ref), [`CTFlows.Flows._pop_method`](@ref).
 """
 function _build_integrator(opts)
     method, kwargs = _pop_method(opts)

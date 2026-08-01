@@ -76,7 +76,7 @@ julia> Systems.variable(params_nonfixed)
 0.5
 \`\`\`
 
-See also: [`CTFlows.Systems.ODEParameters`](@extref), [`CTBase.Traits.VariableDependence`](@extref).
+See also: [`CTFlows.Systems.ODEParameters`](@ref), [`CTBase.Traits.VariableDependence`](@extref).
 """
 function variable(p::ODEParameters)
     return p.variable

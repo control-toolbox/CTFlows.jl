@@ -12,7 +12,7 @@ law, from which the control is reconstructed along the trajectory. There is **no
 costate** (the underlying flow is a state flow) and no objective.
 
 # Fields
-- `traj::T`: the underlying state trajectory (a [`CTFlows.Trajectories.VectorFieldTrajectory`](@extref)).
+- `traj::T`: the underlying state trajectory (a [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref)).
 - `law::L`: the control law (`OpenLoop` or `ClosedLoop`).
 - `variable::V`: the variable threaded through the flow call (or `Core.NotProvided`).
 - `objective::O`: the objective value (Mayer + Lagrange with the reconstructed control)
@@ -31,8 +31,8 @@ costate** (the underlying flow is a state flow) and no objective.
 - `sol(t)`: the state at time `t`.
 - `costate(sol)`: **errors** — a controlled state trajectory has no costate.
 
-See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@extref),
-[`CTFlows.Trajectories.state`](@extref), [`CTFlows.Trajectories.control`](@extref).
+See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref),
+[`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.control`](@ref).
 """
 struct StateFlowTrajectory{T<:VectorFieldTrajectory,L,V,O,C,M,SP,CP} <:
        AbstractVectorFieldTrajectory
@@ -82,7 +82,7 @@ _build_control_proj(::Nothing, traj, variable, coerce) = nothing
 """
 $(TYPEDSIGNATURES)
 
-Build the (precomputed) [`CTFlows.Trajectories.ControlProjection`](@extref) from the law and
+Build the (precomputed) [`CTFlows.Trajectories.ControlProjection`](@ref) from the law and
 the inner trajectory.
 """
 function _build_control_proj(law, traj, variable, coerce)
@@ -123,7 +123,7 @@ _cp_variable(v) = v isa Core.NotProvidedType ? nothing : v
 $(TYPEDEF)
 
 Callable struct returning the (1-D = scalar coerced) state of a
-[`CTFlows.Trajectories.StateFlowTrajectory`](@extref). The coercion (`only`/`identity`) is
+[`CTFlows.Trajectories.StateFlowTrajectory`](@ref). The coercion (`only`/`identity`) is
 precomputed and stored, so no length is tested at run time.
 """
 struct ControlledStateProjection{T<:VectorFieldTrajectory,C} <: Function
@@ -134,7 +134,7 @@ end
 $(TYPEDSIGNATURES)
 
 Return the (1-D = scalar coerced) state at time `t` from a
-[`CTFlows.Trajectories.ControlledStateProjection`](@extref).
+[`CTFlows.Trajectories.ControlledStateProjection`](@ref).
 """
 (sp::ControlledStateProjection)(t::Real) = sp.coerce(sp.traj(t))
 
@@ -142,7 +142,7 @@ Return the (1-D = scalar coerced) state at time `t` from a
 $(TYPEDEF)
 
 Callable struct returning the reconstructed control of a
-[`CTFlows.Trajectories.StateFlowTrajectory`](@extref):
+[`CTFlows.Trajectories.StateFlowTrajectory`](@ref):
 `ControlProjection(sol)(t) = law(t, x(t), v)`. A functor (not a closure); the state
 coercion is precomputed.
 """
@@ -174,9 +174,9 @@ Return the state function `x(t)` of a `StateFlowTrajectory` (scalar for a 1-D st
 
 This is a method of the [`CTModels.Components.state`](@extref) generic, contributed by
 CTFlows for `StateFlowTrajectory`. Returns the stored
-[`CTFlows.Trajectories.ControlledStateProjection`](@extref) precomputed at construction.
+[`CTFlows.Trajectories.ControlledStateProjection`](@ref) precomputed at construction.
 
-See also: [`CTFlows.Trajectories.control`](@extref), [`CTModels.Components.state`](@extref).
+See also: [`CTFlows.Trajectories.control`](@ref), [`CTModels.Components.state`](@extref).
 """
 Components.state(sol::StateFlowTrajectory) = sol.state_proj
 
@@ -184,7 +184,7 @@ Components.state(sol::StateFlowTrajectory) = sol.state_proj
 $(TYPEDSIGNATURES)
 
 Return the reconstructed control function `u(t) = law(t, x(t), v)` of a
-`StateFlowTrajectory`, as the stored [`CTFlows.Trajectories.ControlProjection`](@extref).
+`StateFlowTrajectory`, as the stored [`CTFlows.Trajectories.ControlProjection`](@ref).
 
 This is a method of the [`CTModels.Components.control`](@extref) generic, contributed by
 CTFlows for `StateFlowTrajectory`.
@@ -193,17 +193,17 @@ Raises a [`CTBase.Exceptions.PreconditionError`](@extref) when the trajectory wa
 without a control law (a basic control-free `Flow(ocp)`), which has no control to
 reconstruct.
 
-See also: [`CTFlows.Trajectories.state`](@extref), [`CTModels.Components.control`](@extref).
+See also: [`CTFlows.Trajectories.state`](@ref), [`CTModels.Components.control`](@extref).
 """
 Components.control(sol::StateFlowTrajectory) = _sft_control(sol.control_proj)
 
 """
 $(TYPEDSIGNATURES)
 
-Return the stored [`CTFlows.Trajectories.ControlProjection`](@extref) as-is, or throw a
+Return the stored [`CTFlows.Trajectories.ControlProjection`](@ref) as-is, or throw a
 [`CTBase.Exceptions.PreconditionError`](@extref) when the trajectory has no control
 projection (`cp === nothing`, a basic control-free `Flow(ocp)`). Dispatch helper for
-[`CTFlows.Trajectories.control`](@extref).
+[`CTFlows.Trajectories.control`](@ref).
 """
 _sft_control(cp::ControlProjection) = cp
 
@@ -285,7 +285,7 @@ an OCP (trajectory mode); otherwise a clear error is raised.
 This is a method of the [`CTModels.Components.objective`](@extref) generic, contributed by
 CTFlows for `StateFlowTrajectory`.
 
-See also: [`CTFlows.Trajectories.state`](@extref), [`CTFlows.Trajectories.control`](@extref), [`CTModels.Components.objective`](@extref).
+See also: [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.control`](@ref), [`CTModels.Components.objective`](@extref).
 """
 function Components.objective(
     sol::StateFlowTrajectory{T,L,V,<:Real}
@@ -302,7 +302,7 @@ available (the trajectory was built without an OCP, e.g. from `Flow(fc, law)`).
 This is a method of the [`CTModels.Components.objective`](@extref) generic, contributed by
 CTFlows for `StateFlowTrajectory`.
 
-See also: [`CTFlows.Trajectories.objective`](@extref), [`CTModels.Components.objective`](@extref).
+See also: [`CTFlows.Trajectories.objective`](@ref), [`CTModels.Components.objective`](@extref).
 """
 function Components.objective(
     sol::StateFlowTrajectory{T,L,V,Nothing}
@@ -329,7 +329,7 @@ state flow (`OpenLoop`/`ClosedLoop`), not a Hamiltonian flow. Raises a
 This is a method of the [`CTModels.Components.costate`](@extref) generic, contributed by
 CTFlows for `StateFlowTrajectory`.
 
-See also: [`CTFlows.Trajectories.state`](@extref), [`CTFlows.Trajectories.control`](@extref), [`CTModels.Components.costate`](@extref).
+See also: [`CTFlows.Trajectories.state`](@ref), [`CTFlows.Trajectories.control`](@ref), [`CTModels.Components.costate`](@extref).
 """
 function Components.costate(sol::StateFlowTrajectory)
     return throw(
@@ -351,7 +351,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Pretty-print a [`CTFlows.Trajectories.StateFlowTrajectory`](@extref) to `io` (multi-line
+Pretty-print a [`CTFlows.Trajectories.StateFlowTrajectory`](@ref) to `io` (multi-line
 format with tspan, time points, final state, variable, and objective when available).
 """
 function Base.show(io::IO, ::MIME"text/plain", sol::StateFlowTrajectory)
@@ -382,7 +382,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Compact one-line representation of a [`CTFlows.Trajectories.StateFlowTrajectory`](@extref).
+Compact one-line representation of a [`CTFlows.Trajectories.StateFlowTrajectory`](@ref).
 """
 function Base.show(io::IO, sol::StateFlowTrajectory)
     print(io, "StateFlowTrajectory(")

@@ -25,10 +25,10 @@ Collapse a length-1 array to its single scalar element, GPU-safely.
   convention returns an identical host scalar on CPU and GPU (never a device 1-vector).
 - Backend-agnostic (`AbstractGPUArray` covers CUDA/AMDGPU/Metal).
 - On the RHS hot path, only ever runs for the degenerate length-1-on-GPU case (real GPU
-  workloads have `length ≥ 2`, where [`CTFlows.Systems._coerce_state`](@extref) returns
+  workloads have `length ≥ 2`, where [`CTFlows.Systems._coerce_state`](@ref) returns
   `identity` at zero cost).
 
-See also: [`CTFlows.Systems._coerce_state`](@extref).
+See also: [`CTFlows.Systems._coerce_state`](@ref).
 """
 _safe_only(x::GPUArraysCore.AbstractGPUArray) = GPUArraysCore.@allowscalar only(x)
 
@@ -37,7 +37,7 @@ $(TYPEDSIGNATURES)
 
 Host-array fallback: exactly `only(x)`.
 
-See also: [`CTFlows.Systems._safe_only`](@extref).
+See also: [`CTFlows.Systems._safe_only`](@ref).
 """
 _safe_only(x) = only(x)
 
@@ -58,7 +58,7 @@ $(TYPEDSIGNATURES)
 
 State dimension of a vector initial condition: `length(x)`.
 
-See also: [`CTFlows.Systems._state_dim`](@extref).
+See also: [`CTFlows.Systems._state_dim`](@ref).
 """
 _state_dim(x::AbstractVector) = length(x)
 
@@ -67,7 +67,7 @@ $(TYPEDSIGNATURES)
 
 State dimension of a batched `Matrix` initial condition: `size(x, 1)` (per-column batch).
 
-See also: [`CTFlows.Systems._state_dim`](@extref).
+See also: [`CTFlows.Systems._state_dim`](@ref).
 """
 _state_dim(x::AbstractMatrix) = size(x, 1)
 
@@ -101,7 +101,7 @@ are left untouched via `identity`.
 - Differs from `CTBase.Core.make_coerce` in that a length-1 **vector** also collapses
   to a scalar (`_safe_only`, the GPU-safe `only`), not only a bare `Number`.
 
-See also: [`CTFlows.Systems._safe_only`](@extref).
+See also: [`CTFlows.Systems._safe_only`](@ref).
 """
 _coerce_state(::Number) = _safe_only
 
@@ -110,7 +110,7 @@ $(TYPEDSIGNATURES)
 
 Batched `Matrix` states are always left untouched (`identity`): batch mode never collapses to a scalar.
 
-See also: [`CTFlows.Systems._coerce_state`](@extref).
+See also: [`CTFlows.Systems._coerce_state`](@ref).
 """
 _coerce_state(::AbstractMatrix) = identity
 
@@ -119,7 +119,7 @@ $(TYPEDSIGNATURES)
 
 Vector states: `_safe_only` for length 1 (1-D = scalar convention), `identity` otherwise.
 
-See also: [`CTFlows.Systems._coerce_state`](@extref), [`CTFlows.Systems._safe_only`](@extref).
+See also: [`CTFlows.Systems._coerce_state`](@ref), [`CTFlows.Systems._safe_only`](@ref).
 """
 _coerce_state(x::AbstractVector) = length(x) == 1 ? _safe_only : identity
 
@@ -158,7 +158,7 @@ Return `src` in a form that can be broadcast into `dst` without a device/host mi
   `O(n_v)` H2D copy.
 - Backend-agnostic (`GPUArraysCore.AbstractGPUArray` covers CUDA/AMDGPU/Metal).
 
-See also: [`CTFlows.Systems._aug_assign!`](@extref), [`CTFlows.Systems._safe_only`](@extref).
+See also: [`CTFlows.Systems._aug_assign!`](@ref), [`CTFlows.Systems._safe_only`](@ref).
 """
 _device_like(::AbstractArray, src) = src
 
@@ -167,7 +167,7 @@ $(TYPEDSIGNATURES)
 
 Scalar source is always compatible with any destination: return `src` as-is.
 
-See also: [`CTFlows.Systems._device_like`](@extref).
+See also: [`CTFlows.Systems._device_like`](@ref).
 """
 _device_like(::GPUArraysCore.AbstractGPUArray, src::Number) = src
 
@@ -176,7 +176,7 @@ $(TYPEDSIGNATURES)
 
 Device-resident source on a matching device destination: return `src` as-is (no copy).
 
-See also: [`CTFlows.Systems._device_like`](@extref).
+See also: [`CTFlows.Systems._device_like`](@ref).
 """
 _device_like(::GPUArraysCore.AbstractGPUArray, src::GPUArraysCore.AbstractGPUArray) = src
 function _device_like(dst::GPUArraysCore.AbstractGPUArray, src::AbstractArray)
@@ -203,7 +203,7 @@ Allocate an uninitialised length-`n` buffer of eltype `T` in `template`'s array 
   Allocating those as a host `Vector` pins the whole OCP hot path to the CPU; deriving them
   from the state instead keeps the buffer on whichever device the state already lives on.
 - The `Number` fallback is required, not defensive: under the "1-D = scalar" convention the
-  coerced state is a scalar (via [`CTFlows.Systems._safe_only`](@extref) for a declared dimension
+  coerced state is a scalar (via [`CTFlows.Systems._safe_only`](@ref) for a declared dimension
   of 1), and `similar` is undefined for `Number`. A scalar state is a **host** scalar even on
   GPU, so a host `Vector` is the correct buffer there.
 - This generalises the same `isa AbstractArray` branch already used for `pv0` in
@@ -211,7 +211,7 @@ Allocate an uninitialised length-`n` buffer of eltype `T` in `template`'s array 
 - Dispatch is on the value actually received at the call site, so CPU behaviour is
   byte-for-byte unchanged and no run-time type test enters the hot path.
 
-See also: [`CTFlows.Systems._device_like`](@extref), [`CTFlows.Systems._safe_only`](@extref).
+See also: [`CTFlows.Systems._device_like`](@ref), [`CTFlows.Systems._safe_only`](@ref).
 """
 _buffer_like(template::AbstractArray, ::Type{T}, n::Int) where {T} = similar(template, T, n)
 
@@ -220,7 +220,7 @@ $(TYPEDSIGNATURES)
 
 Scalar fallback: allocate a host `Vector{T}(undef, n)` — `similar` is undefined for `Number`.
 
-See also: [`CTFlows.Systems._buffer_like`](@extref).
+See also: [`CTFlows.Systems._buffer_like`](@ref).
 """
 _buffer_like(::Any, ::Type{T}, n::Int) where {T} = Vector{T}(undef, n)
 
@@ -233,7 +233,7 @@ batched `Matrix` state (each column an independent trajectory) — `batch = size
 More specific than the `AbstractArray` method above, so it is selected automatically for
 a `Matrix`/`MMatrix`/`SMatrix` template; no call site needs to change.
 
-See also: [`CTFlows.Systems._buffer_like`](@extref).
+See also: [`CTFlows.Systems._buffer_like`](@ref).
 """
 function _buffer_like(template::AbstractMatrix, ::Type{T}, n::Int) where {T}
     return similar(template, T, n, size(template, 2))
