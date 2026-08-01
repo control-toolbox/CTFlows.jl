@@ -66,7 +66,7 @@ the complete integration result with trajectory data.
 # Returns
 - `AbstractIntegrationResult`: The complete integration result with trajectory data.
 
-See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@ref), [`CTFlows.Integrators.build_options`](@ref).
+See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@extref), [`CTFlows.Integrators.build_options`](@extref).
 """
 function (f::SciMLProblemFlow)(; unsafe=Flows.__unsafe())
     opts = Integrators.build_options(f.integrator, nothing)
@@ -93,7 +93,7 @@ final state, not the full trajectory.
 # Returns
 - The final state vector.
 
-See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@ref), [`CTFlows.Configs.StateEndPointConfig`](@ref).
+See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@extref), [`CTFlows.Configs.StateEndPointConfig`](@extref).
 """
 function (f::SciMLProblemFlow)(
     t0::Real, x0, tf::Real; variable=Flows.__variable(), unsafe=Flows.__unsafe()
@@ -178,7 +178,7 @@ Shows the time span, initial condition, and integrator information.
 - `io::IO`: The IO stream to write to.
 - `f::SciMLProblemFlow`: The SciML problem flow to display.
 
-See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@ref).
+See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@extref).
 """
 function Base.show(io::IO, f::SciMLProblemFlow)
     fmt = Display.format_codes(io)

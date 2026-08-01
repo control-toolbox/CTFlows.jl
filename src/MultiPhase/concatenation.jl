@@ -56,7 +56,7 @@ using CTFlows: Flows, MultiPhase
 mpf = flow1 * (1.0, flow2)
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
+See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@extref), [`CTFlows.MultiPhase.get_flows`](@extref).
 """
 function Base.:*(
     f1::Flows.AbstractStateFlow, (t_switch, f2)::Tuple{Real,Flows.AbstractStateFlow}
@@ -96,8 +96,8 @@ mpf = flow1 * (1.0, [0.1, 0.2], flow2)   # x ← x + [0.1, 0.2] at t = 1.0
 mpf = flow1 * (1.0, x -> 2.0 .* x, flow2)   # x ← 2x at t = 1.0
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref),
-  [`CTFlows.MultiPhase._apply_component_jump`](@ref).
+See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@extref),
+  [`CTFlows.MultiPhase._apply_component_jump`](@extref).
 """
 function Base.:*(
     f1::Flows.AbstractStateFlow,
@@ -131,7 +131,7 @@ using CTFlows: Flows, MultiPhase
 mpf = flow1 * (1.0, flow2)
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.MultiPhase.get_flows`](@ref).
+See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@extref), [`CTFlows.MultiPhase.get_flows`](@extref).
 """
 function Base.:*(
     f1::Flows.AbstractHamiltonianFlow,
@@ -172,8 +172,8 @@ mpf = flow1 * (1.0, [0.5, 0.0], flow2)   # p ← p + [0.5, 0.0] at t = 1.0
 mpf = flow1 * (1.0, (x, p) -> (x, 2.0 .* p), flow2)   # p ← 2p at t = 1.0
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref),
-  [`CTFlows.MultiPhase._apply_hamiltonian_jump`](@ref).
+See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@extref),
+  [`CTFlows.MultiPhase._apply_hamiltonian_jump`](@extref).
 """
 function Base.:*(
     f1::Flows.AbstractHamiltonianFlow,
@@ -220,8 +220,8 @@ mpf = flow1 * (1.0, [0.1, 0.0], nothing, flow2)
 mpf = flow1 * (1.0, x -> 2.0 .* x, nothing, flow2)
 \`\`\`
 
-See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref),
-  [`CTFlows.MultiPhase._apply_component_jump`](@ref).
+See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@extref),
+  [`CTFlows.MultiPhase._apply_component_jump`](@extref).
 """
 function Base.:*(
     f1::Flows.AbstractHamiltonianFlow,

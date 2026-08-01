@@ -25,10 +25,10 @@ All subtypes must implement a callable interface:
 - Out-of-place: `(f::SubType)(u, λ, t) -> du` for allocating output
 
 # Notes
-- Subtypes include [`CTFlows.Systems.AbstractIPHamRHS`](@ref) and [`CTFlows.Systems.AbstractOoPHamRHS`](@ref).
+- Subtypes include [`CTFlows.Systems.AbstractIPHamRHS`](@extref) and [`CTFlows.Systems.AbstractOoPHamRHS`](@extref).
 - These functors are created by `build_rhs` and related functions.
 
-See also: [`CTFlows.Systems.AbstractRHS`](@ref), [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamOoPRHS`](@ref).
+See also: [`CTFlows.Systems.AbstractRHS`](@extref), [`CTFlows.Systems.HamIpRHS`](@extref), [`CTFlows.Systems.HamOoPRHS`](@extref).
 """
 abstract type AbstractHamRHS{T<:Traits.AbstractMutabilityTrait} <: AbstractRHS{T} end
 
@@ -42,9 +42,9 @@ derivatives, mutating the output vector `du` rather than allocating a new one.
 
 # Notes
 - All subtypes must implement `(f::SubType)(du, u, λ, t)`.
-- Concrete subtypes include [`CTFlows.Systems.HamIpRHS`](@ref) and [`CTFlows.Systems.HamIpAugRHS`](@ref).
+- Concrete subtypes include [`CTFlows.Systems.HamIpRHS`](@extref) and [`CTFlows.Systems.HamIpAugRHS`](@extref).
 
-See also: [`CTFlows.Systems.AbstractHamRHS`](@ref), [`CTFlows.Systems.AbstractOoPHamRHS`](@ref).
+See also: [`CTFlows.Systems.AbstractHamRHS`](@extref), [`CTFlows.Systems.AbstractOoPHamRHS`](@extref).
 """
 abstract type AbstractIPHamRHS <: AbstractHamRHS{Traits.InPlace} end
 
@@ -58,9 +58,9 @@ derivatives, allocating and returning a new output vector.
 
 # Notes
 - All subtypes must implement `(f::SubType)(u, λ, t) -> du`.
-- Concrete subtypes include [`CTFlows.Systems.HamOoPRHS`](@ref).
+- Concrete subtypes include [`CTFlows.Systems.HamOoPRHS`](@extref).
 
-See also: [`CTFlows.Systems.AbstractHamRHS`](@ref), [`CTFlows.Systems.AbstractIPHamRHS`](@ref).
+See also: [`CTFlows.Systems.AbstractHamRHS`](@extref), [`CTFlows.Systems.AbstractIPHamRHS`](@extref).
 """
 abstract type AbstractOoPHamRHS <: AbstractHamRHS{Traits.OutOfPlace} end
 
@@ -103,7 +103,7 @@ gradient in-place, following the canonical Hamiltonian equations:
 - The AD cache is embedded in the functor for better composability.
 - This functor is created by `build_rhs` for Hamiltonian systems.
 
-See also: [`CTFlows.Systems.HamOoPRHS`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
+See also: [`CTFlows.Systems.HamOoPRHS`](@extref), [`CTFlows.Systems.HamIpAugRHS`](@extref).
 """
 struct HamIpRHS{
     H<:Data.AbstractHamiltonian,
@@ -162,7 +162,7 @@ gradient out-of-place, following the canonical Hamiltonian equations:
 - The AD cache is embedded in the functor for better composability.
 - This functor is created by `build_oop_rhs` for Hamiltonian systems.
 
-See also: [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
+See also: [`CTFlows.Systems.HamIpRHS`](@extref), [`CTFlows.Systems.HamIpAugRHS`](@extref).
 """
 struct HamOoPRHS{
     H<:Data.AbstractHamiltonian,
@@ -207,9 +207,9 @@ and variable matrix `v` have compatible batch sizes (same number of columns).
 
 # Notes
 - No-op for non-matrix inputs (vectors or scalars).
-- Used internally by [`CTFlows.Systems.HamIpAugRHS`](@ref) to validate batch mode.
+- Used internally by [`CTFlows.Systems.HamIpAugRHS`](@extref) to validate batch mode.
 
-See also: [`CTFlows.Systems.HamIpAugRHS`](@ref), [`CTFlows.Systems._aug_split`](@ref).
+See also: [`CTFlows.Systems.HamIpAugRHS`](@extref), [`CTFlows.Systems._aug_split`](@extref).
 """
 function _check_aug_batch_compat(u::AbstractMatrix, v::AbstractMatrix)
     if size(u, 2) != size(v, 2)
@@ -236,7 +236,7 @@ No-op version of batch compatibility check for non-matrix inputs.
 
 # Notes
 - Used as fallback when inputs are not matrices.
-- See [`CTFlows.Systems._check_aug_batch_compat(::AbstractMatrix, ::AbstractMatrix)`](@ref) for the matrix version.
+- See [`CTFlows.Systems._check_aug_batch_compat(::AbstractMatrix, ::AbstractMatrix)`](@extref) for the matrix version.
 """
 _check_aug_batch_compat(u, v) = nothing   # no-op for non-matrix cases
 
@@ -278,7 +278,7 @@ The state vector is augmented as `[x; p; v]` where `v` is the variable costate.
 - The AD cache is embedded in the functor for better composability.
 - This functor is created by `build_rhs_augmented` for Hamiltonian systems.
 
-See also: [`CTFlows.Systems.HamIpRHS`](@ref), [`CTFlows.Systems.HamOoPRHS`](@ref).
+See also: [`CTFlows.Systems.HamIpRHS`](@extref), [`CTFlows.Systems.HamOoPRHS`](@extref).
 """
 struct HamIpAugRHS{
     H<:Data.AbstractHamiltonian,
@@ -315,7 +315,7 @@ Return a descriptive label for the RHS conversion performed by a Hamiltonian fun
 
 Used internally by `Base.show` for display.
 
-See also: [`CTFlows.Systems.AbstractHamRHS`](@ref).
+See also: [`CTFlows.Systems.AbstractHamRHS`](@extref).
 """
 _rhs_conversion_label(::HamIpRHS) = "Hamiltonian AD → in-place interface"
 
@@ -324,7 +324,7 @@ $(TYPEDSIGNATURES)
 
 Hamiltonian AD wrapped as out-of-place interface.
 
-See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+See also: [`CTFlows.Systems._rhs_conversion_label`](@extref).
 """
 _rhs_conversion_label(::HamOoPRHS) = "Hamiltonian AD → out-of-place interface"
 
@@ -333,7 +333,7 @@ $(TYPEDSIGNATURES)
 
 Hamiltonian AD wrapped as in-place augmented interface.
 
-See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+See also: [`CTFlows.Systems._rhs_conversion_label`](@extref).
 """
 _rhs_conversion_label(::HamIpAugRHS) = "Hamiltonian AD → in-place augmented interface"
 
@@ -344,7 +344,7 @@ Display a compact representation of an `AbstractHamRHS` functor.
 
 Shows the functor type name, the wrapped Hamiltonian's traits, and the conversion label.
 
-See also: [`CTFlows.Systems.AbstractHamRHS`](@ref), [`CTFlows.Systems._rhs_conversion_label`](@ref).
+See also: [`CTFlows.Systems.AbstractHamRHS`](@extref), [`CTFlows.Systems._rhs_conversion_label`](@extref).
 """
 function Base.show(io::IO, f::AbstractHamRHS)
     fmt = Display.format_codes(io)
@@ -365,7 +365,7 @@ Display an `AbstractHamRHS` functor in the REPL with `text/plain` MIME type.
 
 Delegates to the compact `show` method.
 
-See also: [`CTFlows.Systems.AbstractHamRHS`](@ref).
+See also: [`CTFlows.Systems.AbstractHamRHS`](@extref).
 """
 function Base.show(io::IO, ::MIME"text/plain", f::AbstractHamRHS)
     return show(io, f)

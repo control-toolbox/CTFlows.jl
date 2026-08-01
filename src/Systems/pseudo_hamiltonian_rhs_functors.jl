@@ -18,7 +18,7 @@ $(TYPEDEF)
 Abstract supertype for pseudo-Hamiltonian right-hand side (RHS) functors. The type
 parameter encodes the mutability trait (in-place vs out-of-place).
 
-See also: [`CTFlows.Systems.AbstractRHS`](@ref), [`CTFlows.Systems.PseudoHamIpRHS`](@ref).
+See also: [`CTFlows.Systems.AbstractRHS`](@extref), [`CTFlows.Systems.PseudoHamIpRHS`](@extref).
 """
 abstract type AbstractPseudoHamRHS{T<:Traits.AbstractMutabilityTrait} <: AbstractRHS{T} end
 
@@ -27,7 +27,7 @@ $(TYPEDEF)
 
 Abstract supertype for in-place pseudo-Hamiltonian RHS functors.
 
-See also: [`CTFlows.Systems.AbstractPseudoHamRHS`](@ref).
+See also: [`CTFlows.Systems.AbstractPseudoHamRHS`](@extref).
 """
 abstract type AbstractIPPseudoHamRHS <: AbstractPseudoHamRHS{Traits.InPlace} end
 
@@ -36,7 +36,7 @@ $(TYPEDEF)
 
 Abstract supertype for out-of-place pseudo-Hamiltonian RHS functors.
 
-See also: [`CTFlows.Systems.AbstractPseudoHamRHS`](@ref).
+See also: [`CTFlows.Systems.AbstractPseudoHamRHS`](@extref).
 """
 abstract type AbstractOoPPseudoHamRHS <: AbstractPseudoHamRHS{Traits.OutOfPlace} end
 
@@ -63,7 +63,7 @@ In-place RHS functor for a `PseudoHamiltonianSystem`. Evaluates the feedback con
 - `cx::CX`: state coercion.
 - `cp::CP`: costate coercion.
 
-See also: [`CTFlows.Systems.PseudoHamOoPRHS`](@ref), [`CTFlows.Systems.PseudoHamIpAugRHS`](@ref).
+See also: [`CTFlows.Systems.PseudoHamOoPRHS`](@extref), [`CTFlows.Systems.PseudoHamIpAugRHS`](@extref).
 """
 struct PseudoHamIpRHS{
     PH<:Data.PseudoHamiltonian,
@@ -94,7 +94,7 @@ end
 $(TYPEDEF)
 
 Out-of-place RHS functor for a `PseudoHamiltonianSystem`; see
-[`CTFlows.Systems.PseudoHamIpRHS`](@ref) for the computation. Returns `vcat(∂p, -∂x)`.
+[`CTFlows.Systems.PseudoHamIpRHS`](@extref) for the computation. Returns `vcat(∂p, -∂x)`.
 
 # Fields
 - `h̃::PH`: the pseudo-Hamiltonian `H̃(t, x, p, u, v)`.
@@ -104,7 +104,7 @@ Out-of-place RHS functor for a `PseudoHamiltonianSystem`; see
 - `cx::CX`: state coercion.
 - `cp::CP`: costate coercion.
 
-See also: [`CTFlows.Systems.PseudoHamIpRHS`](@ref).
+See also: [`CTFlows.Systems.PseudoHamIpRHS`](@extref).
 """
 struct PseudoHamOoPRHS{
     PH<:Data.PseudoHamiltonian,
@@ -140,7 +140,7 @@ end
 $(TYPEDEF)
 
 In-place augmented RHS functor for a `PseudoHamiltonianSystem` with variable costate.
-Extends [`CTFlows.Systems.PseudoHamIpRHS`](@ref) with `ṗv = -∂H̃/∂v` (control fixed),
+Extends [`CTFlows.Systems.PseudoHamIpRHS`](@extref) with `ṗv = -∂H̃/∂v` (control fixed),
 computed by [`CTBase.Differentiation.pseudo_variable_gradient`](@extref). The augmented
 state is `[x; p; pv]`.
 
@@ -153,7 +153,7 @@ state is `[x; p; pv]`.
 - `cx::CX`: state coercion.
 - `cp::CP`: costate coercion.
 
-See also: [`CTFlows.Systems.PseudoHamIpRHS`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
+See also: [`CTFlows.Systems.PseudoHamIpRHS`](@extref), [`CTFlows.Systems.HamIpAugRHS`](@extref).
 """
 struct PseudoHamIpAugRHS{
     PH<:Data.PseudoHamiltonian,
@@ -194,7 +194,7 @@ Return a descriptive label for the RHS conversion performed by a pseudo-Hamilton
 
 Used internally by `Base.show` for display.
 
-See also: [`CTFlows.Systems.AbstractPseudoHamRHS`](@ref).
+See also: [`CTFlows.Systems.AbstractPseudoHamRHS`](@extref).
 """
 _rhs_conversion_label(::PseudoHamIpRHS) = "PseudoHamiltonian AD → in-place interface"
 
@@ -203,7 +203,7 @@ $(TYPEDSIGNATURES)
 
 Pseudo-Hamiltonian AD wrapped as out-of-place interface.
 
-See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+See also: [`CTFlows.Systems._rhs_conversion_label`](@extref).
 """
 _rhs_conversion_label(::PseudoHamOoPRHS) = "PseudoHamiltonian AD → out-of-place interface"
 
@@ -212,7 +212,7 @@ $(TYPEDSIGNATURES)
 
 Pseudo-Hamiltonian AD wrapped as in-place augmented interface.
 
-See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+See also: [`CTFlows.Systems._rhs_conversion_label`](@extref).
 """
 function _rhs_conversion_label(::PseudoHamIpAugRHS)
     return "PseudoHamiltonian AD → in-place augmented interface"
@@ -225,7 +225,7 @@ Display a compact representation of an `AbstractPseudoHamRHS` functor.
 
 Shows the functor type name, the wrapped pseudo-Hamiltonian's traits, and the conversion label.
 
-See also: [`CTFlows.Systems.AbstractPseudoHamRHS`](@ref), [`CTFlows.Systems._rhs_conversion_label`](@ref).
+See also: [`CTFlows.Systems.AbstractPseudoHamRHS`](@extref), [`CTFlows.Systems._rhs_conversion_label`](@extref).
 """
 function Base.show(io::IO, f::AbstractPseudoHamRHS)
     fmt = Display.format_codes(io)
@@ -246,7 +246,7 @@ Display an `AbstractPseudoHamRHS` functor in the REPL with `text/plain` MIME typ
 
 Delegates to the compact `show` method.
 
-See also: [`CTFlows.Systems.AbstractPseudoHamRHS`](@ref).
+See also: [`CTFlows.Systems.AbstractPseudoHamRHS`](@extref).
 """
 function Base.show(io::IO, ::MIME"text/plain", f::AbstractPseudoHamRHS)
     return show(io, f)

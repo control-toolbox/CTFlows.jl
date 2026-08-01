@@ -19,12 +19,12 @@ by directly calling the function.
 - `cx::CX`: coercion applied to the state before calling `f` (`_safe_only` for a 1-D
   state, `identity` otherwise, per issue #357 — `SciMLFunctionSystem` shares
   `VectorFieldSystem`'s `Systems`/`Trajectories` dispatch, so it gets the same
-  1-D = scalar coercion; see [`CTFlows.Systems._coerce_state`](@ref)).
+  1-D = scalar coercion; see [`CTFlows.Systems._coerce_state`](@extref)).
 
 # Call signature
 `(r::IPSciMLIpRHS)(du, u, λ, t) -> nothing`
 
-See also: [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@ref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@ref).
+See also: [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@extref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@extref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@extref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@extref).
 """
 struct IPSciMLIpRHS{
     F<:SciMLBase.AbstractODEFunction{true},
@@ -58,7 +58,7 @@ by allocating a temporary buffer on each call.
 - `dx = similar(u)` already matches `u`'s actual (uncoerced) shape, so no reshaping is
   needed even when `cx` collapses the CALL argument to a scalar.
 
-See also: [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@ref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@ref).
+See also: [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@extref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@extref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@extref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@extref).
 """
 struct OoPSciMLIpRHS{
     F<:SciMLBase.AbstractODEFunction{true},
@@ -89,7 +89,7 @@ that converts the result to match the input type (e.g., Vector → SVector).
 # Call signature
 `(r::OoPSciMLIpFinalizeRHS)(u, λ, t) -> du`
 
-See also: [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@ref).
+See also: [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@extref), [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@extref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@extref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@extref).
 """
 struct OoPSciMLIpFinalizeRHS{
     F<:SciMLBase.AbstractODEFunction{true},
@@ -120,7 +120,7 @@ by allocating the result into the pre-allocated `du` buffer.
 # Call signature
 `(r::IPSciMLOoPRHS)(du, u, λ, t) -> nothing`
 
-See also: [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@ref).
+See also: [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@extref), [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@extref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@extref), [`CTFlowsSciMLFlows.OoPSciMLOoPRHS`](@extref).
 """
 struct IPSciMLOoPRHS{
     F<:SciMLBase.AbstractODEFunction{false},
@@ -155,9 +155,9 @@ by directly calling the function.
   block and nothing to reassemble: when `cx` collapses `u` to a scalar for the call,
   `f` may return a bare scalar too, which does not match `u`'s own (uncoerced)
   container shape. That case is reshaped back explicitly, matching
-  [`CTFlows.Systems.OoPVFOoPRHS`](@ref)'s identical handling.
+  [`CTFlows.Systems.OoPVFOoPRHS`](@extref)'s identical handling.
 
-See also: [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@ref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@ref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@ref).
+See also: [`CTFlowsSciMLFlows.IPSciMLIpRHS`](@extref), [`CTFlowsSciMLFlows.OoPSciMLIpRHS`](@extref), [`CTFlowsSciMLFlows.OoPSciMLIpFinalizeRHS`](@extref), [`CTFlowsSciMLFlows.IPSciMLOoPRHS`](@extref).
 """
 struct OoPSciMLOoPRHS{
     F<:SciMLBase.AbstractODEFunction{false},
@@ -200,7 +200,7 @@ Return a human-readable label describing the RHS conversion strategy.
 - Internal helper used for display purposes in `Base.show` methods.
 - Labels describe both the wrapped SciML function's interface and the provided interface.
 
-See also: [`_AnySciMLRHS`](@ref).
+See also: [`_AnySciMLRHS`](@extref).
 """
 _rhs_sciml_label(::IPSciMLIpRHS) = "in-place SciML → in-place interface"
 _rhs_sciml_label(::OoPSciMLIpRHS) = "in-place SciML → out-of-place interface"
@@ -219,7 +219,7 @@ Union type of all SciML RHS functors.
 - Internal type alias used for method dispatch on display methods.
 - Covers all five conversion strategies between in-place and out-of-place interfaces.
 
-See also: [`_rhs_sciml_label`](@ref), [`IPSciMLIpRHS`](@ref), [`OoPSciMLIpRHS`](@ref), [`OoPSciMLIpFinalizeRHS`](@ref), [`IPSciMLOoPRHS`](@ref), [`OoPSciMLOoPRHS`](@ref).
+See also: [`_rhs_sciml_label`](@extref), [`IPSciMLIpRHS`](@extref), [`OoPSciMLIpRHS`](@extref), [`OoPSciMLIpFinalizeRHS`](@extref), [`IPSciMLOoPRHS`](@extref), [`OoPSciMLOoPRHS`](@extref).
 """
 const _AnySciMLRHS = Union{
     IPSciMLIpRHS,OoPSciMLIpRHS,OoPSciMLIpFinalizeRHS,IPSciMLOoPRHS,OoPSciMLOoPRHS
@@ -237,7 +237,7 @@ and the conversion strategy label.
 - `io::IO`: The IO stream to write to.
 - `r::_AnySciMLRHS`: The SciML RHS functor to display.
 
-See also: [`CTFlowsSciMLFlows._rhs_sciml_label`](@ref), [`CTFlowsSciMLFlows._AnySciMLRHS`](@ref).
+See also: [`CTFlowsSciMLFlows._rhs_sciml_label`](@extref), [`CTFlowsSciMLFlows._AnySciMLRHS`](@extref).
 """
 function Base.show(io::IO, r::_AnySciMLRHS)
     fmt = Display.format_codes(io)
@@ -267,7 +267,7 @@ Delegates to the compact show method.
 - `::MIME"text/plain"`: The MIME type for REPL display.
 - `r::_AnySciMLRHS`: The SciML RHS functor to display.
 
-See also: [`CTFlowsSciMLFlows._AnySciMLRHS`](@ref).
+See also: [`CTFlowsSciMLFlows._AnySciMLRHS`](@extref).
 """
 function Base.show(io::IO, ::MIME"text/plain", r::_AnySciMLRHS)
     return show(io, r)

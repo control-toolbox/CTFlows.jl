@@ -32,7 +32,7 @@ Dispatched on the Hamiltonian's time/variable-dependence traits:
 - NonAutonomous/NonFixed — `(t, x, p, v; variable_costate=false) -> (∂p, -∂x)`, or
   `(∂p, -∂x, -∂v)` when `variable_costate=true`
 
-See also: [`CTFlows.Systems.HVFIpFunctor`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
+See also: [`CTFlows.Systems.HVFIpFunctor`](@extref), [`CTFlows.Systems.hamiltonian_vector_field`](@extref).
 """
 struct HVFOoPFunctor{H<:Data.AbstractHamiltonian,B<:Differentiation.AbstractADBackend} <:
        Function
@@ -98,7 +98,7 @@ is filled with `-∂H/∂v`; it must be provided or a `PreconditionError` is thr
 # Throws
 - `Exceptions.PreconditionError`: when `variable_costate=true` and `dpv` is `nothing`.
 
-See also: [`CTFlows.Systems.HVFOoPFunctor`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
+See also: [`CTFlows.Systems.HVFOoPFunctor`](@extref), [`CTFlows.Systems.hamiltonian_vector_field`](@extref).
 """
 struct HVFIpFunctor{H<:Data.AbstractHamiltonian,B<:Differentiation.AbstractADBackend} <:
        Function
@@ -176,7 +176,7 @@ the **symplectic gradient** of `H`) for a given Hamiltonian using automatic
 differentiation. It accepts any [`CTBase.Data.AbstractHamiltonian`](@extref) — a scalar
 `Hamiltonian` or a `ComposedHamiltonian` (as produced by an OCP + control law) — so it also
 covers pseudo-Hamiltonian flows. The returned vector field wraps a callable
-[`CTFlows.Systems.HVFOoPFunctor`](@ref) or [`CTFlows.Systems.HVFIpFunctor`](@ref) whose
+[`CTFlows.Systems.HVFOoPFunctor`](@extref) or [`CTFlows.Systems.HVFIpFunctor`](@extref) whose
 call signature matches the Hamiltonian's time and variable dependence traits.
 
 # Arguments
@@ -197,7 +197,7 @@ call signature matches the Hamiltonian's time and variable dependence traits.
   - Autonomous/NonFixed: `(x, p, v; variable_costate=false) -> (∂p, -∂x)` or `(x, p, v; variable_costate=true) -> (∂p, -∂x, -∂v)`
   - NonAutonomous/NonFixed: `(t, x, p, v; variable_costate=false) -> (∂p, -∂x)` or `(t, x, p, v; variable_costate=true) -> (∂p, -∂x, -∂v)`
 
-See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTBase.Data.HamiltonianVectorField`](@extref)
+See also: [`CTFlows.Systems.HamiltonianSystem`](@extref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@extref), [`CTBase.Data.HamiltonianVectorField`](@extref)
 """
 function hamiltonian_vector_field(
     h::Data.AbstractHamiltonian{TD,VD};
@@ -232,7 +232,7 @@ No computation is performed since the vector field is already constructed.
   redundant automatic differentiation.
 - The returned vector field is identical to `sys.hvf` (same object reference).
 
-See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTBase.Data.HamiltonianVectorField`](@extref)
+See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@extref), [`CTBase.Data.HamiltonianVectorField`](@extref)
 """
 function hamiltonian_vector_field(
     sys::HamiltonianVectorFieldSystem; inplace::Bool=__hvf_inplace()
@@ -260,9 +260,9 @@ Hamiltonian overload to compute the vector field via automatic differentiation.
   passed through as-is (no unwrapping/rewrapping), so a device-specific backend (e.g.
   `DifferentiationInterface{Strategies.GPU}`) is preserved.
 - The `inplace` parameter controls whether the returned closure writes results in-place.
-- Delegates to [`CTFlows.Systems.hamiltonian_vector_field`](@ref).
+- Delegates to [`CTFlows.Systems.hamiltonian_vector_field`](@extref).
 
-See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTBase.Data.Hamiltonian`](@extref), [`CTBase.Differentiation.AbstractADBackend`](@extref)
+See also: [`CTFlows.Systems.HamiltonianSystem`](@extref), [`CTBase.Data.Hamiltonian`](@extref), [`CTBase.Differentiation.AbstractADBackend`](@extref)
 """
 function hamiltonian_vector_field(sys::HamiltonianSystem; inplace::Bool=__hvf_inplace())
     return hamiltonian_vector_field(sys.h; ad_backend=backend(sys), inplace=inplace)
@@ -282,7 +282,7 @@ Get the Hamiltonian vector field from any `AbstractHamiltonianSystem`, dispatchi
 - `Exceptions.NotImplemented`: when the system's AD trait is `WithoutAD` and no
   specialized `hamiltonian_vector_field` overload exists for the system type.
 
-See also: [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
+See also: [`CTFlows.Systems.HamiltonianSystem`](@extref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@extref).
 """
 function hamiltonian_vector_field(
     sys::AbstractHamiltonianSystem; inplace::Bool=__hvf_inplace(), kwargs...
@@ -298,7 +298,7 @@ Compute the Hamiltonian vector field for a `WithAD` system via automatic differe
 Delegates to `hamiltonian_vector_field(hamiltonian(sys); ...)` using the AD backend
 stored in the system.
 
-See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref).
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@extref), [`CTFlows.Systems.HamiltonianSystem`](@extref).
 """
 function _hamiltonian_vector_field_by_ad(
     ::Type{Traits.WithAD}, sys::AbstractHamiltonianSystem; inplace::Bool=__hvf_inplace()
@@ -318,7 +318,7 @@ Throw `NotImplemented` for a `WithoutAD` system that does not provide a speciali
 - `Exceptions.NotImplemented`: always, with a suggestion to implement
   `hamiltonian_vector_field` for the system type or use `HamiltonianVectorFieldSystem`.
 
-See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@extref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@extref).
 """
 function _hamiltonian_vector_field_by_ad(
     ::Type{Traits.WithoutAD}, sys::AbstractHamiltonianSystem; kwargs...

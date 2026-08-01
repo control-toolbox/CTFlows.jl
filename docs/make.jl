@@ -49,17 +49,22 @@ draft = false # Draft mode: if true, @example blocks in markdown are not execute
 # Cross-package links (InterLinks)
 # ═══════════════════════════════════════════════════════════════════════════════
 links = InterLinks(
+    "CTFlows" => (
+        "https://control-toolbox.org/CTFlows.jl/stable/",
+        joinpath(@__DIR__, "build", "1", "objects.inv"),
+        "https://control-toolbox.org/CTFlows.jl/stable/objects.inv",
+    ),
     "CTBase" => (
-        "https://control-toolbox.org/CTBase.jl/dev/",
-        "https://control-toolbox.org/CTBase.jl/dev/objects.inv",
+        "https://control-toolbox.org/CTBase.jl/stable/",
+        "https://control-toolbox.org/CTBase.jl/stable/objects.inv",
     ),
     "CTModels" => (
-        "https://control-toolbox.org/CTModels.jl/dev/",
-        "https://control-toolbox.org/CTModels.jl/dev/objects.inv",
+        "https://control-toolbox.org/CTModels.jl/stable/",
+        "https://control-toolbox.org/CTModels.jl/stable/objects.inv",
     ),
     "CTSolvers" => (
-        "https://control-toolbox.org/CTSolvers.jl/dev/",
-        "https://control-toolbox.org/CTSolvers.jl/dev/objects.inv",
+        "https://control-toolbox.org/CTSolvers.jl/stable/",
+        "https://control-toolbox.org/CTSolvers.jl/stable/objects.inv",
     ),
 )
 

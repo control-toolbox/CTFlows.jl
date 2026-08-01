@@ -25,7 +25,7 @@ julia> flow = Flows.StateFlow(system, integrator)
 julia> sol = flow(0.0, [1.0, 0.0], 1.0)
 \`\`\`
 
-See also: [`CTFlows.Configs.StateEndPointConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+See also: [`CTFlows.Configs.StateEndPointConfig`](@extref), [`CTFlows.Flows.call`](@extref).
 """
 function (f::AbstractStateFlow)(
     t0::Real, x0, tf::Real; variable=__variable(), unsafe=__unsafe()
@@ -67,7 +67,7 @@ condition* written in the shooting method, not by the flow:
 
     p_{t0}(tf) = -H(t0, x0, p0, v),   p_{tf}(tf) = H(tf, xf, pf, v),
 
-with `H` obtained from [`CTFlows.Systems.hamiltonian`](@ref).
+with `H` obtained from [`CTFlows.Systems.hamiltonian`](@extref).
 
 # Returns
 - The integrated solution `(xf, pf)`, or `(xf, pf, pvf)` when `variable_costate = true`.
@@ -81,7 +81,7 @@ julia> flow = Flows.HamiltonianFlow(system, integrator)
 julia> sol = flow(0.0, [1.0, 0.0], [0.5, 0.3], 1.0)
 \`\`\`
 
-See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref), [`CTFlows.Systems.hamiltonian`](@ref).
+See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@extref), [`CTFlows.Systems.hamiltonian`](@extref).
 """
 function (f::AbstractHamiltonianFlow)(
     t0::Real,
@@ -124,7 +124,7 @@ julia> flow = Flows.StateFlow(system, integrator)
 julia> sol = flow((0.0, 1.0), [1.0, 0.0])
 \`\`\`
 
-See also: [`CTFlows.Configs.StateTrajectoryConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+See also: [`CTFlows.Configs.StateTrajectoryConfig`](@extref), [`CTFlows.Flows.call`](@extref).
 """
 function (f::AbstractStateFlow)(
     tspan::Tuple{Real,Real}, x0; variable=__variable(), unsafe=__unsafe()
@@ -161,7 +161,7 @@ julia> flow = Flows.HamiltonianFlow(system, integrator)
 julia> sol = flow((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
 \`\`\`
 
-See also: [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Flows.call`](@ref).
+See also: [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@extref), [`CTFlows.Flows.call`](@extref).
 """
 function (f::AbstractHamiltonianFlow)(
     tspan::Tuple{Real,Real},
@@ -216,7 +216,7 @@ flow_nonfixed = Flow(system_nonfixed, integrator)
 sol = _invoke_flow(flow_nonfixed, config; variable=0.5, unsafe=false)  # OK, variable provided
 \`\`\`
 
-See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTBase.Traits.VariableDependence`](@extref), `CTBase.Core.NotProvided`, [`CTFlows.Integrators.build_problem`](@ref), `CommonSolve.solve`, [`CTFlows.Trajectories.build_trajectory`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@extref), [`CTBase.Traits.VariableDependence`](@extref), `CTBase.Core.NotProvided`, [`CTFlows.Integrators.build_problem`](@extref), `CommonSolve.solve`, [`CTFlows.Trajectories.build_trajectory`](@extref).
 """
 function _invoke_flow(
     flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe
@@ -254,7 +254,7 @@ and constructs the solution.
 This is an internal function called by the trait-dispatch overloads of `_invoke_flow`.
 Users should call the public `_invoke_flow` function instead.
 
-See also: [`_invoke_flow`](@ref), [`CTFlows.Integrators.build_problem`](@ref), `CommonSolve.solve`, [`CTFlows.Trajectories.build_trajectory`](@ref).
+See also: [`_invoke_flow`](@extref), [`CTFlows.Integrators.build_problem`](@extref), `CommonSolve.solve`, [`CTFlows.Trajectories.build_trajectory`](@extref).
 """
 function _core_invoke_flow(
     flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe
@@ -326,7 +326,7 @@ forwards to `_core_invoke_flow` with `variable=nothing`.
 - The result of `_core_invoke_flow`.
 
 # See also
-[`CTBase.Traits.Fixed`](@extref), `CTBase.Core.NotProvided`, [`_core_invoke_flow`](@ref).
+[`CTBase.Traits.Fixed`](@extref), `CTBase.Core.NotProvided`, [`_core_invoke_flow`](@extref).
 """
 function _invoke_flow(
     ::Type{Traits.Fixed}, ::Type{Core.NotProvidedType}, flow, config; unsafe, variable
@@ -347,7 +347,7 @@ to `_core_invoke_flow` with the provided variable value.
 - The result of `_core_invoke_flow`.
 
 # See also
-[`CTBase.Traits.NonFixed`](@extref), [`_core_invoke_flow`](@ref).
+[`CTBase.Traits.NonFixed`](@extref), [`_core_invoke_flow`](@extref).
 """
 function _invoke_flow(
     ::Type{Traits.NonFixed}, ::Type{VT}, flow, config; unsafe, variable
@@ -499,7 +499,7 @@ and calls the flow with it.
 # Returns
 - `Tuple{AbstractVector, AbstractVector, AbstractVector}`: The augmented solution `(xf, pf, pvf)`.
 
-See also: [`CTBase.Traits.SupportsVariableCostate`](@extref), [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@ref).
+See also: [`CTBase.Traits.SupportsVariableCostate`](@extref), [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@extref).
 """
 function _invoke_flow_variable_costate(
     ::Type{Traits.SupportsVariableCostate},
@@ -566,7 +566,7 @@ with a trajectory configuration.
 # Throws
 - `CTBase.Exceptions.PreconditionError`: Always, with a descriptive message indicating that variable_costate is only supported for point configurations.
 
-See also: [`CTBase.Traits.SupportsVariableCostate`](@extref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref).
+See also: [`CTBase.Traits.SupportsVariableCostate`](@extref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@extref).
 """
 function _invoke_flow_variable_costate(
     ::Type{Traits.SupportsVariableCostate},

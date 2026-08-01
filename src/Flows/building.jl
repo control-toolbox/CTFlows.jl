@@ -29,7 +29,7 @@ vf = Data.VectorField((t, x, v) -> x, Traits.Autonomous(), Traits.Fixed())
 flow = Flows.Flow(vf; reltol=1e-8)
 \`\`\`
 
-See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Systems.build_system`](@ref), [`CTFlows.Flows._build_integrator`](@ref), [`CTSolvers.Integrators.SciML`](@extref).
+See also: [`CTFlows.Flows.Flow`](@extref), [`CTFlows.Systems.build_system`](@extref), [`CTFlows.Flows._build_integrator`](@extref), [`CTSolvers.Integrators.SciML`](@extref).
 """
 function Flow(data::Data.VectorField; opts...)
     system = Systems.build_system(data)
@@ -63,7 +63,7 @@ hvf = Data.HamiltonianVectorField((x, p) -> (x, -p); is_autonomous=true, is_vari
 flow = Flows.Flow(hvf; reltol=1e-8)
 ```
 
-See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.build_system`](@ref), [`CTFlows.Flows._build_integrator`](@ref), [`CTSolvers.Integrators.SciML`](@extref).
+See also: [`CTFlows.Flows.HamiltonianFlow`](@extref), [`CTFlows.Systems.build_system`](@extref), [`CTFlows.Flows._build_integrator`](@extref), [`CTSolvers.Integrators.SciML`](@extref).
 """
 function Flow(data::Data.HamiltonianVectorField; opts...)
     system = Systems.build_system(data)
@@ -115,8 +115,8 @@ flow = Flows.Flow(h; reltol=1e-8, ad_backend=ADTypes.AutoForwardDiff())
 - Use the `state_dimension` argument overload if explicit dimension is needed.
 - Requires the `CTFlowsSciMLIntegrator` extension to be loaded for integrator options.
 
-See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.build_system`](@ref),
-[`CTFlows.Flows._route_flow_options`](@ref), [`CTFlows.Flows._build_flow_components`](@ref)
+See also: [`CTFlows.Flows.HamiltonianFlow`](@extref), [`CTFlows.Systems.build_system`](@extref),
+[`CTFlows.Flows._route_flow_options`](@extref), [`CTFlows.Flows._build_flow_components`](@extref)
 """
 function Flow(h::Data.AbstractHamiltonian; kwargs...)
     method, kw = _pop_method(kwargs)
@@ -139,7 +139,7 @@ Dispatches on the problem's [`CTBase.Traits.ControlDependence`](@extref) trait:
 - **with control** (`WithControl`): throws a
   [`CTBase.Exceptions.PreconditionError`](@extref). Use `Flow(ocp, law)` instead,
   passing a control law to close the loop — see
-  [`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.ControlLaw)`](@ref).
+  [`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.ControlLaw)`](@extref).
 
 # Arguments
 - `ocp::CTModels.Models.Model`: The optimal control problem model.
@@ -155,7 +155,7 @@ Dispatches on the problem's [`CTBase.Traits.ControlDependence`](@extref) trait:
 - [`CTBase.Exceptions.PreconditionError`](@extref): If the OCP carries a control input
   (use `Flow(ocp, law)` instead).
 
-See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), [`CTFlows.Flows.Flow`](@ref).
+See also: [`CTFlows.Flows.OptimalControlFlow`](@extref), [`CTFlows.Flows.Flow`](@extref).
 """
 function Flow(ocp::CTModels.Models.Model; kwargs...)
     return _flow_from_ocp(Traits.control_dependence(ocp), ocp; kwargs...)
@@ -169,7 +169,7 @@ Build an `OptimalControlFlow` from a control-free OCP.
 Constructs the OCP Hamiltonian, builds the Hamiltonian system with the chosen AD
 backend, and wraps the resulting flow together with the OCP reference.
 
-See also: [`CTFlows.Flows.OptimalControlFlow`](@ref), [`CTFlows.Flows.Flow`](@ref), `CTFlows.Flows._ocp_hamiltonian`.
+See also: [`CTFlows.Flows.OptimalControlFlow`](@extref), [`CTFlows.Flows.Flow`](@extref), `CTFlows.Flows._ocp_hamiltonian`.
 """
 function _flow_from_ocp(::Type{Traits.ControlFree}, ocp::CTModels.Models.Model; kwargs...)
     _reject_control_free_constraint(kwargs)
@@ -195,7 +195,7 @@ With no control law there is no pseudo-Hamiltonian to augment, so a state constr
 no well-defined place in the control-free OCP Hamiltonian flow. Throws
 [`CTBase.Exceptions.PreconditionError`](@extref).
 
-See also: [`CTFlows.Flows.Flow`](@ref).
+See also: [`CTFlows.Flows.Flow`](@extref).
 """
 function _reject_control_free_constraint(kwargs)
     (haskey(kwargs, :constraint) || haskey(kwargs, :multiplier)) && throw(
@@ -219,7 +219,7 @@ Reject `Flow(ocp)` construction from a with-control OCP.
 Throws `PreconditionError` because this path assumes no control input. Use
 `Flow(ocp, law)` to pass a control law that closes the loop.
 
-See also: [`CTFlows.Flows.Flow`](@ref), `CTFlows.Flows._ocp_hamiltonian`.
+See also: [`CTFlows.Flows.Flow`](@extref), `CTFlows.Flows._ocp_hamiltonian`.
 """
 function _flow_from_ocp(::Type{Traits.WithControl}, ::CTModels.Models.Model; kwargs...)
     return throw(
@@ -248,9 +248,9 @@ Dispatches on the control law's [`CTBase.Traits.feedback`](@extref) trait, then 
 `hamiltonian_type` keyword:
 
 - `hamiltonian_type=:total` (default) — build a [`CTBase.Data.ComposedHamiltonian`](@extref)
-  `H(t,x,p,v)=H̃(t,x,p,u(t,x,p,v),v)` and a [`CTFlows.Systems.HamiltonianSystem`](@ref);
+  `H(t,x,p,v)=H̃(t,x,p,u(t,x,p,v),v)` and a [`CTFlows.Systems.HamiltonianSystem`](@extref);
   AD differentiates *through* the law (total derivative).
-- `hamiltonian_type=:partial` — build a [`CTFlows.Systems.PseudoHamiltonianSystem`](@ref);
+- `hamiltonian_type=:partial` — build a [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref);
   AD takes partials of `H̃` at the fixed feedback value `u`. Coincides with `:total` only
   where the feedback is stationary (`∂H̃/∂u = 0`).
 
@@ -266,7 +266,7 @@ Dispatches on the control law's [`CTBase.Traits.feedback`](@extref) trait, then 
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): if `hamiltonian_type` is not
   `:total` or `:partial`.
 
-See also: [`CTFlows.Flows.Flow`](@ref), [`CTBase.Data.PseudoHamiltonian`](@extref),
+See also: [`CTFlows.Flows.Flow`](@extref), [`CTBase.Data.PseudoHamiltonian`](@extref),
 [`CTBase.Data.DynClosedLoop`](@extref).
 """
 function Flow(h̃::Data.PseudoHamiltonian, law::Data.ControlLaw; kwargs...)
@@ -276,11 +276,11 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Dispatch helper for [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@ref): build a
+Dispatch helper for [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@extref): build a
 Hamiltonian flow from a `DynClosedLoop` law, routing on the `hamiltonian_type` action
 option.
 
-See also: [`CTFlows.Flows._build_pseudo_flow`](@ref).
+See also: [`CTFlows.Flows._build_pseudo_flow`](@extref).
 """
 function _flow_from_pseudo_hamiltonian(
     ::Type{Traits.DynClosedLoopFeedback},
@@ -300,11 +300,11 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Reject `OpenLoop`/`ClosedLoop` laws in [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@ref):
+Reject `OpenLoop`/`ClosedLoop` laws in [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@extref):
 a pseudo-Hamiltonian `H̃(t,x,p,u,v)` depends on the costate `p`, which `OpenLoop`/`ClosedLoop`
 laws do not provide.
 
-See also: [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@ref).
+See also: [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@extref).
 """
 function _flow_from_pseudo_hamiltonian(
     ::Type{<:Union{Traits.OpenLoopFeedback,Traits.ClosedLoopFeedback}},
@@ -329,9 +329,9 @@ $(TYPEDSIGNATURES)
 Build the inner Hamiltonian flow for the `:total` mode: compose the pseudo-Hamiltonian
 `H̃` with the control law `u(t,x,p,v)` into a [`CTBase.Data.ComposedHamiltonian`](@extref)
 `H(t,x,p,v) = H̃(t,x,p,u(t,x,p,v),v)`, wrap it in a
-[`CTFlows.Systems.HamiltonianSystem`](@ref), and build the flow.
+[`CTFlows.Systems.HamiltonianSystem`](@extref), and build the flow.
 
-See also: [`CTFlows.Flows._build_pseudo_flow`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref),
+See also: [`CTFlows.Flows._build_pseudo_flow`](@extref), [`CTFlows.Systems.HamiltonianSystem`](@extref),
 [`CTBase.Data.ComposedHamiltonian`](@extref).
 """
 function _build_pseudo_flow(::Val{:total}, h̃, law, components)
@@ -344,10 +344,10 @@ end
 $(TYPEDSIGNATURES)
 
 Build the inner Hamiltonian flow for the `:partial` mode: wrap the pseudo-Hamiltonian
-and control law in a [`CTFlows.Systems.PseudoHamiltonianSystem`](@ref) (AD at fixed `u`).
+and control law in a [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref) (AD at fixed `u`).
 
-See also: [`CTFlows.Flows._build_pseudo_flow`](@ref),
-[`CTFlows.Systems.PseudoHamiltonianSystem`](@ref).
+See also: [`CTFlows.Flows._build_pseudo_flow`](@extref),
+[`CTFlows.Systems.PseudoHamiltonianSystem`](@extref).
 """
 function _build_pseudo_flow(::Val{:partial}, h̃, law, components)
     sys = Systems.build_system(h̃, law, components.backend)
@@ -363,7 +363,7 @@ Throw an [`CTBase.Exceptions.IncorrectArgument`](@extref) for an unknown
 # Throws
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): when `ht` is not `:total` or `:partial`.
 
-See also: [`CTFlows.Flows._build_pseudo_flow`](@ref).
+See also: [`CTFlows.Flows._build_pseudo_flow`](@extref).
 """
 function _build_pseudo_flow(::Val{ht}, h̃, law, components) where {ht}
     return throw(
@@ -388,7 +388,7 @@ Build a `HamiltonianFlow` directly from a pseudo-Hamiltonian vector field
 `h̃vf(t,x,p,u,v) = (ẋ,ṗ)` (already differentiated by the user — no AD) and a dynamic
 closed-loop control law `u(t,x,p,v)`, without going through an OCP.
 
-The vector-field analogue of [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@ref):
+The vector-field analogue of [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@extref):
 that constructor differentiates a scalar `H̃` by AD (`:total`/`:partial`); this one
 takes `h̃vf` as the derivatives directly, so there is only **one mode** — no
 `hamiltonian_type` option.
@@ -403,7 +403,7 @@ takes `h̃vf` as the derivatives directly, so there is only **one mode** — no
 - [`CTBase.Exceptions.PreconditionError`](@extref): if the law is `OpenLoop`/`ClosedLoop`
   (a pseudo-Hamiltonian vector field needs the costate `p`, which those laws do not take).
 
-See also: [`CTFlows.Flows.Flow`](@ref), [`CTBase.Data.PseudoHamiltonianVectorField`](@extref),
+See also: [`CTFlows.Flows.Flow`](@extref), [`CTBase.Data.PseudoHamiltonianVectorField`](@extref),
 [`CTBase.Data.DynClosedLoop`](@extref).
 """
 function Flow(h̃vf::Data.PseudoHamiltonianVectorField, law::Data.ControlLaw; opts...)
@@ -413,11 +413,11 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Dispatch helper for [`CTFlows.Flows.Flow(h̃vf::CTBase.Data.PseudoHamiltonianVectorField, law::CTBase.Data.ControlLaw)`](@ref):
+Dispatch helper for [`CTFlows.Flows.Flow(h̃vf::CTBase.Data.PseudoHamiltonianVectorField, law::CTBase.Data.ControlLaw)`](@extref):
 build a `PseudoHamiltonianVectorFieldSystem`-backed Hamiltonian flow from a
 `DynClosedLoop` law.
 
-See also: [`CTFlows.Systems.build_system`](@ref).
+See also: [`CTFlows.Systems.build_system`](@extref).
 """
 function _flow_from_pseudo_hamiltonian_vf(
     ::Type{Traits.DynClosedLoopFeedback},
@@ -432,11 +432,11 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Reject `OpenLoop`/`ClosedLoop` laws in [`CTFlows.Flows.Flow(h̃vf::CTBase.Data.PseudoHamiltonianVectorField, law::CTBase.Data.ControlLaw)`](@ref):
+Reject `OpenLoop`/`ClosedLoop` laws in [`CTFlows.Flows.Flow(h̃vf::CTBase.Data.PseudoHamiltonianVectorField, law::CTBase.Data.ControlLaw)`](@extref):
 a pseudo-Hamiltonian vector field `h̃vf(t,x,p,u,v)` depends on the costate `p`, which
 `OpenLoop`/`ClosedLoop` laws do not provide.
 
-See also: [`CTFlows.Flows.Flow(h̃vf::CTBase.Data.PseudoHamiltonianVectorField, law::CTBase.Data.ControlLaw)`](@ref).
+See also: [`CTFlows.Flows.Flow(h̃vf::CTBase.Data.PseudoHamiltonianVectorField, law::CTBase.Data.ControlLaw)`](@extref).
 """
 function _flow_from_pseudo_hamiltonian_vf(
     ::Type{<:Union{Traits.OpenLoopFeedback,Traits.ClosedLoopFeedback}},
@@ -463,20 +463,20 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build a [`CTFlows.Flows.ControlledFlow`](@ref) directly from a controlled vector field
+Build a [`CTFlows.Flows.ControlledFlow`](@extref) directly from a controlled vector field
 `fc(t,x,u,v)` and an **open-loop** or **closed-loop** control law, without an OCP.
 
 Dispatches on the law's [`CTBase.Traits.feedback`](@extref) trait: the control is
 eliminated via a [`CTBase.Data.ComposedVectorField`](@extref) `g(t,x,v)=fc(t,x,u(...),v)`,
 integrated as a state flow. A trajectory call returns a
-[`CTFlows.Trajectories.StateFlowTrajectory`](@ref) (state + reconstructed control, no
+[`CTFlows.Trajectories.StateFlowTrajectory`](@extref) (state + reconstructed control, no
 objective — there is no OCP).
 
 # Throws
 - [`CTBase.Exceptions.PreconditionError`](@extref): if the law is `DynClosedLoop` (that
-  needs the costate; use [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@ref)).
+  needs the costate; use [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@extref)).
 
-See also: [`CTFlows.Flows.Flow`](@ref), [`CTBase.Data.ControlledVectorField`](@extref).
+See also: [`CTFlows.Flows.Flow`](@extref), [`CTBase.Data.ControlledVectorField`](@extref).
 """
 function Flow(fc::Data.ControlledVectorField, law::Data.ControlLaw; kwargs...)
     return _flow_from_controlled_vf(Traits.feedback(law), fc, law; kwargs...)
@@ -485,11 +485,11 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Dispatch helper for [`CTFlows.Flows.Flow(fc::CTBase.Data.ControlledVectorField, law::CTBase.Data.ControlLaw)`](@ref):
-compose `fc` with an `OpenLoop`/`ClosedLoop` law into a [`CTFlows.Flows.ControlledFlow`](@ref)
+Dispatch helper for [`CTFlows.Flows.Flow(fc::CTBase.Data.ControlledVectorField, law::CTBase.Data.ControlLaw)`](@extref):
+compose `fc` with an `OpenLoop`/`ClosedLoop` law into a [`CTFlows.Flows.ControlledFlow`](@extref)
 with no OCP.
 
-See also: [`CTFlows.Flows._controlled_flow`](@ref).
+See also: [`CTFlows.Flows._controlled_flow`](@extref).
 """
 function _flow_from_controlled_vf(
     ::Type{<:Union{Traits.OpenLoopFeedback,Traits.ClosedLoopFeedback}},
@@ -503,11 +503,11 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Reject a `DynClosedLoop` law in [`CTFlows.Flows.Flow(fc::CTBase.Data.ControlledVectorField, law::CTBase.Data.ControlLaw)`](@ref):
+Reject a `DynClosedLoop` law in [`CTFlows.Flows.Flow(fc::CTBase.Data.ControlledVectorField, law::CTBase.Data.ControlLaw)`](@extref):
 a dynamic closed-loop law `u(t,x,p,v)` needs the costate `p`, which a state flow of a
 vector field does not have.
 
-See also: [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@ref).
+See also: [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@extref).
 """
 function _flow_from_controlled_vf(
     ::Type{Traits.DynClosedLoopFeedback},
@@ -537,16 +537,16 @@ $(TYPEDSIGNATURES)
 Build a flow from an OCP and a **control law**.
 
 Dispatches on the law's [`CTBase.Traits.feedback`](@extref) trait:
-- `DynClosedLoop` → an [`CTFlows.Flows.OptimalControlFlow`](@ref) (Hamiltonian flow),
+- `DynClosedLoop` → an [`CTFlows.Flows.OptimalControlFlow`](@extref) (Hamiltonian flow),
   using the `hamiltonian_type` action option (`:total` default, or `:partial`), the same
-  way as [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@ref). The OCP's
+  way as [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@extref). The OCP's
   dynamics and cost supply the pseudo-Hamiltonian `H̃(t,x,p,u,v) = p·f + sp0·ℓ`; the
   trajectory call returns a [`CTModels.Solutions.Solution`](@extref) with the control
   reconstructed from the law.
-- `OpenLoop`/`ClosedLoop` → a [`CTFlows.Flows.ControlledFlow`](@ref) (state flow): the
+- `OpenLoop`/`ClosedLoop` → a [`CTFlows.Flows.ControlledFlow`](@extref) (state flow): the
   control is eliminated via a [`CTBase.Data.ComposedVectorField`](@extref) and the OCP
   dynamics are integrated as a state flow; the trajectory call returns a
-  [`CTFlows.Trajectories.StateFlowTrajectory`](@ref).
+  [`CTFlows.Trajectories.StateFlowTrajectory`](@extref).
 
 # Throws
 - [`CTBase.Exceptions.PreconditionError`](@extref): if the OCP is control-free.
@@ -554,8 +554,8 @@ Dispatches on the law's [`CTBase.Traits.feedback`](@extref) trait:
   to the state-flow path (should not happen via this constructor).
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): if `hamiltonian_type` is invalid.
 
-See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.OptimalControlFlow`](@ref),
-[`CTFlows.Flows.ControlledFlow`](@ref).
+See also: [`CTFlows.Flows.Flow`](@extref), [`CTFlows.Flows.OptimalControlFlow`](@extref),
+[`CTFlows.Flows.ControlledFlow`](@extref).
 """
 function Flow(ocp::CTModels.Models.Model, law::Data.ControlLaw; kwargs...)
     return _flow_from_ocp_control(Traits.feedback(law), ocp, law; kwargs...)
@@ -581,7 +581,7 @@ non-autonomous, plus `v` if the OCP is non-fixed (`is_variable`).
 # Returns
 - `Int`: the expected number of positional arguments.
 
-See also: [`CTFlows.Flows._arity_issue`](@ref).
+See also: [`CTFlows.Flows._arity_issue`](@extref).
 """
 _expected_arity(ocp) = 2 + !Traits.is_autonomous(ocp) + Traits.is_variable(ocp)
 
@@ -600,7 +600,7 @@ argument name and an OCP's time/variable dependence — used in arity-mismatch m
 # Returns
 - `String`: e.g. `"u(t, x, p)"`.
 
-See also: [`CTFlows.Flows._arity_issue`](@ref).
+See also: [`CTFlows.Flows._arity_issue`](@extref).
 """
 function _natural_syntax(label::AbstractString, second::AbstractString, ocp)
     args = String[]
@@ -635,7 +635,7 @@ cannot tell which arity the user intended, so no diagnostic is possible.
 - `Nothing`: if the arity matches, or if `f` has more than one method (ambiguous).
 - `String`: a one-line diagnostic naming the expected natural syntax, otherwise.
 
-See also: [`CTFlows.Flows._expected_arity`](@ref), [`CTFlows.Flows._natural_syntax`](@ref).
+See also: [`CTFlows.Flows._expected_arity`](@extref), [`CTFlows.Flows._natural_syntax`](@extref).
 """
 function _arity_issue(
     f::Function, ocp, label::AbstractString, second::AbstractString, kind::AbstractString
@@ -653,7 +653,7 @@ $(TYPEDSIGNATURES)
 
 No arity issues for a `nothing` spec — skip the check.
 
-See also: [`CTFlows.Flows._spec_arity_issues!`](@ref).
+See also: [`CTFlows.Flows._spec_arity_issues!`](@extref).
 """
 _spec_arity_issues!(issues, ocp, ::Nothing, label, second, kind) = nothing
 
@@ -663,8 +663,8 @@ $(TYPEDSIGNATURES)
 Check the arity of a single `Function` spec against the OCP's expected arity and push
 an issue string into `issues` if they differ.
 
-See also: [`CTFlows.Flows._check_convenience_arities`](@ref),
-[`CTFlows.Flows._arity_issue`](@ref).
+See also: [`CTFlows.Flows._check_convenience_arities`](@extref),
+[`CTFlows.Flows._arity_issue`](@extref).
 """
 function _spec_arity_issues!(
     issues,
@@ -685,8 +685,8 @@ Check the arity of each `Function` element in a `Tuple` spec against the OCP's e
 arity, pushing an issue string per mismatch into `issues`. Non-`Function` elements are
 skipped.
 
-See also: [`CTFlows.Flows._check_convenience_arities`](@ref),
-[`CTFlows.Flows._arity_issue`](@ref).
+See also: [`CTFlows.Flows._check_convenience_arities`](@extref),
+[`CTFlows.Flows._arity_issue`](@extref).
 """
 function _spec_arity_issues!(
     issues,
@@ -709,7 +709,7 @@ $(TYPEDSIGNATURES)
 Fallback for an already-resolved spec (not a `Function` or `Tuple`): no arity check
 needed.
 
-See also: [`CTFlows.Flows._check_convenience_arities`](@ref).
+See also: [`CTFlows.Flows._check_convenience_arities`](@extref).
 """
 _spec_arity_issues!(issues, ocp, spec, label, second, kind) = nothing
 
@@ -741,7 +741,7 @@ already rejected with a clearer, more fundamental `PreconditionError` downstream
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): if at least one raw function has a
   single method and a mismatched arity, on a with-control OCP.
 
-See also: [`CTFlows.Flows._arity_issue`](@ref), [`CTFlows.Flows._spec_arity_issues!`](@ref).
+See also: [`CTFlows.Flows._arity_issue`](@extref), [`CTFlows.Flows._spec_arity_issues!`](@extref).
 """
 function _check_convenience_arities(ocp, u, cspec, mspec)
     Traits.control_dependence(ocp) === Traits.WithControl || return nothing
@@ -770,7 +770,7 @@ $(TYPEDSIGNATURES)
 
 Convenience constructor: wrap a raw control function `u` in a
 [`CTBase.Data.DynClosedLoop`](@extref) control law and delegate to
-[`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.ControlLaw)`](@ref).
+[`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.ControlLaw)`](@extref).
 
 The control law is given **the same time/variable dependence as the OCP**
 (`is_autonomous(ocp)`, `is_variable(ocp)`), so `u` **must** have the matching natural
@@ -779,18 +779,18 @@ autonomous/fixed, non-autonomous/fixed, autonomous/non-fixed, non-autonomous/non
 respectively. To use a control law whose traits differ from the OCP's (e.g. a
 time-varying feedback on an autonomous OCP), build the
 [`CTBase.Data.DynClosedLoop`](@extref) explicitly and call
-[`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.ControlLaw)`](@ref).
+[`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.ControlLaw)`](@extref).
 
 If `u` (and, when given as raw `Function`s, the `constraint`/`multiplier` keyword specs)
 has a single method, its arity is checked against the OCP's time/variable dependence —
-see [`CTFlows.Flows._check_convenience_arities`](@ref).
+see [`CTFlows.Flows._check_convenience_arities`](@extref).
 
 # Throws
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): if `u`, `constraint`, or `multiplier`
   has a single method and a mismatched arity.
 
-See also: [`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.ControlLaw)`](@ref),
-[`CTFlows.Flows._check_convenience_arities`](@ref).
+See also: [`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.ControlLaw)`](@extref),
+[`CTFlows.Flows._check_convenience_arities`](@extref).
 """
 function Flow(ocp::CTModels.Models.Model, u::Function; kwargs...)
     _check_convenience_arities(
@@ -805,23 +805,23 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build an [`CTFlows.Flows.OptimalControlFlow`](@ref) from the OCP pseudo-Hamiltonian and
+Build an [`CTFlows.Flows.OptimalControlFlow`](@extref) from the OCP pseudo-Hamiltonian and
 a `DynClosedLoop` law, dispatching on the `hamiltonian_type` action option.
 
 If `constraint`/`multiplier` are given as raw `Function`s with a single method, their
 arity is checked against the OCP's time/variable dependence — see
-[`CTFlows.Flows._check_convenience_arities`](@ref). `law` itself is not checked here: it
+[`CTFlows.Flows._check_convenience_arities`](@extref). `law` itself is not checked here: it
 may have been built explicitly with traits that deliberately differ from the OCP's (the
 arity of a raw `u` is only checked in
-[`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, u::Function)`](@ref), which builds the
+[`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, u::Function)`](@extref), which builds the
 law itself from the OCP's traits).
 
 # Throws
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): if `constraint` or `multiplier` has a
   single method and a mismatched arity.
 
-See also: [`CTFlows.Flows._build_pseudo_flow`](@ref), [`CTFlows.Flows._ocp_pseudo_hamiltonian`](@ref),
-[`CTFlows.Flows._check_convenience_arities`](@ref).
+See also: [`CTFlows.Flows._build_pseudo_flow`](@extref), [`CTFlows.Flows._ocp_pseudo_hamiltonian`](@extref),
+[`CTFlows.Flows._check_convenience_arities`](@extref).
 """
 function _flow_from_ocp_control(
     ::Type{Traits.DynClosedLoopFeedback},
@@ -862,7 +862,7 @@ neither), and for multiple constraints both must be tuples of equal length (elem
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): if exactly one of the two is given; if one
   is a tuple and the other is not; or if the two tuples have different lengths.
 
-See also: [`CTFlows.Flows._build_ocp_pseudo_flow`](@ref), [`CTFlows.Flows._CombinedConstraint`](@ref).
+See also: [`CTFlows.Flows._build_ocp_pseudo_flow`](@extref), [`CTFlows.Flows._CombinedConstraint`](@extref).
 """
 function _validate_constraint_pair(cspec, mspec)
     (cspec === nothing) == (mspec === nothing) || throw(
@@ -905,20 +905,20 @@ $(TYPEDSIGNATURES)
 
 Build the inner Hamiltonian flow of an OCP + control-law flow, dispatching on the
 `hamiltonian_type` and on the presence of a `constraint`/`multiplier` pair (already
-validated by [`CTFlows.Flows._validate_constraint_pair`](@ref)).
+validated by [`CTFlows.Flows._validate_constraint_pair`](@extref)).
 
 - **`:total`** — bake the constraint into the pseudo-Hamiltonian
   `H̃(t,x,p,u,v) + μ(t,x,p,v)·g(t,x,u,v)` (via
-  [`CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`](@ref)) and compose with the law;
+  [`CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`](@extref)) and compose with the law;
   AD differentiates through `H̃`, `μ`, `g` and the law (total derivative). Unconstrained →
-  the plain [`CTFlows.Flows._ocp_pseudo_hamiltonian`](@ref).
-- **`:partial`** — build a [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref)
+  the plain [`CTFlows.Flows._ocp_pseudo_hamiltonian`](@extref).
+- **`:partial`** — build a [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref)
   carrying the base `H̃`, the law, `g` and `μ` separately; the RHS freezes the multiplier
   value `μ` alongside the control `u` and differentiates only through `g`. Unconstrained →
-  a [`CTFlows.Systems.PseudoHamiltonianSystem`](@ref).
+  a [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref).
 
-See also: [`CTFlows.Flows._resolve_constraint`](@ref), [`CTFlows.Flows._resolve_multiplier`](@ref),
-[`CTFlows.Flows._build_pseudo_flow`](@ref).
+See also: [`CTFlows.Flows._resolve_constraint`](@extref), [`CTFlows.Flows._resolve_multiplier`](@extref),
+[`CTFlows.Flows._build_pseudo_flow`](@extref).
 """
 function _build_ocp_pseudo_flow(::Val{:total}, ocp, law, components, cspec, mspec)
     h̃ = if cspec === nothing
@@ -937,12 +937,12 @@ $(TYPEDSIGNATURES)
 Build the inner flow for the `:partial` mode from an OCP pseudo-Hamiltonian and a
 control law. When a constraint spec (`cspec`) is provided, resolve it together with the
 multiplier spec (`mspec`) and build a
-[`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref); otherwise delegate to
-[`CTFlows.Flows._build_pseudo_flow`](@ref).
+[`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref); otherwise delegate to
+[`CTFlows.Flows._build_pseudo_flow`](@extref).
 
-See also: [`CTFlows.Flows._build_pseudo_flow`](@ref),
-[`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref),
-[`CTFlows.Flows._resolve_constraint`](@ref), [`CTFlows.Flows._resolve_multiplier`](@ref).
+See also: [`CTFlows.Flows._build_pseudo_flow`](@extref),
+[`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref),
+[`CTFlows.Flows._resolve_constraint`](@extref), [`CTFlows.Flows._resolve_multiplier`](@extref).
 """
 function _build_ocp_pseudo_flow(::Val{:partial}, ocp, law, components, cspec, mspec)
     h̃ = _ocp_pseudo_hamiltonian(ocp)
@@ -959,7 +959,7 @@ $(TYPEDSIGNATURES)
 Unknown `hamiltonian_type`: delegate to the (throwing) unconstrained fallback so the
 error message and type match `Flow(h̃, law; hamiltonian_type=…)`.
 
-See also: [`CTFlows.Flows._build_pseudo_flow`](@ref).
+See also: [`CTFlows.Flows._build_pseudo_flow`](@extref).
 """
 function _build_ocp_pseudo_flow(::Val{ht}, ocp, law, components, cspec, mspec) where {ht}
     return _build_pseudo_flow(Val(ht), _ocp_pseudo_hamiltonian(ocp), law, components)
@@ -968,10 +968,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build a [`CTFlows.Flows.ControlledFlow`](@ref) (state flow) from the OCP controlled
+Build a [`CTFlows.Flows.ControlledFlow`](@extref) (state flow) from the OCP controlled
 dynamics and an `OpenLoop`/`ClosedLoop` law.
 
-See also: [`CTFlows.Flows._controlled_flow`](@ref), [`CTFlows.Flows._ocp_controlled_vector_field`](@ref).
+See also: [`CTFlows.Flows._controlled_flow`](@extref), [`CTFlows.Flows._ocp_controlled_vector_field`](@extref).
 """
 function _flow_from_ocp_control(
     ::Type{<:Union{Traits.OpenLoopFeedback,Traits.ClosedLoopFeedback}},
@@ -994,7 +994,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build a [`CTFlows.Flows.ControlledFlow`](@ref) from a controlled vector field, an
+Build a [`CTFlows.Flows.ControlledFlow`](@extref) from a controlled vector field, an
 open-loop/closed-loop control law, and an optional OCP (for the objective): compose into
 a [`CTBase.Data.ComposedVectorField`](@extref), build a `VectorFieldSystem`, and wrap the
 resulting state flow together with the OCP reference (or `nothing`) and the law.
@@ -1017,7 +1017,7 @@ are supported.
 # Throws
 - [`CTBase.Exceptions.PreconditionError`](@extref): when extra positional arguments are passed.
 
-See also: [`CTFlows.Flows.Flow`](@ref).
+See also: [`CTFlows.Flows.Flow`](@extref).
 """
 function Flow(::CTModels.Models.Model, ::Any, args...; kwargs...)
     return throw(

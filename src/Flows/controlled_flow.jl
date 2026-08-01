@@ -10,11 +10,11 @@
 $(TYPEDEF)
 
 State flow of a controlled dynamical system with an `OpenLoop` or `ClosedLoop` control
-law, built by [`CTFlows.Flows.Flow`](@ref) from `Flow(ocp, law)` or `Flow(fc, law)`.
+law, built by [`CTFlows.Flows.Flow`](@extref) from `Flow(ocp, law)` or `Flow(fc, law)`.
 
-Unlike an [`CTFlows.Flows.OptimalControlFlow`](@ref) (Hamiltonian, with a costate), this
+Unlike an [`CTFlows.Flows.OptimalControlFlow`](@extref) (Hamiltonian, with a costate), this
 is a **state** flow: point evaluation is `f(t0, x0, tf; variable)` (no costate) and a
-trajectory call returns a [`CTFlows.Trajectories.StateFlowTrajectory`](@ref).
+trajectory call returns a [`CTFlows.Trajectories.StateFlowTrajectory`](@extref).
 
 # Type Parameters
 - `TD`, `VD`: time/variable dependence, inherited from the inner flow.
@@ -27,7 +27,7 @@ trajectory call returns a [`CTFlows.Trajectories.StateFlowTrajectory`](@ref).
 - `ocp::M`: the OCP model (for the objective), or `nothing`.
 - `law::L`: the control law, used to reconstruct `u(t)`.
 
-See also: [`CTFlows.Trajectories.StateFlowTrajectory`](@ref), [`CTFlows.Flows.Flow`](@ref).
+See also: [`CTFlows.Trajectories.StateFlowTrajectory`](@extref), [`CTFlows.Flows.Flow`](@extref).
 """
 struct ControlledFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,IF,M,L} <:
        AbstractFlow{TD,VD,Traits.StateDynamics}
@@ -39,8 +39,8 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Construct a [`CTFlows.Flows.ControlledFlow`](@ref) from an inner state
-[`CTFlows.Flows.Flow`](@ref), an optional OCP (for the objective), and a control law.
+Construct a [`CTFlows.Flows.ControlledFlow`](@extref) from an inner state
+[`CTFlows.Flows.Flow`](@extref), an optional OCP (for the objective), and a control law.
 """
 function ControlledFlow(
     flow::Flow{TD,VD,Traits.StateDynamics}, ocp, law
@@ -51,7 +51,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the underlying [`CTFlows.Systems.AbstractSystem`](@ref) of the inner state flow.
+Return the underlying [`CTFlows.Systems.AbstractSystem`](@extref) of the inner state flow.
 """
 system(F::ControlledFlow) = system(F.flow)
 """
@@ -83,7 +83,7 @@ end
 $(TYPEDSIGNATURES)
 
 Trajectory call: integrate the inner state flow over `tspan` and build a
-[`CTFlows.Trajectories.StateFlowTrajectory`](@ref) (state + reconstructed control,
+[`CTFlows.Trajectories.StateFlowTrajectory`](@extref) (state + reconstructed control,
 plus objective when built from an OCP).
 """
 function (F::ControlledFlow)(
@@ -101,12 +101,12 @@ end
 $(TYPEDSIGNATURES)
 
 Precomputed state coercion (`only` for a 1-D state, `identity` otherwise) from the
-OCP's declared state dimension. Unlike [`CTFlows.Flows._dim_coerce`](@ref) alone, this
+OCP's declared state dimension. Unlike [`CTFlows.Flows._dim_coerce`](@extref) alone, this
 also special-cases a batched `Matrix` `x0` to always return `identity`, regardless of the
 declared dimension — `_dim_coerce` is baked in from the OCP's *declared* dimension and
 cannot see `x0`'s runtime shape by itself. Fixing it here (the single source of `coerce`)
 covers every later application of the returned function, including inside
-[`CTFlows.Trajectories.StateFlowTrajectory`](@ref).
+[`CTFlows.Trajectories.StateFlowTrajectory`](@extref).
 """
 _flow_state_coerce(ocp, ::AbstractMatrix) = identity
 
@@ -116,7 +116,7 @@ $(TYPEDSIGNATURES)
 State coercion from the OCP's declared state dimension for a non-batched `x0`:
 `only` for a 1-D state, `identity` otherwise.
 
-See also: [`CTFlows.Flows._flow_state_coerce`](@ref), [`CTFlows.Flows._dim_coerce`](@ref).
+See also: [`CTFlows.Flows._flow_state_coerce`](@extref), [`CTFlows.Flows._dim_coerce`](@extref).
 """
 _flow_state_coerce(ocp, x0) = _dim_coerce(CTModels.Models.state_dimension(ocp))
 
@@ -125,7 +125,7 @@ $(TYPEDSIGNATURES)
 
 Precomputed state coercion (`only` for a 1-D state, `identity` otherwise) inferred from
 `x0` when there is no OCP (`Flow(fc, law)`); a batched `Matrix` `x0` always yields
-`identity` — see [`CTFlows.Flows._flow_state_coerce`](@ref).
+`identity` — see [`CTFlows.Flows._flow_state_coerce`](@extref).
 """
 _flow_state_coerce(::Nothing, ::AbstractMatrix) = identity
 """
@@ -133,9 +133,9 @@ $(TYPEDSIGNATURES)
 
 Precomputed state coercion (`only` for a 1-D state, `identity` otherwise) inferred from
 `x0` when there is no OCP (`Flow(fc, law)`): a `Matrix` `x0` always yields `identity`
-(see [`CTFlows.Flows._flow_state_coerce`](@ref)).
+(see [`CTFlows.Flows._flow_state_coerce`](@extref)).
 
-See also: [`CTFlows.Flows._flow_state_coerce`](@ref), [`CTFlows.Flows._dim_coerce`](@ref).
+See also: [`CTFlows.Flows._flow_state_coerce`](@extref), [`CTFlows.Flows._dim_coerce`](@extref).
 """
 _flow_state_coerce(::Nothing, x0) = _dim_coerce(length(x0))
 
@@ -157,9 +157,9 @@ Compute the objective (Mayer + Lagrange) of an OCP along a state-flow trajectory
 
 Builds the (1-D = scalar coerced) state projection `x(t)` and the reconstructed control
 `u(t)` from the law (empty when `law === nothing`), then delegates to the shared
-[`CTFlows.Flows._flow_objective`](@ref) core.
+[`CTFlows.Flows._flow_objective`](@extref) core.
 
-See also: [`CTFlows.Trajectories.StateFlowTrajectory`](@ref), `CTFlows.Flows._flow_objective`, `CTFlows.Flows._control_of`.
+See also: [`CTFlows.Trajectories.StateFlowTrajectory`](@extref), `CTFlows.Flows._flow_objective`, `CTFlows.Flows._control_of`.
 """
 function _state_flow_objective(ocp, traj, law, variable, integ, coerce)
     x = Trajectories.ControlledStateProjection(traj, coerce)  # callable x(t), scalar for 1-D
