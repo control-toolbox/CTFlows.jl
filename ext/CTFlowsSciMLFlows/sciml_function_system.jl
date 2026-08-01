@@ -14,7 +14,7 @@ this system implements `Systems.AbstractSystem` (`get_ip_rhs`/`get_oop_rhs`) and
 it also follows the "1-D = scalar" convention: RHS closures are built lazily by
 `get_ip_rhs`/`get_oop_rhs` based on the actual initial condition type, coercing a 1-D
 state to a scalar before calling the wrapped ODE function — mirroring
-[`CTFlows.Systems.VectorFieldSystem`](@ref).
+[`CTFlows.Systems.VectorFieldSystem`](@extref).
 
 Unlike CTFlows-native systems, this system passes `p = variable` directly to the ODE —
 no `ODEParameters` wrapper — so users can pass arbitrary SciML parameter objects.
@@ -64,7 +64,7 @@ Lazy implementation: reads `x0` from the config to build a type-specific closure
 # Returns
 - `Systems.AbstractIPRHS`: The in-place closure with signature `(du, u, λ, t) -> nothing`.
 
-See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@extref).
 """
 function Systems.get_ip_rhs(
     sys::SciMLFunctionSystem{F}, config::Configs.AbstractStateConfig
@@ -87,7 +87,7 @@ Lazy implementation: reads `x0` from the config to build a type-specific closure
 # Returns
 - `Systems.AbstractIPRHS`: The in-place closure with signature `(du, u, λ, t) -> nothing`.
 
-See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@extref).
 """
 function Systems.get_ip_rhs(
     sys::SciMLFunctionSystem{F}, config::Configs.AbstractStateConfig
@@ -110,7 +110,7 @@ Lazy implementation: reads `x0` from the config to build a type-specific closure
 # Returns
 - `Systems.AbstractOoPRHS`: The out-of-place closure with signature `(u, λ, t) -> du`.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@extref).
 """
 function Systems.get_oop_rhs(
     sys::SciMLFunctionSystem{F}, config::Configs.AbstractStateConfig
@@ -138,7 +138,7 @@ This method is called when `!ismutable(u0)`, so the finalize path is used whenev
 # Notes
 - Emits a performance warning when called with immutable initial conditions.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@extref).
 """
 function Systems.get_oop_rhs(
     sys::SciMLFunctionSystem{F}, config::Configs.AbstractStateConfig
@@ -167,7 +167,7 @@ Shows the type name, the wrapped ODE function type, and its mutability trait.
 - `io::IO`: The IO stream to write to.
 - `sys::SciMLFunctionSystem`: The system to display.
 
-See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref).
+See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@extref).
 """
 function Base.show(io::IO, sys::SciMLFunctionSystem{F}) where {F}
     fmt = Display.format_codes(io)
@@ -189,7 +189,7 @@ Delegates to the compact show method.
 - `::MIME"text/plain"`: The MIME type for REPL display.
 - `sys::SciMLFunctionSystem`: The system to display.
 
-See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@ref).
+See also: [`CTFlowsSciMLFlows.SciMLFunctionSystem`](@extref).
 """
 function Base.show(io::IO, ::MIME"text/plain", sys::SciMLFunctionSystem)
     return show(io, sys)

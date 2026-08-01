@@ -35,7 +35,7 @@ HamiltonianVectorFieldSystem
    uniform call: f(t, x, p, v)
 ```
 
-See also: [`CTBase.Data.HamiltonianVectorField`](@extref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@ref), `TimeDependence`, [`CTBase.Traits.VariableDependence`](@extref), `build_rhs`, `build_oop_rhs`.
+See also: [`CTBase.Data.HamiltonianVectorField`](@extref), [`CTFlows.Systems.AbstractHamiltonianSystem`](@extref), `TimeDependence`, [`CTBase.Traits.VariableDependence`](@extref), `build_rhs`, `build_oop_rhs`.
 """
 struct HamiltonianVectorFieldSystem{
     F<:Function,
@@ -53,7 +53,7 @@ Return the AD trait of a `HamiltonianVectorFieldSystem`, which is always
 [`CTBase.Traits.WithoutAD`](@extref): the system stores the Hamiltonian vector field
 `X_H` directly and performs no automatic differentiation.
 
-See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref),
+See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@extref),
 [`CTBase.Traits.WithoutAD`](@extref).
 """
 Traits.ad_trait(::HamiltonianVectorFieldSystem) = Traits.WithoutAD
@@ -95,9 +95,9 @@ _ham_split(u::AbstractVector, N::Int) = (@view(u[1:N]), @view(u[(N + 1):2N]))
 """
 $(TYPEDSIGNATURES)
 
-Matrix variant of [`CTFlows.Systems._ham_split`](@ref): splits each column of `u` into state and costate row-block views.
+Matrix variant of [`CTFlows.Systems._ham_split`](@extref): splits each column of `u` into state and costate row-block views.
 
-See also: [`CTFlows.Systems._ham_split`](@ref).
+See also: [`CTFlows.Systems._ham_split`](@extref).
 """
 _ham_split(u::AbstractMatrix, N::Int) = (@view(u[1:N, :]), @view(u[(N + 1):2N, :]))
 
@@ -126,9 +126,9 @@ _ham_assign!(du::AbstractVector, dx, dp, N::Int) = (du[1:N].=dx; du[(N + 1):2N].
 """
 $(TYPEDSIGNATURES)
 
-Matrix variant of [`CTFlows.Systems._ham_assign!`](@ref): assigns state and costate derivatives into the corresponding row-blocks of each column.
+Matrix variant of [`CTFlows.Systems._ham_assign!`](@extref): assigns state and costate derivatives into the corresponding row-blocks of each column.
 
-See also: [`CTFlows.Systems._ham_assign!`](@ref).
+See also: [`CTFlows.Systems._ham_assign!`](@extref).
 """
 _ham_assign!(du::AbstractMatrix, dx, dp, N::Int) = (du[1:N, :].=dx; du[(N + 1):2N, :].=dp)
 
@@ -157,9 +157,9 @@ The augmented state vector has the form `[x; p; pv]` where:
 # Notes
 - Always returns views (never scalars), consistent with `_ham_split`.
 - For matrix inputs, returns column views.
-- Used internally by [`CTFlows.Systems.HamIpAugRHS`](@ref).
+- Used internally by [`CTFlows.Systems.HamIpAugRHS`](@extref).
 
-See also: [`CTFlows.Systems._aug_assign!`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
+See also: [`CTFlows.Systems._aug_assign!`](@extref), [`CTFlows.Systems.HamIpAugRHS`](@extref).
 """
 function _aug_split(u::AbstractVector, n_x::Int, n_v::Int)
     x = @view(u[1:n_x])
@@ -171,9 +171,9 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Matrix variant of [`CTFlows.Systems._aug_split`](@ref): splits each column of `u` into state, costate, and variable-costate row-block views.
+Matrix variant of [`CTFlows.Systems._aug_split`](@extref): splits each column of `u` into state, costate, and variable-costate row-block views.
 
-See also: [`CTFlows.Systems._aug_split`](@ref).
+See also: [`CTFlows.Systems._aug_split`](@extref).
 """
 function _aug_split(u::AbstractMatrix, n_x::Int, n_v::Int)
     return (
@@ -207,9 +207,9 @@ The augmented derivative vector has the form `[dx; dp; dpv]` where:
 # Notes
 - Performs in-place assignment using broadcasting.
 - For matrix inputs, broadcasts over columns.
-- Used internally by [`CTFlows.Systems.HamIpAugRHS`](@ref).
+- Used internally by [`CTFlows.Systems.HamIpAugRHS`](@extref).
 
-See also: [`CTFlows.Systems._aug_split`](@ref), [`CTFlows.Systems.HamIpAugRHS`](@ref).
+See also: [`CTFlows.Systems._aug_split`](@extref), [`CTFlows.Systems.HamIpAugRHS`](@extref).
 """
 function _aug_assign!(du::AbstractVector, dx, dp, dpv, n_x::Int, n_v::Int)
     du[1:n_x] .= _device_like(du, dx)
@@ -221,9 +221,9 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Matrix variant of [`CTFlows.Systems._aug_assign!`](@ref): assigns state, costate, and variable-costate derivatives into the corresponding row-blocks of each column.
+Matrix variant of [`CTFlows.Systems._aug_assign!`](@extref): assigns state, costate, and variable-costate derivatives into the corresponding row-blocks of each column.
 
-See also: [`CTFlows.Systems._aug_assign!`](@ref).
+See also: [`CTFlows.Systems._aug_assign!`](@extref).
 """
 function _aug_assign!(du::AbstractMatrix, dx, dp, dpv, n_x::Int, n_v::Int)
     du[1:n_x, :] .= _device_like(du, dx)
@@ -250,7 +250,7 @@ Lazy implementation: reads `x0`/`p0` from the config to build type-specific clos
 # Returns
 - `IPHVFOoPRHS`: An in-place RHS functor.
 
-See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@extref).
 """
 function get_ip_rhs(
     sys::HamiltonianVectorFieldSystem{F,TD,VD,Traits.OutOfPlace},
@@ -275,7 +275,7 @@ Lazy implementation: reads `x0`/`p0` from the config to build type-specific clos
 # Returns
 - `IPHVFIpRHS`: An in-place RHS functor.
 
-See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@extref).
 """
 function get_ip_rhs(
     sys::HamiltonianVectorFieldSystem{F,TD,VD,Traits.InPlace},
@@ -300,7 +300,7 @@ Lazy implementation: reads `x0`/`p0` from the config to build type-specific clos
 # Returns
 - `OoPHVFOoPRHS`: An out-of-place RHS functor.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@extref).
 """
 function get_oop_rhs(
     sys::HamiltonianVectorFieldSystem{F,TD,VD,Traits.OutOfPlace},
@@ -329,7 +329,7 @@ For immutable initial conditions, returns the finalize closure.
 # Notes
 - Emits a performance warning when called with immutable initial conditions.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@extref).
 """
 function get_oop_rhs(
     sys::HamiltonianVectorFieldSystem{F,TD,VD,Traits.InPlace},
@@ -360,7 +360,7 @@ Lazy implementation: reads `x0`/`p0`/`pv0` from the config to build the augmente
 # Returns
 - `IPHVFOoPAugRHS`: An augmented in-place RHS functor.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@extref), [`CTFlows.Systems.get_oop_rhs`](@extref).
 """
 function get_ip_rhs_augmented(
     sys::HamiltonianVectorFieldSystem{F,TD,VD,Traits.OutOfPlace},
@@ -388,7 +388,7 @@ Lazy implementation: reads `x0`/`p0`/`pv0` from the config to build the augmente
 # Returns
 - `IPHVFIpAugRHS`: An augmented in-place RHS functor.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@extref), [`CTFlows.Systems.get_oop_rhs`](@extref).
 """
 function get_ip_rhs_augmented(
     sys::HamiltonianVectorFieldSystem{F,TD,VD,Traits.InPlace},
@@ -415,7 +415,7 @@ Return the variable-costate trait of a `HamiltonianVectorFieldSystem` with
 carries a variable argument `v`, so the augmented system `ṗv = -∂H/∂v` can be
 integrated.
 
-See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref),
+See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@extref),
 [`CTBase.Traits.SupportsVariableCostate`](@extref).
 """
 function Traits.variable_costate_trait(
@@ -433,10 +433,10 @@ $(TYPEDSIGNATURES)
 
 Throw an `IncorrectArgument` error: a `HamiltonianVectorFieldSystem` stores the
 vector field `X_H` directly and carries no scalar Hamiltonian. Use
-[`CTFlows.Systems.hamiltonian_vector_field`](@ref) to retrieve `X_H` instead.
+[`CTFlows.Systems.hamiltonian_vector_field`](@extref) to retrieve `X_H` instead.
 
-See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref),
-[`CTFlows.Systems.hamiltonian_vector_field`](@ref).
+See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@extref),
+[`CTFlows.Systems.hamiltonian_vector_field`](@extref).
 """
 function hamiltonian(::HamiltonianVectorFieldSystem)
     return throw(
@@ -465,7 +465,7 @@ Shows the type name and the wrapped HamiltonianVectorField with its traits.
 - `io::IO`: The IO stream to write to.
 - `sys::HamiltonianVectorFieldSystem`: The HamiltonianVectorFieldSystem to display.
 
-See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
+See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@extref).
 """
 function Base.show(
     io::IO, sys::HamiltonianVectorFieldSystem{F,TD,VD,MD}
@@ -506,7 +506,7 @@ Delegates to the compact show method.
 - `::MIME"text/plain"`: The MIME type for REPL display.
 - `sys::HamiltonianVectorFieldSystem`: The HamiltonianVectorFieldSystem to display.
 
-See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
+See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@extref).
 """
 function Base.show(io::IO, ::MIME"text/plain", sys::HamiltonianVectorFieldSystem)
     return show(io, sys)

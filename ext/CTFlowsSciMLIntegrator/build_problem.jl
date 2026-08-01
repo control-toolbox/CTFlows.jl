@@ -13,7 +13,7 @@ Validates that the dynamics trait of the system matches the expected config type
 
 Throws `PreconditionError` if the pair is incompatible.
 
-See also: [`CTFlows.Configs.AbstractConfig`](@ref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref).
+See also: [`CTFlows.Configs.AbstractConfig`](@extref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@extref).
 """
 _check_dyn_config(::Type{Traits.StateDynamics}, ::Configs.AbstractConfig) = nothing
 function _check_dyn_config(
@@ -65,7 +65,7 @@ Covers both state systems (`AbstractStateSystem`) and non-augmented Hamiltonian 
 # Throws
 - `CTBase.Exceptions.PreconditionError`: If the system dynamics trait is incompatible with the config type.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref), [`CTFlows.Systems.get_oop_rhs`](@ref), [`CTFlows.Systems.ODEParameters`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@extref), [`CTFlows.Systems.get_oop_rhs`](@extref), [`CTFlows.Systems.ODEParameters`](@extref).
 """
 function Integrators.build_problem(
     system::Systems.AbstractSystem,
@@ -109,7 +109,7 @@ Always uses the in-place path since `pv0 = zeros(...)` guarantees mutability.
 - Only in-place path is implemented; `pv0 = zeros(...)` guarantees mutability by construction.
 - TODO: Add out-of-place path for SVector support in the future.
 
-See also: [`CTFlows.Systems.get_ip_rhs_augmented`](@ref), [`CTFlows.Configs.AbstractAugmentedHamiltonianConfig`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs_augmented`](@extref), [`CTFlows.Configs.AbstractAugmentedHamiltonianConfig`](@extref).
 """
 function Integrators.build_problem(
     system::Systems.AbstractSystem,

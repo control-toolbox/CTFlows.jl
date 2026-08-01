@@ -30,7 +30,7 @@ VectorFieldSystem
   vector_field: VectorField{var"#1", Autonomous, Fixed}
 \`\`\`
 
-See also: [`CTBase.Data.VectorField`](@extref), [`CTFlows.Systems.VectorFieldSystem`](@ref).
+See also: [`CTBase.Data.VectorField`](@extref), [`CTFlows.Systems.VectorFieldSystem`](@extref).
 """
 function build_system(vf::Data.AbstractVectorField)
     return VectorFieldSystem(vf)
@@ -67,7 +67,7 @@ HamiltonianVectorFieldSystem
   hamiltonian_vector_field: HamiltonianVectorField{var"#1", Autonomous, Fixed}
 ```
 
-See also: [`CTBase.Data.HamiltonianVectorField`](@extref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
+See also: [`CTBase.Data.HamiltonianVectorField`](@extref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@extref).
 """
 function build_system(hvf::Data.AbstractHamiltonianVectorField)
     return HamiltonianVectorFieldSystem(hvf)
@@ -76,7 +76,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build a [`CTFlows.Systems.HamiltonianSystem`](@ref) from a scalar `Hamiltonian` function with automatic differentiation.
+Build a [`CTFlows.Systems.HamiltonianSystem`](@extref) from a scalar `Hamiltonian` function with automatic differentiation.
 
 Constructs a concrete Hamiltonian system that wraps the scalar Hamiltonian function with an AD backend.
 RHS closures are built lazily based on actual initial condition types during flow integration.
@@ -107,9 +107,9 @@ HamiltonianSystem
 
 # Notes
 - The AD backend is used to compute Hamiltonian gradients `∂H/∂x` and `∂H/∂p` automatically during integration.
-- This overload is for scalar Hamiltonian functions where gradients are computed via AD. For explicit vector fields, use [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref) instead.
+- This overload is for scalar Hamiltonian functions where gradients are computed via AD. For explicit vector fields, use [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@extref) instead.
 
-See also: [`CTBase.Data.Hamiltonian`](@extref), [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTBase.Differentiation.AbstractADBackend`](@extref).
+See also: [`CTBase.Data.Hamiltonian`](@extref), [`CTFlows.Systems.HamiltonianSystem`](@extref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@extref), [`CTBase.Differentiation.AbstractADBackend`](@extref).
 """
 function build_system(
     h::Data.AbstractHamiltonian, backend::Differentiation.AbstractADBackend
@@ -120,7 +120,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build a [`CTFlows.Systems.PseudoHamiltonianSystem`](@ref) from a pseudo-Hamiltonian
+Build a [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref) from a pseudo-Hamiltonian
 `H̃(t,x,p,u,v)`, a dynamic closed-loop control law `u(t,x,p,v)`, and an AD backend.
 
 The resulting system integrates `ẋ = ∂H̃/∂p`, `ṗ = -∂H̃/∂x` with the control held fixed
@@ -131,7 +131,7 @@ at the feedback value `u = u(t,x,p,v)` during differentiation (the `:partial` mo
 - `law::Data.ControlLaw`: the control law; must carry `DynClosedLoopFeedback`.
 - `backend::Differentiation.AbstractADBackend`: the AD backend.
 
-See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@ref),
+See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref),
 [`CTBase.Data.PseudoHamiltonian`](@extref), [`CTBase.Data.ComposedHamiltonian`](@extref).
 """
 function build_system(
@@ -145,7 +145,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build a [`CTFlows.Systems.PseudoHamiltonianVectorFieldSystem`](@ref) from a
+Build a [`CTFlows.Systems.PseudoHamiltonianVectorFieldSystem`](@extref) from a
 pseudo-Hamiltonian vector field `h̃vf(t,x,p,u,v) = (ẋ,ṗ)` (already differentiated by
 the user, no AD) and a dynamic closed-loop control law `u(t,x,p,v)`.
 
@@ -157,7 +157,7 @@ feedback law is evaluated once per step to produce the control passed to `h̃vf`
 - `h̃vf::Data.AbstractPseudoHamiltonianVectorField`: the pseudo-Hamiltonian vector field.
 - `law::Data.ControlLaw`: the control law; must carry `DynClosedLoopFeedback`.
 
-See also: [`CTFlows.Systems.PseudoHamiltonianVectorFieldSystem`](@ref),
+See also: [`CTFlows.Systems.PseudoHamiltonianVectorFieldSystem`](@extref),
 [`CTBase.Data.PseudoHamiltonianVectorField`](@extref).
 """
 function build_system(
@@ -170,7 +170,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build a [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref) from a
+Build a [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref) from a
 pseudo-Hamiltonian `H̃(t,x,p,u,v)`, a dynamic closed-loop control law `u(t,x,p,v)`, a
 path constraint `g(t,x,u,v)`, a multiplier `μ(t,x,p,v)`, and an AD backend.
 
@@ -185,8 +185,8 @@ held fixed during differentiation (`g` is differentiated, `μ` is not).
 - `μ`: the multiplier (uniform call `μ(t,x,p,v)`), e.g. a `CTBase.Data.Multiplier`.
 - `backend::Differentiation.AbstractADBackend`: the AD backend.
 
-See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref),
-[`CTFlows.Systems.PseudoHamiltonianSystem`](@ref).
+See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref),
+[`CTFlows.Systems.PseudoHamiltonianSystem`](@extref).
 """
 function build_system(
     h̃::Data.PseudoHamiltonian,

@@ -18,7 +18,7 @@ $(TYPEDEF)
 Abstract supertype for `PseudoHamiltonianVectorFieldSystem` right-hand side (RHS)
 functors. The type parameter encodes the mutability trait (in-place vs out-of-place).
 
-See also: [`CTFlows.Systems.AbstractRHS`](@ref), [`CTFlows.Systems.IPPseudoHVFOoPRHS`](@ref).
+See also: [`CTFlows.Systems.AbstractRHS`](@extref), [`CTFlows.Systems.IPPseudoHVFOoPRHS`](@extref).
 """
 abstract type AbstractPseudoHVFRHS{T<:Traits.AbstractMutabilityTrait} <: AbstractRHS{T} end
 
@@ -27,7 +27,7 @@ $(TYPEDEF)
 
 Abstract supertype for in-place `PseudoHamiltonianVectorFieldSystem` RHS functors.
 
-See also: [`CTFlows.Systems.AbstractPseudoHVFRHS`](@ref).
+See also: [`CTFlows.Systems.AbstractPseudoHVFRHS`](@extref).
 """
 abstract type AbstractIPPseudoHVFRHS <: AbstractPseudoHVFRHS{Traits.InPlace} end
 
@@ -36,7 +36,7 @@ $(TYPEDEF)
 
 Abstract supertype for out-of-place `PseudoHamiltonianVectorFieldSystem` RHS functors.
 
-See also: [`CTFlows.Systems.AbstractPseudoHVFRHS`](@ref).
+See also: [`CTFlows.Systems.AbstractPseudoHVFRHS`](@extref).
 """
 abstract type AbstractOoPPseudoHVFRHS <: AbstractPseudoHVFRHS{Traits.OutOfPlace} end
 
@@ -63,7 +63,7 @@ buffer.
 # Call signature
 `(f::IPPseudoHVFOoPRHS)(du, u, λ, t) -> nothing`
 
-See also: [`CTFlows.Systems.OoPPseudoHVFOoPRHS`](@ref), [`CTFlows.Systems.IPPseudoHVFIpRHS`](@ref).
+See also: [`CTFlows.Systems.OoPPseudoHVFOoPRHS`](@extref), [`CTFlows.Systems.IPPseudoHVFIpRHS`](@extref).
 """
 struct IPPseudoHVFOoPRHS{
     F<:Function,
@@ -108,7 +108,7 @@ field directly with the pre-allocated `dx`/`dp` buffers.
 # Call signature
 `(f::IPPseudoHVFIpRHS)(du, u, λ, t) -> nothing`
 
-See also: [`CTFlows.Systems.IPPseudoHVFOoPRHS`](@ref).
+See also: [`CTFlows.Systems.IPPseudoHVFOoPRHS`](@extref).
 """
 struct IPPseudoHVFIpRHS{
     F<:Function,
@@ -139,7 +139,7 @@ end
 $(TYPEDEF)
 
 Out-of-place RHS functor for an out-of-place `PseudoHamiltonianVectorField`; see
-[`CTFlows.Systems.IPPseudoHVFOoPRHS`](@ref) for the computation. Returns
+[`CTFlows.Systems.IPPseudoHVFOoPRHS`](@extref) for the computation. Returns
 `vcat(dx, dp)`.
 
 # Fields
@@ -153,7 +153,7 @@ Out-of-place RHS functor for an out-of-place `PseudoHamiltonianVectorField`; see
 # Call signature
 `(f::OoPPseudoHVFOoPRHS)(u, λ, t) -> du`
 
-See also: [`CTFlows.Systems.IPPseudoHVFOoPRHS`](@ref).
+See also: [`CTFlows.Systems.IPPseudoHVFOoPRHS`](@extref).
 """
 struct OoPPseudoHVFOoPRHS{
     F<:Function,
@@ -196,7 +196,7 @@ temporary `dx`/`dp` buffers on each call via `similar`.
 # Call signature
 `(f::OoPPseudoHVFIpRHS)(u, λ, t) -> du`
 
-See also: [`CTFlows.Systems.OoPPseudoHVFIpFinalizeRHS`](@ref).
+See also: [`CTFlows.Systems.OoPPseudoHVFIpFinalizeRHS`](@extref).
 """
 struct OoPPseudoHVFIpRHS{
     F<:Function,
@@ -241,7 +241,7 @@ initial conditions.
 # Call signature
 `(f::OoPPseudoHVFIpFinalizeRHS)(u, λ, t) -> du`
 
-See also: [`CTFlows.Systems.OoPPseudoHVFIpRHS`](@ref).
+See also: [`CTFlows.Systems.OoPPseudoHVFIpRHS`](@extref).
 """
 struct OoPPseudoHVFIpFinalizeRHS{
     F<:Function,
@@ -295,7 +295,7 @@ u_, v; variable_costate=true)` to get `(dx, dp, dpv)`. The augmented state is
 # Call signature
 `(f::IPPseudoHVFOoPAugRHS)(du, u, λ, t) -> nothing`
 
-See also: [`CTFlows.Systems.IPPseudoHVFIpAugRHS`](@ref).
+See also: [`CTFlows.Systems.IPPseudoHVFIpAugRHS`](@extref).
 """
 struct IPPseudoHVFOoPAugRHS{
     F<:Function,
@@ -327,7 +327,7 @@ end
 $(TYPEDEF)
 
 In-place augmented RHS functor for an in-place `PseudoHamiltonianVectorField` with
-variable costate. Extends [`CTFlows.Systems.IPPseudoHVFIpRHS`](@ref) with `ṗv =
+variable costate. Extends [`CTFlows.Systems.IPPseudoHVFIpRHS`](@extref) with `ṗv =
 -∂H̃/∂v` (supplied directly by `h̃vf` at `u_ = law(t,x,p,v)`, no AD). The augmented
 state is `[x; p; pv]`.
 
@@ -343,7 +343,7 @@ state is `[x; p; pv]`.
 # Call signature
 `(f::IPPseudoHVFIpAugRHS)(du, u, λ, t) -> nothing`
 
-See also: [`CTFlows.Systems.IPPseudoHVFOoPAugRHS`](@ref).
+See also: [`CTFlows.Systems.IPPseudoHVFOoPAugRHS`](@extref).
 """
 struct IPPseudoHVFIpAugRHS{
     F<:Function,
@@ -385,7 +385,7 @@ Return a descriptive label for the RHS conversion performed by a pseudo-Hamilton
 
 Used internally by `Base.show` for display.
 
-See also: [`CTFlows.Systems.AbstractPseudoHVFRHS`](@ref).
+See also: [`CTFlows.Systems.AbstractPseudoHVFRHS`](@extref).
 """
 _rhs_conversion_label(::IPPseudoHVFOoPRHS) = "out-of-place PHVF → in-place interface"
 
@@ -394,7 +394,7 @@ $(TYPEDSIGNATURES)
 
 In-place PHVF wrapped as in-place interface.
 
-See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+See also: [`CTFlows.Systems._rhs_conversion_label`](@extref).
 """
 _rhs_conversion_label(::IPPseudoHVFIpRHS) = "in-place PHVF → in-place interface"
 
@@ -403,7 +403,7 @@ $(TYPEDSIGNATURES)
 
 Out-of-place PHVF wrapped as out-of-place interface.
 
-See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+See also: [`CTFlows.Systems._rhs_conversion_label`](@extref).
 """
 _rhs_conversion_label(::OoPPseudoHVFOoPRHS) = "out-of-place PHVF → out-of-place interface"
 
@@ -412,7 +412,7 @@ $(TYPEDSIGNATURES)
 
 In-place PHVF wrapped as out-of-place interface.
 
-See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+See also: [`CTFlows.Systems._rhs_conversion_label`](@extref).
 """
 _rhs_conversion_label(::OoPPseudoHVFIpRHS) = "in-place PHVF → out-of-place interface"
 
@@ -421,7 +421,7 @@ $(TYPEDSIGNATURES)
 
 In-place PHVF wrapped as out-of-place interface with type-finalize conversion.
 
-See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+See also: [`CTFlows.Systems._rhs_conversion_label`](@extref).
 """
 function _rhs_conversion_label(::OoPPseudoHVFIpFinalizeRHS)
     return "in-place PHVF → out-of-place interface + finalize"
@@ -432,7 +432,7 @@ $(TYPEDSIGNATURES)
 
 Out-of-place PHVF wrapped as in-place augmented interface.
 
-See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+See also: [`CTFlows.Systems._rhs_conversion_label`](@extref).
 """
 function _rhs_conversion_label(::IPPseudoHVFOoPAugRHS)
     return "out-of-place PHVF → in-place augmented interface"
@@ -443,7 +443,7 @@ $(TYPEDSIGNATURES)
 
 In-place PHVF wrapped as in-place augmented interface.
 
-See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+See also: [`CTFlows.Systems._rhs_conversion_label`](@extref).
 """
 function _rhs_conversion_label(::IPPseudoHVFIpAugRHS)
     return "in-place PHVF → in-place augmented interface"
@@ -456,7 +456,7 @@ Display a compact representation of an `AbstractPseudoHVFRHS` functor.
 
 Shows the functor type name, the wrapped PseudoHamiltonianVectorField's traits, and the conversion label.
 
-See also: [`CTFlows.Systems.AbstractPseudoHVFRHS`](@ref), [`CTFlows.Systems._rhs_conversion_label`](@ref).
+See also: [`CTFlows.Systems.AbstractPseudoHVFRHS`](@extref), [`CTFlows.Systems._rhs_conversion_label`](@extref).
 """
 function Base.show(io::IO, f::AbstractPseudoHVFRHS)
     fmt = Display.format_codes(io)
@@ -478,7 +478,7 @@ Display an `AbstractPseudoHVFRHS` functor in the REPL with `text/plain` MIME typ
 
 Delegates to the compact `show` method.
 
-See also: [`CTFlows.Systems.AbstractPseudoHVFRHS`](@ref).
+See also: [`CTFlows.Systems.AbstractPseudoHVFRHS`](@extref).
 """
 function Base.show(io::IO, ::MIME"text/plain", f::AbstractPseudoHVFRHS)
     return show(io, f)

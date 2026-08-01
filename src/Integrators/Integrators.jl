@@ -10,9 +10,9 @@ part of that surface consumed inside CTFlows so that existing `Integrators.<symb
 sites keep resolving, and it **owns** the two domain-specific glue functions that must stay in
 CTFlows because they are typed on CTFlows' own `Systems`/`Configs`/`Traits`:
 
-- [`CTFlows.Integrators.build_problem`](@ref) — build a SciML `ODEProblem` from a `Systems.AbstractSystem` and a
+- [`CTFlows.Integrators.build_problem`](@extref) — build a SciML `ODEProblem` from a `Systems.AbstractSystem` and a
   `Configs.AbstractConfig`;
-- [`CTFlows.Integrators.build_options`](@ref) — select the integrator's cached option bundle for a given config.
+- [`CTFlows.Integrators.build_options`](@extref) — select the integrator's cached option bundle for a given config.
 
 Their concrete methods are provided by the `CTFlowsSciMLIntegrator` package extension (loaded
 with `SciMLBase`); the stubs here throw `CTBase.Exceptions.ExtensionError` until it is active.
@@ -80,7 +80,7 @@ provided by the `CTFlowsSciMLIntegrator` extension; this stub throws
 # Throws
 - `CTBase.Exceptions.ExtensionError`: If the `CTFlowsSciMLIntegrator` extension is not loaded.
 
-See also: [`build_options`](@ref), [`CTSolvers.Integrators.SciML`](@extref).
+See also: [`CTFlows.Integrators.build_options`](@extref), [`CTSolvers.Integrators.SciML`](@extref).
 """
 function build_problem(
     system::Systems.AbstractSystem,
@@ -120,7 +120,7 @@ until it is loaded.
 # Throws
 - `CTBase.Exceptions.ExtensionError`: If the `CTFlowsSciMLIntegrator` extension is not loaded.
 
-See also: [`build_problem`](@ref), [`CTSolvers.Integrators.options_trajectory`](@extref).
+See also: [`CTFlows.Integrators.build_problem`](@extref), [`CTSolvers.Integrators.options_trajectory`](@extref).
 """
 function build_options(integrator::AbstractIntegrator, config)
     return throw(

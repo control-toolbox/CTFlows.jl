@@ -26,7 +26,7 @@ StateEndPointConfig
   tf: 1.0
 \`\`\`
 
-See also: [`CTFlows.Configs.StateTrajectoryConfig`](@ref)
+See also: [`CTFlows.Configs.StateTrajectoryConfig`](@extref)
 """
 struct StateEndPointConfig{T0<:Real,X0,TF<:Real} <:
        AbstractConfigWithMaC{X0,Traits.EndPointMode,Traits.StateDynamics}
@@ -66,7 +66,7 @@ StateTrajectoryConfig
   x0: [1.0, 0.0]
 \`\`\`
 
-See also: [`CTFlows.Configs.StateEndPointConfig`](@ref)
+See also: [`CTFlows.Configs.StateEndPointConfig`](@extref)
 """
 struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real},X0} <:
        AbstractConfigWithMaC{X0,Traits.TrajectoryMode,Traits.StateDynamics}
@@ -109,7 +109,7 @@ HamiltonianEndPointConfig
   tf: 1.0
 \`\`\`
 
-See also: [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@ref), [`CTFlows.Configs.StateEndPointConfig`](@ref).
+See also: [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@extref), [`CTFlows.Configs.StateEndPointConfig`](@extref).
 """
 struct HamiltonianEndPointConfig{T0<:Real,X0,P0,TF<:Real} <:
        AbstractConfigWithMaC{X0,Traits.EndPointMode,Traits.HamiltonianDynamics}
@@ -156,7 +156,7 @@ HamiltonianTrajectoryConfig
   p0: [0.5, 0.3]
 \`\`\`
 
-See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref), [`CTFlows.Configs.StateTrajectoryConfig`](@ref).
+See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@extref), [`CTFlows.Configs.StateTrajectoryConfig`](@extref).
 """
 struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real},X0,P0} <:
        AbstractConfigWithMaC{X0,Traits.TrajectoryMode,Traits.HamiltonianDynamics}
@@ -205,7 +205,7 @@ AugmentedHamiltonianEndPointConfig
   tf: 1.0
 \`\`\`
 
-See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@ref), [`CTBase.Traits.AugmentedHamiltonianDynamics`](@extref).
+See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@extref), [`CTBase.Traits.AugmentedHamiltonianDynamics`](@extref).
 """
 struct AugmentedHamiltonianEndPointConfig{T0<:Real,X0,P0,PV0,TF<:Real} <:
        AbstractAugmentedHamiltonianConfig{X0,Traits.EndPointMode}
@@ -243,7 +243,7 @@ initial state, initial costate, and initial variable costate: `vcat(x0, p0, pv0)
 # Returns
 - Concatenated vector `[x0; p0; pv0]`.
 
-See also: [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@ref), [`CTFlows.Configs.initial_state`](@ref), [`CTFlows.Configs.initial_costate`](@ref), [`CTFlows.Configs.initial_variable_costate`](@ref).
+See also: [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@extref), [`CTFlows.Configs.initial_state`](@extref), [`CTFlows.Configs.initial_costate`](@extref), [`CTFlows.Configs.initial_variable_costate`](@extref).
 """
 function initial_condition(c::AugmentedHamiltonianEndPointConfig)
     return vcat(c.x0, c.p0, c.pv0)
@@ -262,7 +262,7 @@ Extracts the initial costate field from the augmented Hamiltonian configuration.
 # Returns
 - The initial costate vector.
 
-See also: [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@ref).
+See also: [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@extref).
 """
 function initial_costate(c::AugmentedHamiltonianEndPointConfig)
     return c.p0
@@ -281,7 +281,7 @@ Extracts the initial variable costate field from the augmented Hamiltonian confi
 # Returns
 - The initial variable costate vector.
 
-See also: [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@ref).
+See also: [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@extref).
 """
 function initial_variable_costate(c::AugmentedHamiltonianEndPointConfig)
     return c.pv0

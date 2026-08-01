@@ -30,7 +30,7 @@ of [`CTBase.Data.ComposedHamiltonian`](@extref) only where the feedback is stati
 - `law::L`: the dynamic closed-loop control law.
 - `backend::BACKEND`: the AD backend.
 
-See also: [`CTFlows.Systems.HamiltonianSystem`](@ref),
+See also: [`CTFlows.Systems.HamiltonianSystem`](@extref),
 [`CTBase.Data.PseudoHamiltonian`](@extref), [`CTBase.Data.ComposedHamiltonian`](@extref).
 """
 struct PseudoHamiltonianSystem{
@@ -60,7 +60,7 @@ $(TYPEDSIGNATURES)
 
 Return the pseudo-Hamiltonian `H̃` of a `PseudoHamiltonianSystem`.
 
-See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@ref), [`CTFlows.Systems.control_law`](@ref).
+See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref), [`CTFlows.Systems.control_law`](@extref).
 """
 pseudo_hamiltonian(sys::PseudoHamiltonianSystem) = sys.h̃
 
@@ -69,7 +69,7 @@ $(TYPEDSIGNATURES)
 
 Return the control law `u(t,x,p,v)` of a `PseudoHamiltonianSystem`.
 
-See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@ref), [`CTFlows.Systems.pseudo_hamiltonian`](@ref).
+See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref), [`CTFlows.Systems.pseudo_hamiltonian`](@extref).
 """
 control_law(sys::PseudoHamiltonianSystem) = sys.law
 
@@ -78,7 +78,7 @@ $(TYPEDSIGNATURES)
 
 Return the AD backend of a `PseudoHamiltonianSystem`.
 
-See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@ref).
+See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref).
 """
 backend(sys::PseudoHamiltonianSystem) = sys.backend
 
@@ -89,7 +89,7 @@ Return the true Hamiltonian of a `PseudoHamiltonianSystem` — the
 [`CTBase.Data.ComposedHamiltonian`](@extref) `H(t,x,p,v) = H̃(t,x,p,u(t,x,p,v),v)`
 obtained by eliminating the control with the feedback law. Built on the fly.
 
-See also: [`CTFlows.Systems.pseudo_hamiltonian`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref).
+See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref), [`CTFlows.Systems.HamiltonianSystem`](@extref).
 """
 function hamiltonian(sys::PseudoHamiltonianSystem)
     return Data.ComposedHamiltonian(sys.h̃, sys.law)
@@ -102,10 +102,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the in-place RHS ([`CTFlows.Systems.PseudoHamIpRHS`](@ref)) for a
+Return the in-place RHS ([`CTFlows.Systems.PseudoHamIpRHS`](@extref)) for a
 `PseudoHamiltonianSystem`.
 
-See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@extref).
 """
 function get_ip_rhs(sys::PseudoHamiltonianSystem, config::Configs.AbstractHamiltonianConfig)
     x0 = Configs.initial_state(config)
@@ -119,10 +119,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the out-of-place RHS ([`CTFlows.Systems.PseudoHamOoPRHS`](@ref)) for a
+Return the out-of-place RHS ([`CTFlows.Systems.PseudoHamOoPRHS`](@extref)) for a
 `PseudoHamiltonianSystem`.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@extref).
 """
 function get_oop_rhs(
     sys::PseudoHamiltonianSystem, config::Configs.AbstractHamiltonianConfig
@@ -138,10 +138,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the augmented in-place RHS ([`CTFlows.Systems.PseudoHamIpAugRHS`](@ref)) for a
+Return the augmented in-place RHS ([`CTFlows.Systems.PseudoHamIpAugRHS`](@extref)) for a
 `PseudoHamiltonianSystem` with variable costate.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@extref).
 """
 function get_ip_rhs_augmented(
     sys::PseudoHamiltonianSystem, config::Configs.AbstractAugmentedHamiltonianConfig
@@ -191,7 +191,7 @@ Display a compact representation of a `PseudoHamiltonianSystem`.
 Shows the type name, time/variable dependence traits, and the wrapped pseudo-Hamiltonian,
 control law, and AD backend.
 
-See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@ref).
+See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref).
 """
 function Base.show(io::IO, sys::PseudoHamiltonianSystem)
     fmt = Display.format_codes(io)
