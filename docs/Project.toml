@@ -19,7 +19,7 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 [compat]
 CTBase = "0.28"
 CTModels = "0.15"
-CTSolvers = "0.4"
+CTSolvers = "0.4, 0.5"
 DiffEqBase = "7"
 DifferentiationInterface = "0.6, 0.7"
 Documenter = "1"
