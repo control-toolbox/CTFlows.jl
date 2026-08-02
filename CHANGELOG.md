@@ -8,6 +8,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-08-02
+
+### 💥 Breaking Changes
+
+#### `OpenLoop` laws now require a time argument
+
+- **`CTBase.Data.OpenLoop` is now unconditionally non-autonomous**: its control
+  function must accept `t` as its first argument. This follows the CTBase control-law
+  contract and prevents time from being silently ignored.
+
+**Migration**:
+
+```julia
+# Before
+law = CTBase.Data.OpenLoop(() -> 1.0)
+
+# After
+law = CTBase.Data.OpenLoop(t -> 1.0)
+```
+
+See [BREAKING.md](BREAKING.md).
+
+### ✨ New Features
+
+- **GPU-aware flow construction**: `method=:gpu` selects GPU strategies across the
+  supported `:di` and `:sciml` constructor families, with GPU-safe augmented and OCP
+  flow paths and compatibility documentation.
+- **Constrained pseudo-Hamiltonian flows**: support for `:total` and `:partial` modes,
+  multiple path constraints, and multi-phase reconstruction for OCP and controlled flows.
+- **Pseudo-Hamiltonian vector-field flows**: `Flow(h̃vf, law)` and the corresponding
+  system, RHS functors, tests, and compatibility reference page.
+- **Control-free OCP flows**: state-only `Flow(ocp)` calls, state-flow trajectories,
+  variable-costate and multi-phase support.
+
+### 🐛 Bug Fixes
+
+- Corrected OCP-derived buffers and output reconstruction for batched matrices and
+  immutable `SVector` states.
+- Corrected flow-built solution status and success reporting by delegating to the
+  underlying integration result.
+- Added explicit environment contracts and GPU test skipping so unsupported GPU suites
+  are reported as broken rather than silently passing.
+- `Flow(ocp)` now dispatches on control dependence instead of silently ignoring controls.
+
+### 🛠 Enhancements
+
+- Added compatibility probes and reference pages covering flow constructors, state shapes,
+  GPU execution, and pseudo-Hamiltonian vector fields.
+- Improved arity diagnostics for control laws, constraints, and multipliers.
+- Added function-based and component-wise jumps for multi-phase flows and cached trajectory
+  projections.
+
+### 📦 Dependencies
+
+- Updated CTBase, CTModels, and CTSolvers compatibility ranges for the new flow and
+  documentation features.
+
+### ✅ Compatibility
+
+- **Breaking changes**: `OpenLoop` now requires a time argument. See [BREAKING.md](BREAKING.md).
+- The release also consolidates the breaking changes introduced throughout the 0.9–0.16
+  beta series in [BREAKING.md](BREAKING.md).
+
+
 ## [0.16.3-beta] - 2026-07-29
 
 ### Fixed

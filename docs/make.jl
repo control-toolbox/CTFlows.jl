@@ -50,9 +50,9 @@ draft = false # Draft mode: if true, @example blocks in markdown are not execute
 # ═══════════════════════════════════════════════════════════════════════════════
 links = InterLinks(
     "CTFlows" => (
-        "https://control-toolbox.org/CTFlows.jl/dev/",
+        "https://control-toolbox.org/CTFlows.jl/stable/",
         joinpath(@__DIR__, "build", "1", "objects.inv"),
-        "https://control-toolbox.org/CTFlows.jl/dev/objects.inv",
+        "https://control-toolbox.org/CTFlows.jl/stable/objects.inv",
     ),
     "CTBase" => (
         "https://control-toolbox.org/CTBase.jl/stable/",
