@@ -36,7 +36,7 @@ julia> Configs.StateEndPointConfig <: Configs.AbstractStateConfig
 true
 \`\`\`
 
-See also: [`CTFlows.Configs.AbstractEndPointConfig`](@ref), [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref), [`CTFlows.Configs.AbstractStateConfig`](@ref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref).
+See also: [`CTFlows.Configs.AbstractEndPointConfig`](@extref), [`CTFlows.Configs.AbstractTrajectoryConfig`](@extref), [`CTFlows.Configs.AbstractStateConfig`](@extref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@extref).
 """
 abstract type AbstractConfig{X0} end
 
@@ -73,7 +73,7 @@ julia> Configs.HamiltonianEndPointConfig <: Configs.AbstractConfigWithMaC
 true
 \`\`\`
 
-See also: [`CTFlows.Configs.AbstractConfig`](@ref), [`CTFlows.Configs.AbstractEndPointConfig`](@ref), [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref), [`CTFlows.Configs.AbstractStateConfig`](@ref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref), [`CTFlows.Configs.AbstractAugmentedHamiltonianConfig`](@ref).
+See also: [`CTFlows.Configs.AbstractConfig`](@extref), [`CTFlows.Configs.AbstractEndPointConfig`](@extref), [`CTFlows.Configs.AbstractTrajectoryConfig`](@extref), [`CTFlows.Configs.AbstractStateConfig`](@extref), [`CTFlows.Configs.AbstractHamiltonianConfig`](@extref), [`CTFlows.Configs.AbstractAugmentedHamiltonianConfig`](@extref).
 """
 abstract type AbstractConfigWithMaC{
     X0,Mode<:Traits.AbstractModeTrait,Dyn<:Traits.AbstractDynamicsTrait
@@ -99,7 +99,7 @@ config = Configs.HamiltonianEndPointConfig(0.0, [1.0], [0.5], 1.0)
 Configs.mode_trait(config) === Traits.EndPointMode  # true
 \`\`\`
 
-See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@ref), [`CTBase.Traits.EndPointMode`](@extref), [`CTBase.Traits.TrajectoryMode`](@extref), [`CTBase.Traits.dynamics_trait`](@extref).
+See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@extref), [`CTBase.Traits.EndPointMode`](@extref), [`CTBase.Traits.TrajectoryMode`](@extref), [`CTBase.Traits.dynamics_trait`](@extref).
 """
 function mode_trait(
     ::AbstractConfigWithMaC{X0,Mode,Dyn}
@@ -127,7 +127,7 @@ config = Configs.HamiltonianEndPointConfig(0.0, [1.0], [0.5], 1.0)
 Traits.dynamics_trait(config) === Traits.HamiltonianDynamics  # true
 \`\`\`
 
-See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@ref), [`CTBase.Traits.dynamics_trait`](@extref), [`CTBase.Traits.StateDynamics`](@extref), [`CTBase.Traits.HamiltonianDynamics`](@extref), [`CTBase.Traits.AugmentedHamiltonianDynamics`](@extref), [`CTFlows.Configs.mode_trait`](@ref).
+See also: [`CTFlows.Configs.AbstractConfigWithMaC`](@extref), [`CTBase.Traits.dynamics_trait`](@extref), [`CTBase.Traits.StateDynamics`](@extref), [`CTBase.Traits.HamiltonianDynamics`](@extref), [`CTBase.Traits.AugmentedHamiltonianDynamics`](@extref), [`CTFlows.Configs.mode_trait`](@extref).
 """
 function Traits.dynamics_trait(
     ::AbstractConfigWithMaC{X0,Mode,Dyn}
@@ -191,10 +191,10 @@ Type alias for augmented Hamiltonian configurations, which include state, costat
 # Notes
 - Augmented Hamiltonian configurations are used for systems where the Hamiltonian depends on an additional variable (e.g., a control parameter or optimization variable).
 - The initial condition typically has the form `vcat(x0, p0, pv0)` where `x0` is the initial state, `p0` is the initial costate, and `pv0` is the initial augmented variable.
-- Subtypes [`CTFlows.Configs.AbstractConfigWithMaC`](@ref) with [`CTBase.Traits.AugmentedHamiltonianDynamics`](@extref).
-- Used in conjunction with [`CTFlows.Systems.HamiltonianSystem`](@ref) for automatic differentiation-based Hamiltonian integration.
+- Subtypes [`CTFlows.Configs.AbstractConfigWithMaC`](@extref) with [`CTBase.Traits.AugmentedHamiltonianDynamics`](@extref).
+- Used in conjunction with [`CTFlows.Systems.HamiltonianSystem`](@extref) for automatic differentiation-based Hamiltonian integration.
 
-See also: [`CTFlows.Configs.AbstractHamiltonianConfig`](@ref), [`CTBase.Traits.AugmentedHamiltonianDynamics`](@extref), [`CTFlows.Systems.HamiltonianSystem`](@ref).
+See also: [`CTFlows.Configs.AbstractHamiltonianConfig`](@extref), [`CTBase.Traits.AugmentedHamiltonianDynamics`](@extref), [`CTFlows.Systems.HamiltonianSystem`](@extref).
 """
 const AbstractAugmentedHamiltonianConfig{X0,M<:Traits.AbstractModeTrait} = AbstractConfigWithMaC{
     X0,M,Traits.AugmentedHamiltonianDynamics

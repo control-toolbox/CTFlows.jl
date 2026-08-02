@@ -5,7 +5,7 @@ Abstract supertype for vector field solution containers.
 
 This type defines the interface for all solution types that wrap ODE integration results.
 
-See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref).
+See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@extref), [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref).
 """
 abstract type AbstractVectorFieldTrajectory end
 
@@ -23,7 +23,7 @@ semantic accessors for time grids and state functions.
   when the flow carries no variable.
 - `x0`: The initial state, or `Core.NotProvided` when built without a config (e.g. raw
   plumbing/tests). Drives the "1-D = scalar" coercion (issue #357,
-  [`CTFlows.Systems._coerce_state`](@ref)) applied by `sol(t)` and `Integrators.final_state`
+  [`CTFlows.Systems._coerce_state`](@extref)) applied by `sol(t)` and `Integrators.final_state`
   — a scalar or length-1-vector `x0` collapses the returned state to a scalar; anything
   else, or `Core.NotProvided`, applies no coercion.
 
@@ -42,7 +42,7 @@ x = Trajectories.state(sol)            # callable state function
 x(0.5)                    # evaluate at t = 0.5
 \`\`\`
 
-See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.AbstractVectorFieldTrajectory`](@ref).
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.AbstractVectorFieldTrajectory`](@extref).
 """
 struct VectorFieldTrajectory{R<:Integrators.AbstractIntegrationResult,V,X0} <:
        AbstractVectorFieldTrajectory
@@ -66,7 +66,7 @@ $(TYPEDSIGNATURES)
 
 Construct a `VectorFieldTrajectory` with no known initial state (`Core.NotProvided`,
 applying no shape coercion) — kept for callers that only carry `variable`, not `x0`
-(e.g. [`CTFlows.Trajectories.merge`](@ref) on legacy segments, or direct construction
+(e.g. [`CTFlows.Trajectories.merge`](@extref) on legacy segments, or direct construction
 from a raw integration result in tests).
 """
 function VectorFieldTrajectory(result::Integrators.AbstractIntegrationResult, variable)
@@ -139,7 +139,7 @@ x.(0.0:0.1:1.0)   # broadcast over time grid
   `state(sol)`, `costate(sol)`, `control(sol)` when extended to Hamiltonian systems.
 - No allocation occurs — returns `sol` directly.
 
-See also: [`CTSolvers.Integrators.times`](@extref), [`CTSolvers.Integrators.evaluate_at`](@extref), [`CTFlows.Trajectories.time_grid`](@ref), [`CTModels.Components.state`](@extref).
+See also: [`CTSolvers.Integrators.times`](@extref), [`CTSolvers.Integrators.evaluate_at`](@extref), [`CTFlows.Trajectories.time_grid`](@extref), [`CTModels.Components.state`](@extref).
 """
 function Components.state(sol::VectorFieldTrajectory)
     return sol
@@ -173,7 +173,7 @@ tg = Trajectories.time_grid(sol)  # same as times(sol)
 - Use `time_grid` when "grid" terminology is clearer in context.
 - Use `times` for brevity in everyday use.
 
-See also: [`CTSolvers.Integrators.times`](@extref), [`CTFlows.Trajectories.state`](@ref), [`CTModels.Components.time_grid`](@extref).
+See also: [`CTSolvers.Integrators.times`](@extref), [`CTFlows.Trajectories.state`](@extref), [`CTModels.Components.time_grid`](@extref).
 """
 function Components.time_grid(sol::VectorFieldTrajectory)
     return Integrators.times(sol)
@@ -185,7 +185,7 @@ $(TYPEDSIGNATURES)
 Evaluate the solution at a given time, coerced to a scalar for a 1-D state (issue #357).
 
 Delegates to the integration result, then applies
-[`CTFlows.Systems._coerce_state`](@ref)`(sol.x0)` — a scalar or length-1-vector `x0`
+[`CTFlows.Systems._coerce_state`](@extref)`(sol.x0)` — a scalar or length-1-vector `x0`
 collapses the returned state to a scalar; anything else (including `x0 ===
 Core.NotProvided`) applies no coercion.
 
@@ -196,7 +196,7 @@ Core.NotProvided`) applies no coercion.
 # Returns
 - The solution state at time `t`.
 
-See also: [`CTFlows.Systems._coerce_state`](@ref), [`CTSolvers.Integrators.evaluate_at`](@extref), [`CTSolvers.Integrators.times`](@extref).
+See also: [`CTFlows.Systems._coerce_state`](@extref), [`CTSolvers.Integrators.evaluate_at`](@extref), [`CTSolvers.Integrators.times`](@extref).
 """
 function (sol::VectorFieldTrajectory)(t::Real)
     return Systems._coerce_state(sol.x0)(Integrators.evaluate_at(sol.result, t))
@@ -206,7 +206,7 @@ end
 $(TYPEDSIGNATURES)
 
 Return the final state from the solution, coerced to a scalar for a 1-D state (issue
-#357) — see [`CTFlows.Systems._coerce_state`](@ref).
+#357) — see [`CTFlows.Systems._coerce_state`](@extref).
 
 # Arguments
 - `sol::VectorFieldTrajectory`: The vector field solution.
@@ -214,7 +214,7 @@ Return the final state from the solution, coerced to a scalar for a 1-D state (i
 # Returns
 - The final state from the integration result.
 
-See also: [`CTFlows.Systems._coerce_state`](@ref), [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTSolvers.Integrators.final_state`](@extref).
+See also: [`CTFlows.Systems._coerce_state`](@extref), [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTSolvers.Integrators.final_state`](@extref).
 """
 function Integrators.final_state(sol::VectorFieldTrajectory)
     return Systems._coerce_state(sol.x0)(Integrators.final_state(sol.result))
@@ -308,7 +308,7 @@ Plot stub — throws error if Plots extension not loaded.
 # Throws
 - `CTBase.Exceptions.ExtensionError`: If Plots extension is not loaded.
 
-See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.AbstractVectorFieldTrajectory`](@ref).
+See also: [`CTFlows.Trajectories.VectorFieldTrajectory`](@extref), [`CTFlows.Trajectories.AbstractVectorFieldTrajectory`](@extref).
 """
 function RecipesBase.plot(sol::AbstractVectorFieldTrajectory; kwargs...)
     return throw(

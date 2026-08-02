@@ -17,6 +17,6 @@ Returns `Differentiation.DifferentiationInterface()`, the CPU-default strategy. 
 need a device-specific backend (e.g. GPU) must build and pass one explicitly — this default is
 not device-aware.
 
-See also: [`CTFlows.Systems.hamiltonian_vector_field`](@ref), [`CTBase.Differentiation.DifferentiationInterface`](@extref).
+See also: [`CTFlows.Systems.hamiltonian_vector_field`](@extref), [`CTBase.Differentiation.DifferentiationInterface`](@extref).
 """
 __hvf_ad_backend() = Differentiation.DifferentiationInterface()

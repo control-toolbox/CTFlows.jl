@@ -19,7 +19,7 @@ the final state is needed.
 # Returns
 - `Dict{Symbol,Any}`: Pre-computed options optimized for point integration.
 
-See also: [`CTFlows.Integrators.build_options`](@ref), [`CTFlows.Configs.AbstractEndPointConfig`](@ref).
+See also: [`CTFlows.Integrators.build_options`](@extref), [`CTFlows.Configs.AbstractEndPointConfig`](@extref).
 """
 function Integrators.build_options(
     integ::Integrators.SciML, config::Configs.AbstractEndPointConfig
@@ -43,7 +43,7 @@ storage and interpolation.
 # Returns
 - `Dict{Symbol,Any}`: Pre-computed options optimized for trajectory integration.
 
-See also: [`CTFlows.Integrators.build_options`](@ref), [`CTFlows.Configs.AbstractTrajectoryConfig`](@ref).
+See also: [`CTFlows.Integrators.build_options`](@extref), [`CTFlows.Configs.AbstractTrajectoryConfig`](@extref).
 """
 function Integrators.build_options(
     integ::Integrators.SciML, config::Configs.AbstractTrajectoryConfig
@@ -65,7 +65,7 @@ Defaults to trajectory options when no configuration is provided.
 # Returns
 - `Dict{Symbol,Any}`: Pre-computed options for trajectory integration (fallback).
 
-See also: [`CTFlows.Integrators.build_options`](@ref).
+See also: [`CTFlows.Integrators.build_options`](@extref).
 """
 function Integrators.build_options(integ::Integrators.SciML, config::Nothing)
     return Integrators.options_trajectory(integ)  # fallback vers Trajectory par défaut

@@ -30,7 +30,7 @@ julia> flow = Flows.StateFlow(system, integrator)
 StateFlow{...}
 \`\`\`
 
-See also: [`CTFlows.Flows.AbstractFlow`](@ref), [`CTFlows.Flows.StateFlow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref).
+See also: [`CTFlows.Flows.AbstractFlow`](@extref), [`CTFlows.Flows.StateFlow`](@extref), [`CTFlows.Flows.HamiltonianFlow`](@extref).
 """
 struct Flow{
     TD<:Traits.TimeDependence,
@@ -48,7 +48,7 @@ $(TYPEDEF)
 
 Alias for state flows: `Flow{TD, VD, StateDynamics, S, I}`.
 
-See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref).
+See also: [`CTFlows.Flows.Flow`](@extref), [`CTFlows.Flows.HamiltonianFlow`](@extref).
 """
 const StateFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,S<:Systems.AbstractSystem{TD,VD,Traits.StateDynamics},I<:Integrators.AbstractIntegrator} = Flow{
     TD,VD,Traits.StateDynamics,S,I
@@ -57,7 +57,7 @@ const StateFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,S<:Syste
 """
 $(TYPEDSIGNATURES)
 
-Construct a [`CTFlows.Flows.StateFlow`](@ref) from a state system and an integrator.
+Construct a [`CTFlows.Flows.StateFlow`](@extref) from a state system and an integrator.
 
 # Arguments
 - `system::S`: a state system (`<: AbstractStateSystem`).
@@ -66,7 +66,7 @@ Construct a [`CTFlows.Flows.StateFlow`](@ref) from a state system and an integra
 # Returns
 - `StateFlow`: a concrete `Flow` with `StateDynamics`.
 
-See also: [`CTFlows.Flows.StateFlow`](@ref), [`CTFlows.Flows.Flow`](@ref).
+See also: [`CTFlows.Flows.StateFlow`](@extref), [`CTFlows.Flows.Flow`](@extref).
 """
 function StateFlow(
     system::S, integrator::I
@@ -79,7 +79,7 @@ $(TYPEDEF)
 
 Alias for Hamiltonian flows: `Flow{TD, VD, HamiltonianDynamics, S, I}`.
 
-See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.StateFlow`](@ref).
+See also: [`CTFlows.Flows.Flow`](@extref), [`CTFlows.Flows.StateFlow`](@extref).
 """
 const HamiltonianFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,S<:Systems.AbstractSystem{TD,VD,Traits.HamiltonianDynamics},I<:Integrators.AbstractIntegrator} = Flow{
     TD,VD,Traits.HamiltonianDynamics,S,I
@@ -88,7 +88,7 @@ const HamiltonianFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,S<
 """
 $(TYPEDSIGNATURES)
 
-Construct a [`CTFlows.Flows.HamiltonianFlow`](@ref) from a Hamiltonian system and an
+Construct a [`CTFlows.Flows.HamiltonianFlow`](@extref) from a Hamiltonian system and an
 integrator.
 
 # Arguments
@@ -98,7 +98,7 @@ integrator.
 # Returns
 - `HamiltonianFlow`: a concrete `Flow` with `HamiltonianDynamics`.
 
-See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Flows.Flow`](@ref).
+See also: [`CTFlows.Flows.HamiltonianFlow`](@extref), [`CTFlows.Flows.Flow`](@extref).
 """
 function HamiltonianFlow(
     system::S, integrator::I
@@ -113,7 +113,7 @@ $(TYPEDSIGNATURES)
 
 Build a `Flow` from a system and an integrator.
 
-See also: [`CTFlows.Flows.Flow`](@ref).
+See also: [`CTFlows.Flows.Flow`](@extref).
 """
 function build_flow(
     system::S, integrator::I
@@ -126,7 +126,7 @@ $(TYPEDSIGNATURES)
 
 Return the system associated with a `Flow`.
 
-See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.integrator`](@ref).
+See also: [`CTFlows.Flows.Flow`](@extref), [`CTFlows.Flows.integrator`](@extref).
 """
 function system(
     f::Flow{TD,VD,D,S,I}
@@ -145,7 +145,7 @@ $(TYPEDSIGNATURES)
 
 Return the integrator associated with a `Flow`.
 
-See also: [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.system`](@ref).
+See also: [`CTFlows.Flows.Flow`](@extref), [`CTFlows.Flows.system`](@extref).
 """
 function integrator(
     f::Flow{TD,VD,D,S,I}
@@ -171,7 +171,7 @@ Get the Hamiltonian vector field from a HamiltonianFlow with an AD-backed system
 Delegates to the system-level getter. The `inplace` parameter controls whether
 the returned closure writes results in-place.
 
-See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.HamiltonianSystem`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref)
+See also: [`CTFlows.Flows.HamiltonianFlow`](@extref), [`CTFlows.Systems.HamiltonianSystem`](@extref), [`CTFlows.Systems.hamiltonian_vector_field`](@extref)
 """
 function Systems.hamiltonian_vector_field(
     flow::HamiltonianFlow{
@@ -190,7 +190,7 @@ Get the Hamiltonian vector field from a HamiltonianFlow with an HVF-backed syste
 Returns the pre-stored vector field from the `HamiltonianVectorFieldSystem` without
 any recomputation.
 
-See also: [`CTFlows.Flows.HamiltonianFlow`](@ref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref), [`CTFlows.Systems.hamiltonian_vector_field`](@ref)
+See also: [`CTFlows.Flows.HamiltonianFlow`](@extref), [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@extref), [`CTFlows.Systems.hamiltonian_vector_field`](@extref)
 """
 function Systems.hamiltonian_vector_field(
     flow::HamiltonianFlow{

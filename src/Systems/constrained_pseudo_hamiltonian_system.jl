@@ -23,7 +23,7 @@ pseudo-Hamiltonian `H̃ + μ·g`
 with **both** the control `u = u(t,x,p,v)` **and** the multiplier value
 `μ = μ(t,x,p,v)` **held fixed** during differentiation (the constrained `:partial`
 mode): `g` is differentiated in `(x,p,v)`, `μ` is not. This is the counterpart of
-[`CTFlows.Systems.PseudoHamiltonianSystem`](@ref) for constrained flows; the constrained
+[`CTFlows.Systems.PseudoHamiltonianSystem`](@extref) for constrained flows; the constrained
 `:total` mode instead bakes `μ` as a function and composes with the law (see
 `CTFlows.Flows.ConstrainedPseudoHamiltonianFunction`).
 
@@ -42,8 +42,8 @@ mode): `g` is differentiated in `(x,p,v)`, `μ` is not. This is the counterpart 
 - `μ::M`: the multiplier `μ(t,x,p,v)`.
 - `backend::BACKEND`: the AD backend.
 
-See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@ref),
-[`CTFlows.Systems.FrozenConstrainedPseudoHamiltonian`](@ref),
+See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref),
+[`CTFlows.Systems.FrozenConstrainedPseudoHamiltonian`](@extref),
 [`CTBase.Data.PathConstraint`](@extref), [`CTBase.Data.Multiplier`](@extref).
 """
 struct ConstrainedPseudoHamiltonianSystem{
@@ -68,7 +68,7 @@ $(TYPEDSIGNATURES)
 A `ConstrainedPseudoHamiltonianSystem` is AD-backed: the constrained pseudo-Hamiltonian
 `H̃ + μ·g` is differentiated at frozen `(u, μ)` to produce the RHS.
 
-See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref),
+See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref),
 [`CTBase.Traits.WithAD`](@extref).
 """
 Traits.ad_trait(::ConstrainedPseudoHamiltonianSystem) = Traits.WithAD
@@ -87,9 +87,9 @@ $(TYPEDSIGNATURES)
 
 Return the **base** pseudo-Hamiltonian `H̃` of a `ConstrainedPseudoHamiltonianSystem`
 (without the `μ·g` term). The constraint and multiplier are exposed separately by
-[`CTFlows.Systems.constraint`](@ref) and [`CTFlows.Systems.multiplier`](@ref).
+[`CTFlows.Systems.constraint`](@extref) and [`CTFlows.Systems.multiplier`](@extref).
 
-See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref).
+See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref).
 """
 pseudo_hamiltonian(sys::ConstrainedPseudoHamiltonianSystem) = sys.h̃
 
@@ -98,7 +98,7 @@ $(TYPEDSIGNATURES)
 
 Return the control law `u(t,x,p,v)` of a `ConstrainedPseudoHamiltonianSystem`.
 
-See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref).
+See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref).
 """
 control_law(sys::ConstrainedPseudoHamiltonianSystem) = sys.law
 
@@ -107,7 +107,7 @@ $(TYPEDSIGNATURES)
 
 Return the path constraint `g(t,x,u,v)` of a `ConstrainedPseudoHamiltonianSystem`.
 
-See also: [`CTFlows.Systems.multiplier`](@ref), [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref).
+See also: [`CTFlows.Systems.multiplier`](@extref), [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref).
 """
 constraint(sys::ConstrainedPseudoHamiltonianSystem) = sys.g
 
@@ -116,7 +116,7 @@ $(TYPEDSIGNATURES)
 
 Return the multiplier `μ(t,x,p,v)` of a `ConstrainedPseudoHamiltonianSystem`.
 
-See also: [`CTFlows.Systems.constraint`](@ref), [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref).
+See also: [`CTFlows.Systems.constraint`](@extref), [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref).
 """
 multiplier(sys::ConstrainedPseudoHamiltonianSystem) = sys.μ
 
@@ -125,7 +125,7 @@ $(TYPEDSIGNATURES)
 
 Return the AD backend of a `ConstrainedPseudoHamiltonianSystem`.
 
-See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref).
+See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref).
 """
 backend(sys::ConstrainedPseudoHamiltonianSystem) = sys.backend
 
@@ -136,11 +136,11 @@ Return the **base** (unconstrained) true Hamiltonian of a
 `ConstrainedPseudoHamiltonianSystem` — the [`CTBase.Data.ComposedHamiltonian`](@extref)
 `H(t,x,p,v) = H̃(t,x,p,u(t,x,p,v),v)`. The integrated dynamics additionally include the
 `μ·g` term (with `μ` frozen during differentiation); the constraint and multiplier are
-available via [`CTFlows.Systems.constraint`](@ref) / [`CTFlows.Systems.multiplier`](@ref).
+available via [`CTFlows.Systems.constraint`](@extref) / [`CTFlows.Systems.multiplier`](@extref).
 On a boundary arc, where `g ≡ 0`, this base Hamiltonian coincides with the constrained
 one.
 
-See also: [`CTFlows.Systems.pseudo_hamiltonian`](@ref), [`CTFlows.Systems.constraint`](@ref).
+See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref), [`CTFlows.Systems.constraint`](@extref).
 """
 function hamiltonian(sys::ConstrainedPseudoHamiltonianSystem)
     return Data.ComposedHamiltonian(sys.h̃, sys.law)
@@ -153,10 +153,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the in-place RHS ([`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@ref)) for a
+Return the in-place RHS ([`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@extref)) for a
 `ConstrainedPseudoHamiltonianSystem`.
 
-See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@extref).
 """
 function get_ip_rhs(
     sys::ConstrainedPseudoHamiltonianSystem, config::Configs.AbstractHamiltonianConfig
@@ -172,10 +172,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the out-of-place RHS ([`CTFlows.Systems.ConstrainedPseudoHamOoPRHS`](@ref)) for a
+Return the out-of-place RHS ([`CTFlows.Systems.ConstrainedPseudoHamOoPRHS`](@extref)) for a
 `ConstrainedPseudoHamiltonianSystem`.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@extref).
 """
 function get_oop_rhs(
     sys::ConstrainedPseudoHamiltonianSystem, config::Configs.AbstractHamiltonianConfig
@@ -191,10 +191,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the augmented in-place RHS ([`CTFlows.Systems.ConstrainedPseudoHamIpAugRHS`](@ref))
+Return the augmented in-place RHS ([`CTFlows.Systems.ConstrainedPseudoHamIpAugRHS`](@extref))
 for a `ConstrainedPseudoHamiltonianSystem` with variable costate.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@extref).
 """
 function get_ip_rhs_augmented(
     sys::ConstrainedPseudoHamiltonianSystem,
@@ -249,7 +249,7 @@ Display a compact representation of a `ConstrainedPseudoHamiltonianSystem`.
 Shows the type name, time/variable dependence traits, and the wrapped pseudo-Hamiltonian,
 control law, constraint, multiplier, and AD backend.
 
-See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref).
+See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref).
 """
 function Base.show(io::IO, sys::ConstrainedPseudoHamiltonianSystem)
     fmt = Display.format_codes(io)

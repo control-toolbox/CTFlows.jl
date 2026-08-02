@@ -6,7 +6,7 @@ Abstract supertype for Hamiltonian vector field solution containers.
 This type defines the interface for all solution types that wrap ODE integration
 results for Hamiltonian systems.
 
-See also: [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref).
+See also: [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@extref), [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref).
 """
 abstract type AbstractHamiltonianVectorFieldTrajectory end
 
@@ -39,7 +39,7 @@ x(0.5), p(0.5)           # evaluate at t = 0.5
 x0, p0 = sol(0.0)        # returns tuple (x(0), p(0))
 ```
 
-See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.AbstractHamiltonianVectorFieldTrajectory`](@ref).
+See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.AbstractHamiltonianVectorFieldTrajectory`](@extref).
 """
 struct HamiltonianVectorFieldTrajectory{
     X0,R<:Integrators.AbstractIntegrationResult,V,SP,CP
@@ -91,7 +91,7 @@ end
 Split a combined state vector into state and costate components, preserving the shape of x0.
 
 For scalar x0, extracts single elements and coerces them back to scalars (via the GPU-safe
-[`CTFlows.Systems._safe_only`](@ref), consistent with every other 1-D=scalar split path).
+[`CTFlows.Systems._safe_only`](@extref), consistent with every other 1-D=scalar split path).
 For vector/matrix x0, extracts views of the appropriate size.
 """
 function _ham_split_solution(u::AbstractVector, x0::Number)
@@ -165,7 +165,7 @@ CTFlows for `HamiltonianVectorFieldTrajectory`: an alternative, more explicit na
 # Returns
 - `AbstractVector`: The vector of time points.
 
-See also: [`CTSolvers.Integrators.times`](@extref), [`CTFlows.Trajectories.state`](@ref), [`CTModels.Components.time_grid`](@extref).
+See also: [`CTSolvers.Integrators.times`](@extref), [`CTFlows.Trajectories.state`](@extref), [`CTModels.Components.time_grid`](@extref).
 """
 function Components.time_grid(sol::HamiltonianVectorFieldTrajectory)
     return Integrators.times(sol)
@@ -269,7 +269,7 @@ Return the solution as a state function of time `x(t)`.
 
 This is a method of the [`CTModels.Components.state`](@extref) generic, contributed by
 CTFlows for `HamiltonianVectorFieldTrajectory`. Returns a
-[`CTFlows.Trajectories.StateProjection`](@ref) wrapping the solution, callable as `x(t)`.
+[`CTFlows.Trajectories.StateProjection`](@extref) wrapping the solution, callable as `x(t)`.
 
 # Arguments
 - `sol::HamiltonianVectorFieldTrajectory`: The Hamiltonian vector field solution.
@@ -287,7 +287,7 @@ x(0.0)            # initial state
 x(0.5)            # interpolated state at t = 0.5
 ```
 
-See also: [`CTFlows.Trajectories.costate`](@ref), [`CTSolvers.Integrators.times`](@extref), [`CTModels.Components.state`](@extref).
+See also: [`CTFlows.Trajectories.costate`](@extref), [`CTSolvers.Integrators.times`](@extref), [`CTModels.Components.state`](@extref).
 """
 function Components.state(sol::HamiltonianVectorFieldTrajectory)
     return sol.state_proj
@@ -300,7 +300,7 @@ Return the solution as a costate function of time `p(t)`.
 
 This is a method of the [`CTModels.Components.costate`](@extref) generic, contributed by
 CTFlows for `HamiltonianVectorFieldTrajectory`. Returns a
-[`CTFlows.Trajectories.CostateProjection`](@ref) wrapping the solution, callable as `p(t)`.
+[`CTFlows.Trajectories.CostateProjection`](@extref) wrapping the solution, callable as `p(t)`.
 
 # Arguments
 - `sol::HamiltonianVectorFieldTrajectory`: The Hamiltonian vector field solution.
@@ -318,7 +318,7 @@ p(0.0)            # initial costate
 p(0.5)            # interpolated costate at t = 0.5
 ```
 
-See also: [`CTFlows.Trajectories.state`](@ref), [`CTSolvers.Integrators.times`](@extref), [`CTModels.Components.costate`](@extref).
+See also: [`CTFlows.Trajectories.state`](@extref), [`CTSolvers.Integrators.times`](@extref), [`CTModels.Components.costate`](@extref).
 """
 function Components.costate(sol::HamiltonianVectorFieldTrajectory)
     return sol.costate_proj
@@ -430,7 +430,7 @@ Plot stub — throws error if Plots extension not loaded.
 # Throws
 - `CTBase.Exceptions.ExtensionError`: If Plots extension is not loaded.
 
-See also: [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@ref), [`CTFlows.Trajectories.AbstractHamiltonianVectorFieldTrajectory`](@ref).
+See also: [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@extref), [`CTFlows.Trajectories.AbstractHamiltonianVectorFieldTrajectory`](@extref).
 """
 function RecipesBase.plot(sol::AbstractHamiltonianVectorFieldTrajectory; kwargs...)
     return throw(

@@ -16,7 +16,7 @@ closed-loop control law `u(t,x,p,v)`. It integrates
 ```
 
 by evaluating the feedback law once per step and passing the resulting `u` directly
-to `h̃vf` — the vector-field analogue of [`CTFlows.Systems.PseudoHamiltonianSystem`](@ref),
+to `h̃vf` — the vector-field analogue of [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref),
 which instead differentiates a scalar pseudo-Hamiltonian `H̃` by AD at fixed `u`. Here
 there is no AD anywhere: `h̃vf` already returns the derivatives directly.
 
@@ -30,8 +30,8 @@ there is no AD anywhere: `h̃vf` already returns the derivatives directly.
 - `h̃vf::PseudoHamiltonianVectorField{F,TD,VD,MD}`: the pseudo-Hamiltonian vector field.
 - `law::L`: the dynamic closed-loop control law.
 
-See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref),
-[`CTFlows.Systems.PseudoHamiltonianSystem`](@ref),
+See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@extref),
+[`CTFlows.Systems.PseudoHamiltonianSystem`](@extref),
 [`CTBase.Data.PseudoHamiltonianVectorField`](@extref).
 """
 struct PseudoHamiltonianVectorFieldSystem{
@@ -52,7 +52,7 @@ Return the AD trait of a `PseudoHamiltonianVectorFieldSystem`, which is always
 [`CTBase.Traits.WithoutAD`](@extref): the system stores the pseudo-Hamiltonian vector
 field `X_H̃` directly and performs no automatic differentiation.
 
-See also: [`CTFlows.Systems.PseudoHamiltonianVectorFieldSystem`](@ref),
+See also: [`CTFlows.Systems.PseudoHamiltonianVectorFieldSystem`](@extref),
 [`CTBase.Traits.WithoutAD`](@extref).
 """
 Traits.ad_trait(::PseudoHamiltonianVectorFieldSystem) = Traits.WithoutAD
@@ -68,10 +68,10 @@ Traits.ad_trait(::PseudoHamiltonianVectorFieldSystem) = Traits.WithoutAD
 """
 $(TYPEDSIGNATURES)
 
-Return the in-place RHS ([`CTFlows.Systems.IPPseudoHVFOoPRHS`](@ref)) for a
+Return the in-place RHS ([`CTFlows.Systems.IPPseudoHVFOoPRHS`](@extref)) for a
 `PseudoHamiltonianVectorFieldSystem` wrapping an out-of-place vector field.
 
-See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@extref).
 """
 function get_ip_rhs(
     sys::PseudoHamiltonianVectorFieldSystem{F,TD,VD,Traits.OutOfPlace},
@@ -87,10 +87,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the in-place RHS ([`CTFlows.Systems.IPPseudoHVFIpRHS`](@ref)) for a
+Return the in-place RHS ([`CTFlows.Systems.IPPseudoHVFIpRHS`](@extref)) for a
 `PseudoHamiltonianVectorFieldSystem` wrapping an in-place vector field.
 
-See also: [`CTFlows.Systems.get_oop_rhs`](@ref).
+See also: [`CTFlows.Systems.get_oop_rhs`](@extref).
 """
 function get_ip_rhs(
     sys::PseudoHamiltonianVectorFieldSystem{F,TD,VD,Traits.InPlace},
@@ -106,10 +106,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the out-of-place RHS ([`CTFlows.Systems.OoPPseudoHVFOoPRHS`](@ref)) for a
+Return the out-of-place RHS ([`CTFlows.Systems.OoPPseudoHVFOoPRHS`](@extref)) for a
 `PseudoHamiltonianVectorFieldSystem` wrapping an out-of-place vector field.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@extref).
 """
 function get_oop_rhs(
     sys::PseudoHamiltonianVectorFieldSystem{F,TD,VD,Traits.OutOfPlace},
@@ -129,14 +129,14 @@ Return the out-of-place RHS for a `PseudoHamiltonianVectorFieldSystem` wrapping 
 in-place vector field.
 
 # Returns
-- [`CTFlows.Systems.OoPPseudoHVFIpFinalizeRHS`](@ref) for immutable initial conditions
+- [`CTFlows.Systems.OoPPseudoHVFIpFinalizeRHS`](@extref) for immutable initial conditions
   (e.g. `SVector`), converting the result back to the input array type.
-- [`CTFlows.Systems.OoPPseudoHVFIpRHS`](@ref) otherwise.
+- [`CTFlows.Systems.OoPPseudoHVFIpRHS`](@extref) otherwise.
 
 # Notes
 - Emits a performance warning when called with immutable initial conditions.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@extref).
 """
 function get_oop_rhs(
     sys::PseudoHamiltonianVectorFieldSystem{F,TD,VD,Traits.InPlace},
@@ -158,11 +158,11 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the augmented in-place RHS ([`CTFlows.Systems.IPPseudoHVFOoPAugRHS`](@ref)) for
+Return the augmented in-place RHS ([`CTFlows.Systems.IPPseudoHVFOoPAugRHS`](@extref)) for
 a `PseudoHamiltonianVectorFieldSystem` wrapping an out-of-place vector field, with
 variable costate.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@extref).
 """
 function get_ip_rhs_augmented(
     sys::PseudoHamiltonianVectorFieldSystem{F,TD,VD,Traits.OutOfPlace},
@@ -181,11 +181,11 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the augmented in-place RHS ([`CTFlows.Systems.IPPseudoHVFIpAugRHS`](@ref)) for
+Return the augmented in-place RHS ([`CTFlows.Systems.IPPseudoHVFIpAugRHS`](@extref)) for
 a `PseudoHamiltonianVectorFieldSystem` wrapping an in-place vector field, with
 variable costate.
 
-See also: [`CTFlows.Systems.get_ip_rhs`](@ref).
+See also: [`CTFlows.Systems.get_ip_rhs`](@extref).
 """
 function get_ip_rhs_augmented(
     sys::PseudoHamiltonianVectorFieldSystem{F,TD,VD,Traits.InPlace},
@@ -210,7 +210,7 @@ $(TYPEDSIGNATURES)
 
 A variable-dependent `PseudoHamiltonianVectorFieldSystem` supports variable-costate
 integration (`ṗv = -∂H̃/∂v` at fixed control, supplied directly by `h̃vf`), analogous
-to [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@ref).
+to [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@extref).
 
 See also: [`CTBase.Traits.SupportsVariableCostate`](@extref).
 """
@@ -234,10 +234,10 @@ $(TYPEDSIGNATURES)
 
 Throw an `IncorrectArgument` error: a `PseudoHamiltonianVectorFieldSystem` stores the
 pseudo-Hamiltonian vector field `X_H̃` directly and carries no scalar Hamiltonian. Use
-[`CTFlows.Systems.hamiltonian_vector_field`](@ref) to retrieve `X_H̃` instead.
+[`CTFlows.Systems.hamiltonian_vector_field`](@extref) to retrieve `X_H̃` instead.
 
-See also: [`CTFlows.Systems.PseudoHamiltonianVectorFieldSystem`](@ref),
-[`CTFlows.Systems.hamiltonian_vector_field`](@ref).
+See also: [`CTFlows.Systems.PseudoHamiltonianVectorFieldSystem`](@extref),
+[`CTFlows.Systems.hamiltonian_vector_field`](@extref).
 """
 function hamiltonian(::PseudoHamiltonianVectorFieldSystem)
     return throw(
@@ -263,7 +263,7 @@ Display a compact representation of a `PseudoHamiltonianVectorFieldSystem`.
 Shows the type name, the wrapped `PseudoHamiltonianVectorField`'s traits, and the
 control law.
 
-See also: [`CTFlows.Systems.PseudoHamiltonianVectorFieldSystem`](@ref).
+See also: [`CTFlows.Systems.PseudoHamiltonianVectorFieldSystem`](@extref).
 """
 function Base.show(
     io::IO, sys::PseudoHamiltonianVectorFieldSystem{F,TD,VD,MD,L}
@@ -301,7 +301,7 @@ Display a `PseudoHamiltonianVectorFieldSystem` in the REPL with text/plain MIME 
 
 Delegates to the compact `show` method.
 
-See also: [`CTFlows.Systems.PseudoHamiltonianVectorFieldSystem`](@ref).
+See also: [`CTFlows.Systems.PseudoHamiltonianVectorFieldSystem`](@extref).
 """
 function Base.show(io::IO, ::MIME"text/plain", sys::PseudoHamiltonianVectorFieldSystem)
     return show(io, sys)

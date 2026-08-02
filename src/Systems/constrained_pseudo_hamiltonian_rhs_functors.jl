@@ -48,8 +48,8 @@ the uniform `(t, x, p, u, v)` signature.
 - `g::G`: path constraint, uniform call `g(t, x, u, v)`.
 - `μ_::T`: frozen multiplier **value** (scalar or vector), captured as a constant.
 
-See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref),
-[`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@ref).
+See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref),
+[`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@extref).
 """
 struct FrozenConstrainedPseudoHamiltonian{
     TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,PH,G,T
@@ -81,7 +81,7 @@ end
 """
 $(TYPEDEF)
 
-In-place RHS functor for a [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref).
+In-place RHS functor for a [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref).
 Evaluates the feedback control `u_ = law(t, x, p, v)` and the multiplier value
 `μ_ = μ(t, x, p, v)`, then computes, at that fixed `(u_, μ_)`,
 
@@ -102,8 +102,8 @@ with `g` differentiated and `μ_` frozen (constrained `:partial` mode).
 - `cx::CX`: state coercion.
 - `cp::CP`: costate coercion.
 
-See also: [`CTFlows.Systems.ConstrainedPseudoHamOoPRHS`](@ref),
-[`CTFlows.Systems.ConstrainedPseudoHamIpAugRHS`](@ref), [`CTFlows.Systems.PseudoHamIpRHS`](@ref).
+See also: [`CTFlows.Systems.ConstrainedPseudoHamOoPRHS`](@extref),
+[`CTFlows.Systems.ConstrainedPseudoHamIpAugRHS`](@extref), [`CTFlows.Systems.PseudoHamIpRHS`](@extref).
 """
 struct ConstrainedPseudoHamIpRHS{
     PH<:Data.PseudoHamiltonian,
@@ -139,8 +139,8 @@ end
 """
 $(TYPEDEF)
 
-Out-of-place RHS functor for a [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref);
-see [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@ref) for the computation. Returns
+Out-of-place RHS functor for a [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref);
+see [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@extref) for the computation. Returns
 `vcat(∂p, -∂x)`.
 
 # Fields
@@ -153,7 +153,7 @@ see [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@ref) for the computation. Ret
 - `cx::CX`: state coercion.
 - `cp::CP`: costate coercion.
 
-See also: [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@ref).
+See also: [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@extref).
 """
 struct ConstrainedPseudoHamOoPRHS{
     PH<:Data.PseudoHamiltonian,
@@ -195,8 +195,8 @@ end
 $(TYPEDEF)
 
 In-place augmented RHS functor for a
-[`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@ref) with variable costate.
-Extends [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@ref) with `ṗv = -∂/∂v[H̃ + μ_·g]`
+[`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref) with variable costate.
+Extends [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@extref) with `ṗv = -∂/∂v[H̃ + μ_·g]`
 (control and multiplier frozen), computed by
 [`CTBase.Differentiation.pseudo_variable_gradient`](@extref). The augmented state is
 `[x; p; pv]`; the `ṗv` block picks up `−μ_ᵀ ∂g/∂v` at frozen `μ`.
@@ -212,8 +212,8 @@ Extends [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@ref) with `ṗv = -∂/�
 - `cx::CX`: state coercion.
 - `cp::CP`: costate coercion.
 
-See also: [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@ref),
-[`CTFlows.Systems.PseudoHamIpAugRHS`](@ref).
+See also: [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@extref),
+[`CTFlows.Systems.PseudoHamIpAugRHS`](@extref).
 """
 struct ConstrainedPseudoHamIpAugRHS{
     PH<:Data.PseudoHamiltonian,
@@ -260,7 +260,7 @@ Return a descriptive label for the RHS conversion performed by a constrained pse
 
 Used internally by `Base.show` for display.
 
-See also: [`CTFlows.Systems.AbstractPseudoHamRHS`](@ref).
+See also: [`CTFlows.Systems.AbstractPseudoHamRHS`](@extref).
 """
 function _rhs_conversion_label(::ConstrainedPseudoHamIpRHS)
     return "Constrained PseudoHamiltonian AD → in-place interface"
@@ -271,7 +271,7 @@ $(TYPEDSIGNATURES)
 
 Constrained pseudo-Hamiltonian AD wrapped as out-of-place interface.
 
-See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+See also: [`CTFlows.Systems._rhs_conversion_label`](@extref).
 """
 function _rhs_conversion_label(::ConstrainedPseudoHamOoPRHS)
     return "Constrained PseudoHamiltonian AD → out-of-place interface"
@@ -282,7 +282,7 @@ $(TYPEDSIGNATURES)
 
 Constrained pseudo-Hamiltonian AD wrapped as in-place augmented interface.
 
-See also: [`CTFlows.Systems._rhs_conversion_label`](@ref).
+See also: [`CTFlows.Systems._rhs_conversion_label`](@extref).
 """
 function _rhs_conversion_label(::ConstrainedPseudoHamIpAugRHS)
     return "Constrained PseudoHamiltonian AD → in-place augmented interface"
