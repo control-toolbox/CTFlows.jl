@@ -200,6 +200,28 @@ function test_convenience_arity()
         end
 
         # ====================================================================
+        # extra positional arguments — a different guard entirely (PreconditionError,
+        # not the arity-mismatch IncorrectArgument checked above)
+        # ====================================================================
+
+        Test.@testset "constraint/multiplier passed positionally: rejected with a suggestion pointing at keywords" begin
+            # historical pre-v2.1.0-beta form Flow(ocp, u, g, μ) — see issue #401
+            u = (x, p) -> p
+            g = (x, u) -> x
+            μ = (x, p) -> 0.7
+            try
+                Flows.Flow(OCP_LQR, u, g, μ; _opts()...)
+                Test.@test false
+            catch err
+                Test.@test err isa Exceptions.PreconditionError
+                Test.@test occursin("Flow(ocp, u)", err.suggestion)
+                Test.@test occursin("constraint=", err.suggestion)
+                Test.@test occursin("multiplier=", err.suggestion)
+                Test.@test !occursin("takes no positional argument", err.suggestion)
+            end
+        end
+
+        # ====================================================================
         # explicit law: only constraint/multiplier are checked, never the law itself
         # ====================================================================
 
