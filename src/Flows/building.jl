@@ -1025,7 +1025,7 @@ function Flow(::CTModels.Models.Model, ::Any, args...; kwargs...)
             "Flow(ocp, …) with extra positional arguments is not supported";
             reason="passing a control law, state constraint or multiplier as a positional " *
                    "argument is not handled by the OCP flow constructor",
-            suggestion="call Flow(ocp; kwargs…) — the OCP flow takes no positional argument beyond the model",
+            suggestion="Flow(ocp, u) takes the control law positionally; pass constraint/multiplier as keywords: Flow(ocp, u; constraint=g, multiplier=μ)",
             context="Flow(ocp::CTModels.Models.Model) — positional-argument guard",
         ),
     )
