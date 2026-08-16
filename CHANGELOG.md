@@ -8,11 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.1] - 2026-08-16
+
 ### 🐛 Bug Fixes
 
 - **`augment=` on `OptimalControlFlow` now guarded**: the pre-v2.1.0-beta `augment=true`
   keyword (renamed to `variable_costate=true`) now raises a `PreconditionError` pointing
   to the replacement, instead of a bare `MethodError` (#402).
+- **Corrected misleading suggestion in `Flow(ocp, u, g, μ)` positional-argument guard**:
+  the `PreconditionError` now points to the actual supported form,
+  `Flow(ocp, u; constraint=g, multiplier=μ)`, instead of the control-free `Flow(ocp; kwargs…)`
+  form (#401).
 
 ## [0.17.0] - 2026-08-02
 
