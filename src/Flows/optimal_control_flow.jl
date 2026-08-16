@@ -1089,6 +1089,10 @@ $(TYPEDSIGNATURES)
 Point-evaluation call for [`CTFlows.Flows.OptimalControlFlow`](@extref): delegate to the
 inner Hamiltonian flow, returning `(xf, pf)` (and `pvf` when `variable_costate=true`).
 
+# Throws
+- [`CTBase.Exceptions.PreconditionError`](@extref): when the pre-v2.1.0-beta `augment`
+  keyword is passed — it was renamed to `variable_costate`.
+
 See also: [`CTFlows.Flows.OptimalControlFlow`](@extref).
 """
 function (F::OptimalControlFlow)(
@@ -1099,7 +1103,16 @@ function (F::OptimalControlFlow)(
     variable=Core.NotProvided,
     variable_costate::Bool=false,
     unsafe::Bool=false,
+    augment::Union{Nothing,Bool}=nothing,
 )
+    augment === nothing || throw(
+        Exceptions.PreconditionError(
+            "augment=$augment is not supported (removed in v2.1.0-beta)";
+            reason="the `augment` keyword was renamed to `variable_costate`, with the same behaviour",
+            suggestion="use variable_costate=$augment instead of augment=$augment",
+            context="OptimalControlFlow point evaluation — deprecated `augment` keyword guard",
+        ),
+    )
     return F.flow(t0, x0, p0, tf; variable, variable_costate, unsafe)
 end
 
@@ -1112,12 +1125,32 @@ Trajectory call for [`CTFlows.Flows.OptimalControlFlow`](@extref): integrate the
 Hamiltonian flow over `tspan` and build a full [`CTModels.Solutions.Solution`](@extref)
 via [`CTFlows.Flows._build_ocp_solution`](@extref).
 
+# Throws
+- [`CTBase.Exceptions.PreconditionError`](@extref): when the pre-v2.1.0-beta `augment`
+  keyword is passed — augmentation is only available at point evaluation, not on a
+  trajectory call (there is no `variable_costate` replacement here either, by design).
+
 See also: [`CTFlows.Flows.OptimalControlFlow`](@extref),
 [`CTFlows.Flows._build_ocp_solution`](@extref).
 """
 function (F::OptimalControlFlow)(
-    tspan::Tuple{<:Real,<:Real}, x0, p0; variable=Core.NotProvided, unsafe::Bool=false
+    tspan::Tuple{<:Real,<:Real},
+    x0,
+    p0;
+    variable=Core.NotProvided,
+    unsafe::Bool=false,
+    augment::Union{Nothing,Bool}=nothing,
 )
+    augment === nothing || throw(
+        Exceptions.PreconditionError(
+            "augment=$augment is not supported on a trajectory call";
+            reason="augmentation was, and still is, only available at point evaluation — " *
+                   "F(t0, x0, p0, tf; variable_costate=true) — not on a trajectory call; " *
+                   "this matches v2.0, where `augment` had no effect here either",
+            suggestion="use the point-evaluation call F(t0, x0, p0, tf; variable_costate=$augment) instead",
+            context="OptimalControlFlow trajectory call — deprecated `augment` keyword guard",
+        ),
+    )
     sol = F.flow(tspan, x0, p0; variable, unsafe)   # HamiltonianVectorFieldTrajectory
     return _build_ocp_solution(F.ocp, sol, variable, integrator(F.flow), F.law)
 end

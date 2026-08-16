@@ -573,6 +573,23 @@ function test_optimal_control_flow()
             )
         end
 
+        Test.@testset "Error: augment=true on point evaluation → PreconditionError" begin
+            err = nothing
+            try
+                OCF_ANF(0.0, 1.0, 0.5, 1.0; variable=[λ_TEST], augment=true)
+            catch e
+                err = e
+            end
+            Test.@test err isa Exceptions.PreconditionError
+            Test.@test occursin("variable_costate", err.suggestion)
+        end
+
+        Test.@testset "Error: augment=... on trajectory call → PreconditionError" begin
+            Test.@test_throws Exceptions.PreconditionError OCF_AF_MAYER(
+                (0.0, 1.0), 1.0, 0.5; augment=true
+            )
+        end
+
         # =====================================================================
         # Control-dependence dispatch
         # =====================================================================

@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **`augment=` on `OptimalControlFlow` now guarded**: the pre-v2.1.0-beta `augment=true`
+  keyword (renamed to `variable_costate=true`) now raises a `PreconditionError` pointing
+  to the replacement, instead of a bare `MethodError` (#402).
+
 ## [0.17.0] - 2026-08-02
 
 ### 💥 Breaking Changes
