@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.2] - 2026-08-24
+
+### 📦 Dependencies
+
+- **CTModels compat raised to `0.18`** (from `0.16`), in `Project.toml` and
+  `docs/Project.toml`. CTModels 0.18.0 changes `Components.times(sol)` to alias
+  `Components.time_grid(sol)`; CTFlows never calls that generic on a `Solution` (only
+  its own `Integrators.times`), so no source changes were needed.
+
+### ✅ Compatibility
+
+- **No breaking changes**: compat-only update, no CTFlows API affected. See
+  [BREAKING.md](BREAKING.md).
+
 ## [0.17.1] - 2026-08-16
 
 ### 🐛 Bug Fixes

@@ -1,7 +1,7 @@
 name = "CTFlows"
 uuid = "1c39547c-7794-42f7-af83-d98194f657c2"
 authors = ["Olivier Cots <olivier.cots@toulouse-inp.fr>"]
-version = "0.17.1"
+version = "0.17.2"
 
 [deps]
 ADTypes = "47edcb42-4c32-4615-8424-f2b9edc5f35b"
@@ -29,7 +29,7 @@ ADTypes = "1"
 Aqua = "0.8"
 CTBase = "0.29"
 CTLie = "0.2"
-CTModels = "0.16"
+CTModels = "0.18"
 CTSolvers = "0.5"
 CUDA = "5, 6"
 CommonSolve = "0.2"
