@@ -11,9 +11,9 @@ Mirrors `probe/gpu/probe_gpu.jl` Block 6 (H200 runs 8–11, both algorithms gree
 Each trajectory `i` integrates ẋ = -x from a perturbed x0, so x(1) = x0·e⁻¹ — a clean analytic
 reference. The in-place path is additionally cross-checked against a CPU `EnsembleThreads()` solve.
 
-Self-gates on `is_cuda_on()`: on a machine without a functional device it skips cleanly; the real
-run is the `test-gpu-kkt` job on the `kkt` NVIDIA runner (PR label `run ci gpu`). Everything runs
-under `CUDA.allowscalar(false)`.
+Self-gates on `Main.TestCapabilities.CUDA_FUNCTIONAL`: on a machine without a functional device it
+skips cleanly; the real run is the `test-gpu-occidata` job on the `occidata` self-hosted NVIDIA
+runner (PR label `run ci occidata-runner`). Everything runs under `CUDA.allowscalar(false)`.
 
 Accessor discipline (probe runs 9–10): read a trajectory's final state via the raw `.u` field —
 `sol.u[i].u[end]` — never `sol[i][end]`, which is Cartesian tensor indexing into the
@@ -32,15 +32,6 @@ using StaticArrays: StaticArrays                 # SVector for the EnsembleGPUKe
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
-# CUDA availability — read from Main.TestCapabilities (consolidated in runtests.jl)
-function _cuda_on()
-    return if isdefined(Main, :TestCapabilities)
-        Main.TestCapabilities.CUDA_FUNCTIONAL
-    else
-        false
-    end
-end
-
 # N independent trajectories of ẋ = -x, trajectory i starting at [i, 2i] ⇒ x(1) = [i, 2i]·e⁻¹.
 const _N_ENS = 8
 _u0(i) = [Float64(i), 2.0 * i]
@@ -49,12 +40,10 @@ _expected(i) = _u0(i) .* exp(-1.0)
 function test_gpu_ensemble()
     Test.@testset "GPU ensemble (Family-C, DiffEqGPU tooling PoC)" verbose = VERBOSE showtiming =
         SHOWTIMING begin
-        on_gpu_runner() = get(ENV, "RUNNER_NAME", "") == "kkt"
-
-        if on_gpu_runner()
-            Test.@test _cuda_on()   # fails loudly if kkt lost its device
-        elseif !_cuda_on()
-            @info "CUDA not functional — GPU ensemble tests skipped (run on the kkt runner)"
+        if Main.TestCapabilities.ON_GPU_RUNNER
+            Test.@test Main.TestCapabilities.CUDA_FUNCTIONAL   # fails loudly if the GPU runner lost its device
+        elseif !Main.TestCapabilities.CUDA_FUNCTIONAL
+            @info "CUDA not functional — GPU ensemble tests skipped (run on a self-hosted GPU runner)"
             Test.@test_skip false   # shows as Broken, not Pass 0
             return nothing
         end

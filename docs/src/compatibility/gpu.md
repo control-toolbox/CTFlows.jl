@@ -15,7 +15,7 @@ found while re-measuring for this page.
     **illustrative** `julia` blocks, not `@example`/`@repl` — there is no GPU device in the
     Documenter build (nor on the machine this page was written on). Every ✓/✗ is instead
     sourced from a **measured run** of [`probe/gpu/probe_gpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/gpu/probe_gpu.jl)
-    on the self-hosted NVIDIA (`kkt`) runner —
+    on the self-hosted NVIDIA GPU runner —
     [run 30037105763](https://github.com/control-toolbox/CTFlows.jl/actions/runs/30037105763/job/89317162708),
     2026-07-23 — triggered specifically for this page, not carried over from an older
     document. Re-run the probe (`run probe` label on a PR) to re-verify; this page can drift

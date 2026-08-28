@@ -22,7 +22,7 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event.action == 'labeled' && github.event.label.name == 'run probe') ||
       (github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, 'run probe'))
-    runs-on: ["kkt"]
+    runs-on: ["occidata"]
 
     steps:
       - name: Checkout repository

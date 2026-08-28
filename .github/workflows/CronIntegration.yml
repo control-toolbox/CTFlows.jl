@@ -20,11 +20,11 @@ jobs:
     secrets:
       SSH_KEY: ${{ secrets.SSH_KEY }}
 
-  test-gpu-kkt:
+  test-gpu-occidata:
     uses: control-toolbox/CTActions/.github/workflows/ci.yml@main
     with:
       versions: '["1"]'
-      runs_on: '[["kkt"]]'
+      runs_on: '[["occidata"]]'
       runner_type: 'self-hosted'
       use_ct_registry: true
       test_args: 'cron'
@@ -32,7 +32,7 @@ jobs:
       SSH_KEY: ${{ secrets.SSH_KEY }}
 
   notify-on-failure:
-    needs: [test-cpu-github, test-gpu-kkt]
+    needs: [test-cpu-github, test-gpu-occidata]
     if: failure()
     runs-on: ubuntu-latest
     permissions:
