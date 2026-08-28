@@ -197,13 +197,17 @@ cross-package change).
 
 ### The gating pattern
 
-Device tests self-gate, so a machine without a GPU skips them cleanly:
+Device tests self-gate, so a machine without a GPU skips them cleanly. The suite's single
+CUDA-device predicate is `Main.TestCapabilities.CUDA_FUNCTIONAL` (computed once in
+`test/runtests.jl` — never redefine a local `is_cuda_on()`), and `Main.TestCapabilities.ON_GPU_RUNNER`
+turns a skip into a loud failure on the self-hosted GPU runners:
 
 ```julia
-is_cuda_on() = CUDA.functional()
-...
-if !is_cuda_on()
+if Main.TestCapabilities.ON_GPU_RUNNER
+    Test.@test Main.TestCapabilities.CUDA_FUNCTIONAL   # fails loudly if the GPU runner lost its device
+elseif !Main.TestCapabilities.CUDA_FUNCTIONAL
     @info "CUDA not functional — GPU tests skipped"
+    Test.@test_skip false   # shows as Broken, not Pass 0
     return nothing
 end
 CUDA.allowscalar(false)   # every ✓ below is genuinely scalar-index-free
@@ -220,8 +224,8 @@ them.
 ### There is no local validation
 
 **A developer without a device cannot validate GPU work locally.** The only real pass/fail is
-the `test-gpu-kkt` job on the self-hosted NVIDIA runner, triggered by the `run ci gpu` label on
-a pull request. Practical consequences:
+the `test-gpu-occidata` job on the `occidata` self-hosted NVIDIA runner, triggered by the
+`run ci occidata-runner` label on a pull request. Practical consequences:
 
 - The label costs real GPU time. Do not set it on documentation-only or CPU-only changes.
 - The workflows listen on `[labeled, synchronize, reopened]` — **not `opened`** — because

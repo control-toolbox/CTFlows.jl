@@ -8,6 +8,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🧪 Tests
+
+- **GPU test-runner detection recognises both `kkt` and `occidata`** (#412). The GPU flow /
+  ensemble guards and the environment-contract check keyed on `RUNNER_NAME == "kkt"`; they
+  now use `Main.TestCapabilities.ON_GPU_RUNNER`, which matches the `kkt` / `occidata`
+  substring of `RUNNER_NAME` (the self-hosted runners register as `kkt-runner` /
+  `occidata-runner`), so a broken/absent CUDA device fails loudly on either self-hosted GPU
+  runner instead of being silently skipped. CPU/developer runners keep the visible
+  `Test.@test_skip`.
+- **Local `_cuda_on()` helpers removed** in favour of the single
+  `Main.TestCapabilities.CUDA_FUNCTIONAL` device predicate. The environment-contract
+  meta-test now also fails if a bare `if is_cuda_on()` / `if _cuda_on()` /
+  `if CUDA.functional()` guard reappears anywhere in `test/suite/`.
+
+### 🔧 CI
+
+- **`.github/workflows/` GPU jobs run on `occidata` only** (the `kkt` jobs were removed from
+  `CI.yml` / `CronIntegration.yml`, and `GPUProbe.yml` targets `occidata`); workflow
+  comments translated to English.
+
+### ✅ Compatibility
+
+- **No breaking changes**: test/CI only, no CTFlows API affected. See
+  [BREAKING.md](BREAKING.md).
+
 ## [0.17.2] - 2026-08-24
 
 ### 📦 Dependencies

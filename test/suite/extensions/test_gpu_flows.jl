@@ -4,9 +4,10 @@ against analytic references, under `CUDA.allowscalar(false)` (so every pass is g
 scalar-index-free). Mirrors the green surface pinned by `probe/gpu/probe_gpu.jl` (design report
 §6bis.1, H200 runs 3–6) and exercises the phase-3 augmented / `_safe_only` fixes on-device.
 
-The whole suite self-gates on `is_cuda_on()`: on a machine without a functional device (dev
-laptops, CPU CI runners) it skips cleanly. The real run is the `test-gpu-kkt` job on the `kkt`
-NVIDIA runner (PR label `run ci gpu`).
+The whole suite self-gates on `Main.TestCapabilities.CUDA_FUNCTIONAL`: on a machine without a
+functional device (dev laptops, CPU CI runners) it skips cleanly. The real run is the
+`test-gpu-occidata` job on the `occidata` self-hosted NVIDIA runner (PR label
+`run ci occidata-runner`).
 
 GPU-friendly test integrands use `sum`/`dot`/broadcasts, never scalar indexing (`v[i]`, `x[i]`)
 — a device scalar read is blocked by `allowscalar(false)` (probe run 4/5).
@@ -45,14 +46,8 @@ using Zygote: Zygote      # backs the rows that pass `ad_backend=AutoZygote()` e
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
-# Move a host array onto the device. Only ever called inside a CUDA_FUNCTIONAL guard.
-function _cuda_on()
-    return if isdefined(Main, :TestCapabilities)
-        Main.TestCapabilities.CUDA_FUNCTIONAL
-    else
-        false
-    end
-end
+# Move a host array onto the device. Only ever called inside a
+# `Main.TestCapabilities.CUDA_FUNCTIONAL` guard.
 _dev(x) = CUDA.CuArray(x)
 
 # Analytic references (tf = 1).
@@ -114,12 +109,10 @@ const OCP_GPU_CTRL = _build_gpu_ctrl_ocp()
 
 function test_gpu_flows()
     Test.@testset "GPU flows (Family-B, device execution)" verbose=VERBOSE showtiming=SHOWTIMING begin
-        on_gpu_runner() = get(ENV, "RUNNER_NAME", "") == "kkt"
-
-        if on_gpu_runner()
-            Test.@test _cuda_on()   # fails loudly if kkt lost its device
-        elseif !_cuda_on()
-            @info "CUDA not functional — GPU flow tests skipped (run on the kkt runner)"
+        if Main.TestCapabilities.ON_GPU_RUNNER
+            Test.@test Main.TestCapabilities.CUDA_FUNCTIONAL   # fails loudly if the GPU runner lost its device
+        elseif !Main.TestCapabilities.CUDA_FUNCTIONAL
+            @info "CUDA not functional — GPU flow tests skipped (run on a self-hosted GPU runner)"
             Test.@test_skip false   # shows as Broken, not Pass 0
             return nothing
         end
