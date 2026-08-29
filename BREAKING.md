@@ -3,6 +3,35 @@
 This file lists breaking and near-breaking changes in CTFlows.jl since the last
 stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
+## Non-breaking note (0.18.0-beta)
+
+- **Makie plotting backend for trajectories** ([#414](https://github.com/control-toolbox/CTFlows.jl/issues/414)):
+  a new `CTFlowsMakie` weak-dependency extension adds `Makie.plot` / `Makie.plot!` for
+  the trajectory types. All additive — no public signature, type or name changed; the
+  `Plots.plot(traj)` path is unchanged (frozen by `test_plots_extension.jl`).
+- **`TrajectoryPlots` case layer moved from the `CTFlowsPlots` extension into a `src`
+  submodule**, `CTFlows.TrajectoryPlots` (mirror of `CTModels.PlotCase`). Only code
+  reaching those *internal* helpers through
+  `Base.get_extension(CTFlows, :CTFlowsPlots).TrajectoryPlots` is affected; use
+  `CTFlows.TrajectoryPlots` instead. `ext/CTFlowsPlots/` (folder) is replaced by
+  `ext/CTFlowsPlots.jl`.
+
+  ```julia
+  # Before
+  const TP = Base.get_extension(CTFlows, :CTFlowsPlots).TrajectoryPlots
+
+  # After
+  using CTFlows: TrajectoryPlots
+  ```
+
+### Compatibility
+
+- Needs **`CTBase` ≥ 0.30.1-beta** (`Plotting.MakieBackend` at parity with the Plots
+  backend) and **`CTModels` ≥ 0.19.1-beta**. `[compat]` moves to `CTBase = "0.30"` /
+  `CTModels = "0.19"`; `Makie = "0.24"` is a new weak dependency. Requires
+  `CTLie` ≥ 0.2.1-beta and `CTSolvers` ≥ 0.5.6-beta (their compat betas accepting the
+  same CTBase / CTModels).
+
 ## 0.17.0
 
 ### `OpenLoop` laws now require time in the control function

@@ -11,8 +11,10 @@ This module provides:
 - `state`, `control`, `costate`, `objective`, `time_grid`: methods on the
   [`CTModels.Components`](@extref) generics, contributed here for `VectorFieldTrajectory`,
   `HamiltonianVectorFieldTrajectory` and `StateFlowTrajectory`
-- `Trajectories.plot`: plotting for trajectories via the Plots extension (a `RecipesBase.plot`
-  method; not re-exported — call it qualified or load `Plots`)
+- `Trajectories.plot`: plotting stub for trajectories (a `RecipesBase.plot` method; not
+  re-exported). Load `Plots` (`CTFlowsPlots`) or a Makie backend such as `CairoMakie`
+  (`CTFlowsMakie`) to enable it; both dispatch through the `CTFlows.TrajectoryPlots`
+  case layer
 
 See also: [`CTSolvers.Integrators.AbstractIntegrationResult`](@extref), [`CTFlows.Trajectories.VectorFieldTrajectory`](@extref), [`CTFlows.Trajectories.build_trajectory`](@extref).
 """

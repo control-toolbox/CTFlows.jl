@@ -47,7 +47,8 @@ A fourth result appears one level up: a trajectory call on an `OptimalControlFlo
 (a control-free `Flow(ocp)`, or `Flow(ocp, law)` with a `DynClosedLoop` law) returns a
 [`CTModels.Solutions.Solution`](@extref CTModels.Solutions.Solution) rather than a CTFlows
 container — see [Optimal control](optimal_control.md). All four share the same accessor
-vocabulary (`state`, `costate`, `control`, `objective`) and the same `plot` recipe.
+vocabulary (`state`, `costate`, `control`, `objective`) and the same `plot` / `plot!`
+entry point (Plots or Makie backend — see [Plotting](@ref) below).
 
 ---
 
@@ -192,21 +193,43 @@ call always returns, so inspect `successful(sol)` to check convergence (see
 
 ## Plotting
 
-Load `Plots` (or any Plots-compatible backend) to unlock `plot` on solution objects.
-The plot recipe is provided by the `CTFlowsPlots` extension (activated automatically
-when `Plots` is loaded):
+Trajectory plotting is split into a backend-free **case layer** and a **backend**:
+
+- [`CTFlows.TrajectoryPlots`](@ref) (in `src/`) turns a trajectory plus a `description`
+  into a `CTBase.Plotting.Figure` — vocabulary (`:state`, `:costate`, `:control`),
+  panels, layout. It has no plotting dependency. The single entry point is
+  [`CTFlows.TrajectoryPlots.build_figure`](@ref), which also owns the user-facing
+  defaults.
+- a weak-dependency extension wires a rendering backend to `plot` / `plot!` on the
+  trajectory types:
+
+| Extension | Trigger | `plot(traj)` returns | Renders via |
+|---|---|---|---|
+| `CTFlowsPlots` | `using Plots` | `Plots.Plot` | `CTBase.Plotting.PlotsBackend` |
+| `CTFlowsMakie` | `using CairoMakie` / `GLMakie` (any `Makie`) | `Makie.Figure` | `CTBase.Plotting.MakieBackend` |
+
+Both extensions call `build_figure` and hand the figure to
+`CTBase.Plotting.render(<backend>, fig)`; they expose the **same** `description` and
+keyword surface. The Makie backend is at feature parity with the Plots backend (see
+CTModels#408 / CTBase#540). Until a backend extension is loaded, `plot` on a trajectory
+throws a `CTBase.Exceptions.ExtensionError`.
+
+When only one backend is loaded, call `plot` unqualified; when both are loaded (as in
+this build), qualify — `Plots.plot(traj)` vs `Makie.plot(traj)`.
 
 ```@setup flows_solutions
 using Plots
+using CairoMakie: CairoMakie, Makie
 Base.showable(::MIME"image/png", ::Plots.Plot) = false
+Base.showable(::MIME"image/png", ::Makie.Figure) = false
 ```
 
 ```@example flows_solutions
-plot(sol)    # plots each component of the state trajectory
+Plots.plot(sol)          # each state component — Plots backend
 ```
 
 ```@example flows_solutions
-plot(hsol)   # plots state and costate components
+Makie.plot(hsol)         # state and costate components — Makie backend, a Makie.Figure
 ```
 
 ### Plot options
@@ -214,18 +237,32 @@ plot(hsol)   # plots state and costate components
 Each container draws a default set of panels: `VectorFieldTrajectory` → state,
 `HamiltonianVectorFieldTrajectory` → state + costate, `StateFlowTrajectory` → state +
 control. Pass description symbols (`:state`, `:costate`, `:control`) to select panels,
-and keywords to tune the layout:
+and keywords to tune the layout — identical on both backends:
 
 | Keyword | Values | Effect |
 |---|---|---|
 | `layout` | `:split` (default) / `:group` | one subplot per component, or all in one cell |
 | `control` | `:components` (default) / `:norm` / `:all` | each control, its norm, or both |
 | `time` | `:default` (default) / `:normalize` | real time, or rescaled to ``[0, 1]`` |
-| `state_style`, `costate_style`, `control_style` | `NamedTuple` / `:none` | per-group Plots attributes, or hide the group |
+| `state_style`, `costate_style`, `control_style` | `NamedTuple` / `:none` | per-group backend attributes, or hide the group |
 | `size` | `(w, h)` | figure size in pixels |
 
+Any further keyword is forwarded to the backend (see
+[`CTFlows.TrajectoryPlots.split_plot_kwargs`](@ref)).
+
 ```@example flows_solutions
-plot(hsol, :state; layout=:group, time=:normalize)   # only the state, grouped, [0,1] time
+Plots.plot(hsol, :state; layout=:group, time=:normalize)   # only the state, grouped, [0,1] time
+```
+
+```@example flows_solutions
+Makie.plot(hsol, :state; layout=:group, time=:normalize)   # same call, Makie backend
+```
+
+`plot!` overlays a second trajectory onto an existing figure, on either backend:
+
+```@example flows_solutions
+f = Makie.plot(hsol)
+Makie.plot!(f, hsol; state_style=(linestyle=:dash,))
 ```
 
 ---

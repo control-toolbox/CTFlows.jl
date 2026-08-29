@@ -415,20 +415,23 @@ function Integrators.merge(segments::AbstractVector{<:HamiltonianVectorFieldTraj
 end
 
 # =============================================================================
-# Stub methods — to be extended by CTFlowsPlots
+# Stub methods — to be extended by CTFlowsPlots / CTFlowsMakie
 # =============================================================================
 
 """
 $(TYPEDSIGNATURES)
 
-Plot stub — throws error if Plots extension not loaded.
+Plot stub — throws error if no plotting backend extension is loaded.
+
+Load `Plots` (the `CTFlowsPlots` extension) or a Makie backend such as `CairoMakie` /
+`GLMakie` (the `CTFlowsMakie` extension) to plot trajectories.
 
 # Arguments
 - `sol::AbstractHamiltonianVectorFieldTrajectory`: The Hamiltonian vector field solution.
 - `kwargs...`: Additional plotting keyword arguments (ignored).
 
 # Throws
-- `CTBase.Exceptions.ExtensionError`: If Plots extension is not loaded.
+- `CTBase.Exceptions.ExtensionError`: If no plotting backend extension is loaded.
 
 See also: [`CTFlows.Trajectories.HamiltonianVectorFieldTrajectory`](@extref), [`CTFlows.Trajectories.AbstractHamiltonianVectorFieldTrajectory`](@extref).
 """
@@ -436,9 +439,9 @@ function RecipesBase.plot(sol::AbstractHamiltonianVectorFieldTrajectory; kwargs.
     return throw(
         Exceptions.ExtensionError(
             :Plots;
-            message="to plot solutions",
-            feature="Plotting via Plots.jl",
-            context="Load Plots extension first: using Plots",
+            message="to plot trajectories",
+            feature="Plotting via Plots.jl or a Makie backend",
+            context="Load a plotting backend first: using Plots  (or using CairoMakie / GLMakie)",
         ),
     )
 end

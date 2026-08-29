@@ -8,8 +8,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.0-beta] - 2026-08-29
+
+### ✨ New Features
+
+- **Makie plotting backend for trajectories** (#414). A new `CTFlowsMakie`
+  weak-dependency extension (trigger: `Makie`) provides `Makie.plot` / `Makie.plot!`
+  for `VectorFieldTrajectory`, `HamiltonianVectorFieldTrajectory` and
+  `StateFlowTrajectory`, returning a `Makie.Figure`. Load a Makie backend package
+  (`CairoMakie`, `GLMakie`, …) and `plot(traj)` renders through Makie. The backend is
+  chosen by which package is loaded — `Plots.plot` → Plots, `Makie.plot` → Makie —
+  with identical `description` and keyword arguments. Follows CTModels#408; needs
+  `CTBase` ≥ 0.30.1-beta (`Plotting.MakieBackend` at parity) and `CTModels` ≥
+  0.19.1-beta.
+
+### 🔄 Refactoring
+
+- **Trajectory plotting case layer moved out of the `CTFlowsPlots` extension into a
+  `src` submodule, `CTFlows.TrajectoryPlots`** (mirror of `CTModels.PlotCase`). It is
+  backend-free (vocabulary, panels, layout assembly) with a single entry point
+  `build_figure`; the `CTFlowsPlots` / `CTFlowsMakie` extensions are now thin flat
+  files that call it and hand the figure to a `CTBase.Plotting` backend. `ext/CTFlowsPlots/`
+  (folder) is replaced by `ext/CTFlowsPlots.jl`. The public `Plots.plot(traj)` /
+  `plot!` API — signatures, keywords, defaults and behaviour — is unchanged (frozen by
+  `test_plots_extension.jl`).
+
 ### 🧪 Tests
 
+- **`test/suite/extensions/test_makie_extension.jl`** — end-to-end matrix for the
+  Makie extension (the three trajectory types, description / layout / style / overlay
+  combinations, empty-canvas, error paths), mirroring `test_plots_extension.jl`.
+  `CairoMakie` added to the test dependencies.
 - **GPU test-runner detection recognises both `kkt` and `occidata`** (#412). The GPU flow /
   ensemble guards and the environment-contract check keyed on `RUNNER_NAME == "kkt"`; they
   now use `Main.TestCapabilities.ON_GPU_RUNNER`, which matches the `kkt` / `occidata`
@@ -22,16 +51,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   meta-test now also fails if a bare `if is_cuda_on()` / `if _cuda_on()` /
   `if CUDA.functional()` guard reappears anywhere in `test/suite/`.
 
+### 📚 Documentation
+
+- **`flows/trajectories.md` — "Plotting"** rewritten around the case-layer / backend
+  split, with executed CairoMakie `@example`s alongside the Plots ones. New
+  `TrajectoryPlots` API page and `Makie` extension API page; `docs/make.jl` loads
+  `CairoMakie` and picks up `CTFlowsMakie`.
+
 ### 🔧 CI
 
 - **`.github/workflows/` GPU jobs run on `occidata` only** (the `kkt` jobs were removed from
   `CI.yml` / `CronIntegration.yml`, and `GPUProbe.yml` targets `occidata`); workflow
   comments translated to English.
 
+### 📦 Dependencies
+
+- **`[compat]` `CTBase` `0.29` → `0.30`, `CTModels` `0.18` → `0.19`** (`Project.toml`
+  and `docs/Project.toml`), for the Makie parity backend. `Makie` `0.24` added as a
+  weak dependency; `CairoMakie` `0.15` added as a test/docs dependency. Requires
+  `CTLie` ≥ 0.2.1-beta and `CTSolvers` ≥ 0.5.6-beta (compat betas accepting the same
+  CTBase / CTModels).
+
 ### ✅ Compatibility
 
-- **No breaking changes**: test/CI only, no CTFlows API affected. See
-  [BREAKING.md](BREAKING.md).
+- **No breaking changes** to the public API: `Plots.plot(traj)` is unchanged and the
+  new `Makie.plot(traj)` is additive. One internal relocation —
+  `Base.get_extension(CTFlows, :CTFlowsPlots).TrajectoryPlots` → `CTFlows.TrajectoryPlots`.
+  See [BREAKING.md](BREAKING.md).
 
 ## [0.17.2] - 2026-08-24
 

@@ -97,6 +97,17 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             ),
         ),
         (
+            mod=CTFlows.TrajectoryPlots,
+            title="TrajectoryPlots",
+            filename="trajectory_plots",
+            files=src(
+                joinpath("TrajectoryPlots", "TrajectoryPlots.jl"),
+                joinpath("TrajectoryPlots", "description.jl"),
+                joinpath("TrajectoryPlots", "panels.jl"),
+                joinpath("TrajectoryPlots", "build.jl"),
+            ),
+        ),
+        (
             mod=CTFlows.Flows,
             title="Flows",
             filename="flows",
@@ -140,13 +151,14 @@ function generate_api_reference(src_dir::String, ext_dir::String)
             title="Plots Extension",
             title_in_menu="Plots",
             filename="ext_plots",
-            files=ext(
-                "CTFlowsPlots.jl",
-                joinpath("CTFlowsPlots", "TrajectoryPlots", "TrajectoryPlots.jl"),
-                joinpath("CTFlowsPlots", "TrajectoryPlots", "description.jl"),
-                joinpath("CTFlowsPlots", "TrajectoryPlots", "panels.jl"),
-                joinpath("CTFlowsPlots", "TrajectoryPlots", "plot.jl"),
-            ),
+            files=ext("CTFlowsPlots.jl"),
+        ),
+        (
+            sym=:CTFlowsMakie,
+            title="Makie Extension",
+            title_in_menu="Makie",
+            filename="ext_makie",
+            files=ext("CTFlowsMakie.jl"),
         ),
         (
             sym=:CTFlowsSciMLIntegrator,
