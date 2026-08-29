@@ -41,6 +41,9 @@ using .Integrators
 include(joinpath(@__DIR__, "Trajectories", "Trajectories.jl"))
 using .Trajectories
 
+include(joinpath(@__DIR__, "TrajectoryPlots", "TrajectoryPlots.jl"))
+using .TrajectoryPlots
+
 include(joinpath(@__DIR__, "Flows", "Flows.jl"))
 using .Flows
 

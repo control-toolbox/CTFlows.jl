@@ -1,8 +1,9 @@
 """
-Tests for the CTFlowsPlots extension: the `TrajectoryPlots` case layer (plotting of the
-three trajectory types, including `StateFlowTrajectory`, component-name plumbing from
-the OCP, and the split/group layouts). The generic rendering engine it builds on lives
-in `CTBase.Plotting` and is tested there.
+Tests for the CTFlowsPlots extension and the backend-free `CTFlows.TrajectoryPlots`
+case layer it shares with `CTFlowsMakie`: plotting of the three trajectory types
+(including `StateFlowTrajectory`), component-name plumbing from the OCP, and the
+split/group layouts. The generic rendering engine lives in `CTBase.Plotting` and is
+tested there; the Makie backend is covered by `test_makie_extension.jl`.
 """
 module TestPlotsExtension
 
@@ -10,6 +11,7 @@ using Test: Test
 using CTFlows: CTFlows
 using CTFlows: Integrators
 using CTFlows: Trajectories
+using CTFlows: TrajectoryPlots
 using CTBase: Data
 using CTBase: Core
 using CTBase: Exceptions
@@ -17,9 +19,8 @@ using CTModels: CTModels
 
 using Plots
 
-# Extension and its case-layer sub-module
+# The Plots extension (its methods dispatch through the src `TrajectoryPlots` case layer)
 const CTFlowsPlots = Base.get_extension(CTFlows, :CTFlowsPlots)
-const TrajectoryPlots = CTFlowsPlots.TrajectoryPlots
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
