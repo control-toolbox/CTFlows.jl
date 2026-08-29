@@ -1,0 +1,75 @@
+name: Tmp probe (occidata)
+
+# Throwaway diagnostic — delete this workflow once the answer is in (see issue on
+# the recurring "Package Test not found in current path" failures).
+#
+# Why: `Pkg.test` builds its sandbox environment (Project.toml + Manifest.toml)
+# with `mktempdir()`, i.e. under $TMPDIR — /tmp by default — and runs the test
+# subprocess with JULIA_LOAD_PATH="@:<that dir>" and no JULIA_PROJECT (Pkg 1.12,
+# Operations.jl:2311). No --project, no @stdlib: that temp directory is the *only*
+# entry on the load path. Delete it mid-run and every later `using X` fails with
+# "Package X not found in current path" — stdlib Test included, because
+# Base.require re-runs identify_package before looking at loaded modules.
+#
+# On occidata that is exactly what happens, always a few seconds past HH:01
+# (runs 33202319987 → 20:01:04, 32830024398 → 10:01:18, sandbox only 3 min old in
+# the second case, so not an age-based cleanup). HH:01 is the RHEL signature of
+# /etc/cron.d/0hourly running run-parts /etc/cron.hourly.
+#
+# This job drops one marker in /tmp and one in $RUNNER_TEMP, then watches both
+# once a minute. If the /tmp marker vanishes at HH:01 while the $RUNNER_TEMP one
+# survives, the cause is confirmed *and* pointing TMPDIR at $RUNNER_TEMP is
+# validated as the fix — before touching CTActions.
+#
+# Launch it around HH:45: it exits as soon as a marker goes, so it holds the
+# (single-concurrency) runner for ~20 min rather than a full hour.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [labeled, synchronize, reopened]
+
+jobs:
+  tmp-probe:
+    # Run manually (workflow_dispatch) or on a PR carrying the 'run tmp probe'
+    # label. A 'labeled' event fires once per label added and re-evaluates against
+    # the PR's *current* full label set, so react to 'labeled' only when it is this
+    # specific label; for other trigger types fall back to the current label set.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.action == 'labeled' && github.event.label.name == 'run tmp probe') ||
+      (github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, 'run tmp probe'))
+    runs-on: ["occidata"]
+    timeout-minutes: 80
+
+    steps:
+      - name: Watch /tmp and $RUNNER_TEMP across the top of the hour
+        shell: bash
+        run: |
+          tmp_marker="/tmp/ctprobe.$$"
+          run_marker="$RUNNER_TEMP/ctprobe.$$"
+          mkdir -p "$tmp_marker" "$run_marker"
+          date -u +%FT%TZ > "$tmp_marker/stamp"
+          date -u +%FT%TZ > "$run_marker/stamp"
+
+          echo "host      $(hostname)"
+          echo "TMPDIR    ${TMPDIR:-<unset>}"
+          echo "tmp       $tmp_marker"
+          echo "runner    $run_marker"
+          echo "start     $(date -u +%FT%TZ), /tmp holds $(find /tmp -maxdepth 1 | wc -l) entries"
+
+          for _ in $(seq 1 75); do
+            sleep 60
+            now=$(date -u +%FT%TZ)
+            if [[ -f "$tmp_marker/stamp" ]]; then tmp_state=ok; else tmp_state=GONE; fi
+            if [[ -f "$run_marker/stamp" ]]; then run_state=ok; else run_state=GONE; fi
+            echo "$now  /tmp=$tmp_state  RUNNER_TEMP=$run_state  (/tmp holds $(find /tmp -maxdepth 1 | wc -l) entries)"
+            if [[ $tmp_state == GONE || $run_state == GONE ]]; then
+              echo "::warning::marker lost at $now — /tmp=$tmp_state RUNNER_TEMP=$run_state"
+              break
+            fi
+          done
+
+          echo "--- /tmp at $(date -u +%FT%TZ) ---"
+          ls -la /tmp | head -30 || true
+          rm -rf "$tmp_marker" "$run_marker" || true
