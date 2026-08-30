@@ -18,7 +18,7 @@ SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
-CTBase = "0.30"
+CTBase = "0.30, 0.29"
 CTModels = "0.19"
 CTSolvers = "0.5"
 CairoMakie = "0.15"
