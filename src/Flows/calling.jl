@@ -183,8 +183,8 @@ $(TYPEDSIGNATURES)
 Solve an ODE problem using a flow with trait-based dispatch on the variable parameter.
 
 This function dispatches to one of four specialized implementations based on:
-1. The flow's `VariableDependence` trait (`Fixed` or `NonFixed`)
-2. Whether the `variable` parameter was provided (`NotProvided` vs any other type)
+- The flow's `VariableDependence` trait (`Fixed` or `NonFixed`)
+- Whether the `variable` parameter was provided (`NotProvided` vs any other type)
 
 # Dispatch Rules
 - **`Fixed` + `NotProvided`**: Variable not required, proceeds with `variable=nothing`.

@@ -51,16 +51,16 @@ call site behaves exactly as before.
 at one place — the routing boundary. That choice is deliberate: threading a device argument
 through the constructor signatures would have touched roughly twenty of them.
 
-1. [`CTFlows.Flows._pop_method`](@ref) splits `(method, rest)` out of the keyword arguments, so
-   `method` is never mistaken for a strategy option ([`src/Flows/flow_routing.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/src/Flows/flow_routing.jl)).
-2. [`CTFlows.Flows._flow_description`](@ref) completes the user tokens against
-   [`CTFlows.Flows._available_flow_methods`](@ref), dispatched on `Traits.ad_trait`:
-   - `WithAD` → `(:di, :sciml, :cpu)` / `(:di, :sciml, :gpu)`
-   - `WithoutAD` → `(:sciml, :cpu)` / `(:sciml, :gpu)`
+- [`CTFlows.Flows._pop_method`](@ref) splits `(method, rest)` out of the keyword arguments, so
+  `method` is never mistaken for a strategy option ([`src/Flows/flow_routing.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/src/Flows/flow_routing.jl)).
+- [`CTFlows.Flows._flow_description`](@ref) completes the user tokens against
+  [`CTFlows.Flows._available_flow_methods`](@ref), dispatched on `Traits.ad_trait`:
+  - `WithAD` → `(:di, :sciml, :cpu)` / `(:di, :sciml, :gpu)`
+  - `WithoutAD` → `(:sciml, :cpu)` / `(:sciml, :gpu)`
 
-   One `:gpu` token therefore resolves the device for **both** families at once.
-3. `Orchestration.resolve_method` matches the description against
-   [`CTFlows.Flows.flow_registry`](@ref) and builds the concrete strategies.
+  One `:gpu` token therefore resolves the device for **both** families at once.
+- `Orchestration.resolve_method` matches the description against
+  [`CTFlows.Flows.flow_registry`](@ref) and builds the concrete strategies.
 
 !!! note "Base descriptions must carry `:cpu` explicitly"
     Because the registry is parameterised, `extract_global_parameter_from_method` requires a

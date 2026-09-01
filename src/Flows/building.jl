@@ -4,10 +4,10 @@ $(TYPEDSIGNATURES)
 High-level constructor for `Flow` from vector field data.
 
 This constructor builds a complete flow by:
-1. Building a `VectorFieldSystem` from the vector field data
-2. Building a `SciML` integrator with the given options
-3. Routing options through the integrator's CTBase.Strategies strategy
-4. Combining them into a callable `Flow`
+- Building a `VectorFieldSystem` from the vector field data
+- Building a `SciML` integrator with the given options
+- Routing options through the integrator's CTBase.Strategies strategy
+- Combining them into a callable `Flow`
 
 # Arguments
 - `data::CTBase.Data.VectorField`: The vector field defining the system dynamics.
@@ -42,10 +42,10 @@ $(TYPEDSIGNATURES)
 High-level constructor for `HamiltonianFlow` from Hamiltonian vector field data.
 
 This constructor builds a complete Hamiltonian flow by:
-1. Building a `HamiltonianVectorFieldSystem` from the Hamiltonian vector field data
-2. Building a `SciML` integrator with the given options
-3. Routing options through the integrator's CTBase.Strategies strategy
-4. Combining them into a callable `HamiltonianFlow`
+- Building a `HamiltonianVectorFieldSystem` from the Hamiltonian vector field data
+- Building a `SciML` integrator with the given options
+- Routing options through the integrator's CTBase.Strategies strategy
+- Combining them into a callable `HamiltonianFlow`
 
 # Arguments
 - `data::CTBase.Data.HamiltonianVectorField`: The Hamiltonian vector field defining the system dynamics.
@@ -76,10 +76,10 @@ $(TYPEDSIGNATURES)
 High-level constructor for `HamiltonianFlow` from a scalar Hamiltonian.
 
 This constructor builds a complete Hamiltonian flow by:
-1. Routing keyword options to the appropriate strategy families (backend and integrator)
-2. Building a concrete AD backend and integrator from the routed options
-3. Building a `HamiltonianSystem` from the Hamiltonian and backend
-4. Combining them into a callable `HamiltonianFlow`
+- Routing keyword options to the appropriate strategy families (backend and integrator)
+- Building a concrete AD backend and integrator from the routed options
+- Building a `HamiltonianSystem` from the Hamiltonian and backend
+- Combining them into a callable `HamiltonianFlow`
 
 # Arguments
 - `h::CTBase.Data.AbstractHamiltonian`: The scalar Hamiltonian function.
