@@ -226,7 +226,6 @@ control ``u(t) = p(t)``:
 
 ```@setup flows_laws
 using Plots
-Base.showable(::MIME"image/png", ::Plots.Plot) = false
 ```
 
 ```@example flows_laws

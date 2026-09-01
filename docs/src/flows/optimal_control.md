@@ -140,7 +140,6 @@ control-free):
 
 ```@setup flows_ocp
 using Plots
-Base.showable(::MIME"image/png", ::Plots.Plot) = false
 ```
 
 ```@example flows_ocp

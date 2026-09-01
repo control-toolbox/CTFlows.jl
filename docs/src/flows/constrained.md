@@ -177,7 +177,6 @@ reconstructed from the law — plot it directly once `Plots` is loaded:
 
 ```@setup flows_constrained
 using Plots
-Base.showable(::MIME"image/png", ::Plots.Plot) = false
 ```
 
 ```@example flows_constrained
