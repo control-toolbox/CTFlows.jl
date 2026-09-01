@@ -50,7 +50,6 @@ sol = flow((0.0, 1.0), [1.0]; variable=2.0)
 
 ```@setup flows_sciml
 using Plots
-Base.showable(::MIME"image/png", ::Plots.Plot) = false
 ```
 
 ```@example flows_sciml

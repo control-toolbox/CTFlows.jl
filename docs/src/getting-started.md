@@ -166,7 +166,6 @@ the `CTModels.Solution` on a shared time axis:
 
 ```@setup getting_started
 using Plots
-Base.showable(::MIME"image/png", ::Plots.Plot) = false
 ```
 
 ```@example getting_started

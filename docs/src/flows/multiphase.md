@@ -189,7 +189,6 @@ directly, switching times included:
 
 ```@setup flows_multiphase
 using Plots
-Base.showable(::MIME"image/png", ::Plots.Plot) = false
 ```
 
 ```@example flows_multiphase

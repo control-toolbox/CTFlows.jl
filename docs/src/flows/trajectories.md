@@ -220,8 +220,6 @@ this build), qualify — `Plots.plot(traj)` vs `Makie.plot(traj)`.
 ```@setup flows_solutions
 using Plots
 using CairoMakie: CairoMakie, Makie
-Base.showable(::MIME"image/png", ::Plots.Plot) = false
-Base.showable(::MIME"image/png", ::Makie.Figure) = false
 ```
 
 ```@example flows_solutions
