@@ -39,5 +39,8 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           registry: control-toolbox/ct-registry
 
+      # On occidata the runner idles in a CPU allocation: $OCCIDATA_GPU_RUN runs the
+      # probe on a GPU node for its own duration (control-toolbox/occidata,
+      # scripts/slurm_gpu_run.sh). Empty on any other runner.
       - name: Run GPU probe
-        run: julia --project=probe/gpu probe/gpu/probe_gpu.jl
+        run: ${OCCIDATA_GPU_RUN:-} julia --project=probe/gpu probe/gpu/probe_gpu.jl
