@@ -3,6 +3,12 @@
 This file lists breaking and near-breaking changes in CTFlows.jl since the last
 stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
+## 0.18.1
+
+Stable release of the 0.18 line. **No breaking change since 0.18.0-beta.** Users
+upgrading from the previous stable release (0.17.2) should read the 0.18.0-beta note
+below: everything is additive except the internal `TrajectoryPlots` relocation.
+
 ## Non-breaking note (0.18.0-beta)
 
 - **Makie plotting backend for trajectories** ([#414](https://github.com/control-toolbox/CTFlows.jl/issues/414)):
