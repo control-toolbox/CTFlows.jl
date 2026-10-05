@@ -8,6 +8,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.1] - 2026-10-05
+
+Stable release of the 0.18 line: it ships the Makie plotting backend and the
+`CTFlows.TrajectoryPlots` case layer introduced in
+[0.18.0-beta](#0180-beta---2026-08-29). No source change since 0.18.0-beta.
+
+### 📚 Documentation
+
+- **Plotting setup centralised in `docs/make.jl`, SVG output preferred** for the
+  executed Plots / CairoMakie examples (#429).
+- **Ordered lists converted to bullets** across `src/` docstrings and `docs/src/`
+  (#427).
+
+### 🔧 CI
+
+- **GPU probe runs on an on-demand Occidata GPU node** (#430); the throwaway `/tmp`
+  wipe probe was removed (#419).
+
+### 🧹 Maintenance
+
+- JuliaFormatter pass on `.jl` files (#420).
+
+### ✅ Compatibility
+
+- **No breaking changes** since 0.18.0-beta. Relative to the previous stable release
+  (0.17.2), see the 0.18.0-beta notes in [BREAKING.md](BREAKING.md) — additive, plus
+  one internal relocation (`CTFlows.TrajectoryPlots`). Requires the stable `CTBase`
+  0.30, `CTModels` 0.19, `CTSolvers` 0.5 and `CTLie` 0.2 releases.
+
 ## [0.18.0-beta] - 2026-08-29
 
 ### ✨ New Features
