@@ -32,6 +32,9 @@ function Base.copyto!(dst::FakeGPUArray{T,N}, src::Array{T,N}) where {T,N}
     return (copyto!(dst.data, src); dst)
 end
 Base.view(a::FakeGPUArray, I::Vararg{Any}) = view(a.data, I...)
+# GPUArrays >= 11.5.16 routes Base.dataids through GPUArrays.storage (JuliaGPU/GPUArrays.jl#784),
+# which this CPU stand-in does not implement; key alias detection off the backing Array.
+Base.dataids(a::FakeGPUArray) = Base.dataids(a.data)
 Base.getindex(a::FakeGPUArray, I::AbstractUnitRange) = FakeGPUArray(a.data[I])
 Base.getindex(a::FakeGPUArray, I::AbstractUnitRange, ::Colon) = FakeGPUArray(a.data[I, :])
 
