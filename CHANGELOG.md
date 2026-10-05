@@ -21,6 +21,14 @@ Stable release of the 0.18 line: it ships the Makie plotting backend and the
 - **Ordered lists converted to bullets** across `src/` docstrings and `docs/src/`
   (#427).
 
+### 🧪 Tests
+
+- **`FakeGPUArray` test stand-ins forward `Base.dataids` to their backing `Array`**
+  (#432). GPUArrays 11.5.16 (JuliaGPU/GPUArrays.jl#784) routes `Base.dataids` for any
+  `AbstractGPUArray` through `GPUArrays.storage`, which the CPU-backed fakes do not
+  implement; the broadcast alias check in `_aug_assign!` then errored. Test-only — real
+  GPU arrays implement `storage`.
+
 ### 🔧 CI
 
 - **GPU probe runs on an on-demand Occidata GPU node** (#430); the throwaway `/tmp`
