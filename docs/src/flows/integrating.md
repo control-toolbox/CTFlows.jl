@@ -63,6 +63,38 @@ sol = flow((0.0, 1.0), x0)
 hsol = hflow((0.0, 1.0), x0, p0)
 ```
 
+### Output grid and accuracy
+
+A trajectory is returned on a **time grid** (`Integrators.times(sol)`) but can be
+evaluated at **any** time: `sol(t)` reads the solver's dense interpolant, accurate to the
+solver tolerances. By default the grid is made of the solver steps, which may be few when
+the integration is easy. To get the trajectory on chosen times, either:
+
+- pass a grid instead of the time span at the call — a vector, a range, or a tuple of at
+  least three times:
+
+```@example flows_integrating
+sol_grid = flow(range(0.0, 1.0, 11), x0)
+Integrators.times(sol_grid)
+```
+
+- or set `saveat` when building the flow (a vector, a range, or a step):
+
+```@example flows_integrating
+flow_saveat = Flows.Flow(vf; reltol=1e-8, saveat=0.1)
+Integrators.times(flow_saveat((0.0, 1.0), x0))
+```
+
+A grid given at the call takes precedence over `saveat`. In both cases the grid **only
+shapes the output**: the integration (steps, cost) and the dense interpolant are exactly
+those of `flow((t0, tf), x0)`, so `sol(t)` between the grid points, the objective and the
+control of an optimal control flow keep the solver accuracy. Multi-phase flows behave the
+same way: each phase keeps its own interpolant.
+
+Pass `dense=false` to store only the grid values and save memory: the trajectory is then
+linear between the saved points, and an optimal control flow warns that its objective is
+only accurate to the grid spacing.
+
 ---
 
 ## Variable parameters
@@ -205,8 +237,8 @@ The default integrator is **SciML** backed by `OrdinaryDiffEqTsit5` (loaded when
 | `reltol` | `1e-6` | Relative tolerance |
 | `abstol` | `1e-8` | Absolute tolerance |
 | `alg` | `Tsit5()` | ODE algorithm (any SciML algorithm) |
-| `saveat` | `[]` | Extra time points to save |
-| `dense` | `true` | Dense output for interpolation |
+| `saveat` | — | Output time grid (vector, range or step); does not change the integration — see [Output grid and accuracy](#Output-grid-and-accuracy) |
+| `dense` | `:auto` | Keep the dense interpolant (`true` for a trajectory); `false` saves memory, linear between saved points |
 
 ```@example flows_integrating
 # Tighter tolerances
