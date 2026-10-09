@@ -182,6 +182,15 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Return whether the trajectory evaluates through a dense (solver-accurate) interpolant.
+
+See also: [`CTSolvers.Integrators.is_dense`](@extref).
+"""
+Integrators.is_dense(sol::VectorFieldTrajectory) = Integrators.is_dense(sol.result)
+
+"""
+$(TYPEDSIGNATURES)
+
 Evaluate the solution at a given time, coerced to a scalar for a 1-D state (issue #357).
 
 Delegates to the integration result, then applies

@@ -62,19 +62,18 @@ function test_controlled_concatenation()
             x = Trajectories.state(sol)
             u = Trajectories.control(sol)
 
-            # state continuity across the switch (merged trajectory interpolates linearly —
-            # the SciML merge builds a `dense=false` solution — hence a loose tolerance)
-            Test.@test x(0.25) ≈ x0 * exp(-2 * 0.25) atol = 1e-3
-            Test.@test x(0.75) ≈ x_half * exp(-(0.75 - 0.5)) atol = 1e-3
+            # state continuity across the switch (each phase keeps its dense interpolant)
+            Test.@test x(0.25) ≈ x0 * exp(-2 * 0.25) atol = 1e-8
+            Test.@test x(0.75) ≈ x_half * exp(-(0.75 - 0.5)) atol = 1e-8
 
             # piecewise control: phase 1 has u = -x, phase 2 has u ≡ 0
-            Test.@test u(0.25) ≈ -x0 * exp(-2 * 0.25) atol = 1e-3
+            Test.@test u(0.25) ≈ -x0 * exp(-2 * 0.25) atol = 1e-8
             Test.@test abs(u(0.75)) < 1e-8
 
             # objective = ∫_0^0.5 0.5 u² dt with u = -x = x0 e^{-2t} (phase 2 contributes 0)
             #           = 0.5 x0² (1 - e^{-2}) / 4
             Test.@test Trajectories.objective(sol) ≈ 0.5 * x0^2 * (1 - exp(-2)) / 4 atol =
-                1e-3
+                1e-8
         end
 
         # ── OpenLoop, two phases (piecewise-constant control) ────────────────

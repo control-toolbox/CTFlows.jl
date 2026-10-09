@@ -457,11 +457,12 @@ function _evaluate_phase(
     t0,
     tf,
     x,
-    ::Configs.AbstractTrajectoryConfig;
+    config::Configs.AbstractTrajectoryConfig;
     variable,
     unsafe,
 )
-    return _raw_flow(flow)((t0, tf), x; variable=variable, unsafe=unsafe)
+    times = _phase_times(t0, tf, Configs.output_grid(config))
+    return _raw_flow(flow)(times, x; variable=variable, unsafe=unsafe)
 end
 
 """
@@ -526,12 +527,34 @@ function _evaluate_phase(
     t0,
     tf,
     state_tuple,
-    ::Configs.AbstractTrajectoryConfig;
+    config::Configs.AbstractTrajectoryConfig;
     variable,
     unsafe,
 )
     x, p = state_tuple
-    return _raw_flow(flow)((t0, tf), x, p; variable=variable, unsafe=unsafe)
+    times = _phase_times(t0, tf, Configs.output_grid(config))
+    return _raw_flow(flow)(times, x, p; variable=variable, unsafe=unsafe)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Time specification of a phase `[t0, tf]` when no output grid is imposed at the call: the
+phase's time span.
+"""
+_phase_times(t0, tf, ::Nothing) = (t0, tf)
+
+"""
+$(TYPEDSIGNATURES)
+
+Time specification of a phase `[t0, tf]` under an output grid imposed at the call: the
+grid times strictly inside the phase, framed by the phase bounds (a switching time thus
+closes one phase and opens the next, as without a grid).
+"""
+function _phase_times(t0, tf, grid::AbstractVector)
+    t0 == tf && return (t0, tf)
+    lo, hi = minmax(t0, tf)
+    return [t0; filter(t -> lo < t < hi, grid); tf]
 end
 
 """
@@ -966,7 +989,7 @@ returning a merged trajectory from all phases.
 
 # Arguments
 - `mpf::MultiPhaseStateFlow`: The multi-phase state flow to evaluate.
-- `tspan::Tuple{Real, Real}`: Time span as a tuple (t0, tf).
+- `tspan::Configs.TimeSpec`: Time span `(t0, tf)`, or an output grid `(t0, t1, …, tf)` (see [`CTFlows.Configs.TimeSpec`](@extref)).
 - `x0`: Initial state vector.
 - `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
 - `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
@@ -985,7 +1008,7 @@ sol = mpf((0.0, 3.0), [1.0, 0.0])
 See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@extref), [`CTFlows.Configs.StateTrajectoryConfig`](@extref).
 """
 function (mpf::MultiPhaseFlow{TD,VD,Traits.StateDynamics})(
-    tspan::Tuple{Real,Real}, x0; variable=Flows.__variable(), unsafe=Flows.__unsafe()
+    tspan::Configs.TimeSpec, x0; variable=Flows.__variable(), unsafe=Flows.__unsafe()
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     config = Configs.StateTrajectoryConfig(tspan, x0)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
@@ -1037,7 +1060,7 @@ returning a merged trajectory from all phases.
 
 # Arguments
 - `mpf::MultiPhaseHamiltonianFlow`: The multi-phase Hamiltonian flow to evaluate.
-- `tspan::Tuple{Real, Real}`: Time span as a tuple (t0, tf).
+- `tspan::Configs.TimeSpec`: Time span `(t0, tf)`, or an output grid `(t0, t1, …, tf)` (see [`CTFlows.Configs.TimeSpec`](@extref)).
 - `x0`: Initial state vector.
 - `p0`: Initial costate vector.
 - `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
@@ -1057,7 +1080,7 @@ sol = mpf((0.0, 3.0), [1.0, 0.0], [0.5, 0.3])
 See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@extref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@extref).
 """
 function (mpf::MultiPhaseFlow{TD,VD,Traits.HamiltonianDynamics})(
-    tspan::Tuple{Real,Real}, x0, p0; variable=Flows.__variable(), unsafe=Flows.__unsafe()
+    tspan::Configs.TimeSpec, x0, p0; variable=Flows.__variable(), unsafe=Flows.__unsafe()
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     config = Configs.HamiltonianTrajectoryConfig(tspan, x0, p0)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)

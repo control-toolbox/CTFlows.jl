@@ -55,6 +55,7 @@ time interval, useful for generating full trajectories.
 # Fields
 - `tspan::TS`: Time span as a tuple (t0, tf)
 - `x0::X0`: Initial state vector
+- `grid::G`: Output time grid imposed at the call, or `nothing` (see [`CTFlows.Configs.TimeSpec`](@extref))
 
 # Example
 \`\`\`julia-repl
@@ -68,17 +69,20 @@ StateTrajectoryConfig
 
 See also: [`CTFlows.Configs.StateEndPointConfig`](@extref)
 """
-struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real},X0} <:
+struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real},X0,G<:Union{Nothing,AbstractVector}} <:
        AbstractConfigWithMaC{X0,Traits.TrajectoryMode,Traits.StateDynamics}
     tspan::TS
     x0::X0
-    function StateTrajectoryConfig{TS,X0}(tspan, x0) where {TS<:Tuple{<:Real,<:Real},X0}
-        return new{TS,X0}(tspan, x0)
+    grid::G
+    function StateTrajectoryConfig{TS,X0,G}(
+        tspan, x0, grid
+    ) where {TS<:Tuple{<:Real,<:Real},X0,G<:Union{Nothing,AbstractVector}}
+        return new{TS,X0,G}(tspan, x0, grid)
     end
-    function StateTrajectoryConfig(tspan::Tuple{<:Real,<:Real}, x0)
-        TS = float.(tspan)
+    function StateTrajectoryConfig(times::TimeSpec, x0)
+        TS, G = _time_spec(times)
         X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
-        return new{typeof(TS),typeof(X)}(TS, X)
+        return new{typeof(TS),typeof(X),typeof(G)}(TS, X, G)
     end
 end
 
@@ -144,6 +148,7 @@ full Hamiltonian trajectories.
 - `tspan::TS`: Time span as a tuple (t0, tf)
 - `x0::X0`: Initial state vector
 - `p0::P0`: Initial costate vector
+- `grid::G`: Output time grid imposed at the call, or `nothing` (see [`CTFlows.Configs.TimeSpec`](@extref))
 
 # Example
 \`\`\`julia-repl
@@ -158,21 +163,23 @@ HamiltonianTrajectoryConfig
 
 See also: [`CTFlows.Configs.HamiltonianEndPointConfig`](@extref), [`CTFlows.Configs.StateTrajectoryConfig`](@extref).
 """
-struct HamiltonianTrajectoryConfig{TS<:Tuple{<:Real,<:Real},X0,P0} <:
-       AbstractConfigWithMaC{X0,Traits.TrajectoryMode,Traits.HamiltonianDynamics}
+struct HamiltonianTrajectoryConfig{
+    TS<:Tuple{<:Real,<:Real},X0,P0,G<:Union{Nothing,AbstractVector}
+} <: AbstractConfigWithMaC{X0,Traits.TrajectoryMode,Traits.HamiltonianDynamics}
     tspan::TS
     x0::X0
     p0::P0
-    function HamiltonianTrajectoryConfig{TS,X0,P0}(
-        tspan, x0, p0
-    ) where {TS<:Tuple{<:Real,<:Real},X0,P0}
-        return new{TS,X0,P0}(tspan, x0, p0)
+    grid::G
+    function HamiltonianTrajectoryConfig{TS,X0,P0,G}(
+        tspan, x0, p0, grid
+    ) where {TS<:Tuple{<:Real,<:Real},X0,P0,G<:Union{Nothing,AbstractVector}}
+        return new{TS,X0,P0,G}(tspan, x0, p0, grid)
     end
-    function HamiltonianTrajectoryConfig(tspan::Tuple{<:Real,<:Real}, x0, p0)
-        TS = float.(tspan)
+    function HamiltonianTrajectoryConfig(times::TimeSpec, x0, p0)
+        TS, G = _time_spec(times)
         X = eltype(x0) <: AbstractFloat ? x0 : float.(x0)
         P = eltype(p0) <: AbstractFloat ? p0 : float.(p0)
-        return new{typeof(TS),typeof(X),typeof(P)}(TS, X, P)
+        return new{typeof(TS),typeof(X),typeof(P),typeof(G)}(TS, X, P, G)
     end
 end
 

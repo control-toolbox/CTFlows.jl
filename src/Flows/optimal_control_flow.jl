@@ -1134,7 +1134,7 @@ See also: [`CTFlows.Flows.OptimalControlFlow`](@extref),
 [`CTFlows.Flows._build_ocp_solution`](@extref).
 """
 function (F::OptimalControlFlow)(
-    tspan::Tuple{<:Real,<:Real},
+    tspan::Configs.TimeSpec,
     x0,
     p0;
     variable=Core.NotProvided,
@@ -1215,7 +1215,7 @@ no control, no costate — `control`/`costate` throw a `PreconditionError`).
 See also: [`CTFlows.Trajectories.StateFlowTrajectory`](@extref), `CTFlows.Flows._state_flow_objective`.
 """
 function (F::OptimalControlFlow)(
-    tspan::Tuple{<:Real,<:Real}, x0; variable=Core.NotProvided, unsafe::Bool=false
+    tspan::Configs.TimeSpec, x0; variable=Core.NotProvided, unsafe::Bool=false
 )
     sf = _require_state_flow(F)
     traj = sf(tspan, x0; variable, unsafe)   # VectorFieldTrajectory
@@ -1276,6 +1276,7 @@ function _build_ocp_solution(
     t0, tf = first(T), last(T)
     v = _variable_vector(variable)
     u = _control_of(law, x, p, v)  # empty for control-free; law(t,x,p,v) otherwise
+    _warn_not_dense(sol)
     obj = _flow_objective(ocp, x, u, v, t0, tf, integ)
     return CTModels.Solutions.build_solution(
         ocp,

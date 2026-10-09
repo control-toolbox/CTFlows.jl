@@ -39,6 +39,7 @@ using .CTSolversIntegrators:
     final_state,
     times,
     evaluate_at,
+    is_dense,
     status,
     successful,
     merge,
@@ -138,7 +139,8 @@ end
 # ==============================================================================
 
 export AbstractIntegrator, SciML
-export AbstractIntegrationResult, final_state, times, evaluate_at, status, successful, merge
+export AbstractIntegrationResult, final_state, times, evaluate_at, is_dense, status, successful,
+    merge
 export options_point, options_trajectory
 export build_problem, build_options
 

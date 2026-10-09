@@ -153,6 +153,15 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Return whether the trajectory evaluates through a dense (solver-accurate) interpolant.
+
+See also: [`CTSolvers.Integrators.is_dense`](@extref).
+"""
+Integrators.is_dense(sol::HamiltonianVectorFieldTrajectory) = Integrators.is_dense(sol.result)
+
+"""
+$(TYPEDSIGNATURES)
+
 Alias for `times(sol)` — returns the time grid from the solution.
 
 This is a method of the [`CTModels.Components.time_grid`](@extref) generic, contributed by

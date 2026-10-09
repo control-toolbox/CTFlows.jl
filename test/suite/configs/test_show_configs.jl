@@ -46,6 +46,16 @@ function test_show_configs()
                 Test.@test occursin("x0:", output)
             end
 
+            Test.@testset "trajectory config show: grid line only with a grid" begin
+                io = IOBuffer()
+                show(io, Configs.StateTrajectoryConfig((0.0, 1.0), [1.0]))
+                Test.@test !occursin("grid:", String(take!(io)))
+                show(io, Configs.StateTrajectoryConfig([0.0, 0.5, 1.0], [1.0]))
+                Test.@test occursin("grid:", String(take!(io)))
+                show(io, Configs.HamiltonianTrajectoryConfig([0.0, 0.5, 1.0], [1.0], [0.5]))
+                Test.@test occursin("grid:", String(take!(io)))
+            end
+
             Test.@testset "StateTrajectoryConfig text/plain show method" begin
                 config = Configs.StateTrajectoryConfig((0.0, 1.0), [1.0, 0.0])
                 io = IOBuffer()

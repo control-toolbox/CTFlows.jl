@@ -54,6 +54,7 @@ using ..Display: Display
 include(joinpath(@__DIR__, "abstract.jl"))
 include(joinpath(@__DIR__, "interface.jl"))
 include(joinpath(@__DIR__, "implementations.jl"))
+include(joinpath(@__DIR__, "time_spec.jl"))
 include(joinpath(@__DIR__, "concrete.jl"))
 include(joinpath(@__DIR__, "show.jl"))
 
@@ -69,5 +70,6 @@ export HamiltonianEndPointConfig,
     HamiltonianTrajectoryConfig, AugmentedHamiltonianEndPointConfig
 export tspan, initial_condition, initial_state, initial_costate, initial_variable_costate
 export initial_time, final_time, mode_trait
+export TimeSpec, output_grid
 
 end # module Configs

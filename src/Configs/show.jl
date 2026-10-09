@@ -33,6 +33,7 @@ function Base.show(io::IO, c::StateTrajectoryConfig)
     fmt = Display.format_codes(io)
     Display.print_header(io, "StateTrajectoryConfig"; fmt=fmt)
     Display.print_field(io, "tspan", c.tspan; fmt=fmt)
+    isnothing(c.grid) || Display.print_field(io, "grid", c.grid; fmt=fmt)
     return Display.print_field(io, "x0", c.x0; last=true, fmt=fmt)
 end
 
@@ -77,6 +78,7 @@ function Base.show(io::IO, c::HamiltonianTrajectoryConfig)
     fmt = Display.format_codes(io)
     Display.print_header(io, "HamiltonianTrajectoryConfig"; fmt=fmt)
     Display.print_field(io, "tspan", c.tspan; fmt=fmt)
+    isnothing(c.grid) || Display.print_field(io, "grid", c.grid; fmt=fmt)
     Display.print_field(io, "x0", c.x0; fmt=fmt)
     return Display.print_field(io, "p0", c.p0; last=true, fmt=fmt)
 end
