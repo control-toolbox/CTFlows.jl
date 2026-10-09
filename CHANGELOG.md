@@ -8,6 +8,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🐛 Bug fixes
+
+- **`saveat` on a trajectory call no longer crashes, and keeps the solver accuracy**
+  ([#434](https://github.com/control-toolbox/CTFlows.jl/issues/434)). `Flow(ocp, law;
+  saveat=…)` segfaulted (Lagrange cost) or threw `UndefRefError` (Mayer cost) on
+  `f((t0, tf), x0, p0)` unless `dense=false` was added: the integrator requested
+  `dense=true` explicitly together with `saveat`, which SciML does not support. `saveat`
+  is now an *output grid* only (CTSolvers ≥ 0.6): the integration and its dense
+  interpolant are unchanged, the trajectory is returned on the `saveat` times, and the
+  state, costate, control and objective stay accurate to the solver tolerances between
+  them. `dense=false` is no longer required; it remains available to save memory.
+- **Multi-phase trajectories keep each phase's dense interpolant.** The merged trajectory
+  of a concatenated flow (`f * (t, g)`) used to be linear between the saved points (error
+  ~1e-5 with tolerances 1e-12, and on the objective); it is now as accurate as a
+  single-phase flow. The value at a switching time is unchanged (end of the phase that
+  finishes there, before the jump).
+
+### ✨ Features
+
+- **Output grid at the call:** a trajectory call accepts a grid instead of the time
+  span — `f(range(0, 1, 101), x0, p0)`, `f([t0, t1, …, tf], x0)` or a tuple of at least
+  three times — and returns the trajectory on exactly these times. It takes precedence
+  over the flow's `saveat`; the 2-tuple `(t0, tf)` keeps its meaning (automatic grid).
+  Available on every flow (state, Hamiltonian, `Flow(ocp, law)`, multi-phase, SciML
+  problem flows). See `Configs.TimeSpec`.
+- **Warning on a non-dense objective:** rebuilding an OCP objective from a trajectory
+  integrated with `dense=false` warns (once) that it is only accurate to the grid spacing.
+
+### 🧪 Tests
+
+- Precision regression matrix (`test/suite/integration/test_saveat_precision.jl`): every
+  flow kind × {span, `saveat`, `saveat` step, call grid, call grid over `saveat`,
+  `dense=false`}, against exact solutions at 1e-8 between grid points, including the
+  issue's reproducer; multi-phase tolerances tightened from 1e-3 to 1e-8;
+  switch-time convention characterized (`test_switch_time_convention.jl`).
+
 ## [0.18.1] - 2026-10-05
 
 Stable release of the 0.18 line: it ships the Makie plotting backend and the

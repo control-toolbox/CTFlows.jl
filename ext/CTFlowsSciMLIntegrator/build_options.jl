@@ -48,7 +48,27 @@ See also: [`CTFlows.Integrators.build_options`](@extref), [`CTFlows.Configs.Abst
 function Integrators.build_options(
     integ::Integrators.SciML, config::Configs.AbstractTrajectoryConfig
 )
-    return Integrators.options_trajectory(integ)
+    return _with_output_grid(Integrators.options_trajectory(integ), Configs.output_grid(config))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+No grid imposed at the call: the cached trajectory options are used as they are.
+"""
+_with_output_grid(options, ::Nothing) = options
+
+"""
+$(TYPEDSIGNATURES)
+
+Grid imposed at the call: a copy of the trajectory options whose `saveat` is the grid
+(it takes precedence over the integrator's own `saveat`). `saveat` only shapes the output;
+the integration stays dense (see `CommonSolve.solve` for `Integrators.SciML`).
+"""
+function _with_output_grid(options, grid::AbstractVector)
+    opts = copy(options)
+    opts[:saveat] = grid
+    return opts
 end
 
 """

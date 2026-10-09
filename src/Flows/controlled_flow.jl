@@ -87,7 +87,7 @@ Trajectory call: integrate the inner state flow over `tspan` and build a
 plus objective when built from an OCP).
 """
 function (F::ControlledFlow)(
-    tspan::Tuple{<:Real,<:Real}, x0; variable=__variable(), unsafe=__unsafe()
+    tspan::Configs.TimeSpec, x0; variable=__variable(), unsafe=__unsafe()
 )
     traj = F.flow(tspan, x0; variable, unsafe)   # VectorFieldTrajectory
     coerce = _flow_state_coerce(F.ocp, x0)  # precomputed once (only / identity)
@@ -167,5 +167,6 @@ function _state_flow_objective(ocp, traj, law, variable, integ, coerce)
     t0, tf = first(T), last(T)
     v = Trajectories._cp_variable(variable)  # raw variable (nothing if NotProvided)
     u = _control_of(law, x, v)               # OpenLoop/ClosedLoop, or empty when law===nothing
+    _warn_not_dense(traj)
     return _flow_objective(ocp, x, u, v, t0, tf, integ)
 end

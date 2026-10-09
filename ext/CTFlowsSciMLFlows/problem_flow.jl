@@ -118,7 +118,7 @@ Builds a `StateTrajectoryConfig` internally and returns the complete solution.
 
 # Arguments
 - `f::SciMLProblemFlow`: The SciML problem flow to solve.
-- `tspan::Tuple{Real, Real}`: Time span as a tuple (t0, tf).
+- `tspan::Configs.TimeSpec`: Time span `(t0, tf)`, or an output grid `(t0, t1, …, tf)` (see [`CTFlows.Configs.TimeSpec`](@extref)).
 - `x0`: Initial state vector.
 - `variable`: The variable parameter value (optional, passed to remake).
 - `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
@@ -136,14 +136,14 @@ sol = flow((0.0, 1.0), [1.0])
 ```
 """
 function (f::SciMLProblemFlow)(
-    tspan::Tuple{Real,Real}, x0; variable=Flows.__variable(), unsafe=Flows.__unsafe()
+    tspan::Configs.TimeSpec, x0; variable=Flows.__variable(), unsafe=Flows.__unsafe()
 )
-    kw = (; u0=x0, tspan=tspan)
+    config = Configs.StateTrajectoryConfig(tspan, x0)
+    kw = (; u0=x0, tspan=Configs.tspan(config))
     if !(variable isa Core.NotProvidedType)
         kw = merge(kw, (; p=variable))
     end
     prob = SciMLBase.remake(f.prob; kw...)
-    config = Configs.StateTrajectoryConfig(tspan, x0)
     opts = Integrators.build_options(f.integrator, config)
     return CommonSolve.solve(prob, f.integrator; options=opts, unsafe)
 end

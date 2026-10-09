@@ -3,6 +3,7 @@ module TestConcreteConfigs
 using Test: Test
 using CTFlows: Configs
 using CTBase: Traits
+using CTBase: Exceptions
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
@@ -13,6 +14,51 @@ function test_concrete_configs()
         # ====================================================================
         # UNIT TESTS - Concrete Type Construction
         # ====================================================================
+
+        Test.@testset "UNIT TESTS - Output grid at the call (issue #434)" begin
+            Test.@testset "time span: no grid" begin
+                c = Configs.StateTrajectoryConfig((0, 1), [1.0])
+                Test.@test Configs.tspan(c) === (0.0, 1.0)
+                Test.@test Configs.output_grid(c) === nothing
+                Test.@test Configs.output_grid(Configs.StateEndPointConfig(0.0, [1.0], 1.0)) ===
+                    nothing
+            end
+
+            Test.@testset "vector, range and tuple grids" begin
+                for times in ([0, 0.25, 1], range(0, 1, 3), (0, 0.5, 1))
+                    c = Configs.StateTrajectoryConfig(times, [1.0])
+                    Test.@test Configs.tspan(c) == (0.0, 1.0)
+                    Test.@test Configs.output_grid(c) == collect(Float64, times)
+                    Test.@test eltype(Configs.output_grid(c)) == Float64
+                end
+                h = Configs.HamiltonianTrajectoryConfig([0.0, 0.5, 1.0], [1.0], [0.5])
+                Test.@test Configs.tspan(h) == (0.0, 1.0)
+                Test.@test Configs.output_grid(h) == [0.0, 0.5, 1.0]
+            end
+
+            Test.@testset "backward grid" begin
+                c = Configs.StateTrajectoryConfig([1.0, 0.5, 0.0], [1.0])
+                Test.@test Configs.tspan(c) == (1.0, 0.0)
+                Test.@test Configs.initial_time(c) == 1.0
+                Test.@test Configs.final_time(c) == 0.0
+            end
+
+            Test.@testset "two-element vector is a grid" begin
+                c = Configs.StateTrajectoryConfig([0.0, 1.0], [1.0])
+                Test.@test Configs.output_grid(c) == [0.0, 1.0]
+            end
+
+            Test.@testset "Error: invalid grids" begin
+                for bad in ([0.0], Float64[], [0.0, 0.5, 0.5, 1.0], [0.0, 0.7, 0.5], (0.0,))
+                    Test.@test_throws Exceptions.IncorrectArgument Configs.StateTrajectoryConfig(
+                        bad, [1.0]
+                    )
+                end
+                Test.@test_throws Exceptions.IncorrectArgument Configs.HamiltonianTrajectoryConfig(
+                    [1.0, 1.0], [1.0], [0.5]
+                )
+            end
+        end
 
         Test.@testset "UNIT TESTS - Concrete Type Construction" begin
             Test.@testset "StateEndPointConfig construction" begin

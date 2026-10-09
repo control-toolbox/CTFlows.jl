@@ -288,8 +288,12 @@ plot(hsol_sx)   # state jumps, costate continuous
   tuple, so the compiler specializes the integration loop per phase combination.
   The required uniformity across phases is `TD`, `VD`, and the dynamics family
   (state vs Hamiltonian), enforced at construction time.
-- The trajectory integration merges phase results via `Integrators.merge`, which
-  concatenates the time grids and result vectors.
+- The trajectory integration merges phase results via `Integrators.merge`, which keeps
+  each phase's result and dense interpolant (a piecewise result): the merged trajectory
+  is as accurate as a single-phase one. Its time grid concatenates the phase grids, so a
+  switching time appears twice; evaluating at a switching time returns the end value of
+  the phase that finishes there (before the jump). An output grid given at the call is
+  split between the phases.
 
 ---
 

@@ -41,6 +41,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                 joinpath("Configs", "abstract.jl"),
                 joinpath("Configs", "interface.jl"),
                 joinpath("Configs", "implementations.jl"),
+                joinpath("Configs", "time_spec.jl"),
                 joinpath("Configs", "concrete.jl"),
                 joinpath("Configs", "show.jl"),
             ),

@@ -107,7 +107,7 @@ Builds a `StateTrajectoryConfig` internally and calls the flow with it.
 
 # Arguments
 - `f::StateFlow`: The state flow to integrate.
-- `tspan::Tuple{Real, Real}`: Time span as a tuple (t0, tf).
+- `tspan::Configs.TimeSpec`: Time span `(t0, tf)`, or an output grid `(t0, t1, …, tf)` (see [`CTFlows.Configs.TimeSpec`](@extref)).
 - `x0`: Initial state vector.
 - `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
 - `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
@@ -127,7 +127,7 @@ julia> sol = flow((0.0, 1.0), [1.0, 0.0])
 See also: [`CTFlows.Configs.StateTrajectoryConfig`](@extref), [`CTFlows.Flows.call`](@extref).
 """
 function (f::AbstractStateFlow)(
-    tspan::Tuple{Real,Real}, x0; variable=__variable(), unsafe=__unsafe()
+    tspan::Configs.TimeSpec, x0; variable=__variable(), unsafe=__unsafe()
 )
     return _invoke_flow(
         f, Configs.StateTrajectoryConfig(tspan, x0); variable=variable, unsafe=unsafe
@@ -143,7 +143,7 @@ Builds a `HamiltonianTrajectoryConfig` internally and calls the flow with it.
 
 # Arguments
 - `f::HamiltonianFlow`: The Hamiltonian flow to integrate.
-- `tspan::Tuple{Real, Real}`: Time span as a tuple (t0, tf).
+- `tspan::Configs.TimeSpec`: Time span `(t0, tf)`, or an output grid `(t0, t1, …, tf)` (see [`CTFlows.Configs.TimeSpec`](@extref)).
 - `x0`: Initial state vector.
 - `p0`: Initial costate vector.
 - `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
@@ -164,7 +164,7 @@ julia> sol = flow((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
 See also: [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@extref), [`CTFlows.Flows.call`](@extref).
 """
 function (f::AbstractHamiltonianFlow)(
-    tspan::Tuple{Real,Real},
+    tspan::Configs.TimeSpec,
     x0,
     p0;
     variable=__variable(),

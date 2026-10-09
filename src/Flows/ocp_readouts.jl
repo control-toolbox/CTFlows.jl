@@ -84,3 +84,22 @@ function _flow_objective(ocp, x, u, v, t0, tf, integ)
     end
     return obj
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Warn (once) when an OCP objective is about to be recomputed from a trajectory that has no
+dense interpolant (e.g. integrated with `dense=false`): the state is then only linearly
+interpolated between the saved points, so the objective — and the reconstructed control —
+are accurate to the grid spacing, not to the solver tolerances.
+
+See also: `CTFlows.Flows._flow_objective`, [`CTSolvers.Integrators.is_dense`](@extref).
+"""
+function _warn_not_dense(traj)
+    Integrators.is_dense(traj) && return nothing
+    @warn "The objective is recomputed from a trajectory without dense output " *
+          "(`dense=false`): the state is linearly interpolated between the saved points, " *
+          "so the objective and the control are only accurate to the time-grid spacing. " *
+          "Remove `dense=false` for solver accuracy (`saveat` alone keeps it)." maxlog = 1
+    return nothing
+end

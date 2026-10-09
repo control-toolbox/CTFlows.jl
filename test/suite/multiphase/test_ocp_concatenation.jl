@@ -79,16 +79,16 @@ function test_ocp_concatenation()
                 xs1, ps1, us1 = CTModels.state(sol1),
                 CTModels.costate(sol1),
                 CTModels.control(sol1)
-                # merged trajectory interpolates linearly (SciML merge is `dense=false`)
+                # each phase keeps its dense interpolant: split invariance at solver accuracy
                 for t in (0.2, 0.5, 0.8)
-                    Test.@test xs(t) ≈ xs1(t) atol = 1e-3
-                    Test.@test ps(t) ≈ ps1(t) atol = 1e-3
-                    Test.@test _uval(us, t) ≈ _uval(us1, t) atol = 1e-3
+                    Test.@test xs(t) ≈ xs1(t) atol = 1e-8
+                    Test.@test ps(t) ≈ ps1(t) atol = 1e-8
+                    Test.@test _uval(us, t) ≈ _uval(us1, t) atol = 1e-8
                 end
-                Test.@test CTModels.objective(sol) ≈ CTModels.objective(sol1) atol = 1e-3
+                Test.@test CTModels.objective(sol) ≈ CTModels.objective(sol1) atol = 1e-8
                 # objective = ∫₀¹ 0.5 p² dt = 0.25 p0² (e^{2tf} - 1)
                 Test.@test CTModels.objective(sol) ≈ 0.25 * p0^2 * (exp(2tf) - 1) atol =
-                    1e-3
+                    1e-8
             end
         end
 

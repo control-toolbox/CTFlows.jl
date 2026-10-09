@@ -3,6 +3,26 @@
 This file lists breaking and near-breaking changes in CTFlows.jl since the last
 stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
+## Unreleased
+
+- **Time grid of a trajectory with `saveat` and `dense=false`** ([#434](https://github.com/control-toolbox/CTFlows.jl/issues/434)):
+  it is now the `saveat` grid only; it used to be the union of the `saveat` times and of
+  every solver step (the trajectory options forced `save_everystep=true`). Pass
+  `save_everystep=true` explicitly to get the union back. With the default (dense)
+  output, `saveat` used to crash on a trajectory call; it now returns the `saveat` grid.
+- **Memory with `saveat`:** a dense trajectory with `saveat` keeps the full dense
+  interpolant (that is what makes it accurate between the grid points). To store only
+  the grid values, pass `dense=false` as well.
+- **Merged multi-phase result type:** `Integrators.merge` of SciML segments returns a
+  `CTSolvers.Integrators.PiecewiseIntegrationResult` (CTSolvers ≥ 0.6) instead of a
+  single flattened `SciMLIntegrationResult`. Code using only the `Integrators` accessors
+  (`times`, `evaluate_at`, `final_state`, `status`, `successful`) is unaffected; code
+  reading the internal `ode_sol` of a merged result is not.
+- **Trajectory configs gain a `grid` field/type parameter**
+  (`StateTrajectoryConfig{TS,X0,G}`, `HamiltonianTrajectoryConfig{TS,X0,P0,G}`). The
+  public constructors `StateTrajectoryConfig(tspan, x0)` / `HamiltonianTrajectoryConfig(tspan, x0, p0)`
+  are unchanged; only the explicit-parameter inner constructors changed.
+
 ## 0.18.1
 
 Stable release of the 0.18 line. **No breaking change since 0.18.0-beta.** Users
