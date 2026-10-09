@@ -68,28 +68,47 @@ hsol = hflow((0.0, 1.0), x0, p0)
 A trajectory is returned on a **time grid** (`Integrators.times(sol)`) but can be
 evaluated at **any** time: `sol(t)` reads the solver's dense interpolant, accurate to the
 solver tolerances. By default the grid is made of the solver steps, which may be few when
-the integration is easy. To get the trajectory on chosen times, either:
+the integration is easy (the plot is then a coarse polyline). To get the trajectory on
+more or chosen times, use **one** of:
 
-- pass a grid instead of the time span at the call — a vector, a range, or a tuple of at
-  least three times:
+- `grid=` at the call, to **generate** a grid of `n` distinct times from the span — an
+  integer `n` (uniform), `Configs.UniformGrid(n)`, or `Configs.AdaptiveGrid(n)`, denser
+  where the plotted curves (state, costate, control) bend:
+
+```@example flows_integrating
+Integrators.times(flow((0.0, 1.0), x0; grid=11))
+```
+
+```@example flows_integrating
+Integrators.times(flow((0.0, 1.0), x0; grid=Configs.AdaptiveGrid(11)))
+```
+
+- a grid of times instead of the time span — a vector, a range, or a tuple of at least
+  three times — returned exactly:
 
 ```@example flows_integrating
 sol_grid = flow(range(0.0, 1.0, 11), x0)
 Integrators.times(sol_grid)
 ```
 
-- or set `saveat` when building the flow (a vector, a range, or a step):
+- `saveat` when building the flow (a vector, a range, or a step):
 
 ```@example flows_integrating
 flow_saveat = Flows.Flow(vf; reltol=1e-8, saveat=0.1)
 Integrators.times(flow_saveat((0.0, 1.0), x0))
 ```
 
-A grid given at the call takes precedence over `saveat`. In both cases the grid **only
-shapes the output**: the integration (steps, cost) and the dense interpolant are exactly
-those of `flow((t0, tf), x0)`, so `sol(t)` between the grid points, the objective and the
-control of an optimal control flow keep the solver accuracy. Multi-phase flows behave the
-same way: each phase keeps its own interpolant.
+Combining two of them (`saveat` and a grid at the call, or a grid of times and `grid=`)
+throws an `IncorrectArgument`. In every case the grid **only shapes the output**: the
+integration (steps, cost) and the dense interpolant are exactly those of
+`flow((t0, tf), x0)`, so `sol(t)` between the grid points, the objective and the control of
+an optimal control flow keep the solver accuracy. Multi-phase flows behave the same way:
+each phase keeps its own interpolant, and a generated grid counts every switching time
+once.
+
+`AdaptiveGrid(n; uniform=0.1)` equidistributes the density `‖y''‖^{1/2}` of the plotted
+curves (each scaled by its range), which minimizes the error of the polyline drawn through
+the grid, mixed with a uniform share `uniform`.
 
 Pass `dense=false` to store only the grid values and save memory: the trajectory is then
 linear between the saved points, and an optimal control flow warns that its objective is
@@ -237,7 +256,7 @@ The default integrator is **SciML** backed by `OrdinaryDiffEqTsit5` (loaded when
 | `reltol` | `1e-6` | Relative tolerance |
 | `abstol` | `1e-8` | Absolute tolerance |
 | `alg` | `Tsit5()` | ODE algorithm (any SciML algorithm) |
-| `saveat` | — | Output time grid (vector, range or step); does not change the integration — see [Output grid and accuracy](#Output-grid-and-accuracy) |
+| `saveat` | — | Output time grid (vector, range or step); does not change the integration; not combinable with a grid at the call — see [Output grid and accuracy](#Output-grid-and-accuracy) |
 | `dense` | `:auto` | Keep the dense interpolant (`true` for a trajectory); `false` saves memory, linear between saved points |
 
 ```@example flows_integrating

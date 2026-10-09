@@ -292,8 +292,10 @@ plot(hsol_sx)   # state jumps, costate continuous
   each phase's result and dense interpolant (a piecewise result): the merged trajectory
   is as accurate as a single-phase one. Its time grid concatenates the phase grids, so a
   switching time appears twice; evaluating at a switching time returns the end value of
-  the phase that finishes there (before the jump). An output grid given at the call is
-  split between the phases.
+  the phase that finishes there (before the jump). A grid of times given at the call is
+  returned exactly (switching times are not added); a generated grid (`grid=n`,
+  `UniformGrid`, `AdaptiveGrid`) has exactly `n` distinct times, every switching time
+  included once, the intervals being shared between the phases.
 
 ---
 

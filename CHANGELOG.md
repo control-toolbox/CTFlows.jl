@@ -29,10 +29,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Output grid at the call:** a trajectory call accepts a grid instead of the time
   span — `f(range(0, 1, 101), x0, p0)`, `f([t0, t1, …, tf], x0)` or a tuple of at least
-  three times — and returns the trajectory on exactly these times. It takes precedence
-  over the flow's `saveat`; the 2-tuple `(t0, tf)` keeps its meaning (automatic grid).
+  three times — and returns the trajectory on exactly these times. The 2-tuple
+  `(t0, tf)` keeps its meaning (automatic grid).
   Available on every flow (state, Hamiltonian, `Flow(ocp, law)`, multi-phase, SciML
-  problem flows). See `Configs.TimeSpec`.
+  problem flows); on a multi-phase flow the given times are returned exactly. See
+  `Configs.TimeSpec`. Combining two output grids (`saveat` with a grid at the call, or a
+  grid of times with `grid=`) throws an `IncorrectArgument`.
+- **Generated output grids** ([#435](https://github.com/control-toolbox/CTFlows.jl/issues/435)):
+  `f((t0, tf), x0, p0; grid=spec)` returns the trajectory on exactly `n` distinct times
+  generated from the span — `grid=n` / `Configs.UniformGrid(n)` (uniform) or
+  `Configs.AdaptiveGrid(n; uniform=0.1)`, denser where the plotted curves (state,
+  costate, control) bend (equidistribution of `‖y''‖^{1/2}`, which minimizes the error of
+  the drawn polyline; about 35× better than uniform on a sharp control in our tests). On
+  every flow kind, multi-phase included (switching times counted once). The integration
+  is unchanged; the grid is read from the dense interpolant (`Integrators.regrid`,
+  CTSolvers ≥ 0.6.1).
 - **Warning on a non-dense objective:** rebuilding an OCP objective from a trajectory
   integrated with `dense=false` warns (once) that it is only accurate to the grid spacing.
 
