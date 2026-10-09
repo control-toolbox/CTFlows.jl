@@ -87,10 +87,12 @@ Trajectory call: integrate the inner state flow over `tspan` and build a
 plus objective when built from an OCP).
 """
 function (F::ControlledFlow)(
-    tspan::Configs.TimeSpec, x0; variable=__variable(), unsafe=__unsafe()
+    tspan::Configs.TimeSpec, x0; variable=__variable(), unsafe=__unsafe(), grid=nothing
 )
+    spec = _call_grid_spec(tspan, grid, F)
     traj = F.flow(tspan, x0; variable, unsafe)   # VectorFieldTrajectory
     coerce = _flow_state_coerce(F.ocp, x0)  # precomputed once (only / identity)
+    traj = _regrid_state(traj, spec, F.law, variable, coerce, collect(float.(tspan)))
     obj = _state_flow_objective(F.ocp, traj, F.law, variable, integrator(F.flow), coerce)
     return Trajectories.StateFlowTrajectory(traj, F.law, variable, obj, coerce, F.ocp)
 end

@@ -54,22 +54,32 @@ end
 """
 $(TYPEDSIGNATURES)
 
-No grid imposed at the call: the cached trajectory options are used as they are.
+No grid of times imposed at the call (none, or a generated grid built after the
+integration): the cached trajectory options are used as they are.
 """
-_with_output_grid(options, ::Nothing) = options
+_with_output_grid(options, ::Union{Nothing,Configs.AbstractGrid}) = options
 
 """
 $(TYPEDSIGNATURES)
 
-Grid imposed at the call: a copy of the trajectory options whose `saveat` is the grid
-(it takes precedence over the integrator's own `saveat`). `saveat` only shapes the output;
-the integration stays dense (see `CommonSolve.solve` for `Integrators.SciML`).
+Grid of times imposed at the call: a copy of the trajectory options whose `saveat` is the
+grid (a call that also has the integrator's `saveat` is rejected upstream). `saveat` only
+shapes the output; the integration stays dense (see `CommonSolve.solve` for
+`Integrators.SciML`).
 """
 function _with_output_grid(options, grid::AbstractVector)
     opts = copy(options)
     opts[:saveat] = grid
     return opts
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return whether the SciML integrator sets `saveat`.
+"""
+Integrators.has_saveat(integ::Integrators.SciML) =
+    haskey(Integrators.options_trajectory(integ), :saveat)
 
 """
 $(TYPEDSIGNATURES)

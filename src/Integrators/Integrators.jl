@@ -43,6 +43,7 @@ using .CTSolversIntegrators:
     status,
     successful,
     merge,
+    regrid,
     options_point,
     options_trajectory
 
@@ -134,14 +135,25 @@ function build_options(integrator::AbstractIntegrator, config)
     )
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return whether the integrator itself sets an output grid (`saveat`). Defaults to `false`;
+the `CTFlowsSciMLIntegrator` extension provides the `SciML` method. Used to reject a call
+that also imposes an output grid.
+
+See also: [`CTFlows.Integrators.build_options`](@extref).
+"""
+has_saveat(::AbstractIntegrator)::Bool = false
+
 # ==============================================================================
 # Module exports
 # ==============================================================================
 
 export AbstractIntegrator, SciML
 export AbstractIntegrationResult, final_state, times, evaluate_at, is_dense, status, successful,
-    merge
+    merge, regrid
 export options_point, options_trajectory
-export build_problem, build_options
+export build_problem, build_options, has_saveat
 
 end # module Integrators

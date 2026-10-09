@@ -27,6 +27,7 @@ using CTBase: Traits
 using CTFlows: Systems
 using CTFlows: Integrators
 using CTFlows: Flows
+using CTFlows: Trajectories
 using SciMLBase: SciMLBase, ODEProblem
 
 # =============================================================================

@@ -122,6 +122,7 @@ Builds a `StateTrajectoryConfig` internally and returns the complete solution.
 - `x0`: Initial state vector.
 - `variable`: The variable parameter value (optional, passed to remake).
 - `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+- `grid`: Generated output grid from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)).
 
 # Returns
 - `AbstractIntegrationResult`: The complete integration result with trajectory data.
@@ -136,16 +137,49 @@ sol = flow((0.0, 1.0), [1.0])
 ```
 """
 function (f::SciMLProblemFlow)(
-    tspan::Configs.TimeSpec, x0; variable=Flows.__variable(), unsafe=Flows.__unsafe()
+    tspan::Configs.TimeSpec,
+    x0;
+    variable=Flows.__variable(),
+    unsafe=Flows.__unsafe(),
+    grid=nothing,
 )
-    config = Configs.StateTrajectoryConfig(tspan, x0)
+    config = Configs.StateTrajectoryConfig(tspan, x0; grid=grid)
+    _check_problem_saveat(f.prob, config)
+    Flows._check_output_grid(f, config)
     kw = (; u0=x0, tspan=Configs.tspan(config))
     if !(variable isa Core.NotProvidedType)
         kw = merge(kw, (; p=variable))
     end
     prob = SciMLBase.remake(f.prob; kw...)
     opts = Integrators.build_options(f.integrator, config)
-    return CommonSolve.solve(prob, f.integrator; options=opts, unsafe)
+    result = CommonSolve.solve(prob, f.integrator; options=opts, unsafe)
+    curve = Trajectories._plotted_curve(t -> Integrators.evaluate_at(result, t))
+    bounds = collect(Configs.tspan(config))
+    return Trajectories.apply_generated_grid(result, Configs.output_grid(config), curve, bounds)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Reject an output grid given at the call when the wrapped problem stores its own `saveat`.
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: If a grid is given and `prob.kwargs` has `saveat`.
+"""
+function _check_problem_saveat(prob, config)
+    Configs.output_grid(config) === nothing && return nothing
+    if hasproperty(prob, :kwargs) && haskey(prob.kwargs, :saveat)
+        throw(
+            Exceptions.IncorrectArgument(
+                "Two output grids given: `saveat` in the ODE problem and a grid at the call";
+                got="saveat in the problem's keyword arguments, and a grid at the call",
+                expected="a single output grid",
+                suggestion="Remove `saveat` from the problem, or call the flow with the time span (t0, tf) only.",
+                context="SciMLProblemFlow trajectory call",
+            ),
+        )
+    end
+    return nothing
 end
 
 function Base.show(io::IO, ::MIME"text/plain", f::SciMLProblemFlow)

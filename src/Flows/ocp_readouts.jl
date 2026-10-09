@@ -103,3 +103,103 @@ function _warn_not_dense(traj)
           "Remove `dense=false` for solver accuracy (`saveat` alone keeps it)." maxlog = 1
     return nothing
 end
+
+# =============================================================================
+# Generated output grids (issue #435): the plotted curves include the control
+# =============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+No generated grid: the Hamiltonian trajectory is returned unchanged.
+"""
+_regrid_hamiltonian(sol, ::Union{Nothing,AbstractVector}, law, variable, bounds) = sol
+
+"""
+$(TYPEDSIGNATURES)
+
+Regrid a Hamiltonian trajectory on the generated grid `spec`, whose plotted curves are the
+state, the costate and, when there is a law, the reconstructed control.
+
+See also: [`CTFlows.Trajectories.apply_generated_grid`](@extref).
+"""
+function _regrid_hamiltonian(sol, spec::Configs.AbstractGrid, law, variable, bounds)
+    x, p = Trajectories.state(sol), Trajectories.costate(sol)
+    u = law === nothing ? nothing : _control_of(law, x, p, _variable_vector(variable))
+    return Trajectories.apply_generated_grid(
+        sol, spec, Trajectories._plotted_curve(x, p, u), bounds
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+No generated grid: the state trajectory is returned unchanged.
+"""
+_regrid_state(traj, ::Union{Nothing,AbstractVector}, law, variable, coerce, bounds) = traj
+
+"""
+$(TYPEDSIGNATURES)
+
+Regrid a state trajectory on the generated grid `spec`, whose plotted curves are the state
+and, when there is a law, the reconstructed control.
+
+See also: [`CTFlows.Trajectories.apply_generated_grid`](@extref).
+"""
+function _regrid_state(traj, spec::Configs.AbstractGrid, law, variable, coerce, bounds)
+    x = Trajectories.ControlledStateProjection(traj, coerce)
+    u = law === nothing ? nothing : _control_of(law, x, Trajectories._cp_variable(variable))
+    return Trajectories.apply_generated_grid(
+        traj, spec, Trajectories._plotted_curve(x, u), bounds
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Validate the `grid` keyword of a decorated trajectory call and return the generated grid
+spec (or `nothing`). A grid of times given in place of the span is left to the inner flow.
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: If a grid of times and `grid=` are both given, or
+  if the integrator sets `saveat` while `grid=` is given.
+"""
+function _call_grid_spec(tspan, grid, flow)
+    spec = Configs._grid_spec(grid)
+    spec === nothing && return nothing
+    Configs._time_spec(tspan, spec)
+    _reject_saveat(integrator(flow))
+    return spec
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Reject an output grid imposed at the call when the integrator already sets `saveat`.
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: If `Integrators.has_saveat(integ)`.
+"""
+function _reject_saveat(integ)
+    Integrators.has_saveat(integ) && throw(
+        Exceptions.IncorrectArgument(
+            "Two output grids given: `saveat` on the flow and a grid at the call";
+            got="saveat set on the integrator, and a grid of times or `grid=` at the call",
+            expected="a single output grid",
+            suggestion="Remove `saveat` from the flow, or call it with the time span (t0, tf) only.",
+            context="trajectory call",
+        ),
+    )
+    return nothing
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Reject an output grid given at the call (grid of times or generated) when the flow's
+integrator sets `saveat` (the integrator is only queried when a grid is given).
+"""
+function _check_output_grid(flow, config)
+    Configs.output_grid(config) === nothing || _reject_saveat(integrator(flow))
+    return nothing
+end

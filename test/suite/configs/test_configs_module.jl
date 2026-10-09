@@ -39,6 +39,7 @@ const EXPORTED_ABSTRACT_TYPES = (
     :AbstractStateConfig,
     :AbstractHamiltonianConfig,
     :AbstractAugmentedHamiltonianConfig,
+    :AbstractGrid,
 )
 
 const EXPORTED_CONCRETE_TYPES = (
@@ -47,6 +48,8 @@ const EXPORTED_CONCRETE_TYPES = (
     :HamiltonianEndPointConfig,
     :HamiltonianTrajectoryConfig,
     :AugmentedHamiltonianEndPointConfig,
+    :UniformGrid,
+    :AdaptiveGrid,
 )
 
 const EXPORTED_FUNCTIONS = (
