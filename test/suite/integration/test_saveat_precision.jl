@@ -93,7 +93,6 @@ const VARIANTS = (
     ("saveat step", (; saveat=0.1), (0.0, 1.0), collect(0:0.1:1)),
     ("call grid", (;), CALL_GRID, CALL_GRID),
     ("call grid as tuple", (;), Tuple(CALL_GRID), CALL_GRID),
-    ("call grid over saveat", (; saveat=SAVEAT), CALL_GRID, CALL_GRID),
 )
 
 _check_grid(T, ::Nothing) = (Test.@test first(T) == 0.0; Test.@test last(T) == 1.0)
@@ -242,7 +241,11 @@ function test_saveat_precision()
             sol = _no_warning(() -> φ(times, X0, P0))
             x, p, u = CTModels.state(sol), CTModels.costate(sol), CTModels.control(sol)
             T = CTModels.time_grid(sol)
-            Test.@test count(==(0.5), T) == 2   # the switching time closes and opens a phase
+            if times isa Tuple{Real,Real}
+                Test.@test count(==(0.5), T) == 2   # the switching time closes and opens a phase
+            else
+                Test.@test T == collect(Float64, times)   # a grid of times is returned exactly
+            end
             Test.@test first(T) == 0.0 && last(T) == 1.0
             for t in OFF_GRID
                 Test.@test x(t) ≈ _x(t) atol = TOL
@@ -269,7 +272,7 @@ function test_saveat_precision()
         Test.@testset "multi-phase grid at the call" begin
             f = Flows.Flow(OCPS_H[1][2], LAW_H; hamiltonian_type=:partial, _tol()...)
             sol = (f * (0.5, f))(CALL_GRID, X0, P0)
-            Test.@test CTModels.time_grid(sol) ≈ [0.0, 0.05, 0.3, 0.31, 0.5, 0.5, 0.9, 1.0]
+            Test.@test CTModels.time_grid(sol) == CALL_GRID   # exactly the given times
         end
 
         Test.@testset "multi-phase dense=false warns" begin
@@ -287,6 +290,14 @@ function test_saveat_precision()
             Test.@test_throws Exceptions.IncorrectArgument f([0.0, 0.5, 0.5, 1.0], 1.0)
             Test.@test_throws Exceptions.IncorrectArgument f([0.0, 0.7, 0.5, 1.0], 1.0)
             Test.@test_throws Exceptions.IncorrectArgument f((0.0,), 1.0)
+        end
+
+        Test.@testset "Error: saveat and a grid at the call" begin
+            f = Flows.Flow(Data.VectorField(x -> -x); _tol()..., saveat=SAVEAT)
+            Test.@test_throws Exceptions.IncorrectArgument f(CALL_GRID, 1.0)
+            g = Flows.Flow(OCPS_H[1][2], LAW_H; _tol()..., saveat=SAVEAT)
+            Test.@test_throws Exceptions.IncorrectArgument g(CALL_GRID, X0, P0)
+            Test.@test_throws Exceptions.IncorrectArgument (g * (0.5, g))(CALL_GRID, X0, P0)
         end
 
         Test.@testset "backward call grid" begin
