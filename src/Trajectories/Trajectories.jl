@@ -58,6 +58,7 @@ using ..Integrators: Integrators
 include(joinpath(@__DIR__, "vector_field_trajectory.jl"))
 include(joinpath(@__DIR__, "hamiltonian_vector_field_trajectory.jl"))
 include(joinpath(@__DIR__, "state_flow_trajectory.jl"))
+include(joinpath(@__DIR__, "grids.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 
 # ==============================================================================

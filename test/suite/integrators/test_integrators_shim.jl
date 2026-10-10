@@ -28,6 +28,7 @@ function test_integrators_shim()
             Test.@test Integrators.evaluate_at === CTSI.evaluate_at
             Test.@test Integrators.is_dense === CTSI.is_dense
             Test.@test Integrators.merge === CTSI.merge
+            Test.@test Integrators.regrid === CTSI.regrid
             Test.@test Integrators.options_point === CTSI.options_point
             Test.@test Integrators.options_trajectory === CTSI.options_trajectory
         end

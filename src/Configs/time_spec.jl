@@ -86,3 +86,149 @@ $(TYPEDSIGNATURES)
 Return the output time grid imposed at the call, or `nothing` for a time span.
 """
 output_grid(c::AbstractTrajectoryConfig) = c.grid
+
+# =============================================================================
+# Generated output grids: `grid=` keyword of a trajectory call
+# =============================================================================
+
+"""
+$(TYPEDEF)
+
+Abstract supertype of the output grids generated from the time span of a trajectory call
+(`f((t0, tf), x0, …; grid=spec)`). A generated grid has exactly `n` distinct times, the
+bounds and the switching times of a multi-phase flow included; it only shapes the output
+(the integration is that of the span).
+
+See also: [`CTFlows.Configs.UniformGrid`](@extref), [`CTFlows.Configs.AdaptiveGrid`](@extref).
+"""
+abstract type AbstractGrid end
+
+"""
+$(TYPEDEF)
+
+Uniform output grid of `n` times (`grid=n` is a shortcut for `grid=UniformGrid(n)`). On a
+multi-phase flow, the `n - 1` intervals are shared between the phases in proportion to
+their duration.
+
+# Fields
+- `n::Int`: Number of distinct times, at least 2.
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: If `n < 2`.
+
+See also: [`CTFlows.Configs.AdaptiveGrid`](@extref).
+"""
+struct UniformGrid <: AbstractGrid
+    n::Int
+    function UniformGrid(n::Integer)
+        _check_grid_size(n, "UniformGrid")
+        return new(n)
+    end
+end
+
+"""
+$(TYPEDEF)
+
+Adaptive output grid of `n` times, denser where the plotted curves (state, costate and
+control, each scaled by its range) bend: the times equidistribute the density
+`ρ ∝ ‖y''‖^{1/2}`, which minimizes the error of the polyline drawn through them, mixed with
+a uniform share `uniform`. On a multi-phase flow, the intervals are shared between the
+phases in proportion to their mass.
+
+# Fields
+- `n::Int`: Number of distinct times, at least 2.
+- `uniform::Float64`: Share of the uniform density, in `[0, 1]` (default `0.1`).
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: If `n < 2` or `uniform ∉ [0, 1]`.
+
+See also: [`CTFlows.Configs.UniformGrid`](@extref).
+"""
+struct AdaptiveGrid <: AbstractGrid
+    n::Int
+    uniform::Float64
+    function AdaptiveGrid(n::Integer; uniform::Real=0.1)
+        _check_grid_size(n, "AdaptiveGrid")
+        if !(0 <= uniform <= 1)
+            throw(
+                Exceptions.IncorrectArgument(
+                    "The uniform share of an AdaptiveGrid must lie in [0, 1]";
+                    got="uniform=$(uniform)",
+                    expected="0 ≤ uniform ≤ 1",
+                    context="AdaptiveGrid",
+                ),
+            )
+        end
+        return new(n, Float64(uniform))
+    end
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Check the number of times of a generated grid.
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: If `n < 2`.
+"""
+function _check_grid_size(n::Integer, context::String)
+    n >= 2 || throw(
+        Exceptions.IncorrectArgument(
+            "A generated grid needs at least two times";
+            got="n=$(n)",
+            expected="n ≥ 2",
+            context=context,
+        ),
+    )
+    return nothing
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Normalize the `grid` keyword of a trajectory call: `nothing` (no generated grid), an
+integer `n` (uniform grid of `n` times) or an [`CTFlows.Configs.AbstractGrid`](@extref).
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: For any other value (a vector of times is passed
+  in place of the time span, not through `grid`).
+"""
+_grid_spec(::Nothing) = nothing
+_grid_spec(n::Integer) = UniformGrid(n)
+_grid_spec(spec::AbstractGrid) = spec
+function _grid_spec(grid)
+    throw(
+        Exceptions.IncorrectArgument(
+            "Invalid `grid` keyword";
+            got="grid=$(repr(grid))",
+            expected="an integer, UniformGrid(n) or AdaptiveGrid(n)",
+            suggestion="To impose given times, pass them in place of the time span: f([t0, t1, …, tf], x0, …).",
+            context="trajectory call",
+        ),
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Time specification of a trajectory call with a `grid` keyword: the span and the output
+grid (a vector of times, a generated grid spec, or `nothing`).
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: If both a grid of times and `grid=` are given.
+"""
+function _time_spec(times::TimeSpec, grid)
+    spec = _grid_spec(grid)
+    spec === nothing && return _time_spec(times)
+    if !(times isa Tuple{Real,Real})
+        throw(
+            Exceptions.IncorrectArgument(
+                "Two output grids given: a grid of times and the `grid` keyword";
+                got="times=$(times), grid=$(repr(grid))",
+                expected="either a time span (t0, tf) with `grid=`, or a grid of times without `grid=`",
+                context="trajectory call",
+            ),
+        )
+    end
+    return (float.(times), spec)
+end

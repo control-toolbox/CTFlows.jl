@@ -139,7 +139,13 @@ function _evaluate_multiphase(
         end
     end
 
-    return _finalize_multiphase_trajectory(mpf, Integrators.merge(results), variable)
+    merged = Integrators.merge(results)
+    grid = Configs.output_grid(config)
+    # a grid of times is returned exactly (no switching time added); a generated grid is
+    # built on the merged trajectory, over the phases
+    grid isa AbstractVector && (merged = Integrators.regrid(merged, grid))
+    bounds = vcat(t0, [get_switching_time(mpf, i) for i in 1:(n_ph - 1)], tf)
+    return _finalize_multiphase_trajectory(mpf, merged, variable, grid, bounds)
 end
 
 # =============================================================================
@@ -257,17 +263,31 @@ cannot select a method here.
 
 See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@extref).
 """
-function _finalize_multiphase_trajectory(mpf::MultiPhaseFlow, merged, variable)
+function _finalize_multiphase_trajectory(
+    mpf::MultiPhaseFlow, merged, variable, grid=nothing, bounds=nothing
+)
     phases = get_flows(mpf)
     isempty(phases) && return merged
     if all(p -> p isa Flows.OptimalControlFlow, phases)
-        return _reconstruct_ocp_solution(mpf, merged, variable)
+        return _reconstruct_ocp_solution(mpf, merged, variable, grid, bounds)
     end
     if all(p -> p isa Flows.ControlledFlow, phases)
-        return _reconstruct_controlled_trajectory(mpf, merged, variable)
+        return _reconstruct_controlled_trajectory(mpf, merged, variable, grid, bounds)
     end
-    return merged
+    return _regrid_raw(merged, grid, bounds)
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Regrid a raw merged trajectory (no control law) on a generated grid, whose plotted curves
+are the state (and the costate); unchanged otherwise.
+"""
+_regrid_raw(merged, grid, bounds) = merged
+_regrid_raw(merged::Trajectories.VectorFieldTrajectory, grid::Configs.AbstractGrid, bounds) =
+    Flows._regrid_state(merged, grid, nothing, nothing, identity, bounds)
+_regrid_raw(merged::Trajectories.HamiltonianVectorFieldTrajectory, grid::Configs.AbstractGrid, bounds) =
+    Flows._regrid_hamiltonian(merged, grid, nothing, nothing, bounds)
 
 """
 $(TYPEDSIGNATURES)
@@ -315,11 +335,12 @@ over the per-phase laws.
 
 See also: [`CTFlows.MultiPhase._reconstruct_controlled_trajectory`](@extref), `CTFlows.Flows._build_ocp_solution`.
 """
-function _reconstruct_ocp_solution(mpf, merged, variable)
+function _reconstruct_ocp_solution(mpf, merged, variable, grid=nothing, bounds=nothing)
     phases = get_flows(mpf)
     ocp = _shared_ocp(phases)
     plaw = _PiecewiseControlLaw(map(p -> p.law, phases), get_switching_times(mpf))
     integ = Flows.integrator(phases[1])
+    merged = Flows._regrid_hamiltonian(merged, grid, plaw, variable, bounds)
     return Flows._build_ocp_solution(ocp, merged, variable, integ, plaw)
 end
 
@@ -342,12 +363,13 @@ Lagrange) over the merged trajectory when the phases carry an OCP (`nothing` obj
 
 See also: [`CTFlows.MultiPhase._reconstruct_ocp_solution`](@extref), `CTFlows.Flows._state_flow_objective`.
 """
-function _reconstruct_controlled_trajectory(mpf, merged, variable)
+function _reconstruct_controlled_trajectory(mpf, merged, variable, grid=nothing, bounds=nothing)
     phases = get_flows(mpf)
     ocp = _shared_ocp(phases)
     plaw = _PiecewiseControlLaw(map(p -> p.law, phases), get_switching_times(mpf))
     integ = Flows.integrator(phases[1])
     coerce = Flows._dim_coerce(length(Integrators.final_state(merged)))
+    merged = Flows._regrid_state(merged, grid, plaw, variable, coerce, bounds)
     obj = Flows._state_flow_objective(ocp, merged, plaw, variable, integ, coerce)
     return Trajectories.StateFlowTrajectory(merged, plaw, variable, obj, coerce, ocp)
 end
@@ -542,7 +564,7 @@ $(TYPEDSIGNATURES)
 Time specification of a phase `[t0, tf]` when no output grid is imposed at the call: the
 phase's time span.
 """
-_phase_times(t0, tf, ::Nothing) = (t0, tf)
+_phase_times(t0, tf, ::Union{Nothing,Configs.AbstractGrid}) = (t0, tf)
 
 """
 $(TYPEDSIGNATURES)
@@ -1008,9 +1030,14 @@ sol = mpf((0.0, 3.0), [1.0, 0.0])
 See also: [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@extref), [`CTFlows.Configs.StateTrajectoryConfig`](@extref).
 """
 function (mpf::MultiPhaseFlow{TD,VD,Traits.StateDynamics})(
-    tspan::Configs.TimeSpec, x0; variable=Flows.__variable(), unsafe=Flows.__unsafe()
+    tspan::Configs.TimeSpec,
+    x0;
+    variable=Flows.__variable(),
+    unsafe=Flows.__unsafe(),
+    grid=nothing,
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
-    config = Configs.StateTrajectoryConfig(tspan, x0)
+    config = Configs.StateTrajectoryConfig(tspan, x0; grid=grid)
+    _check_phase_grids(mpf, config)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
 
@@ -1080,8 +1107,26 @@ sol = mpf((0.0, 3.0), [1.0, 0.0], [0.5, 0.3])
 See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@extref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@extref).
 """
 function (mpf::MultiPhaseFlow{TD,VD,Traits.HamiltonianDynamics})(
-    tspan::Configs.TimeSpec, x0, p0; variable=Flows.__variable(), unsafe=Flows.__unsafe()
+    tspan::Configs.TimeSpec,
+    x0,
+    p0;
+    variable=Flows.__variable(),
+    unsafe=Flows.__unsafe(),
+    grid=nothing,
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
-    config = Configs.HamiltonianTrajectoryConfig(tspan, x0, p0)
+    config = Configs.HamiltonianTrajectoryConfig(tspan, x0, p0; grid=grid)
+    _check_phase_grids(mpf, config)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Reject a generated grid (`grid=`) when a phase integrator sets `saveat`. A grid of times is
+checked by each phase flow on its sub-grid.
+"""
+function _check_phase_grids(mpf::MultiPhaseFlow, config)
+    Configs.output_grid(config) isa Configs.AbstractGrid || return nothing
+    foreach(f -> Flows._reject_saveat(Flows.integrator(f)), get_flows(mpf))
+    return nothing
 end

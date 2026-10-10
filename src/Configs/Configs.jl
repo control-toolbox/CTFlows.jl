@@ -71,5 +71,6 @@ export HamiltonianEndPointConfig,
 export tspan, initial_condition, initial_state, initial_costate, initial_variable_costate
 export initial_time, final_time, mode_trait
 export TimeSpec, output_grid
+export AbstractGrid, UniformGrid, AdaptiveGrid
 
 end # module Configs

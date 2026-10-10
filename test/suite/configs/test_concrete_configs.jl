@@ -49,6 +49,24 @@ function test_concrete_configs()
                 Test.@test Configs.output_grid(c) == [0.0, 1.0]
             end
 
+            Test.@testset "generated grid keyword" begin
+                c = Configs.StateTrajectoryConfig((0, 1), [1.0]; grid=20)
+                Test.@test Configs.tspan(c) == (0.0, 1.0)
+                Test.@test Configs.output_grid(c) == Configs.UniformGrid(20)
+                spec = Configs.AdaptiveGrid(30; uniform=0.2)
+                h = Configs.HamiltonianTrajectoryConfig((0.0, 1.0), [1.0], [0.5]; grid=spec)
+                Test.@test Configs.output_grid(h) === spec
+                Test.@test Configs.output_grid(
+                    Configs.StateTrajectoryConfig((0.0, 1.0), [1.0]; grid=nothing)
+                ) === nothing
+                Test.@test_throws Exceptions.IncorrectArgument Configs.StateTrajectoryConfig(
+                    [0.0, 0.5, 1.0], [1.0]; grid=10
+                )
+                Test.@test_throws Exceptions.IncorrectArgument Configs.StateTrajectoryConfig(
+                    (0.0, 1.0), [1.0]; grid=1
+                )
+            end
+
             Test.@testset "Error: invalid grids" begin
                 for bad in ([0.0], Float64[], [0.0, 0.5, 0.5, 1.0], [0.0, 0.7, 0.5], (0.0,))
                     Test.@test_throws Exceptions.IncorrectArgument Configs.StateTrajectoryConfig(

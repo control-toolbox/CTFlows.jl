@@ -1140,6 +1140,7 @@ function (F::OptimalControlFlow)(
     variable=Core.NotProvided,
     unsafe::Bool=false,
     augment::Union{Nothing,Bool}=nothing,
+    grid=nothing,
 )
     augment === nothing || throw(
         Exceptions.PreconditionError(
@@ -1151,7 +1152,9 @@ function (F::OptimalControlFlow)(
             context="OptimalControlFlow trajectory call — deprecated `augment` keyword guard",
         ),
     )
+    spec = _call_grid_spec(tspan, grid, F)
     sol = F.flow(tspan, x0, p0; variable, unsafe)   # HamiltonianVectorFieldTrajectory
+    sol = _regrid_hamiltonian(sol, spec, F.law, variable, collect(float.(tspan)))
     return _build_ocp_solution(F.ocp, sol, variable, integrator(F.flow), F.law)
 end
 
@@ -1215,11 +1218,13 @@ no control, no costate — `control`/`costate` throw a `PreconditionError`).
 See also: [`CTFlows.Trajectories.StateFlowTrajectory`](@extref), `CTFlows.Flows._state_flow_objective`.
 """
 function (F::OptimalControlFlow)(
-    tspan::Configs.TimeSpec, x0; variable=Core.NotProvided, unsafe::Bool=false
+    tspan::Configs.TimeSpec, x0; variable=Core.NotProvided, unsafe::Bool=false, grid=nothing
 )
     sf = _require_state_flow(F)
+    spec = _call_grid_spec(tspan, grid, sf)
     traj = sf(tspan, x0; variable, unsafe)   # VectorFieldTrajectory
     coerce = _flow_state_coerce(F.ocp, x0)   # precomputed once (only / identity)
+    traj = _regrid_state(traj, spec, nothing, variable, coerce, collect(float.(tspan)))
     obj = _state_flow_objective(F.ocp, traj, nothing, variable, integrator(sf), coerce)
     return Trajectories.StateFlowTrajectory(traj, nothing, variable, obj, coerce, F.ocp)
 end
