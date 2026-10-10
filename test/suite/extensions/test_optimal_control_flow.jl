@@ -598,7 +598,8 @@ function test_optimal_control_flow()
                 catch e
                     err = e
                 end
-                Test.@test_broken err isa Exceptions.PreconditionError
+                Test.@test err isa Exceptions.PreconditionError
+                Test.@test occursin("trajectory", err.msg)
             end
         end
 

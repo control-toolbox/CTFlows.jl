@@ -440,8 +440,8 @@ function test_variable_costate_flows()
             )
         end
 
-        # Issue #437: a trajectory config must be rejected whatever the capability trait;
-        # NoVariableCostate currently falls through to the "unknown capability" catch-all.
+        # Issue #437: a trajectory config must be rejected whatever the capability trait
+        # (NoVariableCostate used to fall through to the "unknown capability" catch-all).
         Test.@testset "Error: variable_costate=true with trajectory config on Fixed system (#437)" begin
             h_fixed = Data.Hamiltonian(
                 (x, p) -> 0.5*(sum(abs2, x) + sum(abs2, p));
@@ -457,8 +457,7 @@ function test_variable_costate_flows()
                 err = e
             end
             Test.@test err isa Exceptions.PreconditionError
-            Test.@test_broken err isa Exceptions.PreconditionError &&
-                occursin("trajectory", err.msg)
+            Test.@test occursin("trajectory", err.msg)
         end
     end
 end
