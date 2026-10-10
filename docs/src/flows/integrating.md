@@ -67,9 +67,27 @@ hsol = hflow((0.0, 1.0), x0, p0)
 
 A trajectory is returned on a **time grid** (`Integrators.times(sol)`) but can be
 evaluated at **any** time: `sol(t)` reads the solver's dense interpolant, accurate to the
-solver tolerances. By default the grid is made of the solver steps, which may be few when
-the integration is easy (the plot is then a coarse polyline). To get the trajectory on
-more or chosen times, use **one** of:
+solver tolerances. When the call sets no output grid, the trajectory is returned on a
+**default grid**: if the solver returns fewer than 250 times (an easy integration, hence a
+coarse polyline when plotted), an `AdaptiveGrid(250)` is generated, so that the result has
+250 distinct times — the `grid_size` of the solutions of the direct methods, which makes a
+`Solution` built by a flow interchangeable with a direct one. With 250 times or more, the
+result is left as the solver returned it.
+
+```@example flows_integrating
+length(Integrators.times(flow((0.0, 1.0), x0)))
+```
+
+The default grid applies to a top-level trajectory call on a time span `(t0, tf)` with a
+dense integration. It is **not** generated with `saveat`, a grid of times, `grid=`,
+`dense=false`, a point call `f(t0, x0, tf)`, or a `SciMLProblemFlow` (which keeps the raw
+SciML behaviour). To keep the solver steps, pass `grid=nothing`:
+
+```@example flows_integrating
+length(Integrators.times(flow((0.0, 1.0), x0; grid=nothing)))
+```
+
+To get the trajectory on other or chosen times, use **one** of:
 
 - `grid=` at the call, to **generate** a grid of `n` distinct times from the span — an
   integer `n` (uniform), `Configs.UniformGrid(n)`, or `Configs.AdaptiveGrid(n)`, denser
@@ -103,8 +121,8 @@ throws an `IncorrectArgument`. In every case the grid **only shapes the output**
 integration (steps, cost) and the dense interpolant are exactly those of
 `flow((t0, tf), x0)`, so `sol(t)` between the grid points, the objective and the control of
 an optimal control flow keep the solver accuracy. Multi-phase flows behave the same way:
-each phase keeps its own interpolant, and a generated grid counts every switching time
-once.
+each phase keeps its own interpolant, and a generated grid (the default one included)
+counts every switching time once.
 
 `AdaptiveGrid(n; uniform=0.1)` equidistributes the density `‖y''‖^{1/2}` of the plotted
 curves (each scaled by its range), which minimizes the error of the polyline drawn through

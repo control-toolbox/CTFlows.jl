@@ -259,7 +259,11 @@ function test_saveat_precision()
             sol = _no_warning(() -> φ(times, X0, P0))
             x, p, u = CTModels.state(sol), CTModels.costate(sol), CTModels.control(sol)
             T = CTModels.time_grid(sol)
-            if times isa Tuple{Real,Real}
+            if times isa Tuple{Real,Real} && !haskey(kw, :saveat)
+                # default grid (issue #446): adaptive, the switching time appears once
+                Test.@test count(==(0.5), T) == 1
+                Test.@test length(T) == 250
+            elseif times isa Tuple{Real,Real}
                 Test.@test count(==(0.5), T) == 2   # the switching time closes and opens a phase
             else
                 Test.@test T == collect(Float64, times)   # a grid of times is returned exactly

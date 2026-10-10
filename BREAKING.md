@@ -5,6 +5,16 @@ stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
 ## Unreleased
 
+- **Default output grid of a trajectory call** ([#446](https://github.com/control-toolbox/CTFlows.jl/issues/446)):
+  a top-level trajectory call on a time span `(t0, tf)` that sets no output grid (no
+  `saveat`, grid of times or `grid=`) now returns an `AdaptiveGrid(250)` when the
+  integration is dense and the solver returns fewer than 250 times; with 250 times or
+  more it is unchanged. The default `time_grid` / `Integrators.times` of such a call is
+  therefore no longer the list of solver steps (and a switching time of a multi-phase
+  flow appears once instead of twice). Pass `grid=nothing` to get the solver steps back.
+  `SciMLProblemFlow`, point calls, `dense=false` and the internal calls (the inner flow
+  of a decorator, the phases of a multi-phase flow) are unchanged. Code that counts the
+  solver steps or relies on a duplicated switching time must use `grid=nothing`.
 - **Time grid of a trajectory with `saveat` and `dense=false`** ([#434](https://github.com/control-toolbox/CTFlows.jl/issues/434)):
   it is now the `saveat` grid only; it used to be the union of the `saveat` times and of
   every solver step (the trajectory options forced `save_everystep=true`). Pass

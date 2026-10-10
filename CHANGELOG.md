@@ -27,6 +27,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ Features
 
+- **Default output grid** ([#446](https://github.com/control-toolbox/CTFlows.jl/issues/446)):
+  a top-level trajectory call that sets no output grid returns an `AdaptiveGrid(250)` when
+  the integration is dense and the solver returns fewer than 250 times (it used to return
+  the few accepted solver steps — 5 points on the energy double integrator — so
+  `plot(sol)` drew a coarse polyline). 250 is the `grid_size` of the solutions of the
+  direct methods: a `Solution` built by a flow becomes interchangeable with a direct one.
+  The integration is unchanged (the grid is read from the dense interpolant). `grid=nothing`
+  keeps the solver steps; not applied with `saveat`, a grid of times, `grid=`,
+  `dense=false`, point calls, `SciMLProblemFlow` and the internal calls (decorator inner
+  flow, multi-phase phases). New `Configs.AutomaticGrid` and `Flows.__grid()`. A complex-valued
+  state no longer breaks the generated grids (real and imaginary parts are used).
+  **Breaking-ish**, see `BREAKING.md`.
 - **Output grid at the call:** a trajectory call accepts a grid instead of the time
   span — `f(range(0, 1, 101), x0, p0)`, `f([t0, t1, …, tf], x0)` or a tuple of at least
   three times — and returns the trajectory on exactly these times. The 2-tuple

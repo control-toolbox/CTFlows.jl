@@ -170,7 +170,7 @@ function test_flow_callables()
 
             Test.@testset "vector x0" begin
                 x0 = [1.0, 0.0]
-                result = flow((0.0, 1.0), x0)
+                result = flow((0.0, 1.0), x0; grid=nothing)
                 Test.@test integ.last_config isa Configs.StateTrajectoryConfig
                 Test.@test integ.last_config.tspan == (0.0, 1.0)
                 Test.@test integ.last_config.x0 === x0
@@ -179,7 +179,7 @@ function test_flow_callables()
 
             Test.@testset "SVector x0" begin
                 x0 = SA[1.0, 0.0]
-                result = flow((0.0, 1.0), x0)
+                result = flow((0.0, 1.0), x0; grid=nothing)
                 Test.@test integ.last_config isa Configs.StateTrajectoryConfig
                 Test.@test integ.last_config.tspan == (0.0, 1.0)
                 Test.@test integ.last_config.x0 === x0
@@ -188,7 +188,7 @@ function test_flow_callables()
 
             Test.@testset "matrix x0" begin
                 x0 = [1.0 2.0; 3.0 4.0]
-                result = flow((0.0, 1.0), x0)
+                result = flow((0.0, 1.0), x0; grid=nothing)
                 Test.@test integ.last_config isa Configs.StateTrajectoryConfig
                 Test.@test integ.last_config.tspan == (0.0, 1.0)
                 Test.@test integ.last_config.x0 === x0
@@ -254,7 +254,7 @@ function test_flow_callables()
             Test.@testset "vector x0, p0" begin
                 x0 = [1.0, 0.0]
                 p0 = [0.0, 1.0]
-                result = flow((0.0, 1.0), x0, p0)
+                result = flow((0.0, 1.0), x0, p0; grid=nothing)
                 Test.@test integ.last_config isa Configs.HamiltonianTrajectoryConfig
                 Test.@test integ.last_config.tspan == (0.0, 1.0)
                 Test.@test integ.last_config.x0 === x0
@@ -265,7 +265,7 @@ function test_flow_callables()
             Test.@testset "SVector x0, p0" begin
                 x0 = SA[1.0, 0.0]
                 p0 = SA[0.0, 1.0]
-                result = flow((0.0, 1.0), x0, p0)
+                result = flow((0.0, 1.0), x0, p0; grid=nothing)
                 Test.@test integ.last_config isa Configs.HamiltonianTrajectoryConfig
                 Test.@test integ.last_config.tspan == (0.0, 1.0)
                 Test.@test integ.last_config.x0 === x0

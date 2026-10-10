@@ -50,7 +50,7 @@ function test_switch_time_convention()
             sys = Systems.VectorFieldSystem(Data.VectorField(u -> -u))
             f = Flows.StateFlow(sys, Integrators.SciML(; _opts()...))
             Δx = 10.0
-            traj = (f * (ts, Δx, f))((0.0, 1.0), [1.0])
+            traj = (f * (ts, Δx, f))((0.0, 1.0), [1.0]; grid=nothing)
             left, right = exp(-ts), exp(-ts) + Δx
 
             Test.@test count(==(ts), Integrators.times(traj)) == 2
@@ -64,7 +64,7 @@ function test_switch_time_convention()
                 OCP, Data.DynClosedLoop((x, p) -> p); hamiltonian_type=:total, _opts()...
             )
             x0, p0, Δp = 1.0, 0.5, 0.4
-            sol = (g * (ts, Δp, g))((0.0, 1.0), x0, p0)
+            sol = (g * (ts, Δp, g))((0.0, 1.0), x0, p0; grid=nothing)
             p, u = CTModels.costate(sol), CTModels.control(sol)
             left = p0 * exp(ts)
 
