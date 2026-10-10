@@ -48,7 +48,9 @@ See also: [`CTFlows.Integrators.build_options`](@extref), [`CTFlows.Configs.Abst
 function Integrators.build_options(
     integ::Integrators.SciML, config::Configs.AbstractTrajectoryConfig
 )
-    return _with_output_grid(Integrators.options_trajectory(integ), Configs.output_grid(config))
+    return _with_output_grid(
+        Integrators.options_trajectory(integ), Configs.output_grid(config)
+    )
 end
 
 """

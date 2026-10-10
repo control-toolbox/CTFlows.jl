@@ -69,8 +69,9 @@ StateTrajectoryConfig
 
 See also: [`CTFlows.Configs.StateEndPointConfig`](@extref)
 """
-struct StateTrajectoryConfig{TS<:Tuple{<:Real,<:Real},X0,G<:Union{Nothing,AbstractVector,AbstractGrid}} <:
-       AbstractConfigWithMaC{X0,Traits.TrajectoryMode,Traits.StateDynamics}
+struct StateTrajectoryConfig{
+    TS<:Tuple{<:Real,<:Real},X0,G<:Union{Nothing,AbstractVector,AbstractGrid}
+} <: AbstractConfigWithMaC{X0,Traits.TrajectoryMode,Traits.StateDynamics}
     tspan::TS
     x0::X0
     grid::G

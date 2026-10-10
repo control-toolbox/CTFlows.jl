@@ -151,8 +151,8 @@ has_saveat(::AbstractIntegrator)::Bool = false
 # ==============================================================================
 
 export AbstractIntegrator, SciML
-export AbstractIntegrationResult, final_state, times, evaluate_at, is_dense, status, successful,
-    merge, regrid
+export AbstractIntegrationResult,
+    final_state, times, evaluate_at, is_dense, status, successful, merge, regrid
 export options_point, options_trajectory
 export build_problem, build_options, has_saveat
 

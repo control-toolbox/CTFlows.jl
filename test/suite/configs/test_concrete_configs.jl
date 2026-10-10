@@ -20,8 +20,9 @@ function test_concrete_configs()
                 c = Configs.StateTrajectoryConfig((0, 1), [1.0])
                 Test.@test Configs.tspan(c) === (0.0, 1.0)
                 Test.@test Configs.output_grid(c) === nothing
-                Test.@test Configs.output_grid(Configs.StateEndPointConfig(0.0, [1.0], 1.0)) ===
-                    nothing
+                Test.@test Configs.output_grid(
+                    Configs.StateEndPointConfig(0.0, [1.0], 1.0)
+                ) === nothing
             end
 
             Test.@testset "vector, range and tuple grids" begin
