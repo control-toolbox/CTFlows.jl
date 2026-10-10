@@ -60,7 +60,9 @@ function _di_ocp(; lagrange=nothing, mayer=nothing)
     CTModels.Building.state!(pre, 2)
     CTModels.Building.control!(pre, 1)
     CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=x[2]; r[2]=u; nothing))
-    kw = (; (isnothing(lagrange) ? () : (; lagrange))..., (isnothing(mayer) ? () : (; mayer))...)
+    kw = (;
+        (isnothing(lagrange) ? () : (; lagrange))..., (isnothing(mayer) ? () : (; mayer))...
+    )
     CTModels.Building.objective!(pre, :min; kw...)
     return CTModels.Building.build(pre)
 end
@@ -110,7 +112,7 @@ function test_saveat_precision()
         # ====================================================================
 
         Test.@testset "Flow(ocp, DynClosedLoop) [$cost, $label]" for (cost, ocp, J) in
-                                                                      OCPS_H,
+                                                                     OCPS_H,
             (label, kw, times, grid) in VARIANTS
 
             f = Flows.Flow(ocp, LAW_H; hamiltonian_type=:partial, _tol()..., kw...)
@@ -191,7 +193,8 @@ function test_saveat_precision()
         end
 
         Test.@testset "plain Hamiltonian flow [$label]" for (label, kw, times, grid) in
-                                                             VARIANTS
+                                                            VARIANTS
+
             f = Flows.Flow(Data.HamiltonianVectorField((x, p) -> (p, -x)); _tol()..., kw...)
             traj = _no_warning(() -> f(times, 1.0, 0.0))
             x, p = Trajectories.state(traj), Trajectories.costate(traj)
@@ -203,7 +206,9 @@ function test_saveat_precision()
         end
 
         Test.@testset "plain state flow, dense=false" begin
-            f = Flows.Flow(Data.VectorField(x -> [x[2], -x[1]]); _tol()..., saveat=SAVEAT, dense=false)
+            f = Flows.Flow(
+                Data.VectorField(x -> [x[2], -x[1]]); _tol()..., saveat=SAVEAT, dense=false
+            )
             traj = _no_warning(() -> f((0.0, 1.0), [1.0, 0.0]))
             Test.@test !Integrators.is_dense(traj)
             Test.@test traj(0.5) ≈ [cos(0.5), -sin(0.5)] atol = TOL
@@ -216,15 +221,28 @@ function test_saveat_precision()
         Test.@testset "SciML problem flow" begin
             osc(u, p, t) = [u[2], -u[1]]
             for (label, prob, times, grid) in (
-                ("saveat in the problem", ODEProblem(osc, [1.0, 0.0], (0.0, 1.0); saveat=0.1), (0.0, 1.0), collect(0:0.1:1)),
-                ("call grid", ODEProblem(osc, [1.0, 0.0], (0.0, 1.0)), CALL_GRID, CALL_GRID),
+                (
+                    "saveat in the problem",
+                    ODEProblem(osc, [1.0, 0.0], (0.0, 1.0); saveat=0.1),
+                    (0.0, 1.0),
+                    collect(0:0.1:1),
+                ),
+                (
+                    "call grid",
+                    ODEProblem(osc, [1.0, 0.0], (0.0, 1.0)),
+                    CALL_GRID,
+                    CALL_GRID,
+                ),
             )
                 Test.@testset "$label" begin
-                    f = CTFlowsSciMLFlows.SciMLProblemFlow(prob, Integrators.SciML(; _tol()...))
+                    f = CTFlowsSciMLFlows.SciMLProblemFlow(
+                        prob, Integrators.SciML(; _tol()...)
+                    )
                     r = f(times, [1.0, 0.0])
                     Test.@test Integrators.times(r) ≈ grid
                     for t in OFF_GRID
-                        Test.@test Integrators.evaluate_at(r, t) ≈ [cos(t), -sin(t)] atol = TOL
+                        Test.@test Integrators.evaluate_at(r, t) ≈ [cos(t), -sin(t)] atol =
+                            TOL
                     end
                 end
             end

@@ -98,8 +98,8 @@ See also: `CTFlows.Flows._flow_objective`, [`CTSolvers.Integrators.is_dense`](@e
 function _warn_not_dense(traj)
     Integrators.is_dense(traj) && return nothing
     @warn "The objective is recomputed from a trajectory without dense output " *
-          "(`dense=false`): the state is linearly interpolated between the saved points, " *
-          "so the objective and the control are only accurate to the time-grid spacing. " *
-          "Remove `dense=false` for solver accuracy (`saveat` alone keeps it)." maxlog = 1
+        "(`dense=false`): the state is linearly interpolated between the saved points, " *
+        "so the objective and the control are only accurate to the time-grid spacing. " *
+        "Remove `dense=false` for solver accuracy (`saveat` alone keeps it)." maxlog = 1
     return nothing
 end
