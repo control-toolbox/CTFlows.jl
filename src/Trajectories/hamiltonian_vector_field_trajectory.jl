@@ -157,7 +157,9 @@ Return whether the trajectory evaluates through a dense (solver-accurate) interp
 
 See also: [`CTSolvers.Integrators.is_dense`](@extref).
 """
-Integrators.is_dense(sol::HamiltonianVectorFieldTrajectory) = Integrators.is_dense(sol.result)
+function Integrators.is_dense(sol::HamiltonianVectorFieldTrajectory)
+    return Integrators.is_dense(sol.result)
+end
 
 """
 $(TYPEDSIGNATURES)
