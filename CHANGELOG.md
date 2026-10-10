@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the drawn polyline; about 35× better than uniform on a sharp control in our tests). On
   every flow kind, multi-phase included (switching times counted once). The integration
   is unchanged; the grid is read from the dense interpolant (`Integrators.regrid`,
-  CTSolvers ≥ 0.6.1).
+  CTSolvers ≥ 0.6.0).
 - **Warning on a non-dense objective:** rebuilding an OCP objective from a trajectory
   integrated with `dense=false` warns (once) that it is only accurate to the grid spacing.
 
