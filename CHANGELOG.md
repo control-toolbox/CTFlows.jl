@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug fixes
 
+- **`variable_costate=true` on a trajectory call raises a clear error**
+  ([#437](https://github.com/control-toolbox/CTFlows.jl/issues/437)).
+  `F((t0, tf), x0, p0; variable_costate=true)` on an `OptimalControlFlow` threw a raw
+  `MethodError` (with the full `OptimalControlFlow{…}` type); it now throws a
+  `PreconditionError` pointing to the point-evaluation call
+  `F(t0, x0, p0, tf; variable_costate=true)`. On a Hamiltonian flow without variable
+  costate capability, the trajectory call is also rejected with this message instead of
+  the misleading "unsupported capability trait" one.
 - **`saveat` on a trajectory call no longer crashes, and keeps the solver accuracy**
   ([#434](https://github.com/control-toolbox/CTFlows.jl/issues/434)). `Flow(ocp, law;
   saveat=…)` segfaulted (Lagrange cost) or threw `UndefRefError` (Mayer cost) on
