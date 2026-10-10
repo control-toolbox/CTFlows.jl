@@ -45,7 +45,8 @@ using .CTSolversIntegrators:
     merge,
     regrid,
     options_point,
-    options_trajectory
+    options_trajectory,
+    deepvalue
 
 # ==============================================================================
 # Internal sibling-submodule imports (used by the glue-function signatures)

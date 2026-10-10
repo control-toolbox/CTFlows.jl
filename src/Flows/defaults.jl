@@ -13,6 +13,21 @@ __variable()::Core.NotProvidedType = Core.NotProvided
 """
 $(TYPEDSIGNATURES)
 
+Default value for the `grid` keyword of a top-level trajectory call.
+
+Returns `CTBase.Core.NotProvided` by default, meaning no output grid is imposed: the call
+then generates an [`CTFlows.Configs.AutomaticGrid`](@extref) (`AdaptiveGrid(250)` when the
+solver returns fewer than 250 times), unless a grid of times or the integrator's `saveat`
+already shapes the output. `grid=nothing` keeps the solver steps. Internal calls (the inner
+flow of a decorator, a phase of a multi-phase flow) pass `grid=nothing`.
+
+See also: [`CTFlows.Flows._default_grid`](@extref).
+"""
+__grid()::Core.NotProvidedType = Core.NotProvided
+
+"""
+$(TYPEDSIGNATURES)
+
 Default value for unsafe flag in integration functions.
 
 Returns `false` by default, meaning ODE solver retcodes are checked and

@@ -157,6 +157,24 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Resolve the `grid` keyword of a top-level trajectory call. An explicit `grid` (`nothing`, an
+integer, a generated grid) is returned as given. `Core.NotProvided` becomes
+[`CTFlows.Configs.AutomaticGrid`](@extref) when the call sets a time span and none of the
+`flows` (every phase of a multi-phase flow) has an integrator with `saveat`, and `nothing`
+otherwise: a grid of times or a `saveat` already shapes the output.
+
+See also: [`CTFlows.Flows.__grid`](@extref).
+"""
+_default_grid(grid, tspan, flows...) = grid
+function _default_grid(::Core.NotProvidedType, tspan, flows...)
+    tspan isa Tuple{Real,Real} || return nothing
+    any(f -> Integrators.has_saveat(integrator(f)), flows) && return nothing
+    return Configs.AutomaticGrid()
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Validate the `grid` keyword of a decorated trajectory call and return the generated grid
 spec (or `nothing`). A grid of times given in place of the span is left to the inner flow.
 
@@ -165,6 +183,7 @@ spec (or `nothing`). A grid of times given in place of the span is left to the i
   if the integrator sets `saveat` while `grid=` is given.
 """
 function _call_grid_spec(tspan, grid, flow)
+    grid isa Core.NotProvidedType && return _default_grid(grid, tspan, flow)
     spec = Configs._grid_spec(grid)
     spec === nothing && return nothing
     Configs._time_spec(tspan, spec)
