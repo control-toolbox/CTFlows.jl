@@ -58,12 +58,13 @@ function test_ocp_concatenation()
                 Test.@test f isa Flows.OptimalControlFlow
                 φ = f * (ts, f)   # split at ts, same law, no jump
 
-                # point-eval: the multi-phase result (vector [x; p]) reproduces the single
-                # flow (tuple (x, p)), and matches the analytic solution
+                # point-eval: a multi-phase flow preserves the single-phase (x, p) result shape
                 xf, pf = f(t0, x0, p0, tf)
                 res = φ(t0, x0, p0, tf)
+                Test.@test res isa Tuple
+                Test.@test length(res) == 2
                 Test.@test res[1] ≈ xf atol = 1e-8
-                Test.@test res[end] ≈ pf atol = 1e-8
+                Test.@test res[2] ≈ pf atol = 1e-8
                 Test.@test pf ≈ p0 * exp(tf) atol = 1e-6
                 Test.@test xf ≈ (x0 - p0 / 2) * exp(-tf) + (p0 / 2) * exp(tf) atol = 1e-6
 

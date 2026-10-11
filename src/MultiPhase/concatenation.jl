@@ -38,6 +38,42 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Return the concrete common element type for switching times from two flows and a new time.
+
+The empty switching-time vector returned by a single-phase flow has element type `Real`, so
+`vcat` alone would promote a concrete switching-time vector to `Vector{Real}`.
+"""
+function _switching_time_eltype(::Type{Real}, ::Type{B}, ::Type{Real}) where {B}
+    return B
+end
+
+function _switching_time_eltype(::Type{Real}, ::Type{B}, ::Type{C}) where {B,C}
+    return promote_type(B, C)
+end
+
+function _switching_time_eltype(::Type{A}, ::Type{B}, ::Type{Real}) where {A,B}
+    return promote_type(A, B)
+end
+
+function _switching_time_eltype(::Type{A}, ::Type{B}, ::Type{C}) where {A,B,C}
+    return promote_type(A, B, C)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Merge the switching times of two flows and a new switching time into a concrete vector.
+"""
+function _merge_switching_times(f1, t_switch::B, f2) where {B}
+    t1 = get_switching_times(f1)
+    t2 = get_switching_times(f2)
+    T = _switching_time_eltype(eltype(t1), B, eltype(t2))
+    return convert(Vector{T}, vcat(t1, [t_switch], t2))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Concatenate two state flows with a switching time using the `*` operator.
 
 Creates a multi-phase flow with no jump at the switching time.
@@ -62,7 +98,7 @@ function Base.:*(
     f1::Flows.AbstractStateFlow, (t_switch, f2)::Tuple{Real,Flows.AbstractStateFlow}
 )
     flows = (get_flows(f1)..., get_flows(f2)...)
-    switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
+    switches = _merge_switching_times(f1, t_switch, f2)
     _check_switching_times_order(switches)
     jumps = vcat(get_jumps(f1), [nothing], get_jumps(f2))
     return MultiPhaseStateFlow(flows, switches, jumps)
@@ -104,7 +140,7 @@ function Base.:*(
     (t_switch, jump, f2)::Tuple{Real,Any,Flows.AbstractStateFlow},
 )
     flows = (get_flows(f1)..., get_flows(f2)...)
-    switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
+    switches = _merge_switching_times(f1, t_switch, f2)
     _check_switching_times_order(switches)
     jumps = vcat(get_jumps(f1), [jump], get_jumps(f2))
     return MultiPhaseStateFlow(flows, switches, jumps)
@@ -138,7 +174,7 @@ function Base.:*(
     (t_switch, f2)::Tuple{Real,Flows.AbstractHamiltonianFlow},
 )
     flows = (get_flows(f1)..., get_flows(f2)...)
-    switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
+    switches = _merge_switching_times(f1, t_switch, f2)
     _check_switching_times_order(switches)
     jumps = vcat(get_jumps(f1), [nothing], get_jumps(f2))
     return MultiPhaseHamiltonianFlow(flows, switches, jumps)
@@ -180,7 +216,7 @@ function Base.:*(
     (t_switch, jump, f2)::Tuple{Real,Any,Flows.AbstractHamiltonianFlow},
 )
     flows = (get_flows(f1)..., get_flows(f2)...)
-    switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
+    switches = _merge_switching_times(f1, t_switch, f2)
     _check_switching_times_order(switches)
     jumps = vcat(get_jumps(f1), [jump], get_jumps(f2))
     return MultiPhaseHamiltonianFlow(flows, switches, jumps)
@@ -228,7 +264,7 @@ function Base.:*(
     (t_switch, jump_x, jump_p, f2)::Tuple{Real,Any,Any,Flows.AbstractHamiltonianFlow},
 )
     flows = (get_flows(f1)..., get_flows(f2)...)
-    switches = vcat(get_switching_times(f1), [t_switch], get_switching_times(f2))
+    switches = _merge_switching_times(f1, t_switch, f2)
     _check_switching_times_order(switches)
     jumps = vcat(get_jumps(f1), [(jump_x, jump_p)], get_jumps(f2))
     return MultiPhaseHamiltonianFlow(flows, switches, jumps)

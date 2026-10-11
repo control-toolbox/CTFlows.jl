@@ -951,14 +951,13 @@ Format the final output for Hamiltonian dynamics.
 - `state_tuple`: Tuple of (state, costate).
 
 # Returns
-- Concatenated vector [state; costate].
+- Tuple of `(state, costate)`.
 
 # Notes
 This is an internal dispatch method for the `_format_final_output` function.
 """
 function _format_final_output(::Type{Traits.HamiltonianDynamics}, state_tuple)
-    x, p = state_tuple
-    return vcat(x, p)
+    return state_tuple
 end
 
 # ==============================================================================
