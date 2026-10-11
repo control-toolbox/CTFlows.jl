@@ -270,6 +270,9 @@ function _core_invoke_flow(
     flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe
 )
 
+    # fail before the integration on a device/array or AD backend mismatch (issue #436)
+    _check_call(flow, config)
+
     # get system and integrator
     sys = system(flow)
     int = integrator(flow)
@@ -571,15 +574,16 @@ Variable costate call for trajectory configurations.
 
 Variable costate computation is only supported for point configurations, not trajectory
 configurations. This method throws an error when attempting to use variable_costate=true
-with a trajectory configuration.
+with a trajectory configuration, whatever the flow's variable-costate capability
+(`SupportsVariableCostate` or `NoVariableCostate`): the call form is rejected first.
 
 # Throws
 - `CTBase.Exceptions.PreconditionError`: Always, with a descriptive message indicating that variable_costate is only supported for point configurations.
 
-See also: [`CTBase.Traits.SupportsVariableCostate`](@extref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@extref).
+See also: [`CTBase.Traits.AbstractVariableCostateCapability`](@extref), [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@extref).
 """
 function _invoke_flow_variable_costate(
-    ::Type{Traits.SupportsVariableCostate},
+    ::Type{<:Traits.AbstractVariableCostateCapability},
     ::Type{VT},
     flow::AbstractHamiltonianFlow,
     config::Configs.HamiltonianTrajectoryConfig;

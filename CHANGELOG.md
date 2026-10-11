@@ -10,6 +10,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug fixes
 
+- **`variable_costate=true` on a trajectory call raises a clear error**
+  ([#437](https://github.com/control-toolbox/CTFlows.jl/issues/437)).
+  `F((t0, tf), x0, p0; variable_costate=true)` on an `OptimalControlFlow` threw a raw
+  `MethodError` (with the full `OptimalControlFlow{…}` type); it now throws a
+  `PreconditionError` pointing to the point-evaluation call
+  `F(t0, x0, p0, tf; variable_costate=true)`. On a Hamiltonian flow without variable
+  costate capability, the trajectory call is also rejected with this message instead of
+  the misleading "unsupported capability trait" one.
+- **Structured errors instead of obscure `MethodError`s at call time**
+  ([#436](https://github.com/control-toolbox/CTFlows.jl/issues/436)). A flow call now checks,
+  before the integration: (1) the package of the AD backend is loaded — otherwise an
+  `ExtensionError` names it (`Missing Mooncake`, `Hint: using Mooncake`; same for the default
+  `AutoForwardDiff()` without `using ForwardDiff`), through
+  `CTBase.Differentiation.check_backend` (CTBase ≥ 0.30.8); (2) a flow built with
+  `method=:gpu` is called on device arrays, not host arrays — otherwise a `PreconditionError`
+  (numbers, i.e. 1-D states, are accepted); (3) `AutoMooncake` is not used with host arrays
+  (unsupported for now, see [#448](https://github.com/control-toolbox/CTFlows.jl/issues/448)).
+  The GPU page of the documentation states these prerequisites. **Near-breaking** for (2),
+  see `BREAKING.md`.
 - **`saveat` on a trajectory call no longer crashes, and keeps the solver accuracy**
   ([#434](https://github.com/control-toolbox/CTFlows.jl/issues/434)). `Flow(ocp, law;
   saveat=…)` segfaulted (Lagrange cost) or threw `UndefRefError` (Mayer cost) on

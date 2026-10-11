@@ -60,7 +60,7 @@ end
 
 function Systems.backend(sys::FakeHamiltonianSystemWithAD)
     return Differentiation.DifferentiationInterface(;
-        ad_backend=ADTypes.AutoForwardDiff(), prepare_cache=true
+        ad_backend=ADTypes.AutoForwardDiff()
     )
 end
 
