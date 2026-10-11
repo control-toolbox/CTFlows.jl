@@ -186,10 +186,9 @@ function test_goddard_ocp()
                     φ = φ1 * (t1_sol, φs) * (t2_sol, φb) * (t3_sol, φ0)
 
                     # point eval: reproduces the hand-chained arcs, right dimensions (ℝ³)
-                    # (Hamiltonian dynamics returns the flat concatenation [x; p], not a
-                    # (x, p) tuple — see MultiPhase._format_final_output)
+                    # and preserves the (x, p) endpoint tuple.
                     res = φ(_GODD_t0, _GODD_x0, p0_sol, tf_sol; variable=tf_sol)
-                    xf_multi, pf_multi = res[1:3], res[4:6]
+                    xf_multi, pf_multi = res
                     Test.@test length(xf_multi) == 3
                     Test.@test length(pf_multi) == 3
                     Test.@test xf_multi ≈ xfr atol = 1e-8

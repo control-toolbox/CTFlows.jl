@@ -303,7 +303,10 @@ function test_calling_multiphase()
                 hmpf = hflow1 * (0.5, hflow2)
 
                 result = MultiPhase._format_final_output(hmpf, (x, p))
-                Test.@test result == vcat(x, p)
+                Test.@test result isa Tuple
+                Test.@test length(result) == 2
+                Test.@test result[1] == x
+                Test.@test result[2] == p
             end
         end
 
@@ -621,8 +624,8 @@ function test_calling_multiphase()
                     unsafe=Flows.__unsafe(),
                 )
 
-                # Each phase multiplies by 2, _format_final_output returns vcat(x, p)
-                Test.@test result == vcat(x0 * 4, p0 * 4)
+                # Each phase multiplies by 2, preserving the (x, p) endpoint tuple
+                Test.@test result == (x0 * 4, p0 * 4)
             end
 
             Test.@testset "MultiPhaseHamiltonianFlow with jump" begin
@@ -641,8 +644,8 @@ function test_calling_multiphase()
                 )
 
                 # Phase 1: x0*2, p0*2, then jump_p applied to p, then phase 2: x*2, (p+jump_p)*2
-                # _format_final_output returns vcat(x, p)
-                Test.@test result == vcat(x0 * 4, (p0 * 2 + jump_p) * 2)
+                # _format_final_output preserves the (x, p) endpoint tuple
+                Test.@test result == (x0 * 4, (p0 * 2 + jump_p) * 2)
             end
         end
 
@@ -843,7 +846,7 @@ function test_calling_multiphase()
 
                 result = hmpf(0.0, x0, p0, 1.0)
                 # Each phase multiplies by 2
-                Test.@test result == vcat(x0 * 4, p0 * 4)
+                Test.@test result == (x0 * 4, p0 * 4)
             end
 
             Test.@testset "call with (tspan, x0, p0)" begin

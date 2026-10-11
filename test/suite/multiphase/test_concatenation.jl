@@ -119,9 +119,10 @@ function test_concatenation()
             end
 
             Test.@testset "get_switching_times" begin
-                Test.@test MultiPhase.get_switching_times(mpstate) == [1.0, 2.0]
-                Test.@test MultiPhase.get_switching_times(mpstate) ===
-                    mpstate.switching_times
+                switching_times = MultiPhase.get_switching_times(mpstate)
+                Test.@test switching_times == [1.0, 2.0]
+                Test.@test switching_times isa Vector{Float64}
+                Test.@test switching_times === mpstate.switching_times
                 Test.@inferred MultiPhase.get_switching_times(mpstate)
             end
 
