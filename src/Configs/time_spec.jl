@@ -197,7 +197,7 @@ _grid_spec(::Nothing) = nothing
 _grid_spec(n::Integer) = UniformGrid(n)
 _grid_spec(spec::AbstractGrid) = spec
 function _grid_spec(grid)
-    throw(
+    return throw(
         Exceptions.IncorrectArgument(
             "Invalid `grid` keyword";
             got="grid=$(repr(grid))",

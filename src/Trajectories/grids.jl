@@ -69,8 +69,9 @@ $(TYPEDSIGNATURES)
 
 Uniform cumulative distribution on the phase `[a, b]`; its mass is the duration.
 """
-_cdf_table(::Configs.UniformGrid, curve, steps, a, b) =
-    (F=[0.0, 1.0], T=[Float64(a), Float64(b)], mass=abs(b - a))
+function _cdf_table(::Configs.UniformGrid, curve, steps, a, b)
+    return (F=[0.0, 1.0], T=[Float64(a), Float64(b)], mass=abs(b - a))
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -90,11 +91,13 @@ function _cdf_table(spec::Configs.AdaptiveGrid, curve, steps, a, b)
     ρ = zeros(n)
     for j in 2:(n - 1)
         h1, h2 = τ[j] - τ[j - 1], τ[j + 1] - τ[j]
-        d2 = 2 .* ((Yn[:, j + 1] .- Yn[:, j]) ./ h2 .- (Yn[:, j] .- Yn[:, j - 1]) ./ h1) ./ (h1 + h2)
+        d2 =
+            2 .* ((Yn[:, j + 1] .- Yn[:, j]) ./ h2 .- (Yn[:, j] .- Yn[:, j - 1]) ./ h1) ./
+            (h1 + h2)
         κ = sqrt(sum(abs2, d2))
         ρ[j] = κ > _NEGLIGIBLE_CURVATURE ? sqrt(κ) : 0.0
     end
-    n > 2 && (ρ[1] = ρ[2]; ρ[n] = ρ[n - 1])
+    n > 2 && (ρ[1]=ρ[2]; ρ[n]=ρ[n - 1])
     s = vcat(0.0, cumsum([(ρ[j] + ρ[j + 1]) / 2 * (τ[j + 1] - τ[j]) for j in 1:(n - 1)]))
     Fc = s[end] > 0 ? s ./ s[end] : τ
     u = spec.uniform
@@ -117,8 +120,12 @@ in integration order.
 """
 function _pre_grid(steps, a, b, k::Int)
     lo, hi = minmax(a, b)
-    S = sort!(unique!(vcat(Float64(a), filter(t -> lo < t < hi, steps), Float64(b))); rev=b < a)
-    return unique!(reduce(vcat, [collect(range(S[i], S[i + 1], k + 1)) for i in 1:(length(S) - 1)]))
+    S = sort!(
+        unique!(vcat(Float64(a), filter(t -> lo < t < hi, steps), Float64(b))); rev=b < a
+    )
+    return unique!(
+        reduce(vcat, [collect(range(S[i], S[i + 1], k + 1)) for i in 1:(length(S) - 1)])
+    )
 end
 
 """
@@ -199,7 +206,9 @@ $(TYPEDSIGNATURES)
 
 Plotted curve `t -> [x(t); p(t); u(t)]` from callables (`nothing` entries are skipped).
 """
-_plotted_curve(fs...) = t -> reduce(vcat, (_flat(f(t)) for f in fs if f !== nothing); init=Float64[])
+function _plotted_curve(fs...)
+    return t -> reduce(vcat, (_flat(f(t)) for f in fs if f !== nothing); init=Float64[])
+end
 
 """
 $(TYPEDSIGNATURES)

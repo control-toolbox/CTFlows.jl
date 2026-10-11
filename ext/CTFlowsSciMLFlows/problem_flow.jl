@@ -155,7 +155,9 @@ function (f::SciMLProblemFlow)(
     result = CommonSolve.solve(prob, f.integrator; options=opts, unsafe)
     curve = Trajectories._plotted_curve(t -> Integrators.evaluate_at(result, t))
     bounds = collect(Configs.tspan(config))
-    return Trajectories.apply_generated_grid(result, Configs.output_grid(config), curve, bounds)
+    return Trajectories.apply_generated_grid(
+        result, Configs.output_grid(config), curve, bounds
+    )
 end
 
 """
