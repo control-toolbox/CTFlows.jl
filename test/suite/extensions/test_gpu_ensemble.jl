@@ -12,8 +12,8 @@ Each trajectory `i` integrates ẋ = -x from a perturbed x0, so x(1) = x0·e⁻�
 reference. The in-place path is additionally cross-checked against a CPU `EnsembleThreads()` solve.
 
 Self-gates on `Main.TestCapabilities.CUDA_FUNCTIONAL`: on a machine without a functional device it
-skips cleanly; the real run is the `test-gpu-occidata` job on the `occidata` self-hosted NVIDIA
-runner (PR label `run ci occidata-runner`). Everything runs under `CUDA.allowscalar(false)`.
+skips cleanly; the real run is the `test-gpu-kkt` / `test-gpu-occidata` jobs on the `kkt` / `occidata`
+self-hosted NVIDIA runners (PR labels `run ci kkt-runner` / `run ci occidata-runner`). Everything runs under `CUDA.allowscalar(false)`.
 
 Accessor discipline (probe runs 9–10): read a trajectory's final state via the raw `.u` field —
 `sol.u[i].u[end]` — never `sol[i][end]`, which is Cartesian tensor indexing into the
