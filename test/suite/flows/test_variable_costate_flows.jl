@@ -439,6 +439,26 @@ function test_variable_costate_flows()
                 (t0, tf), x0, p0; variable=v, variable_costate=true
             )
         end
+
+        # Issue #437: a trajectory config must be rejected whatever the capability trait
+        # (NoVariableCostate used to fall through to the "unknown capability" catch-all).
+        Test.@testset "Error: variable_costate=true with trajectory config on Fixed system (#437)" begin
+            h_fixed = Data.Hamiltonian(
+                (x, p) -> 0.5*(sum(abs2, x) + sum(abs2, p));
+                is_autonomous=true,
+                is_variable=false,
+            )
+            hflow = Flows.build_flow(Systems.HamiltonianSystem(h_fixed, BACKEND_FAKE), INTEG)
+            Test.@test Traits.variable_costate_trait(hflow) === Traits.NoVariableCostate
+            err = nothing
+            try
+                hflow((0.0, 1.0), 1.0, 0.0; variable_costate=true)
+            catch e
+                err = e
+            end
+            Test.@test err isa Exceptions.PreconditionError
+            Test.@test occursin("trajectory", err.msg)
+        end
     end
 end
 

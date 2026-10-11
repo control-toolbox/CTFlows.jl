@@ -1129,11 +1129,15 @@ via [`CTFlows.Flows._build_ocp_solution`](@extref).
 - `grid`: Output grid generated from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)). Default: an [`CTFlows.Configs.AutomaticGrid`](@extref) (`AdaptiveGrid(250)` when the integration is dense and the solver returns fewer than 250 times), unless `saveat` or a grid of times already shapes the output; `grid=nothing` keeps the solver steps.
   The grid is generated once, by this call, over the inner trajectory (the inner flow is
   called with `grid=nothing`); the control is part of the plotted curves.
+- `variable_costate::Bool=false`: accepted only so that `true` is rejected with a clear
+  error; the variable costate is only available at point evaluation.
 
 # Throws
+- [`CTBase.Exceptions.PreconditionError`](@extref): when `variable_costate=true` is
+  passed — the variable costate is only available at point evaluation,
+  `F(t0, x0, p0, tf; variable_costate=true)`, not on a trajectory call.
 - [`CTBase.Exceptions.PreconditionError`](@extref): when the pre-v2.1.0-beta `augment`
-  keyword is passed — augmentation is only available at point evaluation, not on a
-  trajectory call (there is no `variable_costate` replacement here either, by design).
+  keyword is passed — it is not supported on a trajectory call.
 
 See also: [`CTFlows.Flows.OptimalControlFlow`](@extref),
 [`CTFlows.Flows._build_ocp_solution`](@extref).
@@ -1143,6 +1147,7 @@ function (F::OptimalControlFlow)(
     x0,
     p0;
     variable=Core.NotProvided,
+    variable_costate::Bool=false,
     unsafe::Bool=false,
     augment::Union{Nothing,Bool}=nothing,
     grid=__grid(),
@@ -1158,7 +1163,7 @@ function (F::OptimalControlFlow)(
         ),
     )
     spec = _call_grid_spec(tspan, grid, F)
-    sol = F.flow(tspan, x0, p0; variable, unsafe, grid=nothing)   # HamiltonianVectorFieldTrajectory
+    sol = F.flow(tspan, x0, p0; variable, variable_costate, unsafe, grid=nothing)   # HamiltonianVectorFieldTrajectory
     sol = _regrid_hamiltonian(sol, spec, F.law, variable, collect(float.(tspan)))
     return _build_ocp_solution(F.ocp, sol, variable, integrator(F.flow), F.law)
 end

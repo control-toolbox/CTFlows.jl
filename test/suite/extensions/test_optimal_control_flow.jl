@@ -590,6 +590,19 @@ function test_optimal_control_flow()
             )
         end
 
+        Test.@testset "Error: variable_costate=true on trajectory call → PreconditionError (#437)" begin
+            for (F, kw) in ((OCF_ANF, (; variable=λ_TEST)), (OCF_AF_MAYER, (;)))
+                err = nothing
+                try
+                    F((0.0, 1.0), 1.0, 0.5; kw..., variable_costate=true)
+                catch e
+                    err = e
+                end
+                Test.@test err isa Exceptions.PreconditionError
+                Test.@test occursin("trajectory", err.msg)
+            end
+        end
+
         # =====================================================================
         # Control-dependence dispatch
         # =====================================================================
