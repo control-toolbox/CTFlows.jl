@@ -5,6 +5,12 @@ stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
 ## Unreleased
 
+- **`method=:gpu` refuses host arrays** ([#436](https://github.com/control-toolbox/CTFlows.jl/issues/436)):
+  calling a flow built with `method=:gpu` on a host array (`Vector`, `Matrix`…) now throws
+  a `PreconditionError` before the integration. An AD-free GPU flow used to run on host
+  arrays; an AD one failed with a raw `MethodError`. Pass device arrays (a 1-D scalar state
+  is accepted), or build the flow without `method=:gpu`. Likewise `ad_backend=AutoMooncake()`
+  with host arrays (a raw `MethodError` before) now throws a `PreconditionError`.
 - **Time grid of a trajectory with `saveat` and `dense=false`** ([#434](https://github.com/control-toolbox/CTFlows.jl/issues/434)):
   it is now the `saveat` grid only; it used to be the union of the `saveat` times and of
   every solver step (the trajectory options forced `save_everystep=true`). Pass

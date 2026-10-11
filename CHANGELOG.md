@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug fixes
 
+- **Structured errors instead of obscure `MethodError`s at call time**
+  ([#436](https://github.com/control-toolbox/CTFlows.jl/issues/436)). A flow call now checks,
+  before the integration: (1) the package of the AD backend is loaded — otherwise an
+  `ExtensionError` names it (`Missing Mooncake`, `Hint: using Mooncake`; same for the default
+  `AutoForwardDiff()` without `using ForwardDiff`), through
+  `CTBase.Differentiation.check_backend` (CTBase ≥ 0.30.8); (2) a flow built with
+  `method=:gpu` is called on device arrays, not host arrays — otherwise a `PreconditionError`
+  (numbers, i.e. 1-D states, are accepted); (3) `AutoMooncake` is not used with host arrays
+  (unsupported for now, see [#448](https://github.com/control-toolbox/CTFlows.jl/issues/448)).
+  The GPU page of the documentation states these prerequisites. **Near-breaking** for (2),
+  see `BREAKING.md`.
 - **`saveat` on a trajectory call no longer crashes, and keeps the solver accuracy**
   ([#434](https://github.com/control-toolbox/CTFlows.jl/issues/434)). `Flow(ocp, law;
   saveat=…)` segfaulted (Lagrange cost) or threw `UndefRefError` (Mayer cost) on

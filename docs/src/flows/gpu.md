@@ -89,6 +89,19 @@ The keyword is accepted by every `Flow` constructor and can be combined freely w
 flow = Flows.Flow(h; method=:gpu, reltol=1e-10, abstol=1e-10)
 ```
 
+!!! warning "`method=:gpu` needs device arrays"
+    A flow built with `method=:gpu` refuses a **host** array (a `Vector`, a `Matrix`…): the call
+    throws a `PreconditionError` before the integration starts, instead of failing deep inside
+    the AD backend. A 1-D state, which is a scalar, is not an array and is accepted. To integrate
+    host arrays, build the flow without `method=:gpu` (CPU).
+
+!!! note "Load the packages the backend needs"
+    The AD backend is a *marker*: its package must be loaded. For `method=:gpu` the default
+    backend is `AutoMooncake()`, so run `using Mooncake` (and `using CUDA`) before calling the
+    flow; on CPU the default `AutoForwardDiff()` needs `using ForwardDiff`. A missing package
+    gives an `ExtensionError` that names it (`Missing Mooncake`, `Hint: using Mooncake`) at the
+    call, before the integration.
+
 ---
 
 ## The GPU contract for your code
@@ -259,10 +272,12 @@ flow = Flows.Flow(h; ad_backend=ADTypes.AutoZygote())
     try; it is not something to rely on without testing your own case.
 
 !!! warning "`AutoMooncake` on CPU is not a supported combination"
-    Passing `ad_backend=AutoMooncake()` explicitly on **CPU** produces a cryptic `MethodError`:
-    Mooncake returns a structural tangent for the `SubArray` views the Hamiltonian splitter
-    produces, and that tangent cannot be negated. On device the CUDA-specific rules avoid this.
-    The CPU default is `AutoForwardDiff()` — keep it.
+    Passing `ad_backend=AutoMooncake()` explicitly with **host arrays** throws a
+    `PreconditionError`: Mooncake returns a structural tangent for the `SubArray` views the
+    Hamiltonian splitter produces on a host array, and that tangent cannot be negated. On device
+    the CUDA-specific rules avoid this. The CPU default is `AutoForwardDiff()` — keep it. Whether
+    Mooncake could be supported on CPU is tracked in
+    [#448](https://github.com/control-toolbox/CTFlows.jl/issues/448).
 
 ---
 

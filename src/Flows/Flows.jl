@@ -13,6 +13,7 @@ module Flows
 
 # 1. External-package imports (qualified, pollution-free)
 using DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
+using ADTypes: ADTypes
 using CTBase: Core
 using CTBase: Data
 using CTBase: Descriptions
@@ -48,6 +49,7 @@ include(joinpath(@__DIR__, "ocp_readouts.jl"))
 include(joinpath(@__DIR__, "optimal_control_flow.jl"))
 include(joinpath(@__DIR__, "controlled_flow.jl"))
 include(joinpath(@__DIR__, "building.jl"))
+include(joinpath(@__DIR__, "device_checks.jl"))
 include(joinpath(@__DIR__, "calling.jl"))
 
 # ==============================================================================

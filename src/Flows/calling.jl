@@ -268,6 +268,9 @@ function _core_invoke_flow(
     flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe
 )
 
+    # fail before the integration on a device/array or AD backend mismatch (issue #436)
+    _check_call(flow, config)
+
     # get system and integrator
     sys = system(flow)
     int = integrator(flow)
