@@ -1,0 +1,41 @@
+name: CI (targeted)
+
+# Manual run of a *subset* of the test suite on a self-hosted GPU runner, to iterate
+# quickly on a failing file instead of re-running the whole suite (slow on occidata).
+#
+# Run it from the Actions tab ("Run workflow", pick the branch), or with
+#   gh workflow run "CI (targeted)" --ref <branch> -f tests=test_gpu_flows -f runner=kkt
+#
+# `tests` is forwarded as `test_args` to Pkg.test: space-separated glob patterns matched
+# against test file names (same syntax as test/runtests.jl), e.g.
+#   test_gpu_flows                      one file
+#   test_gpu_flows test_integrators_*   several
+#   *pipelines*                         a glob
+
+on:
+  workflow_dispatch:
+    inputs:
+      tests:
+        description: "Test file name(s) / glob(s), space-separated (e.g. test_gpu_flows)"
+        required: true
+        type: string
+      runner:
+        description: "Self-hosted runner"
+        required: true
+        type: choice
+        options:
+          - kkt
+          - occidata
+        default: kkt
+
+jobs:
+  test-targeted:
+    uses: control-toolbox/CTActions/.github/workflows/ci.yml@main
+    with:
+      versions: '["1"]'
+      runs_on: ${{ format('[["{0}"]]', inputs.runner) }}
+      runner_type: 'self-hosted'
+      use_ct_registry: true
+      test_args: ${{ inputs.tests }}
+    secrets:
+      SSH_KEY: ${{ secrets.SSH_KEY }}

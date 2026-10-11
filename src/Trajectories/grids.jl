@@ -189,13 +189,14 @@ end
 $(TYPEDSIGNATURES)
 
 Flatten a plotted value (number or array) into a vector of floats; a complex value gives
-its real parts followed by its imaginary parts. The primal value is taken (dual numbers of
+its real parts followed by its imaginary parts. A device array (e.g. `CuArray`) is first copied
+to the host: the plotted curve is host data and must not scalar-index the device. The primal value is taken (dual numbers of
 an automatic-differentiation pass only shape the grid through their value, see
 [`CTSolvers.Integrators.deepvalue`](@extref)).
 """
 _flat(v::Real) = [Float64(Integrators.deepvalue(v))]
 _flat(v::Complex) = [_flat(real(v)); _flat(imag(v))]
-_flat(v::AbstractArray{<:Real}) = Float64[Integrators.deepvalue(x) for x in vec(v)]
+_flat(v::AbstractArray{<:Real}) = Float64[Integrators.deepvalue(x) for x in vec(Array(v))]
 _flat(v::AbstractArray{<:Complex}) = Float64[_flat_part(real, v); _flat_part(imag, v)]
 
 """
@@ -204,7 +205,7 @@ $(TYPEDSIGNATURES)
 Primal values of the `part` (`real` or `imag`) of the entries of the complex array `v`, as a
 vector of floats.
 """
-_flat_part(part, v) =Float64[Integrators.deepvalue(part(x)) for x in vec(v)]
+_flat_part(part, v) = Float64[Integrators.deepvalue(part(x)) for x in vec(Array(v))]
 _flat(::Nothing) = Float64[]
 
 """
