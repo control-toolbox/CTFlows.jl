@@ -15,7 +15,8 @@ This constructor builds a complete flow by:
   (a `Symbol`, or a token tuple) to build the flow for GPU execution — the integrator
   resolves to `SciML{GPU}`; the default (`method=:cpu`) builds a CPU flow. The `method`
   selector is accepted by **every** `Flow(...)` constructor and, for AD-dependent flows,
-  also selects the GPU AD backend.
+  also selects the GPU AD backend. A GPU flow must then be called on device arrays: a host
+  array throws a `PreconditionError` at the call (a 1-D scalar state is accepted).
 
 # Returns
 - `CTFlows.Flows.Flow`: The complete flow ready for integration.
@@ -88,8 +89,11 @@ This constructor builds a complete Hamiltonian flow by:
   - Backend options (e.g., `ad_backend`) → `:di` strategy
   - Integrator options (e.g., `reltol`, `abstol`, `alg`) → `:sciml` strategy
   Pass `method=:gpu` to build the flow for GPU execution: the AD backend resolves to
-  `DifferentiationInterface{GPU}` (whose default backend is `AutoZygote`) and the integrator
-  to `SciML{GPU}`. The default (`method=:cpu`) keeps `AutoForwardDiff` + `SciML{CPU}`.
+  `DifferentiationInterface{GPU}` (whose default backend is `AutoMooncake`, which needs
+  `using Mooncake`) and the integrator to `SciML{GPU}`; the flow must then be called on
+  device arrays. The default (`method=:cpu`) keeps `AutoForwardDiff` + `SciML{CPU}`. The
+  package of the AD backend must be loaded: a missing one is reported by an
+  `ExtensionError` at the call (see [`CTBase.Differentiation.check_backend`](@extref)).
 
 # Returns
 - `CTFlows.Flows.HamiltonianFlow`: The complete Hamiltonian flow ready for integration.
