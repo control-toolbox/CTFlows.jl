@@ -188,10 +188,23 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Flatten a plotted value (number or array) into a vector of floats.
+Flatten a plotted value (number or array) into a vector of floats; a complex value gives
+its real parts followed by its imaginary parts. The primal value is taken (dual numbers of
+an automatic-differentiation pass only shape the grid through their value, see
+[`CTSolvers.Integrators.deepvalue`](@extref)).
 """
-_flat(v::Number) = [Float64(v)]
-_flat(v::AbstractArray) = vec(Float64.(v))
+_flat(v::Real) = [Float64(Integrators.deepvalue(v))]
+_flat(v::Complex) = [_flat(real(v)); _flat(imag(v))]
+_flat(v::AbstractArray{<:Real}) = Float64[Integrators.deepvalue(x) for x in vec(v)]
+_flat(v::AbstractArray{<:Complex}) = Float64[_flat_part(real, v); _flat_part(imag, v)]
+
+"""
+$(TYPEDSIGNATURES)
+
+Primal values of the `part` (`real` or `imag`) of the entries of the complex array `v`, as a
+vector of floats.
+"""
+_flat_part(part, v) =Float64[Integrators.deepvalue(part(x)) for x in vec(v)]
 _flat(::Nothing) = Float64[]
 
 """
@@ -209,6 +222,21 @@ a generated grid; otherwise generate it from `curve` over `bounds` (the solver t
 `traj` as pre-grid) and regrid.
 """
 apply_generated_grid(traj, ::Union{Nothing,AbstractVector}, curve, bounds) = traj
+
+"""
+$(TYPEDSIGNATURES)
+
+Apply the default output grid of a call (issue #446): the adaptive grid is generated only
+when the trajectory is dense (the curvature of a linear interpolant is meaningless) and has
+fewer than `spec.grid.n` distinct times; otherwise `traj` is returned unchanged.
+
+See also: [`CTFlows.Configs.AutomaticGrid`](@extref).
+"""
+function apply_generated_grid(traj, spec::Configs.AutomaticGrid, curve, bounds)
+    Integrators.is_dense(traj) || return traj
+    length(unique(Integrators.times(traj))) < spec.grid.n || return traj
+    return apply_generated_grid(traj, spec.grid, curve, bounds)
+end
 function apply_generated_grid(traj, spec::Configs.AbstractGrid, curve, bounds)
     steps = unique(Integrators.times(traj))
     return Integrators.regrid(traj, generate_grid(spec, curve, steps, bounds))
