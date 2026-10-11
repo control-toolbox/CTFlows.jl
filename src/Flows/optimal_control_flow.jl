@@ -1125,6 +1125,11 @@ Trajectory call for [`CTFlows.Flows.OptimalControlFlow`](@extref): integrate the
 Hamiltonian flow over `tspan` and build a full [`CTModels.Solutions.Solution`](@extref)
 via [`CTFlows.Flows._build_ocp_solution`](@extref).
 
+# Keyword arguments
+- `grid`: Output grid generated from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)). Default: an [`CTFlows.Configs.AutomaticGrid`](@extref) (`AdaptiveGrid(250)` when the integration is dense and the solver returns fewer than 250 times), unless `saveat` or a grid of times already shapes the output; `grid=nothing` keeps the solver steps.
+  The grid is generated once, by this call, over the inner trajectory (the inner flow is
+  called with `grid=nothing`); the control is part of the plotted curves.
+
 # Throws
 - [`CTBase.Exceptions.PreconditionError`](@extref): when the pre-v2.1.0-beta `augment`
   keyword is passed — augmentation is only available at point evaluation, not on a
@@ -1140,7 +1145,7 @@ function (F::OptimalControlFlow)(
     variable=Core.NotProvided,
     unsafe::Bool=false,
     augment::Union{Nothing,Bool}=nothing,
-    grid=nothing,
+    grid=__grid(),
 )
     augment === nothing || throw(
         Exceptions.PreconditionError(
@@ -1153,7 +1158,7 @@ function (F::OptimalControlFlow)(
         ),
     )
     spec = _call_grid_spec(tspan, grid, F)
-    sol = F.flow(tspan, x0, p0; variable, unsafe)   # HamiltonianVectorFieldTrajectory
+    sol = F.flow(tspan, x0, p0; variable, unsafe, grid=nothing)   # HamiltonianVectorFieldTrajectory
     sol = _regrid_hamiltonian(sol, spec, F.law, variable, collect(float.(tspan)))
     return _build_ocp_solution(F.ocp, sol, variable, integrator(F.flow), F.law)
 end
@@ -1211,6 +1216,10 @@ Integrates the inner control-free state flow and builds a
 [`CTFlows.Trajectories.StateFlowTrajectory`](@extref) (`law = nothing`: state and objective,
 no control, no costate — `control`/`costate` throw a `PreconditionError`).
 
+# Keyword arguments
+- `grid`: Output grid generated from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)). Default: an [`CTFlows.Configs.AutomaticGrid`](@extref) (`AdaptiveGrid(250)` when the integration is dense and the solver returns fewer than 250 times), unless `saveat` or a grid of times already shapes the output; `grid=nothing` keeps the solver steps.
+  The grid is generated once, by this call (the inner flow is called with `grid=nothing`).
+
 # Throws
 - [`CTBase.Exceptions.PreconditionError`](@extref): if the flow was built with a control
   law (`Flow(ocp, law)`) — use `f((t0,tf),x0,p0)` instead.
@@ -1218,11 +1227,11 @@ no control, no costate — `control`/`costate` throw a `PreconditionError`).
 See also: [`CTFlows.Trajectories.StateFlowTrajectory`](@extref), `CTFlows.Flows._state_flow_objective`.
 """
 function (F::OptimalControlFlow)(
-    tspan::Configs.TimeSpec, x0; variable=Core.NotProvided, unsafe::Bool=false, grid=nothing
+    tspan::Configs.TimeSpec, x0; variable=Core.NotProvided, unsafe::Bool=false, grid=__grid()
 )
     sf = _require_state_flow(F)
     spec = _call_grid_spec(tspan, grid, sf)
-    traj = sf(tspan, x0; variable, unsafe)   # VectorFieldTrajectory
+    traj = sf(tspan, x0; variable, unsafe, grid=nothing)   # VectorFieldTrajectory
     coerce = _flow_state_coerce(F.ocp, x0)   # precomputed once (only / identity)
     traj = _regrid_state(traj, spec, nothing, variable, coerce, collect(float.(tspan)))
     obj = _state_flow_objective(F.ocp, traj, nothing, variable, integrator(sf), coerce)
