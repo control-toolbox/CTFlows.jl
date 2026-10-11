@@ -122,7 +122,7 @@ Builds a `StateTrajectoryConfig` internally and returns the complete solution.
 - `x0`: Initial state vector.
 - `variable`: The variable parameter value (optional, passed to remake).
 - `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
-- `grid`: Generated output grid from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)).
+- `grid`: Generated output grid from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)). Default `nothing`: unlike the other flows, a `SciMLProblemFlow` applies no default grid and exposes the raw SciML output (the problem's own `saveat`, or the solver steps).
 
 # Returns
 - `AbstractIntegrationResult`: The complete integration result with trajectory data.
