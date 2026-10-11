@@ -6,8 +6,8 @@ scalar-index-free). Mirrors the green surface pinned by `probe/gpu/probe_gpu.jl`
 
 The whole suite self-gates on `Main.TestCapabilities.CUDA_FUNCTIONAL`: on a machine without a
 functional device (dev laptops, CPU CI runners) it skips cleanly. The real run is the
-`test-gpu-occidata` job on the `occidata` self-hosted NVIDIA runner (PR label
-`run ci occidata-runner`).
+`test-gpu-kkt` / `test-gpu-occidata` jobs on the `kkt` / `occidata` self-hosted NVIDIA
+runners (PR labels `run ci kkt-runner` / `run ci occidata-runner`).
 
 GPU-friendly test integrands use `sum`/`dot`/broadcasts, never scalar indexing (`v[i]`, `x[i]`)
 — a device scalar read is blocked by `allowscalar(false)` (probe run 4/5).
