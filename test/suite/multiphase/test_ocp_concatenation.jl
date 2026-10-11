@@ -127,8 +127,10 @@ function test_ocp_concatenation()
             x_ref = (x1 - p1p / 2) * exp(-dt) + (p1p / 2) * exp(dt)
             φ = f * (ts, Δp, f)
             res = φ(t0, x0, p0, tf)
+            Test.@test res isa Tuple
+            Test.@test length(res) == 2
             Test.@test res[1] ≈ x_ref atol = 1e-6
-            Test.@test res[end] ≈ p_ref atol = 1e-6
+            Test.@test res[2] ≈ p_ref atol = 1e-6
             sol = φ((t0, tf), x0, p0)
             Test.@test sol isa CTModels.Solutions.Solution
             Test.@test _uval(CTModels.state(sol), tf) ≈ x_ref atol = 1e-6
