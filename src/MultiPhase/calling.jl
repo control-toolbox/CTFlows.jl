@@ -484,7 +484,7 @@ function _evaluate_phase(
     unsafe,
 )
     times = _phase_times(t0, tf, Configs.output_grid(config))
-    return _raw_flow(flow)(times, x; variable=variable, unsafe=unsafe)
+    return _raw_flow(flow)(times, x; variable=variable, unsafe=unsafe, grid=nothing)
 end
 
 """
@@ -555,7 +555,7 @@ function _evaluate_phase(
 )
     x, p = state_tuple
     times = _phase_times(t0, tf, Configs.output_grid(config))
-    return _raw_flow(flow)(times, x, p; variable=variable, unsafe=unsafe)
+    return _raw_flow(flow)(times, x, p; variable=variable, unsafe=unsafe, grid=nothing)
 end
 
 """
@@ -1015,6 +1015,7 @@ returning a merged trajectory from all phases.
 - `x0`: Initial state vector.
 - `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
 - `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+- `grid`: Output grid generated from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)). Default: an [`CTFlows.Configs.AutomaticGrid`](@extref) (`AdaptiveGrid(250)` when the integration is dense and the solver returns fewer than 250 times), unless `saveat` or a grid of times already shapes the output; `grid=nothing` keeps the solver steps. The grid is generated once, over the merged trajectory, the switching times counted once (the phases are integrated without it).
 
 # Returns
 - The merged trajectory solution after sequential integration through all phases.
@@ -1034,8 +1035,9 @@ function (mpf::MultiPhaseFlow{TD,VD,Traits.StateDynamics})(
     x0;
     variable=Flows.__variable(),
     unsafe=Flows.__unsafe(),
-    grid=nothing,
+    grid=Flows.__grid(),
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
+    grid = Flows._default_grid(grid, tspan, get_flows(mpf)...)
     config = Configs.StateTrajectoryConfig(tspan, x0; grid=grid)
     _check_phase_grids(mpf, config)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
@@ -1092,6 +1094,7 @@ returning a merged trajectory from all phases.
 - `p0`: Initial costate vector.
 - `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
 - `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+- `grid`: Output grid generated from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)). Default: an [`CTFlows.Configs.AutomaticGrid`](@extref) (`AdaptiveGrid(250)` when the integration is dense and the solver returns fewer than 250 times), unless `saveat` or a grid of times already shapes the output; `grid=nothing` keeps the solver steps. The grid is generated once, over the merged trajectory, the switching times counted once (the phases are integrated without it).
 
 # Returns
 - The merged trajectory solution after sequential integration through all phases.
@@ -1112,8 +1115,9 @@ function (mpf::MultiPhaseFlow{TD,VD,Traits.HamiltonianDynamics})(
     p0;
     variable=Flows.__variable(),
     unsafe=Flows.__unsafe(),
-    grid=nothing,
+    grid=Flows.__grid(),
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
+    grid = Flows._default_grid(grid, tspan, get_flows(mpf)...)
     config = Configs.HamiltonianTrajectoryConfig(tspan, x0, p0; grid=grid)
     _check_phase_grids(mpf, config)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)

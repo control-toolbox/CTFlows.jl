@@ -5,8 +5,10 @@
 """
 Time specification accepted by a trajectory call (and by the trajectory configurations):
 
-- a 2-tuple `(t0, tf)` is the time span; the output grid is chosen automatically (the
-  solver steps, or the integrator's `saveat`);
+- a 2-tuple `(t0, tf)` is the time span; the output grid is chosen automatically: the
+  integrator's `saveat`, or else the default grid of a top-level call
+  ([`CTFlows.Configs.AutomaticGrid`](@extref): `AdaptiveGrid(250)` when the solver returns
+  fewer than 250 times), or the solver steps with `grid=nothing`;
 - a vector (or range) of times, or a tuple of at least three times, imposes the output grid
   `(t0, t1, …, tf)`: the integration runs from its first to its last time and the trajectory
   is returned on exactly these times. The grid takes precedence over the integrator's
@@ -97,7 +99,8 @@ $(TYPEDEF)
 Abstract supertype of the output grids generated from the time span of a trajectory call
 (`f((t0, tf), x0, …; grid=spec)`). A generated grid has exactly `n` distinct times, the
 bounds and the switching times of a multi-phase flow included; it only shapes the output
-(the integration is that of the span).
+(the integration is that of the span). [`CTFlows.Configs.AutomaticGrid`](@extref) is the
+default grid of a call that sets none.
 
 See also: [`CTFlows.Configs.UniformGrid`](@extref), [`CTFlows.Configs.AdaptiveGrid`](@extref).
 """
@@ -164,6 +167,29 @@ struct AdaptiveGrid <: AbstractGrid
 end
 
 """
+$(TYPEDEF)
+
+Output grid applied by default to a trajectory call that sets no output grid (`grid` not
+provided, issue #446): the adaptive grid `grid` is generated only when the integration is
+dense and yields fewer than `grid.n` times, so that the result has `grid.n` times; otherwise
+the result is left as the solver returned it.
+
+It is resolved by the top-level trajectory calls and never by the internal ones (the inner
+flow of a decorator, a phase of a multi-phase flow), whose result is regridded once, at the
+end. `grid=nothing` opts out.
+
+# Fields
+- `grid::AdaptiveGrid`: The grid generated when the solver returns fewer than `grid.n` times
+  (default `AdaptiveGrid(250)`, the size of the solutions of the direct methods).
+
+See also: [`CTFlows.Configs.AdaptiveGrid`](@extref).
+"""
+struct AutomaticGrid <: AbstractGrid
+    grid::AdaptiveGrid
+end
+AutomaticGrid() = AutomaticGrid(AdaptiveGrid(250))
+
+"""
 $(TYPEDSIGNATURES)
 
 Check the number of times of a generated grid.
@@ -220,6 +246,8 @@ grid (a vector of times, a generated grid spec, or `nothing`).
 function _time_spec(times::TimeSpec, grid)
     spec = _grid_spec(grid)
     spec === nothing && return _time_spec(times)
+    # the default grid only completes a time span: a grid of times is returned as given
+    spec isa AutomaticGrid && !(times isa Tuple{Real,Real}) && return _time_spec(times)
     if !(times isa Tuple{Real,Real})
         throw(
             Exceptions.IncorrectArgument(

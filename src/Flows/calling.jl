@@ -111,7 +111,7 @@ Builds a `StateTrajectoryConfig` internally and calls the flow with it.
 - `x0`: Initial state vector.
 - `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
 - `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
-- `grid`: Generated output grid from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)).
+- `grid`: Output grid generated from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)). Default: an [`CTFlows.Configs.AutomaticGrid`](@extref) (`AdaptiveGrid(250)` when the integration is dense and the solver returns fewer than 250 times), unless `saveat` or a grid of times already shapes the output; `grid=nothing` keeps the solver steps.
 
 # Returns
 - The integrated solution (type varies by system).
@@ -128,9 +128,9 @@ julia> sol = flow((0.0, 1.0), [1.0, 0.0])
 See also: [`CTFlows.Configs.StateTrajectoryConfig`](@extref), [`CTFlows.Flows.call`](@extref).
 """
 function (f::AbstractStateFlow)(
-    tspan::Configs.TimeSpec, x0; variable=__variable(), unsafe=__unsafe(), grid=nothing
+    tspan::Configs.TimeSpec, x0; variable=__variable(), unsafe=__unsafe(), grid=__grid()
 )
-    config = Configs.StateTrajectoryConfig(tspan, x0; grid=grid)
+    config = Configs.StateTrajectoryConfig(tspan, x0; grid=_default_grid(grid, tspan, f))
     _check_output_grid(f, config)
     traj = _invoke_flow(f, config; variable=variable, unsafe=unsafe)
     bounds = collect(Configs.tspan(config))
@@ -151,7 +151,7 @@ Builds a `HamiltonianTrajectoryConfig` internally and calls the flow with it.
 - `p0`: Initial costate vector.
 - `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
 - `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
-- `grid`: Generated output grid from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)).
+- `grid`: Output grid generated from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)). Default: an [`CTFlows.Configs.AutomaticGrid`](@extref) (`AdaptiveGrid(250)` when the integration is dense and the solver returns fewer than 250 times), unless `saveat` or a grid of times already shapes the output; `grid=nothing` keeps the solver steps.
 
 # Returns
 - The integrated solution (type varies by system).
@@ -174,9 +174,11 @@ function (f::AbstractHamiltonianFlow)(
     variable=__variable(),
     unsafe=__unsafe(),
     variable_costate::Bool=__variable_costate(),
-    grid=nothing,
+    grid=__grid(),
 )
-    config = Configs.HamiltonianTrajectoryConfig(tspan, x0, p0; grid=grid)
+    config = Configs.HamiltonianTrajectoryConfig(
+        tspan, x0, p0; grid=_default_grid(grid, tspan, f)
+    )
     _check_output_grid(f, config)
     variable_costate &&
         return _invoke_flow_variable_costate(f, config; variable=variable, unsafe=unsafe)
