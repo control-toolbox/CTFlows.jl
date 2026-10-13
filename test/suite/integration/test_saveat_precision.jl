@@ -97,6 +97,14 @@ const VARIANTS = (
     ("call grid as tuple", (;), Tuple(CALL_GRID), CALL_GRID),
 )
 
+# point calls with saveat (issue #441): tf = 1/3 is on none of these grids
+const TF_OFF = 1 / 3
+const POINT_SAVEAT = (
+    ("saveat", (; saveat=SAVEAT)),
+    ("saveat step", (; saveat=0.1)),
+    ("saveat, dense=false", (; saveat=SAVEAT, dense=false)),
+)
+
 _check_grid(T, ::Nothing) = (Test.@test first(T) == 0.0; Test.@test last(T) == 1.0)
 _check_grid(T, expected) = Test.@test T ≈ expected
 
@@ -300,6 +308,60 @@ function test_saveat_precision()
         Test.@testset "multi-phase dense=false warns" begin
             f = Flows.Flow(OCPS_H[1][2], LAW_H; _tol()..., saveat=SAVEAT, dense=false)
             Test.@test_logs (:warn, WARN) (f * (0.5, f))((0.0, 1.0), X0, P0)
+        end
+
+        # ====================================================================
+        # point call off the saveat grid (issue #441): the value at tf, not at the
+        # last saved time before tf
+        # ====================================================================
+
+        Test.@testset "point call off the saveat grid [$label]" for (label, kw) in
+                                                                    POINT_SAVEAT
+
+            # Flow(ocp, law), Hamiltonian path: p₂(1/3) = 6 - 12/3 = 2
+            f = Flows.Flow(OCPS_H[1][2], LAW_H; hamiltonian_type=:partial, _tol()..., kw...)
+            xf, pf = f(0.0, X0, P0, TF_OFF)
+            Test.@test xf ≈ _x(TF_OFF) atol = TOL
+            Test.@test pf ≈ _p(TF_OFF) atol = TOL
+
+            # backward: from 1 to 1 - 1/3, both off the grid
+            x0, p0 = f(1.0, _x(1.0), _p(1.0), 1 - TF_OFF)
+            Test.@test x0 ≈ _x(1 - TF_OFF) atol = TOL
+            Test.@test p0 ≈ _p(1 - TF_OFF) atol = TOL
+
+            # multi-phase: the second phase ends off the grid
+            xf, pf = (f * (0.2, f))(0.0, X0, P0, TF_OFF)
+            Test.@test xf ≈ _x(TF_OFF) atol = TOL
+            Test.@test pf ≈ _p(TF_OFF) atol = TOL
+
+            # Flow(ocp, law), state path
+            g = Flows.Flow(OCPS_S[1][2], LAW_S; _tol()..., kw...)
+            Test.@test g(0.0, X0, TF_OFF) ≈ _x(TF_OFF) atol = TOL
+            Test.@test (g * (0.2, g))(0.0, X0, TF_OFF) ≈ _x(TF_OFF) atol = TOL
+
+            # plain flows
+            s = Flows.Flow(Data.VectorField(x -> [x[2], -x[1]]); _tol()..., kw...)
+            Test.@test s(0.0, [1.0, 0.0], TF_OFF) ≈ [cos(TF_OFF), -sin(TF_OFF)] atol = TOL
+            h = Flows.Flow(Data.HamiltonianVectorField((x, p) -> (p, -x)); _tol()..., kw...)
+            xf, pf = h(0.0, 1.0, 0.0, TF_OFF)
+            Test.@test xf ≈ cos(TF_OFF) atol = TOL
+            Test.@test pf ≈ -sin(TF_OFF) atol = TOL
+        end
+
+        Test.@testset "point call off the saveat grid [SciML problem flow]" begin
+            osc(u, p, t) = [u[2], -u[1]]
+            prob = ODEProblem(osc, [1.0, 0.0], (0.0, 1.0); saveat=0.1)
+            f = CTFlowsSciMLFlows.SciMLProblemFlow(prob, Integrators.SciML(; _tol()...))
+            Test.@test f(0.0, [1.0, 0.0], TF_OFF) ≈ [cos(TF_OFF), -sin(TF_OFF)] atol = TOL
+        end
+
+        Test.@testset "issue #441 reproducer" begin
+            # u = p₂ on the double integrator from x0 = (0, 1), p0 = (-18, -6):
+            # p₂(t) = -6 + 18t vanishes at t = 1/3, and is -0.06 at t = 0.33
+            f = Flows.Flow(OCPS_H[1][2], LAW_H; saveat=range(0, 1, 101))
+            xf, pf = f(0, [0, 1], [-18, -6], 1 / 3)
+            Test.@test xf ≈ [1 / 9, 0] atol = 1e-6
+            Test.@test pf ≈ [-18, 0] atol = 1e-6
         end
 
         # ====================================================================
