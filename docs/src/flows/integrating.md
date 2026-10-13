@@ -228,7 +228,16 @@ Systems.get_variable_gradient(hflow_v)    # functor: (t, x, p, v) -> ∂H/∂v
 `Systems.pseudo_hamiltonian`, `Systems.control_law`, `Systems.get_pseudo_hamiltonian_gradient`
 and `Systems.get_pseudo_variable_gradient` are available on flows built from a
 pseudo-Hamiltonian (or an OCP) and a control law — see [Control laws](control_laws.md).
-Calling them on a flow with no associated control law throws `IncorrectArgument`.
+Like the Hamiltonian, the gradient functors also take the short form allowed by the
+flow's time and variable dependence: `(x, p)` for an autonomous flow with no variable,
+`(t, x, p)` or `(x, p, v)` otherwise (`(x, p, u)`, ... for the pseudo-Hamiltonian ones).
+
+An accessor that does not apply to a flow throws `IncorrectArgument`, saying what the
+flow holds and which accessor to use instead: a state flow has no Hamiltonian (use
+`Systems.vector_field`), a flow built from a Hamiltonian vector field has no scalar
+Hamiltonian (use `Systems.hamiltonian_vector_field`), and a flow with no control law has
+no pseudo-Hamiltonian. `Systems.control_law` also returns the law of a state flow built
+from a control law, e.g. `Flow(ocp, OpenLoop(u))`.
 
 ---
 
