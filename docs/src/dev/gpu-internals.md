@@ -188,8 +188,10 @@ cross-package change).
     `Mooncake.Tangent{@NamedTuple{parent, indices, offset1, stride1}}` — right values, inside
     `.parent`, but not an array — so negating it throws a `MethodError` in the Hamiltonian RHS
     functors. The views come from the Hamiltonian splitter. On device `MooncakeCUDAExt` yields a
-    negatable tangent, so **no CTBase extension fix is required**; but a user explicitly asking
-    for `AutoMooncake` on CPU gets a cryptic error. Not a supported combination.
+    negatable tangent, so **no CTBase extension fix is required**. On CPU it is not a supported
+    combination: `Flows._check_call` rejects host arrays with `AutoMooncake` up front, with a
+    `PreconditionError` (see `src/Flows/device_checks.jl`). Supporting it is tracked in
+    [#448](https://github.com/control-toolbox/CTFlows.jl/issues/448).
 
 ---
 

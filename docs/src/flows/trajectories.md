@@ -48,7 +48,7 @@ A fourth result appears one level up: a trajectory call on an `OptimalControlFlo
 [`CTModels.Solutions.Solution`](@extref CTModels.Solutions.Solution) rather than a CTFlows
 container — see [Optimal control](optimal_control.md). All four share the same accessor
 vocabulary (`state`, `costate`, `control`, `objective`) and the same `plot` / `plot!`
-entry point (Plots or Makie backend — see [Plotting](@ref) below).
+entry point (Plots or Makie backend — see [Plotting](#Plotting) below).
 
 ---
 
