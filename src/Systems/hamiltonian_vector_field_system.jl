@@ -425,32 +425,6 @@ function Traits.variable_costate_trait(
 end
 
 # =============================================================================
-# hamiltonian getter — informative error (no scalar Hamiltonian stored)
-# =============================================================================
-
-"""
-$(TYPEDSIGNATURES)
-
-Throw an `IncorrectArgument` error: a `HamiltonianVectorFieldSystem` stores the
-vector field `X_H` directly and carries no scalar Hamiltonian. Use
-[`CTFlows.Systems.hamiltonian_vector_field`](@extref) to retrieve `X_H` instead.
-
-See also: [`CTFlows.Systems.HamiltonianVectorFieldSystem`](@extref),
-[`CTFlows.Systems.hamiltonian_vector_field`](@extref).
-"""
-function hamiltonian(::HamiltonianVectorFieldSystem)
-    return throw(
-        Exceptions.IncorrectArgument(
-            "no scalar Hamiltonian available for a HamiltonianVectorFieldSystem";
-            got="a HamiltonianVectorFieldSystem (stores the vector field directly, no AD)",
-            expected="a HamiltonianSystem or PseudoHamiltonianSystem (built from a scalar Hamiltonian with AD)",
-            suggestion="use hamiltonian_vector_field(flow) to retrieve X_H, or build the flow from a scalar Hamiltonian",
-            context="hamiltonian(sys::HamiltonianVectorFieldSystem)",
-        ),
-    )
-end
-
-# =============================================================================
 # Base.show
 # =============================================================================
 

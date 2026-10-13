@@ -50,6 +50,7 @@ include(joinpath(@__DIR__, "constrained_pseudo_hamiltonian_system.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 include(joinpath(@__DIR__, "hamiltonian_getter.jl"))
 include(joinpath(@__DIR__, "hamiltonian_getters_extra.jl"))
+include(joinpath(@__DIR__, "accessor_errors.jl"))
 
 # ==============================================================================
 # Module exports
