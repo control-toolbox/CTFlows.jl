@@ -571,10 +571,11 @@ function test_ocp_control()
             f = Flows.Flow(
                 OCP_LQR_C, law; constraint=:g, multiplier=(x, p) -> c, _opts()...
             )
+            # :g is x ≤ 0, normalised as g = 0 - x ≥ 0 (issue #440): μ·g = (-c)·x
             t0, tf, x0, p0 = 0.0, 1.0, 1.0, 0.5
             xt, pt = f(t0, x0, p0, tf)
-            Test.@test pt ≈ _pc(p0, tf, c) atol = 1e-6
-            Test.@test xt ≈ _xc(x0, p0, tf, c) atol = 1e-6
+            Test.@test pt ≈ _pc(p0, tf, -c) atol = 1e-6
+            Test.@test xt ≈ _xc(x0, p0, tf, -c) atol = 1e-6
         end
 
         Test.@testset "Constrained: μ≡0 recovers the unconstrained flow" begin
@@ -893,8 +894,9 @@ function test_ocp_control()
                 _opts()...,
             )
             xl, pl = fl(t0, x0, p0, tf)
-            Test.@test pl ≈ _pc(p0, tf, c) atol = 1e-6
-            Test.@test xl ≈ _xc(x0, p0, tf, c) atol = 1e-6
+            # :g is x ≤ 0, normalised as g = -x (issue #440): μ·g = (-c)·x
+            Test.@test pl ≈ _pc(p0, tf, -c) atol = 1e-6
+            Test.@test xl ≈ _xc(x0, p0, tf, -c) atol = 1e-6
         end
 
         Test.@testset "Constrained :partial error: non-:path label rejected" begin
