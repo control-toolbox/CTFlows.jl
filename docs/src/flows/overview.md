@@ -62,7 +62,7 @@ using CTBase: Data          # VectorField, Hamiltonian, HamiltonianVectorField
 using CTFlows: Systems      # build_system
 using CTFlows: Integrators  # SciML, build_problem, build_options
 using CTFlows: Trajectories # VectorFieldTrajectory, state, time_grid
-using CTBase: Traits        # Autonomous, NonAutonomous, Fixed, NonFixed, InPlace, OutOfPlace
+using CTBase: Traits        # Autonomous, Fixed, InPlace, …
 using CTFlows: Configs      # StateEndPointConfig, StateTrajectoryConfig, …
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5 # activates the SciML extension
 nothing # hide

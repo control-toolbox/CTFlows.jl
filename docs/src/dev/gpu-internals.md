@@ -123,7 +123,9 @@ to the host regardless of the state. Eleven sites. The obvious fix, `similar(xs,
 useful `similar`. Hence:
 
 ```julia
-_buffer_like(template::AbstractArray, ::Type{T}, n::Int) where {T} = similar(template, T, n)
+function _buffer_like(template::AbstractArray, ::Type{T}, n::Int) where {T}
+    return similar(template, T, n)
+end
 _buffer_like(::Any, ::Type{T}, n::Int) where {T} = Vector{T}(undef, n)
 ```
 
@@ -206,7 +208,8 @@ turns a skip into a loud failure on the self-hosted GPU runners:
 
 ```julia
 if Main.TestCapabilities.ON_GPU_RUNNER
-    Test.@test Main.TestCapabilities.CUDA_FUNCTIONAL   # fails loudly if the GPU runner lost its device
+    # fails loudly if the GPU runner lost its device
+    Test.@test Main.TestCapabilities.CUDA_FUNCTIONAL
 elseif !Main.TestCapabilities.CUDA_FUNCTIONAL
     @info "CUDA not functional — GPU tests skipped"
     Test.@test_skip false   # shows as Broken, not Pass 0

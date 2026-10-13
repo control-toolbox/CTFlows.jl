@@ -248,7 +248,8 @@ Any further keyword is forwarded to the backend (see
 [`CTFlows.TrajectoryPlots.split_plot_kwargs`](@ref)).
 
 ```@example flows_solutions
-Plots.plot(hsol, :state; layout=:group, time=:normalize)   # only the state, grouped, [0,1] time
+# only the state, grouped, time rescaled to [0, 1]
+Plots.plot(hsol, :state; layout=:group, time=:normalize)
 ```
 
 ```@example flows_solutions

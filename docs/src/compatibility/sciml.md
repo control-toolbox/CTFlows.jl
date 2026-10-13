@@ -100,7 +100,8 @@ flow_f(0.0, x0, 1.0; variable=1.0)                       # Dual scalar
 A length-1 `Vector`/`SVector` `x0` collapses to a scalar, in both call styles:
 
 ```@repl sciml_compat
-flow_f(0.0, [1.0], 1.0; variable=1.0)         # ≈ exp(-1), a Real — not a length-1 Vector
+# ≈ exp(-1), a Real, not a length-1 Vector
+flow_f(0.0, [1.0], 1.0; variable=1.0)
 sol = flow_f((0.0, 1.0), [1.0]; variable=1.0);
 Trajectories.state(sol)(1.0)                   # ≈ exp(-1), a Real
 ```

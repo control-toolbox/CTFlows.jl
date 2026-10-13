@@ -96,7 +96,8 @@ flow_cl(0.0, 1.0 + 2.0im, 1.0)
 ```@repl fc_compat
 x0 = ForwardDiff.Dual(1.0, 1.0)
 xf = flow_cl(0.0, x0, 1.0)
-(ForwardDiff.value(xf), ForwardDiff.partials(xf, 1))   # ≈ (exp(-2), exp(-2)) — no AD collision
+# ≈ (exp(-2), exp(-2)): no AD collision
+(ForwardDiff.value(xf), ForwardDiff.partials(xf, 1))
 ```
 
 Unlike [`Flow(h̃, law)`](pseudo_hamiltonian.md) or [`Flow(ocp, law)`'s `DynClosedLoop`

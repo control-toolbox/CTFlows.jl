@@ -46,7 +46,7 @@ The flow is built once, in both `hamiltonian_type` modes:
 h̃ = Data.PseudoHamiltonian((x, p, u) -> sum(p .* u) - 0.5 * sum(abs2, u))
 law = Data.DynClosedLoop((x, p) -> p)
 
-hflow_total = Flows.Flow(h̃, law; reltol=1e-8)                                  # :total (default)
+hflow_total = Flows.Flow(h̃, law; reltol=1e-8)   # :total (default)
 hflow_partial = Flows.Flow(h̃, law; hamiltonian_type=:partial, reltol=1e-8)
 ```
 
@@ -103,8 +103,12 @@ Trajectories.state(sol)(1.0), Trajectories.costate(sol)(1.0)
 ```
 
 ```@repl ph_compat
-hflow_total(0.0, MMatrix{2,2}(1.0, 3.0, 2.0, 4.0), MMatrix{2,2}(0.0, 1.0, 0.0, 1.0), 1.0)   # mutable
-hflow_total(0.0, SMatrix{2,2}(1.0, 3.0, 2.0, 4.0), SMatrix{2,2}(0.0, 1.0, 0.0, 1.0), 1.0)   # immutable
+X0m = MMatrix{2,2}(1.0, 3.0, 2.0, 4.0)
+P0m = MMatrix{2,2}(0.0, 1.0, 0.0, 1.0)
+X0s = SMatrix{2,2}(1.0, 3.0, 2.0, 4.0)
+P0s = SMatrix{2,2}(0.0, 1.0, 0.0, 1.0)
+hflow_total(0.0, X0m, P0m, 1.0)   # mutable
+hflow_total(0.0, X0s, P0s, 1.0)   # immutable
 ```
 
 ---

@@ -317,7 +317,9 @@ sprob = SciMLBase.ODEProblem(
 )
 seprob = SciMLBase.EnsembleProblem(
     sprob;
-    prob_func=(p, ctx) -> SciMLBase.remake(p; u0=StaticArrays.SVector{2}(init(ctx.sim_id))),
+    prob_func=(p, ctx) -> SciMLBase.remake(
+        p; u0=StaticArrays.SVector{2}(init(ctx.sim_id)),
+    ),
 )
 ssol = SciMLBase.solve(
     seprob, DiffEqGPU.GPUTsit5(), DiffEqGPU.EnsembleGPUKernel(CUDA.CUDABackend());

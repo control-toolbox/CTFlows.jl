@@ -17,7 +17,7 @@ using CTFlows: Flows
 using CTFlows: Trajectories
 using CTFlows: Configs
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
-using ForwardDiff: ForwardDiff  # triggers the DifferentiationInterface ForwardDiff extension
+using ForwardDiff: ForwardDiff  # AD backend of the Hamiltonian flows
 
 vf = Data.VectorField(x -> -x)
 flow = Flows.Flow(vf; reltol=1e-8)
@@ -219,7 +219,8 @@ Systems.hamiltonian(hflow_v)          # the callable H(t, x, p, v)
 ```
 
 ```@example flows_integrating
-Systems.get_hamiltonian_gradient(hflow_v) # functor: (t, x, p, v) -> (∂H/∂x, ∂H/∂p)
+# functor: (t, x, p, v) -> (∂H/∂x, ∂H/∂p)
+Systems.get_hamiltonian_gradient(hflow_v)
 ```
 
 ```@example flows_integrating

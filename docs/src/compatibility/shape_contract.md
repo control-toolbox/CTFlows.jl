@@ -95,7 +95,8 @@ flow(0.0, [1.0], 1.0)   # a length-1 Vector x0 → a scalar xf, not [exp(-1)]
 
 ```@repl shape_compat
 sol = flow((0.0, 1.0), [1.0]);
-Trajectories.state(sol)(1.0)   # scalar too — the trajectory accessor is coerced the same way
+# a scalar too: the trajectory accessor is coerced the same way
+Trajectories.state(sol)(1.0)
 ```
 
 ### `Flow(::SciMLBase.AbstractODEFunction)`
@@ -103,7 +104,8 @@ Trajectories.state(sol)(1.0)   # scalar too — the trajectory accessor is coerc
 ```@example shape_compat
 f = SciMLBase.ODEFunction{false}((u, p, t) -> -p .* u)
 flow_f = Flows.Flow(f; reltol=1e-8)
-flow_f(0.0, [1.0], 1.0; variable=1.0)   # same collapse — SciMLFunctionSystem coerces too
+# same collapse: SciMLFunctionSystem coerces too
+flow_f(0.0, [1.0], 1.0; variable=1.0)
 ```
 
 ## The exception: `Flow(::ODEProblem)`
@@ -111,7 +113,8 @@ flow_f(0.0, [1.0], 1.0; variable=1.0)   # same collapse — SciMLFunctionSystem 
 ```@example shape_compat
 prob = SciMLBase.ODEProblem(f, [1.0], (0.0, 1.0), 1.0)
 pflow = Flows.Flow(prob; reltol=1e-8)
-pflow(0.0, [1.0], 1.0; variable=1.0)   # stays a length-1 Vector — no CTFlows dispatch, no coercion
+# stays a length-1 Vector: no CTFlows dispatch, no coercion
+pflow(0.0, [1.0], 1.0; variable=1.0)
 ```
 
 The same `[1.0]` state produces a **scalar** through `Flow(::ODEFunction)` and a

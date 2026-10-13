@@ -33,7 +33,10 @@ flow = Flows.Flow(vf; reltol=1e-8)
 ```
 
 ```@example vf_compat
-vf_ip   = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)   # in-place
+# in-place
+vf_ip = Data.VectorField(
+    (du, x) -> (du .= -x); is_autonomous=true, is_variable=false,
+)
 flow_ip = Flows.Flow(vf_ip; reltol=1e-8)
 ```
 

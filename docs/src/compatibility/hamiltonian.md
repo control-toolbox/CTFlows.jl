@@ -117,8 +117,12 @@ scalar the same way it does a vector, and the induced dynamics are independent p
 
 ```@repl h_compat
 hflow(0.0, [1.0 2.0; 3.0 4.0], [0.0 0.0; 1.0 1.0], pi/2)
-hflow(0.0, MMatrix{2,2}(1.0, 3.0, 2.0, 4.0), MMatrix{2,2}(0.0, 1.0, 0.0, 1.0), pi/2)   # mutable
-hflow(0.0, SMatrix{2,2}(1.0, 3.0, 2.0, 4.0), SMatrix{2,2}(0.0, 1.0, 0.0, 1.0), pi/2)   # immutable
+X0m = MMatrix{2,2}(1.0, 3.0, 2.0, 4.0)
+P0m = MMatrix{2,2}(0.0, 1.0, 0.0, 1.0)
+X0s = SMatrix{2,2}(1.0, 3.0, 2.0, 4.0)
+P0s = SMatrix{2,2}(0.0, 1.0, 0.0, 1.0)
+hflow(0.0, X0m, P0m, pi/2)   # mutable
+hflow(0.0, X0s, P0s, pi/2)   # immutable
 ```
 
 ---

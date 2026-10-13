@@ -69,7 +69,7 @@ p_f = p_0\,e, \qquad x_f = \frac{x_0}{e} + \frac{p_0}{2}\left(e - \frac1e\right)
 ```@example ocp_laws_compat
 law = Data.DynClosedLoop((x, p) -> p)
 
-f1_total = Flows.Flow(ocp1, law; reltol=1e-8)                                # :total (default)
+f1_total = Flows.Flow(ocp1, law; reltol=1e-8)   # :total (default)
 f2_total = Flows.Flow(ocp2, law; reltol=1e-8)
 f1_partial = Flows.Flow(ocp1, law; hamiltonian_type=:partial, reltol=1e-8)
 f2_partial = Flows.Flow(ocp2, law; hamiltonian_type=:partial, reltol=1e-8)

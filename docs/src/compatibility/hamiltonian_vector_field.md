@@ -110,7 +110,8 @@ hflow(0.0, 1.0, 0.0, pi/2)   # (xf, pf) ≈ (0.0, -1.0)
 
 ```@repl hvf_compat
 sol = hflow((0.0, pi/2), 1.0, 0.0);
-(Trajectories.state(sol)(pi/2), Trajectories.costate(sol)(pi/2))   # ≈ (0.0, -1.0), both scalars
+# ≈ (0.0, -1.0), both scalars
+(Trajectories.state(sol)(pi/2), Trajectories.costate(sol)(pi/2))
 ```
 
 ### Vector
@@ -142,8 +143,12 @@ harmonic oscillator:
 
 ```@repl hvf_compat
 hflow(0.0, [1.0 2.0; 3.0 4.0], [0.0 0.0; 1.0 1.0], pi/2)
-hflow(0.0, MMatrix{2,2}(1.0, 3.0, 2.0, 4.0), MMatrix{2,2}(0.0, 1.0, 0.0, 1.0), pi/2)   # mutable
-hflow(0.0, SMatrix{2,2}(1.0, 3.0, 2.0, 4.0), SMatrix{2,2}(0.0, 1.0, 0.0, 1.0), pi/2)   # immutable
+X0m = MMatrix{2,2}(1.0, 3.0, 2.0, 4.0)
+P0m = MMatrix{2,2}(0.0, 1.0, 0.0, 1.0)
+X0s = SMatrix{2,2}(1.0, 3.0, 2.0, 4.0)
+P0s = SMatrix{2,2}(0.0, 1.0, 0.0, 1.0)
+hflow(0.0, X0m, P0m, pi/2)   # mutable
+hflow(0.0, X0s, P0s, pi/2)   # immutable
 ```
 
 ---
@@ -166,7 +171,9 @@ hflow(0.0, [1.0 + 2.0im, 0.0 + 0.0im], [0.0 + 0.0im, 1.0 + 1.0im], pi/2)
 and matrices:
 
 ```@repl hvf_compat
-hflow(0.0, [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im], [0.0+0.0im 1.0+1.0im; 2.0+2.0im 3.0+3.0im], pi/2)
+X0c = [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im]
+P0c = [0.0+0.0im 1.0+1.0im; 2.0+2.0im 3.0+3.0im]
+hflow(0.0, X0c, P0c, pi/2)
 ```
 
 ---

@@ -116,8 +116,9 @@ to `h̃vf` — **no AD anywhere**, so there is no `hamiltonian_type` option (unl
 `Flow(h̃, law)`, only one mode exists here).
 
 ```@example flows_laws
-# h̃vf(x, p, u) = (u, 0): ẋ = u, ṗ = 0 — the derivatives of H̃(x,p,u) = p*u - 0.5u²
-# at the stationary feedback u = p, supplied directly instead of via AD
+# h̃vf(x, p, u) = (u, 0): ẋ = u, ṗ = 0, the derivatives of
+# H̃(x, p, u) = p*u - 0.5u² at the stationary feedback u = p,
+# supplied directly instead of via AD
 h̃vf_pvf = Data.PseudoHamiltonianVectorField((x, p, u) -> (u, zero(p)))
 law_pvf = Data.DynClosedLoop((x, p) -> p)  # u = p
 
@@ -267,7 +268,8 @@ A plain function `u` is wrapped in a `DynClosedLoop` law automatically, with
 time/variable dependence inferred from the OCP:
 
 ```@example flows_laws
-f_conv = Flows.Flow(ocp, (x, p) -> p; reltol=1e-10)  # autonomous, fixed → auto DynClosedLoop
+# autonomous, fixed: wrapped in a DynClosedLoop
+f_conv = Flows.Flow(ocp, (x, p) -> p; reltol=1e-10)
 ```
 
 The function `u` **must** have the natural arity matching the OCP's traits:
