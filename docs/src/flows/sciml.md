@@ -89,6 +89,11 @@ return an `AbstractIntegrationResult` — use `Integrators.times`,
 `Integrators.evaluate_at` and `Integrators.final_state` to inspect it (see
 [Trajectories](trajectories.md#low-level-integration-result)).
 
+Unlike the other flows, a `SciMLProblemFlow` applies no default output grid: a trajectory
+call returns the raw SciML output (the `saveat` stored in the problem, or the solver
+steps). Pass `grid=n` to generate one; `grid=` together with a `saveat` stored in the
+problem throws an `IncorrectArgument`.
+
 ---
 
 ## See also

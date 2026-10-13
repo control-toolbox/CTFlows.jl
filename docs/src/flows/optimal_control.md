@@ -51,8 +51,8 @@ pre = CTModels.Building.PreModel()
 CTModels.Building.time_dependence!(pre; autonomous=true)
 CTModels.Building.time!(pre; t0=0.0, tf=1.0)
 CTModels.Building.state!(pre, 1)
-CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = λ * x[1]; nothing))
-CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf[1])
+CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = λ * x; nothing))
+CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf)
 ocp = CTModels.Building.build(pre)
 nothing # hide
 ```

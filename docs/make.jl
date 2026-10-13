@@ -145,7 +145,10 @@ with_api_reference(src_dir, ext_dir) do api_pages
                 "Flow(fc, law)" => "compatibility/controlled_vector_field.md",
                 "GPU" => "compatibility/gpu.md",
             ],
-            "Developer notes" => ["GPU internals" => "dev/gpu-internals.md"],
+            "Developer notes" => [
+                "Extending CTFlows" => "dev/extending.md",
+                "GPU internals" => "dev/gpu-internals.md",
+            ],
             "API Reference" => api_pages,
         ],
         plugins=[links],

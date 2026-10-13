@@ -115,10 +115,10 @@ derive the vector field — see [Building a flow](flows/building_a_flow.md).
 
 ### Optimal control problems
 
-This is the entry point most users of the control-toolbox ecosystem actually reach
-for: `Flow(ocp)` builds a flow directly from an **optimal control problem** — a
-[`CTModels.Models.Model`](@extref CTModels.Models.Model) — with no Hamiltonian to
-write by hand.
+`Flow(ocp)` builds a flow directly from an **optimal control problem**, a
+[`CTModels.Models.Model`](@extref CTModels.Models.Model), with no Hamiltonian to write by
+hand. The state is one-dimensional here, so it is a scalar, as everywhere in the
+ecosystem.
 
 ```@example getting_started
 using CTModels
@@ -127,8 +127,8 @@ pre = CTModels.Building.PreModel()
 CTModels.Building.time_dependence!(pre; autonomous=true)
 CTModels.Building.time!(pre; t0=0.0, tf=1.0)
 CTModels.Building.state!(pre, 1)
-CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = -x[1]; nothing))
-CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf[1])
+CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = -x; nothing))
+CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf)
 ocp = CTModels.Building.build(pre)
 
 f = Flows.Flow(ocp; reltol=1e-10)
@@ -137,7 +137,7 @@ f = Flows.Flow(ocp; reltol=1e-10)
 Point evaluation returns the final state–costate pair (Hamiltonian semantics):
 
 ```@repl getting_started
-xf, pf = f(0.0, [1.0], [1.0], 1.0);
+xf, pf = f(0.0, 1.0, 1.0, 1.0);
 xf
 pf
 ```
@@ -146,7 +146,7 @@ A trajectory call assembles a full `CTModels.Solution` — state, costate, and t
 objective value:
 
 ```@example getting_started
-sol = f((0.0, 1.0), [1.0], [1.0])
+sol = f((0.0, 1.0), 1.0, 1.0)
 ```
 
 ```@repl getting_started
@@ -163,10 +163,6 @@ basic no-costate call `f(t0, x0, tf)` for direct shooting.
 
 Load `Plots` and any solution object draws directly — here the state and costate of
 the `CTModels.Solution` on a shared time axis:
-
-```@setup getting_started
-using Plots
-```
 
 ```@example getting_started
 using Plots

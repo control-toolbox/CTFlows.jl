@@ -67,9 +67,9 @@ through the constructor signatures would have touched roughly twenty of them.
     device token and throws without one. The base (default) descriptions therefore spell out
     `:cpu` rather than omitting it. `(:di, :sciml)` alone does not work.
 
-This routing also unified two previously separate construction paths (with and without AD)
-behind a single `_build_integrator` helper: every flow constructor now reaches the integrator
-through the registry, so a device token is honoured no matter which constructor was called.
+Every flow constructor, with or without AD, builds its integrator through the single
+`_build_integrator` helper, which goes through the registry: a device token is honoured
+whatever the constructor.
 
 ### What `SciML{GPU}` does today
 
@@ -268,7 +268,7 @@ therefore also delegate those methods to its backing `Array`, **and** define
 `copyto!(::FakeGPUArray{T,N}, ::Array{T,N})` to resolve the ambiguity with GPUArrays'
 `copyto!(::AnyGPUArray, ::Array)`.
 
-Both fake-array test files already carry the fix; copy the pattern rather than rediscovering it.
+Both fake-array test files define these methods; copy the pattern from them.
 
 ---
 
