@@ -69,7 +69,22 @@ xf, pf
 ```
 
 A labelled `:path` constraint from the OCP itself also resolves — pass its `Symbol` label
-as `constraint`.
+as `constraint`. The model stores it as ``\mathrm{lb} \le c(t,x,u,v) \le \mathrm{ub}``;
+the flow normalises it as ``g \ge 0`` (see the sign convention below) from its bounds:
+
+| Bounds stored in the model | `constraint=` | ``g`` |
+| --- | --- | --- |
+| lower only, ``c \ge \mathrm{lb}`` | `:label` | ``c - \mathrm{lb}`` |
+| upper only, ``c \le \mathrm{ub}`` | `:label` | ``\mathrm{ub} - c`` |
+| equality, ``c = \mathrm{lb}`` | `:label` | ``c - \mathrm{lb}`` |
+| two-sided, ``\mathrm{lb} < \mathrm{ub}`` | `:label => :lower` | ``c - \mathrm{lb}`` |
+| two-sided, ``\mathrm{lb} < \mathrm{ub}`` | `:label => :upper` | ``\mathrm{ub} - c`` |
+
+So `x(t) - lb ≥ 0`, `x(t) ≥ lb` and `lb - x(t) ≤ 0` give the same flow. A two-sided
+constraint has no active side known from the model: `:label` alone throws an
+`IncorrectArgument`, and the side is given as a `Pair`. For a vector constraint, the side
+is one `Symbol` for every component, or a tuple with one `Symbol` per component. (A
+`Tuple` of labels is a set of constraints, see [Multiple constraints](#Multiple-constraints).)
 
 ---
 

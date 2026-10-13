@@ -250,7 +250,8 @@ function _flow_action_defs()
             type=Any,
             default=nothing,
             description="Path constraint g for a constrained pseudo-Hamiltonian flow: " *
-                        "a :path constraint label (Symbol), a CTBase.Data.PathConstraint, " *
+                        "a :path constraint label (Symbol), normalised as g ≥ 0 from its bounds, " *
+                        "or `label => :lower`/`:upper` for a two-sided one, a CTBase.Data.PathConstraint, " *
                         "or a plain function with the OCP's natural arity. Paired with `multiplier`.",
         ),
         Options.OptionDefinition(;

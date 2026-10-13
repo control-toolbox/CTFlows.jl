@@ -309,11 +309,16 @@ $(TYPEDSIGNATURES)
 Resolve a `constraint` specification into a [`CTBase.Data.PathConstraint`](@extref).
 
 - `spec::Symbol` is a `:path` constraint **label**: resolved via
-  [`CTModels.Models.constraint`](@extref), which returns an out-of-place `g(t,x,u,v)`.
-  Rejected with [`CTBase.Exceptions.IncorrectArgument`](@extref) if the label is not a
-  `:path` constraint (e.g. `:boundary` or a box constraint). The functor is wrapped as a
+  [`CTModels.Models.constraint`](@extref), which returns an out-of-place `c(t,x,u,v)` and
+  its bounds `lb ≤ c ≤ ub`. The constraint is normalised as `g ≥ 0` from the bounds:
+  `g = c - lb` for a lower bound, `g = ub - c` for an upper bound, `g = c - lb` for an
+  equality; a two-sided constraint needs the side (next item). Rejected with
+  [`CTBase.Exceptions.IncorrectArgument`](@extref) if the label is not a `:path`
+  constraint (e.g. `:boundary` or a box constraint). The functor is wrapped as a
   **non-autonomous, non-fixed** [`CTBase.Data.MixedConstraint`](@extref) so its uniform
-  call `g(t,x,u,v)` forwards verbatim to the resolved functor.
+  call `g(t,x,u,v)` forwards verbatim.
+- `spec::Pair` is `label => side`: the label as above, on the active `side` (`:lower` or
+  `:upper`, or one of them per component of a vector constraint).
 - `spec::CTBase.Data.PathConstraint` is used as-is.
 - `spec::Function` is a raw function with the OCP's natural arity (`(x,u)`, `(t,x,u)`,
   `(x,u,v)` or `(t,x,u,v)`), wrapped in a [`CTBase.Data.MixedConstraint`](@extref) with the
@@ -325,18 +330,202 @@ Resolve a `constraint` specification into a [`CTBase.Data.PathConstraint`](@extr
 See also: [`CTFlows.Flows._resolve_multiplier`](@extref), `CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`.
 """
 function _resolve_constraint(ocp, spec::Symbol)
-    kind, g_oop, _, _ = CTModels.Models.constraint(ocp, spec)
+    return _resolve_labelled_constraint(ocp, spec, nothing)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Resolve a `:label => side` constraint spec: the `:path` constraint `label`, normalised as
+`g ≥ 0` on the given active `side` — `:lower` (`g = c - lb`) or `:upper` (`g = ub - c`).
+`side` is one `Symbol` for every component of the constraint, or a `Tuple`/`AbstractVector`
+with one `Symbol` per component.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if `label` is not a `:path`
+  constraint, if a side is neither `:lower` nor `:upper`, if the bound of the given side
+  is infinite, or if the number of sides does not match the constraint dimension.
+
+See also: [`CTFlows.Flows._resolve_constraint`](@extref).
+"""
+function _resolve_constraint(ocp, spec::Pair{Symbol})
+    return _resolve_labelled_constraint(ocp, first(spec), last(spec))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Resolve the `:path` constraint `label` of `ocp` into a [`CTBase.Data.MixedConstraint`](@extref)
+normalised as `g ≥ 0`, from the function `c` and the bounds `lb ≤ c ≤ ub` stored in the
+model. `side` is `nothing` (inferred from the bounds), a `Symbol`, or one `Symbol` per
+component.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if `label` is not a `:path` constraint,
+  or if the active side cannot be determined or is invalid (see
+  [`CTFlows.Flows._active_side`](@extref)).
+"""
+function _resolve_labelled_constraint(ocp, label::Symbol, side)
+    kind, c, lb, ub = CTModels.Models.constraint(ocp, label)
     kind === :path || throw(
         Exceptions.IncorrectArgument(
-            "constraint label :$spec is not a path constraint";
+            "constraint label :$label is not a path constraint";
             got=":$kind constraint",
             expected="a :path constraint label",
-            context="Flow(ocp, law; constraint=:$spec) — label resolution",
+            context="Flow(ocp, law; constraint=:$label) — label resolution",
         ),
     )
+    g = _bounded_constraint(label, c, lb, ub, side)
     # The label functor is always the full uniform arity g(t,x,u,v); wrap it as a
     # non-autonomous, non-fixed MixedConstraint so its uniform call forwards verbatim.
-    return Data.MixedConstraint(g_oop; is_autonomous=false, is_variable=true)
+    return Data.MixedConstraint(g; is_autonomous=false, is_variable=true)
+end
+
+"""
+$(TYPEDEF)
+
+A path constraint `lb ≤ c(t,x,u,v) ≤ ub` from the model, normalised as `g ≥ 0` on its
+active side: `g = sign · (c - bound)`, with `sign = 1` and `bound = lb` on the lower side,
+`sign = -1` and `bound = ub` on the upper side. Scalar fields for a one-dimensional
+constraint, vectors (one entry per component) otherwise.
+
+# Fields
+- `c::C`: the constraint function `c(t,x,u,v)` stored in the model.
+- `sign::S`: `1` (lower side) or `-1` (upper side), per component.
+- `bound::B`: the bound of the active side, per component.
+
+See also: [`CTFlows.Flows._resolve_constraint`](@extref).
+"""
+struct _BoundedConstraint{C,S,B} <: Function
+    c::C
+    sign::S
+    bound::B
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Uniform call: `g(t,x,u,v) = sign .* (c(t,x,u,v) .- bound)`.
+"""
+(g::_BoundedConstraint)(t, x, u, v) = g.sign .* (g.c(t, x, u, v) .- g.bound)
+
+"""
+$(TYPEDSIGNATURES)
+
+Build the [`CTFlows.Flows._BoundedConstraint`](@extref) of a scalar constraint.
+"""
+function _bounded_constraint(label, c, lb::Real, ub::Real, side)
+    s = _active_side(label, lb, ub, _single_side(label, side, 1, 1))
+    return s === :lower ? _BoundedConstraint(c, 1, lb) : _BoundedConstraint(c, -1, ub)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Build the [`CTFlows.Flows._BoundedConstraint`](@extref) of a vector constraint, one side
+per component.
+"""
+function _bounded_constraint(label, c, lb::AbstractVector, ub::AbstractVector, side)
+    n = length(lb)
+    sides = [_active_side(label, lb[i], ub[i], _single_side(label, side, i, n)) for i in 1:n]
+    sign = [s === :lower ? 1 : -1 for s in sides]
+    bound = [s === :lower ? lb[i] : ub[i] for (i, s) in enumerate(sides)]
+    return _BoundedConstraint(c, sign, bound)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the side requested for component `i` (of `n`): `side` itself when it is `nothing`
+or a `Symbol`, its `i`-th entry when it gives one side per component.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if the number of sides is not `n`.
+"""
+_single_side(label, side::Union{Nothing,Symbol}, i, n) = side
+
+function _single_side(label, side::Union{Tuple,AbstractVector}, i, n)
+    length(side) == n || throw(
+        Exceptions.IncorrectArgument(
+            "wrong number of sides for the constraint :$label";
+            got="$(length(side)) side(s)",
+            expected="one side for every component ($n), or a single Symbol",
+            context="Flow(ocp, law; constraint=:$label => side) — side selection",
+        ),
+    )
+    return side[i]
+end
+
+function _single_side(label, side, i, n)
+    return throw(
+        Exceptions.IncorrectArgument(
+            "unsupported side for the constraint :$label";
+            got="$(typeof(side))",
+            expected=":lower or :upper, or one of them per component",
+            context="Flow(ocp, law; constraint=:$label => side) — side selection",
+        ),
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the active side, `:lower` or `:upper`, of one component `lb ≤ c ≤ ub` of the path
+constraint `label`. With `side === nothing` it is inferred from the bounds:
+
+- lower bound only: `:lower` (`g = c - lb`);
+- upper bound only: `:upper` (`g = ub - c`);
+- equality, `lb == ub`: `:lower` (`g = c - lb`; the multiplier has no sign).
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): for a two-sided constraint with no
+  side given, for a constraint with no finite bound, for a side other than `:lower` or
+  `:upper`, or for a side whose bound is infinite.
+"""
+function _active_side(label, lb, ub, side::Nothing)
+    lo, up = isfinite(lb), isfinite(ub)
+    lo && !up && return :lower
+    !lo && up && return :upper
+    lo && lb == ub && return :lower
+    lo && throw(
+        Exceptions.IncorrectArgument(
+            "two-sided path constraint :$label: the active side is not known";
+            got="$lb ≤ c ≤ $ub",
+            expected="the side active on the arc",
+            suggestion="Give it with constraint = :$label => :lower (g = c - lb) or :$label => :upper (g = ub - c)",
+            context="Flow(ocp, law; constraint=:$label) — side selection",
+        ),
+    )
+    return throw(
+        Exceptions.IncorrectArgument(
+            "path constraint :$label has no finite bound";
+            got="$lb ≤ c ≤ $ub",
+            expected="a finite lower or upper bound",
+            context="Flow(ocp, law; constraint=:$label) — side selection",
+        ),
+    )
+end
+
+function _active_side(label, lb, ub, side::Symbol)
+    side in (:lower, :upper) || throw(
+        Exceptions.IncorrectArgument(
+            "unknown side :$side for the constraint :$label";
+            got=":$side",
+            expected=":lower or :upper",
+            context="Flow(ocp, law; constraint=:$label => :$side) — side selection",
+        ),
+    )
+    bound = side === :lower ? lb : ub
+    isfinite(bound) || throw(
+        Exceptions.IncorrectArgument(
+            "the constraint :$label has no $side bound";
+            got="$lb ≤ c ≤ $ub",
+            expected="a finite $side bound",
+            suggestion="Use the side whose bound is finite, or omit the side",
+            context="Flow(ocp, law; constraint=:$label => :$side) — side selection",
+        ),
+    )
+    return side
 end
 
 """
@@ -418,7 +607,7 @@ end
 $(TYPEDSIGNATURES)
 
 Throw an [`CTBase.Exceptions.IncorrectArgument`](@extref) for an unsupported constraint
-spec type. Only `Symbol` (path label), `Function`, `Tuple`, and
+spec type. Only `Symbol` (path label), `label => side`, `Function`, `Tuple`, and
 [`CTBase.Data.PathConstraint`](@extref) are accepted.
 
 # Throws
@@ -431,7 +620,7 @@ function _resolve_constraint(::Any, spec)
         Exceptions.IncorrectArgument(
             "unsupported constraint specification";
             got="$(typeof(spec))",
-            expected="a :path label (Symbol), a CTBase.Data.PathConstraint, or a Function",
+            expected="a :path label (Symbol), a label => side Pair, a CTBase.Data.PathConstraint, or a Function",
             context="Flow(ocp, law; constraint=…) — constraint resolution",
         ),
     )
