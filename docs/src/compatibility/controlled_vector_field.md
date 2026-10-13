@@ -4,14 +4,9 @@
 CurrentModule = CTFlows
 ```
 
-This page is a **living compatibility reference** for `Flow(fc, law)`, built directly from
-a [`Data.ControlledVectorField`](@extref CTBase.Data.ControlledVectorField)
-``fc(t,x,u,v)`` and a control law — **no optimal control problem involved**. Every ✓ / ✗
-in the table below is demonstrated by a code block re-run on every documentation build.
-
-Scope: **CPU**, default AD backend. The table is generated from
-[`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl).
-GPU compatibility is a separate effort — see [`probe/gpu`](https://github.com/control-toolbox/CTFlows.jl/tree/main/probe/gpu).
+Which state types and call styles `Flow(fc, law)` accepts, for a
+[`Data.ControlledVectorField`](@extref CTBase.Data.ControlledVectorField) ``fc(t,x,u,v)``
+and a control law, with **no optimal control problem**, on **CPU**. Every cell has an executed example; see [Compatibility](overview.md) for how the pages stay true.
 
 As documented in [Control laws](../flows/control_laws.md), only an
 [`OpenLoop`](@extref CTBase.Data.OpenLoop) or [`ClosedLoop`](@extref CTBase.Data.ClosedLoop)
@@ -34,13 +29,6 @@ example, ``fc(x,u) = u - x``, with **both** feedback kinds:
 ```
 
 at ``t_f = 1``.
-
-!!! note "Last probed: 2026-07-23"
-    This page's table *shape* — which containers and axes are tested — reflects
-    [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
-    as of this date. Every ✓/✗ cell below is still re-executed on **every** documentation
-    build regardless (see [Compatibility overview](overview.md)) — only the *scope* of
-    what's tested can go stale, not the results shown.
 
 ```@setup fc_compat
 using CTFlows
@@ -76,9 +64,7 @@ flow_ol = Flows.Flow(fc, law_ol; reltol=1e-8)
 
 **Fully green, measured on `ClosedLoop` — no unsupported combination**, matching
 [`Flow(ocp, law)`'s `OpenLoop`/`ClosedLoop` table](ocp_control_laws.md#OpenLoop-ClosedLoop-—-state-flow,-no-internal-AD)
-on every state-shape axis since the `Matrix`/`SVector` fix there
-([#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)). The one remaining
-difference is the trajectory-`Dual` case: that table's OCP objective computation is not
+on every state-shape axis. The one difference is the trajectory-`Dual` case: that table's OCP objective computation is not
 `Dual`-transparent, whereas `Flow(fc, law)` computes no objective at all, so it has no
 counterpart restriction. `OpenLoop` shares the same mechanics as `ClosedLoop` here (only the
 control-law arity differs — `u(t,v)` vs `u(t,x,v)`) and is spot-checked below rather than
@@ -153,10 +139,7 @@ end
   gallery this page's mechanics inherit (out-of-place, no AD).
 - [`Flow(h̃, law)` compatibility](pseudo_hamiltonian.md) — the pseudo-Hamiltonian
   counterpart (`DynClosedLoop` only, AD-backed).
-- [`Flow(ocp, law)` compatibility](ocp_control_laws.md) — the OCP-based counterpart, whose
-  fixed-size-buffer `Matrix`/`SVector` restrictions
-  ([#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)) never applied here and
-  are now fixed there too.
+- [`Flow(ocp, law)` compatibility](ocp_control_laws.md) — the OCP-based counterpart.
 - [Compatibility overview](overview.md) — the per-constructor feature matrix and the other flow types.
 - [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.ControlledFlow`](@ref) — the flow types.
 - [`CTBase.Data.ControlledVectorField`](@extref CTBase.Data.ControlledVectorField), [`CTBase.Data.OpenLoop`](@extref CTBase.Data.OpenLoop), [`CTBase.Data.ClosedLoop`](@extref CTBase.Data.ClosedLoop) — the data wrappers.

@@ -4,28 +4,15 @@
 CurrentModule = CTFlows
 ```
 
-This page is a **living compatibility reference** for the Hamiltonian flow built from a
-[`Data.HamiltonianVectorField`](@extref CTBase.Data.HamiltonianVectorField): which
-state/costate types and call styles it accepts, each shown with a minimal, executable
-example. Every ✓ / ⚠ in the table below is demonstrated by a code block on this page and
-is re-run on every documentation build, so the page cannot drift from the code.
-
-Scope: **CPU** only. The table is generated from [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
-(run it locally with `julia --project=probe/cpu probe/cpu/probe_cpu.jl`). GPU
-compatibility is a separate effort — see [`probe/gpu`](https://github.com/control-toolbox/CTFlows.jl/tree/main/probe/gpu).
+Which state/costate types and call styles the Hamiltonian flow built from a
+[`Data.HamiltonianVectorField`](@extref CTBase.Data.HamiltonianVectorField) accepts, on
+**CPU**. Every cell has an executed example; see [Compatibility](overview.md) for how the pages stay true.
 
 All examples integrate the harmonic oscillator ``\dot{x} = p,\ \dot{p} = -x`` (autonomous,
 fixed) with the default SciML integrator (`OrdinaryDiffEqTsit5`). The analytic solution is
 ``x(t) = x_0\cos t + p_0\sin t``, ``p(t) = -x_0\sin t + p_0\cos t``, so integrating from
 ``t_0 = 0`` to ``t_f = \pi/2`` maps every initial condition ``(x_0, p_0)`` to
 ``(x_f, p_f) = (p_0, -x_0)``.
-
-!!! note "Last probed: 2026-07-23"
-    This page's table *shape* — which containers and axes are tested — reflects
-    [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
-    as of this date. Every ✓/⚠ cell below is still re-executed on **every** documentation
-    build regardless (see [Compatibility overview](overview.md)) — only the *scope* of
-    what's tested can go stale, not the results shown.
 
 ```@setup hvf_compat
 using CTFlows
@@ -105,10 +92,9 @@ Every state/costate type is supported on CPU — there is no unsupported (✗) c
     `costate(sol)(t)` also return scalars — not length-1 vectors. A **length-1** vector or
     `SVector` collapses the same way. This is the ecosystem's
     ["1-D = scalar"](https://github.com/control-toolbox/ct-conventions/blob/main/rules/dimension.md)
-    convention, implemented here via the `HamiltonianVectorFieldSystem` coercion machinery
-    — the same mechanism [`Flow(VectorField)`](vector_field.md)
-    now shares. See the [Shape contract](shape_contract.md) page for the full
-    cross-constructor picture.
+    convention, implemented by the coercion of `HamiltonianVectorFieldSystem`, the same
+    mechanism as [`Flow(VectorField)`](vector_field.md). See the
+    [Shape contract](shape_contract.md) page for every constructor.
 
 ---
 
@@ -266,4 +252,3 @@ or use mutable `MVector` / `MMatrix`.
 - [Shape contract](shape_contract.md) — the cross-constructor "1-D = scalar" reference.
 - [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref) — the flow types.
 - [`CTBase.Data.HamiltonianVectorField`](@extref CTBase.Data.HamiltonianVectorField) — the data wrapper.
-- [Shape contract](shape_contract.md) — the cross-constructor "1-D = scalar" reference ([#357](https://github.com/control-toolbox/CTFlows.jl/issues/357)).

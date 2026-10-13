@@ -4,17 +4,10 @@
 CurrentModule = CTFlows
 ```
 
-This page is a **living compatibility reference** for the Hamiltonian flow built from a
-**scalar** [`Data.Hamiltonian`](@extref CTBase.Data.Hamiltonian) function: which
-state/costate types and call styles it accepts, each shown with a minimal, executable
-example. Every ✓ / ⚠ / ✗ in the table below is demonstrated by a code block on this page
-and is re-run on every documentation build, so the page cannot drift from the code.
-
-Scope: **CPU**, default AD backend (`AutoForwardDiff`). The table is generated from
-[`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
-(run it locally with `julia --project=probe/cpu probe/cpu/probe_cpu.jl`). GPU compatibility
-(`method=:gpu`, default backend `AutoMooncake`) is a separate effort — see
-[GPU flows](../flows/gpu.md) and [`probe/gpu`](https://github.com/control-toolbox/CTFlows.jl/tree/main/probe/gpu).
+Which state/costate types and call styles the Hamiltonian flow built from a **scalar**
+[`Data.Hamiltonian`](@extref CTBase.Data.Hamiltonian) accepts, on **CPU** with the default
+AD backend (`AutoForwardDiff`). Every cell has an executed example; see [Compatibility](overview.md) for how the pages stay true.
+For devices, see [GPU flows](../flows/gpu.md).
 
 Unlike [`Flow(VectorField)`](vector_field.md) and
 [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md), a scalar `Hamiltonian` has
@@ -27,13 +20,6 @@ All examples use the harmonic oscillator ``H(x,p) = \tfrac12\left(\lVert x\rVert
 \lVert p\rVert^2\right)`` (autonomous, fixed) — the same dynamics as
 [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md), so the analytic solution is
 identical: ``(x_f, p_f) = (p_0, -x_0)`` at ``t_f = \pi/2``.
-
-!!! note "Last probed: 2026-07-23"
-    This page's table *shape* — which containers and axes are tested — reflects
-    [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
-    as of this date. Every ✓/✗ cell below is still re-executed on **every** documentation
-    build regardless (see [Compatibility overview](overview.md)) — only the *scope* of
-    what's tested can go stale, not the results shown.
 
 ```@setup h_compat
 using CTFlows
@@ -187,4 +173,4 @@ dodge the nested `Dual`) is needed for this to work.
 - [Compatibility overview](overview.md) — the per-constructor feature matrix and the other flow types.
 - [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref) — the flow types.
 - [`CTBase.Data.Hamiltonian`](@extref CTBase.Data.Hamiltonian) — the data wrapper.
-- [Shape contract](shape_contract.md) — the cross-constructor "1-D = scalar" reference: `Flow(Hamiltonian)` is 1-D = scalar end to end, via the same coercion machinery as `Flow(HamiltonianVectorField)` ([#357](https://github.com/control-toolbox/CTFlows.jl/issues/357)).
+- [Shape contract](shape_contract.md) — the cross-constructor "1-D = scalar" reference: `Flow(Hamiltonian)` is 1-D = scalar end to end, with the same coercion as `Flow(HamiltonianVectorField)`.

@@ -4,18 +4,11 @@
 CurrentModule = CTFlows
 ```
 
-This page is a **living compatibility reference** for `Flow(h̃vf, law)`, built from a
+Which state/costate types and call styles `Flow(h̃vf, law)` accepts, for a
 [`Data.PseudoHamiltonianVectorField`](@extref CTBase.Data.PseudoHamiltonianVectorField)
-`h̃vf(t,x,p,u,v) = (ẋ,ṗ)` — the derivatives of a pseudo-Hamiltonian **already
-differentiated by hand**, with an explicit control argument `u` — and a control law that
-closes the loop. **No AD, no OCP involved.** Every ✓ / ⚠ in the table below is
-demonstrated by a code block re-run on every documentation build.
-
-Scope: **CPU** only. The table is generated from
-[`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
-(run it locally with `julia --project=probe/cpu probe/cpu/probe_cpu.jl`). GPU
-compatibility is a separate effort — see
-[`probe/gpu`](https://github.com/control-toolbox/CTFlows.jl/tree/main/probe/gpu).
+`h̃vf(t,x,p,u,v) = (ẋ,ṗ)` (the derivatives of a pseudo-Hamiltonian, written by hand, with
+an explicit control `u`) and a control law that closes the loop. No AD and no OCP are
+involved. **CPU** only. Every cell has an executed example; see [Compatibility](overview.md) for how the pages stay true.
 
 As documented in [Control laws](../flows/control_laws.md), only a
 [`DynClosedLoop`](@extref CTBase.Data.DynClosedLoop) law is accepted here — `OpenLoop` and
@@ -42,13 +35,6 @@ x_f = x_0 + p_0, \qquad p_f = p_0 \quad\text{at } t_f = 1,
 
 so `h̃vf(x,p,u) = (\dot x, \dot p) = (u, 0)` is the already-differentiated vector field
 supplied directly — no AD anywhere in this constructor.
-
-!!! note "Last probed: 2026-07-24"
-    This page's table *shape* — which containers and axes are tested — reflects
-    [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
-    as of this date. Every ✓/⚠ cell below is still re-executed on **every** documentation
-    build regardless (see [Compatibility overview](overview.md)) — only the *scope* of
-    what's tested can go stale, not the results shown.
 
 ```@setup phvf_compat
 using CTFlows

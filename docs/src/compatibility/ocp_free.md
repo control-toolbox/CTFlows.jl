@@ -4,17 +4,9 @@
 CurrentModule = CTFlows
 ```
 
-This page is a **living compatibility reference** for `Flow(ocp)` built from a
-**control-free** optimal control problem (`ocp::CTModels.Models.Model` with no `control!`
-declared): which state/costate types and call styles it accepts, each shown with a
-minimal, executable example. Every ✓ / ✗ in the tables below is demonstrated by a code
-block on this page and is re-run on every documentation build, so the page cannot drift
-from the code.
-
-Scope: **CPU**, default AD backend (`AutoForwardDiff`). The tables are generated from
-[`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
-(run it locally with `julia --project=probe/cpu probe/cpu/probe_cpu.jl`). GPU
-compatibility is a separate effort — see [`probe/gpu`](https://github.com/control-toolbox/CTFlows.jl/tree/main/probe/gpu).
+Which state/costate types and call styles `Flow(ocp)` accepts, for a **control-free**
+optimal control problem (an `ocp::CTModels.Models.Model` with no `control!`), on **CPU**
+with the default AD backend (`AutoForwardDiff`). Every cell has an executed example; see [Compatibility](overview.md) for how the pages stay true.
 
 Unlike every other flow on this site, **the state dimension of an OCP is fixed at
 construction** (`CTModels.Building.state!(pre, n)`) — one `Flow(ocp)` does not accept every
@@ -22,17 +14,6 @@ container size the way `Flow(VectorField)`/`Flow(HamiltonianVectorField)`/
 `Flow(Hamiltonian)` do. This page therefore uses **two** control-free problems, built once:
 a scalar one (`n=1`) and a vector one (`n=2`), and every table below tests the scalar
 containers against the first and the vector-family containers against the second.
-
-!!! note "Last probed: 2026-07-24"
-    This page's table *shape* — which containers and axes are tested — reflects
-    [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
-    as of this date. Every ✓/✗ cell below is still re-executed on **every** documentation
-    build regardless (see [Compatibility overview](overview.md)) — only the *scope* of
-    what's tested can go stale, not the results shown. Until 2026-07-24, `Matrix`-family
-    states failed on every path and `SVector` failed on the non-AD (basic) path — a
-    fixed-size internal buffer, tracked as
-    [#358](https://github.com/control-toolbox/CTFlows.jl/issues/358). Both are now fixed;
-    the tables below reflect current (fixed) behaviour.
 
 ```@setup ocp_free_compat
 using CTFlows
@@ -150,7 +131,7 @@ end
 ## Basic (state-only) call — `f(t0, x0, tf)`
 
 For a **control-free** OCP, `Flow(ocp)` also exposes a state-only call with **no costate**
-(the direct-shooting use case, [#230](https://github.com/control-toolbox/CTFlows.jl/issues/230)),
+(the direct-shooting use case),
 dispatched by arity on the same `f` object. This path does **not** use automatic
 differentiation at all — the state equation is computed exactly — so its compatibility
 profile is structurally different from the Hamiltonian table above:
@@ -188,8 +169,7 @@ f1(0.0, 1.0 + 2.0im, 1.0)
 f1(0.0, ForwardDiff.Dual(1.0, 1.0), 1.0)
 ```
 
-`SVector` and `Matrix` (batch) both work too — fixed as of 2026-07-24
-([#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)):
+`SVector` and `Matrix` (batch) both work too:
 
 ```@repl ocp_free_compat
 f2(0.0, SA[1.0, 2.0], 1.0)

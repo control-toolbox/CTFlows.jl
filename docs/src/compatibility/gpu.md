@@ -4,54 +4,47 @@
 CurrentModule = CTFlows
 ```
 
-This page is a **compatibility reference** for running a `Flow` on a GPU device
-(`CuArray` state). It complements the [GPU flows](../flows/gpu.md) guide, which covers the
-*why* and the *contract* (no scalar indexing, `method=:gpu`, AD backend selection) — this
-page is the compact, per-constructor and per-AD-backend **table**, plus a few refinements
-found while re-measuring for this page.
+Which `Flow` constructors and AD backends work with a device state (`CuArray`), on
+NVIDIA/CUDA through CUDA.jl. AMDGPU and Metal are untested. The [GPU flows](../flows/gpu.md)
+guide explains the contract behind these results: no scalar indexing, `method=:gpu`, the
+choice of AD backend.
 
-!!! warning "Last probed: 2026-07-23 — not build-executed"
-    Unlike the 8 CPU pages, this page is not self-verifying: the code blocks below are
-    **illustrative** `julia` blocks, not `@example`/`@repl` — there is no GPU device in the
-    Documenter build (nor on the machine this page was written on). Every ✓/✗ is instead
-    sourced from a **measured run** of [`probe/gpu/probe_gpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/gpu/probe_gpu.jl)
-    on the self-hosted NVIDIA GPU runner —
-    [run 30037105763](https://github.com/control-toolbox/CTFlows.jl/actions/runs/30037105763/job/89317162708),
-    2026-07-23 — triggered specifically for this page, not carried over from an older
-    document. Re-run the probe (`run probe` label on a PR) to re-verify; this page can drift
-    from the code between probe runs in a way the CPU pages structurally cannot.
-
-Scope: **NVIDIA/CUDA**, validated via CUDA.jl. AMDGPU/Metal are untested (see
-[GPU flows](../flows/gpu.md)).
+!!! warning "Measured on a device, not executed by the documentation build"
+    The documentation build has no GPU, so the code blocks of this page are plain `julia`
+    blocks. The results come from a run of
+    [`probe/gpu/probe_gpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/gpu/probe_gpu.jl)
+    on the self-hosted NVIDIA runner
+    ([run 30037105763](https://github.com/control-toolbox/CTFlows.jl/actions/runs/30037105763/job/89317162708),
+    2026-07-23). To check them against the current code, add the `run probe` label to a pull
+    request.
 
 ---
 
 ## Per-constructor table
 
-| Flow source | AD needed | Device call | This run |
-|---|---|---|---|
-| `Flow(::VectorField)` | no | pass `CuArray`s | ✓ re-verified (point + trajectory) |
-| `Flow(::HamiltonianVectorField)` | no | pass `CuArray`s | ✓ re-verified (point) |
-| `Flow(::ODEFunction)` | no | pass `CuArray`s | not in this probe — same no-AD mechanism as `Flow(VectorField)`, see [`Flow(SciML)`](sciml.md) |
-| `Flow(::ODEProblem)` | no | pass `CuArray`s | ✓ re-verified (point remake) |
-| `Flow(ocp)` — state flow (no costate) | no | pass `CuArray`s | not re-tested this run — carried from prior validation, see [GPU flows](../flows/gpu.md#What-runs-on-device) |
-| `Flow(ocp, OpenLoop/ClosedLoop)` | no | pass `CuArray`s | not re-tested this run — carried from prior validation |
-| `Flow(::Hamiltonian)` | yes | `method=:gpu` (swaps the default AD backend — see below) | ✓ re-verified: default backend fails (scalar indexing, expected), `AutoZygote`/`AutoMooncake` both work |
-| `Flow(ocp)` — Hamiltonian (with costate) / `Flow(ocp, DynClosedLoop)` | yes | `method=:gpu` | ✓ re-verified — **only `AutoMooncake` survives** the in-place OCP dynamics on device (see backend table) |
-| Multi-phase concatenation (`*`), with jumps | inherits | works on device | not re-tested this run — carried from prior validation |
-| `variable_costate=true` | yes | explicit `ad_backend=AutoZygote()`, host or device `variable`, any length | ✓ re-verified (host variable, device variable length 1 and length 2) |
+"Probe" says whether `probe/gpu` measures the row; the other rows rest on the hardware
+tests of the test suite (see [GPU flows](../flows/gpu.md#What-runs-on-device)).
 
-Rows marked "not re-tested this run" are not disproven — `probe/gpu/probe_gpu.jl` simply
-doesn't cover them yet; they carry forward [GPU flows](../flows/gpu.md#What-runs-on-device)'
-prior hardware validation without a fresh timestamp.
+| Flow source | AD needed | Device call | Probe |
+|---|---|---|---|
+| `Flow(::VectorField)` | no | pass `CuArray`s | ✓ point and trajectory |
+| `Flow(::HamiltonianVectorField)` | no | pass `CuArray`s | ✓ point |
+| `Flow(::ODEFunction)` | no | pass `CuArray`s | not measured; same mechanism as `Flow(VectorField)` |
+| `Flow(::ODEProblem)` | no | pass `CuArray`s | ✓ point (`remake`) |
+| `Flow(ocp)`, state call (no costate) | no | pass `CuArray`s | not measured |
+| `Flow(ocp, OpenLoop/ClosedLoop)` | no | pass `CuArray`s | not measured |
+| `Flow(::Hamiltonian)` | yes | `method=:gpu` | ✓ `AutoZygote` and `AutoMooncake`; the CPU default fails (scalar indexing) |
+| `Flow(ocp)`, Hamiltonian call / `Flow(ocp, DynClosedLoop)` | yes | `method=:gpu` | ✓ `AutoMooncake` only (in-place OCP dynamics) |
+| Multi-phase concatenation (`*`), with jumps | inherits | works on device | not measured |
+| `variable_costate=true` | yes | `ad_backend=AutoZygote()`, host or device `variable` | ✓ host variable, device variable of length 1 and 2 |
 
 ---
 
-## AD backend comparison (fresh finding)
+## AD backends on device
 
-The probe exercises four AD backends across four call shapes: a plain gradient, the actual
-`Hamiltonian` gradient, a **mutating** in-place RHS, and the real `Flow(ocp)` Hamiltonian
-(which is in-place under the hood, via `CTModels`' `dynamics!`):
+Four AD backends, on four call shapes: a plain gradient, the gradient of a `Hamiltonian`, a
+**mutating** in-place right-hand side, and the Hamiltonian of a `Flow(ocp)` (in-place under
+the hood, through the `dynamics!` of CTModels):
 
 | Backend | Plain gradient | `hamiltonian_gradient` | Mutating in-place RHS | `Flow(ocp)` Hamiltonian |
 |---|:---:|:---:|:---:|:---:|
@@ -60,61 +53,44 @@ The probe exercises four AD backends across four call shapes: a plain gradient, 
 | `AutoMooncake` (GPU default) | ✓ | ✓ | ✓ | ✓ |
 | `AutoEnzyme` | ✗ `EnzymeRuntimeActivityError` | ✗ `EnzymeMutabilityException` | ✓ | ✗ `EnzymeMutabilityException` |
 
-**`AutoMooncake` is the only backend that survives every call shape measured on device** —
-confirming it as the right `method=:gpu` default (already documented in
-[GPU flows](../flows/gpu.md#AD-backends-on-device)).
+`AutoMooncake` handles every call shape, which is why `method=:gpu` selects it.
 
-Two refinements this run adds:
+!!! note "`AutoZygote` fails once the call reduces over a device array"
+    The plain gradient works. Through `hamiltonian_gradient` (one more `sum(abs2, …)`
+    layer) it raises a `KernelException`, and with mutation it cannot differentiate
+    `gc_preserve_end` (a mutation-tracking marker).
 
-!!! note "`AutoZygote` breaks specifically once a call reduces over a device array"
-    The plain gradient (no reduction inside the traced function beyond a final `sum`) works
-    with `AutoZygote`. The moment the call chain goes through
-    `CTBaseDifferentiationInterface.hamiltonian_gradient` (an extra `sum(abs2, …)` layer) or
-    touches mutation, it fails — a `KernelException` in the first case, an inability to
-    differentiate `gc_preserve_end` (a mutation-tracking marker) in the second. This is
-    consistent with, and sharpens, the existing warning that `AutoZygote` "is not reliably
-    predictable" on device.
-
-!!! note "`AutoEnzyme` fails specifically on GPU array reductions, not on mutation itself"
-    A synthetic mutating RHS with no reduction (`du .= 2 .* u`) differentiates fine with
-    `AutoEnzyme`, on both host and device. But every failure above —
-    `EnzymeRuntimeActivityError` on the plain gradient, `EnzymeMutabilityException` on
-    `hamiltonian_gradient` and on `Flow(ocp)`'s Hamiltonian — traces back to a `sum`/
-    `mapreduce` over a `CuArray` inside the traced function. Real Hamiltonians almost always
-    contain such a reduction (`sum(abs2, x)`, `dot(p, x)`), so in practice `AutoEnzyme` is
-    not currently usable for `Flow(::Hamiltonian)`/`Flow(ocp, ...)` on device — not a general
-    "Enzyme doesn't support GPU" limitation, but this specific pattern.
+!!! note "`AutoEnzyme` fails on GPU array reductions, not on mutation"
+    A mutating right-hand side with no reduction (`du .= 2 .* u`) differentiates, on host
+    and on device. Every failure in the table comes from a `sum`/`mapreduce` over a
+    `CuArray` inside the traced function. Real Hamiltonians contain such reductions
+    (`sum(abs2, x)`, `dot(p, x)`), so `AutoEnzyme` is not usable for `Flow(::Hamiltonian)` or
+    `Flow(ocp, …)` on device.
 
 ---
 
-## Ensembles: a coupled system needs the kernel path, not the array path
+## Ensembles: a coupled system needs the kernel path
 
-[GPU ensembles](../flows/gpu.md#GPU-ensembles) already documents both DiffEqGPU.jl
-algorithms for a decoupled decay RHS (`du .= .-u`), where both work. This run adds a
-**coupled** oscillator (`du .= A * u`, a genuine matrix–vector product) to check whether
-that still holds:
+[GPU ensembles](../flows/gpu.md#GPU-ensembles) uses both DiffEqGPU.jl algorithms on a
+decoupled right-hand side. With a coupled one (`du .= A * u`, a matrix–vector product):
 
 | Algorithm | Decoupled (`du .= .-u`) | Coupled (`du .= A * u`) |
 |---|:---:|:---:|
-| `EnsembleGPUArray` (in-place, host closures) | ✓ | ✗ `InvalidIRError` (expected) |
+| `EnsembleGPUArray` (in-place, host closures) | ✓ | ✗ `InvalidIRError` |
 | `EnsembleGPUKernel` (out-of-place `SVector`) | ✓ | ✓ |
 
-This matches [GPU ensembles](../flows/gpu.md#⚠️-The-scalar-indexing-rule-inverts-here)'
-own warning, now with a concrete failure: `EnsembleGPUArray`'s in-place kernel cannot
-compile a BLAS matrix–vector product (`InvalidIRError`, as documented — kernels can't
-allocate or call BLAS), while `EnsembleGPUKernel`'s out-of-place `SVector` RHS handles the
-coupled system correctly, since a small static matrix–vector product lowers to ordinary
-kernel code rather than a BLAS call.
+The in-place kernel of `EnsembleGPUArray` cannot compile a BLAS matrix–vector product
+(kernels can neither allocate nor call BLAS). The out-of-place `SVector` right-hand side of
+`EnsembleGPUKernel` lowers a small static product to plain kernel code.
 
 ---
 
 ## See also
 
-- [GPU flows](../flows/gpu.md) — the full narrative guide: the GPU contract for your own
-  code, `method=:gpu`, AD backend selection, ensembles, testing your own GPU code.
-- [GPU internals](../dev/gpu-internals.md) — design decisions, the routing path, the
-  coercion helpers.
-- [`probe/gpu`](https://github.com/control-toolbox/CTFlows.jl/tree/main/probe/gpu) — the
-  probe this page is sourced from; re-run it (`run probe` label) to refresh this page.
-- [Compatibility overview](overview.md) — the per-constructor feature matrix and the CPU
-  compatibility pages.
+- [GPU flows](../flows/gpu.md): the GPU contract for your own code, `method=:gpu`, AD
+  backends, ensembles, testing on a device.
+- [GPU internals](../dev/gpu-internals.md): design decisions, the routing path, the coercion
+  helpers.
+- [`probe/gpu`](https://github.com/control-toolbox/CTFlows.jl/tree/main/probe/gpu): the probe
+  behind this page.
+- [Compatibility](overview.md): the CPU pages.

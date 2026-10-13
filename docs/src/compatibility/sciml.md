@@ -4,27 +4,13 @@
 CurrentModule = CTFlows
 ```
 
-This page is a **living compatibility reference** for the two SciML-backed flow
-constructors — `Flow(f::SciMLBase.AbstractODEFunction)` and
-`Flow(prob::SciMLBase.AbstractODEProblem)`: which state types and call styles each
-accepts, each shown with a minimal, executable example. Every ✓ / ⚠ / ✗ in the tables
-below is demonstrated by a code block on this page and is re-run on every documentation
-build, so the page cannot drift from the code.
-
-Scope: **CPU** only. The tables are generated from [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
-(run it locally with `julia --project=probe/cpu probe/cpu/probe_cpu.jl`). GPU
-compatibility is a separate effort — see [`probe/gpu`](https://github.com/control-toolbox/CTFlows.jl/tree/main/probe/gpu).
+Which state types and call styles the two SciML-backed constructors,
+`Flow(f::SciMLBase.AbstractODEFunction)` and `Flow(prob::SciMLBase.AbstractODEProblem)`,
+accept, on **CPU**. Every cell has an executed example; see [Compatibility](overview.md) for how the pages stay true.
 
 All examples integrate the scalar exponential decay ``\dot{x} = -p\,x`` with ``p = 1.0``
 (the default SciML integrator, `OrdinaryDiffEqTsit5`) — the same analytic solution as the
 [`Flow(VectorField)`](vector_field.md) page: ``x(1) = x_0\,e^{-1}``.
-
-!!! note "Last probed: 2026-07-24"
-    This page's table *shape* — which containers and axes are tested — reflects
-    [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
-    as of this date. Every ✓/⚠/✗ cell below is still re-executed on **every** documentation
-    build regardless (see [Compatibility overview](overview.md)) — only the *scope* of
-    what's tested can go stale, not the results shown.
 
 ```@setup sciml_compat
 using CTFlows
@@ -53,7 +39,7 @@ The one structural difference: a SciML function always has the uniform `(du, u, 
 `(u, p, t)` signature, so the wrapped flow is always `NonAutonomous`/`NonFixed` — `variable`
 must be passed explicitly on every call (there is no `Fixed`-by-default case like `VectorField`'s).
 
-!!! note "1-D = scalar, end to end (issue #357)"
+!!! note "1-D = scalar, end to end"
     `Flow(::ODEFunction)` goes through CTFlows' own `Systems`/`Trajectories` dispatch, so it
     follows the same ["1-D = scalar"](https://github.com/control-toolbox/ct-conventions/blob/main/rules/dimension.md)
     convention as [`Flow(VectorField)`](vector_field.md): a scalar
@@ -151,13 +137,13 @@ CTFlows `AbstractSystem`, no `get_ip_rhs`/`get_oop_rhs`. Every call does
 `CommonSolve.solve` — the mutability dispatch that protects every other constructor on
 this page (and on [`Flow(VectorField)`](vector_field.md)) **does not exist here**.
 
-!!! note "Shape-preserving by design, not by oversight (issue #357)"
+!!! note "Shape-preserving by design"
     Because this constructor never reaches CTFlows' `Systems`/`Trajectories` dispatch, it
     never applies the "1-D = scalar" coercion either — a length-1 `Vector` `x0` stays a
-    length-1 `Vector` `xf`, unlike every other constructor on this site. This is the
-    deliberate line issue #357 drew: the fix applies to constructors that go through
-    CTFlows' own dispatch (`Flow(VectorField)`, `Flow(::ODEFunction)` above), not to a
-    genuine SciML bypass like this one. See the [Shape contract](shape_contract.md) page.
+    length-1 `Vector` `xf`, unlike every other constructor on this site. The convention
+    applies to constructors that go through CTFlows' own dispatch (`Flow(VectorField)`,
+    `Flow(::ODEFunction)` above), not to a SciML bypass like this one. See the
+    [Shape contract](shape_contract.md) page.
 
 ```@example sciml_compat
 prob_oop = SciMLBase.ODEProblem(f_oop, [1.0], (0.0, 1.0), 1.0)   # built out-of-place

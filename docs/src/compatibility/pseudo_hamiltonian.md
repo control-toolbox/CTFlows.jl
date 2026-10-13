@@ -4,23 +4,18 @@
 CurrentModule = CTFlows
 ```
 
-This page is a **living compatibility reference** for `Flow(h̃, law)`, built directly from
-a [`Data.PseudoHamiltonian`](@extref CTBase.Data.PseudoHamiltonian) ``\tilde H(t,x,p,u,v)``
-and a control law — **no optimal control problem involved**. Every ✓ / ✗ in the table below
-is demonstrated by a code block re-run on every documentation build.
-
-Scope: **CPU**, default AD backend. The table is generated from
-[`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl).
-GPU compatibility is a separate effort — see [`probe/gpu`](https://github.com/control-toolbox/CTFlows.jl/tree/main/probe/gpu).
+Which state/costate types and call styles `Flow(h̃, law)` accepts, for a
+[`Data.PseudoHamiltonian`](@extref CTBase.Data.PseudoHamiltonian) ``\tilde H(t,x,p,u,v)``
+and a control law, with **no optimal control problem**, on **CPU** with the default AD
+backend. Every cell has an executed example; see [Compatibility](overview.md) for how the pages stay true.
 
 As documented in [Control laws](../flows/control_laws.md), only a
 [`DynClosedLoop`](@extref CTBase.Data.DynClosedLoop) law is accepted here — `OpenLoop` and
 `ClosedLoop` are rejected, since a pseudo-Hamiltonian needs the costate `p` that those laws
 do not provide. Unlike [`Flow(ocp, law)`](ocp_control_laws.md), there is **no OCP
 involved**: [`Systems.PseudoHamiltonianSystem`](@ref)/`Data.ComposedHamiltonian` wrap the
-user's `H̃` function **directly**, with no OCP-derived fixed-size buffer — so, as measured
-below, this constructor's compatibility profile matches
-[`Flow(Hamiltonian)`](hamiltonian.md), not the more restricted `Flow(ocp, law)`.
+user's `H̃` function **directly**, so this constructor's compatibility profile matches
+[`Flow(Hamiltonian)`](hamiltonian.md).
 
 The dynamics used on this page generalize
 [`Control laws`](../flows/control_laws.md)'s scalar example
@@ -34,13 +29,6 @@ the stationary point (``\partial\tilde H/\partial u = p - u = 0``). This gives
 \;\Longrightarrow\;
 x_f = x_0 + p_0, \qquad p_f = p_0 \quad\text{at } t_f = 1.
 ```
-
-!!! note "Last probed: 2026-07-23"
-    This page's table *shape* — which containers and axes are tested — reflects
-    [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
-    as of this date. Every ✓/✗ cell below is still re-executed on **every** documentation
-    build regardless (see [Compatibility overview](overview.md)) — only the *scope* of
-    what's tested can go stale, not the results shown.
 
 ```@setup ph_compat
 using CTFlows
@@ -78,12 +66,6 @@ table](ocp_control_laws.md#DynClosedLoop-Hamiltonian-flow,-total-vs-partial):
 | `Matrix`/`MMatrix`/`SMatrix` `Real` (batch) | ✓ | ✓ | ✓ | ✓ |
 | `Complex` (any container) | ✗ (a) | ✗ (a) | ✗ (a) | ✗ (a) |
 | `ForwardDiff.Dual` (any container) | ✗ (b) | ✗ (b) | ✗ (b) | ✗ (b) |
-
-**The full `Matrix` family works here** — measured, not assumed: confirms the "wraps `H̃`
-directly" hypothesis above. [`Flow(ocp, law)`](ocp_control_laws.md) now matches this (fixed
-as of 2026-07-24, [#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)) — before
-that fix, its OCP-derived fixed-size buffer rejected `Matrix`-family states, unlike the
-buffer-free wrapping used here.
 
 !!! note "(a) Complex is not supported"
     Same cause as [`Flow(Hamiltonian)`'s note (a)](hamiltonian.md#Compatibility-table): the
@@ -175,10 +157,7 @@ end
 - [`Flow(h̃vf, law)` compatibility](pseudo_hamiltonian_vector_field.md) — the vector-field
   sibling (derivatives supplied directly, no AD), whose `Complex`/`Dual` restrictions do
   **not** apply.
-- [`Flow(ocp, law)` compatibility](ocp_control_laws.md) — the OCP-based counterpart, whose
-  fixed-size-buffer `Matrix`-family restriction
-  ([#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)) never applied here and
-  is now fixed there too.
+- [`Flow(ocp, law)` compatibility](ocp_control_laws.md) — the OCP-based counterpart.
 - [Compatibility overview](overview.md) — the per-constructor feature matrix and the other flow types.
 - [`CTFlows.Flows.Flow`](@ref), [`CTFlows.Flows.HamiltonianFlow`](@ref) — the flow types.
 - [`CTBase.Data.PseudoHamiltonian`](@extref CTBase.Data.PseudoHamiltonian), [`CTBase.Data.DynClosedLoop`](@extref CTBase.Data.DynClosedLoop) — the data wrappers.
