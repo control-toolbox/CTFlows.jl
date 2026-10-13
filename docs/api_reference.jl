@@ -71,6 +71,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                 joinpath("Systems", "building.jl"),
                 joinpath("Systems", "hamiltonian_getter.jl"),
                 joinpath("Systems", "hamiltonian_getters_extra.jl"),
+                joinpath("Systems", "accessor_errors.jl"),
             ),
         ),
         (
@@ -125,6 +126,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                 joinpath("Flows", "controlled_flow.jl"),
                 joinpath("Flows", "building.jl"),
                 joinpath("Flows", "calling.jl"),
+                joinpath("Flows", "device_checks.jl"),
             ),
             # Flows re-exports `hamiltonian`, `hamiltonian_vector_field`, and `vector_field`
             # from Systems; documenting them here too would duplicate the Systems-page
