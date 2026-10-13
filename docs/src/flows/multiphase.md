@@ -6,8 +6,8 @@ CurrentModule = CTFlows
 
 A **multi-phase flow** concatenates several single-phase flows end-to-end, with
 **switching times** between phases and optional **jump functions** applied at each
-switch. The integration is exact: each phase is solved independently, and the output
-of one phase becomes the initial condition of the next.
+switch. Each phase is integrated on its own, and its final value (after the jump)
+becomes the initial condition of the next.
 
 ```@setup flows_multiphase
 using CTFlows
@@ -184,8 +184,8 @@ xf, pf = hmpf(0.0, x0, p0, 2.0)
 
 The merged trajectory of a multi-phase flow is a plain `VectorFieldTrajectory` (or
 `HamiltonianVectorFieldTrajectory`) — the same types produced by a single-phase flow
-— so the `CTFlowsPlots` recipe (see [Trajectories](trajectories.md#Plotting)) applies
-directly, switching times included:
+— so `plot` (see [Trajectories](trajectories.md#Plotting)) applies directly, switching
+times included:
 
 ```@setup flows_multiphase
 using Plots

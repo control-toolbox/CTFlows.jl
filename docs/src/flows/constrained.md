@@ -86,6 +86,44 @@ constraint has no active side known from the model: `:label` alone throws an
 is one `Symbol` for every component, or a tuple with one `Symbol` per component. (A
 `Tuple` of labels is a set of constraints, see [Multiple constraints](#Multiple-constraints).)
 
+The same constraint ``x \ge 0.1``, declared in the model as `x ≥ 0.1` and as `0.1 - x ≤ 0`,
+gives the flow of the function form ``g = x - 0.1``:
+
+```@example flows_constrained
+function ocp_with(f!, lb, ub)
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, 1)
+    CTModels.Building.control!(pre, 1)
+    CTModels.Building.dynamics!(
+        pre, (r, t, x, u, v) -> (r[1] = -x + u; nothing),
+    )
+    CTModels.Building.objective!(
+        pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2,
+    )
+    CTModels.Building.constraint!(
+        pre, :path; f=f!, lb=lb, ub=ub, label=:xcon,
+    )
+    return CTModels.Building.build(pre)
+end
+
+ocp_lower = ocp_with((r, t, x, u, v) -> (r[1] = x; nothing), 0.1, Inf)
+ocp_upper = ocp_with((r, t, x, u, v) -> (r[1] = 0.1 - x; nothing), -Inf, 0.0)
+μ(x, p) = c
+f_lower = Flows.Flow(ocp_lower, law; constraint=:xcon, multiplier=μ)
+f_upper = Flows.Flow(ocp_upper, law; constraint=:xcon, multiplier=μ)
+f_fun = Flows.Flow(ocp, law; constraint=(x, u) -> x - 0.1, multiplier=μ)
+f_lower(0.0, 1.0, 0.5, 1.0), f_upper(0.0, 1.0, 0.5, 1.0), f_fun(0.0, 1.0, 0.5, 1.0)
+```
+
+```@example flows_constrained
+z = f_fun(0.0, 1.0, 0.5, 1.0)                                  # hide
+@assert all(f_lower(0.0, 1.0, 0.5, 1.0) .≈ z)                  # hide
+@assert all(f_upper(0.0, 1.0, 0.5, 1.0) .≈ z)                  # hide
+nothing                                                        # hide
+```
+
 ---
 
 ## Sign convention
@@ -228,7 +266,8 @@ same `:total` ≡ `:partial` equivalence. The costate **jumps** at the two junct
 the interior and boundary arcs (`f1 * (t1, jump, f2)`, see [Multi-phase
 flows](multiphase.md)), and the reconstructed multi-phase solution's control is exactly
 ``0`` on the boundary arc and non-zero on both interior arcs. Ported from the OptimalControl.jl
-state-constraint example. See `test/suite/integration/test_double_integrator_state.jl`.
+state-constraint example. See `test/cron/integration/test_double_integrator_state.jl` (part
+of the weekly test suite).
 
 ---
 

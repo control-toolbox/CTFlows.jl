@@ -184,9 +184,9 @@ Integrators.final_state(sol)  # xf — a state flow returns the state
 Integrators.final_state(hsol) # (xf, pf) — a Hamiltonian flow returns the pair
 ```
 
-`status` returns the integrator's return code and `successful` a `Bool`. A **point**
-call raises a `SolverFailure` on a non-success code unless `unsafe=true`; a trajectory
-call always returns, so inspect `successful(sol)` to check convergence (see
+`status` returns the integrator's return code and `successful` a `Bool`. Both call styles
+raise a `CTBase.Exceptions.SolverFailure` on a non-success code; with `unsafe=true` the
+call returns anyway, and `successful(sol)` tells whether the integration converged (see
 [Integrating](integrating.md#Unsafe-mode)).
 
 ---
@@ -210,8 +210,7 @@ Trajectory plotting is split into a backend-free **case layer** and a **backend*
 
 Both extensions call `build_figure` and hand the figure to
 `CTBase.Plotting.render(<backend>, fig)`; they expose the **same** `description` and
-keyword surface. The Makie backend is at feature parity with the Plots backend (see
-CTModels#408 / CTBase#540). Until a backend extension is loaded, `plot` on a trajectory
+keyword surface, with the same features. Until a backend extension is loaded, `plot` on a trajectory
 throws a `CTBase.Exceptions.ExtensionError`.
 
 When only one backend is loaded, call `plot` unqualified; when both are loaded (as in

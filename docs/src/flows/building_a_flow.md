@@ -137,7 +137,8 @@ typeof(flow_explicit) == typeof(flow)
 | OCP (with control) + `OpenLoop`/`ClosedLoop` law | `ControlledFlow` |
 | OCP (with control) + `u::Function` | `OptimalControlFlow` (auto `DynClosedLoop`) |
 
-Both `StateFlow` and `HamiltonianFlow` are concrete subtypes of `AbstractFlow`.
+`StateFlow` and `HamiltonianFlow` are aliases of the concrete `Flow` type (a subtype of
+`AbstractFlow`), for a state and a Hamiltonian system.
 `ControlledFlow` is a state-flow wrapper carrying a control law (see
 [Control laws](control_laws.md)).
 `OptimalControlFlow` wraps a `HamiltonianFlow` with the OCP reference (see
