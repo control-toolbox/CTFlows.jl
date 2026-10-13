@@ -80,8 +80,9 @@ $(TYPEDSIGNATURES)
 
 Return whether the SciML integrator sets `saveat`.
 """
-Integrators.has_saveat(integ::Integrators.SciML) =
-    haskey(Integrators.options_trajectory(integ), :saveat)
+function Integrators.has_saveat(integ::Integrators.SciML)
+    return haskey(Integrators.options_trajectory(integ), :saveat)
+end
 
 """
 $(TYPEDSIGNATURES)

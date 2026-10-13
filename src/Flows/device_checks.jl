@@ -30,8 +30,9 @@ $(TYPEDSIGNATURES)
 The ADTypes backend wrapped by an AD backend strategy: only the `DifferentiationInterface`
 strategy wraps one (any other strategy, e.g. a user-defined one, gives `nothing`).
 """
-_adtypes_backend(backend::Differentiation.DifferentiationInterface) =
-    Differentiation.ad_backend(backend)
+function _adtypes_backend(backend::Differentiation.DifferentiationInterface)
+    return Differentiation.ad_backend(backend)
+end
 _adtypes_backend(::Differentiation.AbstractADBackend) = nothing
 
 """
@@ -42,7 +43,9 @@ costate of a Hamiltonian configuration (the variable costate is a host object by
 """
 _call_arrays(config::Configs.AbstractStateConfig) = (Configs.initial_state(config),)
 function _call_arrays(
-    config::Union{Configs.AbstractHamiltonianConfig,Configs.AbstractAugmentedHamiltonianConfig}
+    config::Union{
+        Configs.AbstractHamiltonianConfig,Configs.AbstractAugmentedHamiltonianConfig
+    },
 )
     return (Configs.initial_state(config), Configs.initial_costate(config))
 end
@@ -79,9 +82,12 @@ function _check_call(flow::AbstractFlow, config::Configs.AbstractConfig)
     sys = system(flow)
     host = filter(_is_host_array, _call_arrays(config))
     if !isempty(host)
-        _check_host_arrays(_integrator_device(integrator(flow)), _system_ad_backend(sys), host)
+        _check_host_arrays(
+            _integrator_device(integrator(flow)), _system_ad_backend(sys), host
+        )
     end
-    Traits.ad_trait(sys) === Traits.WithAD && Differentiation.check_backend(Systems.backend(sys))
+    Traits.ad_trait(sys) === Traits.WithAD &&
+        Differentiation.check_backend(Systems.backend(sys))
     return nothing
 end
 

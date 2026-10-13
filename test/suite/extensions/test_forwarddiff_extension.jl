@@ -70,7 +70,8 @@ function test_forwarddiff_extension()
             Test.@test t_dual ≈ t_real atol = 1e-12
             Test.@test first(t_dual) == 0.0 && last(t_dual) == 1.0
             # value and sensitivity at the final time: x(1) = e · x0, ∂x(1)/∂x0 = e
-            Test.@test ForwardDiff.value(result_dual(1.0)[1]) ≈ result_real(1.0)[1] atol = 1e-8
+            Test.@test ForwardDiff.value(result_dual(1.0)[1]) ≈ result_real(1.0)[1] atol =
+                1e-8
             Test.@test ForwardDiff.partials(result_dual(1.0)[1], 1) ≈ ℯ atol = 1e-6
         end
     end

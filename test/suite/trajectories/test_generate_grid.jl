@@ -16,15 +16,16 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 const STEPS = collect(range(0, 1, 11))   # stand-in solver steps
 _sharp(t) = [tanh(40 * (t - 0.6))]
-_gen(spec, curve; steps=STEPS, bounds=[0.0, 1.0]) =
-    Trajectories.generate_grid(spec, curve, steps, bounds)
+function _gen(spec, curve; steps=STEPS, bounds=[0.0, 1.0])
+    return Trajectories.generate_grid(spec, curve, steps, bounds)
+end
 
 # the generic properties every generated grid must have
 function _check_props(g, n, bounds)
     Test.@test length(g) == n
     Test.@test allunique(g)
     forward = last(bounds) > first(bounds)
-    Test.@test issorted(forward ? g : reverse(g); lt=<)
+    Test.@test issorted(forward ? g : reverse(g); lt=(<))
     Test.@test first(g) == first(bounds) && last(g) == last(bounds)
     for b in bounds
         Test.@test count(==(b), g) == 1
@@ -68,7 +69,8 @@ function test_generate_grid()
 
         Test.@testset "a constant component is ignored (rounding noise)" begin
             noisy = t -> [12.0 + 1e-15 * sin(1000t); _sharp(t)]
-            Test.@test _gen(Configs.AdaptiveGrid(25), noisy) ≈ _gen(Configs.AdaptiveGrid(25), _sharp)
+            Test.@test _gen(Configs.AdaptiveGrid(25), noisy) ≈
+                _gen(Configs.AdaptiveGrid(25), _sharp)
         end
 
         Test.@testset "multi-phase [$label]" for (label, spec) in (
@@ -95,7 +97,12 @@ function test_generate_grid()
                 g = _gen(spec, _sharp; steps=reverse(STEPS), bounds=[1.0, 0.0])
                 _check_props(g, 9, [1.0, 0.0])
             end
-            g = _gen(Configs.AdaptiveGrid(9), _sharp; steps=reverse(STEPS), bounds=[1.0, 0.5, 0.0])
+            g = _gen(
+                Configs.AdaptiveGrid(9),
+                _sharp;
+                steps=reverse(STEPS),
+                bounds=[1.0, 0.5, 0.0],
+            )
             _check_props(g, 9, [1.0, 0.5, 0.0])
         end
 
@@ -106,12 +113,17 @@ function test_generate_grid()
         end
 
         Test.@testset "Error: invalid specs" begin
-            for bad in (() -> Configs.UniformGrid(1), () -> Configs.UniformGrid(0),
-                        () -> Configs.UniformGrid(-3), () -> Configs.AdaptiveGrid(1),
-                        () -> Configs.AdaptiveGrid(10; uniform=-0.1),
-                        () -> Configs.AdaptiveGrid(10; uniform=1.1),
-                        () -> Configs._grid_spec(2.5), () -> Configs._grid_spec([0.0, 1.0]),
-                        () -> Configs._grid_spec(:fine))
+            for bad in (
+                () -> Configs.UniformGrid(1),
+                () -> Configs.UniformGrid(0),
+                () -> Configs.UniformGrid(-3),
+                () -> Configs.AdaptiveGrid(1),
+                () -> Configs.AdaptiveGrid(10; uniform=-0.1),
+                () -> Configs.AdaptiveGrid(10; uniform=1.1),
+                () -> Configs._grid_spec(2.5),
+                () -> Configs._grid_spec([0.0, 1.0]),
+                () -> Configs._grid_spec(:fine),
+            )
                 Test.@test_throws Exceptions.IncorrectArgument bad()
             end
             Test.@test Configs._grid_spec(7) == Configs.UniformGrid(7)

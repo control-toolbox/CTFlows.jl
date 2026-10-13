@@ -38,9 +38,7 @@ struct AutoFakeBackend <: ADTypes.AbstractADType end
 const H = Data.Hamiltonian(
     (x, p) -> 0.5 * sum(abs2, p) + x[1]; is_autonomous=true, is_variable=false
 )
-const H1 = Data.Hamiltonian(
-    (x, p) -> 0.5 * p^2 + x; is_autonomous=true, is_variable=false
-)
+const H1 = Data.Hamiltonian((x, p) -> 0.5 * p^2 + x; is_autonomous=true, is_variable=false)
 _vf() = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
 
 const X0, P0 = [1.0, 0.0], [0.0, 1.0]
@@ -87,7 +85,8 @@ function test_device_checks()
         end
 
         Test.@testset "Unit: _call_arrays" begin
-            Test.@test Flows._call_arrays(Configs.StateEndPointConfig(0.0, X0, 1.0)) == (X0,)
+            Test.@test Flows._call_arrays(Configs.StateEndPointConfig(0.0, X0, 1.0)) ==
+                (X0,)
             Test.@test Flows._call_arrays(
                 Configs.HamiltonianEndPointConfig(0.0, X0, P0, 1.0)
             ) == (X0, P0)
@@ -103,8 +102,9 @@ function test_device_checks()
             host = (X0,)
             # CPU device, any backend but Mooncake → accepted
             Test.@test Flows._check_host_arrays(Strategies.CPU, nothing, host) === nothing
-            Test.@test Flows._check_host_arrays(nothing, ADTypes.AutoForwardDiff(), host) ===
-                nothing
+            Test.@test Flows._check_host_arrays(
+                nothing, ADTypes.AutoForwardDiff(), host
+            ) === nothing
             # GPU device → refused
             err = _throws(() -> Flows._check_host_arrays(Strategies.GPU, nothing, host))
             Test.@test err isa Exceptions.PreconditionError
@@ -141,7 +141,9 @@ function test_device_checks()
                 Configs.HamiltonianEndPointConfig(0.0, 1.0, 0.5, 1.0),
             ),
         )
-            Test.@test_throws Exceptions.PreconditionError Flows._check_call(flow, config_host)
+            Test.@test_throws Exceptions.PreconditionError Flows._check_call(
+                flow, config_host
+            )
             Test.@test Flows._check_call(flow, config_device) === nothing
             Test.@test Flows._check_call(flow, config_scalar) === nothing
         end
@@ -161,7 +163,8 @@ function test_device_checks()
                 Flows.Flow(H), Configs.HamiltonianEndPointConfig(0.0, X0, P0, 1.0)
             ) === nothing
             Test.@test Flows._check_call(
-                Flows.Flow(H; method=:cpu), Configs.HamiltonianEndPointConfig(0.0, X0, P0, 1.0)
+                Flows.Flow(H; method=:cpu),
+                Configs.HamiltonianEndPointConfig(0.0, X0, P0, 1.0),
             ) === nothing
         end
 
@@ -198,9 +201,11 @@ function test_device_checks()
 
         Test.@testset "Error: unavailable backend with device arrays (GPU flow)" begin
             f = Flows.Flow(H; method=:gpu, ad_backend=AutoFakeBackend())
-            err = _throws(() -> Flows._check_call(
-                f, Configs.HamiltonianEndPointConfig(0.0, DEVICE_X0, DEVICE_P0, 1.0)
-            ))
+            err = _throws(
+                () -> Flows._check_call(
+                    f, Configs.HamiltonianEndPointConfig(0.0, DEVICE_X0, DEVICE_P0, 1.0)
+                ),
+            )
             Test.@test err isa Exceptions.ExtensionError
             Test.@test err.weakdeps == (:FakeBackend,)
         end
@@ -208,7 +213,9 @@ function test_device_checks()
         # ====================================================================
         # INTEGRATION — the checks apply on every path of a real call
         # ====================================================================
-        Test.@testset "Integration: method=:gpu with a host array [$kind]" for (kind, call) in (
+        Test.@testset "Integration: method=:gpu with a host array [$kind]" for (
+            kind, call
+        ) in (
             ("state point", () -> Flows.Flow(_vf(); method=:gpu)(0.0, X0, 1.0)),
             ("state trajectory", () -> Flows.Flow(_vf(); method=:gpu)((0.0, 1.0), X0)),
             (
@@ -225,9 +232,7 @@ function test_device_checks()
             ),
             (
                 "multi-phase",
-                () -> (
-                    f = Flows.Flow(_vf(); method=:gpu); (f * (0.5, f))((0.0, 1.0), X0)
-                ),
+                () -> (f=Flows.Flow(_vf(); method=:gpu); (f * (0.5, f))((0.0, 1.0), X0)),
             ),
         )
             Test.@test_throws Exceptions.PreconditionError call()

@@ -40,11 +40,14 @@ end
 FakeTraj(ts; dense=true) = FakeTraj(collect(Float64, ts), dense, nothing)
 Integrators.is_dense(t::FakeTraj) = t.dense
 Integrators.times(t::FakeTraj) = t.ts
-Integrators.regrid(t::FakeTraj, grid::AbstractVector) = FakeTraj(t.ts, t.dense, collect(grid))
+function Integrators.regrid(t::FakeTraj, grid::AbstractVector)
+    return FakeTraj(t.ts, t.dense, collect(grid))
+end
 
 _curve(t) = [sin(3t)]
-_apply(traj, spec=Configs.AutomaticGrid()) =
-    Trajectories.apply_generated_grid(traj, spec, _curve, [0.0, 1.0])
+function _apply(traj, spec=Configs.AutomaticGrid())
+    return Trajectories.apply_generated_grid(traj, spec, _curve, [0.0, 1.0])
+end
 
 function test_default_grid()
     Test.@testset "Default output grid" verbose=VERBOSE showtiming=SHOWTIMING begin

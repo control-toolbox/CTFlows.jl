@@ -1232,7 +1232,11 @@ no control, no costate — `control`/`costate` throw a `PreconditionError`).
 See also: [`CTFlows.Trajectories.StateFlowTrajectory`](@extref), `CTFlows.Flows._state_flow_objective`.
 """
 function (F::OptimalControlFlow)(
-    tspan::Configs.TimeSpec, x0; variable=Core.NotProvided, unsafe::Bool=false, grid=__grid()
+    tspan::Configs.TimeSpec,
+    x0;
+    variable=Core.NotProvided,
+    unsafe::Bool=false,
+    grid=__grid(),
 )
     sf = _require_state_flow(F)
     spec = _call_grid_spec(tspan, grid, sf)

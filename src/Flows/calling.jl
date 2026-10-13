@@ -134,7 +134,9 @@ function (f::AbstractStateFlow)(
     _check_output_grid(f, config)
     traj = _invoke_flow(f, config; variable=variable, unsafe=unsafe)
     bounds = collect(Configs.tspan(config))
-    return _regrid_state(traj, Configs.output_grid(config), nothing, nothing, identity, bounds)
+    return _regrid_state(
+        traj, Configs.output_grid(config), nothing, nothing, identity, bounds
+    )
 end
 
 """

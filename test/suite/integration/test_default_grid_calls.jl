@@ -58,14 +58,15 @@ _flow_h(; kw...) = Flows.Flow(OCP, LAW_H; hamiltonian_type=:partial, _tol()..., 
 _flow_s(; kw...) = Flows.Flow(OCP, LAW_S; _tol()..., kw...)
 _flow_c(; kw...) = Flows.Flow(OCP, Data.ClosedLoop(x -> 0.0); _tol()..., kw...)
 _plain_s(; kw...) = Flows.Flow(Data.VectorField(x -> [x[2], -x[1]]); _tol()..., kw...)
-_plain_h(; kw...) =
-    Flows.Flow(Data.HamiltonianVectorField((x, p) -> (p, -x)); _tol()..., kw...)
+function _plain_h(; kw...)
+    return Flows.Flow(Data.HamiltonianVectorField((x, p) -> (p, -x)); _tol()..., kw...)
+end
 
 # 250 distinct times, sorted, bounds included once
 function _check_default(T, bounds)
     Test.@test length(T) == NDEFAULT
     Test.@test allunique(T)
-    Test.@test issorted(last(bounds) > first(bounds) ? T : reverse(T); lt=<)
+    Test.@test issorted(last(bounds) > first(bounds) ? T : reverse(T); lt=(<))
     Test.@test first(T) == first(bounds) && last(T) == last(bounds)
     for b in bounds
         Test.@test count(==(b), T) == 1
@@ -203,9 +204,11 @@ function test_default_grid_calls()
         Test.@testset "values and objective unchanged (state OCP)" begin
             f = _flow_s()
             auto, raw = f((0.0, 1.0), X0), f((0.0, 1.0), X0; grid=nothing)
-            Test.@test Trajectories.objective(auto) ≈ Trajectories.objective(raw) atol = 1e-12
+            Test.@test Trajectories.objective(auto) ≈ Trajectories.objective(raw) atol =
+                1e-12
             for t in OFF_GRID
-                Test.@test Trajectories.state(auto)(t) ≈ Trajectories.state(raw)(t) atol = 1e-12
+                Test.@test Trajectories.state(auto)(t) ≈ Trajectories.state(raw)(t) atol =
+                    1e-12
             end
         end
 
@@ -219,14 +222,27 @@ function test_default_grid_calls()
 
         # ── the opt-out and the solver steps ─────────────────────────────────
         Test.@testset "grid=nothing keeps the solver steps [$kind]" for (kind, call, T) in (
-            ("plain state", () -> _plain_s()((0.0, 1.0), [1.0, 0.0]; grid=nothing),
-                Integrators.times),
-            ("plain Hamiltonian", () -> _plain_h()((0.0, 1.0), 1.0, 0.0; grid=nothing),
-                Integrators.times),
+            (
+                "plain state",
+                () -> _plain_s()((0.0, 1.0), [1.0, 0.0]; grid=nothing),
+                Integrators.times,
+            ),
+            (
+                "plain Hamiltonian",
+                () -> _plain_h()((0.0, 1.0), 1.0, 0.0; grid=nothing),
+                Integrators.times,
+            ),
             ("OCP", () -> _flow_h()((0.0, 1.0), X0, P0; grid=nothing), CTModels.time_grid),
-            ("OCP state", () -> _flow_s()((0.0, 1.0), X0; grid=nothing), CTModels.time_grid),
-            ("multi-phase", () -> (_flow_h() * (0.5, _flow_h()))((0.0, 1.0), X0, P0; grid=nothing),
-                CTModels.time_grid),
+            (
+                "OCP state",
+                () -> _flow_s()((0.0, 1.0), X0; grid=nothing),
+                CTModels.time_grid,
+            ),
+            (
+                "multi-phase",
+                () -> (_flow_h() * (0.5, _flow_h()))((0.0, 1.0), X0, P0; grid=nothing),
+                CTModels.time_grid,
+            ),
         )
             ts = T(call())
             Test.@test length(ts) < NDEFAULT
@@ -241,12 +257,20 @@ function test_default_grid_calls()
 
         # ── no generated grid when the output is already shaped ──────────────
         Test.@testset "saveat: returned as is [$kind]" for (kind, call, T) in (
-            ("plain state", () -> _plain_s(; saveat=0.1)((0.0, 1.0), [1.0, 0.0]),
-                Integrators.times),
+            (
+                "plain state",
+                () -> _plain_s(; saveat=0.1)((0.0, 1.0), [1.0, 0.0]),
+                Integrators.times,
+            ),
             ("OCP", () -> _flow_h(; saveat=0.1)((0.0, 1.0), X0, P0), CTModels.time_grid),
             ("OCP state", () -> _flow_s(; saveat=0.1)((0.0, 1.0), X0), CTModels.time_grid),
-            ("multi-phase", () -> (_flow_h(; saveat=0.1) * (0.5, _flow_h(; saveat=0.1)))(
-                (0.0, 1.0), X0, P0), CTModels.time_grid),
+            (
+                "multi-phase",
+                () -> (_flow_h(; saveat=0.1) * (0.5, _flow_h(; saveat=0.1)))(
+                    (0.0, 1.0), X0, P0
+                ),
+                CTModels.time_grid,
+            ),
         )
             ts = T(call())
             Test.@test length(ts) < NDEFAULT
@@ -254,8 +278,7 @@ function test_default_grid_calls()
         end
 
         Test.@testset "grid of times: returned exactly [$kind]" for (kind, times) in (
-            ("vector", [0.0, 0.25, 0.5, 1.0]),
-            ("tuple", (0.0, 0.25, 0.5, 1.0)),
+            ("vector", [0.0, 0.25, 0.5, 1.0]), ("tuple", (0.0, 0.25, 0.5, 1.0))
         )
             traj = _plain_s()(times, [1.0, 0.0])
             Test.@test Integrators.times(traj) == collect(Float64, times)
@@ -266,14 +289,18 @@ function test_default_grid_calls()
         end
 
         Test.@testset "explicit grid=N is not replaced by the default" begin
-            Test.@test length(Integrators.times(_plain_s()((0.0, 1.0), [1.0, 0.0]; grid=15))) == 15
+            Test.@test length(
+                Integrators.times(_plain_s()((0.0, 1.0), [1.0, 0.0]; grid=15))
+            ) == 15
             Test.@test length(
                 Integrators.times(
                     _plain_s()((0.0, 1.0), [1.0, 0.0]; grid=Configs.UniformGrid(40))
                 ),
             ) == 40
             Test.@test length(
-                CTModels.time_grid(_flow_h()((0.0, 1.0), X0, P0; grid=Configs.AdaptiveGrid(60)))
+                CTModels.time_grid(
+                    _flow_h()((0.0, 1.0), X0, P0; grid=Configs.AdaptiveGrid(60))
+                ),
             ) == 60
             # an explicit AdaptiveGrid(250) is applied whatever the solver returned
             Test.@test length(
@@ -297,7 +324,10 @@ function test_default_grid_calls()
 
         Test.@testset "at least 250 solver times: left as the solver returned" begin
             f = Flows.Flow(
-                Data.VectorField(x -> [x[2], -x[1]]); alg=Tsit5(), reltol=1e-12, abstol=1e-12
+                Data.VectorField(x -> [x[2], -x[1]]);
+                alg=Tsit5(),
+                reltol=1e-12,
+                abstol=1e-12,
             )
             auto = f((0.0, 200.0), [1.0, 0.0])
             raw = f((0.0, 200.0), [1.0, 0.0]; grid=nothing)
@@ -317,7 +347,8 @@ function test_default_grid_calls()
             f = CTFlowsSciMLFlows.SciMLProblemFlow(prob, Integrators.SciML(; _tol()...))
             r = f((0.0, 1.0), [1.0, 0.0])
             Test.@test length(Integrators.times(r)) < 100
-            Test.@test Integrators.times(r) == Integrators.times(f((0.0, 1.0), [1.0, 0.0]; grid=nothing))
+            Test.@test Integrators.times(r) ==
+                Integrators.times(f((0.0, 1.0), [1.0, 0.0]; grid=nothing))
             # its own saveat is the user's escape hatch
             g = CTFlowsSciMLFlows.SciMLProblemFlow(
                 ODEProblem((u, p, t) -> [u[2], -u[1]], [1.0, 0.0], (0.0, 1.0); saveat=0.1),

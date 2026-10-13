@@ -448,7 +448,9 @@ function test_variable_costate_flows()
                 is_autonomous=true,
                 is_variable=false,
             )
-            hflow = Flows.build_flow(Systems.HamiltonianSystem(h_fixed, BACKEND_FAKE), INTEG)
+            hflow = Flows.build_flow(
+                Systems.HamiltonianSystem(h_fixed, BACKEND_FAKE), INTEG
+            )
             Test.@test Traits.variable_costate_trait(hflow) === Traits.NoVariableCostate
             err = nothing
             try

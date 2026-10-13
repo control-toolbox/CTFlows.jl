@@ -284,10 +284,18 @@ Regrid a raw merged trajectory (no control law) on a generated grid, whose plott
 are the state (and the costate); unchanged otherwise.
 """
 _regrid_raw(merged, grid, bounds) = merged
-_regrid_raw(merged::Trajectories.VectorFieldTrajectory, grid::Configs.AbstractGrid, bounds) =
-    Flows._regrid_state(merged, grid, nothing, nothing, identity, bounds)
-_regrid_raw(merged::Trajectories.HamiltonianVectorFieldTrajectory, grid::Configs.AbstractGrid, bounds) =
-    Flows._regrid_hamiltonian(merged, grid, nothing, nothing, bounds)
+function _regrid_raw(
+    merged::Trajectories.VectorFieldTrajectory, grid::Configs.AbstractGrid, bounds
+)
+    return Flows._regrid_state(merged, grid, nothing, nothing, identity, bounds)
+end
+function _regrid_raw(
+    merged::Trajectories.HamiltonianVectorFieldTrajectory,
+    grid::Configs.AbstractGrid,
+    bounds,
+)
+    return Flows._regrid_hamiltonian(merged, grid, nothing, nothing, bounds)
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -363,7 +371,9 @@ Lagrange) over the merged trajectory when the phases carry an OCP (`nothing` obj
 
 See also: [`CTFlows.MultiPhase._reconstruct_ocp_solution`](@extref), `CTFlows.Flows._state_flow_objective`.
 """
-function _reconstruct_controlled_trajectory(mpf, merged, variable, grid=nothing, bounds=nothing)
+function _reconstruct_controlled_trajectory(
+    mpf, merged, variable, grid=nothing, bounds=nothing
+)
     phases = get_flows(mpf)
     ocp = _shared_ocp(phases)
     plaw = _PiecewiseControlLaw(map(p -> p.law, phases), get_switching_times(mpf))

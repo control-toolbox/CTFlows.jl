@@ -59,9 +59,7 @@ function Systems.hamiltonian(sys::FakeHamiltonianSystemWithAD)
 end
 
 function Systems.backend(sys::FakeHamiltonianSystemWithAD)
-    return Differentiation.DifferentiationInterface(;
-        ad_backend=ADTypes.AutoForwardDiff()
-    )
+    return Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff())
 end
 
 # function Differentiation.prepare_cache(

@@ -65,7 +65,7 @@ _flow_s(; kw...) = Flows.Flow(OCP, LAW_S; _tol()..., kw...)
 function _check_grid(T, n, bounds)
     Test.@test length(T) == n
     Test.@test allunique(T)
-    Test.@test issorted(last(bounds) > first(bounds) ? T : reverse(T); lt=<)
+    Test.@test issorted(last(bounds) > first(bounds) ? T : reverse(T); lt=(<))
     Test.@test first(T) == first(bounds) && last(T) == last(bounds)
     for b in bounds
         Test.@test count(==(b), T) == 1
@@ -191,7 +191,9 @@ function test_generated_grids()
 
         Test.@testset "multi-phase with a costate jump: right limit read after the switch" begin
             f = _flow_h()
-            sol = (f * (0.5, [0.0, -9.0], f))((0.0, 1.0), X0, P0; grid=Configs.AdaptiveGrid(N))
+            sol = (f * (0.5, [0.0, -9.0], f))(
+                (0.0, 1.0), X0, P0; grid=Configs.AdaptiveGrid(N)
+            )
             T = CTModels.time_grid(sol)
             _check_grid(T, N, [0.0, 0.5, 1.0])
             Test.@test _val(CTModels.control(sol)(0.5)) ≈ _u(0.5) atol = TOL   # left value
@@ -212,7 +214,9 @@ function test_generated_grids()
         # ── dense=false: works, the OCP objective warns as before ────────────
         Test.@testset "dense=false" begin
             f = _flow_h(; dense=false)
-            sol = Test.@test_logs (:warn, r"without dense output") f((0.0, 1.0), X0, P0; grid=N)
+            sol = Test.@test_logs (:warn, r"without dense output") f(
+                (0.0, 1.0), X0, P0; grid=N
+            )
             _check_grid(CTModels.time_grid(sol), N, [0.0, 1.0])
         end
 
@@ -228,26 +232,61 @@ function test_generated_grids()
         end
 
         Test.@testset "Error: grid of times and grid= [$kind]" for (kind, call) in (
-            ("state", () -> Flows.Flow(Data.VectorField(x -> -x); _tol()...)([0.0, 0.5, 1.0], 1.0; grid=5)),
+            (
+                "state",
+                () -> Flows.Flow(Data.VectorField(x -> -x); _tol()...)(
+                    [0.0, 0.5, 1.0], 1.0; grid=5
+                ),
+            ),
             ("OCP", () -> _flow_h()([0.0, 0.5, 1.0], X0, P0; grid=5)),
             ("OCP state", () -> _flow_s()((0.0, 0.5, 1.0), X0; grid=5)),
-            ("multi-phase", () -> (_flow_h() * (0.5, _flow_h()))([0.0, 0.7, 1.0], X0, P0; grid=5)),
+            (
+                "multi-phase",
+                () -> (_flow_h() * (0.5, _flow_h()))([0.0, 0.7, 1.0], X0, P0; grid=5),
+            ),
         )
             Test.@test_throws Exceptions.IncorrectArgument call()
         end
 
         Test.@testset "Error: saveat and grid= [$kind]" for (kind, call) in (
-            ("state", () -> Flows.Flow(Data.VectorField(x -> -x); _tol()..., saveat=0.1)((0.0, 1.0), 1.0; grid=5)),
-            ("Hamiltonian", () -> Flows.Flow(Data.HamiltonianVectorField((x, p) -> (p, -x)); saveat=0.1)((0.0, 1.0), 1.0, 0.0; grid=5)),
+            (
+                "state",
+                () -> Flows.Flow(Data.VectorField(x -> -x); _tol()..., saveat=0.1)(
+                    (0.0, 1.0), 1.0; grid=5
+                ),
+            ),
+            (
+                "Hamiltonian",
+                () ->
+                    Flows.Flow(Data.HamiltonianVectorField((x, p) -> (p, -x)); saveat=0.1)(
+                        (0.0, 1.0), 1.0, 0.0; grid=5
+                    ),
+            ),
             ("OCP", () -> _flow_h(; saveat=0.1)((0.0, 1.0), X0, P0; grid=5)),
             ("OCP state", () -> _flow_s(; saveat=0.1)((0.0, 1.0), X0; grid=5)),
-            ("multi-phase", () -> (_flow_h(; saveat=0.1) * (0.5, _flow_h()))((0.0, 1.0), X0, P0; grid=5)),
-            ("SciML problem (integrator)", () -> CTFlowsSciMLFlows.SciMLProblemFlow(
-                ODEProblem((u, p, t) -> -u, [1.0], (0.0, 1.0)), Integrators.SciML(; saveat=0.1)
-            )((0.0, 1.0), [1.0]; grid=5)),
-            ("SciML problem (problem)", () -> CTFlowsSciMLFlows.SciMLProblemFlow(
-                ODEProblem((u, p, t) -> -u, [1.0], (0.0, 1.0); saveat=0.1), Integrators.SciML()
-            )((0.0, 1.0), [1.0]; grid=5)),
+            (
+                "multi-phase",
+                () ->
+                    (_flow_h(; saveat=0.1) * (0.5, _flow_h()))((0.0, 1.0), X0, P0; grid=5),
+            ),
+            (
+                "SciML problem (integrator)",
+                () -> CTFlowsSciMLFlows.SciMLProblemFlow(
+                    ODEProblem((u, p, t) -> -u, [1.0], (0.0, 1.0)),
+                    Integrators.SciML(; saveat=0.1),
+                )(
+                    (0.0, 1.0), [1.0]; grid=5
+                ),
+            ),
+            (
+                "SciML problem (problem)",
+                () -> CTFlowsSciMLFlows.SciMLProblemFlow(
+                    ODEProblem((u, p, t) -> -u, [1.0], (0.0, 1.0); saveat=0.1),
+                    Integrators.SciML(),
+                )(
+                    (0.0, 1.0), [1.0]; grid=5
+                ),
+            ),
         )
             Test.@test_throws Exceptions.IncorrectArgument call()
         end
