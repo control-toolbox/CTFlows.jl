@@ -6,12 +6,13 @@
 # integrated RHS — so they return lightweight closures over the system's
 # Hamiltonian and AD backend rather than dedicated functors.
 #
-# The gradient closures use the uniform signature accepted by the
+# The gradient functors take the uniform signature accepted by the
 # `CTBase.Differentiation` primitives:
 #   - true Hamiltonian:   `(t, x, p, v)`      → `H(t, x, p, v)`
 #   - pseudo-Hamiltonian: `(t, x, p, u, v)`   → `H̃(t, x, p, u, v)`
-# with `x`/`p` in the shape the Hamiltonian expects (scalar in dimension 1),
-# exactly as the user would call `hamiltonian(sys)` / `pseudo_hamiltonian(sys)`.
+# and, like `hamiltonian(sys)` / `pseudo_hamiltonian(sys)`, the short form allowed by the
+# traits (`(x, p)`, `(t, x, p)`, `(x, p, v)`; `(x, p, u)`, ...), with `x`/`p` in the shape
+# the Hamiltonian expects (scalar in dimension 1).
 # =============================================================================
 
 """
@@ -83,7 +84,8 @@ end
 $(TYPEDEF)
 
 Functor returning the gradient `(∂H/∂x, ∂H/∂p)` of a true Hamiltonian, evaluated as
-`(t, x, p, v)`. For a Hamiltonian composed with a control law, the gradient is the
+`(t, x, p, v)` or, like the Hamiltonian itself, in the short form its traits allow:
+`(x, p)`, `(t, x, p)` or `(x, p, v)`. For a Hamiltonian composed with a control law, the gradient is the
 **total** derivative (differentiated through the law). The tuple is non-negated.
 
 # Fields
@@ -101,12 +103,18 @@ function (g::HamiltonianGradient)(t, x, p, v)
     return Differentiation.hamiltonian_gradient(g.backend, g.h, t, x, p, v)
 end
 
+# Short forms, as for the Hamiltonian itself: the arguments its traits do not use are
+# dropped (autonomous: no `t`; fixed: no `v`).
+(g::HamiltonianGradient{<:Data.AbstractHamiltonian{Traits.Autonomous,Traits.Fixed}})(x, p) = g(0.0, x, p, nothing)
+(g::HamiltonianGradient{<:Data.AbstractHamiltonian{Traits.NonAutonomous,Traits.Fixed}})(t, x, p) = g(t, x, p, nothing)
+(g::HamiltonianGradient{<:Data.AbstractHamiltonian{Traits.Autonomous,Traits.NonFixed}})(x, p, v) = g(0.0, x, p, v)
+
 """
 $(TYPEDEF)
 
 Functor returning the variable gradient `∂H/∂v` of a true Hamiltonian, evaluated as
-`(t, x, p, v)` — the quantity (before negation) that drives the augmented
-variable-costate equation `ṗv = -∂H/∂v`. Non-negated.
+`(t, x, p, v)` (or `(x, p, v)` for an autonomous Hamiltonian) — the quantity (before
+negation) that drives the augmented variable-costate equation `ṗv = -∂H/∂v`. Non-negated.
 
 # Fields
 - `h::H`: the Hamiltonian to differentiate.
@@ -125,11 +133,15 @@ function (g::HamiltonianVariableGradient)(t, x, p, v)
     return Differentiation.variable_gradient(g.backend, g.h, t, x, p, v)
 end
 
+# Short form for an autonomous Hamiltonian (the variable gradient needs `v`).
+(g::HamiltonianVariableGradient{<:Data.AbstractHamiltonian{Traits.Autonomous,Traits.NonFixed}})(x, p, v) = g(0.0, x, p, v)
+
 """
 $(TYPEDEF)
 
 Functor returning the gradient `(∂H̃/∂x, ∂H̃/∂p)` of a pseudo-Hamiltonian, evaluated as
-`(t, x, p, u, v)` at **fixed control** `u`. Non-negated.
+`(t, x, p, u, v)` at **fixed control** `u`, or in the short form the pseudo-Hamiltonian's
+traits allow: `(x, p, u)`, `(t, x, p, u)` or `(x, p, u, v)`. Non-negated.
 
 # Fields
 - `h̃::H`: the pseudo-Hamiltonian to differentiate.
@@ -148,11 +160,17 @@ function (g::PseudoHamiltonianGradient)(t, x, p, u, v)
     return Differentiation.pseudo_hamiltonian_gradient(g.backend, g.h̃, t, x, p, u, v)
 end
 
+# Short forms, as for the pseudo-Hamiltonian itself (autonomous: no `t`; fixed: no `v`).
+(g::PseudoHamiltonianGradient{<:Data.AbstractPseudoHamiltonian{Traits.Autonomous,Traits.Fixed}})(x, p, u) = g(0.0, x, p, u, nothing)
+(g::PseudoHamiltonianGradient{<:Data.AbstractPseudoHamiltonian{Traits.NonAutonomous,Traits.Fixed}})(t, x, p, u) = g(t, x, p, u, nothing)
+(g::PseudoHamiltonianGradient{<:Data.AbstractPseudoHamiltonian{Traits.Autonomous,Traits.NonFixed}})(x, p, u, v) = g(0.0, x, p, u, v)
+
 """
 $(TYPEDEF)
 
 Functor returning the variable gradient `∂H̃/∂v` of a pseudo-Hamiltonian, evaluated as
-`(t, x, p, u, v)` at **fixed control** `u`. Non-negated.
+`(t, x, p, u, v)` (or `(x, p, u, v)` for an autonomous pseudo-Hamiltonian) at **fixed
+control** `u`. Non-negated.
 
 # Fields
 - `h̃::H`: the pseudo-Hamiltonian to differentiate.
@@ -170,6 +188,9 @@ end
 function (g::PseudoHamiltonianVariableGradient)(t, x, p, u, v)
     return Differentiation.pseudo_variable_gradient(g.backend, g.h̃, t, x, p, u, v)
 end
+
+# Short form for an autonomous pseudo-Hamiltonian (the variable gradient needs `v`).
+(g::PseudoHamiltonianVariableGradient{<:Data.AbstractPseudoHamiltonian{Traits.Autonomous,Traits.NonFixed}})(x, p, u, v) = g(0.0, x, p, u, v)
 
 """
 $(TYPEDSIGNATURES)
