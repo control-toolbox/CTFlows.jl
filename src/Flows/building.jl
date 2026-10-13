@@ -552,11 +552,26 @@ Dispatches on the law's [`CTBase.Traits.feedback`](@extref) trait:
   dynamics are integrated as a state flow; the trajectory call returns a
   [`CTFlows.Trajectories.StateFlowTrajectory`](@extref).
 
+# Path constraints
+
+With a `DynClosedLoop` law, the `constraint` and `multiplier` keywords (given together)
+augment the pseudo-Hamiltonian as `H = H̃ + μ·g`, with the constraint normalised as
+`g(t,x,u,v) ≥ 0` and `μ(t,x,p,v) ≥ 0` on a boundary arc. `constraint` is:
+- a raw function with the OCP's natural arity, or a [`CTBase.Data.PathConstraint`](@extref):
+  taken as `g`, as is;
+- the `Symbol` label of a `:path` constraint `lb ≤ c ≤ ub` of the OCP: `g = c - lb` for a
+  lower bound or an equality, `g = ub - c` for an upper bound;
+- `label => side`, with `side` `:lower` (`g = c - lb`) or `:upper` (`g = ub - c`) — or one
+  side per component — for a two-sided constraint, where `:label` alone throws;
+- a `Tuple` of the above, paired element-wise with a `Tuple` of multipliers.
+
 # Throws
 - [`CTBase.Exceptions.PreconditionError`](@extref): if the OCP is control-free.
 - [`CTBase.Exceptions.PreconditionError`](@extref): if a `DynClosedLoop` law is passed
   to the state-flow path (should not happen via this constructor).
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): if `hamiltonian_type` is invalid.
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if a constraint label is not a `:path`
+  constraint, or is two-sided with no side given.
 
 See also: [`CTFlows.Flows.Flow`](@extref), [`CTFlows.Flows.OptimalControlFlow`](@extref),
 [`CTFlows.Flows.ControlledFlow`](@extref).
@@ -733,7 +748,7 @@ are checked element-wise; `nothing` is skipped (no spec given).
 # Arguments
 - `ocp::CTModels.Models.Model`: the OCP.
 - `u`: the control-law spec (`nothing` or a raw `Function`).
-- `cspec`: the `constraint` spec (`nothing`, `Symbol`, `Function`, `Tuple`, or
+- `cspec`: the `constraint` spec (`nothing`, `Symbol`, `label => side`, `Function`, `Tuple`, or
   `CTBase.Data.PathConstraint`).
 - `mspec`: the `multiplier` spec (`nothing`, `Function`, `Tuple`, or `CTBase.Data.Multiplier`).
 
