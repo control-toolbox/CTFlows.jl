@@ -104,7 +104,7 @@ Every state/costate type is supported on CPU — there is no unsupported (✗) c
     scalar `(xf, pf)` pair, and the trajectory accessors `state(sol)(t)` /
     `costate(sol)(t)` also return scalars — not length-1 vectors. A **length-1** vector or
     `SVector` collapses the same way. This is the ecosystem's
-    ["1-D = scalar"](https://github.com/control-toolbox/Handbook/blob/main/philosophy/dimension-and-shape.md)
+    ["1-D = scalar"](https://github.com/control-toolbox/ct-conventions/blob/main/rules/dimension.md)
     convention, implemented here via the `HamiltonianVectorFieldSystem` coercion machinery
     — the same mechanism [`Flow(VectorField)`](vector_field.md)
     now shares. See the [Shape contract](shape_contract.md) page for the full

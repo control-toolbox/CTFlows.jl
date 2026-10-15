@@ -1,4 +1,3 @@
-<!-- markdownlint-disable MD024 -->
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -7,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### 📚 Documentation
+
+- ct-conventions pinned at 0.5.0 in `AGENTS.md` (read from a git-ignored clone in
+  `.conventions/`); `AGENTS.md` cites rules by identifier, `CLAUDE.md` redirects to it, and
+  the references to the former Handbook become rule identifiers. One `.markdownlint.json`
+  (`GEN2`) replaces the `markdownlint-disable MD024` comment of this changelog (`CHG2`).
 
 ### 🐛 Bug fixes
 

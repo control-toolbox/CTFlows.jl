@@ -100,7 +100,7 @@ behaviours are worth calling out:
     `SVector`** `x0` *collapses* to a scalar too — the point call returns a scalar `xf`,
     and the trajectory accessor `state(sol)(t)` also returns a scalar, not a length-1
     vector. This is the ecosystem's
-    ["1-D = scalar"](https://github.com/control-toolbox/Handbook/blob/main/philosophy/dimension-and-shape.md)
+    ["1-D = scalar"](https://github.com/control-toolbox/ct-conventions/blob/main/rules/dimension.md)
     convention, matching what [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md)
     already did — see the [Shape contract](shape_contract.md) page for the full
     cross-constructor picture, and [#357](https://github.com/control-toolbox/CTFlows.jl/issues/357)

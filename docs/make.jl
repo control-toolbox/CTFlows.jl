@@ -30,7 +30,7 @@ using CairoMakie: CairoMakie, Makie   # qualified `using`: loads CairoMakie and 
 # (image/png: 4.0 over image/svg+xml: 3.0) — the opposite of Documenter.HTML, which
 # prefers SVG. Both Plots.jl and CairoMakie respond to `image/png`, so PNG wins for
 # every figure unless it is disabled. Set once here so it covers every page, present
-# or future. See Handbook/VITEPRESS-DOC.md "Plot image format — SVG vs PNG".
+# or future. See ct-conventions SITE12.
 Base.showable(::MIME"image/png", ::Plots.Plot) = false
 CairoMakie.activate!(; type="svg")
 Base.showable(::MIME"image/png", ::CairoMakie.Makie.Figure) = false

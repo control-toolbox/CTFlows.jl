@@ -60,8 +60,8 @@ in-place interface by allocating the result into the pre-allocated `du` buffer.
 # Notes
 - `du` is always the pre-allocated buffer supplied by the integrator, matching `u`'s
   actual (uncoerced) shape — broadcasting a coerced-scalar result into it is safe
-  regardless of `cx` (the Handbook's documented "in-place buffer stays a vector"
-  exception).
+  regardless of `cx` (the "in-place buffer stays a vector" exception, ct-conventions
+  `DIM2`).
 """
 struct IPVFOoPRHS{
     VF<:Data.AbstractVectorField,CX<:Union{typeof(_safe_only),typeof(identity)}
