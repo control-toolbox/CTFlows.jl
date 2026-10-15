@@ -286,9 +286,7 @@ s = pvf[idx_tf] - H(tf, xf, pf, v)   # transversality for free final time
 
 See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Flows.system`](@extref).
 """
-function Systems.hamiltonian(
-    f::AbstractFlow,
-)
+function Systems.hamiltonian(f::AbstractFlow)
     return Systems.hamiltonian(system(f))
 end
 
@@ -303,10 +301,7 @@ is a `CTBase.Data.ComposedHamiltonian`.
 
 See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Systems.vector_field`](@extref).
 """
-function Systems.hamiltonian_vector_field(
-    f::AbstractFlow;
-    kwargs...,
-)
+function Systems.hamiltonian_vector_field(f::AbstractFlow; kwargs...)
     return Systems.hamiltonian_vector_field(system(f); kwargs...)
 end
 
@@ -358,9 +353,7 @@ control law, in either the `:partial` or the `:total` mode. Delegates to
 
 See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Systems.control_law`](@extref).
 """
-function Systems.pseudo_hamiltonian(
-    f::AbstractFlow,
-)
+function Systems.pseudo_hamiltonian(f::AbstractFlow)
     return Systems.pseudo_hamiltonian(system(f))
 end
 
@@ -375,9 +368,7 @@ control law. Delegates to [`CTFlows.Systems.control_law`](@extref).
 
 See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref).
 """
-function Systems.control_law(
-    f::AbstractFlow,
-)
+function Systems.control_law(f::AbstractFlow)
     return Systems.control_law(system(f))
 end
 
@@ -390,10 +381,7 @@ Hamiltonian flow. Delegates to [`CTFlows.Systems.get_hamiltonian_gradient`](@ext
 
 See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Systems.get_variable_gradient`](@extref).
 """
-function Systems.get_hamiltonian_gradient(
-    f::AbstractFlow;
-    kwargs...,
-)
+function Systems.get_hamiltonian_gradient(f::AbstractFlow; kwargs...)
     return Systems.get_hamiltonian_gradient(system(f); kwargs...)
 end
 
@@ -407,10 +395,7 @@ system's backend) selects the AD backend.
 
 See also: [`CTFlows.Systems.get_hamiltonian_gradient`](@extref).
 """
-function Systems.get_variable_gradient(
-    f::AbstractFlow;
-    kwargs...,
-)
+function Systems.get_variable_gradient(f::AbstractFlow; kwargs...)
     return Systems.get_variable_gradient(system(f); kwargs...)
 end
 
@@ -424,10 +409,7 @@ Hamiltonian flow (differentiated at fixed control), when available. Delegates to
 
 See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref), [`CTFlows.Systems.get_pseudo_variable_gradient`](@extref).
 """
-function Systems.get_pseudo_hamiltonian_gradient(
-    f::AbstractFlow;
-    kwargs...,
-)
+function Systems.get_pseudo_hamiltonian_gradient(f::AbstractFlow; kwargs...)
     return Systems.get_pseudo_hamiltonian_gradient(system(f); kwargs...)
 end
 
@@ -441,10 +423,7 @@ Hamiltonian flow (differentiated at fixed control), when available. Delegates to
 
 See also: [`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@extref).
 """
-function Systems.get_pseudo_variable_gradient(
-    f::AbstractFlow;
-    kwargs...,
-)
+function Systems.get_pseudo_variable_gradient(f::AbstractFlow; kwargs...)
     return Systems.get_pseudo_variable_gradient(system(f); kwargs...)
 end
 

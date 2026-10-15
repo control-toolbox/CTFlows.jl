@@ -105,9 +105,27 @@ end
 
 # Short forms, as for the Hamiltonian itself: the arguments its traits do not use are
 # dropped (autonomous: no `t`; fixed: no `v`).
-(g::HamiltonianGradient{<:Data.AbstractHamiltonian{Traits.Autonomous,Traits.Fixed}})(x, p) = g(0.0, x, p, nothing)
-(g::HamiltonianGradient{<:Data.AbstractHamiltonian{Traits.NonAutonomous,Traits.Fixed}})(t, x, p) = g(t, x, p, nothing)
-(g::HamiltonianGradient{<:Data.AbstractHamiltonian{Traits.Autonomous,Traits.NonFixed}})(x, p, v) = g(0.0, x, p, v)
+function (g::HamiltonianGradient{
+    <:Data.AbstractHamiltonian{Traits.Autonomous,Traits.Fixed}
+})(
+    x, p
+)
+    return g(0.0, x, p, nothing)
+end
+function (g::HamiltonianGradient{
+    <:Data.AbstractHamiltonian{Traits.NonAutonomous,Traits.Fixed}
+})(
+    t, x, p
+)
+    return g(t, x, p, nothing)
+end
+function (g::HamiltonianGradient{
+    <:Data.AbstractHamiltonian{Traits.Autonomous,Traits.NonFixed}
+})(
+    x, p, v
+)
+    return g(0.0, x, p, v)
+end
 
 """
 $(TYPEDEF)
@@ -134,7 +152,13 @@ function (g::HamiltonianVariableGradient)(t, x, p, v)
 end
 
 # Short form for an autonomous Hamiltonian (the variable gradient needs `v`).
-(g::HamiltonianVariableGradient{<:Data.AbstractHamiltonian{Traits.Autonomous,Traits.NonFixed}})(x, p, v) = g(0.0, x, p, v)
+function (g::HamiltonianVariableGradient{
+    <:Data.AbstractHamiltonian{Traits.Autonomous,Traits.NonFixed}
+})(
+    x, p, v
+)
+    return g(0.0, x, p, v)
+end
 
 """
 $(TYPEDEF)
@@ -161,9 +185,27 @@ function (g::PseudoHamiltonianGradient)(t, x, p, u, v)
 end
 
 # Short forms, as for the pseudo-Hamiltonian itself (autonomous: no `t`; fixed: no `v`).
-(g::PseudoHamiltonianGradient{<:Data.AbstractPseudoHamiltonian{Traits.Autonomous,Traits.Fixed}})(x, p, u) = g(0.0, x, p, u, nothing)
-(g::PseudoHamiltonianGradient{<:Data.AbstractPseudoHamiltonian{Traits.NonAutonomous,Traits.Fixed}})(t, x, p, u) = g(t, x, p, u, nothing)
-(g::PseudoHamiltonianGradient{<:Data.AbstractPseudoHamiltonian{Traits.Autonomous,Traits.NonFixed}})(x, p, u, v) = g(0.0, x, p, u, v)
+function (g::PseudoHamiltonianGradient{
+    <:Data.AbstractPseudoHamiltonian{Traits.Autonomous,Traits.Fixed}
+})(
+    x, p, u
+)
+    return g(0.0, x, p, u, nothing)
+end
+function (g::PseudoHamiltonianGradient{
+    <:Data.AbstractPseudoHamiltonian{Traits.NonAutonomous,Traits.Fixed}
+})(
+    t, x, p, u
+)
+    return g(t, x, p, u, nothing)
+end
+function (g::PseudoHamiltonianGradient{
+    <:Data.AbstractPseudoHamiltonian{Traits.Autonomous,Traits.NonFixed}
+})(
+    x, p, u, v
+)
+    return g(0.0, x, p, u, v)
+end
 
 """
 $(TYPEDEF)
@@ -190,7 +232,13 @@ function (g::PseudoHamiltonianVariableGradient)(t, x, p, u, v)
 end
 
 # Short form for an autonomous pseudo-Hamiltonian (the variable gradient needs `v`).
-(g::PseudoHamiltonianVariableGradient{<:Data.AbstractPseudoHamiltonian{Traits.Autonomous,Traits.NonFixed}})(x, p, u, v) = g(0.0, x, p, u, v)
+function (g::PseudoHamiltonianVariableGradient{
+    <:Data.AbstractPseudoHamiltonian{Traits.Autonomous,Traits.NonFixed}
+})(
+    x, p, u, v
+)
+    return g(0.0, x, p, u, v)
+end
 
 """
 $(TYPEDSIGNATURES)

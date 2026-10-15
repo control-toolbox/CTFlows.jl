@@ -62,7 +62,7 @@ function _ocp2(lb, ub)
     CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=x[2]; r[2]=u; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2)
     CTModels.Building.constraint!(
-        pre, :path; f=(r, t, x, u, v) -> (r .= x; nothing), lb=lb, ub=ub, label=:c
+        pre, :path; f=(r, t, x, u, v) -> (r.=x; nothing), lb=lb, ub=ub, label=:c
     )
     return CTModels.Building.build(pre)
 end
@@ -158,7 +158,12 @@ function test_constraint_label_bounds()
 
             ocp = _ocp((f!, lb, ub, :xcon))
             f_sym = Flows.Flow(
-                ocp, (x, p) -> 0; constraint=:xcon, multiplier=μ, hamiltonian_type=ht, _opts()...
+                ocp,
+                (x, p) -> 0;
+                constraint=:xcon,
+                multiplier=μ,
+                hamiltonian_type=ht,
+                _opts()...,
             )
             f_fun = Flows.Flow(
                 ocp,
@@ -171,13 +176,17 @@ function test_constraint_label_bounds()
             x2, p2 = f_sym(0.9, LB, 0.0, 1.6)
             Test.@test x2 ≈ LB atol = ATOL
             Test.@test p2 ≈ 0.0 atol = ATOL
-            Test.@test all(isapprox.(f_sym(0.9, LB, 0.0, 1.6), f_fun(0.9, LB, 0.0, 1.6); atol=ATOL))
+            Test.@test all(
+                isapprox.(f_sym(0.9, LB, 0.0, 1.6), f_fun(0.9, LB, 0.0, 1.6); atol=ATOL)
+            )
         end
 
         Test.@testset "three arcs [$name]" for (name, f!, lb, ub) in SPELLINGS
             ocp = _ocp((f!, lb, ub, :xcon))
             f_minus = Flows.Flow(ocp, (x, p) -> -1; _opts()...)
-            f_bound = Flows.Flow(ocp, (x, p) -> 0; constraint=:xcon, multiplier=μ, _opts()...)
+            f_bound = Flows.Flow(
+                ocp, (x, p) -> 0; constraint=:xcon, multiplier=μ, _opts()...
+            )
             f_plus = Flows.Flow(ocp, (x, p) -> 1; _opts()...)
             φ = f_minus * (0.9, f_bound) * (1.6, f_plus)
             xf, pf = φ(0.0, 1.0, -0.982237546583301, 2.0)
