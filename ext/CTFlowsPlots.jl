@@ -58,7 +58,7 @@ end
 # abstract `RecipesBase.plot` `ExtensionError` stubs in `src/Trajectories`; every method
 # forwards verbatim to the abstract-typed `_plot` / `_plot!` above, which carry the
 # documentation for the operation (mirrors the "documented once, as a unit" rule the
-# Handbook applies to dispatch-only method groups).
+# conventions apply to dispatch-only method groups, DOC6).
 
 for T in (:VectorFieldTrajectory, :StateFlowTrajectory, :HamiltonianVectorFieldTrajectory)
     @eval begin

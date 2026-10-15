@@ -5,7 +5,7 @@ CurrentModule = CTFlows
 ```
 
 This page is the **single cross-constructor reference** for the ecosystem's
-["1-D = scalar"](https://github.com/control-toolbox/Handbook/blob/main/philosophy/dimension-and-shape.md)
+["1-D = scalar"](https://github.com/control-toolbox/ct-conventions/blob/main/rules/dimension.md)
 convention: a one-dimensional state (or costate) must be a **scalar** end to end — never a
 length-1 container — in every user-facing function, `Flow` call, and returned trajectory
 accessor. It consolidates what used to be a handful of scattered per-page admonitions
@@ -129,7 +129,7 @@ on.
 
 ## See also
 
-- [1-D = scalar (Handbook)](https://github.com/control-toolbox/Handbook/blob/main/philosophy/dimension-and-shape.md) — the ecosystem-wide convention this page implements for `CTFlows.jl`.
+- [1-D = scalar (ct-conventions `DIM1`)](https://github.com/control-toolbox/ct-conventions/blob/main/rules/dimension.md) — the ecosystem-wide convention this page implements for `CTFlows.jl`.
 - [Issue #357](https://github.com/control-toolbox/CTFlows.jl/issues/357) — the audit and fix this page documents.
 - [Compatibility overview](overview.md) — the per-constructor feature matrix and the other flow types.
 - [`Flow(VectorField)`](vector_field.md), [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md), [`Flow(Hamiltonian)`](hamiltonian.md), [`Flow(SciML)`](sciml.md) — the per-constructor compatibility pages.
