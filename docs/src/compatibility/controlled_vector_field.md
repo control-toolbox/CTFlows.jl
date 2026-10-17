@@ -123,11 +123,7 @@ flow_ol(0.0, SA[1.0 + 2.0im, 0.0 + 0.0im], 1.0)
 ## `DynClosedLoop` — rejected
 
 ```@repl fc_compat
-try
-    Flows.Flow(fc, Data.DynClosedLoop((x, p) -> p); reltol=1e-8)
-catch e
-    showerror(stdout, e)
-end
+Flows.Flow(fc, Data.DynClosedLoop((x, p) -> p); reltol=1e-8)
 ```
 
 ---

@@ -203,12 +203,8 @@ point and trajectory call styles:
     to the in-place function's calling convention, and **SciML itself** raises a hard,
     native error:
 
-    ```@example sciml_compat
-    try
-        pflow_ip(0.0, 1.0, 1.0; variable=1.0)
-    catch e
-        showerror(stdout, e)
-    end
+    ```@repl sciml_compat
+    pflow_ip(0.0, 1.0, 1.0; variable=1.0)
     ```
 
     The message is actionable (it names the fix: use an out-of-place function, or force

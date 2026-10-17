@@ -116,19 +116,11 @@ hflow_total(0.0, X0s, P0s, 1.0)   # immutable
 ## Complex and `Dual` states — not supported
 
 ```@repl ph_compat
-try
-    hflow_total(0.0, 1.0 + 2.0im, 0.0 + 0.0im, 1.0)
-catch e
-    showerror(stdout, e)
-end
+hflow_total(0.0, 1.0 + 2.0im, 0.0 + 0.0im, 1.0)
 ```
 
 ```@repl ph_compat
-try
-    hflow_total(0.0, ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0), 1.0)
-catch e
-    showerror(stdout, e)
-end
+hflow_total(0.0, ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0), 1.0)
 ```
 
 See notes (a)/(b) above — for `Complex`, rewrite the system on real/imaginary components;
@@ -143,11 +135,7 @@ A pseudo-Hamiltonian ``\tilde H(t,x,p,u,v)`` depends on the costate ``p``, which
 `OpenLoop`/`ClosedLoop` control laws do not provide:
 
 ```@repl ph_compat
-try
-    Flows.Flow(h̃, Data.ClosedLoop(x -> -x); reltol=1e-8)
-catch e
-    showerror(stdout, e)
-end
+Flows.Flow(h̃, Data.ClosedLoop(x -> -x); reltol=1e-8)
 ```
 
 ---

@@ -158,11 +158,7 @@ A pseudo-Hamiltonian vector field ``\tilde h(t,x,p,u,v)`` depends on the costate
 which `OpenLoop`/`ClosedLoop` control laws do not provide:
 
 ```@repl phvf_compat
-try
-    Flows.Flow(h̃vf, Data.ClosedLoop(x -> -x); reltol=1e-8)
-catch e
-    showerror(stdout, e)
-end
+Flows.Flow(h̃vf, Data.ClosedLoop(x -> -x); reltol=1e-8)
 ```
 
 ---

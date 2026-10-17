@@ -187,11 +187,7 @@ fcl1(0.0, ForwardDiff.Dual(1.0, 1.0), 1.0)   # point call: works
 ```
 
 ```@repl ocp_laws_compat
-try
-    fcl1((0.0, 1.0), ForwardDiff.Dual(1.0, 1.0))   # trajectory call: fails (note e)
-catch e
-    showerror(stdout, e)
-end
+fcl1((0.0, 1.0), ForwardDiff.Dual(1.0, 1.0))   # trajectory call: fails (note e)
 ```
 
 ```@repl ocp_laws_compat

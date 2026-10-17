@@ -130,11 +130,7 @@ hflow(0.0, X0s, P0s, pi/2)   # immutable
 ## Complex states — not supported
 
 ```@repl h_compat
-try
-    hflow(0.0, 1.0 + 2.0im, 0.0 + 0.0im, pi/2)
-catch e
-    showerror(stdout, e)
-end
+hflow(0.0, 1.0 + 2.0im, 0.0 + 0.0im, pi/2)
 ```
 
 See note (a) above — for a system that is naturally complex, rewrite it as a real system
