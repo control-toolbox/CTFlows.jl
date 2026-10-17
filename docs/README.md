@@ -16,19 +16,19 @@ Documentation conventions and build workflow:
 
 ## `@repl` vs `@example` — ANSI color rule
 
-DocumenterVitepress processes code block output differently depending on how it is produced:
-
-| Block type | Output fence | ANSI codes | Result |
-| --- | --- | --- | --- |
-| `@example` | ` ```ansi ` | processed by Shiki | **colors render correctly** |
-| `@repl` | ` ```julia ` | parsed as Julia syntax | **raw escape sequences — ugly** |
+Before `DocumenterVitepress` **v0.3.5**, ANSI-colored output from `@repl` was rendered as raw
+escape sequences. This was fixed in v0.3.5
+([#373](https://github.com/LuxDL/DocumenterVitepress.jl/pull/373)): colored `@repl` output is
+now rendered correctly while the input remains Julia syntax-highlighted. The documentation
+environment requires `DocumenterVitepress` 0.3.5 or later (`docs/Project.toml`).
 
 **Rules:**
 
-- Use **`@example`** when the output comes from a `show` method that uses ANSI colors
-  (flows, systems, integrators, trajectory objects, …).
-- Use **`@repl`** only when the output is a plain scalar value with no custom colored `show`
-  (integers, booleans, symbols, plain strings, tuples of symbols, types, plain vectors).
-- Use **`@repl` + `try/catch # hide` + `showerror(IOContext(stdout, :color => false), e) # hide`**
-  to display exceptions — the `showerror` call produces plain text that renders cleanly inside a
-  `julia`-fenced block.
+- Use **`@repl`** for interactive examples, including output from custom ANSI-colored `show`
+  methods (flows, systems, integrators, trajectory objects, …).
+- Use **`@example`** for regular evaluated examples when REPL formatting is not needed; existing
+  blocks whose output already renders correctly are kept.
+- Use **`@ansi`** when explicitly demonstrating terminal styling or raw ANSI output.
+- To display an exception, write the expression that raises it directly in a **`@repl`** block:
+  `@repl` captures the exception as output (`ERROR: …`) instead of failing the documentation
+  build. No `try/catch` is needed.
