@@ -55,7 +55,7 @@ must be passed explicitly on every call (there is no `Fixed`-by-default case lik
 
 !!! note "1-D = scalar, end to end (issue #357)"
     `Flow(::ODEFunction)` goes through CTFlows' own `Systems`/`Trajectories` dispatch, so it
-    follows the same ["1-D = scalar"](https://github.com/control-toolbox/Handbook/blob/main/philosophy/dimension-and-shape.md)
+    follows the same ["1-D = scalar"](https://github.com/control-toolbox/ct-conventions/blob/main/rules/dimension.md)
     convention as [`Flow(VectorField)`](vector_field.md): a scalar
     or length-1 `Vector`/`SVector` `x0` collapses to a scalar in both call styles. This is
     **not** true of `Flow(::ODEProblem)` below — see the

@@ -51,7 +51,7 @@ This work tracks issue
   `ForwardDiff.Dual` elements — in both the point and trajectory call styles. The only
   caveat in both cases is that an **in-place** vector field with an **immutable** initial
   condition (`SVector` / `SMatrix`) works but emits a performance warning. Both are also
-  ["1-D = scalar"](https://github.com/control-toolbox/Handbook/blob/main/philosophy/dimension-and-shape.md)
+  ["1-D = scalar"](https://github.com/control-toolbox/ct-conventions/blob/main/rules/dimension.md)
   end to end (point *and* trajectory) — a scalar or length-1 `Vector`/`SVector` state
   always collapses to a scalar — since the fix for
   [#357](https://github.com/control-toolbox/CTFlows.jl/issues/357); see the

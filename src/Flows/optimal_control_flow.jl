@@ -427,7 +427,9 @@ per component.
 """
 function _bounded_constraint(label, c, lb::AbstractVector, ub::AbstractVector, side)
     n = length(lb)
-    sides = [_active_side(label, lb[i], ub[i], _single_side(label, side, i, n)) for i in 1:n]
+    sides = [
+        _active_side(label, lb[i], ub[i], _single_side(label, side, i, n)) for i in 1:n
+    ]
     sign = [s === :lower ? 1 : -1 for s in sides]
     bound = [s === :lower ? lb[i] : ub[i] for (i, s) in enumerate(sides)]
     return _BoundedConstraint(c, sign, bound)

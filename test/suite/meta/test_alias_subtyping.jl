@@ -1,7 +1,7 @@
 """
 Regression guard for the parametric-alias bound-dropping pitfall (see
-`.reports/2026-07-11_alias-where-bounds-audit.md` and the Handbook rule in
-`philosophy/types-traits-interfaces.md#aliases-and-where`).
+`.reports/2026-07-11_alias-where-bounds-audit.md` and the ct-conventions rule
+`TYP3`, aliases and `where` repeat every bound verbatim).
 
 A `const Alias{...} = Parent{...}` that names a free type parameter without
 repeating its original bound silently widens it to `<:Any`. This breaks

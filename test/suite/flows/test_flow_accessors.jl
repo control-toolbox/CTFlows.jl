@@ -52,13 +52,22 @@ const ACCESSORS = (
 )
 
 const ALL = Set(ACCESSORS)
-const HAM = Set((Systems.hamiltonian, Systems.hamiltonian_vector_field, Systems.vector_field,
-    Systems.get_hamiltonian_gradient, Systems.get_variable_gradient))
+const HAM = Set((
+    Systems.hamiltonian,
+    Systems.hamiltonian_vector_field,
+    Systems.vector_field,
+    Systems.get_hamiltonian_gradient,
+    Systems.get_variable_gradient,
+))
 const STATE = Set((Systems.vector_field,))
 
 # (label, flow builder, accessors that apply); the others must raise IncorrectArgument
 const CASES = (
-    ("Hamiltonian(H)", () -> Flows.Flow(Data.Hamiltonian((x, p) -> 0.5 * sum(p .^ 2))), HAM),
+    (
+        "Hamiltonian(H)",
+        () -> Flows.Flow(Data.Hamiltonian((x, p) -> 0.5 * sum(p .^ 2))),
+        HAM,
+    ),
     (
         "HamiltonianVectorField(Hv)",
         () -> Flows.Flow(Data.HamiltonianVectorField((x, p) -> (p, zero(x)))),
@@ -179,7 +188,9 @@ function test_flow_accessors()
             law = Data.OpenLoop(t -> 1.0)
             Test.@test Systems.control_law(Flows.Flow(OCP, law)) === law
             dlaw = Data.DynClosedLoop((x, p) -> p)
-            f = Flows.Flow(Data.PseudoHamiltonianVectorField((x, p, u) -> (u, zero(p))), dlaw)
+            f = Flows.Flow(
+                Data.PseudoHamiltonianVectorField((x, p, u) -> (u, zero(p))), dlaw
+            )
             Test.@test Systems.control_law(f) === dlaw
         end
 
