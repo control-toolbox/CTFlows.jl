@@ -4,32 +4,14 @@
 CurrentModule = CTFlows
 ```
 
-This page is a **living compatibility reference** for `Flow(ocp, law)`, built from an OCP
-**with control** and a control law: which state/costate types and call styles each of the
-three feedback kinds (`DynClosedLoop`, `OpenLoop`, `ClosedLoop`) accepts, each shown with a
-minimal, executable example. Every ✓ / ✗ is demonstrated by a code block re-run on every
-documentation build.
-
-Scope: **CPU**, default AD backend. The tables are generated from
-[`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl).
-GPU compatibility is a separate effort — see [`probe/gpu`](https://github.com/control-toolbox/CTFlows.jl/tree/main/probe/gpu).
+Which state/costate types and call styles `Flow(ocp, law)` accepts, for an OCP **with
+control** and each of the three feedback kinds (`DynClosedLoop`, `OpenLoop`, `ClosedLoop`),
+on **CPU** with the default AD backend. Every cell has an executed example; see [Compatibility](overview.md) for how the pages stay true.
 
 As on [`Flow(ocp)`'s page](ocp_free.md), the state dimension is fixed at OCP construction,
 so this page uses two problems built once — scalar (`n=1`) and vector (`n=2`) — and every
 table tests the scalar containers against the first, the vector-family ones against the
 second.
-
-!!! note "Last probed: 2026-07-24"
-    This page's table *shape* — which containers and axes are tested — reflects
-    [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
-    as of this date. Every ✓/✗ cell below is still re-executed on **every** documentation
-    build regardless (see [Compatibility overview](overview.md)) — only the *scope* of
-    what's tested can go stale, not the results shown. Until 2026-07-24, `Matrix`-family
-    states failed on every path here and `SVector` failed on the non-AD
-    (`OpenLoop`/`ClosedLoop`) path — the same fixed-size internal buffer as
-    [`Flow(ocp)`](ocp_free.md), tracked as
-    [#358](https://github.com/control-toolbox/CTFlows.jl/issues/358). Both are now fixed;
-    the tables below reflect current (fixed) behaviour.
 
 ```@setup ocp_laws_compat
 using CTFlows
@@ -87,7 +69,7 @@ p_f = p_0\,e, \qquad x_f = \frac{x_0}{e} + \frac{p_0}{2}\left(e - \frac1e\right)
 ```@example ocp_laws_compat
 law = Data.DynClosedLoop((x, p) -> p)
 
-f1_total = Flows.Flow(ocp1, law; reltol=1e-8)                                # :total (default)
+f1_total = Flows.Flow(ocp1, law; reltol=1e-8)   # :total (default)
 f2_total = Flows.Flow(ocp2, law; reltol=1e-8)
 f1_partial = Flows.Flow(ocp1, law; hamiltonian_type=:partial, reltol=1e-8)
 f2_partial = Flows.Flow(ocp2, law; hamiltonian_type=:partial, reltol=1e-8)
@@ -109,8 +91,7 @@ two independent measurements:
 
 Notes (a)/(c) are exactly [`Flow(ocp)`'s notes (a)/(c)](ocp_free.md): `Complex` fails the
 same `AutoForwardDiff` way, and a hand-built `Dual` collides with the flow's own AD the same
-way — neither is specific to having a control law. `Matrix`/`MMatrix`/`SMatrix` states work
-here too, fixed as of 2026-07-24 ([#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)).
+way — neither is specific to having a control law.
 
 ```@repl ocp_laws_compat
 x0, p0 = 1.0, 0.5;
@@ -186,9 +167,7 @@ fcl2 = Flows.Flow(ocp2, law_cl; reltol=1e-8)
 | `ForwardDiff.Dual` scalar/`Vector`/`MVector`/`SVector` | ✓ | ✗ (e) |
 
 `Complex` and `Dual` work here (no AD in the RHS), like [`Flow(ocp)`'s basic
-call](ocp_free.md) — `SVector`/`Matrix`-family now work too, fixed as of 2026-07-24
-([#358](https://github.com/control-toolbox/CTFlows.jl/issues/358)) — **one asymmetry
-remains**:
+call](ocp_free.md), and so does every container. **One asymmetry**:
 
 !!! note "(e) Dual works at a point, but not in a trajectory"
     `ForwardDiff.Dual` states integrate correctly for the **point** call, but the

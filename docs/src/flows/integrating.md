@@ -17,7 +17,7 @@ using CTFlows: Flows
 using CTFlows: Trajectories
 using CTFlows: Configs
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
-using ForwardDiff: ForwardDiff  # triggers the DifferentiationInterface ForwardDiff extension
+using ForwardDiff: ForwardDiff  # AD backend of the Hamiltonian flows
 
 vf = Data.VectorField(x -> -x)
 flow = Flows.Flow(vf; reltol=1e-8)
@@ -132,6 +132,9 @@ Pass `dense=false` to store only the grid values and save memory: the trajectory
 linear between the saved points, and an optimal control flow warns that its objective is
 only accurate to the grid spacing.
 
+A point call `flow(t0, x0, tf)` is not affected by any of these: it ignores `saveat` and
+returns the value at `tf`, whether `tf` is on the grid or not.
+
 ---
 
 ## Variable parameters
@@ -150,8 +153,8 @@ flow_v = Flows.Flow(vf_v)
 xf_v = flow_v(0.0, [1.0, 0.0], 1.0; variable=[2.0])
 ```
 
-The `variable` argument is required when `is_variable(flow)` is `true`, and silently
-ignored for `Fixed` flows.
+The `variable` argument is required when `Traits.is_variable(flow)` is `true`, and
+rejected for a `Fixed` flow: both mistakes throw a `CTBase.Exceptions.PreconditionError`.
 
 ---
 
@@ -201,10 +204,8 @@ where `H` is obtained from [`CTFlows.Systems.hamiltonian`](@ref)`(flow)`; a nonz
 
 See `test/suite/flows/test_variable_costate_free_time.jl` for worked shooting residuals
 built on this ``p_v`` mechanism (free ``t_0``, free ``t_f``, and both at once). The
-Goddard tests (`test/suite/integration/test_goddard.jl`) instead close their free final
-time with the classical ``H \equiv 0`` condition — not the ``p_v`` adjoint. This settles
-issues [#231](https://github.com/control-toolbox/CTFlows.jl/issues/231) and
-[#183](https://github.com/control-toolbox/CTFlows.jl/issues/183).
+Goddard tests (`test/suite/integration/test_goddard_ocp.jl`) instead close their free final
+time with the classical ``H \equiv 0`` condition, not the ``p_v`` adjoint.
 
 ---
 
@@ -218,7 +219,8 @@ Systems.hamiltonian(hflow_v)          # the callable H(t, x, p, v)
 ```
 
 ```@example flows_integrating
-Systems.get_hamiltonian_gradient(hflow_v) # functor: (t, x, p, v) -> (∂H/∂x, ∂H/∂p)
+# functor: (t, x, p, v) -> (∂H/∂x, ∂H/∂p)
+Systems.get_hamiltonian_gradient(hflow_v)
 ```
 
 ```@example flows_integrating
@@ -280,7 +282,7 @@ The default integrator is **SciML** backed by `OrdinaryDiffEqTsit5` (loaded when
 
 | Option | Default | Description |
 |---|---|---|
-| `reltol` | `1e-6` | Relative tolerance |
+| `reltol` | `1e-8` | Relative tolerance |
 | `abstol` | `1e-8` | Absolute tolerance |
 | `alg` | `Tsit5()` | ODE algorithm (any SciML algorithm) |
 | `saveat` | — | Output time grid (vector, range or step); does not change the integration; not combinable with a grid at the call — see [Output grid and accuracy](#Output-grid-and-accuracy) |
@@ -300,7 +302,7 @@ flow_rodas = Flows.Flow(vf; alg=Rodas4())
 
 ### Unsafe mode
 
-By default, a `SolverFailure` exception is thrown if the ODE solver returns
+By default, a `CTBase.Exceptions.SolverFailure` is thrown if the ODE solver returns
 a non-success retcode. Pass `unsafe=true` to suppress this check:
 
 ```@example flows_integrating

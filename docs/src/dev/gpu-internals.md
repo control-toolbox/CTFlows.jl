@@ -67,9 +67,9 @@ through the constructor signatures would have touched roughly twenty of them.
     device token and throws without one. The base (default) descriptions therefore spell out
     `:cpu` rather than omitting it. `(:di, :sciml)` alone does not work.
 
-This routing also unified two previously separate construction paths (with and without AD)
-behind a single `_build_integrator` helper: every flow constructor now reaches the integrator
-through the registry, so a device token is honoured no matter which constructor was called.
+Every flow constructor, with or without AD, builds its integrator through the single
+`_build_integrator` helper, which goes through the registry: a device token is honoured
+whatever the constructor.
 
 ### What `SciML{GPU}` does today
 
@@ -123,7 +123,9 @@ to the host regardless of the state. Eleven sites. The obvious fix, `similar(xs,
 useful `similar`. Hence:
 
 ```julia
-_buffer_like(template::AbstractArray, ::Type{T}, n::Int) where {T} = similar(template, T, n)
+function _buffer_like(template::AbstractArray, ::Type{T}, n::Int) where {T}
+    return similar(template, T, n)
+end
 _buffer_like(::Any, ::Type{T}, n::Int) where {T} = Vector{T}(undef, n)
 ```
 
@@ -188,8 +190,10 @@ cross-package change).
     `Mooncake.Tangent{@NamedTuple{parent, indices, offset1, stride1}}` — right values, inside
     `.parent`, but not an array — so negating it throws a `MethodError` in the Hamiltonian RHS
     functors. The views come from the Hamiltonian splitter. On device `MooncakeCUDAExt` yields a
-    negatable tangent, so **no CTBase extension fix is required**; but a user explicitly asking
-    for `AutoMooncake` on CPU gets a cryptic error. Not a supported combination.
+    negatable tangent, so **no CTBase extension fix is required**. On CPU it is not a supported
+    combination: `Flows._check_call` rejects host arrays with `AutoMooncake` up front, with a
+    `PreconditionError` (see `src/Flows/device_checks.jl`). Supporting it is tracked in
+    [#448](https://github.com/control-toolbox/CTFlows.jl/issues/448).
 
 ---
 
@@ -204,7 +208,8 @@ turns a skip into a loud failure on the self-hosted GPU runners:
 
 ```julia
 if Main.TestCapabilities.ON_GPU_RUNNER
-    Test.@test Main.TestCapabilities.CUDA_FUNCTIONAL   # fails loudly if the GPU runner lost its device
+    # fails loudly if the GPU runner lost its device
+    Test.@test Main.TestCapabilities.CUDA_FUNCTIONAL
 elseif !Main.TestCapabilities.CUDA_FUNCTIONAL
     @info "CUDA not functional — GPU tests skipped"
     Test.@test_skip false   # shows as Broken, not Pass 0
@@ -268,7 +273,7 @@ therefore also delegate those methods to its backing `Array`, **and** define
 `copyto!(::FakeGPUArray{T,N}, ::Array{T,N})` to resolve the ambiguity with GPUArrays'
 `copyto!(::AnyGPUArray, ::Array)`.
 
-Both fake-array test files already carry the fix; copy the pattern rather than rediscovering it.
+Both fake-array test files define these methods; copy the pattern from them.
 
 ---
 

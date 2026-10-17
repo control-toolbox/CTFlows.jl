@@ -4,18 +4,12 @@
 CurrentModule = CTFlows
 ```
 
-This page is the **single cross-constructor reference** for the ecosystem's
+The ecosystem's
 ["1-D = scalar"](https://github.com/control-toolbox/ct-conventions/blob/main/rules/dimension.md)
-convention: a one-dimensional state (or costate) must be a **scalar** end to end — never a
-length-1 container — in every user-facing function, `Flow` call, and returned trajectory
-accessor. It consolidates what used to be a handful of scattered per-page admonitions
-into one table and one set of runnable examples, and records the design decision behind
-[issue #357](https://github.com/control-toolbox/CTFlows.jl/issues/357): **which**
-constructors this convention applies to, and why one deliberately sits outside it.
-
-Every ✓ / ✗ example below is a Documenter `@example`/`@repl` block re-run on every
-documentation build, so this page cannot drift from the code. Scope: **CPU** only, same as
-every other page in this section.
+convention: a one-dimensional state (or costate) is a **scalar** end to end, never a
+length-1 container, in every user-facing function, `Flow` call and trajectory accessor.
+This page says which constructors apply it, how, and why one deliberately does not. The
+examples are executed, on **CPU**.
 
 ```@setup shape_compat
 using CTFlows
@@ -48,9 +42,9 @@ when `x0` was supplied as `[2.0]`.
 
 ## The dividing line
 
-The fix for #357 does **not** split constructors by "control-toolbox object vs. SciML
-object" — it splits them by **whether the call reaches CTFlows' own `Systems`/
-`Trajectories` dispatch at all**:
+The convention does **not** split constructors by "control-toolbox object vs. SciML
+object", but by **whether the call reaches CTFlows' own `Systems`/`Trajectories` dispatch
+at all**:
 
 - `Flow(::SciMLBase.AbstractODEFunction)` (see [`Flow(SciML)`](sciml.md)) wraps the
   function in `CTFlowsSciMLFlows.SciMLFunctionSystem`, which implements
@@ -73,7 +67,7 @@ object" — it splits them by **whether the call reaches CTFlows' own `Systems`/
 | `Flow(h̃, DynClosedLoop)` | ✓ | `Systems._coerce_state` (`PseudoHamiltonianSystem`) | ✓ | [`Flow(h̃, law)`](pseudo_hamiltonian.md) |
 | `Flow(fc, law)` | ✓ | `Flows._dim_coerce` (from `length(x0)`) | ✓ | [`Flow(fc, law)`](controlled_vector_field.md) |
 | `Flow(ocp)` / `Flow(ocp, law)` | ✓ | `Flows._dim_coerce` (from the OCP's declared `state_dimension`) | ✓ | [`Flow(ocp)`](ocp_free.md) / [`Flow(ocp, law)`](ocp_control_laws.md) |
-| `Flow(::SciMLBase.AbstractODEFunction)` | ✓ | `Systems._coerce_state` (`SciMLFunctionSystem`) | ✓ *(new, #357)* | [`Flow(SciML)`](sciml.md) |
+| `Flow(::SciMLBase.AbstractODEFunction)` | ✓ | `Systems._coerce_state` (`SciMLFunctionSystem`) | ✓ | [`Flow(SciML)`](sciml.md) |
 | `Flow(::SciMLBase.AbstractODEProblem)` | ✗ (direct `remake`+`solve`) | — none — | ✗ *(by design)* | [`Flow(SciML)`](sciml.md) |
 
 **✓** a scalar or length-1 `Vector`/`SVector` state (or costate) collapses to a scalar, in
@@ -89,7 +83,7 @@ anything.
 
 ---
 
-## Demonstrated: the two constructors this issue fixed
+## Examples: a length-1 state collapses
 
 ### `Flow(::VectorField)`
 
@@ -101,7 +95,8 @@ flow(0.0, [1.0], 1.0)   # a length-1 Vector x0 → a scalar xf, not [exp(-1)]
 
 ```@repl shape_compat
 sol = flow((0.0, 1.0), [1.0]);
-Trajectories.state(sol)(1.0)   # scalar too — the trajectory accessor is coerced the same way
+# a scalar too: the trajectory accessor is coerced the same way
+Trajectories.state(sol)(1.0)
 ```
 
 ### `Flow(::SciMLBase.AbstractODEFunction)`
@@ -109,15 +104,17 @@ Trajectories.state(sol)(1.0)   # scalar too — the trajectory accessor is coerc
 ```@example shape_compat
 f = SciMLBase.ODEFunction{false}((u, p, t) -> -p .* u)
 flow_f = Flows.Flow(f; reltol=1e-8)
-flow_f(0.0, [1.0], 1.0; variable=1.0)   # same collapse — SciMLFunctionSystem shares the fix
+# same collapse: SciMLFunctionSystem coerces too
+flow_f(0.0, [1.0], 1.0; variable=1.0)
 ```
 
-## Contrasted: the constructor this issue deliberately excludes
+## The exception: `Flow(::ODEProblem)`
 
 ```@example shape_compat
 prob = SciMLBase.ODEProblem(f, [1.0], (0.0, 1.0), 1.0)
 pflow = Flows.Flow(prob; reltol=1e-8)
-pflow(0.0, [1.0], 1.0; variable=1.0)   # stays a length-1 Vector — no CTFlows dispatch, no coercion
+# stays a length-1 Vector: no CTFlows dispatch, no coercion
+pflow(0.0, [1.0], 1.0; variable=1.0)
 ```
 
 The same `[1.0]` state produces a **scalar** through `Flow(::ODEFunction)` and a
@@ -130,7 +127,6 @@ on.
 ## See also
 
 - [1-D = scalar (ct-conventions `DIM1`)](https://github.com/control-toolbox/ct-conventions/blob/main/rules/dimension.md) — the ecosystem-wide convention this page implements for `CTFlows.jl`.
-- [Issue #357](https://github.com/control-toolbox/CTFlows.jl/issues/357) — the audit and fix this page documents.
 - [Compatibility overview](overview.md) — the per-constructor feature matrix and the other flow types.
 - [`Flow(VectorField)`](vector_field.md), [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md), [`Flow(Hamiltonian)`](hamiltonian.md), [`Flow(SciML)`](sciml.md) — the per-constructor compatibility pages.
 - [`CTFlows.Systems._coerce_state`](@ref) — the shared coercion mechanism.

@@ -8,7 +8,7 @@ The [`CTFlows.Flows`](@ref CTFlows.Flows) submodule is the central abstraction o
 CTFlows. A **flow** is a callable object that integrates a dynamical system over a time
 interval: you hand it an initial condition and a final time, and it returns the result.
 
-CTFlows builds flows through a **four-layer pipeline**:
+CTFlows builds flows through a pipeline of five layers:
 
 ```text
 Data → Systems → Integrators → Flows → Trajectories
@@ -22,7 +22,7 @@ from `Data`, the other from integrator options — and only meet when
 
 | Layer | Submodule | What it produces |
 |---|---|---|
-| **Data** | [`CTBase.Data`](@extref CTBase.Data) | Typed function wrappers (`VectorField`, `Hamiltonian`, `HamiltonianVectorField`, `PseudoHamiltonian`, `PseudoHamiltonianVectorField`) |
+| **Data** | [`CTBase.Data`](@extref CTBase.Data) | Typed function wrappers (`VectorField`, `Hamiltonian`, `HamiltonianVectorField`, `PseudoHamiltonian`, `PseudoHamiltonianVectorField`, `ControlledVectorField`) and control laws (`OpenLoop`, `ClosedLoop`, `DynClosedLoop`) |
 | **Systems** | [`Systems`](@ref CTFlows.Systems) | ODE right-hand side + traits (`VectorFieldSystem`, `HamiltonianSystem`, …) |
 | **Integrators** | [`Integrators`](@ref CTFlows.Integrators) | ODE solver strategy (`SciML`) |
 | **Flows** | [`Flows`](@ref CTFlows.Flows) | Callable integration object (`StateFlow`, `HamiltonianFlow`, `OptimalControlFlow`, `ControlledFlow`) |
@@ -42,9 +42,8 @@ from `Data`, the other from integrator options — and only meet when
 | [SciML flows](sciml.md) | Flows from SciML functions and problems | `Flow(::ODEFunction)`, `Flow(::ODEProblem)`, `SciMLProblemFlow` |
 | [GPU flows](gpu.md) | Running a flow on a device | `method=:gpu`, `CuArray` states, the GPU contract |
 
-The **data layer** (wrapping functions as `VectorField`, `Hamiltonian`,
-`HamiltonianVectorField`, `PseudoHamiltonian`, `PseudoHamiltonianVectorField`) and the **trait system** (`Autonomous`, `Fixed`,
-`InPlace`, …) live in CTBase — see [`CTBase.Data`](@extref CTBase.Data) and
+The **data layer** and the **trait system** (`Autonomous`, `Fixed`, `InPlace`, …) live in
+CTBase — see [`CTBase.Data`](@extref CTBase.Data) and
 [`CTBase.Traits`](@extref CTBase.Traits) in the CTBase documentation. Likewise, the
 **ODE solver strategy** (`SciML`) is not implemented in CTFlows: it is provided by
 [`CTSolvers.Integrators`](@extref CTSolvers.Integrators) and re-exported through
@@ -63,47 +62,18 @@ using CTBase: Data          # VectorField, Hamiltonian, HamiltonianVectorField
 using CTFlows: Systems      # build_system
 using CTFlows: Integrators  # SciML, build_problem, build_options
 using CTFlows: Trajectories # VectorFieldTrajectory, state, time_grid
-using CTBase: Traits        # Autonomous, NonAutonomous, Fixed, NonFixed, InPlace, OutOfPlace
+using CTBase: Traits        # Autonomous, Fixed, InPlace, …
 using CTFlows: Configs      # StateEndPointConfig, StateTrajectoryConfig, …
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5 # activates the SciML extension
 nothing # hide
 ```
 
-## Minimal end-to-end example
+## A first flow
 
-The fastest path from a function to an integrated trajectory:
-
-```@example flows_overview
-# 1. Wrap the dynamics as a VectorField
-#    The function x -> -x is autonomous (no t) and fixed (no variable parameter)
-vf = Data.VectorField(x -> -x)
-```
-
-```@example flows_overview
-# 2. Build the flow directly from the data (shortcut constructor)
-flow = Flows.Flow(vf; reltol=1e-8, abstol=1e-8)
-```
-
-```@example flows_overview
-# 3a. Point integration: final state only
-xf = flow(0.0, [1.0, 0.0], 1.0)
-```
-
-```@example flows_overview
-# 3b. Trajectory integration: full time history
-sol = flow((0.0, 1.0), [1.0, 0.0])
-```
-
-```@example flows_overview
-# 4. Read the result
-ts = Trajectories.time_grid(sol) # vector of time points
-x  = Trajectories.state(sol)     # callable: x(t) → state at time t
-x(0.5)                           # interpolate at t = 0.5
-```
-
-The shortcut `Flows.Flow(vf; opts...)` hides steps 2–3 of the pipeline
-(`build_system` → `SciML` → `build_flow`). See
-[Building a flow](building_a_flow.md) for the explicit form.
+[Getting Started](../getting-started.md) builds, integrates and reads a first flow step by
+step. The shortcut `Flows.Flow(data; opts...)` runs the whole pipeline in one call;
+[Building a flow](building_a_flow.md) shows each step (`build_system`, the `SciML`
+integrator, `build_flow`) explicitly.
 
 ## Mathematical setting
 

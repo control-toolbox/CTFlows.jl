@@ -116,8 +116,9 @@ to `h̃vf` — **no AD anywhere**, so there is no `hamiltonian_type` option (unl
 `Flow(h̃, law)`, only one mode exists here).
 
 ```@example flows_laws
-# h̃vf(x, p, u) = (u, 0): ẋ = u, ṗ = 0 — the derivatives of H̃(x,p,u) = p*u - 0.5u²
-# at the stationary feedback u = p, supplied directly instead of via AD
+# h̃vf(x, p, u) = (u, 0): ẋ = u, ṗ = 0, the derivatives of
+# H̃(x, p, u) = p*u - 0.5u² at the stationary feedback u = p,
+# supplied directly instead of via AD
 h̃vf_pvf = Data.PseudoHamiltonianVectorField((x, p, u) -> (u, zero(p)))
 law_pvf = Data.DynClosedLoop((x, p) -> p)  # u = p
 
@@ -130,10 +131,13 @@ xf, pf = f_pvf(0.0, x0, p0, 1.0);
 xf ≈ x0 + p0, pf ≈ p0
 ```
 
-Unlike `Flow(h̃, law)`, there is no `Systems.pseudo_hamiltonian`/`control_law`/
-`hamiltonian` accessor here — `PseudoHamiltonianVectorFieldSystem` carries no
-scalar `H̃` to reconstruct or getter to expose (same gap as
-`HamiltonianVectorFieldSystem`, which likewise exposes no accessor).
+`Systems.control_law(f_pvf)` returns the law. There is no scalar `H̃` here, so
+`Systems.pseudo_hamiltonian` and `Systems.hamiltonian` throw an `IncorrectArgument`, as on
+a flow built from a `HamiltonianVectorField`:
+
+```@example flows_laws
+Systems.control_law(f_pvf) === law_pvf
+```
 
 !!! warning "OpenLoop/ClosedLoop rejected"
     A pseudo-Hamiltonian vector field depends on the costate ``p``, which
@@ -264,7 +268,8 @@ A plain function `u` is wrapped in a `DynClosedLoop` law automatically, with
 time/variable dependence inferred from the OCP:
 
 ```@example flows_laws
-f_conv = Flows.Flow(ocp, (x, p) -> p; reltol=1e-10)  # autonomous, fixed → auto DynClosedLoop
+# autonomous, fixed: wrapped in a DynClosedLoop
+f_conv = Flows.Flow(ocp, (x, p) -> p; reltol=1e-10)
 ```
 
 The function `u` **must** have the natural arity matching the OCP's traits:
@@ -296,7 +301,7 @@ the result of a trajectory call on a `ControlledFlow`. It provides:
 |---|---|---|
 | `state(sol)` | callable `x(t)` | state trajectory (scalar coercion for 1-D state) |
 | `control(sol)` | callable `u(t)` | reconstructed from the law: `u(t) = law(t, x(t), v)` |
-| `objective(sol)` | `Real` or `nothing` | Mayer + Lagrange (only when built from an OCP) |
+| `objective(sol)` | `Real` | Mayer + Lagrange; **errors** unless built from an OCP |
 | `time_grid(sol)` | vector of time points | |
 | `costate(sol)` | — | **errors**: a state flow has no costate |
 

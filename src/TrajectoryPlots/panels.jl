@@ -2,19 +2,36 @@
 # Building PlotEngine.Panels from a trajectory via the semantic accessors
 # =============================================================================
 
-# Subscript a component index: 1 -> "₁", 12 -> "₁₂".
+"""
+$(TYPEDSIGNATURES)
+
+Subscript form of a component index: `1` → `"₁"`, `12` → `"₁₂"`.
+"""
 _sub(i::Integer) = join(Char(0x2080 + (c - '0')) for c in string(i))
 
-# Generated (fallback) component names: scalar -> ["x"], vector -> ["x₁", "x₂", …].
+"""
+$(TYPEDSIGNATURES)
+
+Generated component names, used when the trajectory carries no model: `["x"]` for one
+component, `["x₁", "x₂", …]` otherwise.
+"""
 function _gen_names(sym::AbstractString, n::Integer)
     return n == 1 ? [String(sym)] : [sym * _sub(i) for i in 1:n]
 end
 
-# Sample a callable `f` over the time grid into an (n_times × n_components) matrix.
-# Handles scalar (1-D) and vector-valued callables uniformly, like the accessors do.
+"""
+$(TYPEDSIGNATURES)
+
+Sample a callable `f` over the times `ts` into an `(n_times × n_components)` matrix. A scalar
+(1-D) and a vector-valued `f` are handled alike.
+"""
 _sample(f, ts) = Matrix{Float64}(reduce(hcat, f.(ts))')
 
-# Euclidean norm of a row (inlined to avoid a LinearAlgebra dependency in the extension).
+"""
+$(TYPEDSIGNATURES)
+
+Euclidean norm of a row, written out to avoid a `LinearAlgebra` dependency.
+"""
 _rownorm(row) = sqrt(sum(abs2, row))
 
 # =============================================================================
@@ -22,9 +39,21 @@ _rownorm(row) = sqrt(sum(abs2, row))
 # Only a StateFlowTrajectory built from an OCP (Flow(ocp, law)) carries a model.
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+The OCP model a trajectory carries, or `nothing`. Only a `StateFlowTrajectory` built from an
+OCP (`Flow(ocp, law)`) carries one.
+"""
 _traj_model(sol) = nothing
 _traj_model(sol::Trajectories.StateFlowTrajectory) = sol.ocp
 
+"""
+$(TYPEDSIGNATURES)
+
+Names of the `n` state components: from the OCP model when the trajectory carries one, else
+generated (`x`, `x₁`, …).
+"""
 function _state_names(sol, n)
     return if _traj_model(sol) === nothing
         _gen_names("x", n)
@@ -32,6 +61,13 @@ function _state_names(sol, n)
         CTModels.state_components(_traj_model(sol))
     end
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Names of the `m` control components: from the OCP model when the trajectory carries one,
+else generated (`u`, `u₁`, …).
+"""
 function _control_names(sol, m)
     return if _traj_model(sol) === nothing
         _gen_names("u", m)
@@ -39,6 +75,12 @@ function _control_names(sol, m)
         CTModels.control_components(_traj_model(sol))
     end
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Name of the control as a whole (for the label of its norm): from the OCP model, else `"u"`.
+"""
 function _control_name(sol)
     return _traj_model(sol) === nothing ? "u" : CTModels.control_name(_traj_model(sol))
 end
@@ -54,13 +96,23 @@ _time_name(sol) = _traj_model(sol) === nothing ? "t" : CTModels.time_name(_traj_
 # Panel builders
 # =============================================================================
 
+"""
+$(TYPEDSIGNATURES)
+
+The state panel: `state(sol)` sampled at `ts`, one curve per component.
+"""
 function _state_panel(sol, ts, style::NamedTuple)
     M = _sample(Trajectories.state(sol), ts)
     return Plotting.Panel(ts, M; title="state", labels=_state_names(sol, size(M, 2)), style)
 end
 
-# When state is shown alongside (paired columns), the aligned state ylabels label the
-# rows, so the costate column carries no ylabel (mirrors the CTModels convention).
+"""
+$(TYPEDSIGNATURES)
+
+The costate panel: `costate(sol)` sampled at `ts`. When the state is drawn alongside (paired
+columns), the state labels name the rows, so the costate curves carry no label, as in
+CTModels.
+"""
 function _costate_panel(sol, ts, style::NamedTuple; state_shown::Bool)
     M = _sample(Trajectories.costate(sol), ts)
     n = size(M, 2)
@@ -68,6 +120,15 @@ function _costate_panel(sol, ts, style::NamedTuple; state_shown::Bool)
     return Plotting.Panel(ts, M; title="costate", labels, style)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+The control panel: `control(sol)` sampled at `ts`, drawn as its components
+(`control=:components`), its norm (`:norm`) or both (`:all`).
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: for any other value of `control`.
+"""
 function _control_panel(sol, ts, control::Symbol, style::NamedTuple)
     U = _sample(Trajectories.control(sol), ts)
     m = size(U, 2)

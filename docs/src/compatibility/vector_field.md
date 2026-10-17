@@ -4,27 +4,14 @@
 CurrentModule = CTFlows
 ```
 
-This page is a **living compatibility reference** for the state flow built from a
-[`Data.VectorField`](@extref CTBase.Data.VectorField): which state types and call styles
-it accepts, each shown with a minimal, executable example. Every ✓ / ⚠ in the table below
-is demonstrated by a code block on this page and is re-run on every documentation build,
-so the page cannot drift from the code.
-
-Scope: **CPU** only. The table is generated from [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
-(run it locally with `julia --project=probe/cpu probe/cpu/probe_cpu.jl`). GPU
-compatibility is a separate effort — see [`probe/gpu`](https://github.com/control-toolbox/CTFlows.jl/tree/main/probe/gpu).
+Which state types and call styles the state flow built from a
+[`Data.VectorField`](@extref CTBase.Data.VectorField) accepts, on **CPU**.
+Every cell has an executed example; see [Compatibility](overview.md) for how the pages stay true.
 
 All examples integrate the scalar exponential decay ``\dot{x} = -x`` (autonomous, fixed)
 with the default SciML integrator (`OrdinaryDiffEqTsit5`). The analytic solution is
 ``x(t) = x_0\,e^{-t}``, so integrating from ``t_0 = 0`` to ``t_f = 1`` maps every initial
 condition ``x_0`` to ``x_0\,e^{-1}``.
-
-!!! note "Last probed: 2026-07-24"
-    This page's table *shape* — which containers and axes are tested — reflects
-    [`probe/cpu/probe_cpu.jl`](https://github.com/control-toolbox/CTFlows.jl/blob/main/probe/cpu/probe_cpu.jl)
-    as of this date. Every ✓/⚠ cell below is still re-executed on **every** documentation
-    build regardless (see [Compatibility overview](overview.md)) — only the *scope* of
-    what's tested can go stale, not the results shown.
 
 ```@setup vf_compat
 using CTFlows
@@ -46,7 +33,10 @@ flow = Flows.Flow(vf; reltol=1e-8)
 ```
 
 ```@example vf_compat
-vf_ip   = Data.VectorField((du, x) -> (du .= -x); is_autonomous=true, is_variable=false)   # in-place
+# in-place
+vf_ip = Data.VectorField(
+    (du, x) -> (du .= -x); is_autonomous=true, is_variable=false,
+)
 flow_ip = Flows.Flow(vf_ip; reltol=1e-8)
 ```
 
@@ -101,10 +91,8 @@ behaviours are worth calling out:
     and the trajectory accessor `state(sol)(t)` also returns a scalar, not a length-1
     vector. This is the ecosystem's
     ["1-D = scalar"](https://github.com/control-toolbox/ct-conventions/blob/main/rules/dimension.md)
-    convention, matching what [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md)
-    already did — see the [Shape contract](shape_contract.md) page for the full
-    cross-constructor picture, and [#357](https://github.com/control-toolbox/CTFlows.jl/issues/357)
-    for the fix that brought this constructor in line with it.
+    convention, shared with [`Flow(HamiltonianVectorField)`](hamiltonian_vector_field.md);
+    see the [Shape contract](shape_contract.md) page for every constructor.
 
 ---
 

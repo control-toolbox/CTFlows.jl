@@ -51,8 +51,8 @@ pre = CTModels.Building.PreModel()
 CTModels.Building.time_dependence!(pre; autonomous=true)
 CTModels.Building.time!(pre; t0=0.0, tf=1.0)
 CTModels.Building.state!(pre, 1)
-CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = λ * x[1]; nothing))
-CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf[1])
+CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = λ * x; nothing))
+CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf)
 ocp = CTModels.Building.build(pre)
 nothing # hide
 ```
@@ -89,28 +89,18 @@ Hamiltonian flow — see [Integrating](integrating.md).
 
 ## Free times
 
-`Flow(ocp)` builds an `OptimalControlFlow` around an inner `HamiltonianFlow`, so the
-same free-time shooting technique described in
-[Integrating § Variable costate](integrating.md#Variable-costate) applies directly: a
-free ``t_0`` or ``t_f`` is passed as (a component of) the `variable`, and `t1` in
-`f(t0, x0, p0, t1; variable=v)` is the **evaluation time** — independent of `v`, even
-when `v` *represents* the free endpoint being shot on.
-
-Because the augmented costate is initialised at ``p_v(t_0) = 0``, the mitigated
-transversality residuals can be evaluated from the OCP's own Hamiltonian —
-`H = Systems.hamiltonian(f)` — with an **opposite sign convention** at each end:
+A free ``t_0`` or ``t_f`` is passed as (a component of) the `variable`; `t1` in
+`f(t0, x0, p0, t1; variable=v)` stays the **evaluation time**, independent of `v`. With
+`variable_costate=true`, the augmented costate starts at ``p_v(t_0) = 0``, and the
+transversality conditions are written with `H = CTFlows.Systems.hamiltonian(f)`:
 
 ```math
 p_{t_0}(t_f) = -H(t_0, x_0, p_0, v), \qquad p_{t_f}(t_f) = H(t_f, x_f, p_f, v).
 ```
 
-See `test/suite/flows/test_variable_costate_free_time.jl` for worked examples that
-exercise this ``p_v`` mechanism (free ``t_0``, free ``t_f``, and both at once), and
-[Integrating § Free times](integrating.md#Free-times) for the derivation. This settles
-issues [#231](https://github.com/control-toolbox/CTFlows.jl/issues/231) and
-[#183](https://github.com/control-toolbox/CTFlows.jl/issues/183). (The Goddard tests
-close their free final time with the classical ``H \equiv 0`` condition instead — not
-the ``p_v`` adjoint.)
+See [Integrating § Free times](integrating.md#Free-times) for the derivation, and
+`test/suite/flows/test_variable_costate_free_time.jl` for shooting residuals with a free
+``t_0``, a free ``t_f``, and both.
 
 ---
 
@@ -151,8 +141,7 @@ plot(sol)
 ## Basic flow — no costate (direct shooting)
 
 For a **control-free** OCP, `Flow(ocp)` also exposes a **state-only** call, with no
-costate — the direct-shooting use case
-([#230](https://github.com/control-toolbox/CTFlows.jl/issues/230)). Same `f` object,
+costate — the direct-shooting use case. Same `f` object,
 dispatched on arity (3 positional arguments instead of 4):
 
 ```@repl flows_ocp
@@ -187,8 +176,9 @@ see [Control laws](control_laws.md).
 ## Inspecting the wrapper
 
 `OptimalControlFlow` is a thin `AbstractFlow` wrapper around the inner
-`HamiltonianFlow`; it exists solely so the trajectory call can rebuild a
-`CTModels.Solution` from the problem:
+`HamiltonianFlow`. It also holds the OCP (to rebuild a `CTModels.Solution` and its
+objective), the control law (`nothing` for a control-free problem) and the state flow used
+by the state-only call:
 
 ```@repl flows_ocp
 Flows.system(f) isa CTFlows.Systems.HamiltonianSystem

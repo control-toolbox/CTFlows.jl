@@ -137,7 +137,8 @@ typeof(flow_explicit) == typeof(flow)
 | OCP (with control) + `OpenLoop`/`ClosedLoop` law | `ControlledFlow` |
 | OCP (with control) + `u::Function` | `OptimalControlFlow` (auto `DynClosedLoop`) |
 
-Both `StateFlow` and `HamiltonianFlow` are concrete subtypes of `AbstractFlow`.
+`StateFlow` and `HamiltonianFlow` are aliases of the concrete `Flow` type (a subtype of
+`AbstractFlow`), for a state and a Hamiltonian system.
 `ControlledFlow` is a state-flow wrapper carrying a control law (see
 [Control laws](control_laws.md)).
 `OptimalControlFlow` wraps a `HamiltonianFlow` with the OCP reference (see
@@ -149,30 +150,18 @@ Traits.time_dependence(flow)      # Autonomous (inherited from vf)
 Traits.variable_dependence(flow)  # Fixed
 ```
 
-### `AbstractSystem` contract
+To plug in your own system, flow type or integrator, see
+[Extending CTFlows](../dev/extending.md): each layer has a small contract.
 
-Any concrete system must implement:
+---
 
-- `get_ip_rhs(system, config)` — returns the in-place ODE function `(du, u, p, t) -> nothing`
-- `get_oop_rhs(system, config)` — returns the out-of-place ODE function `(u, p, t) -> du`
+## Flow getters
 
-Hamiltonian systems supporting variable-costate integration additionally implement
-`get_ip_rhs_augmented(system, config)`. Eager systems (e.g. `VectorFieldSystem`)
-ignore `config` and return pre-computed closures; lazy systems (e.g.
-`HamiltonianSystem`) read the initial conditions from `config` to build
-type-specific closures.
+Every flow answers a small, uniform set of getters. Which ones are meaningful depends
+on how the flow was built; an inapplicable getter raises an `IncorrectArgument` that says
+what the flow holds and which getter to use.
 
-Traits are propagated automatically from the data layer:
-
-- `Traits.time_dependence(system)`
-- `Traits.variable_dependence(system)`
-
-### `AbstractFlow` contract
-
-Any concrete flow must implement:
-
-- `system(flow)` — the associated `AbstractSystem`
-- `integrator(flow)` — the associated `AbstractIntegrator`
+`Flows.system`, `Flows.integrator` and `vector_field` are available on all flows:
 
 ```@example flows_building
 Flows.system(flow)      # the VectorFieldSystem wrapped by this StateFlow
@@ -182,20 +171,7 @@ Flows.system(flow)      # the VectorFieldSystem wrapped by this StateFlow
 Flows.integrator(flow)  # the SciML integrator strategy
 ```
 
-Calling a flow delegates through `_invoke_flow` which builds the ODE problem,
-solves it, and wraps the result — see [Integrating](integrating.md).
-
----
-
-## Flow getters
-
-Every flow answers a small, uniform set of getters. Which ones are meaningful depends
-on how the flow was built; calling an inapplicable getter raises a clear
-`IncorrectArgument`.
-
-`system`, `integrator`, and `vector_field` are available on all flows (the first two
-are shown in the `AbstractFlow` contract above). For a `StateFlow`, `vector_field`
-returns the underlying `AbstractVectorField` directly:
+For a `StateFlow`, `vector_field` returns the underlying `AbstractVectorField` directly:
 
 ```@repl flows_building
 Flows.vector_field(flow)

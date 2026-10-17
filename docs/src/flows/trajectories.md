@@ -48,7 +48,7 @@ A fourth result appears one level up: a trajectory call on an `OptimalControlFlo
 [`CTModels.Solutions.Solution`](@extref CTModels.Solutions.Solution) rather than a CTFlows
 container — see [Optimal control](optimal_control.md). All four share the same accessor
 vocabulary (`state`, `costate`, `control`, `objective`) and the same `plot` / `plot!`
-entry point (Plots or Makie backend — see [Plotting](@ref) below).
+entry point (Plots or Makie backend — see [Plotting](#Plotting) below).
 
 ---
 
@@ -184,9 +184,9 @@ Integrators.final_state(sol)  # xf — a state flow returns the state
 Integrators.final_state(hsol) # (xf, pf) — a Hamiltonian flow returns the pair
 ```
 
-`status` returns the integrator's return code and `successful` a `Bool`. A **point**
-call raises a `SolverFailure` on a non-success code unless `unsafe=true`; a trajectory
-call always returns, so inspect `successful(sol)` to check convergence (see
+`status` returns the integrator's return code and `successful` a `Bool`. Both call styles
+raise a `CTBase.Exceptions.SolverFailure` on a non-success code; with `unsafe=true` the
+call returns anyway, and `successful(sol)` tells whether the integration converged (see
 [Integrating](integrating.md#Unsafe-mode)).
 
 ---
@@ -210,8 +210,7 @@ Trajectory plotting is split into a backend-free **case layer** and a **backend*
 
 Both extensions call `build_figure` and hand the figure to
 `CTBase.Plotting.render(<backend>, fig)`; they expose the **same** `description` and
-keyword surface. The Makie backend is at feature parity with the Plots backend (see
-CTModels#408 / CTBase#540). Until a backend extension is loaded, `plot` on a trajectory
+keyword surface, with the same features. Until a backend extension is loaded, `plot` on a trajectory
 throws a `CTBase.Exceptions.ExtensionError`.
 
 When only one backend is loaded, call `plot` unqualified; when both are loaded (as in
@@ -249,7 +248,8 @@ Any further keyword is forwarded to the backend (see
 [`CTFlows.TrajectoryPlots.split_plot_kwargs`](@ref)).
 
 ```@example flows_solutions
-Plots.plot(hsol, :state; layout=:group, time=:normalize)   # only the state, grouped, [0,1] time
+# only the state, grouped, time rescaled to [0, 1]
+Plots.plot(hsol, :state; layout=:group, time=:normalize)
 ```
 
 ```@example flows_solutions
