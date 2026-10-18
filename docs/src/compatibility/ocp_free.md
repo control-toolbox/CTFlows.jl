@@ -119,11 +119,7 @@ f2(0.0, [1.0 2.0; 3.0 4.0], [0.5 0.3; 0.2 0.1], 1.0)
 ### Not supported: `Complex`, hand-built `Dual`
 
 ```@repl ocp_free_compat
-try
-    f1(0.0, 1.0 + 2.0im, 0.5 + 0.1im, 1.0)
-catch e
-    showerror(stdout, e)
-end
+f1(0.0, 1.0 + 2.0im, 0.5 + 0.1im, 1.0)
 ```
 
 ---
