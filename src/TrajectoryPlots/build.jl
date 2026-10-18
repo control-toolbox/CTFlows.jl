@@ -133,26 +133,23 @@ function build_figure(
         control_style=control_style,
     )
     isempty(panels) && _nothing_to_plot()
+    taus = Trajectories.switching_times(sol)
     vlines = if switching_style === :none
         Plotting.VLine[]
     else
-        _switching_vlines(sol, ts, time, merge(_SWITCHING_STYLE, switching_style))
+        style = merge(_SWITCHING_STYLE, switching_style)
+        Plotting.switching_vlines(ts, taus; time=time, style=style)
     end
     texts = if phase_labels === :none
         Plotting.Annotation[]
     else
-        _phase_annotations(sol, ts, time, phase_labels_style)
+        labels = Trajectories.phase_labels(sol)
+        Plotting.phase_annotations(ts, taus, labels; time=time, style=phase_labels_style)
     end
-    # the labels go to the control panel (or the first panel), or to every panel (:all)
-    target = if phase_labels === :all
-        0
-    else
-        something(findfirst(p -> p.title == "control", panels), 1)
-    end
-    annotations = [
-        (target == 0 || k == target) ? texts : Plotting.Annotation[] for
-        k in eachindex(panels)
-    ]
+    on = _phase_label_panels(
+        phase_labels, length(panels), _control_shown(desc, control_style)
+    )
+    annotations = [k ? texts : Plotting.Annotation[] for k in on]
     root = _assemble(
         sol,
         panels,
@@ -176,11 +173,6 @@ curves, as the initial/final time markers of a `CTModels.Solution` plot.
 const _SWITCHING_STYLE = (color=:black, linestyle=:dash, linewidth=1, z_order=:back, label="")
 
 """
-Default style of the phase labels: small grey text.
-"""
-const _PHASE_LABEL_STYLE = (color=:gray30, fontsize=9)
-
-"""
 $(TYPEDSIGNATURES)
 
 Check the placement of the phase labels: `:control`, `:all` or `:none`.
@@ -194,6 +186,7 @@ function _check_phase_labels(phase_labels::Symbol)
             "Invalid phase_labels choice";
             got="phase_labels=$phase_labels",
             expected=":control, :all or :none",
+            suggestion="Use phase_labels=:control (default), :all or :none",
             context="TrajectoryPlots.build_figure",
         ),
     )
@@ -203,44 +196,16 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the plotted abscissa of time `t`: `t` itself, or rescaled to `[0, 1]` over the time
-grid `ts` when `time` is `:normalize` / `:normalise` (the transform
-[`CTBase.Plotting.lower`](@extref) applies to the panels).
+Return, for each of the `n` drawn panels, whether it receives the phase labels: every panel
+for `phase_labels = :all`, none for `:none`; for `:control`, the control panel when it is
+drawn (the last panel, see [`CTFlows.TrajectoryPlots._panels`](@extref)), the first panel
+otherwise.
 """
-function _plotted_time(ts, t::Real, time::Symbol)
-    (time === :normalize || time === :normalise) || return Float64(t)
-    t0, tf = first(ts), last(ts)
-    return tf > t0 ? (t - t0) / (tf - t0) : Float64(t - t0)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Build the vertical lines at the switching times of `sol`, shared by every cell.
-"""
-function _switching_vlines(sol, ts, time::Symbol, style::NamedTuple)
-    return Plotting.VLine[
-        Plotting.VLine(_plotted_time(ts, τ, time); style=style) for
-        τ in Trajectories.switching_times(sol)
-    ]
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Build the phase labels of `sol` as texts centred on each phase, near the top of the cell.
-A phase with an empty label gets no text; a trajectory with no label gets none.
-"""
-function _phase_annotations(sol, ts, time::Symbol, style::NamedTuple)
-    labels = Trajectories.phase_labels(sol)
-    any(!isempty, labels) || return Plotting.Annotation[]
-    bounds = vcat(first(ts), Trajectories.switching_times(sol), last(ts))
-    s = merge(_PHASE_LABEL_STYLE, style)
-    return Plotting.Annotation[
-        Plotting.Annotation(
-            _plotted_time(ts, (bounds[k] + bounds[k + 1]) / 2, time), labels[k]; style=s
-        ) for k in eachindex(labels) if !isempty(labels[k])
-    ]
+function _phase_label_panels(phase_labels::Symbol, n::Int, control_shown::Bool)::Vector{Bool}
+    phase_labels === :all && return fill(true, n)
+    phase_labels === :none && return fill(false, n)
+    target = control_shown ? n : 1
+    return [k == target for k in 1:n]
 end
 
 """

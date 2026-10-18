@@ -422,12 +422,46 @@ function test_switching_structure()
                 st, :costate, 1
             )
             # a flow type that holds no label cannot be given one
-            Test.@test_throws Exceptions.IncorrectArgument Flows.with_label(FakeFlow(), "x")
+            Test.@test_throws Exceptions.PreconditionError Flows.with_label(FakeFlow(), "x")
             Test.@test Flows.with_label(FakeFlow(), "") isa FakeFlow
             # invalid phase_labels
             Test.@test_throws Exceptions.IncorrectArgument TrajectoryPlots.build_figure(
                 st; phase_labels=:everywhere
             )
+            # one label per phase
+            Test.@test_throws Exceptions.IncorrectArgument Trajectories.with_labels(
+                traj, ["a"]
+            )
+            Test.@test_throws Exceptions.IncorrectArgument Trajectories.with_labels(
+                ham, ["a", "b", "c"]
+            )
+            Test.@test isempty(Trajectories.phase_labels(Trajectories.with_labels(traj, [""])))
+        end
+
+        # ====================================================================
+        # UNIT TESTS - helpers
+        # ====================================================================
+
+        Test.@testset "helpers" begin
+            # with_label keeps the concrete type of the flow
+            f = _decay()
+            Test.@test typeof(Flows.with_label(f, "a")) === typeof(f)
+            # limits stacked as rows: scalars and vectors
+            Test.@test Flows._limit_rows([1.0, 2.0]) == reshape([1.0, 2.0], 2, 1)
+            Test.@test Flows._limit_rows([[1.0, 2.0], [3.0, 4.0]]) == [1.0 2.0; 3.0 4.0]
+            Test.@test Flows._limit_rows([1, 2]) isa Matrix{Float64}
+            Test.@test size(Flows._limit_rows(Float64[])) == (0, 0)
+            # panels receiving the phase labels
+            Test.@test TrajectoryPlots._phase_label_panels(:all, 3, true) == [true, true, true]
+            Test.@test TrajectoryPlots._phase_label_panels(:none, 2, true) == [false, false]
+            Test.@test TrajectoryPlots._phase_label_panels(:control, 3, true) ==
+                [false, false, true]
+            Test.@test TrajectoryPlots._phase_label_panels(:control, 2, false) == [true, false]
+            # the limits of a trajectory as the matrices of Plotting.splice_jumps
+            ham = (_harmonic() * (τ, 1.0, 0.5, _harmonic()))((0.0, 1.0), 1.0, 0.0)
+            left, right = TrajectoryPlots._limits(ham, :costate)
+            Test.@test size(left) == (1, 1)
+            Test.@test right[1, 1] - left[1, 1] ≈ 0.5 atol = 1e-10
         end
 
         # ====================================================================

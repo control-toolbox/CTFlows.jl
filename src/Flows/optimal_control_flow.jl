@@ -1601,6 +1601,5 @@ row per switching time. No value gives a `0 × 0` matrix.
 """
 function _limit_rows(values::AbstractVector)::Matrix{Float64}
     isempty(values) && return zeros(0, 0)
-    row(x) = x isa Number ? [Float64(x)] : collect(Float64, vec(x))
-    return Matrix{Float64}(reduce(vcat, (permutedims(row(x)) for x in values)))
+    return Matrix{Float64}(permutedims(reduce(hcat, (vcat(x) for x in values))))
 end

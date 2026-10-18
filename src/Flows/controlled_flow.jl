@@ -46,7 +46,7 @@ Construct a [`CTFlows.Flows.ControlledFlow`](@extref) from an inner state
 optional label (none by default).
 """
 function ControlledFlow(
-    flow::Flow{TD,VD,Traits.StateDynamics}, ocp, law, label::AbstractString=__label()
+    flow::Flow{TD,VD,Traits.StateDynamics}, ocp, law; label::AbstractString=__label()
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     return ControlledFlow{TD,VD,typeof(flow),typeof(ocp),typeof(law)}(
         flow, ocp, law, String(label)
@@ -67,7 +67,7 @@ Return a copy of a [`CTFlows.Flows.ControlledFlow`](@extref) with the label `lab
 """
 function with_label(F::ControlledFlow, label::AbstractString)
     isempty(label) && return F
-    return ControlledFlow(F.flow, F.ocp, F.law, label)
+    return ControlledFlow(F.flow, F.ocp, F.law; label=label)
 end
 
 """

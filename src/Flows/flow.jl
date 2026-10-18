@@ -254,7 +254,7 @@ Return a copy of a flow with the label `label` (the flow is shared otherwise). A
 label returns the flow unchanged.
 
 # Throws
-- [`CTBase.Exceptions.IncorrectArgument`](@extref): if the flow type holds no label and
+- [`CTBase.Exceptions.PreconditionError`](@extref): if the flow type holds no label and
   `label` is not empty.
 
 See also: [`CTFlows.Flows.label`](@extref).
@@ -262,10 +262,13 @@ See also: [`CTFlows.Flows.label`](@extref).
 function with_label(f::AbstractFlow, label::AbstractString)
     isempty(label) && return f
     throw(
-        Exceptions.IncorrectArgument(
+        Exceptions.PreconditionError(
             "this flow cannot carry a label";
-            got="label=$(repr(label)) for a $(nameof(typeof(f)))",
-            expected="a flow built by Flow(...) (a Flow, an OptimalControlFlow or a ControlledFlow)",
+            reason="a $(nameof(typeof(f))) holds no label, so label=$(repr(label)) " *
+                   "cannot be kept",
+            suggestion="label a flow built by Flow(...): a Flow, an OptimalControlFlow, " *
+                       "a ControlledFlow or a SciMLProblemFlow; or define label and " *
+                       "with_label for this flow type",
             context="Flow(...; label=...)",
         ),
     )
@@ -276,9 +279,7 @@ $(TYPEDSIGNATURES)
 
 Return a copy of a [`CTFlows.Flows.Flow`](@extref) with the label `label`.
 """
-function with_label(
-    f::Flow{TD,VD,D,S,I}, label::AbstractString
-) where {TD,VD,D,S,I}
+function with_label(f::Flow, label::AbstractString)
     isempty(label) && return f
-    return Flow{TD,VD,D,S,I}(f.system, f.integrator, String(label))
+    return typeof(f)(f.system, f.integrator, String(label))
 end

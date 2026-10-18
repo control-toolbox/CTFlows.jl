@@ -1061,7 +1061,7 @@ function _controlled_flow(
     g = Data.ComposedVectorField(fc, law)
     system = Systems.build_system(g)
     built = _build_integrator(kwargs)
-    return ControlledFlow(build_flow(system, built.integrator), ocp, law, built.label)
+    return ControlledFlow(build_flow(system, built.integrator), ocp, law; label=built.label)
 end
 
 """

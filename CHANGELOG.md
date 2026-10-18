@@ -29,7 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Plots** (Plots and Makie). A jump of the state, costate or control is drawn as a
     vertical segment; vertical lines mark the switching times (`switching_style`); the
     phase labels are written on the control panel (`phase_labels = :control | :all |
-    :none`, `phase_labels_style`).
+    :none`, `phase_labels_style`; an unlabelled phase gets no text). The plot data comes
+    from the building blocks of `CTBase.Plotting` (`splice_jumps`, `switching_vlines`,
+    `phase_annotations`), shared with the plots of `CTModels.Solution`.
 
 ### 📚 Documentation
 

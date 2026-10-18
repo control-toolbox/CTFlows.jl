@@ -40,19 +40,22 @@ phase_labels(sol::StateFlowTrajectory)::Vector{String} = phase_labels(sol.traj)
 """
 $(TYPEDSIGNATURES)
 
-Return a copy of a trajectory with the phase labels `labels` (the integration result is
-shared). Labels that are all empty are dropped, so that an unlabelled trajectory keeps no
-label.
+Return a copy of a trajectory with the phase labels `labels`, one per phase (the
+integration result is shared). Labels that are all empty are dropped, so that an
+unlabelled trajectory keeps no label.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if there is not one label per phase.
 """
 function with_labels(sol::VectorFieldTrajectory, labels::AbstractVector{<:AbstractString})
-    return VectorFieldTrajectory(sol.result, sol.variable, sol.x0, _kept_labels(labels))
+    kept = _kept_labels(sol, labels)
+    return VectorFieldTrajectory(sol.result, sol.variable, sol.x0, kept)
 end
 function with_labels(
     sol::HamiltonianVectorFieldTrajectory, labels::AbstractVector{<:AbstractString}
 )
-    return HamiltonianVectorFieldTrajectory(
-        sol.x0, sol.result, sol.variable, _kept_labels(labels)
-    )
+    kept = _kept_labels(sol, labels)
+    return HamiltonianVectorFieldTrajectory(sol.x0, sol.result, sol.variable, kept)
 end
 function with_labels(sol::StateFlowTrajectory, labels::AbstractVector{<:AbstractString})
     return StateFlowTrajectory(
@@ -68,10 +71,25 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the labels to keep: none when every label is empty, all of them otherwise.
+Return the labels of `sol` to keep: none when every label is empty, all of them otherwise.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if there is not one label per phase of
+  `sol`.
 """
-function _kept_labels(labels::AbstractVector{<:AbstractString})::Vector{String}
-    return all(isempty, labels) ? String[] : collect(String, labels)
+function _kept_labels(sol, labels::AbstractVector{<:AbstractString})::Vector{String}
+    all(isempty, labels) && return String[]
+    n = length(switching_times(sol)) + 1
+    length(labels) == n || throw(
+        Exceptions.IncorrectArgument(
+            "one label per phase";
+            got="$(length(labels)) label(s) for $n phase(s)",
+            expected="$n labels (one more than the switching times)",
+            suggestion="give \"\" for a phase with no label",
+            context="Trajectories.with_labels",
+        ),
+    )
+    return collect(String, labels)
 end
 
 """
@@ -136,6 +154,7 @@ function _check_switch_index(sol, i::Integer, context::String)
             "no switching time with this index";
             got="i = $i",
             expected=n == 0 ? "no index: the trajectory has a single phase" : "1 ≤ i ≤ $n",
+            suggestion="use an index of switching_times(sol)",
             context=context,
         ),
     )
@@ -156,6 +175,7 @@ function _throw_component(sol, component::Symbol, expected::String)
             "unknown component for this trajectory";
             got=":$component for a $(nameof(typeof(sol)))",
             expected=expected,
+            suggestion="use one of the components of this trajectory: $expected",
             context="right_limit / left_limit",
         ),
     )
@@ -185,10 +205,10 @@ function right_limit(sol::VectorFieldTrajectory, component::Symbol, i::Integer)
     return Systems._coerce_state(sol.x0)(Integrators.right_limit(sol.result, i))
 end
 function right_limit(sol::HamiltonianVectorFieldTrajectory, component::Symbol, i::Integer)
-    k = component === :state ? 1 : component === :costate ? 2 : 0
-    k == 0 && _throw_component(sol, component, ":state or :costate")
+    component in (:state, :costate) || _throw_component(sol, component, ":state or :costate")
     _check_switch_index(sol, i, "right_limit")
-    return _ham_split_solution(Integrators.right_limit(sol.result, i), sol.x0)[k]
+    x, p = _ham_split_solution(Integrators.right_limit(sol.result, i), sol.x0)
+    return component === :state ? x : p
 end
 function right_limit(sol::StateFlowTrajectory, component::Symbol, i::Integer)
     component in (:state, :control) || _throw_component(sol, component, ":state or :control")
