@@ -19,13 +19,20 @@ This type wraps the integration result returned by integrators and provides
 semantic accessors for time grids, state functions, and costate functions.
 
 # Fields
+- `x0`: The initial state, which drives the shape of the state and costate.
 - `result`: The integration result object (subtype of `AbstractIntegrationResult`).
+- `variable`: The variable value threaded through the flow call, or `Core.NotProvided`.
+- `state_proj`, `costate_proj`: The precomputed state and costate projections.
+- `labels`: The labels of the phases (one per phase, `""` for no label), or no label at
+  all (an empty vector), see [`CTFlows.Trajectories.phase_labels`](@extref).
 
 # Accessors
 - `times(sol)`: Get the time grid (alias: `time_grid(sol)`)
 - `state(sol)`: Get the solution as a callable state function `x(t)`
 - `costate(sol)`: Get the solution as a callable costate function `p(t)`
 - `sol(t)`: Evaluate the solution at time `t`, returning tuple `(x(t), p(t))`
+- `switching_times(sol)`, `phase_labels(sol)`, `right_limit(sol, :state, i)`,
+  `right_limit(sol, :costate, i)`: the switching structure of a multi-phase trajectory
 
 # Example
 ```julia
@@ -49,6 +56,7 @@ struct HamiltonianVectorFieldTrajectory{
     variable::V
     state_proj::SP
     costate_proj::CP
+    labels::Vector{String}
 end
 
 """
@@ -56,17 +64,20 @@ $(TYPEDSIGNATURES)
 
 Construct a `HamiltonianVectorFieldTrajectory`, precomputing the state and costate
 projections once so the `state`/`costate` accessors return a stored functor instead of
-rebuilding one on every call.
+rebuilding one on every call. `labels` are the phase labels (none by default).
 """
 function HamiltonianVectorFieldTrajectory(
-    x0, result::Integrators.AbstractIntegrationResult, variable
+    x0,
+    result::Integrators.AbstractIntegrationResult,
+    variable,
+    labels::AbstractVector{<:AbstractString}=String[],
 )
     sp = StateProjection(result, x0)
     cp = CostateProjection(result, x0)
     return HamiltonianVectorFieldTrajectory{
         typeof(x0),typeof(result),typeof(variable),typeof(sp),typeof(cp)
     }(
-        x0, result, variable, sp, cp
+        x0, result, variable, sp, cp, collect(String, labels)
     )
 end
 

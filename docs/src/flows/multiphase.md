@@ -164,6 +164,54 @@ nothing # hide
 
 ---
 
+## Phase labels
+
+Each flow can be given a **label** at construction, naming the phase it integrates (an arc
+`bang`, `singular`, `boundary`, …). Concatenation keeps the flows, so it keeps their
+labels, in order:
+
+```@example flows_multiphase
+fa = Flows.Flow(vf; reltol=1e-8, label="decay")
+fb = Flows.Flow(Data.VectorField(f_dyn2); reltol=1e-8, label="fast decay")
+mpf_lab = fa * (1.0, fb)
+MultiPhase.get_labels(mpf_lab)
+```
+
+A flow with no label has the label `""`. The labels are stored in the trajectory
+([`Trajectories.phase_labels`](@ref CTFlows.Trajectories.phase_labels)) and, for an
+optimal control flow, in the `CTModels.Solution`; the plots write them on the curves (see
+[Plotting](#Plotting) below).
+
+---
+
+## Left and right limits at a switching time
+
+A multi-phase trajectory is **left-continuous**: at a switching time `tᵢ`, `sol(tᵢ)` and
+the accessors return the value at the end of the phase that finishes there, before the
+jump. The value after the jump is read with
+[`Trajectories.right_limit`](@ref CTFlows.Trajectories.right_limit):
+
+```@example flows_multiphase
+sol_lab = (fa * (1.0, [0.5, 0.0], fb))((0.0, 2.0), x0)
+Trajectories.switching_times(sol_lab)
+```
+
+```@example flows_multiphase
+Trajectories.left_limit(sol_lab, :state, 1), Trajectories.right_limit(sol_lab, :state, 1)
+```
+
+The components are `:state` for a state trajectory, `:state` and `:costate` for a
+Hamiltonian one, and `:state` and `:control` for the trajectory of a controlled flow: at
+`tᵢ`, the control is computed with the law of the phase that ends there; its right limit,
+with the law of the next phase. The time grid holds each switching time **once**.
+
+For an optimal control flow, the `CTModels.Solution` keeps the same structure — switching
+times, phase labels, left and right limits of the state, costate and control — read with
+`CTModels.switching_times`, `CTModels.phase_labels`, `CTModels.left_limit` and
+`CTModels.right_limit` (see [Optimal control flows](optimal_control.md)).
+
+---
+
 ## Hamiltonian multi-phase flows
 
 The same operators work for Hamiltonian flows:
@@ -184,8 +232,9 @@ xf, pf = hmpf(0.0, x0, p0, 2.0)
 
 The merged trajectory of a multi-phase flow is a plain `VectorFieldTrajectory` (or
 `HamiltonianVectorFieldTrajectory`) — the same types produced by a single-phase flow
-— so `plot` (see [Trajectories](trajectories.md#Plotting)) applies directly, switching
-times included:
+— so `plot` (see [Trajectories](trajectories.md#Plotting)) applies directly. At each
+switching time, a vertical line marks the switch, and a jump of the state, costate or
+control is drawn as a **vertical segment** from the left to the right limit:
 
 ```@setup flows_multiphase
 using Plots
@@ -198,6 +247,25 @@ plot(sol)   # state trajectory across both phases, switch at t = 1.0
 ```@example flows_multiphase
 hsol = hmpf((0.0, 2.0), x0, p0)
 plot(hsol)  # state and costate, across both phases
+```
+
+### Switching lines and phase labels
+
+The phase labels are written on the control panel, or on the first panel when there is no
+control. Three keywords control the switching structure on the plot:
+
+| Keyword | Values (default first) | Effect |
+| --- | --- | --- |
+| `switching_style` | `NamedTuple()` / a `NamedTuple` / `:none` | style of the vertical lines at the switching times (dashed black lines by default); `:none` hides them |
+| `phase_labels` | `:control` / `:all` / `:none` | write the labels on the control panel (or the first panel), on every panel, or nowhere |
+| `phase_labels_style` | `NamedTuple()` | `color`, `fontsize`, `halign`, `valign` of the labels |
+
+```@example flows_multiphase
+plot(sol_lab)   # labels "decay" and "fast decay", state jump at t = 1.0
+```
+
+```@example flows_multiphase
+plot(sol_lab; switching_style=(color=:red,), phase_labels_style=(fontsize=12,))
 ```
 
 ### Different dynamics — kink at the switching time
@@ -291,10 +359,12 @@ plot(hsol_sx)   # state jumps, costate continuous
 - The trajectory integration merges phase results via `Integrators.merge`, which keeps
   each phase's result and dense interpolant (a piecewise result): the merged trajectory
   is as accurate as a single-phase one. With `grid=nothing`, its time grid concatenates the
-  phase grids, so a switching time appears twice; by default (no output grid at the call),
+  phase grids, each switching time once; by default (no output grid at the call),
   an adaptive grid of 250 times is generated over the merged trajectory and every
-  switching time appears once (the phases themselves are integrated without it). Evaluating at a switching time returns the end value of
-  the phase that finishes there (before the jump). A grid of times given at the call is
+  switching time appears once (the phases themselves are integrated without it).
+  Evaluating at a switching time returns the end value of the phase that finishes there
+  (before the jump); `Trajectories.right_limit` returns the value after it. A grid of
+  times given at the call is
   returned exactly (switching times are not added); a generated grid (`grid=n`,
   `UniformGrid`, `AdaptiveGrid`) has exactly `n` distinct times, every switching time
   included once, the intervals being shared between the phases.
@@ -305,4 +375,6 @@ plot(hsol_sx)   # state jumps, costate continuous
 
 - [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.MultiPhase.AnyMultiPhaseFlow`](@ref) — multi-phase flow types.
 - [`CTFlows.MultiPhase.n_phases`](@ref), [`CTFlows.MultiPhase.get_flow`](@ref), [`CTFlows.MultiPhase.get_switching_time`](@ref), [`CTFlows.MultiPhase.get_jump`](@ref) — phase accessors.
-- [`CTFlows.MultiPhase.get_flows`](@ref), [`CTFlows.MultiPhase.get_switching_times`](@ref), [`CTFlows.MultiPhase.get_jumps`](@ref) — bulk accessors.
+- [`CTFlows.MultiPhase.get_flows`](@ref), [`CTFlows.MultiPhase.get_switching_times`](@ref), [`CTFlows.MultiPhase.get_jumps`](@ref), [`CTFlows.MultiPhase.get_labels`](@ref) — bulk accessors.
+- [`CTFlows.Flows.label`](@ref) — the label of a flow.
+- [`CTFlows.Trajectories.switching_times`](@ref), [`CTFlows.Trajectories.phase_labels`](@ref), [`CTFlows.Trajectories.left_limit`](@ref), [`CTFlows.Trajectories.right_limit`](@ref) — the switching structure of a trajectory.

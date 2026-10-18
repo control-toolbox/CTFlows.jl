@@ -1225,6 +1225,7 @@ rebuilds a full [`CTModels.Solutions.Solution`](@extref) from the problem.
 - `state_flow::SF`: inner state flow of `ẋ = f(t,x,∅,v)`, built only for a control-free
   OCP (`Flow(ocp)`, no law); `nothing` otherwise. Backs the basic (no-costate) call
   arities `f(t0,x0,tf)` / `f((t0,tf),x0)` — see [`CTFlows.Flows._ocp_state_vector_field`](@extref).
+- `label::String`: the label of the phase (`""` for no label), see [`CTFlows.Flows.label`](@extref).
 
 See also: [`CTFlows.Flows.Flow`](@extref), [`CTModels.Solutions.Solution`](@extref).
 """
@@ -1235,6 +1236,7 @@ struct OptimalControlFlow{
     ocp::M
     law::CL
     state_flow::SF
+    label::String
 end
 
 """
@@ -1245,11 +1247,32 @@ Construct a [`CTFlows.Flows.OptimalControlFlow`](@extref) from an inner Hamilton
 control-free `state_flow` (see the `state_flow` field).
 """
 function OptimalControlFlow(
-    flow::Flow{TD,VD,Traits.HamiltonianDynamics}, ocp, law=nothing; state_flow=nothing
+    flow::Flow{TD,VD,Traits.HamiltonianDynamics},
+    ocp,
+    law=nothing;
+    state_flow=nothing,
+    label::AbstractString=__label(),
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     return OptimalControlFlow{TD,VD,typeof(flow),typeof(ocp),typeof(law),typeof(state_flow)}(
-        flow, ocp, law, state_flow
+        flow, ocp, law, state_flow, String(label)
     )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the label of an [`CTFlows.Flows.OptimalControlFlow`](@extref).
+"""
+label(F::OptimalControlFlow)::String = F.label
+
+"""
+$(TYPEDSIGNATURES)
+
+Return a copy of an [`CTFlows.Flows.OptimalControlFlow`](@extref) with the label `label`.
+"""
+function with_label(F::OptimalControlFlow, label::AbstractString)
+    isempty(label) && return F
+    return OptimalControlFlow(F.flow, F.ocp, F.law; state_flow=F.state_flow, label=label)
 end
 
 """
@@ -1356,7 +1379,10 @@ function (F::OptimalControlFlow)(
     spec = _call_grid_spec(tspan, grid, F)
     sol = F.flow(tspan, x0, p0; variable, variable_costate, unsafe, grid=nothing)   # HamiltonianVectorFieldTrajectory
     sol = _regrid_hamiltonian(sol, spec, F.law, variable, collect(float.(tspan)))
-    return _build_ocp_solution(F.ocp, sol, variable, integrator(F.flow), F.law)
+    switching = _ocp_switching_model(sol, F.law, variable, [label(F)])
+    return _build_ocp_solution(
+        F.ocp, sol, variable, integrator(F.flow), F.law; switching=switching
+    )
 end
 
 # ── basic (no-costate) point eval / trajectory — control-free OCP only ─────
@@ -1435,6 +1461,7 @@ function (F::OptimalControlFlow)(
     coerce = _flow_state_coerce(F.ocp, x0)   # precomputed once (only / identity)
     traj = _regrid_state(traj, spec, nothing, variable, coerce, collect(float.(tspan)))
     obj = _state_flow_objective(F.ocp, traj, nothing, variable, integrator(sf), coerce)
+    traj = Trajectories.with_labels(traj, [label(F)])
     return Trajectories.StateFlowTrajectory(traj, nothing, variable, obj, coerce, F.ocp)
 end
 
@@ -1482,7 +1509,12 @@ full `CTModels.Solution` with empty control (control-free OCP).
 See also: [`CTFlows.Flows.OptimalControlFlow`](@extref), `CTFlows.Flows._flow_objective`, `CTFlows.Flows._control_of`, `CTFlows.Flows._variable_vector`, [`CTModels.Solutions.Solution`](@extref).
 """
 function _build_ocp_solution(
-    ocp, sol::Trajectories.HamiltonianVectorFieldTrajectory, variable, integ, law=nothing
+    ocp,
+    sol::Trajectories.HamiltonianVectorFieldTrajectory,
+    variable,
+    integ,
+    law=nothing;
+    switching::CTModels.Solutions.AbstractSwitchingModel=CTModels.Solutions.EmptySwitchingModel(),
 )
     T = collect(Float64, Trajectories.time_grid(sol))
     x = Trajectories.state(sol)    # callable StateProjection: t -> x(t)
@@ -1504,5 +1536,71 @@ function _build_ocp_solution(
         status=Integrators.status(sol),
         successful=Integrators.successful(sol),
         control_interpolation=:linear,
+        switching=switching,
     )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Build the switching structure of the `Solution` of an OCP flow from its Hamiltonian
+trajectory: the switching times of the trajectory, the phase labels `labels` (one per
+phase), and the left and right limits of the state, costate and control at every switching
+time. The control limits come from the law: the left limit from the law of the phase that
+ends (at the values before the jump), the right one from the law of the next phase (at the
+values after it), see [`CTFlows.Flows._right_ocp_control`](@extref).
+
+Returns an [`CTModels.Solutions.EmptySwitchingModel`](@extref) when there is no switching
+time and no label.
+"""
+function _ocp_switching_model(
+    sol::Trajectories.HamiltonianVectorFieldTrajectory,
+    law,
+    variable,
+    labels::AbstractVector{<:AbstractString},
+)
+    taus = Trajectories.switching_times(sol)
+    n = length(taus)
+    n == 0 && all(isempty, labels) && return CTModels.Solutions.EmptySwitchingModel()
+    v = _variable_vector(variable)
+    xl = [Trajectories.left_limit(sol, :state, i) for i in 1:n]
+    xr = [Trajectories.right_limit(sol, :state, i) for i in 1:n]
+    pl = [Trajectories.left_limit(sol, :costate, i) for i in 1:n]
+    pr = [Trajectories.right_limit(sol, :costate, i) for i in 1:n]
+    control = if law === nothing
+        (zeros(n, 0), zeros(n, 0))   # control-free: no control component
+    else
+        (
+            _limit_rows([law(taus[i], xl[i], pl[i], v) for i in 1:n]),
+            _limit_rows([_right_ocp_control(law, i, taus[i], xr[i], pr[i], v) for i in 1:n]),
+        )
+    end
+    return CTModels.Solutions.SwitchingModel(;
+        times=taus,
+        labels=labels,
+        state=(_limit_rows(xl), _limit_rows(xr)),
+        costate=(_limit_rows(pl), _limit_rows(pr)),
+        control=control,
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Control just after the `i`-th switching time `t`, from the state `x` and costate `p` after
+the jump. A single law has no phase, so it is the law itself; `CTFlows.MultiPhase` adds the
+method of the piecewise law of a multi-phase flow (the law of the next phase).
+"""
+_right_ocp_control(law, ::Integer, t, x, p, v) = law(t, x, p, v)
+
+"""
+$(TYPEDSIGNATURES)
+
+Stack values (scalars for one component, vectors otherwise) as the rows of a matrix: one
+row per switching time. No value gives a `0 × 0` matrix.
+"""
+function _limit_rows(values::AbstractVector)::Matrix{Float64}
+    isempty(values) && return zeros(0, 0)
+    row(x) = x isa Number ? [Float64(x)] : collect(Float64, vec(x))
+    return Matrix{Float64}(reduce(vcat, (permutedims(row(x)) for x in values)))
 end

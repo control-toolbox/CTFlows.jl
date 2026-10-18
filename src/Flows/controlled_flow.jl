@@ -26,6 +26,7 @@ trajectory call returns a [`CTFlows.Trajectories.StateFlowTrajectory`](@extref).
 - `flow::IF`: the inner state flow integrating `ẋ = g(t, x, v)`.
 - `ocp::M`: the OCP model (for the objective), or `nothing`.
 - `law::L`: the control law, used to reconstruct `u(t)`.
+- `label::String`: the label of the phase (`""` for no label), see [`CTFlows.Flows.label`](@extref).
 
 See also: [`CTFlows.Trajectories.StateFlowTrajectory`](@extref), [`CTFlows.Flows.Flow`](@extref).
 """
@@ -34,18 +35,39 @@ struct ControlledFlow{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,IF
     flow::IF
     ocp::M
     law::L
+    label::String
 end
 
 """
 $(TYPEDSIGNATURES)
 
 Construct a [`CTFlows.Flows.ControlledFlow`](@extref) from an inner state
-[`CTFlows.Flows.Flow`](@extref), an optional OCP (for the objective), and a control law.
+[`CTFlows.Flows.Flow`](@extref), an optional OCP (for the objective), a control law, and an
+optional label (none by default).
 """
 function ControlledFlow(
-    flow::Flow{TD,VD,Traits.StateDynamics}, ocp, law
+    flow::Flow{TD,VD,Traits.StateDynamics}, ocp, law, label::AbstractString=__label()
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
-    return ControlledFlow{TD,VD,typeof(flow),typeof(ocp),typeof(law)}(flow, ocp, law)
+    return ControlledFlow{TD,VD,typeof(flow),typeof(ocp),typeof(law)}(
+        flow, ocp, law, String(label)
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the label of a [`CTFlows.Flows.ControlledFlow`](@extref).
+"""
+label(F::ControlledFlow)::String = F.label
+
+"""
+$(TYPEDSIGNATURES)
+
+Return a copy of a [`CTFlows.Flows.ControlledFlow`](@extref) with the label `label`.
+"""
+function with_label(F::ControlledFlow, label::AbstractString)
+    isempty(label) && return F
+    return ControlledFlow(F.flow, F.ocp, F.law, label)
 end
 
 """
@@ -109,6 +131,7 @@ function (F::ControlledFlow)(
     coerce = _flow_state_coerce(F.ocp, x0)  # precomputed once (only / identity)
     traj = _regrid_state(traj, spec, F.law, variable, coerce, collect(float.(tspan)))
     obj = _state_flow_objective(F.ocp, traj, F.law, variable, integrator(F.flow), coerce)
+    traj = Trajectories.with_labels(traj, [label(F)])
     return Trajectories.StateFlowTrajectory(traj, F.law, variable, obj, coerce, F.ocp)
 end
 

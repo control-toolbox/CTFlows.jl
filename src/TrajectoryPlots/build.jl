@@ -18,12 +18,25 @@ Lower each panel and assemble the [`CTBase.Plotting`](@extref) layout tree from
   side (e.g. state | costate) when they have equal heights;
 - `:split`, `:stacked` → all component cells in a single vertical column.
 
-A lone panel needs no combinator. An invalid `layout` / `time` is reported by
+`vlines` are drawn in every cell; `annotations[k]` are the texts of the `k`-th panel. A
+lone panel needs no combinator. An invalid `layout` / `time` is reported by
 [`CTBase.Plotting.lower`](@extref) as a `CTBase.Exceptions.IncorrectArgument`.
 """
-function _assemble(sol, panels, placement; layout::Symbol, time::Symbol)
+function _assemble(
+    sol,
+    panels,
+    placement;
+    layout::Symbol,
+    time::Symbol,
+    vlines::AbstractVector{Plotting.VLine}=Plotting.VLine[],
+    annotations::AbstractVector=[Plotting.Annotation[] for _ in panels],
+)
     tn = _time_name(sol)
-    nodes = [Plotting.lower(p; layout=layout, time=time, time_name=tn) for p in panels]
+    nodes = [
+        Plotting.lower(
+            p; layout=layout, time=time, time_name=tn, vlines=vlines, annotations=a
+        ) for (p, a) in zip(panels, annotations)
+    ]
     length(nodes) == 1 && return nodes[1]
     if layout === :group
         return Plotting.Paired(nodes)                       # horizontal row of cells
@@ -74,14 +87,26 @@ render the result through a [`CTBase.Plotting.render`](@extref) backend.
 - `time::Symbol = :default`: `:default` or `:normalize` / `:normalise`.
 - `state_style` / `costate_style` / `control_style`: a `NamedTuple` of attributes or
   `:none` to hide the group.
+- `switching_style = NamedTuple()`: style of the vertical lines at the switching times of
+  a multi-phase trajectory (dashed black lines by default, merged with this style); `:none`
+  hides them.
+- `phase_labels::Symbol = :control`: where to write the phase labels (see
+  [`CTFlows.Trajectories.phase_labels`](@extref)): `:control` (the control panel, or the
+  first drawn panel when the control is not drawn), `:all` (every panel) or `:none`.
+- `phase_labels_style::NamedTuple = NamedTuple()`: style of the labels (`color`,
+  `fontsize`, `halign`, `valign`).
 - `size`: figure size; `nothing` defers to the engine heuristic.
+
+At every switching time, a jump of the state, costate or control is drawn as a vertical
+segment, from the left to the right limit.
 
 # Returns
 - `CTBase.Plotting.Figure`.
 
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: nothing to draw (empty description, or every
-  drawn group styled `:none`); an invalid `control` / `layout` / `time`.
+  drawn group styled `:none`); an invalid `control` / `layout` / `time` /
+  `phase_labels`.
 """
 function build_figure(
     sol,
@@ -92,10 +117,14 @@ function build_figure(
     state_style::Union{NamedTuple,Symbol}=Plotting.__style(),
     costate_style::Union{NamedTuple,Symbol}=Plotting.__style(),
     control_style::Union{NamedTuple,Symbol}=Plotting.__style(),
+    switching_style::Union{NamedTuple,Symbol}=Plotting.__style(),
+    phase_labels::Symbol=:control,
+    phase_labels_style::NamedTuple=Plotting.__style(),
     size=nothing,
 )
+    _check_phase_labels(phase_labels)
     desc = clean(isempty(description) ? _default_description(sol) : description)
-    _, panels, placement = _panels(
+    ts, panels, placement = _panels(
         sol,
         desc;
         control=control,
@@ -104,15 +133,131 @@ function build_figure(
         control_style=control_style,
     )
     isempty(panels) && _nothing_to_plot()
-    root = _assemble(sol, panels, placement; layout=layout, time=time)
+    vlines = if switching_style === :none
+        Plotting.VLine[]
+    else
+        _switching_vlines(sol, ts, time, merge(_SWITCHING_STYLE, switching_style))
+    end
+    texts = if phase_labels === :none
+        Plotting.Annotation[]
+    else
+        _phase_annotations(sol, ts, time, phase_labels_style)
+    end
+    # the labels go to the control panel (or the first panel), or to every panel (:all)
+    target = if phase_labels === :all
+        0
+    else
+        something(findfirst(p -> p.title == "control", panels), 1)
+    end
+    annotations = [
+        (target == 0 || k == target) ? texts : Plotting.Annotation[] for
+        k in eachindex(panels)
+    ]
+    root = _assemble(
+        sol,
+        panels,
+        placement;
+        layout=layout,
+        time=time,
+        vlines=vlines,
+        annotations=annotations,
+    )
     return Plotting.Figure(root; size=size)
+end
+
+# =============================================================================
+# Switching structure: vertical lines at the switching times, phase labels
+# =============================================================================
+
+"""
+Default style of the vertical lines at the switching times: dashed black lines behind the
+curves, as the initial/final time markers of a `CTModels.Solution` plot.
+"""
+const _SWITCHING_STYLE = (color=:black, linestyle=:dash, linewidth=1, z_order=:back, label="")
+
+"""
+Default style of the phase labels: small grey text.
+"""
+const _PHASE_LABEL_STYLE = (color=:gray30, fontsize=9)
+
+"""
+$(TYPEDSIGNATURES)
+
+Check the placement of the phase labels: `:control`, `:all` or `:none`.
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: for any other value.
+"""
+function _check_phase_labels(phase_labels::Symbol)
+    phase_labels in (:control, :all, :none) || throw(
+        Exceptions.IncorrectArgument(
+            "Invalid phase_labels choice";
+            got="phase_labels=$phase_labels",
+            expected=":control, :all or :none",
+            context="TrajectoryPlots.build_figure",
+        ),
+    )
+    return nothing
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the plotted abscissa of time `t`: `t` itself, or rescaled to `[0, 1]` over the time
+grid `ts` when `time` is `:normalize` / `:normalise` (the transform
+[`CTBase.Plotting.lower`](@extref) applies to the panels).
+"""
+function _plotted_time(ts, t::Real, time::Symbol)
+    (time === :normalize || time === :normalise) || return Float64(t)
+    t0, tf = first(ts), last(ts)
+    return tf > t0 ? (t - t0) / (tf - t0) : Float64(t - t0)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Build the vertical lines at the switching times of `sol`, shared by every cell.
+"""
+function _switching_vlines(sol, ts, time::Symbol, style::NamedTuple)
+    return Plotting.VLine[
+        Plotting.VLine(_plotted_time(ts, τ, time); style=style) for
+        τ in Trajectories.switching_times(sol)
+    ]
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Build the phase labels of `sol` as texts centred on each phase, near the top of the cell.
+A phase with an empty label gets no text; a trajectory with no label gets none.
+"""
+function _phase_annotations(sol, ts, time::Symbol, style::NamedTuple)
+    labels = Trajectories.phase_labels(sol)
+    any(!isempty, labels) || return Plotting.Annotation[]
+    bounds = vcat(first(ts), Trajectories.switching_times(sol), last(ts))
+    s = merge(_PHASE_LABEL_STYLE, style)
+    return Plotting.Annotation[
+        Plotting.Annotation(
+            _plotted_time(ts, (bounds[k] + bounds[k + 1]) / 2, time), labels[k]; style=s
+        ) for k in eachindex(labels) if !isempty(labels[k])
+    ]
 end
 
 """
 Keyword-argument names consumed by [`build_figure`](@ref); every other keyword a user
 passes to `plot(sol; …)` is forwarded to the `CTBase.Plotting` rendering backend.
 """
-const _BUILD_KEYS = (:layout, :control, :time, :state_style, :costate_style, :control_style)
+const _BUILD_KEYS = (
+    :layout,
+    :control,
+    :time,
+    :state_style,
+    :costate_style,
+    :control_style,
+    :switching_style,
+    :phase_labels,
+    :phase_labels_style,
+)
 
 """
 $(TYPEDSIGNATURES)

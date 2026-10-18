@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ✨ New Features
+
+- **Switching structure of multi-phase flows**
+  ([#443](https://github.com/control-toolbox/CTFlows.jl/issues/443)).
+  - **Phase labels.** `Flow(...; label="bang")` names the phase a flow integrates, on
+    every `Flow` constructor (`Flows.label`, `Flows.with_label`). Concatenation keeps the
+    labels in order (`MultiPhase.get_labels`); the display of a multi-phase flow lists
+    them.
+  - **Left and right limits.** A multi-phase trajectory stays left-continuous at a
+    switching time; `Trajectories.switching_times`, `Trajectories.phase_labels`,
+    `Trajectories.left_limit(sol, component, i)` and `Trajectories.right_limit(sol,
+    component, i)` give the switching structure of the state, costate and control.
+  - **`CTModels.Solution`.** The solution of a multi-phase `Flow(ocp, law)` keeps its
+    switching times, phase labels and the left and right limits of the state, costate and
+    control (a `CTModels.SwitchingModel`); a labelled single-phase flow keeps its label.
+  - **Plots** (Plots and Makie). A jump of the state, costate or control is drawn as a
+    vertical segment; vertical lines mark the switching times (`switching_style`); the
+    phase labels are written on the control panel (`phase_labels = :control | :all |
+    :none`, `phase_labels_style`).
+
 ### 📚 Documentation
 
 - ct-conventions pinned at 0.5.0 in `AGENTS.md` (read from a git-ignored clone in
@@ -16,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug fixes
 
+- **Control at a switching time** ([#443](https://github.com/control-toolbox/CTFlows.jl/issues/443)):
+  at an exact switching time `tᵢ`, the control of a multi-phase flow was computed with the
+  law of the *next* phase at the state and costate *before* the jump, mixing the two
+  sides. It is now the law of the phase that ends at `tᵢ` (left limit), consistent with
+  the left-continuous state and costate; the right limit is given by `right_limit`.
 - **`variable_costate=true` on a trajectory call raises a clear error**
   ([#437](https://github.com/control-toolbox/CTFlows.jl/issues/437)).
   `F((t0, tf), x0, p0; variable_costate=true)` on an `OptimalControlFlow` threw a raw

@@ -26,11 +26,15 @@ semantic accessors for time grids and state functions.
   [`CTFlows.Systems._coerce_state`](@extref)) applied by `sol(t)` and `Integrators.final_state`
   — a scalar or length-1-vector `x0` collapses the returned state to a scalar; anything
   else, or `Core.NotProvided`, applies no coercion.
+- `labels`: The labels of the phases (one per phase, `""` for no label), or no label at
+  all (an empty vector), see [`CTFlows.Trajectories.phase_labels`](@extref).
 
 # Accessors
 - `times(sol)`: Get the time grid (alias: `time_grid(sol)`)
 - `state(sol)`: Get the solution as a callable state function
 - `sol(t)`: Evaluate the solution at time `t` (equivalent to `state(sol)(t)`)
+- `switching_times(sol)`, `phase_labels(sol)`, `right_limit(sol, :state, i)`: the
+  switching structure of a multi-phase trajectory
 
 # Example
 \`\`\`julia
@@ -49,6 +53,16 @@ struct VectorFieldTrajectory{R<:Integrators.AbstractIntegrationResult,V,X0} <:
     result::R
     variable::V
     x0::X0
+    labels::Vector{String}
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Construct a `VectorFieldTrajectory` with no phase label.
+"""
+function VectorFieldTrajectory(result::Integrators.AbstractIntegrationResult, variable, x0)
+    return VectorFieldTrajectory(result, variable, x0, String[])
 end
 
 """
@@ -297,7 +311,8 @@ function Integrators.merge(segments::AbstractVector{<:VectorFieldTrajectory})
     # Merge the internal results
     merged_result = Integrators.merge(internal_results)
 
-    # Wrap in VectorFieldTrajectory, preserving the first segment's variable and x0
+    # Wrap in VectorFieldTrajectory, preserving the first segment's variable and x0;
+    # the phase labels are set by the multi-phase flow (see `with_labels`)
     return VectorFieldTrajectory(merged_result, segments[1].variable, segments[1].x0)
 end
 

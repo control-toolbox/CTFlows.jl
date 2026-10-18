@@ -11,6 +11,8 @@ This constructor builds a complete flow by:
 
 # Arguments
 - `data::CTBase.Data.VectorField`: The vector field defining the system dynamics.
+- `label::AbstractString=""`: the label of the phase the flow integrates (e.g. `"bang"`),
+  kept through concatenation and written on the plots; see [`CTFlows.Flows.label`](@extref).
 - `opts...`: Keyword options passed to the integrator's strategy. Pass `method=:gpu`
   (a `Symbol`, or a token tuple) to build the flow for GPU execution — the integrator
   resolves to `SciML{GPU}`; the default (`method=:cpu`) builds a CPU flow. The `method`
@@ -32,9 +34,9 @@ flow = Flows.Flow(vf; reltol=1e-8)
 
 See also: [`CTFlows.Flows.Flow`](@extref), [`CTFlows.Systems.build_system`](@extref), [`CTFlows.Flows._build_integrator`](@extref), [`CTSolvers.Integrators.SciML`](@extref).
 """
-function Flow(data::Data.VectorField; opts...)
+function Flow(data::Data.VectorField; label::AbstractString=__label(), opts...)
     system = Systems.build_system(data)
-    return build_flow(system, _build_integrator(opts))
+    return with_label(build_flow(system, _build_integrator(opts)), label)
 end
 
 """
@@ -50,6 +52,8 @@ This constructor builds a complete Hamiltonian flow by:
 
 # Arguments
 - `data::CTBase.Data.HamiltonianVectorField`: The Hamiltonian vector field defining the system dynamics.
+- `label::AbstractString=""`: the label of the phase the flow integrates (e.g. `"bang"`),
+  kept through concatenation and written on the plots; see [`CTFlows.Flows.label`](@extref).
 - `opts...`: Keyword options passed to the integrator's strategy.
 
 # Returns
@@ -66,9 +70,9 @@ flow = Flows.Flow(hvf; reltol=1e-8)
 
 See also: [`CTFlows.Flows.HamiltonianFlow`](@extref), [`CTFlows.Systems.build_system`](@extref), [`CTFlows.Flows._build_integrator`](@extref), [`CTSolvers.Integrators.SciML`](@extref).
 """
-function Flow(data::Data.HamiltonianVectorField; opts...)
+function Flow(data::Data.HamiltonianVectorField; label::AbstractString=__label(), opts...)
     system = Systems.build_system(data)
-    return build_flow(system, _build_integrator(opts))
+    return with_label(build_flow(system, _build_integrator(opts)), label)
 end
 
 """
@@ -84,6 +88,8 @@ This constructor builds a complete Hamiltonian flow by:
 
 # Arguments
 - `h::CTBase.Data.AbstractHamiltonian`: The scalar Hamiltonian function.
+- `label::AbstractString=""`: the label of the phase the flow integrates (e.g. `"bang"`),
+  kept through concatenation and written on the plots; see [`CTFlows.Flows.label`](@extref).
 - `kwargs...`: Keyword options passed to the backend and integrator strategies.
   Options are automatically routed based on their names:
   - Backend options (e.g., `ad_backend`) → `:di` strategy
@@ -122,12 +128,12 @@ flow = Flows.Flow(h; reltol=1e-8, ad_backend=ADTypes.AutoForwardDiff())
 See also: [`CTFlows.Flows.HamiltonianFlow`](@extref), [`CTFlows.Systems.build_system`](@extref),
 [`CTFlows.Flows._route_flow_options`](@extref), [`CTFlows.Flows._build_flow_components`](@extref)
 """
-function Flow(h::Data.AbstractHamiltonian; kwargs...)
+function Flow(h::Data.AbstractHamiltonian; label::AbstractString=__label(), kwargs...)
     method, kw = _pop_method(kwargs)
     routed = _route_flow_options(Traits.WithAD, kw; method=method)
     components = _build_flow_components(Traits.WithAD, routed; method=method)
     sys = Systems.build_system(h, components.backend)
-    return build_flow(sys, components.integrator)
+    return with_label(build_flow(sys, components.integrator), label)
 end
 
 """
@@ -147,6 +153,8 @@ Dispatches on the problem's [`CTBase.Traits.ControlDependence`](@extref) trait:
 
 # Arguments
 - `ocp::CTModels.Models.Model`: The optimal control problem model.
+- `label::AbstractString=""`: the label of the phase the flow integrates (e.g. `"bang"`),
+  kept through concatenation and written on the plots; see [`CTFlows.Flows.label`](@extref).
 - `kwargs...`: Keyword options passed to the backend and integrator strategies
   (same as `Flow(h::Data.AbstractHamiltonian; kwargs...)`).
 
@@ -161,8 +169,8 @@ Dispatches on the problem's [`CTBase.Traits.ControlDependence`](@extref) trait:
 
 See also: [`CTFlows.Flows.OptimalControlFlow`](@extref), [`CTFlows.Flows.Flow`](@extref).
 """
-function Flow(ocp::CTModels.Models.Model; kwargs...)
-    return _flow_from_ocp(Traits.control_dependence(ocp), ocp; kwargs...)
+function Flow(ocp::CTModels.Models.Model; label::AbstractString=__label(), kwargs...)
+    return with_label(_flow_from_ocp(Traits.control_dependence(ocp), ocp; kwargs...), label)
 end
 
 """
@@ -262,6 +270,8 @@ Dispatches on the control law's [`CTBase.Traits.feedback`](@extref) trait, then 
 - `h̃::Data.PseudoHamiltonian`: the pseudo-Hamiltonian.
 - `law::Data.ControlLaw`: the control law; must carry `DynClosedLoopFeedback`.
 - `hamiltonian_type::Symbol=:total`: `:total` or `:partial`.
+- `label::AbstractString=""`: the label of the phase the flow integrates (e.g. `"bang"`),
+  kept through concatenation and written on the plots; see [`CTFlows.Flows.label`](@extref).
 - `kwargs...`: backend / integrator strategy options (as for `Flow(h::AbstractHamiltonian)`).
 
 # Throws
@@ -273,8 +283,15 @@ Dispatches on the control law's [`CTBase.Traits.feedback`](@extref) trait, then 
 See also: [`CTFlows.Flows.Flow`](@extref), [`CTBase.Data.PseudoHamiltonian`](@extref),
 [`CTBase.Data.DynClosedLoop`](@extref).
 """
-function Flow(h̃::Data.PseudoHamiltonian, law::Data.ControlLaw; kwargs...)
-    return _flow_from_pseudo_hamiltonian(Traits.feedback(law), h̃, law; kwargs...)
+function Flow(
+    h̃::Data.PseudoHamiltonian,
+    law::Data.ControlLaw;
+    label::AbstractString=__label(),
+    kwargs...,
+)
+    return with_label(
+        _flow_from_pseudo_hamiltonian(Traits.feedback(law), h̃, law; kwargs...), label
+    )
 end
 
 """
@@ -400,6 +417,8 @@ takes `h̃vf` as the derivatives directly, so there is only **one mode** — no
 # Arguments
 - `h̃vf::Data.PseudoHamiltonianVectorField`: the pseudo-Hamiltonian vector field.
 - `law::Data.ControlLaw`: the control law; must carry `DynClosedLoopFeedback`.
+- `label::AbstractString=""`: the label of the phase the flow integrates (e.g. `"bang"`),
+  kept through concatenation and written on the plots; see [`CTFlows.Flows.label`](@extref).
 - `opts...`: integrator strategy options (as for `Flow(hvf::Data.HamiltonianVectorField)`)
   — no AD-backend options, since there is no AD in this path.
 
@@ -410,8 +429,15 @@ takes `h̃vf` as the derivatives directly, so there is only **one mode** — no
 See also: [`CTFlows.Flows.Flow`](@extref), [`CTBase.Data.PseudoHamiltonianVectorField`](@extref),
 [`CTBase.Data.DynClosedLoop`](@extref).
 """
-function Flow(h̃vf::Data.PseudoHamiltonianVectorField, law::Data.ControlLaw; opts...)
-    return _flow_from_pseudo_hamiltonian_vf(Traits.feedback(law), h̃vf, law; opts...)
+function Flow(
+    h̃vf::Data.PseudoHamiltonianVectorField,
+    law::Data.ControlLaw;
+    label::AbstractString=__label(),
+    opts...,
+)
+    return with_label(
+        _flow_from_pseudo_hamiltonian_vf(Traits.feedback(law), h̃vf, law; opts...), label
+    )
 end
 
 """
@@ -476,14 +502,24 @@ integrated as a state flow. A trajectory call returns a
 [`CTFlows.Trajectories.StateFlowTrajectory`](@extref) (state + reconstructed control, no
 objective — there is no OCP).
 
+# Keyword Arguments
+- `label::AbstractString=""`: the label of the phase the flow integrates (e.g. `"bang"`),
+  kept through concatenation and written on the plots; see [`CTFlows.Flows.label`](@extref).
+- `kwargs...`: integrator strategy options.
+
 # Throws
 - [`CTBase.Exceptions.PreconditionError`](@extref): if the law is `DynClosedLoop` (that
   needs the costate; use [`CTFlows.Flows.Flow(h̃::CTBase.Data.PseudoHamiltonian, law::CTBase.Data.ControlLaw)`](@ref)).
 
 See also: [`CTFlows.Flows.Flow`](@extref), [`CTBase.Data.ControlledVectorField`](@extref).
 """
-function Flow(fc::Data.ControlledVectorField, law::Data.ControlLaw; kwargs...)
-    return _flow_from_controlled_vf(Traits.feedback(law), fc, law; kwargs...)
+function Flow(
+    fc::Data.ControlledVectorField,
+    law::Data.ControlLaw;
+    label::AbstractString=__label(),
+    kwargs...,
+)
+    return with_label(_flow_from_controlled_vf(Traits.feedback(law), fc, law; kwargs...), label)
 end
 
 """
@@ -565,6 +601,13 @@ augment the pseudo-Hamiltonian as `H = H̃ + μ·g`, with the constraint normali
   side per component — for a two-sided constraint, where `:label` alone throws;
 - a `Tuple` of the above, paired element-wise with a `Tuple` of multipliers.
 
+# Phase label
+
+The keyword `label::AbstractString=""` names the phase the flow integrates (e.g.
+`"bang"`, `"boundary"`). It is kept through concatenation, stored in the
+[`CTModels.Solutions.Solution`](@extref) (see [`CTModels.Solutions.phase_labels`](@extref)) and
+written on the plots; see [`CTFlows.Flows.label`](@extref).
+
 # Throws
 - [`CTBase.Exceptions.PreconditionError`](@extref): if the OCP is control-free.
 - [`CTBase.Exceptions.PreconditionError`](@extref): if a `DynClosedLoop` law is passed
@@ -576,8 +619,13 @@ augment the pseudo-Hamiltonian as `H = H̃ + μ·g`, with the constraint normali
 See also: [`CTFlows.Flows.Flow`](@extref), [`CTFlows.Flows.OptimalControlFlow`](@extref),
 [`CTFlows.Flows.ControlledFlow`](@extref).
 """
-function Flow(ocp::CTModels.Models.Model, law::Data.ControlLaw; kwargs...)
-    return _flow_from_ocp_control(Traits.feedback(law), ocp, law; kwargs...)
+function Flow(
+    ocp::CTModels.Models.Model,
+    law::Data.ControlLaw;
+    label::AbstractString=__label(),
+    kwargs...,
+)
+    return with_label(_flow_from_ocp_control(Traits.feedback(law), ocp, law; kwargs...), label)
 end
 
 # =============================================================================

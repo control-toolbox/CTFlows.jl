@@ -30,6 +30,55 @@ _sample(f, ts) = Matrix{Float64}(reduce(hcat, f.(ts))')
 """
 $(TYPEDSIGNATURES)
 
+Return a value of a trajectory as a vector of `Float64`: a one-element vector for a scalar.
+"""
+_as_row(x) = x isa Number ? [Float64(x)] : collect(Float64, vec(x))
+
+"""
+$(TYPEDSIGNATURES)
+
+Insert the left and right limits of `component` at the switching times of `sol` into the
+samples `(ts, M)` of that component.
+
+At every switching time `τ`, the rows `(τ, left)` then `(τ, right)` are inserted at their
+place in time, and a sample already at `τ` is replaced, so that a jump is drawn as a
+vertical segment. The samples are returned unchanged when the trajectory has no switching
+time. The limits are read with [`CTFlows.Trajectories.left_limit`](@extref) and
+[`CTFlows.Trajectories.right_limit`](@extref).
+
+# Returns
+- `(ts, M)`: the time grid (each switching time twice) and the matrix of samples.
+"""
+function _with_jumps(sol, ts::AbstractVector, M::AbstractMatrix, component::Symbol)
+    taus = Trajectories.switching_times(sol)
+    isempty(taus) && return (ts, M)
+    left = [_as_row(Trajectories.left_limit(sol, component, i)) for i in eachindex(taus)]
+    right = [_as_row(Trajectories.right_limit(sol, component, i)) for i in eachindex(taus)]
+    Tn = Float64[]
+    rows = Vector{Vector{Float64}}()
+    i = 1
+    for k in eachindex(ts)
+        while i <= length(taus) && taus[i] <= ts[k]
+            push!(Tn, taus[i], taus[i])
+            push!(rows, left[i], right[i])
+            i += 1
+        end
+        # a sample exactly at a switching time is replaced by its two limits
+        (i > 1 && ts[k] == taus[i - 1]) && continue
+        push!(Tn, ts[k])
+        push!(rows, M[k, :])
+    end
+    while i <= length(taus)   # switching times after the last sample
+        push!(Tn, taus[i], taus[i])
+        push!(rows, left[i], right[i])
+        i += 1
+    end
+    return (Tn, Matrix{Float64}(reduce(hcat, rows)'))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Euclidean norm of a row, written out to avoid a `LinearAlgebra` dependency.
 """
 _rownorm(row) = sqrt(sum(abs2, row))
@@ -99,11 +148,12 @@ _time_name(sol) = _traj_model(sol) === nothing ? "t" : CTModels.time_name(_traj_
 """
 $(TYPEDSIGNATURES)
 
-The state panel: `state(sol)` sampled at `ts`, one curve per component.
+The state panel: `state(sol)` sampled at `ts`, one curve per component, with the jumps at
+the switching times drawn as vertical segments.
 """
 function _state_panel(sol, ts, style::NamedTuple)
-    M = _sample(Trajectories.state(sol), ts)
-    return Plotting.Panel(ts, M; title="state", labels=_state_names(sol, size(M, 2)), style)
+    T, M = _with_jumps(sol, ts, _sample(Trajectories.state(sol), ts), :state)
+    return Plotting.Panel(T, M; title="state", labels=_state_names(sol, size(M, 2)), style)
 end
 
 """
@@ -114,10 +164,10 @@ columns), the state labels name the rows, so the costate curves carry no label, 
 CTModels.
 """
 function _costate_panel(sol, ts, style::NamedTuple; state_shown::Bool)
-    M = _sample(Trajectories.costate(sol), ts)
+    T, M = _with_jumps(sol, ts, _sample(Trajectories.costate(sol), ts), :costate)
     n = size(M, 2)
     labels = state_shown ? fill("", n) : _gen_names("p", n)
-    return Plotting.Panel(ts, M; title="costate", labels, style)
+    return Plotting.Panel(T, M; title="costate", labels, style)
 end
 
 """
@@ -130,7 +180,7 @@ The control panel: `control(sol)` sampled at `ts`, drawn as its components
 - `CTBase.Exceptions.IncorrectArgument`: for any other value of `control`.
 """
 function _control_panel(sol, ts, control::Symbol, style::NamedTuple)
-    U = _sample(Trajectories.control(sol), ts)
+    T, U = _with_jumps(sol, ts, _sample(Trajectories.control(sol), ts), :control)
     m = size(U, 2)
     if control === :components
         data, labels = U, _control_names(sol, m)
@@ -151,7 +201,7 @@ function _control_panel(sol, ts, control::Symbol, style::NamedTuple)
             ),
         )
     end
-    return Plotting.Panel(ts, data; title="control", labels, style)
+    return Plotting.Panel(T, data; title="control", labels, style)
 end
 
 """
