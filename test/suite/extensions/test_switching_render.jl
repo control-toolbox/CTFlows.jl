@@ -59,6 +59,12 @@ function test_switching_render()
                 ["u=+1", "u=-1"]
             Test.@test Plots.plot(traj; switching_style=:none, phase_labels=:none) isa
                 Plots.Plot
+            # one curve (one color) for the whole state, across both phases
+            Test.@test count(s -> s[:seriestype] === :path, plt.subplots[1].series_list) == 1
+            # jumps=:none: a break (NaN) instead of the vertical segment
+            br = Plots.plot(traj; jumps=:none)
+            ys = br.subplots[1].series_list[1][:y]
+            Test.@test count(isnan, ys) == 1
         end
 
         Test.@testset "Makie" begin

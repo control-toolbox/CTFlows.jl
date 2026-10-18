@@ -349,6 +349,26 @@ function test_switching_structure()
             Test.@test (u.y[k], u.y[k + 1]) == (1.0, -1.0)
         end
 
+        Test.@testset "plot: jumps=:none breaks the curves" begin
+            x0, p0 = 1.0, 0.0
+            ht = (_harmonic() * (τ, 1.0, 0.5, _harmonic()))((0.0, 1.0), x0, p0)
+            fig = TrajectoryPlots.build_figure(ht; jumps=:none)
+            ys = [s.y for l in _leaves(fig) for s in l.axes.series]
+            Test.@test all(y -> count(isnan, y) == 1, ys)
+            ct = (_bang(1.0) * (τ, _bang(-1.0)))((0.0, 1.0), 0.0)
+            u = _cell(TrajectoryPlots.build_figure(ct; jumps=:none), "control").axes.series[1]
+            k = findfirst(==(τ), u.x)
+            Test.@test u.x[k:(k + 2)] == [τ, τ, τ]
+            Test.@test isnan(u.y[k + 1])
+            Test.@test (u.y[k], u.y[k + 2]) == (1.0, -1.0)
+            # default: the vertical segment
+            v = _cell(TrajectoryPlots.build_figure(ct), "control").axes.series[1]
+            Test.@test !any(isnan, v.y)
+            Test.@test_throws Exceptions.IncorrectArgument TrajectoryPlots.build_figure(
+                ct; jumps=:dotted
+            )
+        end
+
         Test.@testset "plot: switching lines and phase labels" begin
             mp = _bang(1.0; label="u=+1") * (τ, _bang(-1.0; label="u=-1"))
             st = mp((0.0, 1.0), 0.0)

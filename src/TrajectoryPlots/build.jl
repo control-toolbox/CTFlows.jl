@@ -95,10 +95,14 @@ render the result through a [`CTBase.Plotting.render`](@extref) backend.
   first drawn panel when the control is not drawn), `:all` (every panel) or `:none`.
 - `phase_labels_style::NamedTuple = NamedTuple()`: style of the labels (`color`,
   `fontsize`, `halign`, `valign`).
+- `jumps::Symbol = :segment`: a jump at a switching time is drawn as a vertical segment
+  from the left to the right limit (`:segment`), or the curve is broken between the two
+  limits (`:none`), so that no segment suggests values the trajectory does not take.
 - `size`: figure size; `nothing` defers to the engine heuristic.
 
 At every switching time, a jump of the state, costate or control is drawn as a vertical
-segment, from the left to the right limit.
+segment, from the left to the right limit, or as a break in the curve with `jumps=:none`.
+The whole trajectory is one curve per component, so it keeps one color across phases.
 
 # Returns
 - `CTBase.Plotting.Figure`.
@@ -106,7 +110,7 @@ segment, from the left to the right limit.
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: nothing to draw (empty description, or every
   drawn group styled `:none`); an invalid `control` / `layout` / `time` /
-  `phase_labels`.
+  `phase_labels` / `jumps`.
 """
 function build_figure(
     sol,
@@ -120,9 +124,11 @@ function build_figure(
     switching_style::Union{NamedTuple,Symbol}=Plotting.__style(),
     phase_labels::Symbol=:control,
     phase_labels_style::NamedTuple=Plotting.__style(),
+    jumps::Symbol=:segment,
     size=nothing,
 )
     _check_phase_labels(phase_labels)
+    _check_jumps(jumps)
     desc = clean(isempty(description) ? _default_description(sol) : description)
     ts, panels, placement = _panels(
         sol,
@@ -131,6 +137,7 @@ function build_figure(
         state_style=state_style,
         costate_style=costate_style,
         control_style=control_style,
+        connect=(jumps === :segment),
     )
     isempty(panels) && _nothing_to_plot()
     taus = Trajectories.switching_times(sol)
@@ -171,6 +178,27 @@ Default style of the vertical lines at the switching times: dashed black lines b
 curves, as the initial/final time markers of a `CTModels.Solution` plot.
 """
 const _SWITCHING_STYLE = (color=:black, linestyle=:dash, linewidth=1, z_order=:back, label="")
+
+"""
+$(TYPEDSIGNATURES)
+
+Check the drawing of the jumps: `:segment` or `:none`.
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: for any other value.
+"""
+function _check_jumps(jumps::Symbol)
+    jumps in (:segment, :none) || throw(
+        Exceptions.IncorrectArgument(
+            "Invalid jumps choice";
+            got="jumps=$jumps",
+            expected=":segment or :none",
+            suggestion="Use jumps=:segment (default, a vertical segment) or :none (a break)",
+            context="TrajectoryPlots.build_figure",
+        ),
+    )
+    return nothing
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -222,6 +250,7 @@ const _BUILD_KEYS = (
     :switching_style,
     :phase_labels,
     :phase_labels_style,
+    :jumps,
 )
 
 """

@@ -258,13 +258,14 @@ plot(hsol)  # state and costate, across both phases
 ### Switching lines and phase labels
 
 The phase labels are written on the control panel, or on the first panel when there is no
-control. Three keywords control the switching structure on the plot:
+control. Four keywords control the switching structure on the plot:
 
 | Keyword | Values (default first) | Effect |
 | --- | --- | --- |
 | `switching_style` | `NamedTuple()` / a `NamedTuple` / `:none` | style of the vertical lines at the switching times (dashed black lines by default); `:none` hides them |
 | `phase_labels` | `:control` / `:all` / `:none` | write the labels on the control panel (or the first panel), on every panel, or nowhere |
 | `phase_labels_style` | `NamedTuple()` | `color`, `fontsize`, `halign`, `valign` of the labels |
+| `jumps` | `:segment` / `:none` | draw a jump as a vertical segment, or break the curve between the two limits |
 
 ```@example flows_multiphase
 plot(sol_lab)   # labels "decay" and "fast decay", state jump at t = 1.0
@@ -273,6 +274,21 @@ plot(sol_lab)   # labels "decay" and "fast decay", state jump at t = 1.0
 ```@example flows_multiphase
 plot(sol_lab; switching_style=(color=:red,), phase_labels_style=(fontsize=12,))
 ```
+
+The vertical segment makes a jump easy to see, and to compare with a solution whose jump
+is smoothed (e.g. from a direct method); it does not mean that the trajectory takes the
+values in between. With `jumps=:none`, the curve stops at the left limit and starts again
+at the right limit:
+
+```@example flows_multiphase
+plot(sol_lab; jumps=:none)
+```
+
+The limits are exact: the left limit is the end of the phase that finishes at the
+switching time, the right limit the start of the next phase, after the jump (`x + Δx`,
+`p + Δp`); the control on each side is given by the law of its phase at these values. They
+are not read from the next point of the time grid. The whole trajectory keeps one color:
+the phases are parts of the same curve, not separate series.
 
 ### Different dynamics — kink at the switching time
 
