@@ -14,6 +14,9 @@ Delegates to the standard CTFlows pipeline:
 
 # Arguments
 - `f::SciMLBase.AbstractODEFunction`: The ODE function to wrap.
+- `label::AbstractString=""`: the label of the phase the flow integrates (e.g. `"bang"`),
+  kept through concatenation and shown by the multi-phase flow; see
+  [`CTFlows.Flows.label`](@extref). An action option: it is never passed to the integrator.
 - `opts...`: Passed to the `SciML` integrator constructor (e.g., `reltol=1e-10`).
 
 # Returns
@@ -30,8 +33,8 @@ xf = flow(0.0, [1.0], 1.0; variable=2.0)
 """
 function Flows.Flow(f::SciMLBase.AbstractODEFunction; opts...)
     sys = SciMLFunctionSystem(f)
-    integ = Flows._build_integrator(opts)
-    return Flows.build_flow(sys, integ)
+    built = Flows._build_integrator(opts)
+    return Flows.with_label(Flows.build_flow(sys, built.integrator), built.label)
 end
 
 """
@@ -45,6 +48,9 @@ fully assembled (includes u0, tspan, and p).
 
 # Arguments
 - `prob::SciMLBase.AbstractODEProblem`: The ODE problem to wrap.
+- `label::AbstractString=""`: the label of the phase the flow integrates (e.g. `"bang"`),
+  kept through concatenation and shown by the multi-phase flow; see
+  [`CTFlows.Flows.label`](@extref). An action option: it is never passed to the integrator.
 - `opts...`: Passed to the `SciML` integrator constructor (e.g., `reltol=1e-10`).
 
 # Returns
@@ -63,6 +69,6 @@ xf = Integrators.final_state(result)
 ```
 """
 function Flows.Flow(prob::SciMLBase.AbstractODEProblem; opts...)
-    integ = Flows._build_integrator(opts)
-    return SciMLProblemFlow(prob, integ)
+    built = Flows._build_integrator(opts)
+    return SciMLProblemFlow(prob, built.integrator, built.label)
 end

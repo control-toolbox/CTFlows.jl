@@ -374,6 +374,7 @@ function Base.show(io::IO, ::MIME"text/plain", sol::VectorFieldTrajectory)
         end
     catch
     end
+    append!(fields, _switching_fields(sol, fmt))
     try
         push!(fields, ("final state", Integrators.final_state(sol), fmt.value))
     catch
@@ -407,6 +408,7 @@ function Base.show(io::IO, sol::VectorFieldTrajectory)
         end
     catch
     end
+    append!(parts, _switching_parts(sol))
 
     if _show_variable(sol.variable)
         push!(parts, "variable=$(sol.variable)")

@@ -12,9 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Switching structure of multi-phase flows**
   ([#443](https://github.com/control-toolbox/CTFlows.jl/issues/443)).
   - **Phase labels.** `Flow(...; label="bang")` names the phase a flow integrates, on
-    every `Flow` constructor (`Flows.label`, `Flows.with_label`). Concatenation keeps the
-    labels in order (`MultiPhase.get_labels`); the display of a multi-phase flow lists
-    them.
+    every `Flow` constructor, the SciML ones included (`Flows.label`,
+    `Flows.with_label`). `label` is routed as an action option, like `hamiltonian_type`:
+    it is never passed to the strategies. Concatenation keeps the labels in order
+    (`MultiPhase.get_labels`); the display of a flow shows its label, the display of a
+    multi-phase flow lists them, and the display of a trajectory shows its switching
+    times and its sequence of phases (`bang → · → singular`, `·` for an unlabelled
+    phase; nothing when no phase is labelled).
   - **Left and right limits.** A multi-phase trajectory stays left-continuous at a
     switching time; `Trajectories.switching_times`, `Trajectories.phase_labels`,
     `Trajectories.left_limit(sol, component, i)` and `Trajectories.right_limit(sol,

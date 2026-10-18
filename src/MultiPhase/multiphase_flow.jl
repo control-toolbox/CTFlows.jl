@@ -400,7 +400,7 @@ function Base.show(io::IO, ::MIME"text/plain", mpf::MultiPhaseFlow)
     labels = get_labels(mpf)
     if any(!isempty, labels)
         Display.print_field(
-            io, "labels", join((isempty(l) ? "·" : l for l in labels), " → "); fmt=fmt
+            io, "labels", Trajectories._phase_sequence(labels); fmt=fmt
         )
     end
     return Display.print_field(io, "jumps", mpf.jumps; last=true, fmt=fmt)

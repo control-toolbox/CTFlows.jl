@@ -500,6 +500,7 @@ function Base.show(io::IO, ::MIME"text/plain", flow::AbstractFlow)
     integ = integrator(flow)
 
     Display.print_header(io, nameof(typeof(flow)); fmt=fmt)
+    isempty(label(flow)) || Display.print_field(io, "label", label(flow); fmt=fmt)
 
     # Nest the system's own (styled, possibly multi-line) display under the `system` branch.
     Display.print_field(io, "system", sys; fmt=fmt, value_style="")
@@ -539,6 +540,7 @@ function Base.show(io::IO, flow::AbstractFlow)
     parts = String[]
     push!(parts, "system=$(sys)")
     push!(parts, "integrator=$(nameof(typeof(integ)))")
+    isempty(label(flow)) || push!(parts, "label=$(repr(label(flow)))")
     print(io, join(parts, ", "))
     return print(io, ")")
 end

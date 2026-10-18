@@ -168,12 +168,14 @@ families specific to CTFlows flow construction. Options are routed to either the
 backend family (`:di`) or the integrator family (`:sciml`).
 
 # Arguments
-- `kwargs`: All keyword arguments from the user's `Flow` call (strategy options only,
-  no action-level options).
+- `kwargs`: All keyword arguments from the user's `Flow` call (action and strategy
+  options mixed, `method` already popped).
+- `action_defs`: the action options of the constructor, on top of the `label` option that
+  every flow constructor accepts (see [`CTFlows.Flows._label_action_def`](@extref)).
 
 # Returns
 - `NamedTuple` with fields:
-  - `action`: action-level options (always empty for flows)
+  - `action`: action-level options (`label`, plus those of `action_defs`)
   - `strategies`: `NamedTuple` with `backend` and `integrator` sub-tuples
 
 # Throws
@@ -190,7 +192,8 @@ routed = Flows._route_flow_options((; reltol=1e-8, ad_backend=ADTypes.AutoForwar
 
 # Notes
 - This function uses `:description` source mode for user-friendly error messages.
-- No action-level options are defined for flows (empty `OptionDefinition` array).
+- An action option shadows a strategy option of the same name (an info message is
+  emitted); `route_to` passes a value to the strategy instead.
 
 See also: [`CTFlows.Flows._flow_families`](@extref), [`CTFlows.Flows._build_flow_components`](@extref),
 [`CTBase.Orchestration.route_all_options`](@extref)
@@ -204,7 +207,7 @@ function _route_flow_options(
     return Orchestration.route_all_options(
         _flow_description(ad_trait, method),
         _flow_families(ad_trait),
-        action_defs,
+        vcat(Options.OptionDefinition[_label_action_def()], action_defs),
         (; kwargs...),
         flow_registry();
         source_mode=:description,
@@ -222,6 +225,42 @@ function _route_flow_options(
     kwargs; action_defs::Vector{<:Options.OptionDefinition}=Options.OptionDefinition[]
 )
     return _route_flow_options(Traits.WithAD, kwargs; action_defs=action_defs)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the definition of the `label` action option, accepted by every flow constructor:
+the label of the phase the flow integrates (e.g. `"bang"`), default
+[`CTFlows.Flows.__label`](@extref) (no label).
+
+It is routed as an action option, like `hamiltonian_type`, so it is checked by the
+orchestration (type, unknown or misplaced options) and never mistaken for a strategy
+option; [`CTFlows.Flows._route_flow_options`](@extref) adds it to every routing.
+
+See also: [`CTFlows.Flows._routed_label`](@extref), [`CTFlows.Flows.label`](@extref).
+"""
+function _label_action_def()
+    return Options.OptionDefinition(;
+        name=:label,
+        aliases=(),
+        type=AbstractString,
+        default=__label(),
+        description="Label of the phase the flow integrates (e.g. \"bang\"), kept through " *
+                    "concatenation and written on the plots",
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the `label` action option of a routing result, as a `String`
+([`CTFlows.Flows.__label`](@extref) when it is not set).
+
+See also: [`CTFlows.Flows._label_action_def`](@extref), [`CTFlows.Flows._route_flow_options`](@extref).
+"""
+function _routed_label(routed)::String
+    return String(_unwrap_option(get(routed.action, :label, nothing), __label()))
 end
 
 """
@@ -346,6 +385,8 @@ $(TYPEDSIGNATURES)
 
 Build the SciML integrator for an **AD-free** flow (`Traits.WithoutAD`) directly from a flow
 constructor's keyword arguments, honouring a `method=:gpu` device selection popped from them.
+Return `(integrator, label)`: the integrator and the routed `label` action option (see
+[`CTFlows.Flows._routed_label`](@extref)).
 
 Shared by the AD-free constructors (`Flow(VectorField)`, `Flow(HamiltonianVectorField)`,
 controlled-vector-field flows, `Flow(ODEFunction)`, `Flow(ODEProblem)`), which build only an
@@ -357,5 +398,6 @@ See also: [`CTFlows.Flows._build_flow_components`](@extref), [`CTFlows.Flows._po
 function _build_integrator(opts)
     method, kwargs = _pop_method(opts)
     routed = _route_flow_options(Traits.WithoutAD, kwargs; method=method)
-    return _build_flow_components(Traits.WithoutAD, routed; method=method).integrator
+    integrator = _build_flow_components(Traits.WithoutAD, routed; method=method).integrator
+    return (integrator=integrator, label=_routed_label(routed))
 end

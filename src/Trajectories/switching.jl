@@ -77,6 +77,53 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Return the sequence of phase labels as written by the displays, e.g. `"bang → · → singular"`:
+the labels joined by arrows, a phase with no label written `·` so that every phase keeps
+its place between the switching times.
+
+See also: [`CTFlows.Trajectories.phase_labels`](@extref).
+"""
+function _phase_sequence(labels::AbstractVector{<:AbstractString})::String
+    return join((isempty(l) ? "·" : l for l in labels), " → ")
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the display fields of the switching structure of a trajectory: the switching times
+when there are any, the sequence of phase labels when at least one phase is labelled
+(nothing is shown for an unlabelled trajectory).
+
+See also: [`CTFlows.Trajectories._phase_sequence`](@extref).
+"""
+function _switching_fields(sol, fmt)
+    fields = Any[]
+    times = switching_times(sol)
+    isempty(times) || push!(fields, ("switching times", times, fmt.value))
+    labels = phase_labels(sol)
+    any(!isempty, labels) &&
+        push!(fields, ("phases", _phase_sequence(labels), fmt.value))
+    return fields
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the compact display parts of the switching structure of a trajectory (see
+[`CTFlows.Trajectories._switching_fields`](@extref)).
+"""
+function _switching_parts(sol)
+    parts = String[]
+    times = switching_times(sol)
+    isempty(times) || push!(parts, "switching_times=$(times)")
+    labels = phase_labels(sol)
+    any(!isempty, labels) && push!(parts, "phases=$(_phase_sequence(labels))")
+    return parts
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Check that `i` is the index of a switching time of `sol`.
 
 # Throws

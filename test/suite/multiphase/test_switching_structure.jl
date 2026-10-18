@@ -11,6 +11,7 @@ using Test: Test
 using CTBase: Data
 using CTBase: Exceptions
 using CTBase: Plotting
+using CTBase: Strategies
 using CTBase: Traits
 using CTModels: CTModels
 using CTFlows: Flows
@@ -108,6 +109,60 @@ function test_switching_structure()
             Test.@test Flows.label(Flows.with_label(_bang(1.0), "b")) == "b"
         end
 
+        Test.@testset "labels: an action option of every constructor" begin
+            # routed as an action option, never as a strategy option
+            routed = Flows._route_flow_options(Traits.WithoutAD, (; label="a", reltol=1e-8))
+            Test.@test Flows._routed_label(routed) == "a"
+            Test.@test !haskey(routed.strategies.integrator, :label)
+            Test.@test haskey(routed.strategies.integrator, :reltol)
+            Test.@test Flows._routed_label(Flows._route_flow_options(Traits.WithAD, (;))) == ""
+            # with the action options of the control flows
+            routed = Flows._route_flow_options(
+                Traits.WithAD,
+                (; label="b", hamiltonian_type=:partial);
+                action_defs=Flows._flow_action_defs(),
+            )
+            Test.@test Flows._routed_label(routed) == "b"
+            # the AD-free integrator builder returns the label with the integrator
+            built = Flows._build_integrator((; label="c", reltol=1e-8))
+            Test.@test built.label == "c"
+            Test.@test built.integrator isa Integrators.AbstractIntegrator
+            Test.@test Flows._build_integrator((;)).label == ""
+            # every constructor accepts it
+            h = Data.Hamiltonian((x, p) -> (x^2 + p^2) / 2)
+            Test.@test Flows.label(Flows.Flow(h; label="h", _opts()...)) == "h"
+            hvf = Data.PseudoHamiltonianVectorField((x, p, u) -> (u, -x))
+            law = Data.DynClosedLoop((x, p) -> p)
+            Test.@test Flows.label(Flows.Flow(hvf, law; label="phvf", _opts()...)) == "phvf"
+            ph = Data.PseudoHamiltonian((x, p, u) -> p * u - u^2 / 2)
+            for ht in (:total, :partial)
+                f = Flows.Flow(ph, law; hamiltonian_type=ht, label="ph", _opts()...)
+                Test.@test Flows.label(f) == "ph"
+            end
+            fc = Data.ControlledVectorField((x, u) -> -x + u)
+            cf = Flows.Flow(fc, Data.OpenLoop(t -> 1.0); label="fc", _opts()...)
+            Test.@test cf isa Flows.ControlledFlow
+            Test.@test Flows.label(cf) == "fc"
+            Test.@test Flows.label(Flows.Flow(LQR, (x, p) -> p; label="u", _opts()...)) == "u"
+            # a value of the wrong type is rejected by the orchestration
+            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
+                Data.VectorField(x -> -x); label=:decay
+            )
+            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
+                LQR, Data.DynClosedLoop((x, p) -> p); label=1
+            )
+            # route_to sends it to a strategy, which has no such option
+            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
+                Data.VectorField(x -> -x); label=Strategies.route_to(sciml="x")
+            )
+            # display: a label row when there is a label
+            s = sprint(show, MIME"text/plain"(), _decay(; label="decay"))
+            Test.@test occursin("label: decay", s)
+            Test.@test !occursin("label", sprint(show, MIME"text/plain"(), _decay()))
+            Test.@test occursin("label=\"bang\"", sprint(show, _bang(1.0; label="bang")))
+            Test.@test !occursin("label", sprint(show, _bang(1.0)))
+        end
+
         Test.@testset "labels: concatenation keeps them in order" begin
             Test.@test MultiPhase.get_labels(_decay(; label="a")) == ["a"]
             mp = _decay(; label="a") * (0.3, _decay()) * (0.6, _decay(; label="c"))
@@ -179,6 +234,40 @@ function test_switching_structure()
             Test.@test isempty(Trajectories.phase_labels(_decay()((0.0, 1.0), 1.0)))
             st = _bang(1.0; label="bang")((0.0, 1.0), 0.0)
             Test.@test Trajectories.phase_labels(st) == ["bang"]
+        end
+
+        Test.@testset "display: switching times and phase sequence" begin
+            _plain(x) = sprint(show, MIME"text/plain"(), x)
+            _compact(x) = sprint(show, x)
+            Test.@test Trajectories._phase_sequence(["a", "", "c"]) == "a → · → c"
+            Test.@test Trajectories._phase_sequence(["a"]) == "a"
+            # state flow, labelled phases
+            vt = (_decay(; label="a") * (τ, _decay(; label="b")))((0.0, 1.0), 1.0)
+            Test.@test occursin("switching times: [0.5]", _plain(vt))
+            Test.@test occursin("phases: a → b", _plain(vt))
+            Test.@test occursin("switching_times=[0.5]", _compact(vt))
+            Test.@test occursin("phases=a → b", _compact(vt))
+            # Hamiltonian flow, one unlabelled phase: written ·
+            ht = (_harmonic(; label="h") * (τ, _harmonic()))((0.0, 1.0), 1.0, 0.0)
+            Test.@test occursin("phases: h → ·", _plain(ht))
+            Test.@test occursin("switching times: [0.5]", _plain(ht))
+            # controlled flow
+            ct = (_bang(1.0; label="u=+1") * (τ, _bang(-1.0; label="u=-1")))((0.0, 1.0), 0.0)
+            Test.@test occursin("phases: u=+1 → u=-1", _plain(ct))
+            Test.@test occursin("switching_times=[0.5]", _compact(ct))
+            # no label: the switching times only, no phases row
+            nt = (_decay() * (τ, _decay()))((0.0, 1.0), 1.0)
+            Test.@test occursin("switching times: [0.5]", _plain(nt))
+            Test.@test !occursin("phases", _plain(nt))
+            Test.@test !occursin("phases", _compact(nt))
+            # a labelled single phase: its label, no switching time
+            st = _decay(; label="decay")((0.0, 1.0), 1.0)
+            Test.@test occursin("phases: decay", _plain(st))
+            Test.@test !occursin("switching", _plain(st))
+            # an unlabelled single phase: nothing
+            s0 = _plain(_decay()((0.0, 1.0), 1.0))
+            Test.@test !occursin("switching", s0)
+            Test.@test !occursin("phases", s0)
         end
 
         # ====================================================================

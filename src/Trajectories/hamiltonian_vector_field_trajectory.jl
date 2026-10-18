@@ -494,6 +494,7 @@ function Base.show(io::IO, ::MIME"text/plain", sol::HamiltonianVectorFieldTrajec
         end
     catch
     end
+    append!(fields, _switching_fields(sol, fmt))
     try
         xf, pf = Integrators.final_state(sol)
         push!(fields, ("final state", xf, fmt.value))
@@ -529,6 +530,7 @@ function Base.show(io::IO, sol::HamiltonianVectorFieldTrajectory)
         end
     catch
     end
+    append!(parts, _switching_parts(sol))
 
     if _show_variable(sol.variable)
         push!(parts, "variable=$(sol.variable)")

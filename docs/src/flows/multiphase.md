@@ -182,6 +182,12 @@ A flow with no label has the label `""`. The labels are stored in the trajectory
 optimal control flow, in the `CTModels.Solution`; the plots write them on the curves (see
 [Plotting](#Plotting) below).
 
+Every `Flow` constructor accepts `label`, the SciML ones (`Flow(::ODEFunction)`,
+`Flow(::ODEProblem)`) included, and a flow displays its label. Like `hamiltonian_type`,
+`label` is an **action option** of the constructor: it is routed apart from the strategy
+options (`reltol`, `alg`, `ad_backend`, …) and never passed to the integrator or to the AD
+backend. A value that is not a string is rejected with an `IncorrectArgument`.
+
 ---
 
 ## Left and right limits at a switching time

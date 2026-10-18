@@ -23,6 +23,8 @@ The flow supports three call modes:
 # Fields
 - `prob::P`: The wrapped ODE problem (contains u0, tspan, p).
 - `integrator::I`: The integrator strategy (provides options via `build_options`).
+- `label::String`: The label of the phase the flow integrates (`""` for no label), see
+  [`CTFlows.Flows.label`](@extref).
 
 # Example
 ```julia
@@ -46,10 +48,43 @@ struct SciMLProblemFlow{
 } <: Flows.AbstractFlow{Traits.NonAutonomous,Traits.NonFixed,Traits.StateDynamics}
     prob::P
     integrator::I
+    label::String
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Build a [`CTFlowsSciMLFlows.SciMLProblemFlow`](@extref) from a problem and an integrator, with
+an optional label (none by default).
+"""
+function SciMLProblemFlow(
+    prob::SciMLBase.AbstractODEProblem,
+    integrator::Integrators.AbstractIntegrator,
+    label::AbstractString=Flows.__label(),
+)
+    return SciMLProblemFlow{typeof(prob),typeof(integrator)}(prob, integrator, String(label))
 end
 
 Flows.system(f::SciMLProblemFlow) = nothing
 Flows.integrator(f::SciMLProblemFlow) = f.integrator
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the label of a [`CTFlowsSciMLFlows.SciMLProblemFlow`](@extref).
+"""
+Flows.label(f::SciMLProblemFlow)::String = f.label
+
+"""
+$(TYPEDSIGNATURES)
+
+Return a copy of a [`CTFlowsSciMLFlows.SciMLProblemFlow`](@extref) with the label `label`.
+An empty label returns the flow unchanged.
+"""
+function Flows.with_label(f::SciMLProblemFlow, label::AbstractString)
+    isempty(label) && return f
+    return SciMLProblemFlow(f.prob, f.integrator, label)
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -189,6 +224,7 @@ function Base.show(io::IO, ::MIME"text/plain", f::SciMLProblemFlow)
     Display.print_header(io, "SciMLProblemFlow"; fmt=fmt)
     Display.print_field(io, "tspan", f.prob.tspan; fmt=fmt)
     Display.print_field(io, "u0", f.prob.u0; fmt=fmt)
+    isempty(f.label) || Display.print_field(io, "label", f.label; fmt=fmt)
     # Nest the integrator's own (styled, multi-line) text/plain display under the last branch.
     int_str = chomp(
         sprint(
@@ -218,5 +254,7 @@ See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@extref).
 """
 function Base.show(io::IO, f::SciMLProblemFlow)
     fmt = Display.format_codes(io)
-    return print(io, fmt.name, "SciMLProblemFlow", fmt.reset, "(tspan=", f.prob.tspan, ")")
+    print(io, fmt.name, "SciMLProblemFlow", fmt.reset, "(tspan=", f.prob.tspan)
+    isempty(f.label) || print(io, ", label=", repr(f.label))
+    return print(io, ")")
 end
