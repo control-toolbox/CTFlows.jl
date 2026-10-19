@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `.conventions/`); `AGENTS.md` cites rules by identifier, `CLAUDE.md` redirects to it, and
   the references to the former Handbook become rule identifiers. One `.markdownlint.json`
   (`GEN2`) replaces the `markdownlint-disable MD024` comment of this changelog (`CHG2`).
+- ct-conventions pinned at `v0.7.0` in `AGENTS.md`: the release rules `REL1`–`REL7` in the
+  index, and a *Recurring tasks* section pointing to the release recipe of ct-agents.
 
 ### 🐛 Bug fixes
 
@@ -91,6 +93,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `dense=false`}, against exact solutions at 1e-8 between grid points, including the
   issue's reproducer; multi-phase tolerances tightened from 1e-3 to 1e-8;
   switch-time convention characterized (`test_switch_time_convention.jl`).
+- Release workflows: `ReleaseGate.yml` (the gate of a release PR, `REL1`–`REL7`) and
+  `ReleaseTag.yml` (tag and GitHub release of a merged release PR) call CTActions;
+  `Breakage.yml` moves to `breakage-suite.yml` (one report, the `REL1` check of a release
+  PR) and also runs on push to `main`; `Documentation.yml` accepts `workflow_dispatch`.
 
 ## [0.18.1] - 2026-10-05
 
