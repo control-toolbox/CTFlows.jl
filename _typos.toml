@@ -17,5 +17,6 @@ extend-exclude = [
     "*.svg",
     "save/**",
     "reports/**",
-    ".conventions/",
+    ".ct-conventions/",
+    ".ct-agents/",
 ]
