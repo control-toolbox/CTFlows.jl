@@ -20,19 +20,19 @@ jobs:
     secrets:
       SSH_KEY: ${{ secrets.SSH_KEY }}
 
-  test-gpu-occidata:
-    uses: control-toolbox/CTActions/.github/workflows/ci.yml@main
+  # One GPU run, on kkt unless it is offline, else occidata (CTActions ci-gpu.yml).
+  test-gpu:
+    uses: control-toolbox/CTActions/.github/workflows/ci-gpu.yml@main
     with:
-      versions: '["1"]'
-      runs_on: '[["occidata"]]'
-      runner_type: 'self-hosted'
       use_ct_registry: true
       test_args: 'cron'
     secrets:
       SSH_KEY: ${{ secrets.SSH_KEY }}
+      CT_RUNNERS_CLIENT_ID: ${{ secrets.CT_RUNNERS_CLIENT_ID }}
+      CT_RUNNERS_PRIVATE_KEY: ${{ secrets.CT_RUNNERS_PRIVATE_KEY }}
 
   notify-on-failure:
-    needs: [test-cpu-github, test-gpu-occidata]
+    needs: [test-cpu-github, test-gpu]
     if: failure()
     runs-on: ubuntu-latest
     permissions:
