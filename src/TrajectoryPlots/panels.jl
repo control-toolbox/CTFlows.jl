@@ -30,6 +30,40 @@ _sample(f, ts) = Matrix{Float64}(reduce(hcat, f.(ts))')
 """
 $(TYPEDSIGNATURES)
 
+Return the limits of `component` at the switching times of `sol` as the `(left, right)`
+matrices of [`CTBase.Plotting.splice_jumps`](@extref): one row per switching time, one
+column per component. They are read with [`CTFlows.Trajectories.left_limit`](@extref) and
+[`CTFlows.Trajectories.right_limit`](@extref).
+"""
+function _limits(sol, component::Symbol)
+    n = length(Trajectories.switching_times(sol))
+    rows(f) = permutedims(reduce(hcat, (vcat(f(sol, component, i)) for i in 1:n)))
+    return (rows(Trajectories.left_limit), rows(Trajectories.right_limit))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Insert the left and right limits of `component` at the switching times of `sol` into the
+samples `(ts, M)` of that component, with [`CTBase.Plotting.splice_jumps`](@extref): a jump
+is drawn as a vertical segment, or, with `connect = false`, the curve is broken between
+the two limits. The samples are returned unchanged when the trajectory has no switching
+time.
+
+# Returns
+- `(ts, M)`: the time grid (each switching time twice) and the matrix of samples.
+"""
+function _spliced_samples(
+    sol, ts::AbstractVector, M::AbstractMatrix, component::Symbol; connect::Bool=true
+)
+    taus = Trajectories.switching_times(sol)
+    isempty(taus) && return (ts, M)
+    return Plotting.splice_jumps(ts, M, taus, _limits(sol, component)...; connect=connect)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Euclidean norm of a row, written out to avoid a `LinearAlgebra` dependency.
 """
 _rownorm(row) = sqrt(sum(abs2, row))
@@ -99,11 +133,13 @@ _time_name(sol) = _traj_model(sol) === nothing ? "t" : CTModels.time_name(_traj_
 """
 $(TYPEDSIGNATURES)
 
-The state panel: `state(sol)` sampled at `ts`, one curve per component.
+The state panel: `state(sol)` sampled at `ts`, one curve per component, with the jumps at
+the switching times drawn as vertical segments.
 """
-function _state_panel(sol, ts, style::NamedTuple)
+function _state_panel(sol, ts, style::NamedTuple; connect::Bool=true)
     M = _sample(Trajectories.state(sol), ts)
-    return Plotting.Panel(ts, M; title="state", labels=_state_names(sol, size(M, 2)), style)
+    T, M = _spliced_samples(sol, ts, M, :state; connect=connect)
+    return Plotting.Panel(T, M; title="state", labels=_state_names(sol, size(M, 2)), style)
 end
 
 """
@@ -113,11 +149,12 @@ The costate panel: `costate(sol)` sampled at `ts`. When the state is drawn along
 columns), the state labels name the rows, so the costate curves carry no label, as in
 CTModels.
 """
-function _costate_panel(sol, ts, style::NamedTuple; state_shown::Bool)
+function _costate_panel(sol, ts, style::NamedTuple; state_shown::Bool, connect::Bool=true)
     M = _sample(Trajectories.costate(sol), ts)
+    T, M = _spliced_samples(sol, ts, M, :costate; connect=connect)
     n = size(M, 2)
     labels = state_shown ? fill("", n) : _gen_names("p", n)
-    return Plotting.Panel(ts, M; title="costate", labels, style)
+    return Plotting.Panel(T, M; title="costate", labels, style)
 end
 
 """
@@ -129,8 +166,9 @@ The control panel: `control(sol)` sampled at `ts`, drawn as its components
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: for any other value of `control`.
 """
-function _control_panel(sol, ts, control::Symbol, style::NamedTuple)
+function _control_panel(sol, ts, control::Symbol, style::NamedTuple; connect::Bool=true)
     U = _sample(Trajectories.control(sol), ts)
+    T, U = _spliced_samples(sol, ts, U, :control; connect=connect)
     m = size(U, 2)
     if control === :components
         data, labels = U, _control_names(sol, m)
@@ -151,8 +189,17 @@ function _control_panel(sol, ts, control::Symbol, style::NamedTuple)
             ),
         )
     end
-    return Plotting.Panel(ts, data; title="control", labels, style)
+    return Plotting.Panel(T, data; title="control", labels, style)
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return whether the control panel is drawn: `:control` is in the description and the
+control is not styled `:none`.
+"""
+_control_shown(description, control_style)::Bool =
+    :control in description && control_style !== :none
 
 """
 $(TYPEDSIGNATURES)
@@ -169,17 +216,20 @@ function _panels(
     state_style::Union{NamedTuple,Symbol},
     costate_style::Union{NamedTuple,Symbol},
     control_style::Union{NamedTuple,Symbol},
+    connect::Bool=true,
 )
     ts = Integrators.times(sol)
     panels = Plotting.Panel[]
     state_shown = :state in description && state_style !== :none
     costate_shown = :costate in description && costate_style !== :none
 
-    state_shown && push!(panels, _state_panel(sol, ts, state_style))
-    costate_shown &&
-        push!(panels, _costate_panel(sol, ts, costate_style; state_shown=state_shown))
-    if :control in description && control_style !== :none
-        push!(panels, _control_panel(sol, ts, control, control_style))
+    state_shown && push!(panels, _state_panel(sol, ts, state_style; connect=connect))
+    if costate_shown
+        cp = _costate_panel(sol, ts, costate_style; state_shown=state_shown, connect=connect)
+        push!(panels, cp)
+    end
+    if _control_shown(description, control_style)
+        push!(panels, _control_panel(sol, ts, control, control_style; connect=connect))
     end
 
     placement = (state_shown && costate_shown) ? :paired : :stacked

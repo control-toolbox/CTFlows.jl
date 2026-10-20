@@ -292,6 +292,33 @@ function get_jumps(mpf::MultiPhaseFlow)
     return mpf.jumps
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the labels of the phases of a flow, one per phase (`""` for a phase with no label),
+given with `Flow(...; label="bang")`. Concatenation keeps the phases' flows, so their labels
+are kept in order.
+
+# Example
+\`\`\`julia
+using CTFlows: Flows, MultiPhase
+
+f1 = Flows.Flow(ocp, u_max; label="bang+")
+f2 = Flows.Flow(ocp, u_min; label="bang-")
+MultiPhase.get_labels(f1 * (0.5, f2))   # ["bang+", "bang-"]
+\`\`\`
+
+See also: [`CTFlows.Flows.label`](@extref), [`CTFlows.MultiPhase.get_flows`](@extref).
+"""
+get_labels(f::Flows.AbstractFlow)::Vector{String} = String[Flows.label(f)]
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the labels of the phases of a multi-phase flow, one per phase.
+"""
+get_labels(mpf::MultiPhaseFlow)::Vector{String} = String[Flows.label(f) for f in mpf.flows]
+
 # ==============================================================================
 # Base.show
 # ==============================================================================
@@ -346,7 +373,8 @@ Display a multi-phase flow in a human-readable format.
 - `mpf::MultiPhaseFlow`: The multi-phase flow to display.
 
 # Notes
-- Shows the flow type, number of phases, systems, integrators, switching times, and jumps.
+- Shows the flow type, number of phases, systems, integrators, switching times, phase labels
+  (when at least one phase is labelled; an unlabelled phase shows as `·`), and jumps.
 - Used by the REPL for interactive display.
 """
 function Base.show(io::IO, ::MIME"text/plain", mpf::MultiPhaseFlow)
@@ -369,6 +397,12 @@ function Base.show(io::IO, ::MIME"text/plain", mpf::MultiPhaseFlow)
         )
     end
     Display.print_field(io, "switching_times", mpf.switching_times; fmt=fmt)
+    labels = get_labels(mpf)
+    if any(!isempty, labels)
+        Display.print_field(
+            io, "labels", Trajectories._phase_sequence(labels); fmt=fmt
+        )
+    end
     return Display.print_field(io, "jumps", mpf.jumps; last=true, fmt=fmt)
 end
 

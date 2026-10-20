@@ -272,7 +272,7 @@ function test_saveat_precision()
                 Test.@test count(==(0.5), T) == 1
                 Test.@test length(T) == 250
             elseif times isa Tuple{Real,Real}
-                Test.@test count(==(0.5), T) == 2   # the switching time closes and opens a phase
+                Test.@test count(==(0.5), T) == 1   # the switching time once (issue #443)
             else
                 Test.@test T == collect(Float64, times)   # a grid of times is returned exactly
             end

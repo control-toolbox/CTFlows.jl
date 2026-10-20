@@ -9,7 +9,9 @@ Return the trajectory on another output grid; the integration result (and its in
 is shared. See [`CTSolvers.Integrators.regrid`](@extref).
 """
 function Integrators.regrid(sol::VectorFieldTrajectory, grid::AbstractVector{<:Real})
-    return VectorFieldTrajectory(Integrators.regrid(sol.result, grid), sol.variable, sol.x0)
+    return VectorFieldTrajectory(
+        Integrators.regrid(sol.result, grid), sol.variable, sol.x0, sol.labels
+    )
 end
 
 """
@@ -22,7 +24,7 @@ function Integrators.regrid(
     sol::HamiltonianVectorFieldTrajectory, grid::AbstractVector{<:Real}
 )
     return HamiltonianVectorFieldTrajectory(
-        sol.x0, Integrators.regrid(sol.result, grid), sol.variable
+        sol.x0, Integrators.regrid(sol.result, grid), sol.variable, sol.labels
     )
 end
 

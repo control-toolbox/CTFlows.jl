@@ -7,6 +7,8 @@ This module provides:
 - `AbstractIntegrationResult`: Abstraction for raw ODE integration results
 - `VectorFieldTrajectory`: Trajectory type wrapping integration results
 - `build_trajectory`: Trajectory building functions for different configuration types
+- `switching_times`, `phase_labels`, `left_limit`, `right_limit`: the switching structure
+  of a multi-phase trajectory (left-continuous at a switching time)
 - `final_state`, `times`, `evaluate_at`: Semantic accessors for integration results
 - `state`, `control`, `costate`, `objective`, `time_grid`: methods on the
   [`CTModels.Components`](@extref) generics, contributed here for `VectorFieldTrajectory`,
@@ -58,6 +60,7 @@ using ..Integrators: Integrators
 include(joinpath(@__DIR__, "vector_field_trajectory.jl"))
 include(joinpath(@__DIR__, "hamiltonian_vector_field_trajectory.jl"))
 include(joinpath(@__DIR__, "state_flow_trajectory.jl"))
+include(joinpath(@__DIR__, "switching.jl"))
 include(joinpath(@__DIR__, "grids.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 
@@ -73,5 +76,6 @@ export state, time_grid
 export costate
 export control, objective
 export build_trajectory
+export switching_times, phase_labels, with_labels, left_limit, right_limit
 
 end # module Trajectories

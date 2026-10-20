@@ -11,6 +11,9 @@ This constructor builds a complete flow by:
 
 # Arguments
 - `data::CTBase.Data.VectorField`: The vector field defining the system dynamics.
+- `label::AbstractString=""`: the label of the phase the flow integrates (e.g. `"bang"`),
+  kept through concatenation and written on the plots; see [`CTFlows.Flows.label`](@extref).
+  An action option: it is never passed to the strategies.
 - `opts...`: Keyword options passed to the integrator's strategy. Pass `method=:gpu`
   (a `Symbol`, or a token tuple) to build the flow for GPU execution — the integrator
   resolves to `SciML{GPU}`; the default (`method=:cpu`) builds a CPU flow. The `method`
@@ -34,7 +37,8 @@ See also: [`CTFlows.Flows.Flow`](@extref), [`CTFlows.Systems.build_system`](@ext
 """
 function Flow(data::Data.VectorField; opts...)
     system = Systems.build_system(data)
-    return build_flow(system, _build_integrator(opts))
+    built = _build_integrator(opts)
+    return with_label(build_flow(system, built.integrator), built.label)
 end
 
 """
@@ -50,6 +54,9 @@ This constructor builds a complete Hamiltonian flow by:
 
 # Arguments
 - `data::CTBase.Data.HamiltonianVectorField`: The Hamiltonian vector field defining the system dynamics.
+- `label::AbstractString=""`: the label of the phase the flow integrates (e.g. `"bang"`),
+  kept through concatenation and written on the plots; see [`CTFlows.Flows.label`](@extref).
+  An action option: it is never passed to the strategies.
 - `opts...`: Keyword options passed to the integrator's strategy.
 
 # Returns
@@ -68,7 +75,8 @@ See also: [`CTFlows.Flows.HamiltonianFlow`](@extref), [`CTFlows.Systems.build_sy
 """
 function Flow(data::Data.HamiltonianVectorField; opts...)
     system = Systems.build_system(data)
-    return build_flow(system, _build_integrator(opts))
+    built = _build_integrator(opts)
+    return with_label(build_flow(system, built.integrator), built.label)
 end
 
 """
@@ -84,6 +92,9 @@ This constructor builds a complete Hamiltonian flow by:
 
 # Arguments
 - `h::CTBase.Data.AbstractHamiltonian`: The scalar Hamiltonian function.
+- `label::AbstractString=""`: the label of the phase the flow integrates (e.g. `"bang"`),
+  kept through concatenation and written on the plots; see [`CTFlows.Flows.label`](@extref).
+  An action option: it is never passed to the strategies.
 - `kwargs...`: Keyword options passed to the backend and integrator strategies.
   Options are automatically routed based on their names:
   - Backend options (e.g., `ad_backend`) → `:di` strategy
@@ -127,7 +138,7 @@ function Flow(h::Data.AbstractHamiltonian; kwargs...)
     routed = _route_flow_options(Traits.WithAD, kw; method=method)
     components = _build_flow_components(Traits.WithAD, routed; method=method)
     sys = Systems.build_system(h, components.backend)
-    return build_flow(sys, components.integrator)
+    return with_label(build_flow(sys, components.integrator), _routed_label(routed))
 end
 
 """
@@ -147,6 +158,9 @@ Dispatches on the problem's [`CTBase.Traits.ControlDependence`](@extref) trait:
 
 # Arguments
 - `ocp::CTModels.Models.Model`: The optimal control problem model.
+- `label::AbstractString=""`: the label of the phase the flow integrates (e.g. `"bang"`),
+  kept through concatenation and written on the plots; see [`CTFlows.Flows.label`](@extref).
+  An action option: it is never passed to the strategies.
 - `kwargs...`: Keyword options passed to the backend and integrator strategies
   (same as `Flow(h::Data.AbstractHamiltonian; kwargs...)`).
 
@@ -185,7 +199,8 @@ function _flow_from_ocp(::Type{Traits.ControlFree}, ocp::CTModels.Models.Model; 
     inner = build_flow(sys, components.integrator)
     state_sys = Systems.build_system(_ocp_state_vector_field(ocp))
     state_flow = build_flow(state_sys, components.integrator)
-    return OptimalControlFlow(inner, ocp; state_flow=state_flow)
+    flow = OptimalControlFlow(inner, ocp; state_flow=state_flow)
+    return with_label(flow, _routed_label(routed))
 end
 
 """
@@ -262,6 +277,9 @@ Dispatches on the control law's [`CTBase.Traits.feedback`](@extref) trait, then 
 - `h̃::Data.PseudoHamiltonian`: the pseudo-Hamiltonian.
 - `law::Data.ControlLaw`: the control law; must carry `DynClosedLoopFeedback`.
 - `hamiltonian_type::Symbol=:total`: `:total` or `:partial`.
+- `label::AbstractString=""`: the label of the phase the flow integrates (e.g. `"bang"`),
+  kept through concatenation and written on the plots; see [`CTFlows.Flows.label`](@extref).
+  An action option: it is never passed to the strategies.
 - `kwargs...`: backend / integrator strategy options (as for `Flow(h::AbstractHamiltonian)`).
 
 # Throws
@@ -298,7 +316,7 @@ function _flow_from_pseudo_hamiltonian(
     )
     components = _build_flow_components(Traits.WithAD, routed; method=method)
     ht = _unwrap_option(get(routed.action, :hamiltonian_type, nothing), :total)
-    return _build_pseudo_flow(Val(ht), h̃, law, components)
+    return with_label(_build_pseudo_flow(Val(ht), h̃, law, components), _routed_label(routed))
 end
 
 """
@@ -400,6 +418,9 @@ takes `h̃vf` as the derivatives directly, so there is only **one mode** — no
 # Arguments
 - `h̃vf::Data.PseudoHamiltonianVectorField`: the pseudo-Hamiltonian vector field.
 - `law::Data.ControlLaw`: the control law; must carry `DynClosedLoopFeedback`.
+- `label::AbstractString=""`: the label of the phase the flow integrates (e.g. `"bang"`),
+  kept through concatenation and written on the plots; see [`CTFlows.Flows.label`](@extref).
+  An action option: it is never passed to the strategies.
 - `opts...`: integrator strategy options (as for `Flow(hvf::Data.HamiltonianVectorField)`)
   — no AD-backend options, since there is no AD in this path.
 
@@ -430,7 +451,8 @@ function _flow_from_pseudo_hamiltonian_vf(
     opts...,
 )
     sys = Systems.build_system(h̃vf, law)
-    return build_flow(sys, _build_integrator(opts))
+    built = _build_integrator(opts)
+    return with_label(build_flow(sys, built.integrator), built.label)
 end
 
 """
@@ -475,6 +497,12 @@ eliminated via a [`CTBase.Data.ComposedVectorField`](@extref) `g(t,x,v)=fc(t,x,u
 integrated as a state flow. A trajectory call returns a
 [`CTFlows.Trajectories.StateFlowTrajectory`](@extref) (state + reconstructed control, no
 objective — there is no OCP).
+
+# Keyword Arguments
+- `label::AbstractString=""`: the label of the phase the flow integrates (e.g. `"bang"`),
+  kept through concatenation and written on the plots; see [`CTFlows.Flows.label`](@extref).
+  An action option: it is never passed to the strategies.
+- `kwargs...`: integrator strategy options.
 
 # Throws
 - [`CTBase.Exceptions.PreconditionError`](@extref): if the law is `DynClosedLoop` (that
@@ -564,6 +592,15 @@ augment the pseudo-Hamiltonian as `H = H̃ + μ·g`, with the constraint normali
 - `label => side`, with `side` `:lower` (`g = c - lb`) or `:upper` (`g = ub - c`) — or one
   side per component — for a two-sided constraint, where `:label` alone throws;
 - a `Tuple` of the above, paired element-wise with a `Tuple` of multipliers.
+
+# Phase label
+
+The keyword `label::AbstractString=""` names the phase the flow integrates (e.g.
+`"bang"`, `"boundary"`). It is kept through concatenation, stored in the
+[`CTModels.Solutions.Solution`](@extref) (see [`CTModels.Solutions.phase_labels`](@extref)) and
+written on the plots; see [`CTFlows.Flows.label`](@extref). Like `hamiltonian_type`, it is
+an action option of the constructor: it is routed apart from the strategy options and never
+passed to them.
 
 # Throws
 - [`CTBase.Exceptions.PreconditionError`](@extref): if the OCP is control-free.
@@ -867,7 +904,7 @@ function _flow_from_ocp_control(
     _check_convenience_arities(ocp, nothing, cspec, mspec)
     _validate_constraint_pair(cspec, mspec)
     inner = _build_ocp_pseudo_flow(Val(ht), ocp, law, components, cspec, mspec)
-    return OptimalControlFlow(inner, ocp, law)
+    return with_label(OptimalControlFlow(inner, ocp, law), _routed_label(routed))
 end
 
 """
@@ -1023,7 +1060,8 @@ function _controlled_flow(
 )
     g = Data.ComposedVectorField(fc, law)
     system = Systems.build_system(g)
-    return ControlledFlow(build_flow(system, _build_integrator(kwargs)), ocp, law)
+    built = _build_integrator(kwargs)
+    return ControlledFlow(build_flow(system, built.integrator), ocp, law; label=built.label)
 end
 
 """

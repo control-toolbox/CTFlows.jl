@@ -7,6 +7,7 @@ using CTFlows: Systems
 using CTFlows: Integrators
 using CTFlows: Flows
 using CTFlows: Trajectories
+using CTFlows: MultiPhase
 using SciMLBase: SciMLBase, ODEProblem, ODEFunction
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5, Tsit5
 using StaticArrays: SA, SVector
@@ -72,6 +73,41 @@ function test_scimlbase_flow_constructors()
                 integ = Flows.integrator(flow)
                 Test.@test integ isa Integrators.SciML
             end
+        end
+
+        Test.@testset "phase labels (issue #443)" begin
+            f = ODEFunction((du, u, p, t) -> du .= -u)
+            prob = ODEProblem(f, [1.0], (0.0, 1.0))
+            # Flow(::AbstractODEFunction): a labelled state flow
+            Test.@test Flows.label(Flows.Flow(f)) == ""
+            Test.@test Flows.label(Flows.Flow(f; label="decay", reltol=1e-10)) == "decay"
+            # Flow(::AbstractODEProblem): the label is a field of the problem flow
+            pf = Flows.Flow(prob; label="decay", reltol=1e-10)
+            Test.@test Flows.label(pf) == "decay"
+            Test.@test Flows.label(Flows.Flow(prob)) == ""
+            Test.@test Flows.label(CTFlowsSciMLFlows.SciMLProblemFlow(prob, Integrators.SciML())) == ""
+            Test.@test Flows.with_label(pf, "") === pf
+            Test.@test Flows.label(Flows.with_label(pf, "other")) == "other"
+            # not passed to the integrator: the flow still integrates
+            Test.@test Integrators.final_state(pf(; unsafe=false))[1] ≈ exp(-1.0) atol = 1e-8
+            # display
+            Test.@test occursin("label: decay", sprint(show, MIME"text/plain"(), pf))
+            Test.@test occursin("label=\"decay\"", sprint(show, pf))
+            Test.@test !occursin("label", sprint(show, MIME"text/plain"(), Flows.Flow(prob)))
+            Test.@test !occursin("label", sprint(show, Flows.Flow(prob)))
+            # an action option: a wrong type is rejected
+            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(prob; label=:decay)
+            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(f; label=1)
+            # multi-phase SciML flows keep and show the phase sequence
+            g = ODEFunction((du, u, p, t) -> du .= u)
+            mf = Flows.Flow(f; label="bang") * (0.5, Flows.Flow(g; label="singular"))
+            Test.@test MultiPhase.get_labels(mf) == ["bang", "singular"]
+            Test.@test occursin("labels: bang → singular", sprint(show, MIME"text/plain"(), mf))
+            traj = mf((0.0, 1.0), [1.0]; variable=nothing)
+            Test.@test Trajectories.phase_labels(traj) == ["bang", "singular"]
+            mp = pf * (0.5, Flows.Flow(ODEProblem(g, [1.0], (0.0, 1.0)); label="singular"))
+            Test.@test MultiPhase.get_labels(mp) == ["decay", "singular"]
+            Test.@test occursin("labels: decay → singular", sprint(show, MIME"text/plain"(), mp))
         end
 
         # ====================================================================

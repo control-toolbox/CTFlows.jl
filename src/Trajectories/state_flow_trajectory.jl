@@ -366,6 +366,7 @@ function Base.show(io::IO, ::MIME"text/plain", sol::StateFlowTrajectory)
         end
     catch
     end
+    append!(fields, _switching_fields(sol, fmt))
     try
         push!(fields, ("final state", Integrators.final_state(sol), fmt.value))
     catch
@@ -392,6 +393,7 @@ function Base.show(io::IO, sol::StateFlowTrajectory)
         isempty(ts) || push!(parts, "tspan=($(first(ts)), $(last(ts))), n=$(length(ts))")
     catch
     end
+    append!(parts, _switching_parts(sol))
     _show_variable(sol.variable) && push!(parts, "variable=$(sol.variable)")
     sol.objective === nothing || push!(parts, "objective=$(sol.objective)")
     print(io, join(parts, ", "))

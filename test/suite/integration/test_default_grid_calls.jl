@@ -249,10 +249,12 @@ function test_default_grid_calls()
             Test.@test length(ts) < 100   # the coarse polyline of the issue
         end
 
-        Test.@testset "multi-phase grid=nothing: the switching time appears twice" begin
+        Test.@testset "multi-phase grid=nothing: the switching time appears once" begin
+            # the solver steps of the phases, each switching time once (issue #443)
             f = _flow_h()
             T = CTModels.time_grid((f * (0.5, f))((0.0, 1.0), X0, P0; grid=nothing))
-            Test.@test count(==(0.5), T) == 2
+            Test.@test count(==(0.5), T) == 1
+            Test.@test issorted(T; lt=(<=))
         end
 
         # ── no generated grid when the output is already shaped ──────────────

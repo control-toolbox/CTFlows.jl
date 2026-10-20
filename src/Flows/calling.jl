@@ -293,7 +293,24 @@ function _core_invoke_flow(
         Configs.mode_trait(config), Traits.dynamics_trait(config), config, result, variable
     )
 
-    return flow_sol
+    # a trajectory carries the label of the flow (none by default)
+    return _with_flow_label(flow_sol, flow)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Give a raw trajectory the label of the flow that computed it; any other result (a point
+evaluation) is returned as is.
+"""
+_with_flow_label(result, ::Flows.AbstractFlow) = result
+function _with_flow_label(
+    sol::Union{
+        Trajectories.VectorFieldTrajectory,Trajectories.HamiltonianVectorFieldTrajectory
+    },
+    flow::Flows.AbstractFlow,
+)
+    return isempty(label(flow)) ? sol : Trajectories.with_labels(sol, [label(flow)])
 end
 
 # =============================================================================

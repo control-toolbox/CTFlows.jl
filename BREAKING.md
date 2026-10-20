@@ -5,6 +5,24 @@ stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
 ## Unreleased
 
+- **A switching time appears once in the time grid of a multi-phase trajectory**
+  ([#443](https://github.com/control-toolbox/CTFlows.jl/issues/443)): with `grid=nothing`,
+  the grid of a multi-phase trajectory (and of its `CTModels.Solution`) concatenated the
+  phase grids, so each switching time appeared twice; it now appears once (CTSolvers
+  `PiecewiseIntegrationResult`). Both copies returned the same value, and the `Solution`
+  rejects a repeated time (CTModels 0.20). The value after a jump, which the duplicate
+  never gave, is read with `Trajectories.right_limit` / `CTModels.right_limit`. Code that
+  counted the duplicate must expect `n − 1` fewer times for `n` phases.
+- **Control at a switching time** ([#443](https://github.com/control-toolbox/CTFlows.jl/issues/443)):
+  `control(sol)(tᵢ)` at an exact switching time now uses the law of the phase that ends at
+  `tᵢ` (left limit), instead of the law of the next phase evaluated before the jump. The
+  value at a single time changes; integrals (objective) are unchanged. Use
+  `right_limit(sol, :control, i)` for the value after the switch.
+- **New field in `Flow`, `ControlledFlow` and `OptimalControlFlow`** (`label`): code that
+  builds these types with their default positional constructor must pass the label
+  (`""` for none); `Flow(system, integrator)`, `StateFlow`, `HamiltonianFlow`,
+  `ControlledFlow(flow, ocp, law)` and `OptimalControlFlow(flow, ocp, law)` are unchanged.
+
 - **Default output grid of a trajectory call** ([#446](https://github.com/control-toolbox/CTFlows.jl/issues/446)):
   a top-level trajectory call on a time span `(t0, tf)` that sets no output grid (no
   `saveat`, grid of times or `grid=`) now returns an `AdaptiveGrid(250)` when the

@@ -49,3 +49,16 @@ variable costate equation `ṗᵥ = -∂H/∂v` unless explicitly requested.
 See also: [`CTFlows.Configs.AugmentedHamiltonianEndPointConfig`](@extref).
 """
 __variable_costate()::Bool = false
+
+"""
+$(TYPEDSIGNATURES)
+
+Default value for the `label` keyword of [`CTFlows.Flows.Flow`](@extref): no label.
+
+A label names the phase a flow integrates (e.g. `"bang"`, `"singular"`, `"boundary"`).
+It is kept when flows are concatenated into a multi-phase flow, and written on the plots
+of the trajectory.
+
+See also: [`CTFlows.Flows.label`](@extref).
+"""
+__label()::String = ""

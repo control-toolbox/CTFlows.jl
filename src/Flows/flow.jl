@@ -17,6 +17,8 @@ The dynamics axis is encoded in the type parameter `D`:
 # Fields
 - `system::S`: The system to integrate
 - `integrator::I`: The integrator to use for integration
+- `label::String`: The label of the phase the flow integrates (`""` for no label), see
+  [`CTFlows.Flows.label`](@extref)
 
 # Example
 \`\`\`julia-repl
@@ -41,6 +43,24 @@ struct Flow{
 } <: AbstractFlow{TD,VD,D}
     system::S
     integrator::I
+    label::String
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Construct a [`CTFlows.Flows.Flow`](@extref) from a system and an integrator, with no label.
+"""
+function Flow(
+    system::S, integrator::I
+) where {
+    TD<:Traits.TimeDependence,
+    VD<:Traits.VariableDependence,
+    D<:Traits.AbstractDynamicsTrait,
+    S<:Systems.AbstractSystem{TD,VD,D},
+    I<:Integrators.AbstractIntegrator,
+}
+    return Flow{TD,VD,D,S,I}(system, integrator, __label())
 end
 
 """
@@ -71,7 +91,7 @@ See also: [`CTFlows.Flows.StateFlow`](@extref), [`CTFlows.Flows.Flow`](@extref).
 function StateFlow(
     system::S, integrator::I
 ) where {TD,VD,S<:Systems.AbstractStateSystem{TD,VD},I<:Integrators.AbstractIntegrator}
-    return Flow{TD,VD,Traits.StateDynamics,S,I}(system, integrator)
+    return Flow{TD,VD,Traits.StateDynamics,S,I}(system, integrator, __label())
 end
 
 """
@@ -105,7 +125,7 @@ function HamiltonianFlow(
 ) where {
     TD,VD,S<:Systems.AbstractHamiltonianSystem{TD,VD},I<:Integrators.AbstractIntegrator
 }
-    return Flow{TD,VD,Traits.HamiltonianDynamics,S,I}(system, integrator)
+    return Flow{TD,VD,Traits.HamiltonianDynamics,S,I}(system, integrator, __label())
 end
 
 """
@@ -201,4 +221,65 @@ function Systems.hamiltonian_vector_field(
     },
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     return Systems.hamiltonian_vector_field(flow.system)
+end
+
+# ==============================================================================
+# Label of the phase a flow integrates
+# ==============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the label of the phase a flow integrates, given with `Flow(...; label="bang")`;
+`""` for no label. A flow type that holds no label has none.
+
+The labels of the phases of a multi-phase flow are read with
+[`CTFlows.MultiPhase.get_labels`](@extref).
+
+See also: [`CTFlows.Flows.with_label`](@extref).
+"""
+label(::AbstractFlow)::String = __label()
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the label of a [`CTFlows.Flows.Flow`](@extref).
+"""
+label(f::Flow)::String = f.label
+
+"""
+$(TYPEDSIGNATURES)
+
+Return a copy of a flow with the label `label` (the flow is shared otherwise). An empty
+label returns the flow unchanged.
+
+# Throws
+- [`CTBase.Exceptions.PreconditionError`](@extref): if the flow type holds no label and
+  `label` is not empty.
+
+See also: [`CTFlows.Flows.label`](@extref).
+"""
+function with_label(f::AbstractFlow, label::AbstractString)
+    isempty(label) && return f
+    throw(
+        Exceptions.PreconditionError(
+            "this flow cannot carry a label";
+            reason="a $(nameof(typeof(f))) holds no label, so label=$(repr(label)) " *
+                   "cannot be kept",
+            suggestion="label a flow built by Flow(...): a Flow, an OptimalControlFlow, " *
+                       "a ControlledFlow or a SciMLProblemFlow; or define label and " *
+                       "with_label for this flow type",
+            context="Flow(...; label=...)",
+        ),
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return a copy of a [`CTFlows.Flows.Flow`](@extref) with the label `label`.
+"""
+function with_label(f::Flow, label::AbstractString)
+    isempty(label) && return f
+    return typeof(f)(f.system, f.integrator, String(label))
 end

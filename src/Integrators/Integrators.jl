@@ -44,6 +44,8 @@ using .CTSolversIntegrators:
     successful,
     merge,
     regrid,
+    switching_times,
+    right_limit,
     options_point,
     options_trajectory,
     deepvalue
@@ -154,6 +156,7 @@ has_saveat(::AbstractIntegrator)::Bool = false
 export AbstractIntegrator, SciML
 export AbstractIntegrationResult,
     final_state, times, evaluate_at, is_dense, status, successful, merge, regrid
+export switching_times, right_limit
 export options_point, options_trajectory
 export build_problem, build_options, has_saveat
 

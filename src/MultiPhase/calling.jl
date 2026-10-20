@@ -140,6 +140,9 @@ function _evaluate_multiphase(
     end
 
     merged = Integrators.merge(results)
+    # the phase labels of the flows, when at least one phase is labelled
+    labels = get_labels(mpf)
+    any(!isempty, labels) && (merged = Trajectories.with_labels(merged, labels))
     grid = Configs.output_grid(config)
     # a grid of times is returned exactly (no switching time added); a generated grid is
     # built on the merged trajectory, over the phases
@@ -161,13 +164,15 @@ end
 $(TYPEDEF)
 
 Piecewise control law reconstructed from the per-phase laws of a multi-phase flow. It selects
-the phase by time (a flat `searchsortedlast` over the switching times — no nested closures),
+the phase by time (a flat `searchsortedfirst` over the switching times — no nested closures),
 then delegates to that phase's law with the caller's uniform signature. It serves both
 reconstruction paths: `(pl)(t, x, p, v)` for the Hamiltonian/OCP law, and
 `CTFlows.Trajectories._controlled_u(pl, t, x, v)` for the state (controlled) law.
 
-At an exact switching time the *next* phase is selected — a measure-zero choice, irrelevant to
-plotting and to objective integration.
+At an exact switching time `tᵢ` the phase that **ends** at `tᵢ` is selected, consistently
+with the state and costate, which are left-continuous: `u(tᵢ)` is the left limit, computed
+from the values before the jump. The right limit, the next phase's law evaluated after the
+jump, is given by [`CTFlows.MultiPhase._right_law`](@extref).
 
 # Type Parameters
 - `L`: type of the tuple of per-phase control laws.
@@ -188,8 +193,9 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the phase law active at time `t`: the law of the phase selected by `searchsortedlast`
-over the switching times, clamped to the valid phase range.
+Return the phase law active at time `t`: the law of the phase selected by `searchsortedfirst`
+over the switching times, clamped to the valid phase range. At a switching time, it is the
+law of the phase that ends there (left continuity).
 
 # Arguments
 - `pl::_PiecewiseControlLaw`: The piecewise control law.
@@ -199,8 +205,16 @@ over the switching times, clamped to the valid phase range.
 - The per-phase control law active at time `t`.
 """
 function _phase_law(pl::_PiecewiseControlLaw, t)
-    return pl.laws[clamp(searchsortedlast(pl.switches, t) + 1, 1, length(pl.laws))]
+    return pl.laws[clamp(searchsortedfirst(pl.switches, t), 1, length(pl.laws))]
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the law of the phase that starts at the `i`-th switching time: the law that gives
+the right limit of the control there.
+"""
+_right_law(pl::_PiecewiseControlLaw, i::Integer) = pl.laws[i + 1]
 
 """
 $(TYPEDSIGNATURES)
@@ -236,6 +250,17 @@ State (controlled) uniform call: delegate to the phase law active at time `t`, d
 """
 function Trajectories._controlled_u(pl::_PiecewiseControlLaw, t, x, v)
     return Trajectories._controlled_u(_phase_law(pl, t), t, x, v)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+State (controlled) control just after the `i`-th switching time `t`, from the state `x`
+after the jump: the law of the next phase. Used by
+[`CTFlows.Trajectories.right_limit`](@extref).
+"""
+function Trajectories._right_controlled_u(pl::_PiecewiseControlLaw, i::Integer, t, x, v)
+    return Trajectories._controlled_u(_right_law(pl, i), t, x, v)
 end
 
 """
@@ -349,7 +374,19 @@ function _reconstruct_ocp_solution(mpf, merged, variable, grid=nothing, bounds=n
     plaw = _PiecewiseControlLaw(map(p -> p.law, phases), get_switching_times(mpf))
     integ = Flows.integrator(phases[1])
     merged = Flows._regrid_hamiltonian(merged, grid, plaw, variable, bounds)
-    return Flows._build_ocp_solution(ocp, merged, variable, integ, plaw)
+    switching = Flows._ocp_switching_model(merged, plaw, variable, get_labels(mpf))
+    return Flows._build_ocp_solution(ocp, merged, variable, integ, plaw; switching=switching)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Control just after the `i`-th switching time `t`, from the state `x` and costate `p` after
+the jump: the law of the next phase. Used to build the switching structure of the
+`Solution` of a multi-phase OCP flow.
+"""
+function Flows._right_ocp_control(pl::_PiecewiseControlLaw, i::Integer, t, x, p, v)
+    return _right_law(pl, i)(t, x, p, v)
 end
 
 """

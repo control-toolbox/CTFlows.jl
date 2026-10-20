@@ -236,6 +236,34 @@ using Plots
 plot(sol)
 ```
 
+#### Several phases: the switching structure of the `Solution`
+
+Concatenating such flows (see [Multi-phase flows](multiphase.md)) fixes the structure of
+the solution: the law changes at the switching times, and the state or costate may jump.
+The `CTModels.Solution` of a multi-phase flow keeps this structure — the switching times,
+the phase labels given with `label`, and the left and right limits of the state, costate
+and control. Below, the law changes from `u = p` to `u = -p` at `t = 0.5`, where the
+costate jumps by `0.4`:
+
+```@example flows_laws
+f_plus = Flows.Flow(ocp, Data.DynClosedLoop((x, p) -> p); reltol=1e-10, label="u = p")
+f_minus = Flows.Flow(ocp, Data.DynClosedLoop((x, p) -> -p); reltol=1e-10, label="u = -p")
+sol_mp = (f_plus * (0.5, nothing, 0.4, f_minus))((0.0, 1.0), x0, p0)
+```
+
+```@repl flows_laws
+CTModels.switching_times(sol_mp)
+CTModels.phase_labels(sol_mp)
+CTModels.left_limit(sol_mp, :control, 1), CTModels.right_limit(sol_mp, :control, 1)
+```
+
+The plot draws the jumps as vertical segments, marks the switching time and writes the
+labels on the control:
+
+```@example flows_laws
+plot(sol_mp)
+```
+
 ### OpenLoop / ClosedLoop → `ControlledFlow`
 
 The OCP's controlled dynamics are extracted as a `ControlledVectorField`, the

@@ -4,8 +4,8 @@ Characterization tests for the value a multi-phase trajectory returns AT a switc
 
 Convention: the trajectory is left-continuous at a switching time — evaluating at `ts`
 returns the end value of the phase that finishes at `ts` (before the jump); any time
-strictly after `ts` belongs to the next phase (after the jump). The time grid keeps `ts`
-twice (end of one phase, start of the next).
+strictly after `ts` belongs to the next phase (after the jump). The time grid holds `ts`
+once (issue #443); the value after the jump is read with `right_limit`.
 """
 
 module TestSwitchTimeConvention
@@ -16,6 +16,7 @@ using CTModels: CTModels
 using CTFlows: Flows
 using CTFlows: Systems
 using CTFlows: Integrators
+using CTFlows: Trajectories
 using OrdinaryDiffEqTsit5: Tsit5
 using ForwardDiff: ForwardDiff  # triggers the DI ForwardDiff extension (AutoForwardDiff)
 
@@ -53,10 +54,12 @@ function test_switch_time_convention()
             traj = (f * (ts, Δx, f))((0.0, 1.0), [1.0]; grid=nothing)
             left, right = exp(-ts), exp(-ts) + Δx
 
-            Test.@test count(==(ts), Integrators.times(traj)) == 2
+            Test.@test count(==(ts), Integrators.times(traj)) == 1
             Test.@test _val(traj(ts)) ≈ left atol = 1e-8
             Test.@test _val(traj(ts + 1e-9)) ≈ right atol = 1e-6
             Test.@test _val(traj(ts - 1e-9)) ≈ left atol = 1e-6
+            Test.@test _val(Trajectories.left_limit(traj, :state, 1)) ≈ left atol = 1e-8
+            Test.@test _val(Trajectories.right_limit(traj, :state, 1)) ≈ right atol = 1e-8
         end
 
         Test.@testset "OCP flow, costate jump" begin
@@ -68,10 +71,14 @@ function test_switch_time_convention()
             p, u = CTModels.costate(sol), CTModels.control(sol)
             left = p0 * exp(ts)
 
-            Test.@test count(==(ts), CTModels.time_grid(sol)) == 2
+            Test.@test count(==(ts), CTModels.time_grid(sol)) == 1
             Test.@test _val(p(ts)) ≈ left atol = 1e-8
             Test.@test _val(u(ts)) ≈ left atol = 1e-8   # u = p, phase-1 law
             Test.@test _val(p(ts + 1e-9)) ≈ left + Δp atol = 1e-6
+            Test.@test CTModels.switching_times(sol) == [ts]
+            Test.@test CTModels.left_limit(sol, :costate, 1) ≈ left atol = 1e-8
+            Test.@test CTModels.right_limit(sol, :costate, 1) ≈ left + Δp atol = 1e-8
+            Test.@test CTModels.right_limit(sol, :control, 1) ≈ left + Δp atol = 1e-8
         end
     end
 end

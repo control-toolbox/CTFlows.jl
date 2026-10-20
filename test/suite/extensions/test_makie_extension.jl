@@ -202,10 +202,10 @@ function test_makie_extension()
             Test.@test Makie.plot!(Makie.Figure(), _vf_traj()) isa Makie.Figure
         end
 
-        Test.@testset "plot(; size) empty canvas (from CTModelsMakie) overlays" begin
+        Test.@testset "Figure(; size) empty canvas overlays" begin
             # mirror of `Plots.plot(; size=…)`: a blank figure, then `plot!(f, traj)`.
-            # The zero-arg `Makie.plot(; …)` is provided by the CTModelsMakie extension.
-            f = Makie.plot(; size=(800, 800))
+            # No zero-arg `Makie.plot(; …)` (type piracy): build the canvas with `Makie.Figure`.
+            f = Makie.Figure(; size=(800, 800))
             Test.@test f isa Makie.Figure
             Test.@test _n_axes(f) == 0
             Test.@test size(f.scene) == (800, 800)
