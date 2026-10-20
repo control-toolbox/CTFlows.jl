@@ -13,8 +13,8 @@ Everything domain-specific (vocabulary, panels, layout) lives in
 
 `Makie.plot` returns a `Makie.Figure`; the `description` and keyword arguments are
 identical to the Plots backend (see [`CTFlows.TrajectoryPlots.build_figure`](@extref)).
-The zero-argument `Makie.plot(; kwargs...)` empty-canvas figure is provided by the
-`CTModelsMakie` extension (always loaded here, since CTModels is a hard dependency).
+There is no zero-argument `Makie.plot(; kwargs...)` (it would be type piracy): to overlay
+onto an empty canvas, start from `f = Makie.Figure(; size=...)` and call `Makie.plot!(f, traj)`.
 """
 module CTFlowsMakie
 
