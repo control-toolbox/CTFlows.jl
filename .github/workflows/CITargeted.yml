@@ -6,6 +6,9 @@ name: CI (targeted)
 # Run it from the Actions tab ("Run workflow", pick the branch), or with
 #   gh workflow run "CI (targeted)" --ref <branch> -f tests=test_gpu_flows -f runner=kkt
 #
+# `runner=auto` (the default) takes kkt unless it is offline, else occidata (CTActions
+# ci-gpu.yml), as a push to main does.
+#
 # `tests` is forwarded as `test_args` to Pkg.test: space-separated glob patterns matched
 # against test file names (same syntax as test/runtests.jl), e.g.
 #   test_gpu_flows                      one file
@@ -24,12 +27,25 @@ on:
         required: true
         type: choice
         options:
+          - auto
           - kkt
           - occidata
-        default: kkt
+        default: auto
 
 jobs:
+  test-auto:
+    if: inputs.runner == 'auto'
+    uses: control-toolbox/CTActions/.github/workflows/ci-gpu.yml@main
+    with:
+      use_ct_registry: true
+      test_args: ${{ inputs.tests }}
+    secrets:
+      SSH_KEY: ${{ secrets.SSH_KEY }}
+      CT_RUNNERS_CLIENT_ID: ${{ secrets.CT_RUNNERS_CLIENT_ID }}
+      CT_RUNNERS_PRIVATE_KEY: ${{ secrets.CT_RUNNERS_PRIVATE_KEY }}
+
   test-targeted:
+    if: inputs.runner != 'auto'
     uses: control-toolbox/CTActions/.github/workflows/ci.yml@main
     with:
       versions: '["1"]'
