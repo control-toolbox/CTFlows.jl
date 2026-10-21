@@ -1572,7 +1572,9 @@ function _ocp_switching_model(
     else
         (
             _limit_rows([law(taus[i], xl[i], pl[i], v) for i in 1:n]),
-            _limit_rows([_right_ocp_control(law, i, taus[i], xr[i], pr[i], v) for i in 1:n]),
+            _limit_rows([
+                _right_ocp_control(law, i, taus[i], xr[i], pr[i], v) for i in 1:n
+            ]),
         )
     end
     return CTModels.Solutions.SwitchingModel(;

@@ -261,7 +261,7 @@ See also: [`CTFlows.Flows.label`](@extref).
 """
 function with_label(f::AbstractFlow, label::AbstractString)
     isempty(label) && return f
-    throw(
+    return throw(
         Exceptions.PreconditionError(
             "this flow cannot carry a label";
             reason="a $(nameof(typeof(f))) holds no label, so label=$(repr(label)) " *

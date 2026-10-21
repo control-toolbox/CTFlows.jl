@@ -119,8 +119,7 @@ function _switching_fields(sol, fmt)
     times = switching_times(sol)
     isempty(times) || push!(fields, ("switching times", times, fmt.value))
     labels = phase_labels(sol)
-    any(!isempty, labels) &&
-        push!(fields, ("phases", _phase_sequence(labels), fmt.value))
+    any(!isempty, labels) && push!(fields, ("phases", _phase_sequence(labels), fmt.value))
     return fields
 end
 
@@ -153,7 +152,11 @@ function _check_switch_index(sol, i::Integer, context::String)
         Exceptions.IncorrectArgument(
             "no switching time with this index";
             got="i = $i",
-            expected=n == 0 ? "no index: the trajectory has a single phase" : "1 ≤ i ≤ $n",
+            expected=if n == 0
+                "no index: the trajectory has a single phase"
+            else
+                "1 ≤ i ≤ $n"
+            end,
             suggestion="use an index of switching_times(sol)",
             context=context,
         ),
@@ -170,7 +173,7 @@ Throw the error of a component a trajectory does not have.
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): always.
 """
 function _throw_component(sol, component::Symbol, expected::String)
-    throw(
+    return throw(
         Exceptions.IncorrectArgument(
             "unknown component for this trajectory";
             got=":$component for a $(nameof(typeof(sol)))",
@@ -205,13 +208,15 @@ function right_limit(sol::VectorFieldTrajectory, component::Symbol, i::Integer)
     return Systems._coerce_state(sol.x0)(Integrators.right_limit(sol.result, i))
 end
 function right_limit(sol::HamiltonianVectorFieldTrajectory, component::Symbol, i::Integer)
-    component in (:state, :costate) || _throw_component(sol, component, ":state or :costate")
+    component in (:state, :costate) ||
+        _throw_component(sol, component, ":state or :costate")
     _check_switch_index(sol, i, "right_limit")
     x, p = _ham_split_solution(Integrators.right_limit(sol.result, i), sol.x0)
     return component === :state ? x : p
 end
 function right_limit(sol::StateFlowTrajectory, component::Symbol, i::Integer)
-    component in (:state, :control) || _throw_component(sol, component, ":state or :control")
+    component in (:state, :control) ||
+        _throw_component(sol, component, ":state or :control")
     _check_switch_index(sol, i, "right_limit")
     x = sol.state_coerce(Integrators.right_limit(sol.traj.result, i))
     component === :state && return x
@@ -237,15 +242,18 @@ function left_limit(sol::VectorFieldTrajectory, component::Symbol, i::Integer)
     return state(sol)(switching_times(sol)[i])
 end
 function left_limit(sol::HamiltonianVectorFieldTrajectory, component::Symbol, i::Integer)
-    component in (:state, :costate) || _throw_component(sol, component, ":state or :costate")
+    component in (:state, :costate) ||
+        _throw_component(sol, component, ":state or :costate")
     _check_switch_index(sol, i, "left_limit")
     f = component === :state ? state(sol) : costate(sol)
     return f(switching_times(sol)[i])
 end
 function left_limit(sol::StateFlowTrajectory, component::Symbol, i::Integer)
-    component in (:state, :control) || _throw_component(sol, component, ":state or :control")
+    component in (:state, :control) ||
+        _throw_component(sol, component, ":state or :control")
     _check_switch_index(sol, i, "left_limit")
-    component === :control && sol.law === nothing &&
+    component === :control &&
+        sol.law === nothing &&
         _throw_component(sol, component, ":state (no control law)")
     f = component === :state ? state(sol) : control(sol)
     return f(switching_times(sol)[i])

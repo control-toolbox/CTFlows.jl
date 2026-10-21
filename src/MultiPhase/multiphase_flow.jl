@@ -399,9 +399,7 @@ function Base.show(io::IO, ::MIME"text/plain", mpf::MultiPhaseFlow)
     Display.print_field(io, "switching_times", mpf.switching_times; fmt=fmt)
     labels = get_labels(mpf)
     if any(!isempty, labels)
-        Display.print_field(
-            io, "labels", Trajectories._phase_sequence(labels); fmt=fmt
-        )
+        Display.print_field(io, "labels", Trajectories._phase_sequence(labels); fmt=fmt)
     end
     return Display.print_field(io, "jumps", mpf.jumps; last=true, fmt=fmt)
 end

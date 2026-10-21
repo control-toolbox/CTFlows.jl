@@ -62,7 +62,9 @@ function SciMLProblemFlow(
     integrator::Integrators.AbstractIntegrator,
     label::AbstractString=Flows.__label(),
 )
-    return SciMLProblemFlow{typeof(prob),typeof(integrator)}(prob, integrator, String(label))
+    return SciMLProblemFlow{typeof(prob),typeof(integrator)}(
+        prob, integrator, String(label)
+    )
 end
 
 Flows.system(f::SciMLProblemFlow) = nothing

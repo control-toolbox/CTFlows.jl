@@ -85,15 +85,20 @@ function test_scimlbase_flow_constructors()
             pf = Flows.Flow(prob; label="decay", reltol=1e-10)
             Test.@test Flows.label(pf) == "decay"
             Test.@test Flows.label(Flows.Flow(prob)) == ""
-            Test.@test Flows.label(CTFlowsSciMLFlows.SciMLProblemFlow(prob, Integrators.SciML())) == ""
+            Test.@test Flows.label(
+                CTFlowsSciMLFlows.SciMLProblemFlow(prob, Integrators.SciML())
+            ) == ""
             Test.@test Flows.with_label(pf, "") === pf
             Test.@test Flows.label(Flows.with_label(pf, "other")) == "other"
             # not passed to the integrator: the flow still integrates
-            Test.@test Integrators.final_state(pf(; unsafe=false))[1] ≈ exp(-1.0) atol = 1e-8
+            Test.@test Integrators.final_state(pf(; unsafe=false))[1] ≈ exp(-1.0) atol =
+                1e-8
             # display
             Test.@test occursin("label: decay", sprint(show, MIME"text/plain"(), pf))
             Test.@test occursin("label=\"decay\"", sprint(show, pf))
-            Test.@test !occursin("label", sprint(show, MIME"text/plain"(), Flows.Flow(prob)))
+            Test.@test !occursin(
+                "label", sprint(show, MIME"text/plain"(), Flows.Flow(prob))
+            )
             Test.@test !occursin("label", sprint(show, Flows.Flow(prob)))
             # an action option: a wrong type is rejected
             Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(prob; label=:decay)
@@ -102,12 +107,16 @@ function test_scimlbase_flow_constructors()
             g = ODEFunction((du, u, p, t) -> du .= u)
             mf = Flows.Flow(f; label="bang") * (0.5, Flows.Flow(g; label="singular"))
             Test.@test MultiPhase.get_labels(mf) == ["bang", "singular"]
-            Test.@test occursin("labels: bang → singular", sprint(show, MIME"text/plain"(), mf))
+            Test.@test occursin(
+                "labels: bang → singular", sprint(show, MIME"text/plain"(), mf)
+            )
             traj = mf((0.0, 1.0), [1.0]; variable=nothing)
             Test.@test Trajectories.phase_labels(traj) == ["bang", "singular"]
             mp = pf * (0.5, Flows.Flow(ODEProblem(g, [1.0], (0.0, 1.0)); label="singular"))
             Test.@test MultiPhase.get_labels(mp) == ["decay", "singular"]
-            Test.@test occursin("labels: decay → singular", sprint(show, MIME"text/plain"(), mp))
+            Test.@test occursin(
+                "labels: decay → singular", sprint(show, MIME"text/plain"(), mp)
+            )
         end
 
         # ====================================================================
