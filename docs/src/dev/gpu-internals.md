@@ -193,7 +193,7 @@ cross-package change).
     the views come from the Hamiltonian splitter. On device `MooncakeCUDAExt` yields a negatable
     tangent. The fix lives in CTBase, not in the splitter: the `CTBaseMooncake` extension
     replaces a view of a host `Array` by a dense copy before the gradient closures are built
-    (tag `Differentiation.MooncakeTag`, hook `Differentiation._materialize`), so every gradient
+    (`Differentiation._materialize` overloaded for `ADTypes.AutoMooncake`), so every gradient
     entry point is covered and the other backends keep their views. Copying only the
     differentiated argument was measured 30–40 % slower: the closure still captured the other
     block as a view of the whole state. The splitter itself must keep returning views, since
