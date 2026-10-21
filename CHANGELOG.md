@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.2] - 2026-10-21
+
 ### ✨ New Features
 
 - **Switching structure of multi-phase flows**
@@ -45,69 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   outer ForwardDiff: a `Dual` (or any non-IEEE) state, costate, time or variable now raises
   a `PreconditionError` at the call instead of Mooncake's raw error. The measurements are in
   `probe/mooncake_cpu/`.
-
-### 📦 Dependencies
-
-- `CTBase` compat raised to `0.30.13` (the `CTBaseMooncake` extension).
-
-### 📚 Documentation
-
-- ct-conventions pinned at 0.5.0 in `AGENTS.md` (read from a git-ignored clone in
-  `.conventions/`); `AGENTS.md` cites rules by identifier, `CLAUDE.md` redirects to it, and
-  the references to the former Handbook become rule identifiers. One `.markdownlint.json`
-  (`GEN2`) replaces the `markdownlint-disable MD024` comment of this changelog (`CHG2`).
-- ct-conventions pinned at `v0.7.0` in `AGENTS.md`: the release rules `REL1`–`REL7` in the
-  index, and a *Recurring tasks* section pointing to the release recipe of ct-agents.
-- ct-agents pinned at `v0.2.0` and ct-conventions at `v0.7.1` in `AGENTS.md`: the recipes (the
-  release) are read from a git-ignored clone in `.ct-agents/` at that tag, not from `main`
-  of ct-agents, and the proposal of a release states the versions applied. The clone of the
-  conventions is now `.ct-conventions/` (it was `.conventions/`), like `.ct-agents/`.
-- ct-agents pinned at `v0.3.0` in `AGENTS.md`: at the close of a release the agent runs
-  `release.jl audit`, which checks the trail the release left.
-
-### 🐛 Bug fixes
-
-- **Control at a switching time** ([#443](https://github.com/control-toolbox/CTFlows.jl/issues/443)):
-  at an exact switching time `tᵢ`, the control of a multi-phase flow was computed with the
-  law of the *next* phase at the state and costate *before* the jump, mixing the two
-  sides. It is now the law of the phase that ends at `tᵢ` (left limit), consistent with
-  the left-continuous state and costate; the right limit is given by `right_limit`.
-- **`variable_costate=true` on a trajectory call raises a clear error**
-  ([#437](https://github.com/control-toolbox/CTFlows.jl/issues/437)).
-  `F((t0, tf), x0, p0; variable_costate=true)` on an `OptimalControlFlow` threw a raw
-  `MethodError` (with the full `OptimalControlFlow{…}` type); it now throws a
-  `PreconditionError` pointing to the point-evaluation call
-  `F(t0, x0, p0, tf; variable_costate=true)`. On a Hamiltonian flow without variable
-  costate capability, the trajectory call is also rejected with this message instead of
-  the misleading "unsupported capability trait" one.
-- **Structured errors instead of obscure `MethodError`s at call time**
-  ([#436](https://github.com/control-toolbox/CTFlows.jl/issues/436)). A flow call now checks,
-  before the integration: (1) the package of the AD backend is loaded — otherwise an
-  `ExtensionError` names it (`Missing Mooncake`, `Hint: using Mooncake`; same for the default
-  `AutoForwardDiff()` without `using ForwardDiff`), through
-  `CTBase.Differentiation.check_backend` (CTBase ≥ 0.30.8); (2) a flow built with
-  `method=:gpu` is called on device arrays, not host arrays — otherwise a `PreconditionError`
-  (numbers, i.e. 1-D states, are accepted); (3) `AutoMooncake` is not used with host arrays
-  (unsupported for now, see [#448](https://github.com/control-toolbox/CTFlows.jl/issues/448)).
-  The GPU page of the documentation states these prerequisites. **Near-breaking** for (2),
-  see `BREAKING.md`.
-- **`saveat` on a trajectory call no longer crashes, and keeps the solver accuracy**
-  ([#434](https://github.com/control-toolbox/CTFlows.jl/issues/434)). `Flow(ocp, law;
-  saveat=…)` segfaulted (Lagrange cost) or threw `UndefRefError` (Mayer cost) on
-  `f((t0, tf), x0, p0)` unless `dense=false` was added: the integrator requested
-  `dense=true` explicitly together with `saveat`, which SciML does not support. `saveat`
-  is now an *output grid* only (CTSolvers ≥ 0.6): the integration and its dense
-  interpolant are unchanged, the trajectory is returned on the `saveat` times, and the
-  state, costate, control and objective stay accurate to the solver tolerances between
-  them. `dense=false` is no longer required; it remains available to save memory.
-- **Multi-phase trajectories keep each phase's dense interpolant.** The merged trajectory
-  of a concatenated flow (`f * (t, g)`) used to be linear between the saved points (error
-  ~1e-5 with tolerances 1e-12, and on the objective); it is now as accurate as a
-  single-phase flow. The value at a switching time is unchanged (end of the phase that
-  finishes there, before the jump).
-
-### ✨ Features
-
 - **Default output grid** ([#446](https://github.com/control-toolbox/CTFlows.jl/issues/446)):
   a top-level trajectory call that sets no output grid returns an `AdaptiveGrid(250)` when
   the integration is dense and the solver returns fewer than 250 times (it used to return
@@ -140,7 +79,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Warning on a non-dense objective:** rebuilding an OCP objective from a trajectory
   integrated with `dense=false` warns (once) that it is only accurate to the grid spacing.
 
-### 🧪 Tests
+### 🐛 Bug Fixes
+
+- **Control at a switching time** ([#443](https://github.com/control-toolbox/CTFlows.jl/issues/443)):
+  at an exact switching time `tᵢ`, the control of a multi-phase flow was computed with the
+  law of the *next* phase at the state and costate *before* the jump, mixing the two
+  sides. It is now the law of the phase that ends at `tᵢ` (left limit), consistent with
+  the left-continuous state and costate; the right limit is given by `right_limit`.
+- **`variable_costate=true` on a trajectory call raises a clear error**
+  ([#437](https://github.com/control-toolbox/CTFlows.jl/issues/437)).
+  `F((t0, tf), x0, p0; variable_costate=true)` on an `OptimalControlFlow` threw a raw
+  `MethodError` (with the full `OptimalControlFlow{…}` type); it now throws a
+  `PreconditionError` pointing to the point-evaluation call
+  `F(t0, x0, p0, tf; variable_costate=true)`. On a Hamiltonian flow without variable
+  costate capability, the trajectory call is also rejected with this message instead of
+  the misleading "unsupported capability trait" one.
+- **Structured errors instead of obscure `MethodError`s at call time**
+  ([#436](https://github.com/control-toolbox/CTFlows.jl/issues/436)). A flow call now checks,
+  before the integration: (1) the package of the AD backend is loaded — otherwise an
+  `ExtensionError` names it (`Missing Mooncake`, `Hint: using Mooncake`; same for the default
+  `AutoForwardDiff()` without `using ForwardDiff`), through
+  `CTBase.Differentiation.check_backend` (CTBase ≥ 0.30.8); (2) a flow built with
+  `method=:gpu` is called on device arrays, not host arrays — otherwise a `PreconditionError`
+  (numbers, i.e. 1-D states, are accepted). (`AutoMooncake` on host arrays was refused here
+  too; it is supported since [#448](https://github.com/control-toolbox/CTFlows.jl/issues/448).)
+  The GPU page of the documentation states these prerequisites. **Near-breaking** for (2),
+  see `BREAKING.md`.
+- **`saveat` on a trajectory call no longer crashes, and keeps the solver accuracy**
+  ([#434](https://github.com/control-toolbox/CTFlows.jl/issues/434)). `Flow(ocp, law;
+  saveat=…)` segfaulted (Lagrange cost) or threw `UndefRefError` (Mayer cost) on
+  `f((t0, tf), x0, p0)` unless `dense=false` was added: the integrator requested
+  `dense=true` explicitly together with `saveat`, which SciML does not support. `saveat`
+  is now an *output grid* only (CTSolvers ≥ 0.6): the integration and its dense
+  interpolant are unchanged, the trajectory is returned on the `saveat` times, and the
+  state, costate, control and objective stay accurate to the solver tolerances between
+  them. `dense=false` is no longer required; it remains available to save memory.
+- **Multi-phase trajectories keep each phase's dense interpolant.** The merged trajectory
+  of a concatenated flow (`f * (t, g)`) used to be linear between the saved points (error
+  ~1e-5 with tolerances 1e-12, and on the objective); it is now as accurate as a
+  single-phase flow. The value at a switching time is unchanged (end of the phase that
+  finishes there, before the jump).
+
+### 🧪 Testing
 
 - Precision regression matrix (`test/suite/integration/test_saveat_precision.jl`): every
   flow kind × {span, `saveat`, `saveat` step, call grid, call grid over `saveat`,
@@ -151,6 +131,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ReleaseTag.yml` (tag and GitHub release of a merged release PR) call CTActions;
   `Breakage.yml` moves to `breakage-suite.yml` (one report, the `REL1` check of a release
   PR) and also runs on push to `main`; `Documentation.yml` accepts `workflow_dispatch`.
+
+### 📚 Documentation
+
+- ct-conventions pinned at 0.5.0 in `AGENTS.md` (read from a git-ignored clone in
+  `.conventions/`); `AGENTS.md` cites rules by identifier, `CLAUDE.md` redirects to it, and
+  the references to the former Handbook become rule identifiers. One `.markdownlint.json`
+  (`GEN2`) replaces the `markdownlint-disable MD024` comment of this changelog (`CHG2`).
+- ct-conventions pinned at `v0.7.0` in `AGENTS.md`: the release rules `REL1`–`REL7` in the
+  index, and a *Recurring tasks* section pointing to the release recipe of ct-agents.
+- ct-agents pinned at `v0.2.0` and ct-conventions at `v0.7.1` in `AGENTS.md`: the recipes (the
+  release) are read from a git-ignored clone in `.ct-agents/` at that tag, not from `main`
+  of ct-agents, and the proposal of a release states the versions applied. The clone of the
+  conventions is now `.ct-conventions/` (it was `.conventions/`), like `.ct-agents/`.
+- ct-agents pinned at `v0.3.0` in `AGENTS.md`: at the close of a release the agent runs
+  `release.jl audit`, which checks the trail the release left.
+
+### 📦 Dependencies
+
+- `CTBase` compat raised to `0.30.13` (the `CTBaseMooncake` extension).
+
+### ✅ Compatibility
+
+- **No breaking changes** by the `REL1` rule (no public API removed or renamed). Several
+  behaviours change visibly — the default output grid of a trajectory call, the control
+  at a switching time, the `label` field of `Flow`, `method=:gpu` refusing host arrays —
+  and are listed in [BREAKING.md](BREAKING.md) as near-breaking. Requires `CTBase` 0.30.13,
+  `CTModels` 0.20, `CTSolvers` 0.6 and `CTLie` 0.3.
 
 ## [0.18.1] - 2026-10-05
 
