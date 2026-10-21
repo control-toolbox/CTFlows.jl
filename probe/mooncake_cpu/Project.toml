@@ -1,0 +1,13 @@
+[deps]
+ADTypes = "47edcb42-4c32-4615-8424-f2b9edc5f35b"
+CTBase = "54762871-cc72-4466-b8e8-f6c8b58076cd"
+CTFlows = "1c39547c-7794-42f7-af83-d98194f657c2"
+CTModels = "34c4fa32-2049-4079-8329-de33c2a22e2d"
+Chairmarks = "0ca39b1e-fe0b-4e98-acfc-b1656634c4de"
+DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
+FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+Mooncake = "da2b9cff-9c12-43a0-ae48-6db2b0edb7d6"
+OrdinaryDiffEqTsit5 = "b1df2697-797e-41e3-8120-5422d3b24e4a"
+SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"

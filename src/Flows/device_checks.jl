@@ -62,30 +62,52 @@ _is_host_array(x) = x isa Array
 """
 $(TYPEDSIGNATURES)
 
+Element type of a value of the call: the element type of an array, the type of a number,
+`nothing` for anything else (no variable, `NotProvided`).
+"""
+_value_eltype(x::AbstractArray) = eltype(x)
+_value_eltype(x::Number) = typeof(x)
+_value_eltype(::Any) = nothing
+
+"""
+$(TYPEDSIGNATURES)
+
+Whether `AutoMooncake` can differentiate through a value of element type `T`: an IEEE
+float or an integer (an integer time is promoted by the integrator). A `ForwardDiff.Dual`
+(the flow differentiated by an outer ForwardDiff) or a `BigFloat` is refused by Mooncake.
+"""
+_mooncake_eltype(::Type{<:Union{Base.IEEEFloat,Integer}}) = true
+_mooncake_eltype(::Type{<:Real}) = false
+_mooncake_eltype(::Any) = true
+
+"""
+$(TYPEDSIGNATURES)
+
 Check a flow call before the integration:
 - a GPU flow (`method=:gpu`) needs device arrays, not host arrays;
-- the `AutoMooncake` backend does not support host arrays yet;
+- the `AutoMooncake` backend needs IEEE floats in the state, the costate, the times and the
+  variable (no outer ForwardDiff through the flow);
 - the package of the AD backend of the system is loaded (see
   [`CTBase.Differentiation.check_backend`](@extref)).
 
-Each check raises a structured error at the call, instead of a raw `MethodError` from the
-AD backend deep inside the integration.
+Each check raises a structured error at the call, instead of a raw error from the AD
+backend deep inside the integration. `variable` is the variable of the call (`nothing` if
+none).
 
 # Throws
-- `CTBase.Exceptions.PreconditionError`: For a host array under `method=:gpu`, or with the
-  `AutoMooncake` backend.
+- `CTBase.Exceptions.PreconditionError`: For a host array under `method=:gpu`, or a
+  non-IEEE element type with the `AutoMooncake` backend.
 - `CTBase.Exceptions.ExtensionError`: If the package of the AD backend is not loaded.
 
 See also: [`CTFlows.Flows._core_invoke_flow`](@extref).
 """
-function _check_call(flow::AbstractFlow, config::Configs.AbstractConfig)
+function _check_call(flow::AbstractFlow, config::Configs.AbstractConfig; variable=nothing)
     sys = system(flow)
     host = filter(_is_host_array, _call_arrays(config))
-    if !isempty(host)
-        _check_host_arrays(
-            _integrator_device(integrator(flow)), _system_ad_backend(sys), host
-        )
-    end
+    isempty(host) || _check_host_arrays(_integrator_device(integrator(flow)), host)
+    _check_ad_eltypes(
+        _system_ad_backend(sys), (_call_arrays(config)..., Configs.tspan(config)..., variable)
+    )
     Traits.ad_trait(sys) === Traits.WithAD &&
         Differentiation.check_backend(Systems.backend(sys))
     return nothing
@@ -94,11 +116,10 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Reject host arrays when the flow is a GPU flow or differentiates with `AutoMooncake`.
-`device` is the device parameter of the integrator, `ad` the ADTypes backend of the system
-(`nothing` if AD-free), `host` the host arrays of the call.
+Reject host arrays when the flow is a GPU flow. `device` is the device parameter of the
+integrator, `host` the host arrays of the call.
 """
-function _check_host_arrays(device, ad, host)
+function _check_host_arrays(device, host)
     if device === Strategies.GPU
         throw(
             Exceptions.PreconditionError(
@@ -109,12 +130,26 @@ function _check_host_arrays(device, ad, host)
             ),
         )
     end
-    if ad isa ADTypes.AutoMooncake
+    return nothing
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Reject, for the `AutoMooncake` backend `ad`, the values of the call (state, costate, times,
+variable) whose element type Mooncake cannot differentiate through (see
+[`CTFlows.Flows._mooncake_eltype`](@extref)). Other backends accept every element type here.
+"""
+_check_ad_eltypes(::Any, values) = nothing
+function _check_ad_eltypes(::ADTypes.AutoMooncake, values)
+    for x in values
+        T = _value_eltype(x)
+        (T === nothing || _mooncake_eltype(T)) && continue
         throw(
             Exceptions.PreconditionError(
-                "The AutoMooncake backend does not support host arrays yet";
-                reason="Mooncake returns structural tangents for the views the Hamiltonian splitter builds on a host array (a MethodError at the first gradient); device arrays work",
-                suggestion="use ad_backend=AutoForwardDiff() on host arrays (the default of the CPU method), or device arrays with method=:gpu — see https://github.com/control-toolbox/CTFlows.jl/issues/448",
+                "The AutoMooncake backend cannot differentiate values of type $T";
+                reason="Mooncake differentiates IEEE floats only (Float64, Float32, Float16); a ForwardDiff.Dual comes from differentiating the flow itself with ForwardDiff (nested AD), which Mooncake does not support",
+                suggestion="use ad_backend=AutoForwardDiff() (the default of the CPU method) to differentiate through the flow with ForwardDiff, or differentiate the flow with finite differences (e.g. AutoFiniteDiff())",
                 context="flow call",
             ),
         )

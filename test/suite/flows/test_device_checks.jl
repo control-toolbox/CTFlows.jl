@@ -4,7 +4,9 @@ independent of the AD backend packages other test files loaded (fakes only):
 
 - a GPU flow (`method=:gpu`) refuses a host array (numbers, i.e. 1-D states, and device
   arrays are accepted);
-- the `AutoMooncake` backend refuses host arrays;
+- the `AutoMooncake` backend refuses non-IEEE element types (a `ForwardDiff.Dual` from an
+  outer ForwardDiff, a `BigFloat`) in the state, costate, times or variable, and accepts
+  host arrays of IEEE floats (issue #448);
 - the package of the AD backend must be loaded: `ExtensionError` naming it, raised before the
   integration, instead of a raw `MethodError` from DifferentiationInterface.jl.
 """
@@ -44,6 +46,10 @@ _vf() = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
 const X0, P0 = [1.0, 0.0], [0.0, 1.0]
 const DEVICE_X0 = FakeDeviceArray{Float64,1}()
 const DEVICE_P0 = FakeDeviceArray{Float64,1}()
+
+# what an outer ForwardDiff passes through the flow
+const DUAL = ForwardDiff.Dual(1.0, 1.0)
+const DUAL_X0 = [ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)]
 
 _throws(f) =
     try
@@ -100,24 +106,54 @@ function test_device_checks()
         # ====================================================================
         Test.@testset "Contract: _check_host_arrays" begin
             host = (X0,)
-            # CPU device, any backend but Mooncake → accepted
-            Test.@test Flows._check_host_arrays(Strategies.CPU, nothing, host) === nothing
-            Test.@test Flows._check_host_arrays(
-                nothing, ADTypes.AutoForwardDiff(), host
-            ) === nothing
+            # CPU device or no device → accepted
+            Test.@test Flows._check_host_arrays(Strategies.CPU, host) === nothing
+            Test.@test Flows._check_host_arrays(nothing, host) === nothing
             # GPU device → refused
-            err = _throws(() -> Flows._check_host_arrays(Strategies.GPU, nothing, host))
+            err = _throws(() -> Flows._check_host_arrays(Strategies.GPU, host))
             Test.@test err isa Exceptions.PreconditionError
             Test.@test occursin("method=:gpu", err.msg)
             Test.@test occursin("Vector{Float64}", err.reason)
             Test.@test occursin("CuArray", err.suggestion)
-            # Mooncake → refused, pointing to the follow-up issue
+        end
+
+        # ====================================================================
+        # UNIT / CONTRACT — element types under AutoMooncake (issue #448)
+        # ====================================================================
+        Test.@testset "Unit: _value_eltype" begin
+            Test.@test Flows._value_eltype(X0) === Float64
+            Test.@test Flows._value_eltype(Float32[1, 2]) === Float32
+            Test.@test Flows._value_eltype(1.0) === Float64
+            Test.@test Flows._value_eltype(DUAL) === typeof(DUAL)
+            Test.@test Flows._value_eltype(nothing) === nothing
+            Test.@test Flows._value_eltype(:not_a_value) === nothing
+        end
+
+        Test.@testset "Unit: _mooncake_eltype" begin
+            for T in (Float64, Float32, Float16, Int, Bool)
+                Test.@test Flows._mooncake_eltype(T)
+            end
+            for T in (typeof(DUAL), BigFloat, Rational{Int})
+                Test.@test !Flows._mooncake_eltype(T)
+            end
+            Test.@test Flows._mooncake_eltype(ComplexF64)   # not a Real: not this check's call
+        end
+
+        Test.@testset "Contract: _check_ad_eltypes" begin
+            ok = (X0, P0, 0.0, 1, nothing)
+            Test.@test Flows._check_ad_eltypes(ADTypes.AutoMooncake(), ok) === nothing
+            Test.@test Flows._check_ad_eltypes(nothing, (DUAL_X0,)) === nothing
+            Test.@test Flows._check_ad_eltypes(ADTypes.AutoForwardDiff(), (DUAL_X0,)) ===
+                nothing
             err = _throws(
-                () -> Flows._check_host_arrays(Strategies.CPU, ADTypes.AutoMooncake(), host)
+                () -> Flows._check_ad_eltypes(ADTypes.AutoMooncake(), (X0, DUAL_X0))
             )
             Test.@test err isa Exceptions.PreconditionError
             Test.@test occursin("AutoMooncake", err.msg)
-            Test.@test occursin("issues/448", err.suggestion)
+            Test.@test occursin("Dual", err.msg)
+            Test.@test occursin("nested AD", err.reason)
+            Test.@test occursin("AutoForwardDiff()", err.suggestion)
+            Test.@test occursin("AutoFiniteDiff()", err.suggestion)
         end
 
         # ====================================================================
@@ -168,19 +204,34 @@ function test_device_checks()
             ) === nothing
         end
 
-        Test.@testset "Contract: Mooncake refuses host arrays, and only host arrays" begin
+        Test.@testset "Contract: Mooncake accepts IEEE host arrays and scalars" begin
+            f = Flows.Flow(H; ad_backend=ADTypes.AutoMooncake())
+            # they pass the device and element-type checks; the availability check of the
+            # package comes next (loaded or not depending on the other tests: not asserted)
+            for ok in (
+                Configs.HamiltonianEndPointConfig(0.0, X0, P0, 1.0),
+                Configs.HamiltonianEndPointConfig(0, Float32.(X0), Float32.(P0), 1),
+                Configs.HamiltonianEndPointConfig(0.0, 1.0, 0.5, 1.0),
+            )
+                err = _throws(() -> Flows._check_call(f, ok; variable=[0.5]))
+                Test.@test !(err isa Exceptions.PreconditionError)
+            end
+        end
+
+        Test.@testset "Contract: Mooncake refuses non-IEEE values [$kind]" for (
+            kind, config, variable
+        ) in (
+            ("Dual state", Configs.HamiltonianEndPointConfig(0.0, DUAL_X0, P0, 1.0), nothing),
+            ("Dual costate", Configs.HamiltonianEndPointConfig(0.0, X0, DUAL_X0, 1.0), nothing),
+            ("Dual 1-D state", Configs.HamiltonianEndPointConfig(0.0, DUAL, 0.5, 1.0), nothing),
+            ("Dual final time", Configs.HamiltonianEndPointConfig(0.0, X0, P0, DUAL), nothing),
+            ("Dual variable", Configs.HamiltonianEndPointConfig(0.0, X0, P0, 1.0), [DUAL]),
+            ("BigFloat state", Configs.HamiltonianEndPointConfig(0.0, big.(X0), P0, 1.0), nothing),
+        )
             f = Flows.Flow(H; ad_backend=ADTypes.AutoMooncake())
             Test.@test_throws Exceptions.PreconditionError Flows._check_call(
-                f, Configs.HamiltonianEndPointConfig(0.0, X0, P0, 1.0)
+                f, config; variable=variable
             )
-            # scalar states are not host arrays; device arrays go on to the availability
-            # check of the package (loaded or not depending on the other tests: not asserted)
-            err = _throws(
-                () -> Flows._check_call(
-                    f, Configs.HamiltonianEndPointConfig(0.0, 1.0, 0.5, 1.0)
-                ),
-            )
-            Test.@test !(err isa Exceptions.PreconditionError)
         end
 
         # ====================================================================

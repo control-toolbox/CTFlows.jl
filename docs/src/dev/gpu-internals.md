@@ -185,15 +185,24 @@ cross-package change).
     When you change a computed default in a strategy, check the test environments of its
     consumers.
 
-!!! warning "Residual: `AutoMooncake` on CPU"
-    Verified on CPU: with a `@view`, Mooncake returns a structural
-    `Mooncake.Tangent{@NamedTuple{parent, indices, offset1, stride1}}` — right values, inside
-    `.parent`, but not an array — so negating it throws a `MethodError` in the Hamiltonian RHS
-    functors. The views come from the Hamiltonian splitter. On device `MooncakeCUDAExt` yields a
-    negatable tangent, so **no CTBase extension fix is required**. On CPU it is not a supported
-    combination: `Flows._check_call` rejects host arrays with `AutoMooncake` up front, with a
-    `PreconditionError` (see `src/Flows/device_checks.jl`). Supporting it is tracked in
-    [#448](https://github.com/control-toolbox/CTFlows.jl/issues/448).
+!!! note "`AutoMooncake` on CPU: host views are materialized in CTBase"
+    On CPU, Mooncake returns a structural
+    `Mooncake.Tangent{@NamedTuple{parent, indices, offset1, stride1}}` for a `@view` — right
+    values, inside `.parent`, but not an array — even with `friendly_tangents=true`
+    ([chalk-lab/Mooncake.jl#1294](https://github.com/chalk-lab/Mooncake.jl/issues/1294)), and
+    the views come from the Hamiltonian splitter. On device `MooncakeCUDAExt` yields a negatable
+    tangent. The fix lives in CTBase, not in the splitter: the `CTBaseMooncake` extension
+    replaces a view of a host `Array` by a dense copy before the gradient closures are built
+    (tag `Differentiation.MooncakeTag`, hook `Differentiation._materialize`), so every gradient
+    entry point is covered and the other backends keep their views. Copying only the
+    differentiated argument was measured 30–40 % slower: the closure still captured the other
+    block as a view of the whole state. The splitter itself must keep returning views, since
+    the in-place vector-field right-hand sides write `dx`, `dp` through them.
+
+    What remains refused is nested AD: Mooncake rejects a `ForwardDiff.Dual` primal, so
+    `Flows._check_call` raises a `PreconditionError` when the state, costate, times or variable
+    of a Mooncake flow are not IEEE floats (see `src/Flows/device_checks.jl`,
+    [#448](https://github.com/control-toolbox/CTFlows.jl/issues/448)).
 
 ---
 

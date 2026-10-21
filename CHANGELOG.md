@@ -33,6 +33,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     breaks the curve between the two limits instead of drawing the segment. The plot data comes
     from the building blocks of `CTBase.Plotting` (`splice_jumps`, `switching_vlines`,
     `phase_annotations`), shared with the plots of `CTModels.Solution`.
+- **`ad_backend=AutoMooncake()` on host arrays**
+  ([#448](https://github.com/control-toolbox/CTFlows.jl/issues/448)). Every AD-backed
+  flow (Hamiltonian, `variable_costate`, pseudo-Hamiltonian, constrained, `Flow(ocp)`,
+  `Flow(ocp, law)`, matrix batches) now integrates host arrays with Mooncake, with the
+  values of `AutoForwardDiff`; the `PreconditionError` that refused host arrays is gone. The
+  views of the Hamiltonian splitters reach Mooncake as dense copies through the
+  `CTBaseMooncake` extension of CTBase. It pays off for large states (a full flow call at
+  n = 1000: 16 ms against 231 ms with ForwardDiff; crossover near n = 100), so
+  `AutoForwardDiff()` stays the CPU default. A Mooncake flow cannot be differentiated by an
+  outer ForwardDiff: a `Dual` (or any non-IEEE) state, costate, time or variable now raises
+  a `PreconditionError` at the call instead of Mooncake's raw error. The measurements are in
+  `probe/mooncake_cpu/`.
+
+### 📦 Dependencies
+
+- `CTBase` compat raised to `0.30.13` (the `CTBaseMooncake` extension).
 
 ### 📚 Documentation
 

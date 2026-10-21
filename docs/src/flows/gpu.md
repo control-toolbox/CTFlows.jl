@@ -271,12 +271,23 @@ flow = Flows.Flow(h; ad_backend=ADTypes.AutoZygote())
     a call that performs no mutation at all. It remains selectable, and is a reasonable thing to
     try; it is not something to rely on without testing your own case.
 
-!!! warning "`AutoMooncake` on CPU is not a supported combination"
-    Passing `ad_backend=AutoMooncake()` explicitly with **host arrays** throws a
-    `PreconditionError`: Mooncake returns a structural tangent for the `SubArray` views the
-    Hamiltonian splitter produces on a host array, and that tangent cannot be negated. On device
-    the CUDA-specific rules avoid this. The CPU default is `AutoForwardDiff()` — keep it. Whether
-    Mooncake could be supported on CPU is tracked in
+!!! tip "`AutoMooncake` on CPU: for large dimensions"
+    `ad_backend=AutoMooncake()` (with `using Mooncake`) also works on **host arrays**, on every
+    AD-backed flow, with the same values as `AutoForwardDiff()`. It pays off only for large
+    states: for the Hamiltonian ``\tfrac12\|p\|^2 + \sum_i \sin x_i``, a full flow call took
+
+    | n | `AutoForwardDiff` | `AutoMooncake` |
+    |---|---|---|
+    | 30 | 0.45 ms | 2.5 ms |
+    | 100 | 3.0 ms | 3.3 ms |
+    | 400 | 39 ms | 7.5 ms |
+    | 1000 | 231 ms | 16 ms |
+
+    so `AutoForwardDiff()` stays the CPU default. Mooncake does **not** compose with an outer
+    ForwardDiff: differentiating a Mooncake flow with ForwardDiff (with respect to the initial
+    condition, the final time or the variable, as a shooting method does) throws a
+    `PreconditionError`. Keep `AutoForwardDiff()` for shooting, or differentiate the flow with
+    finite differences. Details in
     [#448](https://github.com/control-toolbox/CTFlows.jl/issues/448).
 
 ---
