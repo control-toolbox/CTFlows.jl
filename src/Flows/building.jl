@@ -316,7 +316,9 @@ function _flow_from_pseudo_hamiltonian(
     )
     components = _build_flow_components(Traits.WithAD, routed; method=method)
     ht = _unwrap_option(get(routed.action, :hamiltonian_type, nothing), :total)
-    return with_label(_build_pseudo_flow(Val(ht), h̃, law, components), _routed_label(routed))
+    return with_label(
+        _build_pseudo_flow(Val(ht), h̃, law, components), _routed_label(routed)
+    )
 end
 
 """

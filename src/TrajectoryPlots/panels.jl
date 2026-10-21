@@ -225,7 +225,9 @@ function _panels(
 
     state_shown && push!(panels, _state_panel(sol, ts, state_style; connect=connect))
     if costate_shown
-        cp = _costate_panel(sol, ts, costate_style; state_shown=state_shown, connect=connect)
+        cp = _costate_panel(
+            sol, ts, costate_style; state_shown=state_shown, connect=connect
+        )
         push!(panels, cp)
     end
     if _control_shown(description, control_style)

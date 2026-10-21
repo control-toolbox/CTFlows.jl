@@ -26,7 +26,7 @@ function _ocp()
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = u; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=u; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2)
     return CTModels.Building.build(pre)
 end
@@ -55,12 +55,12 @@ function test_switching_render()
             Test.@test xs[k + 1] == τ
             Test.@test ys[k + 1] - ys[k] ≈ 1.0 atol = 1e-8   # the state jump
             Test.@test isempty(plt.subplots[1][:annotations])
-            Test.@test sort([a[3].str for a in plt.subplots[2][:annotations]]) ==
-                ["u=+1", "u=-1"]
+            Test.@test sort([a[3].str for a in plt.subplots[2][:annotations]]) == ["u=+1", "u=-1"]
             Test.@test Plots.plot(traj; switching_style=:none, phase_labels=:none) isa
                 Plots.Plot
             # one curve (one color) for the whole state, across both phases
-            Test.@test count(s -> s[:seriestype] === :path, plt.subplots[1].series_list) == 1
+            Test.@test count(s -> s[:seriestype] === :path, plt.subplots[1].series_list) ==
+                1
             # jumps=:none: a break (NaN) instead of the vertical segment
             br = Plots.plot(traj; jumps=:none)
             ys = br.subplots[1].series_list[1][:y]

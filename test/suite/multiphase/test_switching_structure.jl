@@ -38,7 +38,7 @@ function _lqr()
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = (-x + u); nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=(-x + u); nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2)
     return CTModels.Building.build(pre)
 end
@@ -50,7 +50,7 @@ function _integrator()
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.control!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = u; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=u; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2)
     return CTModels.Building.build(pre)
 end
@@ -59,24 +59,41 @@ const LQR = _lqr()
 const INT = _integrator()
 const τ = 0.5
 
-_plus(; label="") = Flows.Flow(
-    LQR, Data.DynClosedLoop((x, p) -> p); hamiltonian_type=:total, label=label, _opts()...
-)
-_minus(; label="") = Flows.Flow(
-    LQR, Data.DynClosedLoop((x, p) -> -p); hamiltonian_type=:total, label=label, _opts()...
-)
+function _plus(; label="")
+    return Flows.Flow(
+        LQR,
+        Data.DynClosedLoop((x, p) -> p);
+        hamiltonian_type=:total,
+        label=label,
+        _opts()...,
+    )
+end
+function _minus(; label="")
+    return Flows.Flow(
+        LQR,
+        Data.DynClosedLoop((x, p) -> -p);
+        hamiltonian_type=:total,
+        label=label,
+        _opts()...,
+    )
+end
 _bang(u; label="") = Flows.Flow(INT, Data.OpenLoop(t -> u); label=label, _opts()...)
 _decay(; label="") = Flows.Flow(Data.VectorField(x -> -x); label=label, _opts()...)
-_harmonic(; label="") =
-    Flows.Flow(Data.HamiltonianVectorField((x, p) -> (p, -x)); label=label, _opts()...)
+function _harmonic(; label="")
+    return Flows.Flow(
+        Data.HamiltonianVectorField((x, p) -> (p, -x)); label=label, _opts()...
+    )
+end
 
 _leaves(fig) = Plotting.leaves(fig.root)
 _cell(fig, title) = only(l for l in _leaves(fig) if l.axes.title == title)
-_texts(fig) = reduce(
-    vcat,
-    (filter(d -> d isa Plotting.Annotation, l.axes.decorations) for l in _leaves(fig));
-    init=Plotting.Annotation[],
-)
+function _texts(fig)
+    return reduce(
+        vcat,
+        (filter(d -> d isa Plotting.Annotation, l.axes.decorations) for l in _leaves(fig));
+        init=Plotting.Annotation[],
+    )
+end
 _vlines(cell) = [d.value for d in cell.axes.decorations if d isa Plotting.VLine]
 
 function test_switching_structure()
@@ -115,7 +132,8 @@ function test_switching_structure()
             Test.@test Flows._routed_label(routed) == "a"
             Test.@test !haskey(routed.strategies.integrator, :label)
             Test.@test haskey(routed.strategies.integrator, :reltol)
-            Test.@test Flows._routed_label(Flows._route_flow_options(Traits.WithAD, (;))) == ""
+            Test.@test Flows._routed_label(Flows._route_flow_options(Traits.WithAD, (;))) ==
+                ""
             # with the action options of the control flows
             routed = Flows._route_flow_options(
                 Traits.WithAD,
@@ -143,7 +161,8 @@ function test_switching_structure()
             cf = Flows.Flow(fc, Data.OpenLoop(t -> 1.0); label="fc", _opts()...)
             Test.@test cf isa Flows.ControlledFlow
             Test.@test Flows.label(cf) == "fc"
-            Test.@test Flows.label(Flows.Flow(LQR, (x, p) -> p; label="u", _opts()...)) == "u"
+            Test.@test Flows.label(Flows.Flow(LQR, (x, p) -> p; label="u", _opts()...)) ==
+                "u"
             # a value of the wrong type is rejected by the orchestration
             Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
                 Data.VectorField(x -> -x); label=:decay
@@ -252,7 +271,9 @@ function test_switching_structure()
             Test.@test occursin("phases: h → ·", _plain(ht))
             Test.@test occursin("switching times: [0.5]", _plain(ht))
             # controlled flow
-            ct = (_bang(1.0; label="u=+1") * (τ, _bang(-1.0; label="u=-1")))((0.0, 1.0), 0.0)
+            ct = (_bang(1.0; label="u=+1") * (τ, _bang(-1.0; label="u=-1")))(
+                (0.0, 1.0), 0.0
+            )
             Test.@test occursin("phases: u=+1 → u=-1", _plain(ct))
             Test.@test occursin("switching_times=[0.5]", _compact(ct))
             # no label: the switching times only, no phases row
@@ -320,7 +341,8 @@ function test_switching_structure()
             sol = mp([0.0, 0.25, 0.75, 1.0], 1.0, 0.5)
             Test.@test CTModels.time_grid(sol) == [0.0, 0.25, 0.75, 1.0]
             Test.@test CTModels.switching_times(sol) == [τ]
-            Test.@test CTModels.right_limit(sol, :costate, 1) ≈ 0.5 * exp(τ) + 0.4 atol = 1e-8
+            Test.@test CTModels.right_limit(sol, :costate, 1) ≈ 0.5 * exp(τ) + 0.4 atol =
+                1e-8
         end
 
         # ====================================================================
@@ -375,23 +397,35 @@ function test_switching_structure()
             fig = TrajectoryPlots.build_figure(st)
             Test.@test _vlines(_cell(fig, "state")) == [τ]
             Test.@test _vlines(_cell(fig, "control")) == [τ]
-            texts = filter(d -> d isa Plotting.Annotation, _cell(fig, "control").axes.decorations)
+            texts = filter(
+                d -> d isa Plotting.Annotation, _cell(fig, "control").axes.decorations
+            )
             Test.@test [a.text for a in texts] == ["u=+1", "u=-1"]
             Test.@test [a.x for a in texts] ≈ [0.25, 0.75]
             Test.@test length(_texts(fig)) == 2
             # default style: dashed black lines; user style merged on top
-            v = only(d for d in _cell(fig, "state").axes.decorations if d isa Plotting.VLine)
+            v = only(
+                d for d in _cell(fig, "state").axes.decorations if d isa Plotting.VLine
+            )
             Test.@test v.style.linestyle === :dash
             fig2 = TrajectoryPlots.build_figure(st; switching_style=(color=:red,))
-            v2 = only(d for d in _cell(fig2, "state").axes.decorations if d isa Plotting.VLine)
+            v2 = only(
+                d for d in _cell(fig2, "state").axes.decorations if d isa Plotting.VLine
+            )
             Test.@test v2.style.color === :red && v2.style.linestyle === :dash
             # :none, :all, style, normalised time
-            Test.@test isempty(_vlines(_cell(
-                TrajectoryPlots.build_figure(st; switching_style=:none), "state"
-            )))
-            Test.@test length(_texts(TrajectoryPlots.build_figure(st; phase_labels=:all))) == 4
+            Test.@test isempty(
+                _vlines(
+                    _cell(TrajectoryPlots.build_figure(st; switching_style=:none), "state")
+                ),
+            )
+            Test.@test length(
+                _texts(TrajectoryPlots.build_figure(st; phase_labels=:all))
+            ) == 4
             Test.@test isempty(_texts(TrajectoryPlots.build_figure(st; phase_labels=:none)))
-            a = first(_texts(TrajectoryPlots.build_figure(st; phase_labels_style=(color=:red,))))
+            a = first(
+                _texts(TrajectoryPlots.build_figure(st; phase_labels_style=(color=:red,)))
+            )
             Test.@test a.style.color === :red
             fign = TrajectoryPlots.build_figure(st; time=:normalize)
             Test.@test _vlines(_cell(fign, "state")) == [0.5]
@@ -455,7 +489,9 @@ function test_switching_structure()
             Test.@test_throws Exceptions.IncorrectArgument Trajectories.with_labels(
                 ham, ["a", "b", "c"]
             )
-            Test.@test isempty(Trajectories.phase_labels(Trajectories.with_labels(traj, [""])))
+            Test.@test isempty(
+                Trajectories.phase_labels(Trajectories.with_labels(traj, [""]))
+            )
         end
 
         # ====================================================================
@@ -472,11 +508,13 @@ function test_switching_structure()
             Test.@test Flows._limit_rows([1, 2]) isa Matrix{Float64}
             Test.@test size(Flows._limit_rows(Float64[])) == (0, 0)
             # panels receiving the phase labels
-            Test.@test TrajectoryPlots._phase_label_panels(:all, 3, true) == [true, true, true]
+            Test.@test TrajectoryPlots._phase_label_panels(:all, 3, true) ==
+                [true, true, true]
             Test.@test TrajectoryPlots._phase_label_panels(:none, 2, true) == [false, false]
             Test.@test TrajectoryPlots._phase_label_panels(:control, 3, true) ==
                 [false, false, true]
-            Test.@test TrajectoryPlots._phase_label_panels(:control, 2, false) == [true, false]
+            Test.@test TrajectoryPlots._phase_label_panels(:control, 2, false) ==
+                [true, false]
             # the limits of a trajectory as the matrices of Plotting.splice_jumps
             ham = (_harmonic() * (τ, 1.0, 0.5, _harmonic()))((0.0, 1.0), 1.0, 0.0)
             left, right = TrajectoryPlots._limits(ham, :costate)

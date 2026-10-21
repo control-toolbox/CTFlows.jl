@@ -375,7 +375,9 @@ function _reconstruct_ocp_solution(mpf, merged, variable, grid=nothing, bounds=n
     integ = Flows.integrator(phases[1])
     merged = Flows._regrid_hamiltonian(merged, grid, plaw, variable, bounds)
     switching = Flows._ocp_switching_model(merged, plaw, variable, get_labels(mpf))
-    return Flows._build_ocp_solution(ocp, merged, variable, integ, plaw; switching=switching)
+    return Flows._build_ocp_solution(
+        ocp, merged, variable, integ, plaw; switching=switching
+    )
 end
 
 """
