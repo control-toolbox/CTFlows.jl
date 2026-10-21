@@ -62,6 +62,8 @@ flow's own `Dual`s. To get sensitivities of such a flow, wrap the **call** in
 
 On device, AD-free flows need no keyword: pass `CuArray`s. For AD-backed flows,
 `AutoMooncake` is the backend that handles every measured call shape; see [GPU](gpu.md).
+On CPU, `AutoMooncake` works on every AD-backed flow too and pays off for large states; it
+refuses `Dual` states, i.e. an outer ForwardDiff through the flow.
 
 ## See also
 

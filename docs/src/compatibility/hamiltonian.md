@@ -41,7 +41,9 @@ hflow = Flows.Flow(h; reltol=1e-8)
 
 An explicit backend, or a GPU one, can be selected the same way:
 `Flows.Flow(h; ad_backend=ADTypes.AutoForwardDiff())` — see [GPU flows](../flows/gpu.md)
-for `method=:gpu` and `AutoMooncake`/`AutoZygote`.
+for `method=:gpu` and `AutoMooncake`/`AutoZygote`. On CPU, `AutoMooncake` also works and
+pays off for large states (a hundred dimensions and more), but it does not support the nested
+differentiation shown below.
 
 ---
 
@@ -161,7 +163,9 @@ ForwardDiff.jacobian(shoot, [1.0, 0.0])
 
 The same closure-wrapping pattern works with `ForwardDiff.gradient` for a scalar shooting
 residual. No internal backend change (e.g. switching to `AutoZygote`/`AutoMooncake` to
-dodge the nested `Dual`) is needed for this to work.
+dodge the nested `Dual`) is needed for this to work. The other way round does not work: a flow
+built with `ad_backend=AutoMooncake()` refuses an outer ForwardDiff with a
+`PreconditionError`, since Mooncake cannot differentiate through `Dual` numbers.
 
 ---
 

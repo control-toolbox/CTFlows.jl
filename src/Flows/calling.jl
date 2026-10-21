@@ -273,7 +273,7 @@ function _core_invoke_flow(
 )
 
     # fail before the integration on a device/array or AD backend mismatch (issue #436)
-    _check_call(flow, config)
+    _check_call(flow, config; variable=variable)
 
     # get system and integrator
     sys = system(flow)
