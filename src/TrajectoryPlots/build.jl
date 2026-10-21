@@ -177,7 +177,9 @@ end
 Default style of the vertical lines at the switching times: dashed black lines behind the
 curves, as the initial/final time markers of a `CTModels.Solution` plot.
 """
-const _SWITCHING_STYLE = (color=:black, linestyle=:dash, linewidth=1, z_order=:back, label="")
+const _SWITCHING_STYLE = (
+    color=:black, linestyle=:dash, linewidth=1, z_order=:back, label=""
+)
 
 """
 $(TYPEDSIGNATURES)
@@ -229,7 +231,9 @@ for `phase_labels = :all`, none for `:none`; for `:control`, the control panel w
 drawn (the last panel, see [`CTFlows.TrajectoryPlots._panels`](@extref)), the first panel
 otherwise.
 """
-function _phase_label_panels(phase_labels::Symbol, n::Int, control_shown::Bool)::Vector{Bool}
+function _phase_label_panels(
+    phase_labels::Symbol, n::Int, control_shown::Bool
+)::Vector{Bool}
     phase_labels === :all && return fill(true, n)
     phase_labels === :none && return fill(false, n)
     target = control_shown ? n : 1
