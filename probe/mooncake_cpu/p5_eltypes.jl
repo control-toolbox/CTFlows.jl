@@ -21,15 +21,25 @@ cases = [
     "Float32 state" => () -> f(0.0f0, Float32.(x0), Float32.(p0), 1.0f0),
     "Int t0" => () -> f(0, x0, p0, 1.0),
     "BigFloat state" => () -> f(0.0, big.(x0), big.(p0), 1.0),
-    "Dual state (outer FD on x0)" => () -> ForwardDiff.jacobian(z -> vcat(f(0.0, z, p0, 1.0)...), x0),
+    "Dual state (outer FD on x0)" =>
+        () -> ForwardDiff.jacobian(z -> vcat(f(0.0, z, p0, 1.0)...), x0),
     "Dual 1-D state" => () -> ForwardDiff.derivative(z -> f1(0.0, z, 1.0, 1.0)[1], 0.3),
-    "Dual tf (outer FD on tf)" => () -> ForwardDiff.derivative(T -> sum(f(0.0, x0, p0, T)[1]), 1.0),
-    "Dual variable (outer FD on v)" => () -> ForwardDiff.derivative(w -> sum(fv(0.0, x0, p0, 1.0; variable=[w])[1]), 0.5),
+    "Dual tf (outer FD on tf)" =>
+        () -> ForwardDiff.derivative(T -> sum(f(0.0, x0, p0, T)[1]), 1.0),
+    "Dual variable (outer FD on v)" =>
+        () -> ForwardDiff.derivative(w -> sum(fv(0.0, x0, p0, 1.0; variable=[w])[1]), 0.5),
 ]
 for (k, run) in cases
     try
-        run(); println(rpad(k, 32), "✓")
+        run()
+        println(rpad(k, 32), "✓")
     catch e
-        println(rpad(k, 32), "✗ ", nameof(typeof(e)), ": ", replace(first(sprint(showerror, e), 110), '\n' => ' '))
+        println(
+            rpad(k, 32),
+            "✗ ",
+            nameof(typeof(e)),
+            ": ",
+            replace(first(sprint(showerror, e), 110), '\n' => ' '),
+        )
     end
 end

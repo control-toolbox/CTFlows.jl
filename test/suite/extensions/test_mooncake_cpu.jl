@@ -47,13 +47,14 @@ function _ocp(; variable::Bool=false, control::Bool=false)
     variable && CTModels.Building.variable!(pre, 1)
     if control
         CTModels.Building.control!(pre, 2)
-        CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r .= u .- sin.(x); nothing))
-        CTModels.Building.objective!(
-            pre, :min; lagrange=(t, x, u, v) -> 0.5 * sum(abs2, u)
-        )
+        CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r.=u .- sin.(x); nothing))
+        CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * sum(abs2, u))
     else
-        dyn = variable ? (r, t, x, u, v) -> (r .= v[1] .* sin.(x); nothing) :
-            (r, t, x, u, v) -> (r .= sin.(x); nothing)
+        dyn = if variable
+            (r, t, x, u, v) -> (r.=v[1] .* sin.(x); nothing)
+        else
+            (r, t, x, u, v) -> (r.=sin.(x); nothing)
+        end
         CTModels.Building.dynamics!(pre, dyn)
         CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> sum(xf))
     end
@@ -67,7 +68,14 @@ const OCP_U = _ocp(; control=true)
 const X0, P0 = [0.3, -0.7], [1.0, 0.5]
 const BX0, BP0 = [0.3 0.1; -0.7 0.2], [1.0 -1.0; 0.5 0.4]   # a batch of two columns
 
-_flat(r) = r isa Tuple ? reduce(vcat, map(_flat, r)) : r isa Number ? [r] : vec(collect(r))
+_flat(r) =
+    if r isa Tuple
+        reduce(vcat, map(_flat, r))
+    elseif r isa Number
+        [r]
+    else
+        vec(collect(r))
+    end
 
 # name => ad -> result of the call
 const CASES = (
@@ -77,37 +85,43 @@ const CASES = (
     "Flow(h) Matrix batch" =>
         ad -> Flows.Flow(H; ad_backend=ad, TOL...)(0.0, BX0, BP0, 1.0),
     "Flow(h) 1-D" => ad -> Flows.Flow(H1; ad_backend=ad, TOL...)(0.0, 0.3, 1.0, 1.0),
-    "Flow(h) variable" => ad -> Flows.Flow(HV; ad_backend=ad, TOL...)(
-        0.0, X0, P0, 1.0; variable=[0.5]
-    ),
-    "Flow(h) variable_costate" => ad -> Flows.Flow(HV; ad_backend=ad, TOL...)(
-        0.0, X0, P0, 1.0; variable=[0.5], variable_costate=true
-    ),
+    "Flow(h) variable" =>
+        ad -> Flows.Flow(HV; ad_backend=ad, TOL...)(0.0, X0, P0, 1.0; variable=[0.5]),
+    "Flow(h) variable_costate" =>
+        ad -> Flows.Flow(HV; ad_backend=ad, TOL...)(
+            0.0, X0, P0, 1.0; variable=[0.5], variable_costate=true
+        ),
     "Flow(h̃, law) :total" =>
         ad -> Flows.Flow(H̃, LAW; ad_backend=ad, TOL...)(0.0, X0, P0, 1.0),
-    "Flow(h̃, law) :partial" => ad -> Flows.Flow(
-        H̃, LAW; hamiltonian_type=:partial, ad_backend=ad, TOL...
-    )(0.0, X0, P0, 1.0),
+    "Flow(h̃, law) :partial" =>
+        ad -> Flows.Flow(H̃, LAW; hamiltonian_type=:partial, ad_backend=ad, TOL...)(
+            0.0, X0, P0, 1.0
+        ),
     "Flow(ocp) Hamiltonian call" =>
         ad -> Flows.Flow(OCP; ad_backend=ad, TOL...)(0.0, X0, P0, 1.0),
     "Flow(ocp) Matrix batch" =>
         ad -> Flows.Flow(OCP; ad_backend=ad, TOL...)(0.0, BX0, BP0, 1.0),
-    "Flow(ocp) variable_costate" => ad -> Flows.Flow(OCP_V; ad_backend=ad, TOL...)(
-        0.0, X0, P0, 1.0; variable=0.5, variable_costate=true
-    ),
+    "Flow(ocp) variable_costate" =>
+        ad -> Flows.Flow(OCP_V; ad_backend=ad, TOL...)(
+            0.0, X0, P0, 1.0; variable=0.5, variable_costate=true
+        ),
     "Flow(ocp, law) :total" =>
         ad -> Flows.Flow(OCP_U, LAW; ad_backend=ad, TOL...)(0.0, X0, P0, 1.0),
-    "Flow(ocp, law) :partial" => ad -> Flows.Flow(
-        OCP_U, LAW; hamiltonian_type=:partial, ad_backend=ad, TOL...
-    )(0.0, X0, P0, 1.0),
-    "Flow(ocp, law) constrained" => ad -> Flows.Flow(
-        OCP_U,
-        LAW;
-        constraint=(x, u) -> sum(u),
-        multiplier=(x, p) -> 0.3,
-        ad_backend=ad,
-        TOL...,
-    )(0.0, X0, P0, 1.0),
+    "Flow(ocp, law) :partial" =>
+        ad -> Flows.Flow(OCP_U, LAW; hamiltonian_type=:partial, ad_backend=ad, TOL...)(
+            0.0, X0, P0, 1.0
+        ),
+    "Flow(ocp, law) constrained" =>
+        ad -> Flows.Flow(
+            OCP_U,
+            LAW;
+            constraint=(x, u) -> sum(u),
+            multiplier=(x, p) -> 0.3,
+            ad_backend=ad,
+            TOL...,
+        )(
+            0.0, X0, P0, 1.0
+        ),
 )
 
 function test_mooncake_cpu()
@@ -138,8 +152,9 @@ function test_mooncake_cpu()
         # ====================================================================
         # ERROR — ForwardDiff through a Mooncake flow (nested AD) is refused
         # ====================================================================
-        Test.@testset "Error: outer ForwardDiff → PreconditionError [$kind]" for (kind, call) in
-                                                                                 (
+        Test.@testset "Error: outer ForwardDiff → PreconditionError [$kind]" for (
+            kind, call
+        ) in (
             (
                 "initial state",
                 () -> ForwardDiff.jacobian(
@@ -156,7 +171,7 @@ function test_mooncake_cpu()
                 "variable",
                 () -> ForwardDiff.derivative(
                     w -> sum(
-                        Flows.Flow(HV; ad_backend=MC)(0.0, X0, P0, 1.0; variable=[w])[1]
+                        Flows.Flow(HV; ad_backend=MC)(0.0, X0, P0, 1.0; variable=[w])[1],
                     ),
                     0.5,
                 ),

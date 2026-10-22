@@ -12,7 +12,8 @@ elseif MODE == "fixB"
     @eval EXT begin
         _materialize(::ADTypes.AutoMooncake, x::SubArray{<:Any,<:Any,<:Array}) = copy(x)
         _materialize(ad, x) = x
-        _derivator(::Type{<:SubArray}) = (f, ad, x) -> DI.gradient(f, ad, _materialize(ad, x))
+        _derivator(::Type{<:SubArray}) =
+            (f, ad, x) -> DI.gradient(f, ad, _materialize(ad, x))
     end
 end
 
@@ -23,14 +24,21 @@ if MODE == "fixB2"
         _materialize(ad, x) = x
         function Differentiation.hamiltonian_gradient(
             backend::Differentiation.DifferentiationInterface,
-            h::Data.AbstractHamiltonian, t, x, p, v,
+            h::Data.AbstractHamiltonian,
+            t,
+            x,
+            p,
+            v,
         )
             di_backend = _checked_backend(backend)
             x = _materialize(di_backend, x)
             p = _materialize(di_backend, p)
             h_x(x_) = h(t, x_, p, v)
             h_p(p_) = h(t, x, p_, v)
-            return (_derivator(typeof(x))(h_x, di_backend, x), _derivator(typeof(p))(h_p, di_backend, p))
+            return (
+                _derivator(typeof(x))(h_x, di_backend, x),
+                _derivator(typeof(p))(h_p, di_backend, p),
+            )
         end
     end
 end

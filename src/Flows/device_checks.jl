@@ -106,7 +106,8 @@ function _check_call(flow::AbstractFlow, config::Configs.AbstractConfig; variabl
     host = filter(_is_host_array, _call_arrays(config))
     isempty(host) || _check_host_arrays(_integrator_device(integrator(flow)), host)
     _check_ad_eltypes(
-        _system_ad_backend(sys), (_call_arrays(config)..., Configs.tspan(config)..., variable)
+        _system_ad_backend(sys),
+        (_call_arrays(config)..., Configs.tspan(config)..., variable),
     )
     Traits.ad_trait(sys) === Traits.WithAD &&
         Differentiation.check_backend(Systems.backend(sys))

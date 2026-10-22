@@ -221,12 +221,32 @@ function test_device_checks()
         Test.@testset "Contract: Mooncake refuses non-IEEE values [$kind]" for (
             kind, config, variable
         ) in (
-            ("Dual state", Configs.HamiltonianEndPointConfig(0.0, DUAL_X0, P0, 1.0), nothing),
-            ("Dual costate", Configs.HamiltonianEndPointConfig(0.0, X0, DUAL_X0, 1.0), nothing),
-            ("Dual 1-D state", Configs.HamiltonianEndPointConfig(0.0, DUAL, 0.5, 1.0), nothing),
-            ("Dual final time", Configs.HamiltonianEndPointConfig(0.0, X0, P0, DUAL), nothing),
+            (
+                "Dual state",
+                Configs.HamiltonianEndPointConfig(0.0, DUAL_X0, P0, 1.0),
+                nothing,
+            ),
+            (
+                "Dual costate",
+                Configs.HamiltonianEndPointConfig(0.0, X0, DUAL_X0, 1.0),
+                nothing,
+            ),
+            (
+                "Dual 1-D state",
+                Configs.HamiltonianEndPointConfig(0.0, DUAL, 0.5, 1.0),
+                nothing,
+            ),
+            (
+                "Dual final time",
+                Configs.HamiltonianEndPointConfig(0.0, X0, P0, DUAL),
+                nothing,
+            ),
             ("Dual variable", Configs.HamiltonianEndPointConfig(0.0, X0, P0, 1.0), [DUAL]),
-            ("BigFloat state", Configs.HamiltonianEndPointConfig(0.0, big.(X0), P0, 1.0), nothing),
+            (
+                "BigFloat state",
+                Configs.HamiltonianEndPointConfig(0.0, big.(X0), P0, 1.0),
+                nothing,
+            ),
         )
             f = Flows.Flow(H; ad_backend=ADTypes.AutoMooncake())
             Test.@test_throws Exceptions.PreconditionError Flows._check_call(

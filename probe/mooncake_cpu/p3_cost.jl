@@ -22,7 +22,9 @@ for n in (2, 10, 30, 100, 400, 1000)
         f = Flows.Flow(h; ad_backend=ad, tol...)
         f(0.0, x0, p0, 1.0)
         b = @b $f(0.0, $x0, $p0, 1.0) seconds = 3
-        push!(row, "$k $(round(b.time * 1e3; digits=2)) ms / $(round(Int, b.allocs)) allocs")
+        push!(
+            row, "$k $(round(b.time * 1e3; digits=2)) ms / $(round(Int, b.allocs)) allocs"
+        )
     end
     println("n=", rpad(n, 6), join(row, "   "))
 end

@@ -15,15 +15,23 @@ include("patches.jl")
 h = Data.Hamiltonian((x, p) -> sum(abs2, p) / 2 + sum(sin, x))
 tol = (reltol=1e-10, abstol=1e-10)
 z0 = [0.3, -0.7, 1.0, 0.5]
-F(ad) = (f = Flows.Flow(h; ad_backend=ad, tol...); z -> vcat(f(0.0, z[1:2], z[3:4], 1.0)...))
+F(ad) = (f=Flows.Flow(h; ad_backend=ad, tol...); z -> vcat(f(0.0, z[1:2], z[3:4], 1.0)...))
 Jref = ForwardDiff.jacobian(F(ADTypes.AutoForwardDiff()), z0)
-for (k, outer) in ("outer ForwardDiff" => ADTypes.AutoForwardDiff(),
-                   "outer FiniteDiff" => ADTypes.AutoFiniteDiff(),
-                   "outer Mooncake" => ADTypes.AutoMooncake())
+for (k, outer) in (
+    "outer ForwardDiff" => ADTypes.AutoForwardDiff(),
+    "outer FiniteDiff" => ADTypes.AutoFiniteDiff(),
+    "outer Mooncake" => ADTypes.AutoMooncake(),
+)
     try
         J = DI.jacobian(F(ADTypes.AutoMooncake()), outer, z0)
         println(rpad(k, 20), "✓  max|J-Jref| = ", maximum(abs, J - Jref))
     catch e
-        println(rpad(k, 20), "✗ ", nameof(typeof(e)), ": ", replace(first(sprint(showerror, e), 400), '\n' => ' '))
+        println(
+            rpad(k, 20),
+            "✗ ",
+            nameof(typeof(e)),
+            ": ",
+            replace(first(sprint(showerror, e), 400), '\n' => ' '),
+        )
     end
 end
