@@ -1216,6 +1216,7 @@ rebuilds a full [`CTModels.Solutions.Solution`](@extref) from the problem.
   `CTBase.Data.ControlLaw` when the flow was built from an OCP and a control law).
 - `SF`: type of the inner control-free state flow (`Nothing` unless the OCP is
   control-free — see `state_flow`).
+- `D`: type of the path duals (see `duals`).
 
 # Fields
 - `flow::IF`: the inner Hamiltonian flow doing the integration.
@@ -1226,25 +1227,29 @@ rebuilds a full [`CTModels.Solutions.Solution`](@extref) from the problem.
   OCP (`Flow(ocp)`, no law); `nothing` otherwise. Backs the basic (no-costate) call
   arities `f(t0,x0,tf)` / `f((t0,tf),x0)` — see [`CTFlows.Flows._ocp_state_vector_field`](@extref).
 - `label::String`: the label of the phase (`""` for no label), see [`CTFlows.Flows.label`](@extref).
+- `duals::D`: the path duals of the flow, rebuilt along a trajectory from the multiplier
+  given to `Flow(ocp, law; constraint, multiplier)` (see
+  [`CTFlows.Flows._path_duals`](@extref)), or `nothing` for a control-free OCP.
 
 See also: [`CTFlows.Flows.Flow`](@extref), [`CTModels.Solutions.Solution`](@extref).
 """
 struct OptimalControlFlow{
-    TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,IF,M,CL,SF
+    TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,IF,M,CL,SF,D
 } <: AbstractFlow{TD,VD,Traits.HamiltonianDynamics}
     flow::IF    # inner HamiltonianFlow
     ocp::M
     law::CL
     state_flow::SF
     label::String
+    duals::D
 end
 
 """
 $(TYPEDSIGNATURES)
 
 Construct a [`CTFlows.Flows.OptimalControlFlow`](@extref) from an inner Hamiltonian
-[`CTFlows.Flows.Flow`](@extref), the OCP, an optional control law, and an optional
-control-free `state_flow` (see the `state_flow` field).
+[`CTFlows.Flows.Flow`](@extref), the OCP, an optional control law, an optional
+control-free `state_flow` (see the `state_flow` field), and the optional path `duals`.
 """
 function OptimalControlFlow(
     flow::Flow{TD,VD,Traits.HamiltonianDynamics},
@@ -1252,9 +1257,12 @@ function OptimalControlFlow(
     law=nothing;
     state_flow=nothing,
     label::AbstractString=__label(),
+    duals=nothing,
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
-    return OptimalControlFlow{TD,VD,typeof(flow),typeof(ocp),typeof(law),typeof(state_flow)}(
-        flow, ocp, law, state_flow, String(label)
+    return OptimalControlFlow{
+        TD,VD,typeof(flow),typeof(ocp),typeof(law),typeof(state_flow),typeof(duals)
+    }(
+        flow, ocp, law, state_flow, String(label), duals
     )
 end
 
@@ -1272,7 +1280,9 @@ Return a copy of an [`CTFlows.Flows.OptimalControlFlow`](@extref) with the label
 """
 function with_label(F::OptimalControlFlow, label::AbstractString)
     isempty(label) && return F
-    return OptimalControlFlow(F.flow, F.ocp, F.law; state_flow=F.state_flow, label=label)
+    return OptimalControlFlow(
+        F.flow, F.ocp, F.law; state_flow=F.state_flow, label=label, duals=F.duals
+    )
 end
 
 """
@@ -1379,9 +1389,9 @@ function (F::OptimalControlFlow)(
     spec = _call_grid_spec(tspan, grid, F)
     sol = F.flow(tspan, x0, p0; variable, variable_costate, unsafe, grid=nothing)   # HamiltonianVectorFieldTrajectory
     sol = _regrid_hamiltonian(sol, spec, F.law, variable, collect(float.(tspan)))
-    switching = _ocp_switching_model(sol, F.law, variable, [label(F)])
+    switching = _ocp_switching_model(sol, F.law, variable, [label(F)]; duals=F.duals)
     return _build_ocp_solution(
-        F.ocp, sol, variable, integrator(F.flow), F.law; switching=switching
+        F.ocp, sol, variable, integrator(F.flow), F.law; switching=switching, duals=F.duals
     )
 end
 
@@ -1515,6 +1525,7 @@ function _build_ocp_solution(
     integ,
     law=nothing;
     switching::CTModels.Solutions.AbstractSwitchingModel=CTModels.Solutions.EmptySwitchingModel(),
+    duals=nothing,
 )
     T = collect(Float64, Trajectories.time_grid(sol))
     x = Trajectories.state(sol)    # callable StateProjection: t -> x(t)
@@ -1537,6 +1548,7 @@ function _build_ocp_solution(
         successful=Integrators.successful(sol),
         control_interpolation=:linear,
         switching=switching,
+        path_constraints_dual=_path_constraints_dual(duals, x, p, v),
     )
 end
 
@@ -1548,7 +1560,9 @@ trajectory: the switching times of the trajectory, the phase labels `labels` (on
 phase), and the left and right limits of the state, costate and control at every switching
 time. The control limits come from the law: the left limit from the law of the phase that
 ends (at the values before the jump), the right one from the law of the next phase (at the
-values after it), see [`CTFlows.Flows._right_ocp_control`](@extref).
+values after it), see [`CTFlows.Flows._right_ocp_control`](@extref). The limits of the duals
+of the path constraints come from the path `duals` in the same way, see
+[`CTFlows.Flows._switching_path_duals`](@extref).
 
 Returns an [`CTModels.Solutions.EmptySwitchingModel`](@extref) when there is no switching
 time and no label.
@@ -1557,7 +1571,8 @@ function _ocp_switching_model(
     sol::Trajectories.HamiltonianVectorFieldTrajectory,
     law,
     variable,
-    labels::AbstractVector{<:AbstractString},
+    labels::AbstractVector{<:AbstractString};
+    duals=nothing,
 )
     taus = Trajectories.switching_times(sol)
     n = length(taus)
@@ -1583,6 +1598,7 @@ function _ocp_switching_model(
         state=(_limit_rows(xl), _limit_rows(xr)),
         costate=(_limit_rows(pl), _limit_rows(pr)),
         control=control,
+        path_dual=_switching_path_duals(duals, taus, xl, xr, pl, pr, v),
     )
 end
 
