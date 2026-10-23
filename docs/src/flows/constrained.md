@@ -239,6 +239,133 @@ plot(sol)
 
 ---
 
+## Constraint duals of a flow
+
+The trajectory call of `Flow(ocp, law; constraint=:label, multiplier=μ)` returns a
+`CTModels.Solution` that carries the **duals of the path constraints** of the model,
+rebuilt from the multiplier ``\mu`` given to the flow. They are read as for a direct
+solve, with `dual(sol, ocp, :label)`, and they follow the same convention (see the
+*Multiplier Convention* page of CTSolvers and
+[OptimalControl.jl#1014](https://github.com/control-toolbox/OptimalControl.jl/discussions/1014)).
+
+### The convention
+
+The pseudo-Hamiltonian is **always maximised**, for a minimisation and for a
+maximisation:
+
+```math
+H(t,x,p,u,v) = p \cdot f(t,x,u,v) + p^0\,\ell(t,x,u,v) + \mu \cdot g(t,x,u,v),
+\qquad g \ge 0, \quad \mu \ge 0,
+```
+
+with ``p^0 = -1`` for `:min` and ``p^0 = +1`` for `:max` (normal case). For `min ∫ℓ` and
+`max ∫(-ℓ)` the term ``p^0 \ell`` is the same, so the control, the costate ``p`` and the
+multipliers ``\mu`` are the same: only the criterion changes sign. This is the indirect
+counterpart of the rule of the direct solvers, which return the multipliers of the
+equivalent minimisation.
+
+The dual of a constraint is ``\mu`` itself when the constraint has a single bound, however
+it is written: `x ≥ 0.1`, `x - 0.1 ≥ 0` and `0.1 - x ≤ 0` have the same dual ``\mu \ge 0``.
+An equality, or a constraint with two finite bounds, has a signed dual, as in the
+direct solvers:
+
+| Constraint in the model | `constraint=` | `dual(sol, ocp, :label)` |
+| --- | --- | --- |
+| single bound, ``c \ge \mathrm{lb}`` or ``c \le \mathrm{ub}`` | `:label` | ``\mu \ge 0`` |
+| equality, ``c = \mathrm{lb}`` | `:label` (lower side) | ``-\mu`` |
+| equality | `:label => :upper` | ``+\mu`` |
+| two-sided, ``\mathrm{lb} < \mathrm{ub}`` | `:label => :lower` | ``-\mu`` |
+| two-sided | `:label => :upper` | ``+\mu`` |
+
+The rows of a label are taken from the model, so **the label is the key**: a constraint
+given as a function has no label, and its dual cannot be placed (see below). On an arc where
+a constraint is not adjoined to the flow, its dual is ``0``.
+
+### A closed form
+
+``\dot x = u``, ``x(0) = -1``, ``\int_0^1 -u\,\mathrm{d}t \to \min``, with the mixed
+constraint ``x + u \le 0`` active on the whole arc: ``u = -x``, ``p(t) = e^{t-1} - 1`` and
+the multiplier of ``g = -(x + u) \ge 0`` is ``\mu = p + 1 = e^{t-1}``.
+
+```@example flows_constrained
+pre = CTModels.Building.PreModel()
+CTModels.Building.time_dependence!(pre; autonomous=true)
+CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+CTModels.Building.state!(pre, 1)
+CTModels.Building.control!(pre, 1)
+CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = u; nothing))
+CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> -u)
+CTModels.Building.constraint!(
+    pre, :path; f=(r, t, x, u, v) -> (r[1] = x + u; nothing), lb=-Inf, ub=0.0,
+    label=:mixed,
+)
+ocp_mixed = CTModels.Building.build(pre)
+
+f_mixed = Flows.Flow(
+    ocp_mixed, (x, p) -> -x; constraint=:mixed, multiplier=(x, p) -> p + 1,
+    reltol=1e-10, abstol=1e-10,
+)
+sol_mixed = f_mixed((0.0, 1.0), -1.0, exp(-1) - 1)
+d = CTModels.dual(sol_mixed, ocp_mixed, :mixed)
+[(t, d(t), exp(t - 1)) for t in (0.0, 0.5, 1.0)]
+```
+
+A direct method returns the same dual, up to the discretisation error.
+
+### Several arcs: the dual jumps at the junctions
+
+With a multi-phase flow, each phase brings the duals of its own constraints, and the
+switching structure of the solution stores the left and right limits of the duals at each
+switching time, so the plot draws the jump of the multiplier at the entry and the exit of
+a boundary arc. The problem of issue #440: ``\dot x = u``, ``|u| \le 1``, ``x \ge 0.1``,
+``\int_0^2 x^2 \to \min``, ``x(0) = 1``, ``x(2) = 1/2``; on the boundary arc
+``[0.9, 1.6]``, ``u = 0`` and ``\mu = 2x = 0.2``.
+
+```@example flows_constrained
+pre = CTModels.Building.PreModel()
+CTModels.Building.time_dependence!(pre; autonomous=true)
+CTModels.Building.time!(pre; t0=0.0, tf=2.0)
+CTModels.Building.state!(pre, 1)
+CTModels.Building.control!(pre, 1)
+CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1] = u; nothing))
+CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> x^2)
+CTModels.Building.constraint!(
+    pre, :path; f=(r, t, x, u, v) -> (r[1] = x; nothing), lb=0.1, ub=Inf, label=:xmin,
+)
+ocp_440 = CTModels.Building.build(pre)
+
+opts = (; reltol=1e-10, abstol=1e-10)
+f_minus = Flows.Flow(ocp_440, (x, p) -> -1; label="u = -1", opts...)
+f_bound = Flows.Flow(
+    ocp_440, (x, p) -> 0; constraint=:xmin, multiplier=(x, p) -> 2x, label="boundary",
+    opts...,
+)
+f_plus = Flows.Flow(ocp_440, (x, p) -> 1; label="u = +1", opts...)
+φ = f_minus * (0.9, f_bound) * (1.6, f_plus)
+sol_440 = φ((0.0, 2.0), 1.0, -0.982237546583301)
+d = CTModels.dual(sol_440, ocp_440, :xmin)
+d(0.5), d(1.2), d(1.8)
+```
+
+```@example flows_constrained
+plot(sol_440, :state, :control, :path, :dual)
+```
+
+### Without a label, and the other constraints
+
+- A constraint given as a **function** (or as an explicit `StateConstraint`,
+  `MixedConstraint`, …) has no label: the solution carries **no dual**, and
+  `dual(sol, ocp, :label)` throws a `PreconditionError` that says so. When the problem has
+  path constraints, the flow warns once when it is built. Give the constraint by its label,
+  `constraint=:label` (or `:label => side`), to get its dual. In a multi-phase flow, one
+  unlabelled phase is enough to lose the duals of the whole solution.
+- The duals of the **boundary** constraints and of the **box** constraints (state, control,
+  variable) are not rebuilt by a flow: `dual(sol, ocp, :label)` throws a
+  `PreconditionError` for them. An unknown label throws an `IncorrectArgument`, as for
+  any solution.
+
+---
+
 ## Worked example: Goddard problem (order 1)
 
 The [Goddard rocket problem](https://en.wikipedia.org/wiki/Goddard_problem) (maximise final
