@@ -4,7 +4,8 @@
 # `Flow(ocp, law; constraint=:label, multiplier=μ)` adjoins `μ·g` to the
 # pseudo-Hamiltonian, with `g ≥ 0` the path constraint `label` normalised on its active
 # side and `μ ≥ 0`. The trajectory call rebuilds the duals of the path constraints of the
-# model from `μ`, in the convention of the direct solvers (control-toolbox/CTSolvers.jl#288):
+# model from `μ`, in the sign convention of the ecosystem (ct-conventions SGN1–SGN6, the
+# convention of the direct solvers, control-toolbox/CTSolvers.jl#288):
 #
 #   - a row with a single finite bound (c ≥ lb, or c ≤ ub) has the dual μ ≥ 0;
 #   - an equality row, and a row with two finite bounds, has the signed dual

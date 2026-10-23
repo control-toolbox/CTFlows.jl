@@ -244,8 +244,10 @@ plot(sol)
 The trajectory call of `Flow(ocp, law; constraint=:label, multiplier=μ)` returns a
 `CTModels.Solution` that carries the **duals of the path constraints** of the model,
 rebuilt from the multiplier ``\mu`` given to the flow. They are read as for a direct
-solve, with `dual(sol, ocp, :label)`, and they follow the same convention (see the
-*Multiplier Convention* page of CTSolvers and
+solve, with `dual(sol, ocp, :label)`, and they follow the same convention: the sign
+convention of the ecosystem,
+[ct-conventions `SGN1`–`SGN6`](https://github.com/control-toolbox/ct-conventions/blob/main/rules/signs.md)
+(see also the *Multiplier Convention* page of CTSolvers and
 [OptimalControl.jl#1014](https://github.com/control-toolbox/OptimalControl.jl/discussions/1014)).
 
 ### The convention
@@ -258,7 +260,7 @@ H(t,x,p,u,v) = p \cdot f(t,x,u,v) + p^0\,\ell(t,x,u,v) + \mu \cdot g(t,x,u,v),
 \qquad g \ge 0, \quad \mu \ge 0,
 ```
 
-with ``p^0 = -1`` for `:min` and ``p^0 = +1`` for `:max` (normal case). For `min ∫ℓ` and
+with ``p^0 = -1`` for `:min` and ``p^0 = +1`` for `:max` (normal case, `SGN4`). For `min ∫ℓ` and
 `max ∫(-ℓ)` the term ``p^0 \ell`` is the same, so the control, the costate ``p`` and the
 multipliers ``\mu`` are the same: only the criterion changes sign. This is the indirect
 counterpart of the rule of the direct solvers, which return the multipliers of the
@@ -267,7 +269,7 @@ equivalent minimisation.
 The dual of a constraint is ``\mu`` itself when the constraint has a single bound, however
 it is written: `x ≥ 0.1`, `x - 0.1 ≥ 0` and `0.1 - x ≤ 0` have the same dual ``\mu \ge 0``.
 An equality, or a constraint with two finite bounds, has a signed dual, as in the
-direct solvers:
+direct solvers (`SGN2`, `SGN3`):
 
 | Constraint in the model | `constraint=` | `dual(sol, ocp, :label)` |
 | --- | --- | --- |
