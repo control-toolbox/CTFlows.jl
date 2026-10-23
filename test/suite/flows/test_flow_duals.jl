@@ -39,6 +39,7 @@ function _mixed()
     CTModels.Building.control!(pre, 1)
     CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=u; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> -u)
+    CTModels.Building.constraint!(pre, :control; rg=1:1, lb=[0.0], ub=[Inf], label=:u_box)
     CTModels.Building.constraint!(
         pre,
         :path;
@@ -171,6 +172,17 @@ function test_flow_duals()
             Test.@test CTModels.dual(sol, ocp, :dummy)(0.5) == [0.0, 0.0]
             Test.@test CTModels.path_constraints_dual(sol)(1.0) ≈ [0.0, 0.0, 1.0] atol =
                 1e-8
+            # a box label: not rebuilt by a flow, and the error says so
+            err = try
+                CTModels.dual(sol, ocp, :u_box)
+            catch e
+                e
+            end
+            Test.@test err isa Exceptions.PreconditionError
+            Test.@test occursin("path constraints only", err.suggestion)
+            Test.@test occursin("CTFlows.jl#495", err.suggestion)
+            # an unknown label
+            Test.@test_throws Exceptions.IncorrectArgument CTModels.dual(sol, ocp, :nope)
         end
 
         # ====================================================================
@@ -303,6 +315,13 @@ function test_flow_duals()
             sol = f((0.0, 1.0), -1.0, P0_MIXED)
             Test.@test !CTModels.Solutions.has_duals(sol)
             Test.@test_throws Exceptions.PreconditionError CTModels.dual(sol, ocp, :mixed)
+            err = try
+                CTModels.dual(sol, ocp, :mixed)
+            catch e
+                e
+            end
+            Test.@test occursin("has no label", err.suggestion)
+            Test.@test occursin("constraint=:label", err.suggestion)
             # the flow warns when it is built, and names the labels of the problem
             Test.@test_logs (:warn, r"constraint=:dummy.*:dummy, :mixed") Flows.Flow(
                 ocp,

@@ -216,3 +216,30 @@ function _warn_unlabelled_constraint(ocp)
         "problem: $(join(":" .* string.(labels), ", "))." maxlog = 1
     return nothing
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+The note stored in `infos(sol)[:missing_duals]` of the solution of a flow: CTModels uses it
+as the suggestion of the `PreconditionError` that `dual(sol, ocp, :label)` throws for a
+dual the flow did not rebuild. It says why the dual is missing and how to get it.
+"""
+function _missing_duals_note(::_UnlabelledPathDuals)::String
+    return "This solution comes from a CTFlows flow with a constraint given as a function: " *
+           "it has no label, so its multiplier cannot be placed in the rows of the model, " *
+           "and the solution carries no dual. Give the path constraints by their label: " *
+           "Flow(ocp, law; constraint=:label, multiplier=μ), or :label => :upper for a " *
+           "two-sided constraint."
+end
+
+function _missing_duals_note(::Nothing)::String
+    return "This solution comes from a CTFlows flow of a control-free problem, which " *
+           "carries no constraint dual."
+end
+
+function _missing_duals_note(::Any)::String
+    return "This solution comes from a CTFlows flow, which rebuilds the duals of the path " *
+           "constraints only, from the multiplier given with constraint=:label. The duals " *
+           "of the boundary and box constraints are not computed by a flow (see " *
+           "control-toolbox/CTFlows.jl#495)."
+end

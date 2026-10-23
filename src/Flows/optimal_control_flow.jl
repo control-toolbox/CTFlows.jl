@@ -1549,6 +1549,7 @@ function _build_ocp_solution(
         control_interpolation=:linear,
         switching=switching,
         path_constraints_dual=_path_constraints_dual(duals, x, p, v),
+        infos=Dict{Symbol,Any}(:missing_duals => _missing_duals_note(duals)),
     )
 end
 

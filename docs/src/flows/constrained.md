@@ -361,8 +361,13 @@ plot(sol_440, :state, :control, :path, :dual)
   unlabelled phase is enough to lose the duals of the whole solution.
 - The duals of the **boundary** constraints and of the **box** constraints (state, control,
   variable) are not rebuilt by a flow: `dual(sol, ocp, :label)` throws a
-  `PreconditionError` for them. An unknown label throws an `IncorrectArgument`, as for
-  any solution.
+  `PreconditionError` for them. A zero would be wrong: a boundary constraint is always
+  active, and a control box is active on a bang arc, where the law saturates the control.
+  How to compute them is discussed in
+  [CTFlows.jl#495](https://github.com/control-toolbox/CTFlows.jl/issues/495).
+- The error says why the dual is missing and how to get it: the flow leaves this
+  explanation in `infos(sol)[:missing_duals]`, which `dual` uses as its suggestion. An
+  unknown label throws an `IncorrectArgument`, as for any solution.
 
 ---
 

@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A constraint given as a function has no label, so its dual cannot be placed: the solution
   then carries no dual, and the flow warns once when it is built if the problem has path
   constraints, with their labels.
+- The solution of a flow explains its missing duals in `infos(sol)[:missing_duals]`, which
+  `dual` uses as the suggestion of its `PreconditionError` (CTModels): a constraint without
+  label, or the boundary and box duals, which a flow does not compute
+  ([#495](https://github.com/control-toolbox/CTFlows.jl/issues/495)).
 
 ### 📚 Documentation
 
