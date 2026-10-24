@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.3] - 2026-10-24
+
 ### ✨ New Features
 
 - **Constraint duals of a flow solution**
@@ -38,13 +40,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📦 Dependencies
 
-- CTModels `0.20.1`: the limits of the path duals in the switching model
-  (control-toolbox/CTModels.jl, `path_dual`).
+- CTModels `0.21`: the limits of the path duals in the switching model (`path_dual`) and
+  the sign of the box duals (control-toolbox/CTModels.jl).
+- CTSolvers `0.7`: the multipliers of the NLP solvers follow one convention.
 
 ### ✅ Compatibility
 
 - **No breaking changes**: additive. See [BREAKING.md](BREAKING.md) for the near-breaking
   notes (a new field in `OptimalControlFlow`; flow solutions now carry duals).
+- `[compat]`: `CTModels = "0.21"` and `CTSolvers = "0.7"` (they were `0.20` and `0.6`); the
+  suite passes against CTModels 0.21.0 and CTSolvers 0.7.0.
 
 ## [0.18.2] - 2026-10-21
 
