@@ -3,7 +3,7 @@
 This file lists breaking and near-breaking changes in CTFlows.jl since the last
 stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
-## Unreleased
+## 0.18.3
 
 No breaking change by the `REL1` rule; near-breaking notes:
 
