@@ -906,7 +906,9 @@ function _flow_from_ocp_control(
     _check_convenience_arities(ocp, nothing, cspec, mspec)
     _validate_constraint_pair(cspec, mspec)
     inner = _build_ocp_pseudo_flow(Val(ht), ocp, law, components, cspec, mspec)
-    return with_label(OptimalControlFlow(inner, ocp, law), _routed_label(routed))
+    duals = _path_duals(ocp, cspec, mspec)
+    duals isa _UnlabelledPathDuals && _warn_unlabelled_constraint(ocp)
+    return with_label(OptimalControlFlow(inner, ocp, law; duals=duals), _routed_label(routed))
 end
 
 """

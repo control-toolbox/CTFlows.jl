@@ -3,6 +3,19 @@
 This file lists breaking and near-breaking changes in CTFlows.jl since the last
 stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
+## Unreleased
+
+No breaking change by the `REL1` rule; near-breaking notes:
+
+- **New field in `OptimalControlFlow`** (`duals`, the path duals of the flow,
+  [#472](https://github.com/control-toolbox/CTFlows.jl/issues/472)): code that builds it
+  with its default positional constructor must pass it (`nothing` for none); the keyword
+  constructor `OptimalControlFlow(flow, ocp, law; duals=…)` defaults it.
+- **The solution of `Flow(ocp, law)` carries duals** when the problem has path constraints
+  and every constraint of the flow is given by its label (zeros for an unconstrained flow):
+  `has_duals(sol)` is `true` and `plot(sol)` draws the dual panel. Before, a flow solution
+  had no dual. A flow with a constraint given as a function warns once when it is built.
+
 ## 0.18.2
 
 No breaking change by the `REL1` rule; the entries below are near-breaking behaviour changes.

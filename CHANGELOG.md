@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ✨ New Features
+
+- **Constraint duals of a flow solution**
+  ([#472](https://github.com/control-toolbox/CTFlows.jl/issues/472)). The trajectory call
+  of `Flow(ocp, law; constraint=:label, multiplier=μ)` returns a `CTModels.Solution` that
+  carries the duals of the path constraints of the model, rebuilt from `μ`:
+  `dual(sol, ocp, :label)` works as for a direct solve, with the same convention
+  ([CTSolvers.jl#288](https://github.com/control-toolbox/CTSolvers.jl/issues/288)): `μ ≥ 0`
+  for a constraint with a single bound, however it is written; `−μ` / `+μ` on the lower /
+  upper side of an equality or a two-sided constraint; `0` on the rows and arcs where a
+  constraint is not adjoined to the flow. Multi-phase flows select the duals by phase, like
+  the control, and store their left and right limits at the switching times, so the plots
+  draw the jump of a multiplier at a junction.
+- A constraint given as a function has no label, so its dual cannot be placed: the solution
+  then carries no dual, and the flow warns once when it is built if the problem has path
+  constraints, with their labels.
+- The solution of a flow explains its missing duals in `infos(sol)[:missing_duals]`, which
+  `dual` uses as the suggestion of its `PreconditionError` (CTModels): a constraint without
+  label, or the boundary and box duals, which a flow does not compute
+  ([#495](https://github.com/control-toolbox/CTFlows.jl/issues/495)).
+
+### 📚 Documentation
+
+- *Constrained flows*: new section *Constraint duals of a flow*: the convention (the
+  pseudo-Hamiltonian is always maximised, `p⁰ = −1` for `:min`, `+1` for `:max`, so
+  `min f` and `max −f` have the same costate and multipliers), the dual of each kind of
+  constraint, a closed form, a three-arc example with the plotted jump of the dual, and
+  what is not available (no label, boundary and box duals).
+
+### 📦 Dependencies
+
+- CTModels `0.20.1`: the limits of the path duals in the switching model
+  (control-toolbox/CTModels.jl, `path_dual`).
+
+### ✅ Compatibility
+
+- **No breaking changes**: additive. See [BREAKING.md](BREAKING.md) for the near-breaking
+  notes (a new field in `OptimalControlFlow`; flow solutions now carry duals).
+
 ## [0.18.2] - 2026-10-21
 
 ### ✨ New Features
