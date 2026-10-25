@@ -52,7 +52,7 @@ function _mixed()
         pre,
         :path;
         f=(r, t, x, u, v) -> (r[1]=x + u; nothing),
-        lb=-Inf,
+        lb=(-Inf),
         ub=0.0,
         label=:mixed,
     )
@@ -121,7 +121,7 @@ function _vector(lb, ub)
     CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=u; r[2]=0; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2)
     CTModels.Building.constraint!(
-        pre, :path; f=(r, t, x, u, v) -> (r .= x; nothing), lb=lb, ub=ub, label=:c
+        pre, :path; f=(r, t, x, u, v) -> (r.=x; nothing), lb=lb, ub=ub, label=:c
     )
     CTModels.Building.constraint!(
         pre, :path; f=(r, t, x, u, v) -> (r[1]=u; nothing), lb=-1.0, ub=Inf, label=:s
@@ -130,7 +130,9 @@ function _vector(lb, ub)
 end
 
 _const(c) = (x, p) -> c                     # a constant multiplier
-_dual(ocp, flow, label; x0=0.5, p0=0.0) = CTModels.dual(flow((0.0, 1.0), x0, p0), ocp, label)
+function _dual(ocp, flow, label; x0=0.5, p0=0.0)
+    return CTModels.dual(flow((0.0, 1.0), x0, p0), ocp, label)
+end
 
 function test_flow_duals()
     Test.@testset "Flow duals (issue #472)" verbose=VERBOSE showtiming=SHOWTIMING begin
@@ -190,7 +192,8 @@ function test_flow_duals()
         # ====================================================================
 
         Test.@testset "three arcs: the same dual for $name" for (name, f!, lb, ub) in
-                                                                  SPELLINGS
+                                                                SPELLINGS
+
             ocp = _issue440(f!, lb, ub)
             sol = _three_arcs(ocp)((0.0, 2.0), 1.0, P0_440)
             d = CTModels.dual(sol, ocp, :xcon)

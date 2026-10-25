@@ -908,7 +908,9 @@ function _flow_from_ocp_control(
     inner = _build_ocp_pseudo_flow(Val(ht), ocp, law, components, cspec, mspec)
     duals = _path_duals(ocp, cspec, mspec)
     duals isa _UnlabelledPathDuals && _warn_unlabelled_constraint(ocp)
-    return with_label(OptimalControlFlow(inner, ocp, law; duals=duals), _routed_label(routed))
+    return with_label(
+        OptimalControlFlow(inner, ocp, law; duals=duals), _routed_label(routed)
+    )
 end
 
 """
