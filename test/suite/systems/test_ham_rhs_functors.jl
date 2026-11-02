@@ -40,7 +40,7 @@ function Differentiation.variable_gradient(
 end
 
 function test_ham_rhs_functors()
-    Test.@testset "Hamiltonian RHS Functors Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Hamiltonian RHS Functors Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # =============================================================================
         # Test hierarchy

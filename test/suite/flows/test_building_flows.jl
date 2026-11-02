@@ -17,7 +17,7 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # ==============================================================================
 
 function test_building_flows()
-    Test.@testset "Building Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Building Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Flow constructor from VectorField
@@ -201,8 +201,8 @@ function test_building_flows()
 
                 x0, p0 = 1.0, 0.5
                 xf, pf = flow(0.0, x0, p0, 1.0)
-                Test.@test xf ≈ x0 + p0 atol=1e-6
-                Test.@test pf ≈ p0 atol=1e-6
+                Test.@test xf ≈ x0 + p0 atol = 1e-6
+                Test.@test pf ≈ p0 atol = 1e-6
             end
 
             Test.@testset "OpenLoop law is rejected" begin

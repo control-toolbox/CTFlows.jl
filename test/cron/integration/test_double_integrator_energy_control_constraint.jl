@@ -52,7 +52,8 @@ function _build_di_energy_control_constraint()
 end
 
 function test_double_integrator_energy_control_constraint()
-    Test.@testset "Double integrator — energy + control constraint B+SB- (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Double integrator — energy + control constraint B+SB- (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_di_energy_control_constraint()
 
         for ht in (:total, :partial)

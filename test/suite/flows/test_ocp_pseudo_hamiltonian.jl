@@ -101,7 +101,7 @@ const OCP_NANF = _build_ocp(
 )
 
 function test_ocp_pseudo_hamiltonian()
-    Test.@testset "OCP PseudoHamiltonian Function" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "OCP PseudoHamiltonian Function" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ── call methods, all four (TD, VD) arities ──────────────────────────
 

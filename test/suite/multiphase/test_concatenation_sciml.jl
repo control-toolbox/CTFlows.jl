@@ -20,7 +20,8 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # ==============================================================================
 
 function test_concatenation_sciml()
-    Test.@testset "Concatenation with SciML Integration" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Concatenation with SciML Integration" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
 
         # Linear system: dx/dt = -x, solution: x(t) = x0 * exp(-t)
         linear_oop(u) = -u
@@ -212,7 +213,7 @@ function test_concatenation_sciml()
             flow = Flows.Flow(f)
             mpf = flow * (0.5, flow)
             xf = mpf(0.0, [1.0], 1.0; variable=1.0)
-            Test.@test xf[1] ≈ exp(-1.0) atol=1e-3
+            Test.@test xf[1] ≈ exp(-1.0) atol = 1e-3
         end
 
         Test.@testset "SciMLFunctionSystem — Two-phase oop ODEFunction" begin
@@ -220,7 +221,7 @@ function test_concatenation_sciml()
             flow = Flows.Flow(f)
             mpf = flow * (0.5, flow)
             xf = mpf(0.0, [1.0], 1.0; variable=1.0)
-            Test.@test xf[1] ≈ exp(-1.0) atol=1e-3
+            Test.@test xf[1] ≈ exp(-1.0) atol = 1e-3
         end
 
         Test.@testset "SciMLFunctionSystem — Jump at switching time" begin
@@ -231,7 +232,7 @@ function test_concatenation_sciml()
             x0 = [1.0]
             xf = mpf(0.0, x0, 1.0; variable=1.0)
             expected = (exp(-0.5) + 10.0) * exp(-0.5)
-            Test.@test xf[1] ≈ expected atol=1e-3
+            Test.@test xf[1] ≈ expected atol = 1e-3
         end
 
         Test.@testset "SciMLFunctionSystem — Trajectory merging" begin
@@ -241,7 +242,7 @@ function test_concatenation_sciml()
             sol = mpf((0.0, 1.0), [1.0]; variable=1.0)
             Test.@test sol isa Trajectories.VectorFieldTrajectory
             xf = Integrators.final_state(sol)
-            Test.@test xf[1] ≈ exp(-1.0) atol=1e-4
+            Test.@test xf[1] ≈ exp(-1.0) atol = 1e-4
         end
     end
 end

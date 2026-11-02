@@ -17,7 +17,7 @@ const FakeF = x -> -x
 const FakeFIP = (du, x) -> du .= -x
 
 function test_rhs_functors()
-    Test.@testset "RHS Functors Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "RHS Functors Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # =============================================================================
         # Test hierarchy

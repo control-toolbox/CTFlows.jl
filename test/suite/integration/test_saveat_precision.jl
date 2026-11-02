@@ -112,7 +112,7 @@ _check_grid(T, expected) = Test.@test T ≈ expected
 _no_warning(f) = Test.@test_logs min_level = Base.CoreLogging.Warn f()
 
 function test_saveat_precision()
-    Test.@testset "saveat precision (issue #434)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "saveat precision (issue #434)" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # Flow(ocp, law) — Hamiltonian (costate) path → CTModels.Solution

@@ -85,7 +85,7 @@ end
 # ============================================================================
 
 function test_multiphase_module()
-    Test.@testset "MultiPhase Module Exports" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "MultiPhase Module Exports" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # Module availability

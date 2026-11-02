@@ -39,7 +39,7 @@ Strategies.parameter(::Type{FakeIntegrator}) = nothing
 # ==============================================================================
 
 function test_multiphase_flow()
-    Test.@testset "MultiPhaseFlow Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "MultiPhaseFlow Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
         Test.@testset "MultiPhaseStateFlow" begin
             sys = FakeStateSystem([1.0, 2.0])
             integ = FakeIntegrator(:fake_result)

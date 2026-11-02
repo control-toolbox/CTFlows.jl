@@ -52,7 +52,8 @@ function _build_simple_exp_time()
 end
 
 function test_simple_exponential_time()
-    Test.@testset "Simple exponential — time-optimal bang-plus (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Simple exponential — time-optimal bang-plus (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_simple_exp_time()
 
         for ht in (:total, :partial)

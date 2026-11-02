@@ -97,7 +97,7 @@ end
 _vlines(cell) = [d.value for d in cell.axes.decorations if d isa Plotting.VLine]
 
 function test_switching_structure()
-    Test.@testset "Switching structure" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Switching structure" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - labels given at construction

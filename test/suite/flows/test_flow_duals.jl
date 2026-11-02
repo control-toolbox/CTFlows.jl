@@ -135,7 +135,7 @@ function _dual(ocp, flow, label; x0=0.5, p0=0.0)
 end
 
 function test_flow_duals()
-    Test.@testset "Flow duals (issue #472)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Flow duals (issue #472)" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - the coefficient of μ on a row

@@ -19,7 +19,7 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # ==============================================================================
 
 function test_scimlbase_problem_flow()
-    Test.@testset "SciMLBaseProblemFlow" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "SciMLBaseProblemFlow" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Construction

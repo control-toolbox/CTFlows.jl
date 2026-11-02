@@ -47,7 +47,8 @@ Strategies.options(::HeteroIntegA) = Strategies.StrategyOptions()
 Strategies.options(::HeteroIntegB) = Strategies.StrategyOptions()
 
 function test_concatenation_heterogeneous()
-    Test.@testset "Heterogeneous Flow Concatenation" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Heterogeneous Flow Concatenation" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
         sysA = HeteroSysA(2)
         sysB = HeteroSysB(2)
         hamA = HeteroHamSysA(2)

@@ -14,7 +14,7 @@ const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 function test_sciml_rhs_functors()
-    Test.@testset "SciML RHS Functors" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "SciML RHS Functors" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # =============================================================================
         # Fake ODE functions for testing

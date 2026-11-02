@@ -98,14 +98,14 @@ const HSYS_DI = Systems.HamiltonianSystem(H_LINEAR_VAR, DI_BACKEND)
 # Scalar-only Hamiltonian with variable: H = x³/3 - log(p) + v³/3
 # This will fail if x, p, or v are treated as vectors
 # Gradients: ∂H/∂x = x*x, ∂H/∂p = -1/p, ∂H/∂v = v*v
-H_SCALAR_VAR(x, p, v) = x^3/3 - log(p) + v^3/3
+H_SCALAR_VAR(x, p, v) = x^3 / 3 - log(p) + v^3 / 3
 const H_SCALAR_VAR_H = Data.Hamiltonian(H_SCALAR_VAR; is_autonomous=true, is_variable=true)
 const HSYS_SCALAR_VAR = Systems.HamiltonianSystem(H_SCALAR_VAR_H, DI_BACKEND)
 
 const INTEG = Integrators.SciML()
 
 function test_variable_costate_flows()
-    Test.@testset "Variable Costate Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Variable Costate Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS
@@ -167,7 +167,7 @@ function test_variable_costate_flows()
         Test.@testset "Integration: variable_costate_trait on systems" begin
             # Fixed HamiltonianSystem -> NoVariableCostate
             h_fixed = Data.Hamiltonian(
-                (x, p) -> 0.5*(sum(abs2, x) + sum(abs2, p));
+                (x, p) -> 0.5 * (sum(abs2, x) + sum(abs2, p));
                 is_autonomous=true,
                 is_variable=false,
             )
@@ -214,9 +214,9 @@ function test_variable_costate_flows()
                 Test.@test xf isa Real
                 Test.@test pf isa Real
                 Test.@test pvf isa Real
-                Test.@test xf ≈ xf_ref atol=ATOL
-                Test.@test pf ≈ pf_ref atol=ATOL
-                Test.@test pvf ≈ pvf_ref atol=ATOL
+                Test.@test xf ≈ xf_ref atol = ATOL
+                Test.@test pf ≈ pf_ref atol = ATOL
+                Test.@test pvf ≈ pvf_ref atol = ATOL
             end
 
             Test.@testset "scalar with variable_costate=false (default)" begin
@@ -231,8 +231,8 @@ function test_variable_costate_flows()
 
                 Test.@test xf isa Real
                 Test.@test pf isa Real
-                Test.@test xf ≈ xf_ref atol=ATOL
-                Test.@test pf ≈ pf_ref atol=ATOL
+                Test.@test xf ≈ xf_ref atol = ATOL
+                Test.@test pf ≈ pf_ref atol = ATOL
             end
 
             Test.@testset "vector with variable_costate=true" begin
@@ -249,9 +249,9 @@ function test_variable_costate_flows()
                 Test.@test xf isa AbstractVector && length(xf) == 2
                 Test.@test pf isa AbstractVector && length(pf) == 2
                 Test.@test pvf isa AbstractVector && length(pvf) == 2
-                Test.@test xf ≈ xf_ref atol=ATOL
-                Test.@test pf ≈ pf_ref atol=ATOL
-                Test.@test pvf ≈ pvf_ref atol=ATOL
+                Test.@test xf ≈ xf_ref atol = ATOL
+                Test.@test pf ≈ pf_ref atol = ATOL
+                Test.@test pvf ≈ pvf_ref atol = ATOL
             end
 
             Test.@testset "SVector with variable_costate=true" begin
@@ -271,9 +271,9 @@ function test_variable_costate_flows()
                 Test.@test length(xf) == 2
                 Test.@test length(pf) == 2
                 Test.@test length(pvf) == 2
-                Test.@test xf ≈ xf_ref atol=ATOL
-                Test.@test pf ≈ pf_ref atol=ATOL
-                Test.@test pvf ≈ pvf_ref atol=ATOL
+                Test.@test xf ≈ xf_ref atol = ATOL
+                Test.@test pf ≈ pf_ref atol = ATOL
+                Test.@test pvf ≈ pvf_ref atol = ATOL
             end
         end
 
@@ -291,9 +291,9 @@ function test_variable_costate_flows()
                 Test.@test xf isa Real
                 Test.@test pf isa Real
                 Test.@test pvf isa Real
-                Test.@test xf ≈ xf_ref atol=ATOL
-                Test.@test pf ≈ pf_ref atol=ATOL
-                Test.@test pvf ≈ pvf_ref atol=ATOL
+                Test.@test xf ≈ xf_ref atol = ATOL
+                Test.@test pf ≈ pf_ref atol = ATOL
+                Test.@test pvf ≈ pvf_ref atol = ATOL
             end
 
             Test.@testset "scalar vector-v with variable_costate=true" begin
@@ -309,9 +309,9 @@ function test_variable_costate_flows()
                 Test.@test xf isa Real
                 Test.@test pf isa Real
                 Test.@test pvf isa Real
-                Test.@test xf ≈ xf_ref atol=ATOL
-                Test.@test pf ≈ pf_ref atol=ATOL
-                Test.@test pvf ≈ pvf_ref atol=ATOL
+                Test.@test xf ≈ xf_ref atol = ATOL
+                Test.@test pf ≈ pf_ref atol = ATOL
+                Test.@test pvf ≈ pvf_ref atol = ATOL
             end
 
             Test.@testset "vector with variable_costate=true" begin
@@ -328,9 +328,9 @@ function test_variable_costate_flows()
                 Test.@test xf isa AbstractVector && length(xf) == 2
                 Test.@test pf isa AbstractVector && length(pf) == 2
                 Test.@test pvf isa AbstractVector && length(pvf) == 2
-                Test.@test xf ≈ xf_ref atol=ATOL
-                Test.@test pf ≈ pf_ref atol=ATOL
-                Test.@test pvf ≈ pvf_ref atol=ATOL
+                Test.@test xf ≈ xf_ref atol = ATOL
+                Test.@test pf ≈ pf_ref atol = ATOL
+                Test.@test pvf ≈ pvf_ref atol = ATOL
             end
 
             Test.@testset "comparison FakeADBackend vs DI" begin
@@ -349,9 +349,9 @@ function test_variable_costate_flows()
                     t0, x0, p0, tf; variable=v, variable_costate=true
                 )
 
-                Test.@test xf_f ≈ xf_d atol=ATOL
-                Test.@test pf_f ≈ pf_d atol=ATOL
-                Test.@test pvf_f ≈ pvf_d atol=ATOL
+                Test.@test xf_f ≈ xf_d atol = ATOL
+                Test.@test pf_f ≈ pf_d atol = ATOL
+                Test.@test pvf_f ≈ pvf_d atol = ATOL
             end
         end
 
@@ -368,8 +368,8 @@ function test_variable_costate_flows()
 
                 Test.@test xf isa Real
                 Test.@test pf isa Real
-                Test.@test xf ≈ xf_ref atol=ATOL
-                Test.@test pf ≈ pf_ref atol=ATOL
+                Test.@test xf ≈ xf_ref atol = ATOL
+                Test.@test pf ≈ pf_ref atol = ATOL
             end
         end
 
@@ -400,7 +400,7 @@ function test_variable_costate_flows()
 
         Test.@testset "Error: variable_costate=true on Fixed system" begin
             h_fixed = Data.Hamiltonian(
-                (x, p) -> 0.5*(sum(abs2, x) + sum(abs2, p));
+                (x, p) -> 0.5 * (sum(abs2, x) + sum(abs2, p));
                 is_autonomous=true,
                 is_variable=false,
             )
@@ -444,7 +444,7 @@ function test_variable_costate_flows()
         # (NoVariableCostate used to fall through to the "unknown capability" catch-all).
         Test.@testset "Error: variable_costate=true with trajectory config on Fixed system (#437)" begin
             h_fixed = Data.Hamiltonian(
-                (x, p) -> 0.5*(sum(abs2, x) + sum(abs2, p));
+                (x, p) -> 0.5 * (sum(abs2, x) + sum(abs2, p));
                 is_autonomous=true,
                 is_variable=false,
             )

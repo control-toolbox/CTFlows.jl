@@ -55,7 +55,8 @@ function _build_free_initial_time()
 end
 
 function test_free_initial_time()
-    Test.@testset "Free initial time — double integrator bang-bang (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Free initial time — double integrator bang-bang (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_free_initial_time()
 
         for ht in (:total, :partial)

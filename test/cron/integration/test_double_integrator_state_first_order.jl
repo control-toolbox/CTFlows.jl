@@ -57,7 +57,8 @@ function _build_di_first_order()
 end
 
 function test_double_integrator_state_first_order()
-    Test.@testset "Double integrator — 1st-order state constraint v≤v_max (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Double integrator — 1st-order state constraint v≤v_max (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_di_first_order()
         g(x) = _V_MAX - x[2]   # constraint g(x) ≥ 0
 

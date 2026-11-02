@@ -250,7 +250,7 @@ end
 # ==============================================================================
 
 function test_calling_multiphase()
-    Test.@testset "Calling Multiphase Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Calling Multiphase Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
         Test.@testset "_extract_initial_state" begin
             x0 = [1.0, 2.0]
             p0 = [0.5, 0.3]

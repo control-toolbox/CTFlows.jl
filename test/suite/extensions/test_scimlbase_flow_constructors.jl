@@ -22,7 +22,7 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # ==============================================================================
 
 function test_scimlbase_flow_constructors()
-    Test.@testset "SciMLBase Flow Constructors" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "SciMLBase Flow Constructors" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Flow(::AbstractODEFunction)
@@ -183,7 +183,7 @@ function test_scimlbase_flow_constructors()
                 flow = Flows.Flow(f; reltol=1e-10)
                 sol = flow((0.0, 1.0), [1.0]; variable=2.0)
                 Test.@test sol isa Trajectories.VectorFieldTrajectory
-                Test.@test sol(0.5)[1] ≈ exp(-2.0 * 0.5) rtol=1e-6
+                Test.@test sol(0.5)[1] ≈ exp(-2.0 * 0.5) rtol = 1e-6
             end
         end
 
@@ -194,7 +194,7 @@ function test_scimlbase_flow_constructors()
                 xf = flow(0.0, [1.0, 2.0], 1.0; variable=1.0)
                 Test.@test xf isa Vector
                 Test.@test length(xf) == 2
-                Test.@test xf ≈ [exp(-1.0), 2.0 * exp(-1.0)] rtol=1e-6
+                Test.@test xf ≈ [exp(-1.0), 2.0 * exp(-1.0)] rtol = 1e-6
             end
         end
 
@@ -206,7 +206,7 @@ function test_scimlbase_flow_constructors()
             )
             # 1-D = scalar (issue #357): a length-1 SVector u0 collapses to a scalar.
             Test.@test xf isa Real
-            Test.@test xf ≈ exp(-2.0) rtol=1e-6
+            Test.@test xf ≈ exp(-2.0) rtol = 1e-6
         end
     end
 end

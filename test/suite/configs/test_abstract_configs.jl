@@ -20,7 +20,7 @@ struct FakeConfig{X0} <:
 end
 
 function test_abstract_configs()
-    Test.@testset "Abstract Configs Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Abstract Configs Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Abstract Types

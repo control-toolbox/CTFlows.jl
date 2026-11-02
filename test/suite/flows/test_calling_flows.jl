@@ -194,7 +194,7 @@ end
 # ==============================================================================
 
 function test_calling_flows()
-    Test.@testset "Calling Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Calling Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - call function workflow

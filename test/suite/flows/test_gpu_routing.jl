@@ -25,7 +25,7 @@ const _TEST_H = Data.Hamiltonian(
 _test_vf() = Data.VectorField(x -> -x; is_autonomous=true, is_variable=false)
 
 function test_gpu_routing()
-    Test.@testset "GPU routing (method=:gpu)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "GPU routing (method=:gpu)" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # method → effective description (device token completion)

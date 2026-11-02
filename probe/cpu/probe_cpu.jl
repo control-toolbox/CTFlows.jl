@@ -148,8 +148,8 @@ cases = [
     ("Vector Complex", [1.0 + 2.0im, 3.0 + 4.0im]),
     ("MVector Complex", MVector{2}(1.0 + 2.0im, 3.0 + 4.0im)),
     ("SVector Complex", SA[1.0 + 2.0im, 3.0 + 4.0im]),
-    ("Matrix Complex", [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im]),
-    ("SMatrix Complex", SMatrix{2,2}(1.0+2.0im, 3.0+4.0im, 5.0+6.0im, 7.0+8.0im)),
+    ("Matrix Complex", [1.0 + 2.0im 5.0 + 6.0im; 3.0 + 4.0im 7.0 + 8.0im]),
+    ("SMatrix Complex", SMatrix{2,2}(1.0 + 2.0im, 3.0 + 4.0im, 5.0 + 6.0im, 7.0 + 8.0im)),
     ("Dual scalar", ForwardDiff.Dual(1.0, 1.0)),
     ("Dual Vector", [ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(2.0, 0.0)]),
     ("Dual MVector", MVector{2}(ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(2.0, 0.0))),
@@ -321,13 +321,13 @@ cases_hvf = [
     ("SVector Complex", SA[1.0 + 2.0im, 0.0 + 0.0im], SA[0.0 + 0.0im, 1.0 + 1.0im]),
     (
         "Matrix Complex",
-        [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im],
-        [0.0+0.0im 1.0+1.0im; 2.0+2.0im 3.0+3.0im],
+        [1.0 + 2.0im 5.0 + 6.0im; 3.0 + 4.0im 7.0 + 8.0im],
+        [0.0 + 0.0im 1.0 + 1.0im; 2.0 + 2.0im 3.0 + 3.0im],
     ),
     (
         "SMatrix Complex",
-        SMatrix{2,2}(1.0+2.0im, 3.0+4.0im, 5.0+6.0im, 7.0+8.0im),
-        SMatrix{2,2}(0.0+0.0im, 2.0+2.0im, 1.0+1.0im, 3.0+3.0im),
+        SMatrix{2,2}(1.0 + 2.0im, 3.0 + 4.0im, 5.0 + 6.0im, 7.0 + 8.0im),
+        SMatrix{2,2}(0.0 + 0.0im, 2.0 + 2.0im, 1.0 + 1.0im, 3.0 + 3.0im),
     ),
     ("Dual scalar", ForwardDiff.Dual(1.0, 1.0), ForwardDiff.Dual(0.0, 0.0)),
     (
@@ -516,13 +516,13 @@ cases_had = [
     ("SVector Complex", SA[1.0 + 2.0im, 0.0 + 0.0im], SA[0.0 + 0.0im, 1.0 + 1.0im]),
     (
         "Matrix Complex",
-        [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im],
-        [0.0+0.0im 1.0+1.0im; 2.0+2.0im 3.0+3.0im],
+        [1.0 + 2.0im 5.0 + 6.0im; 3.0 + 4.0im 7.0 + 8.0im],
+        [0.0 + 0.0im 1.0 + 1.0im; 2.0 + 2.0im 3.0 + 3.0im],
     ),
     (
         "SMatrix Complex",
-        SMatrix{2,2}(1.0+2.0im, 3.0+4.0im, 5.0+6.0im, 7.0+8.0im),
-        SMatrix{2,2}(0.0+0.0im, 2.0+2.0im, 1.0+1.0im, 3.0+3.0im),
+        SMatrix{2,2}(1.0 + 2.0im, 3.0 + 4.0im, 5.0 + 6.0im, 7.0 + 8.0im),
+        SMatrix{2,2}(0.0 + 0.0im, 2.0 + 2.0im, 1.0 + 1.0im, 3.0 + 3.0im),
     ),
 ]
 

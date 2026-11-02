@@ -69,7 +69,8 @@ function _build_si_nonautonomous()
 end
 
 function test_simple_integrator_state_and_control_constraints_nonautonomous()
-    Test.@testset "Simple integrator — state+control nonautonomous 0C0 (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Simple integrator — state+control nonautonomous 0C0 (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_si_nonautonomous()
 
         # State constraint function g(t, x) = 1 - x - (t-2)²

@@ -46,7 +46,7 @@ end
 const OCP = _build_lqr()
 
 function test_ocp_concatenation()
-    Test.@testset "OCP flow concatenation" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "OCP flow concatenation" verbose = VERBOSE showtiming = SHOWTIMING begin
         x0, p0, t0, tf, ts = 1.0, 0.5, 0.0, 1.0, 0.5
 
         # ── split invariance: split a flow at ts with the same law ⇒ single flow ──

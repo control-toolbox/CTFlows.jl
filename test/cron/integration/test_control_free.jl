@@ -87,7 +87,8 @@ function _build_harmonic_oscillator()
 end
 
 function test_control_free()
-    Test.@testset "Control-free parameter optimization" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Control-free parameter optimization" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
 
         # -------------------------------------------------------------------
         # F.1 — Exponential growth rate estimation

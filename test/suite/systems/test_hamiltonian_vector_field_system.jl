@@ -45,7 +45,8 @@ Base.getindex(a::FakeGPUArray, I::AbstractUnitRange) = FakeGPUArray(a.data[I])
 Base.getindex(a::FakeGPUArray, I::AbstractUnitRange, ::Colon) = FakeGPUArray(a.data[I, :])
 
 function test_hamiltonian_vector_field_system()
-    Test.@testset "Hamiltonian Vector Field System Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Hamiltonian Vector Field System Tests" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Construction
@@ -123,7 +124,7 @@ function test_hamiltonian_vector_field_system()
             u_mat = [1.0 2.0; 3.0 4.0; 5.0 6.0; 7.0 8.0]  # x = [1 2; 3 4], p = [5 6; 7 8]
             du_mat = zeros(4, 2)
             rhs_mat(du_mat, u_mat, p, 0.0)
-            Test.@test du_mat ≈ [1.0 2.0; 3.0 4.0; -5.0 -6.0; -7.0 -8.0] atol=1e-10
+            Test.@test du_mat ≈ [1.0 2.0; 3.0 4.0; -5.0 -6.0; -7.0 -8.0] atol = 1e-10
         end
 
         # ====================================================================
@@ -158,7 +159,7 @@ function test_hamiltonian_vector_field_system()
             rhs_oop_mat = Systems.get_oop_rhs(sys, config_mat)
             u_mat = [1.0 2.0; 3.0 4.0; 5.0 6.0; 7.0 8.0]  # x = [1 2; 3 4], p = [5 6; 7 8]
             du_mat = rhs_oop_mat(u_mat, p, 0.0)
-            Test.@test du_mat ≈ [1.0 2.0; 3.0 4.0; -5.0 -6.0; -7.0 -8.0] atol=1e-10
+            Test.@test du_mat ≈ [1.0 2.0; 3.0 4.0; -5.0 -6.0; -7.0 -8.0] atol = 1e-10
         end
 
         # ====================================================================
@@ -173,48 +174,50 @@ function test_hamiltonian_vector_field_system()
             p_param = Systems.ODEParameters(nothing)
 
             Test.@testset "get_ip_rhs - complex vector" begin
-                x0 = [1.0+2.0im]
-                p0 = [3.0+4.0im]
+                x0 = [1.0 + 2.0im]
+                p0 = [3.0 + 4.0im]
                 config = Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0)
                 rhs = Systems.get_ip_rhs(sys, config)
                 # x = [1+2im], p = [3+4im]  →  dx = x, dp = -p
-                u = [1.0+2.0im, 3.0+4.0im]
+                u = [1.0 + 2.0im, 3.0 + 4.0im]
                 du = zeros(ComplexF64, 2)
                 rhs(du, u, p_param, 0.0)
-                Test.@test du ≈ [1.0+2.0im, -3.0-4.0im] atol=1e-10
+                Test.@test du ≈ [1.0 + 2.0im, -3.0 - 4.0im] atol = 1e-10
             end
 
             Test.@testset "get_oop_rhs - complex vector" begin
-                x0 = [1.0+2.0im]
-                p0 = [3.0+4.0im]
+                x0 = [1.0 + 2.0im]
+                p0 = [3.0 + 4.0im]
                 config = Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0)
                 rhs_oop = Systems.get_oop_rhs(sys, config)
-                u = [1.0+2.0im, 3.0+4.0im]
+                u = [1.0 + 2.0im, 3.0 + 4.0im]
                 du = rhs_oop(u, p_param, 0.0)
-                Test.@test du ≈ [1.0+2.0im, -3.0-4.0im] atol=1e-10
+                Test.@test du ≈ [1.0 + 2.0im, -3.0 - 4.0im] atol = 1e-10
             end
 
             Test.@testset "get_ip_rhs - complex matrix" begin
-                x0 = [1.0+2.0im 5.0+6.0im]
-                p0 = [3.0+4.0im 7.0+8.0im]
+                x0 = [1.0 + 2.0im 5.0 + 6.0im]
+                p0 = [3.0 + 4.0im 7.0 + 8.0im]
                 config = Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0)
                 rhs = Systems.get_ip_rhs(sys, config)
                 # x = [1+2im  5+6im], p = [3+4im  7+8im]
-                u = [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im]
+                u = [1.0 + 2.0im 5.0 + 6.0im; 3.0 + 4.0im 7.0 + 8.0im]
                 du = zeros(ComplexF64, 2, 2)
                 rhs(du, u, p_param, 0.0)
                 # dx = x = rows 1, dp = -p = rows 2 negated
-                Test.@test du ≈ [1.0+2.0im 5.0+6.0im; -3.0-4.0im -7.0-8.0im] atol=1e-10
+                Test.@test du ≈ [1.0 + 2.0im 5.0 + 6.0im; -3.0 - 4.0im -7.0 - 8.0im] atol =
+                    1e-10
             end
 
             Test.@testset "get_oop_rhs - complex matrix" begin
-                x0 = [1.0+2.0im 5.0+6.0im]
-                p0 = [3.0+4.0im 7.0+8.0im]
+                x0 = [1.0 + 2.0im 5.0 + 6.0im]
+                p0 = [3.0 + 4.0im 7.0 + 8.0im]
                 config = Configs.HamiltonianEndPointConfig(0.0, x0, p0, 1.0)
                 rhs_oop = Systems.get_oop_rhs(sys, config)
-                u = [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im]
+                u = [1.0 + 2.0im 5.0 + 6.0im; 3.0 + 4.0im 7.0 + 8.0im]
                 du = rhs_oop(u, p_param, 0.0)
-                Test.@test du ≈ [1.0+2.0im 5.0+6.0im; -3.0-4.0im -7.0-8.0im] atol=1e-10
+                Test.@test du ≈ [1.0 + 2.0im 5.0 + 6.0im; -3.0 - 4.0im -7.0 - 8.0im] atol =
+                    1e-10
             end
         end
 

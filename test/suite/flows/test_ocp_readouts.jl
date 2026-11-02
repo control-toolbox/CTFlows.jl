@@ -16,7 +16,7 @@ const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 function test_ocp_readouts()
-    Test.@testset "OCP readouts — _control_of" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "OCP readouts — _control_of" verbose = VERBOSE showtiming = SHOWTIMING begin
         x = _ -> 2.0    # constant state callable  x(t) = 2
         p = _ -> 3.0    # constant costate callable p(t) = 3
         v = nothing

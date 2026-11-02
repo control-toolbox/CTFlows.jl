@@ -55,7 +55,8 @@ function test_double_integrator_state()
     # ==========================================================================
     # Case 1: Touch point (a = 0.2)
     # ==========================================================================
-    Test.@testset "Double integrator — 2nd-order touch point a=0.2 (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Double integrator — 2nd-order touch point a=0.2 (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         a = 0.2
         ocp = _build_di(a)
         g(x) = a - x[1]   # constraint g(x) ≥ 0
@@ -128,7 +129,8 @@ function test_double_integrator_state()
     # ==========================================================================
     # Case 2: Boundary arc (a = 0.1)
     # ==========================================================================
-    Test.@testset "Double integrator — 2nd-order boundary arc a=0.1 (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Double integrator — 2nd-order boundary arc a=0.1 (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         a = 0.1
         ocp = _build_di(a)
         g(x) = a - x[1]   # constraint g(x) ≥ 0

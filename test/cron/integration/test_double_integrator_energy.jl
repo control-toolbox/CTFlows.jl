@@ -43,7 +43,8 @@ function _build_di_energy()
 end
 
 function test_double_integrator_energy()
-    Test.@testset "Double integrator — energy-optimal smooth (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Double integrator — energy-optimal smooth (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_di_energy()
 
         for ht in (:total, :partial)

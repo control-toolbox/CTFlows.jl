@@ -14,7 +14,7 @@ const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 function test_automatic_grid()
-    Test.@testset "AutomaticGrid" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "AutomaticGrid" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ── UNIT: construction and defaults ─────────────────────────────────
         Test.@testset "default is AdaptiveGrid(250), uniform share 0.1" begin

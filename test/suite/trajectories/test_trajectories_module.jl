@@ -106,7 +106,7 @@ const _LAW_UNIFY = Data.DynClosedLoop((x, p) -> p[2])
 # ============================================================================
 
 function test_trajectories_module()
-    Test.@testset "Trajectories Module Exports" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Trajectories Module Exports" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # Module availability

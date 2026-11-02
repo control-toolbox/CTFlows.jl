@@ -49,7 +49,8 @@ function _build_di_consumption()
 end
 
 function test_double_integrator_consumption()
-    Test.@testset "Double integrator — consumption bang-off-bang (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Double integrator — consumption bang-off-bang (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_di_consumption()
 
         for ht in (:total, :partial)

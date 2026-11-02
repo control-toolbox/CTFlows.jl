@@ -128,7 +128,7 @@ const OCP_NANF_MAYER = _build_ocp_nonauton_nonfixed_mayer()
 # =============================================================================
 
 function test_ocp_hamiltonian()
-    Test.@testset "OCP Hamiltonian Function" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "OCP Hamiltonian Function" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ── call methods ──────────────────────────────────────────────────────
 

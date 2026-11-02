@@ -52,7 +52,8 @@ const F_SCF = SciMLBase.ODEFunction{false}((u, p, t) -> -p .* u)
 # ==============================================================================
 
 function test_vector_field_trajectory_shapes()
-    Test.@testset "VectorFieldTrajectory Shape Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "VectorFieldTrajectory Shape Tests" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
 
         # ====================================================================
         # Flow(VectorField) — VectorFieldSystem
@@ -64,36 +65,36 @@ function test_vector_field_trajectory_shapes()
             Test.@testset "scalar x0 → scalar output" begin
                 xf = flow(0.0, 1.0, 1.0)
                 Test.@test xf isa Real
-                Test.@test first(xf) ≈ E atol=ATOL
+                Test.@test first(xf) ≈ E atol = ATOL
 
                 sol = flow((0.0, 1.0), 1.0)
                 Test.@test sol isa Trajectories.VectorFieldTrajectory
                 x = Trajectories.state(sol)(1.0)
                 Test.@test x isa Real
-                Test.@test first(x) ≈ E atol=ATOL
+                Test.@test first(x) ≈ E atol = ATOL
             end
 
             Test.@testset "length-1 Vector x0 → scalar output (coerced, like Hamiltonian family)" begin
                 xf = flow(0.0, [1.0], 1.0)
                 Test.@test xf isa Real
-                Test.@test first(xf) ≈ E atol=ATOL
+                Test.@test first(xf) ≈ E atol = ATOL
 
                 sol = flow((0.0, 1.0), [1.0])
                 x = Trajectories.state(sol)(1.0)
                 Test.@test x isa Real
-                Test.@test first(x) ≈ E atol=ATOL
+                Test.@test first(x) ≈ E atol = ATOL
             end
 
             Test.@testset "length-1 SVector x0 → scalar output (coerced)" begin
                 xf = flow(0.0, SA[1.0], 1.0)
                 Test.@test xf isa Real
-                Test.@test first(xf) ≈ E atol=ATOL
+                Test.@test first(xf) ≈ E atol = ATOL
             end
 
             Test.@testset "vector x0 → vector output (unaffected by the fix)" begin
                 xf = flow(0.0, [1.0, 2.0], 1.0)
                 Test.@test xf isa AbstractVector && length(xf) == 2
-                Test.@test xf ≈ [1.0, 2.0] .* E atol=ATOL
+                Test.@test xf ≈ [1.0, 2.0] .* E atol = ATOL
 
                 sol = flow((0.0, 1.0), [1.0, 2.0])
                 x = Trajectories.state(sol)(1.0)
@@ -115,12 +116,12 @@ function test_vector_field_trajectory_shapes()
             Test.@testset "complex scalar x0 → complex scalar output" begin
                 xf = flow(0.0, 1.0 + 2.0im, 1.0)
                 Test.@test xf isa Complex
-                Test.@test first(xf) ≈ (1.0 + 2.0im) * E atol=ATOL
+                Test.@test first(xf) ≈ (1.0 + 2.0im) * E atol = ATOL
 
                 sol = flow((0.0, 1.0), 1.0 + 2.0im)
                 x = Trajectories.state(sol)(1.0)
                 Test.@test x isa Complex
-                Test.@test first(x) ≈ (1.0 + 2.0im) * E atol=ATOL
+                Test.@test first(x) ≈ (1.0 + 2.0im) * E atol = ATOL
             end
         end
 
@@ -138,18 +139,18 @@ function test_vector_field_trajectory_shapes()
             Test.@testset "scalar x0 → scalar output" begin
                 xf = flow(0.0, 1.0, 1.0; variable=1.0)
                 Test.@test xf isa Real
-                Test.@test first(xf) ≈ E atol=ATOL
+                Test.@test first(xf) ≈ E atol = ATOL
 
                 sol = flow((0.0, 1.0), 1.0; variable=1.0)
                 x = Trajectories.state(sol)(1.0)
                 Test.@test x isa Real
-                Test.@test first(x) ≈ E atol=ATOL
+                Test.@test first(x) ≈ E atol = ATOL
             end
 
             Test.@testset "length-1 Vector x0 → scalar output (coerced)" begin
                 xf = flow(0.0, [1.0], 1.0; variable=1.0)
                 Test.@test xf isa Real
-                Test.@test first(xf) ≈ E atol=ATOL
+                Test.@test first(xf) ≈ E atol = ATOL
             end
 
             Test.@testset "vector x0 → vector output (unaffected by the fix)" begin
@@ -173,18 +174,18 @@ function test_vector_field_trajectory_shapes()
             Test.@testset "scalar x0 stays scalar" begin
                 xf = flow(0.0, 1.0, 1.0; variable=1.0)
                 Test.@test xf isa Real
-                Test.@test first(xf) ≈ E atol=ATOL
+                Test.@test first(xf) ≈ E atol = ATOL
 
                 result = flow((0.0, 1.0), 1.0; variable=1.0)
                 x = Integrators.evaluate_at(result, 1.0)
                 Test.@test x isa Real
-                Test.@test first(x) ≈ E atol=ATOL
+                Test.@test first(x) ≈ E atol = ATOL
             end
 
             Test.@testset "length-1 vector x0 stays length-1 vector" begin
                 xf = flow(0.0, [1.0], 1.0; variable=1.0)
                 Test.@test xf isa AbstractVector && length(xf) == 1
-                Test.@test first(xf) ≈ E atol=ATOL
+                Test.@test first(xf) ≈ E atol = ATOL
 
                 result = flow((0.0, 1.0), [1.0]; variable=1.0)
                 x = Integrators.evaluate_at(result, 1.0)

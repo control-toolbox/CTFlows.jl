@@ -63,7 +63,7 @@ const OCP_CF = _build_control_free()
 const OCP_2D = _build_ocp_2d()
 
 function test_state_control_flows()
-    Test.@testset "State control flows" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "State control flows" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ── ClosedLoop from an OCP: g(x) = -x + (-x) = -2x ⇒ x(t) = x0·e^{-2t} ──
 

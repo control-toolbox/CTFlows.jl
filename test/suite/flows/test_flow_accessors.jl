@@ -146,7 +146,7 @@ const TRAIT_CASES = (
 )
 
 function test_flow_accessors()
-    Test.@testset "Flow accessors (issue #438)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Flow accessors (issue #438)" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # every accessor on every flow: a value or an IncorrectArgument

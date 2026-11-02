@@ -50,7 +50,7 @@ function _apply(traj, spec=Configs.AutomaticGrid())
 end
 
 function test_default_grid()
-    Test.@testset "Default output grid" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Default output grid" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ── UNIT: the keyword default ───────────────────────────────────────
         Test.@testset "__grid() is NotProvided" begin

@@ -108,7 +108,8 @@ const OCP_GPU_CF = _build_gpu_cf_ocp()
 const OCP_GPU_CTRL = _build_gpu_ctrl_ocp()
 
 function test_gpu_flows()
-    Test.@testset "GPU flows (Family-B, device execution)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "GPU flows (Family-B, device execution)" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
         if Main.TestCapabilities.ON_GPU_RUNNER
             Test.@test Main.TestCapabilities.CUDA_FUNCTIONAL   # fails loudly if the GPU runner lost its device
         elseif !Main.TestCapabilities.CUDA_FUNCTIONAL

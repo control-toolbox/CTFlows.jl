@@ -81,7 +81,8 @@ function _build_singular_control()
 end
 
 function test_singular_control()
-    Test.@testset "Singular control — 3D steering time-optimal (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Singular control — 3D steering time-optimal (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_singular_control()
 
         for ht in (:total, :partial)

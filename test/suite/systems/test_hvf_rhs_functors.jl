@@ -44,7 +44,7 @@ const FakeHVFAugIPNA =
     end
 
 function test_hvf_rhs_functors()
-    Test.@testset "HVF RHS Functors Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "HVF RHS Functors Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # =============================================================================
         # Test hierarchy

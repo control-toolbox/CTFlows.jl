@@ -102,7 +102,8 @@ _bang_law(x, p) = [p[3], p[4]] / sqrt(p[3]^2 + p[4]^2)
 _off_law(x, p) = [0.0, 0.0]
 
 function test_orbital_transfer_consumption()
-    Test.@testset "Orbital transfer — consumption B+B0B+B0B+ (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Orbital transfer — consumption B+B0B+B0B+ (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_orbital_transfer_consumption()
 
         for ht in (:total, :partial)

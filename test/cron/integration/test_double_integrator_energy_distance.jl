@@ -45,7 +45,8 @@ function _build_di_energy_distance()
 end
 
 function test_double_integrator_energy_distance()
-    Test.@testset "Double integrator — energy/distance Bolza (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Double integrator — energy/distance Bolza (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_di_energy_distance()
 
         for ht in (:total, :partial)

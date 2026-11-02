@@ -11,7 +11,8 @@ const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 function test_pseudo_hamiltonian_vector_field_system()
-    Test.@testset "Pseudo-Hamiltonian Vector Field System Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Pseudo-Hamiltonian Vector Field System Tests" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Construction
@@ -90,7 +91,7 @@ function test_pseudo_hamiltonian_vector_field_system()
             u_mat = [1.0 2.0; 3.0 4.0; 5.0 6.0; 7.0 8.0]  # x = [1 2; 3 4], p = [5 6; 7 8]
             du_mat = zeros(4, 2)
             rhs_mat(du_mat, u_mat, p, 0.0)
-            Test.@test du_mat ≈ [1.0 2.0; 3.0 4.0; -5.0 -6.0; -7.0 -8.0] atol=1e-10
+            Test.@test du_mat ≈ [1.0 2.0; 3.0 4.0; -5.0 -6.0; -7.0 -8.0] atol = 1e-10
         end
 
         # ====================================================================
@@ -137,11 +138,11 @@ function test_pseudo_hamiltonian_vector_field_system()
             u = [1.0 + 2.0im, 3.0 + 4.0im]
             du = zeros(ComplexF64, 2)
             rhs(du, u, p_param, 0.0)
-            Test.@test du ≈ [1.0 + 2.0im, -3.0 - 4.0im] atol=1e-10
+            Test.@test du ≈ [1.0 + 2.0im, -3.0 - 4.0im] atol = 1e-10
 
             rhs_oop = Systems.get_oop_rhs(sys, config)
             du_oop = rhs_oop(u, p_param, 0.0)
-            Test.@test du_oop ≈ [1.0 + 2.0im, -3.0 - 4.0im] atol=1e-10
+            Test.@test du_oop ≈ [1.0 + 2.0im, -3.0 - 4.0im] atol = 1e-10
         end
 
         # ====================================================================

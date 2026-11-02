@@ -82,7 +82,8 @@ end
 # ==============================================================================
 
 function test_goddard_ocp()
-    Test.@testset "Goddard OCP-built flows — :total / :partial" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Goddard OCP-built flows — :total / :partial" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
 
         # Lie brackets / controls / multiplier (same as test_goddard.jl)
         H0 = CTLie.Lift(_godd_F0)

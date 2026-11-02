@@ -44,7 +44,7 @@ end
 const OCP = _build_lqr()
 
 function test_switch_time_convention()
-    Test.@testset "Switch-time convention" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Switch-time convention" verbose = VERBOSE showtiming = SHOWTIMING begin
         ts = 0.5
 
         Test.@testset "state flow, state jump" begin

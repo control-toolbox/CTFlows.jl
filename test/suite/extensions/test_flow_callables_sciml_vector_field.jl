@@ -34,7 +34,8 @@ const ATOL = 1e-5
 # ==============================================================================
 
 function test_flow_callables_sciml_vector_field()
-    Test.@testset "Flow Callables SciML VectorField Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Flow Callables SciML VectorField Tests" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
 
         # ====================================================================
         # INTEGRATION TESTS - StateFlow StateEndPointConfig
@@ -46,55 +47,56 @@ function test_flow_callables_sciml_vector_field()
             Test.@testset "scalar Real x0" begin
                 xf = flow(0.0, 1.0, 1.0)
                 Test.@test xf isa Real
-                Test.@test xf ≈ exp(-1.0) atol=ATOL
+                Test.@test xf ≈ exp(-1.0) atol = ATOL
             end
 
             Test.@testset "vector x0" begin
                 xf = flow(0.0, [1.0, 2.0], 1.0)
                 Test.@test xf isa AbstractVector
                 Test.@test length(xf) == 2
-                Test.@test xf ≈ [exp(-1.0), 2*exp(-1.0)] atol=ATOL
+                Test.@test xf ≈ [exp(-1.0), 2 * exp(-1.0)] atol = ATOL
             end
 
             Test.@testset "SVector x0" begin
                 xf = flow(0.0, SA[1.0, 2.0], 1.0)
                 Test.@test xf isa AbstractVector
                 Test.@test length(xf) == 2
-                Test.@test xf ≈ [exp(-1.0), 2*exp(-1.0)] atol=ATOL
+                Test.@test xf ≈ [exp(-1.0), 2 * exp(-1.0)] atol = ATOL
             end
 
             Test.@testset "MVector x0" begin
                 xf = flow(0.0, MVector{2}(1.0, 2.0), 1.0)
                 Test.@test xf isa AbstractVector
                 Test.@test length(xf) == 2
-                Test.@test xf ≈ [exp(-1.0), 2*exp(-1.0)] atol=ATOL
+                Test.@test xf ≈ [exp(-1.0), 2 * exp(-1.0)] atol = ATOL
             end
 
             Test.@testset "scalar complex x0" begin
-                xf = flow(0.0, 1.0+2.0im, 1.0)
+                xf = flow(0.0, 1.0 + 2.0im, 1.0)
                 Test.@test xf isa Complex
-                Test.@test xf ≈ (1.0+2.0im) * exp(-1.0) atol=ATOL
+                Test.@test xf ≈ (1.0 + 2.0im) * exp(-1.0) atol = ATOL
             end
 
             Test.@testset "complex vector x0" begin
-                xf = flow(0.0, [1.0+2.0im, 3.0+4.0im], 1.0)
+                xf = flow(0.0, [1.0 + 2.0im, 3.0 + 4.0im], 1.0)
                 Test.@test xf isa AbstractVector
                 Test.@test length(xf) == 2
-                Test.@test xf ≈ [1.0+2.0im, 3.0+4.0im] * exp(-1.0) atol=ATOL
+                Test.@test xf ≈ [1.0 + 2.0im, 3.0 + 4.0im] * exp(-1.0) atol = ATOL
             end
 
             Test.@testset "SVector complex x0" begin
                 xf = flow(0.0, SA[1.0 + 2.0im, 3.0 + 4.0im], 1.0)
                 Test.@test xf isa AbstractVector
                 Test.@test length(xf) == 2
-                Test.@test xf ≈ [exp(-1.0)*(1.0+2.0im), exp(-1.0)*(3.0+4.0im)] atol=ATOL
+                Test.@test xf ≈ [exp(-1.0) * (1.0 + 2.0im), exp(-1.0) * (3.0 + 4.0im)] atol =
+                    ATOL
             end
 
             Test.@testset "ForwardDiff.Dual scalar x0" begin
                 x0 = ForwardDiff.Dual(1.0, 1.0)
                 xf = flow(0.0, x0, 1.0)
                 Test.@test xf isa ForwardDiff.Dual
-                Test.@test ForwardDiff.value(xf) ≈ exp(-1.0) atol=ATOL
+                Test.@test ForwardDiff.value(xf) ≈ exp(-1.0) atol = ATOL
             end
 
             Test.@testset "ForwardDiff.Dual vector x0" begin
@@ -102,8 +104,8 @@ function test_flow_callables_sciml_vector_field()
                 xf = flow(0.0, x0, 1.0)
                 Test.@test xf isa AbstractVector
                 Test.@test length(xf) == 2
-                Test.@test ForwardDiff.value(xf[1]) ≈ exp(-1.0) atol=ATOL
-                Test.@test ForwardDiff.value(xf[2]) ≈ 2*exp(-1.0) atol=ATOL
+                Test.@test ForwardDiff.value(xf[1]) ≈ exp(-1.0) atol = ATOL
+                Test.@test ForwardDiff.value(xf[2]) ≈ 2 * exp(-1.0) atol = ATOL
             end
 
             Test.@testset "matrix x0" begin
@@ -111,21 +113,21 @@ function test_flow_callables_sciml_vector_field()
                 Xf = flow(0.0, X0, 1.0)
                 Test.@test Xf isa AbstractMatrix
                 Test.@test size(Xf) == (2, 2)
-                Test.@test Xf ≈ X0 * exp(-1.0) atol=ATOL
+                Test.@test Xf ≈ X0 * exp(-1.0) atol = ATOL
             end
 
             Test.@testset "complex matrix x0" begin
-                X0 = [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im]
+                X0 = [1.0 + 2.0im 5.0 + 6.0im; 3.0 + 4.0im 7.0 + 8.0im]
                 Xf = flow(0.0, X0, 1.0)
                 Test.@test Xf isa AbstractMatrix
                 Test.@test size(Xf) == (2, 2)
-                Test.@test Xf ≈ X0 * exp(-1.0) atol=ATOL
+                Test.@test Xf ≈ X0 * exp(-1.0) atol = ATOL
             end
 
             Test.@testset "length-1 vector x0 → scalar output (1-D = scalar, issue #357)" begin
                 xf = flow(0.0, [1.0], 1.0)
                 Test.@test xf isa Real
-                Test.@test xf ≈ exp(-1.0) atol=ATOL
+                Test.@test xf ≈ exp(-1.0) atol = ATOL
             end
 
             Test.@testset "1×1 matrix x0 → matrix output" begin
@@ -133,7 +135,7 @@ function test_flow_callables_sciml_vector_field()
                 Xf = flow(0.0, X0, 1.0)
                 Test.@test Xf isa AbstractMatrix   # must NOT collapse to scalar
                 Test.@test size(Xf) == (1, 1)
-                Test.@test Xf ≈ fill(exp(-1.0), 1, 1) atol=ATOL
+                Test.@test Xf ≈ fill(exp(-1.0), 1, 1) atol = ATOL
             end
         end
 
@@ -174,19 +176,19 @@ function test_flow_callables_sciml_vector_field()
 
             Test.@testset "IP VF + Vector u0 (no warning)" begin
                 xf = flow(0.0, [1.0, 2.0], 1.0)
-                Test.@test xf ≈ [exp(-1.0), 2*exp(-1.0)] atol=ATOL
+                Test.@test xf ≈ [exp(-1.0), 2 * exp(-1.0)] atol = ATOL
             end
 
             Test.@testset "IP VF + SVector u0 (warns)" begin
                 xf = Test.@test_logs (:warn, r"InPlace VectorField") flow(
                     0.0, SA[1.0, 2.0], 1.0
                 )
-                Test.@test xf ≈ [exp(-1.0), 2*exp(-1.0)] atol=ATOL
+                Test.@test xf ≈ [exp(-1.0), 2 * exp(-1.0)] atol = ATOL
             end
 
             Test.@testset "IP VF + MVector u0 (no warning)" begin
                 xf = flow(0.0, MVector{2}(1.0, 2.0), 1.0)
-                Test.@test xf ≈ [exp(-1.0), 2*exp(-1.0)] atol=ATOL
+                Test.@test xf ≈ [exp(-1.0), 2 * exp(-1.0)] atol = ATOL
             end
         end
     end

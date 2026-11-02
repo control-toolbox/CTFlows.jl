@@ -14,7 +14,7 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # ==============================================================================
 
 function test_default()
-    Test.@testset "Default Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Default Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Default Value Functions

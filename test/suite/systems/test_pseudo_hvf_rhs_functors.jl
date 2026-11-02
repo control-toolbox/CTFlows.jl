@@ -43,7 +43,7 @@ const _law_fixed = Data.DynClosedLoop((x, p) -> x)
 const _law_nonfixed = Data.DynClosedLoop((x, p, v) -> x; is_variable=true)
 
 function test_pseudo_hvf_rhs_functors()
-    Test.@testset "PseudoHVF RHS Functors Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "PseudoHVF RHS Functors Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # =============================================================================
         # Test hierarchy

@@ -74,7 +74,8 @@ _ev(g, x) = g(0.0, x, 0.0, Float64[])
 const μ = (x, p) -> 2x
 
 function test_constraint_label_bounds()
-    Test.@testset "constraint=:label bounds (issue #440)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "constraint=:label bounds (issue #440)" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
 
         # ====================================================================
         # the normalised g
