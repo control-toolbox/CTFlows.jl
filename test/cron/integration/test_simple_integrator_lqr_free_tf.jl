@@ -49,7 +49,8 @@ function _build_simple_integrator_lqr_free_tf()
 end
 
 function test_simple_integrator_lqr_free_tf()
-    Test.@testset "Simple integrator — LQR Bolza free tf (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Simple integrator — LQR Bolza free tf (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_simple_integrator_lqr_free_tf()
 
         for ht in (:total, :partial)

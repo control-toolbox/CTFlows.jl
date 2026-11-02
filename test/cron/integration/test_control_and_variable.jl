@@ -91,7 +91,7 @@ function _build_harmonic_oscillator_control()
 end
 
 function test_control_and_variable()
-    Test.@testset "Control + variable parameter" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Control + variable parameter" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # -------------------------------------------------------------------
         # G.1 — Exponential growth with control

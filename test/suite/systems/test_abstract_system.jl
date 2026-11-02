@@ -59,7 +59,7 @@ end
 # ==============================================================================
 
 function test_abstract_system()
-    Test.@testset "Abstract System Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Abstract System Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Abstract Types
@@ -102,14 +102,14 @@ function test_abstract_system()
                 t = 0.0
                 # Should not throw - signature is correct
                 rhs(du, u, p, t)
-                Test.@test du ≈ [3.0, 8.0] atol=1e-10
+                Test.@test du ≈ [3.0, 8.0] atol = 1e-10
             end
 
             Test.@testset "get_ip_rhs function fills du in place" begin
                 rhs = Systems.get_ip_rhs(sys, dummy_config)
                 du = zeros(2)
                 rhs(du, [3.0, 4.0], [], 0.0)
-                Test.@test du ≈ [3.0, 8.0] atol=1e-10
+                Test.@test du ≈ [3.0, 8.0] atol = 1e-10
             end
 
             Test.@testset "get_ip_rhs function uses system data" begin
@@ -121,8 +121,8 @@ function test_abstract_system()
                 du2 = zeros(2)
                 rhs1(du1, [1.0, 1.0], [], 0.0)
                 rhs2(du2, [1.0, 1.0], [], 0.0)
-                Test.@test du1 ≈ [2.0, 3.0] atol=1e-10
-                Test.@test du2 ≈ [0.5, 1.0] atol=1e-10
+                Test.@test du1 ≈ [2.0, 3.0] atol = 1e-10
+                Test.@test du2 ≈ [0.5, 1.0] atol = 1e-10
             end
         end
 

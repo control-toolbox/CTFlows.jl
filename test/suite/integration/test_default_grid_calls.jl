@@ -76,7 +76,8 @@ end
 _no_warning(f) = Test.@test_logs min_level = Base.CoreLogging.Warn f()
 
 function test_default_grid_calls()
-    Test.@testset "default output grid (issue #446)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "default output grid (issue #446)" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
 
         # ── every kind of flow gets the default grid ─────────────────────────
         Test.@testset "Flow(ocp, DynClosedLoop) → Solution" begin

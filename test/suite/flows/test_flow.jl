@@ -87,7 +87,7 @@ end
 # ==============================================================================
 
 function test_flow()
-    Test.@testset "Flow Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Flow Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Flow Construction

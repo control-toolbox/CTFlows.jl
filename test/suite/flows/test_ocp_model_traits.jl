@@ -35,7 +35,7 @@ function _build_ocp_auton_nonfixed()
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.variable!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=v[1]*x[1]; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=v[1] * x[1]; nothing))
     CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf[1])
     return CTModels.Building.build(pre)
 end
@@ -46,7 +46,7 @@ function _build_ocp_nonauton_nonfixed()
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
     CTModels.Building.variable!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=t*v[1]*x[1]; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=t * v[1] * x[1]; nothing))
     CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf[1])
     return CTModels.Building.build(pre)
 end
@@ -56,7 +56,7 @@ function _build_ocp_nonauton_fixed()
     CTModels.Building.time_dependence!(pre; autonomous=false)
     CTModels.Building.time!(pre; t0=0.0, tf=1.0)
     CTModels.Building.state!(pre, 1)
-    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=t*x[1]; nothing))
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=t * x[1]; nothing))
     CTModels.Building.objective!(pre, :min; mayer=(x0, xf, v) -> xf[1])
     return CTModels.Building.build(pre)
 end
@@ -69,7 +69,7 @@ const OCP_NONAUTON_FIXED = _build_ocp_nonauton_fixed()
 # =============================================================================
 
 function test_ocp_model_traits()
-    Test.@testset "OCP Model Traits" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "OCP Model Traits" verbose = VERBOSE showtiming = SHOWTIMING begin
         Test.@testset "Unit: time_dependence" begin
             Test.@test Traits.time_dependence(OCP_AUTON_FIXED) ===
                 CTModels.Components.Autonomous

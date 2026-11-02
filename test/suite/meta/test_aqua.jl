@@ -16,7 +16,7 @@ const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 
 function test_aqua()
-    Test.@testset "Aqua Quality Checks" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Aqua Quality Checks" verbose = VERBOSE showtiming = SHOWTIMING begin
         Test.@testset "Aqua" begin
             Aqua.test_all(
                 CTFlows; ambiguities=false, unbound_args=false, undefined_exports=false

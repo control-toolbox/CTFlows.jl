@@ -48,7 +48,8 @@ function _build_nonsmooth_turnpike()
 end
 
 function test_simple_integrator_nonsmooth_turnpike()
-    Test.@testset "Nonsmooth turnpike — bang/singular/bang (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Nonsmooth turnpike — bang/singular/bang (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_nonsmooth_turnpike()
 
         for ht in (:total, :partial)

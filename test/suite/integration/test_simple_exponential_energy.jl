@@ -44,7 +44,8 @@ function _build_simple_exp_energy()
 end
 
 function test_simple_exponential_energy()
-    Test.@testset "Simple exponential — energy-optimal smooth (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Simple exponential — energy-optimal smooth (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_simple_exp_energy()
 
         for ht in (:total, :partial)

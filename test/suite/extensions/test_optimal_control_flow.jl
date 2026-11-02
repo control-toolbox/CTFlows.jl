@@ -220,7 +220,7 @@ _lag_obj_vec(T, x0) = sum(abs2, x0) * (exp(2λ_TEST * T) - 1) / (2λ_TEST)
 # =============================================================================
 
 function test_optimal_control_flow()
-    Test.@testset "Flow(ocp) — end-to-end" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Flow(ocp) — end-to-end" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ── construction ──────────────────────────────────────────────────────
 
@@ -241,16 +241,16 @@ function test_optimal_control_flow()
             t0, tf = 0.0, 1.0
             x0, p0 = 1.0, 0.5
             xf, pf = FLOW_AF(t0, x0, p0, tf)
-            Test.@test xf ≈ _x_ref(tf, t0, x0) atol=ATOL
-            Test.@test pf ≈ _p_ref(tf, t0, p0) atol=ATOL
+            Test.@test xf ≈ _x_ref(tf, t0, x0) atol = ATOL
+            Test.@test pf ≈ _p_ref(tf, t0, p0) atol = ATOL
         end
 
         Test.@testset "Integration: Fixed/Auton (x0,p0,tf) vector" begin
             t0, tf = 0.0, 0.5
             x0, p0 = [2.0], [1.0]
             xf, pf = FLOW_AF(t0, x0, p0, tf)
-            Test.@test xf[1] ≈ _x_ref(tf, t0, x0[1]) atol=ATOL
-            Test.@test pf[1] ≈ _p_ref(tf, t0, p0[1]) atol=ATOL
+            Test.@test xf[1] ≈ _x_ref(tf, t0, x0[1]) atol = ATOL
+            Test.@test pf[1] ≈ _p_ref(tf, t0, p0[1]) atol = ATOL
         end
 
         Test.@testset "Unit: xf/pf shape — scalar inputs → Number" begin
@@ -268,8 +268,8 @@ function test_optimal_control_flow()
             xf, pf = FLOW_AF(t0, x0, p0, tf)
             Test.@test xf isa Number
             Test.@test pf isa Number
-            Test.@test xf ≈ _x_ref(tf, t0, x0[1]) atol=ATOL
-            Test.@test pf ≈ _p_ref(tf, t0, p0[1]) atol=ATOL
+            Test.@test xf ≈ _x_ref(tf, t0, x0[1]) atol = ATOL
+            Test.@test pf ≈ _p_ref(tf, t0, p0[1]) atol = ATOL
         end
 
         # ── point eval, NonFixed/Autonomous ──────────────────────────────────
@@ -280,8 +280,8 @@ function test_optimal_control_flow()
             v = [λ_TEST]
             xf, pf = FLOW_ANF(t0, x0, p0, tf; variable=v)
             # ẋ = v[1]*x = λ_TEST*x, same analytic solution
-            Test.@test xf ≈ _x_ref(tf, t0, x0) atol=ATOL
-            Test.@test pf ≈ _p_ref(tf, t0, p0) atol=ATOL
+            Test.@test xf ≈ _x_ref(tf, t0, x0) atol = ATOL
+            Test.@test pf ≈ _p_ref(tf, t0, p0) atol = ATOL
         end
 
         # ── point eval, Non-autonomous ────────────────────────────────────────
@@ -290,7 +290,7 @@ function test_optimal_control_flow()
             t0, tf = 0.0, 1.0
             x0, p0 = 1.0, 1.0
             xf, pf = FLOW_NAF(t0, x0, p0, tf)
-            Test.@test xf ≈ _xna_ref(tf, t0, x0) atol=ATOL
+            Test.@test xf ≈ _xna_ref(tf, t0, x0) atol = ATOL
         end
 
         # ── variable_costate ─────────────────────────────────────────────────
@@ -300,9 +300,9 @@ function test_optimal_control_flow()
             x0, p0 = 1.0, 0.5
             v = [λ_TEST]
             xf, pf, pvf = FLOW_ANF(t0, x0, p0, tf; variable=v, variable_costate=true)
-            Test.@test xf ≈ _x_ref(tf, t0, x0) atol=ATOL
-            Test.@test pf ≈ _p_ref(tf, t0, p0) atol=ATOL
-            Test.@test pvf[1] ≈ _pv_ref(tf, t0, x0, p0) atol=ATOL
+            Test.@test xf ≈ _x_ref(tf, t0, x0) atol = ATOL
+            Test.@test pf ≈ _p_ref(tf, t0, p0) atol = ATOL
+            Test.@test pvf[1] ≈ _pv_ref(tf, t0, x0, p0) atol = ATOL
         end
 
         Test.@testset "Unit: pvf shape — length-1 vector variable → Number" begin
@@ -325,7 +325,7 @@ function test_optimal_control_flow()
             x0, p0 = 1.0, 0.5
             _, _, pvf1 = FLOW_ANF(t0, x0, p0, tf; variable=[λ_TEST], variable_costate=true)
             _, _, pvf2 = FLOW_ANF(t0, x0, p0, tf; variable=λ_TEST, variable_costate=true)
-            Test.@test pvf1[1] ≈ pvf2 atol=ATOL
+            Test.@test pvf1[1] ≈ pvf2 atol = ATOL
         end
 
         # ── OptimalControlFlow wrapper delegates variable_costate ─────────────
@@ -337,9 +337,9 @@ function test_optimal_control_flow()
             x0, p0 = 1.0, 0.5
             v = [λ_TEST]
             xf, pf, pvf = OCF_ANF(t0, x0, p0, tf; variable=v, variable_costate=true)
-            Test.@test xf ≈ _x_ref(tf, t0, x0) atol=ATOL
-            Test.@test pf ≈ _p_ref(tf, t0, p0) atol=ATOL
-            Test.@test pvf[1] ≈ _pv_ref(tf, t0, x0, p0) atol=ATOL
+            Test.@test xf ≈ _x_ref(tf, t0, x0) atol = ATOL
+            Test.@test pf ≈ _p_ref(tf, t0, p0) atol = ATOL
+            Test.@test pvf[1] ≈ _pv_ref(tf, t0, x0, p0) atol = ATOL
         end
 
         Test.@testset "Integration: OCF wrapper agrees with inner flow (pvf)" begin
@@ -348,7 +348,7 @@ function test_optimal_control_flow()
             v = [λ_TEST]
             _, _, pvf_ocf = OCF_ANF(t0, x0, p0, tf; variable=v, variable_costate=true)
             _, _, pvf_inner = FLOW_ANF(t0, x0, p0, tf; variable=v, variable_costate=true)
-            Test.@test pvf_ocf[1] ≈ pvf_inner[1] atol=ATOL
+            Test.@test pvf_ocf[1] ≈ pvf_inner[1] atol = ATOL
         end
 
         # ── Hamiltonian / gradient getters (H = p·v·x for OCP_ANF) ────────────
@@ -357,20 +357,20 @@ function test_optimal_control_flow()
             H = Systems.hamiltonian(FLOW_ANF)
             Test.@test H isa Data.AbstractHamiltonian
             # uniform signature (t, x, p, v); autonomous ⇒ t ignored
-            Test.@test H(0.0, 2.0, 0.5, [3.0]) ≈ 0.5 * 3.0 * 2.0 atol=ATOL
+            Test.@test H(0.0, 2.0, 0.5, [3.0]) ≈ 0.5 * 3.0 * 2.0 atol = ATOL
         end
 
         Test.@testset "Unit: get_hamiltonian_gradient(flow) → (∂H/∂x, ∂H/∂p)" begin
             ∇H = Systems.get_hamiltonian_gradient(FLOW_ANF)
             ∂x, ∂p = ∇H(0.0, 2.0, 0.5, [3.0])
-            Test.@test ∂x[1] ≈ 0.5 * 3.0 atol=ATOL   # ∂H/∂x = p·v
-            Test.@test ∂p[1] ≈ 3.0 * 2.0 atol=ATOL   # ∂H/∂p = v·x
+            Test.@test ∂x[1] ≈ 0.5 * 3.0 atol = ATOL   # ∂H/∂x = p·v
+            Test.@test ∂p[1] ≈ 3.0 * 2.0 atol = ATOL   # ∂H/∂p = v·x
         end
 
         Test.@testset "Unit: get_variable_gradient(flow) → ∂H/∂v = p·x" begin
             ∇vH = Systems.get_variable_gradient(FLOW_ANF)
             gv = ∇vH(0.0, 2.0, 0.5, [3.0])
-            Test.@test gv[1] ≈ 0.5 * 2.0 atol=ATOL   # ∂H/∂v = p·x
+            Test.@test gv[1] ≈ 0.5 * 2.0 atol = ATOL   # ∂H/∂v = p·x
         end
 
         Test.@testset "Error: pseudo_hamiltonian(flow) on a control-free flow" begin
@@ -396,7 +396,8 @@ function test_optimal_control_flow()
             t0, tf = 0.0, 1.0
             x0, p0 = 1.0, 0.5
             sol = OCF_AF_MAYER((t0, tf), x0, p0)
-            Test.@test CTModels.Components.objective(sol) ≈ _may_obj(tf - t0, x0) atol=ATOL
+            Test.@test CTModels.Components.objective(sol) ≈ _may_obj(tf - t0, x0) atol =
+                ATOL
         end
 
         Test.@testset "Integration: (co)state(sol)(tf) ≈ analytic (x,p)(tf)" begin
@@ -405,8 +406,8 @@ function test_optimal_control_flow()
             sol = OCF_AF_MAYER((t0, tf), x0, p0)
             xsol = CTModels.Components.state(sol)(tf)
             psol = CTModels.Components.costate(sol)(tf) # 
-            Test.@test xsol ≈ _x_ref(tf, t0, x0) atol=ATOL
-            Test.@test psol ≈ _p_ref(tf, t0, p0) atol=ATOL
+            Test.@test xsol ≈ _x_ref(tf, t0, x0) atol = ATOL
+            Test.@test psol ≈ _p_ref(tf, t0, p0) atol = ATOL
         end
 
         Test.@testset "Unit: state(sol)(tf) shape — scalar inputs → Number" begin
@@ -439,7 +440,8 @@ function test_optimal_control_flow()
             t0, tf = 0.0, 1.0
             x0, p0 = 1.0, 1.0
             sol = ocf_lag((t0, tf), x0, p0)
-            Test.@test CTModels.Components.objective(sol) ≈ _lag_obj(tf - t0, x0) atol=ATOL
+            Test.@test CTModels.Components.objective(sol) ≈ _lag_obj(tf - t0, x0) atol =
+                ATOL
         end
 
         Test.@testset "Integration: Bolza objective ≈ Mayer + Lagrange" begin
@@ -452,7 +454,7 @@ function test_optimal_control_flow()
             x0, p0 = 1.0, 1.0
             sol = ocf_bolza((t0, tf), x0, p0)
             expected = _may_obj(tf - t0, x0) + _lag_obj(tf - t0, x0)
-            Test.@test CTModels.Components.objective(sol) ≈ expected atol=ATOL
+            Test.@test CTModels.Components.objective(sol) ≈ expected atol = ATOL
         end
 
         # ── objective coverage beyond the autonomous/fixed/scalar family ──────
@@ -515,8 +517,8 @@ function test_optimal_control_flow()
             xf_ocp, pf_ocp = FLOW_AF(t0, x0, p0, tf)
             xf_gen, pf_gen = flow_gen(t0, x0, p0, tf)
 
-            Test.@test xf_ocp ≈ xf_gen atol=ATOL
-            Test.@test pf_ocp ≈ pf_gen atol=ATOL
+            Test.@test xf_ocp ≈ xf_gen atol = ATOL
+            Test.@test pf_ocp ≈ pf_gen atol = ATOL
         end
 
         # ── Matrix (batch) state (issue #358) ───────────────────────────────

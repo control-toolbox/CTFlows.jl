@@ -11,7 +11,7 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # ==============================================================================
 
 function test_ode_parameters()
-    Test.@testset "ODEParameters Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "ODEParameters Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Constructor

@@ -33,7 +33,7 @@ function _check_props(g, n, bounds)
 end
 
 function test_generate_grid()
-    Test.@testset "generate_grid" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "generate_grid" verbose = VERBOSE showtiming = SHOWTIMING begin
         Test.@testset "uniform, one phase" begin
             g = _gen(Configs.UniformGrid(11), _sharp)
             _check_props(g, 11, [0.0, 1.0])

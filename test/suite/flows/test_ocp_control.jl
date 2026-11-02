@@ -189,7 +189,7 @@ const OCP_TYPED_2D = _build_typed_2d()
 const OCP_CTRL_2D = _build_ctrl_2d()
 
 function test_ocp_control()
-    Test.@testset "OCP control flows" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "OCP control flows" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # INTEGRATION — scalar LQR, stationary law u = p (:min ⇒ ∂H̃/∂u = p - u)

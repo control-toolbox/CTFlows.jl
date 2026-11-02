@@ -48,7 +48,8 @@ function _build_lqr_ricatti()
 end
 
 function test_lqr_ricatti()
-    Test.@testset "LQR Riccati 2D — smooth free terminal state (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "LQR Riccati 2D — smooth free terminal state (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_lqr_ricatti()
 
         for ht in (:total, :partial)

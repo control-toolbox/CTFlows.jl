@@ -46,7 +46,8 @@ function _build_simple_exponential_consumption()
 end
 
 function test_simple_exponential_consumption()
-    Test.@testset "Simple exponential — consumption 0B+ (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Simple exponential — consumption 0B+ (:total/:partial)" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
         ocp = _build_simple_exponential_consumption()
 
         for ht in (:total, :partial)

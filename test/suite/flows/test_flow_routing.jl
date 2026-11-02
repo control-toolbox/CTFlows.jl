@@ -28,7 +28,7 @@ const _TEST_H = Data.Hamiltonian(
 )
 
 function test_flow_routing()
-    Test.@testset "Flow Routing Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Flow Routing Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Registry and Families

@@ -97,7 +97,7 @@ const OCP_CF_FIXED_2D = _build_cf_fixed_2d()
 const OCP_CF_FIXED_2D_BC = _build_cf_fixed_2d_broadcast()
 
 function test_ocp_basic_flow()
-    Test.@testset "OCP basic (no-costate) flow" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "OCP basic (no-costate) flow" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ── point eval — Fixed ────────────────────────────────────────────
 

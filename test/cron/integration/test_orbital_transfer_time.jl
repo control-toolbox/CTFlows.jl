@@ -111,7 +111,8 @@ function _ham(x, p)
 end
 
 function test_orbital_transfer_time()
-    Test.@testset "Orbital transfer — time minimisation (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Orbital transfer — time minimisation (:total/:partial)" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
         ocp = _build_orbital_transfer_time()
 
         for ht in (:total, :partial)

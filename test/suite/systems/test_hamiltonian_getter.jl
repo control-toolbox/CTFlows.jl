@@ -44,7 +44,7 @@ end
 # ==============================================================================
 
 function test_hamiltonian_getter()
-    Test.@testset "Hamiltonian Getter Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Hamiltonian Getter Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Contract

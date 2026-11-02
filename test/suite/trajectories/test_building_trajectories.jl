@@ -29,7 +29,7 @@ Integrators.final_state(r::FakeIntegrationResult) = r.u[end]
 # ==============================================================================
 
 function test_building_trajectories()
-    Test.@testset "Building Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Building Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - build_trajectory for StateEndPointConfig

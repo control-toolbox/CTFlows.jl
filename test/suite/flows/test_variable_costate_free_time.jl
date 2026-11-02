@@ -44,7 +44,7 @@ const H_T0 = Data.Hamiltonian((x, p, v) -> v * p; is_variable=true)
 const H_T0TF = Data.Hamiltonian((x, p, v) -> v[1] * p + v[2] * p^2 / 2; is_variable=true)
 
 function test_variable_costate_free_time()
-    Test.@testset "variable_costate — free times" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "variable_costate — free times" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # =====================================================================
         # H independent of the time-variable ⇒ pvf = 0, transversality ⇒ H(tf)=0
@@ -55,14 +55,14 @@ function test_variable_costate_free_time()
             t0, tf, x0, p0, v = 0.0, 2.0, 1.0, 0.5, 2.0   # v plays the role of tf
             xf, pf, pvf = φ(t0, x0, p0, tf; variable=v, variable_costate=true)
             # ẋ = p, ṗ = 0 ⇒ x(t) = x0 + p0(t-t0), p ≡ p0
-            Test.@test xf ≈ x0 + p0 * (tf - t0) atol=ATOL
-            Test.@test pf ≈ p0 atol=ATOL
+            Test.@test xf ≈ x0 + p0 * (tf - t0) atol = ATOL
+            Test.@test pf ≈ p0 atol = ATOL
             # ∂H/∂v = 0 ⇒ pvf = 0
-            Test.@test pvf ≈ 0.0 atol=ATOL
+            Test.@test pvf ≈ 0.0 atol = ATOL
             # mitigated transversality residual p_{tf}(tf) - H(tf) reduces to -H(tf)
             H = Systems.hamiltonian(φ)
             res = pvf - H(tf, xf, pf, v)
-            Test.@test res ≈ -pf^2 / 2 atol=ATOL
+            Test.@test res ≈ -pf^2 / 2 atol = ATOL
         end
 
         # =====================================================================
@@ -74,10 +74,10 @@ function test_variable_costate_free_time()
             t0, tf, x0, p0, v = 0.0, 2.0, 1.0, 0.5, 0.7
             xf, pf, pvf = φ(t0, x0, p0, tf; variable=v, variable_costate=true)
             # ẋ = v·p, ṗ = 0 ⇒ x(t) = x0 + v·p0(t-t0)
-            Test.@test xf ≈ x0 + v * p0 * (tf - t0) atol=ATOL
-            Test.@test pf ≈ p0 atol=ATOL
+            Test.@test xf ≈ x0 + v * p0 * (tf - t0) atol = ATOL
+            Test.@test pf ≈ p0 atol = ATOL
             # ∂H/∂v = p²/2 = p0²/2 (const) ⇒ pvf = -(p0²/2)(tf-t0)
-            Test.@test pvf ≈ -(p0^2 / 2) * (tf - t0) atol=ATOL
+            Test.@test pvf ≈ -(p0^2 / 2) * (tf - t0) atol = ATOL
         end
 
         # =====================================================================
@@ -90,9 +90,9 @@ function test_variable_costate_free_time()
             t1, tf = 1.3, 2.0                      # positional eval time ≠ variable value
             xf, pf, pvf = φ(t0, x0, p0, t1; variable=tf, variable_costate=true)
             # integration runs to t1, with the Hamiltonian scaled by the variable tf
-            Test.@test xf ≈ x0 + tf * p0 * (t1 - t0) atol=ATOL
-            Test.@test pf ≈ p0 atol=ATOL
-            Test.@test pvf ≈ -(p0^2 / 2) * (t1 - t0) atol=ATOL
+            Test.@test xf ≈ x0 + tf * p0 * (t1 - t0) atol = ATOL
+            Test.@test pf ≈ p0 atol = ATOL
+            Test.@test pvf ≈ -(p0^2 / 2) * (t1 - t0) atol = ATOL
         end
 
         # =====================================================================
@@ -105,12 +105,12 @@ function test_variable_costate_free_time()
             v = [0.7, 0.3]
             xf, pf, pvf = φ(t0, x0, p0, tf; variable=v, variable_costate=true)
             # ẋ = v[1], ṗ = 0 ⇒ x(t) = x0 + v[1](t-t0)
-            Test.@test xf ≈ x0 + v[1] * (tf - t0) atol=ATOL
-            Test.@test pf ≈ p0 atol=ATOL
+            Test.@test xf ≈ x0 + v[1] * (tf - t0) atol = ATOL
+            Test.@test pf ≈ p0 atol = ATOL
             # ∂H/∂v = (p, 0) ⇒ pvf = (-p0(tf-t0), 0)
             Test.@test pvf isa AbstractVector && length(pvf) == 2
-            Test.@test pvf[1] ≈ -p0 * (tf - t0) atol=ATOL
-            Test.@test pvf[2] ≈ 0.0 atol=ATOL
+            Test.@test pvf[1] ≈ -p0 * (tf - t0) atol = ATOL
+            Test.@test pvf[2] ≈ 0.0 atol = ATOL
         end
 
         # =====================================================================
@@ -124,14 +124,14 @@ function test_variable_costate_free_time()
             v = t0                                  # v plays the role of t0
             xf, pf, pvf = φ(t0, x0, p0, tf; variable=v, variable_costate=true)
             # ẋ = v, ṗ = 0 ⇒ x(t) = x0 + v(t-t0), p ≡ p0
-            Test.@test xf ≈ x0 + v * (tf - t0) atol=ATOL
-            Test.@test pf ≈ p0 atol=ATOL
+            Test.@test xf ≈ x0 + v * (tf - t0) atol = ATOL
+            Test.@test pf ≈ p0 atol = ATOL
             # ∂H/∂v = p = p0 (const) ⇒ pvf = -p0(tf-t0)
-            Test.@test pvf ≈ -p0 * (tf - t0) atol=ATOL
+            Test.@test pvf ≈ -p0 * (tf - t0) atol = ATOL
             # mitigated transversality residual: p_{t0}(tf) = -H(t0,x0,p0,v)
             H = Systems.hamiltonian(φ)
             res = pvf + H(t0, x0, p0, v)
-            Test.@test res ≈ -p0 * (tf - t0) + v * p0 atol=ATOL
+            Test.@test res ≈ -p0 * (tf - t0) + v * p0 atol = ATOL
         end
 
         # =====================================================================
@@ -145,19 +145,19 @@ function test_variable_costate_free_time()
             v = [t0, tf]                            # v[1] plays t0, v[2] plays tf
             xf, pf, pvf = φ(t0, x0, p0, tf; variable=v, variable_costate=true)
             # ẋ = v[1] + v[2]·p, ṗ = 0 ⇒ x(t) = x0 + (v[1]+v[2]p0)(t-t0)
-            Test.@test xf ≈ x0 + (v[1] + v[2] * p0) * (tf - t0) atol=ATOL
-            Test.@test pf ≈ p0 atol=ATOL
+            Test.@test xf ≈ x0 + (v[1] + v[2] * p0) * (tf - t0) atol = ATOL
+            Test.@test pf ≈ p0 atol = ATOL
             # ∂H/∂v = (p, p²/2) ⇒ pvf = (-p0(tf-t0), -(p0²/2)(tf-t0))
             Test.@test pvf isa AbstractVector && length(pvf) == 2
-            Test.@test pvf[1] ≈ -p0 * (tf - t0) atol=ATOL
-            Test.@test pvf[2] ≈ -(p0^2 / 2) * (tf - t0) atol=ATOL
+            Test.@test pvf[1] ≈ -p0 * (tf - t0) atol = ATOL
+            Test.@test pvf[2] ≈ -(p0^2 / 2) * (tf - t0) atol = ATOL
             # one residual per endpoint, opposite sign convention
             H = Systems.hamiltonian(φ)
             res_t0 = pvf[1] + H(t0, x0, p0, v)
             res_tf = pvf[2] - H(tf, xf, pf, v)
             Hval = v[1] * p0 + v[2] * p0^2 / 2   # H doesn't depend on (t,x) ⇒ same at t0/tf
-            Test.@test res_t0 ≈ -p0 * (tf - t0) + Hval atol=ATOL
-            Test.@test res_tf ≈ -(p0^2 / 2) * (tf - t0) - Hval atol=ATOL
+            Test.@test res_t0 ≈ -p0 * (tf - t0) + Hval atol = ATOL
+            Test.@test res_tf ≈ -(p0^2 / 2) * (tf - t0) - Hval atol = ATOL
         end
     end
 end

@@ -29,7 +29,7 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # ==============================================================================
 
 function test_scimlbase_function_system()
-    Test.@testset "SciMLBaseFunctionSystem" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "SciMLBaseFunctionSystem" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Extension Loading
@@ -207,7 +207,7 @@ function test_scimlbase_function_system()
             flow = Flows.Flow(f; reltol=1e-10)
             sol = flow((0.0, 1.0), [1.0]; variable=2.0)
             Test.@test sol isa Trajectories.VectorFieldTrajectory
-            Test.@test sol(0.5)[1] ≈ exp(-2.0 * 0.5) rtol=1e-6
+            Test.@test sol(0.5)[1] ≈ exp(-2.0 * 0.5) rtol = 1e-6
         end
 
         Test.@testset "Integration: iip + length-1 SVector u0 (cross-adapter finalize path)" begin
@@ -218,7 +218,7 @@ function test_scimlbase_function_system()
             )
             # 1-D = scalar (issue #357): a length-1 SVector u0 collapses to a scalar.
             Test.@test xf isa Real
-            Test.@test xf ≈ exp(-2.0) rtol=1e-6
+            Test.@test xf ≈ exp(-2.0) rtol = 1e-6
         end
     end
 end

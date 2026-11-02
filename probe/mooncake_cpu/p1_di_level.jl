@@ -58,10 +58,10 @@ for n in (2, 20, 200, 2000)
     mc = @b DI.gradient($h, $(AutoMooncake()), $xc)
     println(
         "n=$n  FD(view) ",
-        round(fd.time*1e6; digits=2),
+        round(fd.time * 1e6; digits=2),
         "  MC friendly(view) ",
-        round(mf.time*1e6; digits=2),
+        round(mf.time * 1e6; digits=2),
         "  MC default(copy) ",
-        round(mc.time*1e6; digits=2),
+        round(mc.time * 1e6; digits=2),
     )
 end

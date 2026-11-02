@@ -105,7 +105,7 @@ end
 # ============================================================================
 
 function test_systems_module()
-    Test.@testset "Systems Module Exports" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Systems Module Exports" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # Module availability

@@ -55,7 +55,8 @@ function _build_simple_integrator_energy_free_tf()
 end
 
 function test_simple_integrator_energy_free_tf()
-    Test.@testset "Simple integrator — energy-optimal free tf + boundary constraint (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Simple integrator — energy-optimal free tf + boundary constraint (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_simple_integrator_energy_free_tf()
 
         for ht in (:total, :partial)

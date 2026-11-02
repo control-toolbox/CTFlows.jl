@@ -17,7 +17,7 @@ Fake bare config that intentionally does not implement any AbstractConfig stubs.
 struct FakeBareConfig <: Configs.AbstractConfig{Float64} end
 
 function test_interface_configs()
-    Test.@testset "Interface Configs Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Interface Configs Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # ERROR TESTS - Interface Stubs

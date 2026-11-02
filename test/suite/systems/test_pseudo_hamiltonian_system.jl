@@ -17,7 +17,7 @@ function _backend()
 end
 
 function test_pseudo_hamiltonian_system()
-    Test.@testset "PseudoHamiltonianSystem Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "PseudoHamiltonianSystem Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT — construction, getters, hamiltonian() returns ComposedHamiltonian

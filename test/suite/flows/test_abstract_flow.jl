@@ -95,7 +95,7 @@ end
 # ==============================================================================
 
 function test_abstract_flow()
-    Test.@testset "Abstract Flow Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Abstract Flow Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Abstract Types

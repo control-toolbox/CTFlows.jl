@@ -66,7 +66,8 @@ function _build_orbital_transfer()
 end
 
 function test_orbital_transfer_energy()
-    Test.@testset "Orbital transfer — energy minimisation (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Orbital transfer — energy minimisation (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_orbital_transfer()
 
         for ht in (:total, :partial)

@@ -36,7 +36,7 @@ end
 const OCP = _build_ocp()
 
 function test_controlled_concatenation()
-    Test.@testset "Controlled flow concatenation" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Controlled flow concatenation" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ── ClosedLoop, two phases from the same OCP ─────────────────────────
         # Phase 1 [0,0.5]: u = -x ⇒ ẋ = -2x ⇒ x = x0 e^{-2t}

@@ -31,7 +31,7 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # ==============================================================================
 
 function test_sciml_extension()
-    Test.@testset "SciML Extension" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "SciML Extension" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # Extension loading
@@ -130,7 +130,8 @@ function test_sciml_extension()
                 prob = Integrators.build_problem(sys, config, integ; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = CommonSolve.solve(prob, integ; options=opts)
-                Test.@test Integrators.final_state(result) ≈ exp(-1.0) .* [1.0, 2.0] atol=1e-5
+                Test.@test Integrators.final_state(result) ≈ exp(-1.0) .* [1.0, 2.0] atol =
+                    1e-5
             end
 
             Test.@testset "OOP VF + SVector u0" begin
@@ -140,7 +141,8 @@ function test_sciml_extension()
                 prob = Integrators.build_problem(sys, config, integ; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = CommonSolve.solve(prob, integ; options=opts)
-                Test.@test Integrators.final_state(result) ≈ exp(-1.0) .* [1.0, 2.0] atol=1e-5
+                Test.@test Integrators.final_state(result) ≈ exp(-1.0) .* [1.0, 2.0] atol =
+                    1e-5
             end
 
             Test.@testset "IP VF + mutable Vector u0" begin
@@ -152,7 +154,8 @@ function test_sciml_extension()
                 prob = Integrators.build_problem(sys, config, integ; variable=nothing)
                 opts = Integrators.build_options(integ, config)
                 result = CommonSolve.solve(prob, integ; options=opts)
-                Test.@test Integrators.final_state(result) ≈ exp(-1.0) .* [1.0, 2.0] atol=1e-5
+                Test.@test Integrators.final_state(result) ≈ exp(-1.0) .* [1.0, 2.0] atol =
+                    1e-5
             end
 
             Test.@testset "IP VF + SVector u0 (warns, uses rhs_oop_finalize)" begin
@@ -166,7 +169,8 @@ function test_sciml_extension()
                 )
                 opts = Integrators.build_options(integ, config)
                 result = CommonSolve.solve(prob, integ; options=opts)
-                Test.@test Integrators.final_state(result) ≈ exp(-1.0) .* [1.0, 2.0] atol=1e-5
+                Test.@test Integrators.final_state(result) ≈ exp(-1.0) .* [1.0, 2.0] atol =
+                    1e-5
             end
         end
 
@@ -184,8 +188,8 @@ function test_sciml_extension()
                 opts = Integrators.build_options(integ, config)
                 result = CommonSolve.solve(prob, integ; options=opts)
                 xf = Integrators.final_state(result)
-                Test.@test xf[1] ≈ exp(1.0) atol=1e-5
-                Test.@test xf[2] ≈ 0.5*exp(-1.0) atol=1e-5
+                Test.@test xf[1] ≈ exp(1.0) atol = 1e-5
+                Test.@test xf[2] ≈ 0.5 * exp(-1.0) atol = 1e-5
             end
 
             Test.@testset "IP HVF + SVector u0 (warns)" begin
@@ -202,8 +206,8 @@ function test_sciml_extension()
                 opts = Integrators.build_options(integ, config)
                 result = CommonSolve.solve(prob, integ; options=opts)
                 xf = Integrators.final_state(result)
-                Test.@test xf[1] ≈ exp(1.0) atol=1e-5
-                Test.@test xf[2] ≈ 0.5*exp(-1.0) atol=1e-5
+                Test.@test xf[1] ≈ exp(1.0) atol = 1e-5
+                Test.@test xf[2] ≈ 0.5 * exp(-1.0) atol = 1e-5
             end
         end
 

@@ -107,7 +107,7 @@ end
 # ==============================================================================
 
 function test_flow_callables()
-    Test.@testset "Flow Callables Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Flow Callables Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - StateFlow (t0, x0, tf) -> StateEndPointConfig

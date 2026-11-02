@@ -125,7 +125,7 @@ const CASES = (
 )
 
 function test_mooncake_cpu()
-    Test.@testset "AutoMooncake on host arrays" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "AutoMooncake on host arrays" verbose = VERBOSE showtiming = SHOWTIMING begin
         Test.@testset "Extension: CTBaseMooncake is loaded" begin
             Test.@test Base.get_extension(CTBase, :CTBaseMooncake) isa Module
         end

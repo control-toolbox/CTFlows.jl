@@ -60,7 +60,8 @@ _throws(f) =
     end
 
 function test_device_checks()
-    Test.@testset "Call checks (device, AD backend)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Call checks (device, AD backend)" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
 
         # ====================================================================
         # UNIT — helpers

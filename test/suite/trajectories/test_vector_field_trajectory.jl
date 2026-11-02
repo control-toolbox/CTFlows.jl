@@ -41,7 +41,7 @@ end
 # ==============================================================================
 
 function test_vector_field_trajectory()
-    Test.@testset "VectorFieldTrajectory Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "VectorFieldTrajectory Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Construction

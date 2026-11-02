@@ -42,7 +42,8 @@ _axes(f) = [x for x in f.content if x isa Makie.Axis]
 _count_plots(axis, ::Type{P}) where {P} = count(p -> p isa P, axis.scene.plots)
 
 function test_switching_render()
-    Test.@testset "Rendering multi-phase trajectories" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Rendering multi-phase trajectories" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
         traj = _traj()
 
         Test.@testset "Plots" begin

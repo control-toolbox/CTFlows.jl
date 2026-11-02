@@ -66,7 +66,7 @@ end
 # ==============================================================================
 
 function test_concatenation()
-    Test.@testset "Concatenation Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Concatenation Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ======================================================================
         # 1. Helpers on AbstractFlow (single-phase dispatch)

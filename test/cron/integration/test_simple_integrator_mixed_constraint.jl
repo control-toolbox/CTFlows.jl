@@ -58,7 +58,8 @@ function _build_simple_integrator_mixed_constraint()
 end
 
 function test_simple_integrator_mixed_constraint()
-    Test.@testset "Simple integrator — mixed constraint active (:total/:partial)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Simple integrator — mixed constraint active (:total/:partial)" verbose =
+        VERBOSE showtiming = SHOWTIMING begin
         ocp = _build_simple_integrator_mixed_constraint()
 
         for ht in (:total, :partial)

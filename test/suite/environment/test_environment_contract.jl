@@ -53,7 +53,7 @@ function _silent_cuda_guard_offenders()
 end
 
 function test_environment_contract()
-    Test.@testset "Test-environment contract" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Test-environment contract" verbose = VERBOSE showtiming = SHOWTIMING begin
         Test.@testset "SciML extensions armed" begin
             Test.@test !isnothing(_SciMLFlows)
             Test.@test !isnothing(_SciMLIntegrator)

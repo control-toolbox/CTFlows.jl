@@ -106,7 +106,7 @@ end
 # ============================================================================
 
 function test_configs_module()
-    Test.@testset "Configs Module Exports" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Configs Module Exports" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # Module availability

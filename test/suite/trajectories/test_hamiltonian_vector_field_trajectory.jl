@@ -90,7 +90,8 @@ function Integrators.merge(results::AbstractVector{<:FakeHamiltonianResult})
 end
 
 function test_hamiltonian_vector_field_trajectory()
-    Test.@testset "Hamiltonian Vector Field Solution Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Hamiltonian Vector Field Solution Tests" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Construction

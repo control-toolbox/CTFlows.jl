@@ -78,8 +78,8 @@ Type-stable split of a `SMatrix` into state and costate components.
 """
 function Systems._ham_split(u::SMatrix{NN,M,T}, N::Int) where {NN,M,T}
     # Enumerate result elements in column-major order via single index k
-    X = SMatrix{N,M,T}(ntuple(k -> u[(k - 1) % N + 1, (k - 1) ÷ N + 1], Val(N*M)))
-    P = SMatrix{N,M,T}(ntuple(k -> u[N + (k - 1) % N + 1, (k - 1) ÷ N + 1], Val(N*M)))
+    X = SMatrix{N,M,T}(ntuple(k -> u[(k - 1) % N + 1, (k - 1) ÷ N + 1], Val(N * M)))
+    P = SMatrix{N,M,T}(ntuple(k -> u[N + (k - 1) % N + 1, (k - 1) ÷ N + 1], Val(N * M)))
     return (X, P)
 end
 

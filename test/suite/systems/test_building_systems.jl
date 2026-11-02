@@ -14,7 +14,7 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # ==============================================================================
 
 function test_building_systems()
-    Test.@testset "Building Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Building Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - build_system function
@@ -83,7 +83,7 @@ function test_building_systems()
                 du = zeros(2)
                 p = Systems.ODEParameters(nothing)
                 rhs(du, [1.0, 2.0], p, 0.0)
-                Test.@test du ≈ [2.0, 4.0] atol=1e-10
+                Test.@test du ≈ [2.0, 4.0] atol = 1e-10
             end
         end
 

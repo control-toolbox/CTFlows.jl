@@ -25,7 +25,7 @@ struct MockIntegrator <: Integrators.AbstractIntegrator end
 # ==============================================================================
 
 function test_hamiltonian_getter_flows()
-    Test.@testset "Hamiltonian Getter Flows Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Hamiltonian Getter Flows Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Trait preservation

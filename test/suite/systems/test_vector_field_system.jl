@@ -15,7 +15,7 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # ==============================================================================
 
 function test_vector_field_system()
-    Test.@testset "VectorFieldSystem Tests" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "VectorFieldSystem Tests" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # UNIT TESTS - Abstract Types
@@ -112,7 +112,7 @@ function test_vector_field_system()
                 t = 0.0
                 # Should not throw - signature is correct
                 rhs(du, u, p, t)
-                Test.@test du ≈ [-1.0, -2.0] atol=1e-10
+                Test.@test du ≈ [-1.0, -2.0] atol = 1e-10
             end
 
             Test.@testset "get_ip_rhs function fills du in place" begin
@@ -122,7 +122,7 @@ function test_vector_field_system()
                 du = zeros(2)
                 p = Systems.ODEParameters(nothing)
                 rhs(du, [1.0, 2.0], p, 0.0)
-                Test.@test du ≈ [-1.0, -2.0] atol=1e-10
+                Test.@test du ≈ [-1.0, -2.0] atol = 1e-10
             end
 
             Test.@testset "get_ip_rhs function uses underlying VectorField" begin
@@ -137,8 +137,8 @@ function test_vector_field_system()
                 p = Systems.ODEParameters(nothing)
                 rhs1(du1, [1.0, 1.0], p, 0.0)
                 rhs2(du2, [1.0, 1.0], p, 0.0)
-                Test.@test du1 ≈ [2.0, 2.0] atol=1e-10
-                Test.@test du2 ≈ [3.0, 3.0] atol=1e-10
+                Test.@test du1 ≈ [2.0, 2.0] atol = 1e-10
+                Test.@test du2 ≈ [3.0, 3.0] atol = 1e-10
             end
 
             Test.@testset "get_oop_rhs returns callable" begin
@@ -156,7 +156,7 @@ function test_vector_field_system()
                 p = Systems.ODEParameters(nothing)
                 t = 0.0
                 du = rhs_oop(u, p, t)
-                Test.@test du ≈ [-1.0, -2.0] atol=1e-10
+                Test.@test du ≈ [-1.0, -2.0] atol = 1e-10
             end
 
             Test.@testset "get_oop_rhs is lazy (not cached across calls)" begin
@@ -178,7 +178,7 @@ function test_vector_field_system()
                 du = zeros(2, 3)
                 p = Systems.ODEParameters(nothing)
                 rhs(du, u, p, 0.0)
-                Test.@test du ≈ -u atol=1e-10
+                Test.@test du ≈ -u atol = 1e-10
             end
 
             Test.@testset "get_oop_rhs with matrix" begin
@@ -188,7 +188,7 @@ function test_vector_field_system()
                 rhs_oop = Systems.get_oop_rhs(sys, cfg(u))
                 p = Systems.ODEParameters(nothing)
                 du = rhs_oop(u, p, 0.0)
-                Test.@test du ≈ -u atol=1e-10
+                Test.@test du ≈ -u atol = 1e-10
             end
         end
 
@@ -208,26 +208,26 @@ function test_vector_field_system()
                 u = [1.0 + 2.0im, 3.0 + 4.0im]
                 du = zeros(ComplexF64, 2)
                 rhs(du, u, p, 0.0)
-                Test.@test du ≈ [-1.0-2.0im, -3.0-4.0im] atol=1e-10
+                Test.@test du ≈ [-1.0 - 2.0im, -3.0 - 4.0im] atol = 1e-10
             end
 
             Test.@testset "get_oop_rhs - complex vector" begin
                 u = [1.0 + 2.0im, 3.0 + 4.0im]
                 du = rhs_oop(u, p, 0.0)
-                Test.@test du ≈ [-1.0-2.0im, -3.0-4.0im] atol=1e-10
+                Test.@test du ≈ [-1.0 - 2.0im, -3.0 - 4.0im] atol = 1e-10
             end
 
             Test.@testset "get_ip_rhs - complex matrix" begin
-                u = [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im]
+                u = [1.0 + 2.0im 5.0 + 6.0im; 3.0 + 4.0im 7.0 + 8.0im]
                 du = zeros(ComplexF64, 2, 2)
                 rhs(du, u, p, 0.0)
-                Test.@test du ≈ -u atol=1e-10
+                Test.@test du ≈ -u atol = 1e-10
             end
 
             Test.@testset "get_oop_rhs - complex matrix" begin
-                u = [1.0+2.0im 5.0+6.0im; 3.0+4.0im 7.0+8.0im]
+                u = [1.0 + 2.0im 5.0 + 6.0im; 3.0 + 4.0im 7.0 + 8.0im]
                 du = rhs_oop(u, p, 0.0)
-                Test.@test du ≈ -u atol=1e-10
+                Test.@test du ≈ -u atol = 1e-10
             end
         end
 

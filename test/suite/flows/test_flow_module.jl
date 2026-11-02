@@ -84,7 +84,7 @@ end
 # ============================================================================
 
 function test_flow_module()
-    Test.@testset "Flows Module Exports" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Flows Module Exports" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
         # Module availability

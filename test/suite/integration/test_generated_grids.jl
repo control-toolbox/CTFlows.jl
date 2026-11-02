@@ -86,7 +86,8 @@ function _polyline_error(f, T)
 end
 
 function test_generated_grids()
-    Test.@testset "generated output grids (issue #435)" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "generated output grids (issue #435)" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
 
         # ── Flow(ocp, law), Hamiltonian path → Solution ──────────────────────
         Test.@testset "Flow(ocp, DynClosedLoop) [$label]" for (label, spec) in SPECS

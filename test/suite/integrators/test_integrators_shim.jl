@@ -14,7 +14,7 @@ const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
 # ==============================================================================
 
 function test_integrators_shim()
-    Test.@testset "Integrators shim" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Integrators shim" verbose = VERBOSE showtiming = SHOWTIMING begin
         Test.@testset "re-exported types resolve to CTSolvers" begin
             Test.@test Integrators.AbstractIntegrator === CTSI.AbstractIntegrator
             Test.@test Integrators.SciML === CTSI.SciML

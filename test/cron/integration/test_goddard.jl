@@ -35,12 +35,12 @@ const _GODD_b = 2
 function _godd_F0(x)
     r, v, m = x
     D = _GODD_Cd * v^2 * exp(-_GODD_β * (r - 1)) # Drag force
-    return [v, -D/m - 1/r^2, 0]
+    return [v, -D / m - 1 / r^2, 0]
 end
 
 function _godd_F1(x)
     r, v, m = x
-    return [0, _GODD_Tmax/m, -_GODD_b*_GODD_Tmax]
+    return [0, _GODD_Tmax / m, -_GODD_b * _GODD_Tmax]
 end
 
 # ==============================================================================
@@ -48,7 +48,8 @@ end
 # ==============================================================================
 
 function test_goddard()
-    Test.@testset "Goddard Rocket — Multi-Phase Integration Test" verbose=VERBOSE showtiming=SHOWTIMING begin
+    Test.@testset "Goddard Rocket — Multi-Phase Integration Test" verbose = VERBOSE showtiming =
+        SHOWTIMING begin
 
         # ======================================================================
         # Build Hamiltonians (requires extensions to be loaded)
