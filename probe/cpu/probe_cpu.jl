@@ -171,7 +171,7 @@ println(
         "OOP traj",
         "IP point",
         "IP traj"
-    )
+    ),
 )
 println("  " * "-"^92)
 
@@ -198,7 +198,7 @@ println(
         n_warn,
         n_fail,
         4 * length(cases)
-    )
+    ),
 )
 println("="^96)
 println("""
@@ -359,7 +359,7 @@ println(
         "OOP traj",
         "IP point",
         "IP traj"
-    )
+    ),
 )
 println("  " * "-"^92)
 
@@ -387,7 +387,7 @@ println(
         n_warn_hvf,
         n_fail_hvf,
         4 * length(cases_hvf)
-    )
+    ),
 )
 println("="^96)
 println("""
@@ -552,7 +552,7 @@ println(
         n_ok_had,
         n_fail_had,
         2 * length(cases_had)
-    )
+    ),
 )
 println("="^96)
 println("""
@@ -683,7 +683,7 @@ println(
         "OOP traj",
         "IP point",
         "IP traj"
-    )
+    ),
 )
 println("  " * "-"^92)
 
@@ -711,7 +711,7 @@ println(
         n_warn_scf,
         n_fail_scf,
         4 * length(cases)
-    )
+    ),
 )
 println("="^96)
 println(
@@ -806,7 +806,7 @@ println(
         "OOP-built traj",
         "IP-built point",
         "IP-built traj"
-    )
+    ),
 )
 println("  " * "-"^140)
 
@@ -831,7 +831,7 @@ println(
         n_ok_prob,
         n_fail_prob,
         4 * length(cases)
-    )
+    ),
 )
 println("="^96)
 
@@ -1043,7 +1043,7 @@ println(
         n_ok_ocpfree,
         n_fail_ocpfree,
         2 * length(cases_hvf)
-    )
+    ),
 )
 println("="^96)
 
@@ -1096,7 +1096,7 @@ println(
         n_ok_basic,
         n_fail_basic,
         2 * length(cases_hvf)
-    )
+    ),
 )
 println("="^96)
 
@@ -1158,7 +1158,7 @@ println("="^96)
 println(
     @sprintf(
         "  %-16s | %-30s | %-30s", "state/costate", "variable=v", "+variable_costate=true"
-    )
+    ),
 )
 println("  " * "-"^80)
 
@@ -1186,7 +1186,7 @@ println(
         n_ok_var,
         n_fail_var,
         2 * (length(cases_var_scalar) + length(cases_var_vec))
-    )
+    ),
 )
 println("="^96)
 println("""
@@ -1252,7 +1252,7 @@ function _print_dyn_table(title, f1, f2)
             ":total traj",
             ":partial point",
             ":partial traj"
-        )
+        ),
     )
     println("  " * "-"^96)
     n_ok = n_fail = 0
@@ -1268,7 +1268,7 @@ function _print_dyn_table(title, f1, f2)
         println(
             @sprintf(
                 "  %-16s | %s | %s | %s | %s", lab, marks[1], marks[2], marks[3], marks[4]
-            )
+            ),
         )
     end
     println("  " * "-"^96)
@@ -1278,7 +1278,7 @@ function _print_dyn_table(title, f1, f2)
             n_ok,
             n_fail,
             4 * length(cases_hvf)
-        )
+        ),
     )
     println("="^100)
     return nothing
@@ -1358,7 +1358,7 @@ println(
         n_ok_cl,
         n_fail_cl,
         2 * length(cases_hvf)
-    )
+    ),
 )
 println("="^96)
 println(
@@ -1448,7 +1448,7 @@ println(
         ":total traj",
         ":partial point",
         ":partial traj"
-    )
+    ),
 )
 println("  " * "-"^96)
 n_ok_pf = n_fail_pf = 0
@@ -1475,7 +1475,7 @@ println(
         n_ok_pf,
         n_fail_pf,
         4 * length(cases_hvf)
-    )
+    ),
 )
 println("="^100)
 
@@ -1563,7 +1563,7 @@ println(
         "OOP traj",
         "IP point",
         "IP traj"
-    )
+    ),
 )
 println("  " * "-"^92)
 n_ok_pvf = n_warn_pvf = n_fail_pvf = 0
@@ -1593,7 +1593,7 @@ println(
         n_warn_pvf,
         n_fail_pvf,
         4 * length(cases_hvf)
-    )
+    ),
 )
 println("="^96)
 
@@ -1693,7 +1693,7 @@ println(
         n_ok_fc,
         n_fail_fc,
         2 * length(cases_hvf)
-    )
+    ),
 )
 println("="^96)
 

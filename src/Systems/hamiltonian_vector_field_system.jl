@@ -179,7 +179,7 @@ function _aug_split(u::AbstractMatrix, n_x::Int, n_v::Int)
     return (
         @view(u[1:n_x, :]),
         @view(u[(n_x + 1):(2 * n_x), :]),
-        @view(u[(end - n_v + 1):end, :])
+        @view(u[(end - n_v + 1):end, :]),
     )
 end
 
