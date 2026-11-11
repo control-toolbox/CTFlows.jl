@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 📚 Documentation
+
+- Documentation previews now deploy only when requested with the
+  `documentation push preview` label ([#516](https://github.com/control-toolbox/CTFlows.jl/issues/516)).
+
 ## [0.18.3] - 2026-10-24
 
 ### ✨ New Features
