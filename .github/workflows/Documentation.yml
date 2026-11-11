@@ -25,7 +25,7 @@ on:
 
 jobs:
   call:
-    uses: control-toolbox/CTActions/.github/workflows/documentation.yml@feat/149-label-dispatch
+    uses: control-toolbox/CTActions/.github/workflows/documentation.yml@main
     with:
       use_ct_registry: true
     secrets:

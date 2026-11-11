@@ -24,7 +24,7 @@ jobs:
   # Job for the GitHub-hosted runners (ubuntu, windows, macos)
   test-cpu-github:
     if: github.event_name == 'push' || inputs.target == 'github'
-    uses: control-toolbox/CTActions/.github/workflows/ci.yml@feat/149-label-dispatch
+    uses: control-toolbox/CTActions/.github/workflows/ci.yml@main
     with:
       runs_on: '["ubuntu-latest", "macos-latest", "windows-latest"]'
       runner_type: 'github'
@@ -35,7 +35,7 @@ jobs:
   # Job for the self-hosted occidata runner (GPU/CUDA)
   test-gpu-occidata:
     if: inputs.target == 'occidata'
-    uses: control-toolbox/CTActions/.github/workflows/ci.yml@feat/149-label-dispatch
+    uses: control-toolbox/CTActions/.github/workflows/ci.yml@main
     with:
       versions: '["1"]'
       runs_on: '[["occidata"]]'
@@ -47,7 +47,7 @@ jobs:
   # Job for the self-hosted kkt runner (GPU/CUDA, faster than occidata)
   test-gpu-kkt:
     if: inputs.target == 'kkt'
-    uses: control-toolbox/CTActions/.github/workflows/ci.yml@feat/149-label-dispatch
+    uses: control-toolbox/CTActions/.github/workflows/ci.yml@main
     with:
       versions: '["1"]'
       runs_on: '[["kkt"]]'

@@ -13,6 +13,4 @@ jobs:
     permissions:
       contents: read
       actions: write
-    uses: control-toolbox/CTActions/.github/workflows/label-dispatch.yml@feat/149-label-dispatch
-    with:
-      ctactions_ref: feat/149-label-dispatch
+    uses: control-toolbox/CTActions/.github/workflows/label-dispatch.yml@main
