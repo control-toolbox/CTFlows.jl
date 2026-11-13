@@ -3,6 +3,10 @@
 This file lists breaking and near-breaking changes in CTFlows.jl since the last
 stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
+## Non-breaking note (Unreleased)
+
+- **Documentation and CI only**: the `Release` caller and the pins of ct-conventions and ct-agents. **No breaking change**; no migration required.
+
 ## 0.18.3
 
 No breaking change by the `REL1` rule; near-breaking notes:
