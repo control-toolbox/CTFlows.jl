@@ -21,7 +21,7 @@ using CTFlows: Flows
 using CTFlows: Integrators
 using CTFlows: Trajectories
 using OrdinaryDiffEqTsit5: Tsit5
-using SciMLBase: SciMLBase, ODEProblem
+using SciMLBase: SciMLBase, ODEProblem, ContinuousCallback, terminate!
 using ForwardDiff: ForwardDiff  # triggers the DI ForwardDiff extension (AutoForwardDiff)
 
 const CTFlowsSciMLFlows = Base.get_extension(CTFlows, :CTFlowsSciMLFlows)
@@ -373,6 +373,18 @@ function test_default_grid_calls()
             traj = f((0.0, 1.0), ComplexF64[1.0 + 0im])
             _check_default(Integrators.times(traj), [0.0, 1.0])
             Test.@test only(traj(1.0)) ≈ exp(-im) atol = TOL
+        end
+
+        # ── terminating callback: default grid stops at callback event ───
+        Test.@testset "terminating callback clamps default grid (issue #524)" begin
+            cb = ContinuousCallback((u, t, int) -> u[1] - 0.5, terminate!)
+            f = Flows.Flow(Data.VectorField(x -> -x); callback=cb, _tol()...)
+            traj = f((0.0, 10.0), [1.0])
+            T = Integrators.times(traj)
+            Test.@test length(T) == NDEFAULT
+            Test.@test first(T) == 0.0
+            Test.@test last(T) ≈ log(2) atol = TOL
+            Test.@test only(traj(last(T))) ≈ 0.5 atol = TOL
         end
 
         # ── errors are unchanged by the default ──────────────────────────────

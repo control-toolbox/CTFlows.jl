@@ -146,6 +146,37 @@ function test_default_grid()
             Test.@test _apply(traj, nothing) === traj
             Test.@test _apply(traj, [0.0, 1.0]) === traj
         end
+
+        Test.@testset "early termination clamps bounds to integrated end time (issue #524)" begin
+            # Forward integration stopped early at 0.37 instead of 1.0
+            out = _apply(FakeTraj(range(0, 0.37, 10)))
+            Test.@test first(out.regridded_on) == 0.0
+            Test.@test last(out.regridded_on) == 0.37
+
+            # Backward integration stopped early at 0.42 instead of 0.0
+            out_bwd = Trajectories.apply_generated_grid(
+                FakeTraj(range(1.0, 0.42, 10)),
+                Configs.AutomaticGrid(),
+                _curve,
+                [1.0, 0.0],
+            )
+            Test.@test first(out_bwd.regridded_on) == 1.0
+            Test.@test last(out_bwd.regridded_on) == 0.42
+
+            # Multi-phase bounds clamped to early termination
+            out_mp = Trajectories.apply_generated_grid(
+                FakeTraj(range(0.0, 0.65, 10)),
+                Configs.AdaptiveGrid(20),
+                _curve,
+                [0.0, 0.5, 1.0],
+            )
+            Test.@test first(out_mp.regridded_on) == 0.0
+            Test.@test last(out_mp.regridded_on) == 0.65
+
+            # Single-step trajectory (stopped at t0) is returned unchanged
+            traj_1 = FakeTraj([0.0])
+            Test.@test _apply(traj_1) === traj_1
+        end
     end
 end
 

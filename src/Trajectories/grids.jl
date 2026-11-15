@@ -251,5 +251,23 @@ function apply_generated_grid(traj, spec::Configs.AutomaticGrid, curve, bounds)
 end
 function apply_generated_grid(traj, spec::Configs.AbstractGrid, curve, bounds)
     steps = unique(Integrators.times(traj))
-    return Integrators.regrid(traj, generate_grid(spec, curve, steps, bounds))
+    length(steps) <= 1 && return traj
+    effective_bounds = _effective_bounds(bounds, steps)
+    return Integrators.regrid(traj, generate_grid(spec, curve, steps, effective_bounds))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Clamp `bounds` to the actual integrated end time `steps[end]` when an early termination
+(such as a `terminate!` callback) stops the solver before `bounds[end]`.
+"""
+function _effective_bounds(bounds::AbstractVector, steps::AbstractVector)
+    t_end = steps[end]
+    t_end == bounds[end] && return bounds
+    length(bounds) == 2 && return [bounds[1], t_end]
+    forward = bounds[end] >= bounds[1]
+    kept = forward ? filter(<(t_end), bounds) : filter(>(t_end), bounds)
+    isempty(kept) && return [steps[1], t_end]
+    return vcat(kept, t_end)
 end
