@@ -143,6 +143,27 @@ xf = mpf(0.0, x0, 2.0)
 sol = mpf((0.0, 2.0), x0)
 ```
 
+### A phase that stops early
+
+A switching time says that the right-hand side changes at that time. If a phase does not
+reach its switching time — a callback that calls `terminate!` stops it, or the integration
+fails with `unsafe=true` — the flow stops there: the following phases are not integrated and
+no jump is applied. A trajectory call returns the trajectory up to the stop time (its output
+grid ends there, and it carries the switching times and the labels of the phases that were
+integrated), and a point call returns the state at the stop time, as for a single flow.
+
+```julia
+using SciMLBase: ContinuousCallback, terminate!
+
+stop = ContinuousCallback((u, t, integrator) -> u[1] - 0.8, terminate!)
+f1 = Flow(Data.VectorField(x -> -x); callback=stop)   # stops at t = log(1/0.8) ≈ 0.22
+f2 = Flow(Data.VectorField(x -> -x))
+
+mpf = f1 * (0.5, f2)
+traj = mpf((0.0, 1.0), [1.0])     # defined on [0, 0.22]: the phase 2 is not integrated
+mpf(0.0, [1.0], 1.0)              # [0.8], the state at the stop time
+```
+
 ---
 
 ## Inspecting a multi-phase flow
