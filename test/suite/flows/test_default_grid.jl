@@ -148,6 +148,15 @@ function test_default_grid()
         end
 
         Test.@testset "early termination clamps bounds to integrated end time (issue #524)" begin
+            # Normal integration: bounds returned untouched (identity)
+            for (b, s) in (
+                ([0.0, 1.0], [0.0, 0.5, 1.0]),
+                ([1.0, 0.0], [1.0, 0.5, 0.0]),
+                ([0.0, 0.5, 1.0], [0.0, 0.5, 1.0]),
+            )
+                Test.@test Trajectories._effective_bounds(b, s) === b
+            end
+
             # Forward integration stopped early at 0.37 instead of 1.0
             out = _apply(FakeTraj(range(0, 0.37, 10)))
             Test.@test first(out.regridded_on) == 0.0

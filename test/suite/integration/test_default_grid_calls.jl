@@ -387,6 +387,20 @@ function test_default_grid_calls()
             Test.@test only(traj(last(T))) ≈ 0.5 atol = TOL
         end
 
+        # ── blow-up ODE: unsafe=false throws, unsafe=true clamps grid ─────
+        Test.@testset "blow-up ODE x' = 1 + x^2 on [0, 2] (issue #524)" begin
+            f = Flows.Flow(Data.VectorField(x -> [1 + x[1]^2]); _tol()...)
+            Base.CoreLogging.with_logger(Base.CoreLogging.NullLogger()) do
+                Test.@test_throws Exceptions.SolverFailure f((0.0, 2.0), [0.0])
+                traj = f((0.0, 2.0), [0.0]; unsafe=true, grid=20)
+                T = Integrators.times(traj)
+                Test.@test length(T) == 20
+                Test.@test first(T) == 0.0
+                Test.@test last(T) < 2.0
+                Test.@test last(T) ≈ pi / 2 atol = 1e-4
+            end
+        end
+
         # ── errors are unchanged by the default ──────────────────────────────
         Test.@testset "Error: explicit conflicting grids still rejected" begin
             Test.@test_throws Exceptions.IncorrectArgument _plain_s()(
