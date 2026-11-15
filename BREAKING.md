@@ -6,6 +6,12 @@ stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 ## Non-breaking note (Unreleased)
 
 - **Documentation and CI only**: the `Release` caller and the pins of ct-conventions and ct-agents. **No breaking change**; no migration required.
+- **The generated output grid ends at the time the solver reached**
+  ([#524](https://github.com/control-toolbox/CTFlows.jl/issues/524)): after an early stop
+  (a `terminate!` callback, a blow-up with `unsafe=true`), `time_grid(sol)[end]` and
+  `Integrators.times(traj)[end]` are the stop time, not the requested final time. A code that
+  read the requested final time from the grid should read it from the call. **No breaking
+  change**: a call that reaches its final time is unchanged. No migration required.
 
 ## 0.18.3
 

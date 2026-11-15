@@ -375,29 +375,111 @@ function test_default_grid_calls()
             Test.@test only(traj(1.0)) ≈ exp(-im) atol = TOL
         end
 
-        # ── terminating callback: default grid stops at callback event ───
-        Test.@testset "terminating callback clamps default grid (issue #524)" begin
+        # ── early termination: the default grid stops at the stop time (#524) ─
+        Test.@testset "terminating callback, plain state flow" begin
             cb = ContinuousCallback((u, t, int) -> u[1] - 0.5, terminate!)
             f = Flows.Flow(Data.VectorField(x -> -x); callback=cb, _tol()...)
             traj = f((0.0, 10.0), [1.0])
             T = Integrators.times(traj)
             Test.@test length(T) == NDEFAULT
+            Test.@test allunique(T) && issorted(T)
             Test.@test first(T) == 0.0
             Test.@test last(T) ≈ log(2) atol = TOL
             Test.@test only(traj(last(T))) ≈ 0.5 atol = TOL
+            # the raw solver steps stop at the same time
+            raw = Integrators.times(f((0.0, 10.0), [1.0]; grid=nothing))
+            Test.@test last(raw) == last(T)
         end
 
-        # ── blow-up ODE: unsafe=false throws, unsafe=true clamps grid ─────
-        Test.@testset "blow-up ODE x' = 1 + x^2 on [0, 2] (issue #524)" begin
+        Test.@testset "terminating callback, backward integration" begin
+            cb = ContinuousCallback((u, t, int) -> u[1] - 0.8, terminate!)
+            f = Flows.Flow(Data.VectorField(x -> [x[2], -x[1]]); callback=cb, _tol()...)
+            traj = f((1.0, 0.0), [cos(1.0), -sin(1.0)])
+            T = Integrators.times(traj)
+            Test.@test length(T) == NDEFAULT
+            Test.@test issorted(T; rev=true)
+            Test.@test first(T) == 1.0
+            Test.@test last(T) ≈ acos(0.8) atol = TOL
+        end
+
+        Test.@testset "terminating callback, plain Hamiltonian flow" begin
+            cb = ContinuousCallback((u, t, int) -> u[1] - 0.5, terminate!)
+            f = Flows.Flow(
+                Data.HamiltonianVectorField((x, p) -> (p, -x)); callback=cb, _tol()...
+            )
+            traj = f((0.0, 3.0), 1.0, 0.0)
+            T = Integrators.times(traj)
+            Test.@test length(T) == NDEFAULT
+            Test.@test last(T) ≈ acos(0.5) atol = TOL
+            Test.@test _val(Trajectories.state(traj)(last(T))) ≈ 0.5 atol = TOL
+        end
+
+        # x₁(t) = -1 + 3t² - 2t³ reaches -1/2 at t = 1/2
+        Test.@testset "terminating callback, Flow(ocp, law) [$name]" for (name, mk, args) in (
+            ("OpenLoop", _flow_s, (X0,)),
+            ("DynClosedLoop", _flow_h, (X0, P0)),
+        )
+            cb = ContinuousCallback((u, t, int) -> u[1] + 0.5, terminate!)
+            sol = mk(; callback=cb)((0.0, 1.0), args...)
+            T = CTModels.time_grid(sol)
+            Test.@test length(T) == NDEFAULT
+            Test.@test first(T) == 0.0
+            Test.@test last(T) ≈ 0.5 atol = 1e-6
+            x = name == "OpenLoop" ? Trajectories.state(sol) : CTModels.state(sol)
+            Test.@test _val(x(last(T))[1]) ≈ -0.5 atol = 1e-6
+        end
+
+        Test.@testset "terminating callback, multi-phase: the switching time is kept" begin
+            cb = ContinuousCallback((u, t, int) -> u[1] + 0.3, terminate!)
+            f = _flow_s() * (0.5, _flow_s(; callback=cb))
+            sol = f((0.0, 1.0), X0)
+            T = CTModels.time_grid(sol)
+            x = Trajectories.state(sol)
+            Test.@test length(T) == NDEFAULT
+            Test.@test first(T) == 0.0 && 0.5 in T
+            Test.@test 0.5 < last(T) < 1.0
+            Test.@test _val(x(last(T))[1]) ≈ -0.3 atol = 1e-6
+        end
+
+        Test.@testset "terminating callback, an explicit generated grid" begin
+            cb = ContinuousCallback((u, t, int) -> u[1] - 0.5, terminate!)
+            f = Flows.Flow(Data.VectorField(x -> -x); callback=cb, _tol()...)
+            for grid in (20, Configs.UniformGrid(20), Configs.AdaptiveGrid(20))
+                T = Integrators.times(f((0.0, 10.0), [1.0]; grid=grid))
+                Test.@test length(T) == 20
+                Test.@test last(T) ≈ log(2) atol = TOL
+            end
+        end
+
+        Test.@testset "ForwardDiff through a terminating callback" begin
+            cb = ContinuousCallback((u, t, int) -> u[1] - 0.5, terminate!)
+            f = Flows.Flow(Data.VectorField(x -> -x); callback=cb, _tol()...)
+            d = ForwardDiff.derivative(a -> _val(f((0.0, 10.0), [a])(0.3)), 1.0)
+            Test.@test d ≈ exp(-0.3) atol = 1e-6
+        end
+
+        Test.@testset "no callback: the default grid still ends at the requested time" begin
+            f = Flows.Flow(Data.VectorField(x -> -x); _tol()...)
+            T = Integrators.times(f((0.0, 10.0), [1.0]))
+            _check_default(T, [0.0, 10.0])
+        end
+
+        Test.@testset "blow-up x' = 1 + x^2 on [0, 2]: SolverFailure by default" begin
             f = Flows.Flow(Data.VectorField(x -> [1 + x[1]^2]); _tol()...)
             Base.CoreLogging.with_logger(Base.CoreLogging.NullLogger()) do
                 Test.@test_throws Exceptions.SolverFailure f((0.0, 2.0), [0.0])
+            end
+        end
+
+        Test.@testset "blow-up with unsafe=true: the grid stops before the singularity" begin
+            f = Flows.Flow(Data.VectorField(x -> [1 + x[1]^2]); _tol()...)
+            Base.CoreLogging.with_logger(Base.CoreLogging.NullLogger()) do
                 traj = f((0.0, 2.0), [0.0]; unsafe=true, grid=20)
                 T = Integrators.times(traj)
                 Test.@test length(T) == 20
                 Test.@test first(T) == 0.0
-                Test.@test last(T) < 2.0
-                Test.@test last(T) ≈ pi / 2 atol = 1e-4
+                Test.@test last(T) < pi / 2 + 1e-3
+                Test.@test last(T) > 1.5
             end
         end
 

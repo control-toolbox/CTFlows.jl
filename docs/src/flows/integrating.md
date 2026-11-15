@@ -81,7 +81,10 @@ length(Integrators.times(flow((0.0, 1.0), x0)))
 The default grid applies to a top-level trajectory call on a time span `(t0, tf)` with a
 dense integration. It is **not** generated with `saveat`, a grid of times, `grid=`,
 `dense=false`, a point call `f(t0, x0, tf)`, or a `SciMLProblemFlow` (which keeps the raw
-SciML behaviour). To keep the solver steps, pass `grid=nothing`:
+SciML behaviour). When the solver stops before `tf` — a callback that calls `terminate!`, or
+a blow-up with `unsafe=true` — the generated grid ends at the time actually reached, not at
+`tf`: the trajectory is not sampled beyond the event. To keep the solver steps, pass
+`grid=nothing`:
 
 ```@example flows_integrating
 length(Integrators.times(flow((0.0, 1.0), x0; grid=nothing)))

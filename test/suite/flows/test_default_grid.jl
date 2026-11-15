@@ -147,44 +147,90 @@ function test_default_grid()
             Test.@test _apply(traj, [0.0, 1.0]) === traj
         end
 
-        Test.@testset "early termination clamps bounds to integrated end time (issue #524)" begin
-            # Normal integration: bounds returned untouched (identity)
+        # ── UNIT: _effective_bounds (issue #524) ────────────────────────────
+        Test.@testset "_effective_bounds: the solver reached the end → same bounds" begin
             for (b, s) in (
                 ([0.0, 1.0], [0.0, 0.5, 1.0]),
                 ([1.0, 0.0], [1.0, 0.5, 0.0]),
                 ([0.0, 0.5, 1.0], [0.0, 0.5, 1.0]),
+                ([0.0, 0.5, 1.0], [0.0, 0.5, 1.0 + 1e-12]),
             )
                 Test.@test Trajectories._effective_bounds(b, s) === b
             end
+        end
 
-            # Forward integration stopped early at 0.37 instead of 1.0
+        Test.@testset "_effective_bounds: early stop [$(b)] → $(expected)" for (
+            b, s, expected
+        ) in (
+            ([0.0, 1.0], [0.0, 0.2, 0.37], [0.0, 0.37]),
+            ([1.0, 0.0], [1.0, 0.7, 0.42], [1.0, 0.42]),
+            ([0.0, 0.5, 1.0], [0.0, 0.3, 0.65], [0.0, 0.5, 0.65]),
+            ([0.0, 0.5, 1.0], [0.0, 0.3], [0.0, 0.3]),
+            ([0.0, 0.5, 1.0], [0.0, 0.5], [0.0, 0.5]),
+            ([1.0, 0.5, 0.0], [1.0, 0.7, 0.3], [1.0, 0.5, 0.3]),
+            ([0, 1], [0.0, 0.25], [0, 0.25]),
+        )
+            Test.@test Trajectories._effective_bounds(b, s) == expected
+            Test.@test Trajectories._effective_bounds(b, s) !== b
+        end
+
+        Test.@testset "_effective_bounds: does not mutate its input and is inferred" begin
+            b = [0.0, 0.5, 1.0]
+            Test.@inferred Trajectories._effective_bounds(b, [0.0, 0.3, 0.65])
+            Trajectories._effective_bounds(b, [0.0, 0.3, 0.65])
+            Test.@test b == [0.0, 0.5, 1.0]
+        end
+
+        # ── CONTRACT: apply_generated_grid stops at the integrated end time ──
+        Test.@testset "early termination: the generated grid stops at the stop time" begin
             out = _apply(FakeTraj(range(0, 0.37, 10)))
             Test.@test first(out.regridded_on) == 0.0
             Test.@test last(out.regridded_on) == 0.37
+            Test.@test length(out.regridded_on) == 250
 
-            # Backward integration stopped early at 0.42 instead of 0.0
-            out_bwd = Trajectories.apply_generated_grid(
+            out = Trajectories.apply_generated_grid(
                 FakeTraj(range(1.0, 0.42, 10)),
                 Configs.AutomaticGrid(),
                 _curve,
                 [1.0, 0.0],
             )
-            Test.@test first(out_bwd.regridded_on) == 1.0
-            Test.@test last(out_bwd.regridded_on) == 0.42
+            Test.@test first(out.regridded_on) == 1.0
+            Test.@test last(out.regridded_on) == 0.42
+            Test.@test issorted(out.regridded_on; rev=true)
+        end
 
-            # Multi-phase bounds clamped to early termination
-            out_mp = Trajectories.apply_generated_grid(
+        Test.@testset "early termination: the switching time before the stop is kept" begin
+            out = Trajectories.apply_generated_grid(
                 FakeTraj(range(0.0, 0.65, 10)),
                 Configs.AdaptiveGrid(20),
                 _curve,
                 [0.0, 0.5, 1.0],
             )
-            Test.@test first(out_mp.regridded_on) == 0.0
-            Test.@test last(out_mp.regridded_on) == 0.65
+            Test.@test length(out.regridded_on) == 20
+            Test.@test first(out.regridded_on) == 0.0
+            Test.@test last(out.regridded_on) == 0.65
+            Test.@test 0.5 in out.regridded_on
+        end
 
-            # Single-step trajectory (stopped at t0) is returned unchanged
-            traj_1 = FakeTraj([0.0])
-            Test.@test _apply(traj_1) === traj_1
+        Test.@testset "early termination: stop before the switching time" begin
+            out = Trajectories.apply_generated_grid(
+                FakeTraj(range(0.0, 0.3, 10)),
+                Configs.AdaptiveGrid(20),
+                _curve,
+                [0.0, 0.5, 1.0],
+            )
+            Test.@test length(out.regridded_on) == 20
+            Test.@test last(out.regridded_on) == 0.3
+            Test.@test all(<=(0.3), out.regridded_on)
+        end
+
+        Test.@testset "a trajectory with a single time is returned unchanged" begin
+            traj = FakeTraj([0.0])
+            for spec in (Configs.AutomaticGrid(), Configs.AdaptiveGrid(20), Configs.UniformGrid(20))
+                Test.@test _apply(traj, spec) === traj
+            end
+            twice = FakeTraj([0.0, 0.0])   # one distinct time
+            Test.@test _apply(twice, Configs.AdaptiveGrid(20)) === twice
         end
     end
 end
