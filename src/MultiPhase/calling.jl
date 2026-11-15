@@ -41,7 +41,10 @@ $(TYPEDSIGNATURES)
 
 Evaluate a multi-phase flow for a point configuration, returning only the final state.
 
-Iterates through all phases sequentially, applying jumps at switching times.
+Iterates through all phases sequentially, applying jumps at switching times. A phase that
+stops before its switching time (a `terminate!` callback, a failure with `unsafe=true`) ends
+the flow: the following phases are not integrated, no jump is applied, and the state at the
+stop time is returned, as the point call of a single flow does (issue #526).
 
 # Arguments
 - `mpf`: The multi-phase flow to evaluate.
@@ -63,7 +66,7 @@ function _evaluate_multiphase(mpf, config::Configs.AbstractEndPointConfig; varia
     for i in 1:n_ph
         t_end = (i < n_ph) ? get_switching_time(mpf, i) : tf
 
-        current_state = _evaluate_phase(
+        current_state, t_reached = _evaluate_phase_reached(
             get_flow(mpf, i),
             current_t,
             t_end,
@@ -72,6 +75,9 @@ function _evaluate_multiphase(mpf, config::Configs.AbstractEndPointConfig; varia
             variable=variable,
             unsafe=unsafe,
         )
+
+        # a phase stopped before its switching time ends the flow, with no jump
+        _reached_end(t_reached, current_t, t_end) || break
 
         current_t = t_end
 
@@ -92,6 +98,9 @@ $(TYPEDSIGNATURES)
 Evaluate a multi-phase flow for a trajectory configuration, returning the full trajectory.
 
 Iterates through all phases sequentially, collecting segment results and applying jumps at switching times.
+A phase that stops before its switching time (a `terminate!` callback, a failure with `unsafe=true`)
+ends the flow (issue #526): the following phases are not integrated, no jump is applied, and the
+trajectory, its labels, its switching times and its output grid stop at the stop time.
 
 # Arguments
 - `mpf`: The multi-phase flow to evaluate.
@@ -113,6 +122,7 @@ function _evaluate_multiphase(
     n_ph = n_phases(mpf)
 
     results = nothing
+    n_done = 0
 
     for i in 1:n_ph
         t_end = (i < n_ph) ? get_switching_time(mpf, i) : tf
@@ -127,6 +137,10 @@ function _evaluate_multiphase(
             unsafe=unsafe,
         )
         results = isnothing(results) ? [segment_result] : push!(results, segment_result)
+        n_done = i
+
+        # a phase stopped before its switching time ends the flow, with no jump
+        _reached_end(Integrators.times(segment_result)[end], current_t, t_end) || break
 
         current_state = _extract_final_state(mpf, segment_result, current_state)
         current_t = t_end
@@ -139,6 +153,8 @@ function _evaluate_multiphase(
         end
     end
 
+    # the flow of the phases integrated: the switching times and labels of the others do not exist
+    mpf = _truncate(mpf, n_done)
     merged = Integrators.merge(results)
     # the phase labels of the flows, when at least one phase is labelled
     labels = get_labels(mpf)
@@ -147,7 +163,7 @@ function _evaluate_multiphase(
     # a grid of times is returned exactly (no switching time added); a generated grid is
     # built on the merged trajectory, over the phases
     grid isa AbstractVector && (merged = Integrators.regrid(merged, grid))
-    bounds = vcat(t0, [get_switching_time(mpf, i) for i in 1:(n_ph - 1)], tf)
+    bounds = vcat(t0, [get_switching_time(mpf, i) for i in 1:(n_phases(mpf) - 1)], tf)
     return _finalize_multiphase_trajectory(mpf, merged, variable, grid, bounds)
 end
 
@@ -660,6 +676,106 @@ function _evaluate_phase(
     x, p = state_tuple
     times = _phase_times(t0, tf, Configs.output_grid(config))
     return _raw_flow(flow)(times, x, p; variable=variable, unsafe=unsafe, grid=nothing)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Whether a phase integrated from `t_start` reached its end `t_end`, given the last time
+`t_reached` of its integration, in the direction of integration. A phase stopped before
+`t_end` (a `terminate!` callback, a failure with `unsafe=true`) has not.
+
+See also: [`CTFlows.MultiPhase._truncate`](@extref).
+"""
+function _reached_end(t_reached, t_start, t_end)
+    t = Integrators.deepvalue(t_reached)
+    return t_start <= t_end ? t >= t_end : t <= t_end
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+The multi-phase flow made of the first `n` phases of `mpf`, with their switching times and
+jumps: the flow that is actually integrated when the phase `n` stops before its switching
+time. It is `mpf` itself when `n` is the number of phases.
+
+# Arguments
+- `mpf::MultiPhaseFlow`: The multi-phase flow.
+- `n::Int`: The number of phases kept, `1 ≤ n ≤ n_phases(mpf)`.
+
+# Returns
+- `MultiPhaseFlow`: the flow of the first `n` phases.
+
+See also: [`CTFlows.MultiPhase._reached_end`](@extref).
+"""
+function _truncate(mpf::MultiPhaseFlow, n::Int)
+    n == n_phases(mpf) && return mpf
+    flows = mpf.flows[1:n]
+    times = mpf.switching_times[1:(n - 1)]
+    jumps = mpf.jumps[1:(n - 1)]
+    return mpf isa MultiPhaseStateFlow ? MultiPhaseStateFlow(flows, times, jumps) :
+           MultiPhaseHamiltonianFlow(flows, times, jumps)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Evaluate a single phase for a point configuration and report the time the solver reached.
+
+The phase of a real flow ([`CTFlows.Flows.StateFlow`](@extref),
+[`CTFlows.Flows.HamiltonianFlow`](@extref), after
+[`CTFlows.MultiPhase._raw_flow`](@extref)) is integrated through
+[`CTFlows.Flows._timed`](@extref). Any other phase is evaluated by
+[`CTFlows.MultiPhase._evaluate_phase`](@extref) and is assumed to reach `tf`.
+
+# Returns
+- `Tuple`: `(final state, t_reached)`; the state is `(x, p)` for a Hamiltonian flow.
+"""
+function _evaluate_phase_reached(flow, t0, tf, x, config; variable, unsafe)
+    return _end_point_reached(_raw_flow(flow), flow, t0, tf, x, config, variable, unsafe)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Fallback of [`CTFlows.MultiPhase._evaluate_phase_reached`](@extref): a phase that cannot report
+its time is evaluated by [`CTFlows.MultiPhase._evaluate_phase`](@extref) and assumed to reach
+`tf`.
+"""
+function _end_point_reached(raw, flow, t0, tf, x, config, variable, unsafe)
+    state = _evaluate_phase(flow, t0, tf, x, config; variable=variable, unsafe=unsafe)
+    return state, tf
+end
+"""
+$(TYPEDSIGNATURES)
+
+State flow: the point call of the raw flow through [`CTFlows.Flows._timed`](@extref), which
+returns `(x, t_reached)`.
+"""
+function _end_point_reached(raw::Flows.StateFlow, flow, t0, tf, x, _, variable, unsafe)
+    return Flows._invoke_flow(
+        Flows._timed(raw),
+        Configs.StateEndPointConfig(t0, x, tf);
+        variable=variable,
+        unsafe=unsafe,
+    )
+end
+"""
+$(TYPEDSIGNATURES)
+
+Hamiltonian flow: the point call of the raw flow through [`CTFlows.Flows._timed`](@extref),
+which returns `((x, p), t_reached)`.
+"""
+function _end_point_reached(
+    raw::Flows.HamiltonianFlow, flow, t0, tf, state_tuple, _, variable, unsafe
+)
+    x, p = state_tuple
+    return Flows._invoke_flow(
+        Flows._timed(raw),
+        Configs.HamiltonianEndPointConfig(t0, x, p, tf);
+        variable=variable,
+        unsafe=unsafe,
+    )
 end
 
 """

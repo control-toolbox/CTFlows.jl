@@ -5,6 +5,13 @@ stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
 ## Non-breaking note (Unreleased)
 
+- **A multi-phase flow stops when a phase stops before its switching time**
+  ([#526](https://github.com/control-toolbox/CTFlows.jl/issues/526)): after a `terminate!`
+  callback (or a failure with `unsafe=true`) in a phase, the following phases are not
+  integrated, no jump is applied, the trajectory ends at the stop time and the point call
+  returns the state there. Before, the next phase started from the stop state at the requested
+  switching time and the result was wrong. **No breaking change**: a flow whose phases reach
+  their switching times is unchanged. No migration required.
 - **Documentation and CI only**: the `Release` caller and the pins of ct-conventions and ct-agents. **No breaking change**; no migration required.
 - **The generated output grid ends at the time the solver reached**
   ([#524](https://github.com/control-toolbox/CTFlows.jl/issues/524)): after an early stop

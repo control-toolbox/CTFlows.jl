@@ -271,6 +271,39 @@ See also: [`CTFlows.Flows._invoke_flow`](@extref), [`CTFlows.Integrators.build_p
 function _core_invoke_flow(
     flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe
 )
+    result = _solve_flow(flow, config; variable=variable, unsafe=unsafe)
+
+    # build flow solution
+    flow_sol = Trajectories.build_trajectory(
+        Configs.mode_trait(config), Traits.dynamics_trait(config), config, result, variable
+    )
+
+    # a trajectory carries the label of the flow (none by default)
+    return _with_flow_label(flow_sol, flow)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Integrate the flow for the configuration `config` and return the raw integration result.
+
+It checks the call (device and AD backend, issue #436), builds the problem and the options
+of the configuration, and solves. It is the common part of
+[`CTFlows.Flows._core_invoke_flow`](@extref) and of the call that also reports the time the
+solver reached ([`CTFlows.Flows._timed`](@extref)).
+
+# Arguments
+- `flow::CTFlows.Flows.AbstractFlow`: The flow to solve.
+- `config::CTFlows.Configs.AbstractConfig`: The integration configuration.
+- `variable`: The variable parameter value (may be `nothing` for Fixed systems).
+- `unsafe`: If `true`, bypass ODE solver retcode checking.
+
+# Returns
+- `CTSolvers.Integrators.AbstractIntegrationResult`: The raw integration result.
+"""
+function _solve_flow(
+    flow::Flows.AbstractFlow, config::Configs.AbstractConfig; variable, unsafe
+)
 
     # fail before the integration on a device/array or AD backend mismatch (issue #436)
     _check_call(flow, config; variable=variable)
@@ -286,15 +319,60 @@ function _core_invoke_flow(
     opts = Integrators.build_options(int, config)
 
     # integrate ode problem
-    result = CommonSolve.solve(prob, int; options=opts, unsafe=unsafe)
+    return CommonSolve.solve(prob, int; options=opts, unsafe=unsafe)
+end
 
-    # build flow solution
-    flow_sol = Trajectories.build_trajectory(
+"""
+$(TYPEDEF)
+
+A flow whose point call also reports the time the solver reached. It wraps `flow` and shares
+its traits, so that [`CTFlows.Flows._invoke_flow`](@extref) validates the variable as for
+`flow`, then returns `(value, t_reached)` instead of `value`. An integration that a callback
+(`terminate!`) or a failure with `unsafe=true` stops early reaches a time other than the
+requested final time, which the call of a flow alone does not tell.
+
+# Fields
+- `flow::F`: the wrapped flow.
+
+See also: [`CTFlows.Flows._timed`](@extref).
+"""
+struct _TimedFlow{TD,VD,D,F<:AbstractFlow{TD,VD,D}} <: AbstractFlow{TD,VD,D}
+    flow::F
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Wrap `flow` so that its point calls through [`CTFlows.Flows._invoke_flow`](@extref) return
+`(value, t_reached)`: the value of the plain call and the last time of the integration, as a
+primal value.
+
+# Example
+\`\`\`julia-repl
+julia> value, t_reached = Flows._invoke_flow(Flows._timed(flow), config; variable=nothing, unsafe=false)
+\`\`\`
+
+See also: [`CTFlows.Flows._TimedFlow`](@extref).
+"""
+_timed(flow::AbstractFlow{TD,VD,D}) where {TD,VD,D} = _TimedFlow{TD,VD,D,typeof(flow)}(flow)
+
+"""
+$(TYPEDSIGNATURES)
+
+Point call of a [`CTFlows.Flows._TimedFlow`](@extref): the value of the plain call of the
+wrapped flow and the time the solver reached.
+
+# Returns
+- `Tuple`: `(value, t_reached)`.
+"""
+function _core_invoke_flow(
+    timed::_TimedFlow, config::Configs.AbstractEndPointConfig; variable, unsafe
+)
+    result = _solve_flow(timed.flow, config; variable=variable, unsafe=unsafe)
+    value = Trajectories.build_trajectory(
         Configs.mode_trait(config), Traits.dynamics_trait(config), config, result, variable
     )
-
-    # a trajectory carries the label of the flow (none by default)
-    return _with_flow_label(flow_sol, flow)
+    return value, Integrators.deepvalue(last(Integrators.times(result)))
 end
 
 """

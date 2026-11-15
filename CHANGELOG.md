@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+- **A multi-phase flow stops when a phase stops before its switching time**
+  ([#526](https://github.com/control-toolbox/CTFlows.jl/issues/526)). A phase stopped early
+  (`ContinuousCallback(…, terminate!)`, or a failure with `unsafe=true`) did not end the flow:
+  the next phase started at the requested switching time from the state reached at the stop
+  time, so the trajectory had a gap in time and the following values were wrong, with no
+  error. The following phases are now not integrated and no jump is applied. A trajectory call
+  returns the trajectory up to the stop time, with the switching times, the labels and the
+  output grid of the phases integrated; a point call returns the state at the stop time. A
+  flow whose phases all reach their switching time is unchanged.
 - **A generated output grid stops at the time the solver reached**
   ([#524](https://github.com/control-toolbox/CTFlows.jl/issues/524)). When a callback
   stopped the integration early (`ContinuousCallback(…, terminate!)`), or an integration
@@ -21,12 +30,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🧪 Testing
 
+- Early stop of a phase of a multi-phase flow, in the trajectory and point calls: forward and
+  backward, in the first, a middle and the last phase, with and without jump, plain state and
+  Hamiltonian flows and `Flow(ocp, law)` flows, with ForwardDiff and with the variable check.
 - Early termination is tested for the plain, Hamiltonian and `Flow(ocp, law)` flows, forward
   and backward, multi-phase, with explicit generated grids and under ForwardDiff;
   `Trajectories._effective_bounds` is tested directly.
 
 ### 📚 Documentation
 
+- The page on multi-phase flows describes a phase that stops before its switching time.
 - The page on integrating flows states that the generated grid ends at the time the solver reached.
 - Documentation previews now deploy only when requested with the
   `documentation push preview` label ([#516](https://github.com/control-toolbox/CTFlows.jl/issues/516)).
