@@ -7,8 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **A generated output grid stops at the time the solver reached**
+  ([#524](https://github.com/control-toolbox/CTFlows.jl/issues/524)). When a callback
+  stopped the integration early (`ContinuousCallback(…, terminate!)`), or an integration
+  blew up with `unsafe=true`, the default grid and any generated grid (`grid=n`,
+  `UniformGrid`, `AdaptiveGrid`) still ran to the requested final time: `time_grid(sol)[end]`
+  was `tf` and the trajectory was sampled beyond the event. The grid now ends at the last
+  integrated time, in forward and backward integration; in a multi-phase flow, the switching
+  times before the stop are kept. A trajectory reduced to a single time is returned as it
+  is. A call that reaches its final time is unchanged.
+
+### 🧪 Testing
+
+- Early termination is tested for the plain, Hamiltonian and `Flow(ocp, law)` flows, forward
+  and backward, multi-phase, with explicit generated grids and under ForwardDiff;
+  `Trajectories._effective_bounds` is tested directly.
+
 ### 📚 Documentation
 
+- The page on integrating flows states that the generated grid ends at the time the solver reached.
 - Documentation previews now deploy only when requested with the
   `documentation push preview` label ([#516](https://github.com/control-toolbox/CTFlows.jl/issues/516)).
 - ct-conventions pinned at `v0.13.0` and ct-agents at `v0.5.0` in `AGENTS.md`; the `Release` workflow of CTActions is called from `.github/workflows/Release.yml`.
@@ -16,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✅ Compatibility
 
-- **No breaking changes**: documentation and CI only. See [BREAKING.md](BREAKING.md).
+- **No breaking changes**: a bug fix of the output grid of an early-terminated integration, documentation and CI. See [BREAKING.md](BREAKING.md).
 
 ## [0.18.3] - 2026-10-24
 
