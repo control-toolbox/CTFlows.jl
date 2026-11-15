@@ -1,0 +1,56 @@
+# The request of the release of CTFlows v0.18.4, for the release workflow of CTActions.
+# Written by `release.jl facts`, completed by the agent after the human's validation, checked
+# by `release.jl request` and again by the workflow. The proposal is in .releases/v0.18.4.md.
+
+[release]
+package = "CTFlows"
+version = "0.18.4"
+kind = "stable"
+mode = "autonomous"            # supervised or autonomous: the human's choice
+requested_by = "ocots"    # the GitHub login of the person who validated the proposal
+reference = "0.18.3"
+base = "5484fb90a1cef4f86fd9cae34fc985f4815a504b"
+
+[versions]
+ct_agents = "v0.5.0"
+ct_conventions = "v0.14.0"
+ctactions = "f1d6b68"
+
+[facts]
+expected_version = "0.18.4"
+breaking = false
+feature = false
+rel4 = true
+rel7 = 10
+jump = "none"
+labels = ["run breakage", "run ci github-runner", "run ci occidata-runner", "run documentation", "documentation push preview"]
+
+[[review]]
+id = "pr-503"
+what = "#503 [AUTO] JuliaFormatter.jl run — touches src; not cited in the changelog since `v0.18.3`"
+verdict = "not-user-facing"   # covered, added, not-user-facing
+note = "Automated JuliaFormatter run: whitespace and layout only, no behaviour change."
+
+[[review]]
+id = "pr-513"
+what = "#513 [AUTO] JuliaFormatter.jl run — touches ext; not cited in the changelog since `v0.18.3`"
+verdict = "not-user-facing"   # covered, added, not-user-facing
+note = "Automated JuliaFormatter run: whitespace and layout only, no behaviour change."
+
+[[review]]
+id = "pr-517"
+what = "#517 [AUTO] JuliaFormatter.jl run — touches src; not cited in the changelog since `v0.18.3`"
+verdict = "not-user-facing"   # covered, added, not-user-facing
+note = "Automated JuliaFormatter run: whitespace and layout only, no behaviour change."
+
+[[review]]
+id = "pr-520"
+what = "#520 [AUTO] JuliaFormatter.jl run — touches docs; not cited in the changelog since `v0.18.3`"
+verdict = "not-user-facing"   # covered, added, not-user-facing
+note = "Automated JuliaFormatter run on the documentation sources: layout only."
+
+[[review]]
+id = "pr-522"
+what = "#522 chore: pin ct-conventions v0.14.0; build the docs with --project=docs — touches docs; not cited in the changelog since `v0.18.3`"
+verdict = "covered"   # covered, added, not-user-facing
+note = "Cited in the Documentation entry of [Unreleased] (ct-conventions pin v0.14.0 and the docs build command)."
