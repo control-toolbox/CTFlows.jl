@@ -113,7 +113,8 @@ function test_multiphase_early_stop()
         Test.@testset "_truncate keeps the kind of the flow" begin
             h = _osc()
             hmpf = h * (0.3, h) * (0.6, h)
-            Test.@test MultiPhase._truncate(hmpf, 2) isa MultiPhase.MultiPhaseHamiltonianFlow
+            Test.@test MultiPhase._truncate(hmpf, 2) isa
+                MultiPhase.MultiPhaseHamiltonianFlow
             f = _decay()
             Test.@test MultiPhase._truncate(f * (0.3, f) * (0.6, f), 2) isa
                 MultiPhase.MultiPhaseStateFlow
@@ -219,7 +220,9 @@ function test_multiphase_early_stop()
 
         Test.@testset "phase labels follow the phases that were integrated" begin
             f = _decay()
-            a = Flows.Flow(Data.VectorField(x -> -x); callback=_stop_at(0.8), _tol()..., label="a")
+            a = Flows.Flow(
+                Data.VectorField(x -> -x); callback=_stop_at(0.8), _tol()..., label="a"
+            )
             b = Flows.Flow(Data.VectorField(x -> -x); _tol()..., label="b")
             traj = (a * (0.5, b))((0.0, 1.0), [1.0]; grid=nothing)
             Test.@test Trajectories.phase_labels(traj) == ["a"]
@@ -235,7 +238,8 @@ function test_multiphase_early_stop()
             Test.@test last(T) ≈ acos(0.5) atol = TOL
             Test.@test all(<(1.2), T)
             Test.@test _val(Trajectories.state(traj)(last(T))) ≈ 0.5 atol = TOL
-            Test.@test _val(Trajectories.costate(traj)(last(T))) ≈ -sin(acos(0.5)) atol = TOL
+            Test.@test _val(Trajectories.costate(traj)(last(T))) ≈ -sin(acos(0.5)) atol =
+                TOL
             default = Integrators.times(mpf((0.0, 2.0), 1.0, 0.0))
             Test.@test length(default) == NDEFAULT
             Test.@test last(default) ≈ acos(0.5) atol = TOL
@@ -317,8 +321,8 @@ function test_multiphase_early_stop()
         Test.@testset "point call: agrees with the end of the trajectory" begin
             mpf = _decay_stopping(0.8) * (0.5, _decay())
             traj = mpf((0.0, 1.0), [1.0]; grid=nothing)
-            Test.@test only(mpf(0.0, [1.0], 1.0)) ≈ only(traj(last(Integrators.times(traj)))) atol =
-                TOL
+            Test.@test only(mpf(0.0, [1.0], 1.0)) ≈
+                only(traj(last(Integrators.times(traj)))) atol = TOL
         end
 
         Test.@testset "point call: ForwardDiff through the phases" begin
@@ -329,7 +333,10 @@ function test_multiphase_early_stop()
         end
 
         Test.@testset "point call: variable-dependent flows keep the variable check" begin
-            g = Flows.Flow(Data.VectorField((x, v) -> -v .* x; is_autonomous=true, is_variable=true); _tol()...)
+            g = Flows.Flow(
+                Data.VectorField((x, v) -> -v .* x; is_autonomous=true, is_variable=true);
+                _tol()...,
+            )
             mpf = g * (0.5, g)
             Test.@test only(mpf(0.0, [1.0], 1.0; variable=2.0)) ≈ exp(-2.0) atol = TOL
         end

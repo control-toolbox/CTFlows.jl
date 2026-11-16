@@ -713,8 +713,11 @@ function _truncate(mpf::MultiPhaseFlow, n::Int)
     flows = mpf.flows[1:n]
     times = mpf.switching_times[1:(n - 1)]
     jumps = mpf.jumps[1:(n - 1)]
-    return mpf isa MultiPhaseStateFlow ? MultiPhaseStateFlow(flows, times, jumps) :
-           MultiPhaseHamiltonianFlow(flows, times, jumps)
+    return if mpf isa MultiPhaseStateFlow
+        MultiPhaseStateFlow(flows, times, jumps)
+    else
+        MultiPhaseHamiltonianFlow(flows, times, jumps)
+    end
 end
 
 """
