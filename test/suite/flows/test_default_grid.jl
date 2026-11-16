@@ -189,10 +189,7 @@ function test_default_grid()
             Test.@test length(out.regridded_on) == 250
 
             out = Trajectories.apply_generated_grid(
-                FakeTraj(range(1.0, 0.42, 10)),
-                Configs.AutomaticGrid(),
-                _curve,
-                [1.0, 0.0],
+                FakeTraj(range(1.0, 0.42, 10)), Configs.AutomaticGrid(), _curve, [1.0, 0.0]
             )
             Test.@test first(out.regridded_on) == 1.0
             Test.@test last(out.regridded_on) == 0.42
@@ -226,7 +223,8 @@ function test_default_grid()
 
         Test.@testset "a trajectory with a single time is returned unchanged" begin
             traj = FakeTraj([0.0])
-            for spec in (Configs.AutomaticGrid(), Configs.AdaptiveGrid(20), Configs.UniformGrid(20))
+            for spec in
+                (Configs.AutomaticGrid(), Configs.AdaptiveGrid(20), Configs.UniformGrid(20))
                 Test.@test _apply(traj, spec) === traj
             end
             twice = FakeTraj([0.0, 0.0])   # one distinct time

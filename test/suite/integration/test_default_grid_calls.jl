@@ -415,9 +415,9 @@ function test_default_grid_calls()
         end
 
         # x₁(t) = -1 + 3t² - 2t³ reaches -1/2 at t = 1/2
-        Test.@testset "terminating callback, Flow(ocp, law) [$name]" for (name, mk, args) in (
-            ("OpenLoop", _flow_s, (X0,)),
-            ("DynClosedLoop", _flow_h, (X0, P0)),
+        Test.@testset "terminating callback, Flow(ocp, law) [$name]" for (name, mk, args) in
+                                                                         (
+            ("OpenLoop", _flow_s, (X0,)), ("DynClosedLoop", _flow_h, (X0, P0))
         )
             cb = ContinuousCallback((u, t, int) -> u[1] + 0.5, terminate!)
             sol = mk(; callback=cb)((0.0, 1.0), args...)
