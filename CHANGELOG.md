@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.4] - 2026-11-16
+
 ### 🐛 Bug Fixes
 
 - **A multi-phase flow stops when a phase stops before its switching time**

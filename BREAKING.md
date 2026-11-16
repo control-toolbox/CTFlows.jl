@@ -3,7 +3,7 @@
 This file lists breaking and near-breaking changes in CTFlows.jl since the last
 stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
-## Non-breaking note (Unreleased)
+## Non-breaking note (0.18.4)
 
 - **A multi-phase flow stops when a phase stops before its switching time**
   ([#526](https://github.com/control-toolbox/CTFlows.jl/issues/526)): after a `terminate!`
