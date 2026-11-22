@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 📚 Documentation
+
+- ct-conventions pinned at `v0.15.0` in `AGENTS.md`.
+
+### ✅ Compatibility
+
+- **No breaking changes**: documentation only. See [BREAKING.md](BREAKING.md).
+
 ## [0.18.4] - 2026-11-16
 
 ### 🐛 Bug Fixes
