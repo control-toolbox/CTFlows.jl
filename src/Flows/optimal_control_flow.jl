@@ -135,29 +135,13 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build an `OCPHamiltonianFunction` from a control-free OCP and wrap it in a
-`Data.Hamiltonian`.
+The Hamiltonian of a control-free OCP, a `Data.Hamiltonian` with the uniform `(t, x, p, v)`
+interface: built by [`CTModels.Models.hamiltonian`](@extref) (control-toolbox/CTModels.jl#532).
 
-Extracts the state dimension, dynamics, criterion sign, Lagrange cost, and
-time/variable-dependence traits from the OCP, then constructs a typed
-`OCPHamiltonianFunction` and wraps it so the downstream AD pipeline receives a
-uniform `(t, x, p, v)` interface.
-
-See also: [`CTFlows.Flows.OCPHamiltonianFunction`](@extref), [`CTFlows.Flows.OptimalControlFlow`](@extref), [`CTFlows.Flows.Flow`](@extref).
+See also: [`CTFlows.Flows.OptimalControlFlow`](@extref), [`CTFlows.Flows.Flow`](@extref).
 """
 function _ocp_hamiltonian(ocp)
-    n = CTModels.Models.state_dimension(ocp)
-    dyn! = CTModels.Models.dynamics(ocp)
-    sp0 = CTModels.Components.criterion(ocp) === :min ? -1.0 : 1.0   # s*p⁰, p⁰=-1
-    lag = if CTModels.Components.has_lagrange_cost(ocp)
-        CTModels.Components.lagrange(ocp)
-    else
-        nothing
-    end
-    TD = Traits.time_dependence(ocp)       # Traits.Autonomous or NonAutonomous
-    VD = Traits.variable_dependence(ocp)   # Traits.Fixed or Traits.NonFixed
-    h_raw = OCPHamiltonianFunction{TD,VD,typeof(dyn!),typeof(lag)}(dyn!, lag, sp0, n)
-    return Data.Hamiltonian(h_raw, TD, VD)   # typed ctor → uniform (t,x,p,v) interface for AD
+    return CTModels.Models.hamiltonian(ocp)
 end
 
 # =============================================================================
@@ -270,25 +254,14 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build an [`CTFlows.Flows.OCPPseudoHamiltonianFunction`](@extref) from an OCP and wrap it in a
-[`CTBase.Data.PseudoHamiltonian`](@extref), giving the uniform `(t,x,p,u,v)` interface
-used by the pseudo-Hamiltonian AD pipeline.
+The pseudo-Hamiltonian of an OCP, a [`CTBase.Data.PseudoHamiltonian`](@extref) with the
+uniform `(t, x, p, u, v)` interface used by the pseudo-Hamiltonian AD pipeline: built by
+[`CTModels.Models.pseudo_hamiltonian`](@extref) (control-toolbox/CTModels.jl#532).
 
-See also: [`CTFlows.Flows.OCPPseudoHamiltonianFunction`](@extref), `CTFlows.Flows._ocp_hamiltonian`.
+See also: `CTFlows.Flows._ocp_hamiltonian`.
 """
 function _ocp_pseudo_hamiltonian(ocp)
-    n = CTModels.Models.state_dimension(ocp)
-    dyn! = CTModels.Models.dynamics(ocp)
-    sp0 = CTModels.Components.criterion(ocp) === :min ? -1.0 : 1.0
-    lag = if CTModels.Components.has_lagrange_cost(ocp)
-        CTModels.Components.lagrange(ocp)
-    else
-        nothing
-    end
-    TD = Traits.time_dependence(ocp)
-    VD = Traits.variable_dependence(ocp)
-    h_raw = OCPPseudoHamiltonianFunction{TD,VD,typeof(dyn!),typeof(lag)}(dyn!, lag, sp0, n)
-    return Data.PseudoHamiltonian(h_raw, TD, VD)
+    return CTModels.Models.pseudo_hamiltonian(ocp)
 end
 
 # =============================================================================
