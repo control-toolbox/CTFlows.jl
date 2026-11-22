@@ -164,6 +164,11 @@ traj = mpf((0.0, 1.0), [1.0])     # defined on [0, 0.22]: the phase 2 is not int
 mpf(0.0, [1.0], 1.0)              # [0.8], the state at the stop time
 ```
 
+With `unsafe=false` (the default), a phase whose integration fails raises a
+`CTBase.Exceptions.SolverFailure` whose context names the phase, for instance
+`phase 2 of 3, point call of the flow (SciML solve)`, and whose suggestion is to call the
+flow with `unsafe=true` to get what was computed up to the failure.
+
 ---
 
 ## Inspecting a multi-phase flow

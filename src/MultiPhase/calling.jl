@@ -66,15 +66,19 @@ function _evaluate_multiphase(mpf, config::Configs.AbstractEndPointConfig; varia
     for i in 1:n_ph
         t_end = (i < n_ph) ? get_switching_time(mpf, i) : tf
 
-        current_state, t_reached = _evaluate_phase_reached(
-            get_flow(mpf, i),
-            current_t,
-            t_end,
-            current_state,
-            config;
-            variable=variable,
-            unsafe=unsafe,
-        )
+        current_state, t_reached = let t = current_t, state = current_state
+            _in_phase(i, n_ph, unsafe) do
+                _evaluate_phase_reached(
+                    get_flow(mpf, i),
+                    t,
+                    t_end,
+                    state,
+                    config;
+                    variable=variable,
+                    unsafe=unsafe,
+                )
+            end
+        end
 
         # a phase stopped before its switching time ends the flow, with no jump
         _reached_end(t_reached, current_t, t_end) || break
@@ -90,6 +94,49 @@ function _evaluate_multiphase(mpf, config::Configs.AbstractEndPointConfig; varia
     end
 
     return _format_final_output(mpf, current_state)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Evaluate the phase `i` of a multi-phase flow of `n` phases and, when its integration raises a
+[`CTBase.Exceptions.SolverFailure`](@extref) with `unsafe=false`, raise it again with the
+phase in its context (issue #523): `"phase 2 of 3, point call of the flow (SciML solve)"`.
+
+The message, the return code and the suggestion are kept: the call of the flow of the phase
+already names `unsafe=true` (see [`CTFlows.Flows._with_unsafe_hint`](@extref)). With
+`unsafe=true`, `evaluate` is called as is. Any other exception is rethrown unchanged.
+
+# Arguments
+- `evaluate`: A function of no argument that evaluates the phase.
+- `i::Int`: The index of the phase.
+- `n::Int`: The number of phases.
+- `unsafe::Bool`: The `unsafe` keyword of the call.
+
+# Returns
+- The value of `evaluate()`.
+
+# Throws
+- [`CTBase.Exceptions.SolverFailure`](@extref): If `evaluate` raises one and `unsafe=false`.
+
+See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@extref).
+"""
+function _in_phase(evaluate, i::Int, n::Int, unsafe::Bool)
+    unsafe && return evaluate()
+    try
+        return evaluate()
+    catch e
+        e isa Exceptions.SolverFailure || rethrow()
+        phase = "phase $(i) of $(n)"
+        throw(
+            Exceptions.SolverFailure(
+                e.msg;
+                retcode=e.retcode,
+                suggestion=e.suggestion,
+                context=isnothing(e.context) ? phase : "$(phase), $(e.context)",
+            ),
+        )
+    end
 end
 
 """
@@ -127,15 +174,19 @@ function _evaluate_multiphase(
     for i in 1:n_ph
         t_end = (i < n_ph) ? get_switching_time(mpf, i) : tf
 
-        segment_result = _evaluate_phase(
-            get_flow(mpf, i),
-            current_t,
-            t_end,
-            current_state,
-            config;
-            variable=variable,
-            unsafe=unsafe,
-        )
+        segment_result = let t = current_t, state = current_state
+            _in_phase(i, n_ph, unsafe) do
+                _evaluate_phase(
+                    get_flow(mpf, i),
+                    t,
+                    t_end,
+                    state,
+                    config;
+                    variable=variable,
+                    unsafe=unsafe,
+                )
+            end
+        end
         results = isnothing(results) ? [segment_result] : push!(results, segment_result)
         n_done = i
 
@@ -1200,7 +1251,9 @@ Builds a `StateEndPointConfig` internally and evaluates the multi-phase flow.
 - `x0`: Initial state vector.
 - `tf::Real`: Final time.
 - `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
-- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+- `unsafe`: If `true`, bypass ODE solver retcode checking and return what was computed up to
+  an integration failure; if `false`, throw `SolverFailure` on integration failure, with the
+  call in its context and a suggestion to call the flow with `unsafe=true`.
 
 # Returns
 - The final state after sequential integration through all phases.
@@ -1236,7 +1289,9 @@ returning a merged trajectory from all phases.
 - `tspan::Configs.TimeSpec`: Time span `(t0, tf)`, or an output grid `(t0, t1, …, tf)` (see [`CTFlows.Configs.TimeSpec`](@extref)).
 - `x0`: Initial state vector.
 - `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
-- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+- `unsafe`: If `true`, bypass ODE solver retcode checking and return what was computed up to
+  an integration failure; if `false`, throw `SolverFailure` on integration failure, with the
+  call in its context and a suggestion to call the flow with `unsafe=true`.
 - `grid`: Output grid generated from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)). Default: an [`CTFlows.Configs.AutomaticGrid`](@extref) (`AdaptiveGrid(250)` when the integration is dense and the solver returns fewer than 250 times), unless `saveat` or a grid of times already shapes the output; `grid=nothing` keeps the solver steps. The grid is generated once, over the merged trajectory, the switching times counted once (the phases are integrated without it).
 
 # Returns
@@ -1279,7 +1334,9 @@ Builds a `HamiltonianEndPointConfig` internally and evaluates the multi-phase fl
 - `p0`: Initial costate vector.
 - `tf::Real`: Final time.
 - `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
-- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+- `unsafe`: If `true`, bypass ODE solver retcode checking and return what was computed up to
+  an integration failure; if `false`, throw `SolverFailure` on integration failure, with the
+  call in its context and a suggestion to call the flow with `unsafe=true`.
 
 # Returns
 - The final state and costate after sequential integration through all phases.
@@ -1315,7 +1372,9 @@ returning a merged trajectory from all phases.
 - `x0`: Initial state vector.
 - `p0`: Initial costate vector.
 - `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
-- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+- `unsafe`: If `true`, bypass ODE solver retcode checking and return what was computed up to
+  an integration failure; if `false`, throw `SolverFailure` on integration failure, with the
+  call in its context and a suggestion to call the flow with `unsafe=true`.
 - `grid`: Output grid generated from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)). Default: an [`CTFlows.Configs.AutomaticGrid`](@extref) (`AdaptiveGrid(250)` when the integration is dense and the solver returns fewer than 250 times), unless `saveat` or a grid of times already shapes the output; `grid=nothing` keeps the solver steps. The grid is generated once, over the merged trajectory, the switching times counted once (the phases are integrated without it).
 
 # Returns

@@ -11,7 +11,9 @@ Builds a `StateEndPointConfig` internally and calls the flow with it.
 - `x0`: Initial state vector.
 - `tf::Real`: Final time.
 - `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
-- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+- `unsafe`: If `true`, bypass ODE solver retcode checking and return what was computed up to
+  an integration failure; if `false`, throw `SolverFailure` on integration failure, with the
+  call in its context and a suggestion to call the flow with `unsafe=true`.
 
 # Returns
 - The integrated solution (type varies by system).
@@ -52,8 +54,9 @@ Builds a `HamiltonianEndPointConfig` internally and calls the flow with it.
   represents a free time (see below).
 - `variable`: The variable parameter value (required for NonFixed systems, optional for
   Fixed systems).
-- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw
-  `SolverFailure` on integration failure.
+- `unsafe`: If `true`, bypass ODE solver retcode checking and return what was computed up to
+  an integration failure; if `false`, throw `SolverFailure` on integration failure, with the
+  call in its context and a suggestion to call the flow with `unsafe=true`.
 - `variable_costate`: If `true` (NonFixed only), also integrate the augmented adjoint
   `ṗv = -∂H/∂v` (initialised at `pv(t0) = 0`) and return `(xf, pf, pvf)`.
 
@@ -110,7 +113,9 @@ Builds a `StateTrajectoryConfig` internally and calls the flow with it.
 - `tspan::Configs.TimeSpec`: Time span `(t0, tf)`, or an output grid `(t0, t1, …, tf)` (see [`CTFlows.Configs.TimeSpec`](@extref)).
 - `x0`: Initial state vector.
 - `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
-- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+- `unsafe`: If `true`, bypass ODE solver retcode checking and return what was computed up to
+  an integration failure; if `false`, throw `SolverFailure` on integration failure, with the
+  call in its context and a suggestion to call the flow with `unsafe=true`.
 - `grid`: Output grid generated from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)). Default: an [`CTFlows.Configs.AutomaticGrid`](@extref) (`AdaptiveGrid(250)` when the integration is dense and the solver returns fewer than 250 times), unless `saveat` or a grid of times already shapes the output; `grid=nothing` keeps the solver steps.
 
 # Returns
@@ -152,7 +157,9 @@ Builds a `HamiltonianTrajectoryConfig` internally and calls the flow with it.
 - `x0`: Initial state vector.
 - `p0`: Initial costate vector.
 - `variable`: The variable parameter value (required for NonFixed systems, optional for Fixed systems).
-- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+- `unsafe`: If `true`, bypass ODE solver retcode checking and return what was computed up to
+  an integration failure; if `false`, throw `SolverFailure` on integration failure, with the
+  call in its context and a suggestion to call the flow with `unsafe=true`.
 - `grid`: Output grid generated from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)). Default: an [`CTFlows.Configs.AutomaticGrid`](@extref) (`AdaptiveGrid(250)` when the integration is dense and the solver returns fewer than 250 times), unless `saveat` or a grid of times already shapes the output; `grid=nothing` keeps the solver steps.
 
 # Returns
@@ -208,7 +215,9 @@ This function dispatches to one of four specialized implementations based on:
 - `flow::CTFlows.Flows.AbstractFlow`: The flow to solve.
 - `config::CTFlows.Configs.AbstractConfig`: The integration configuration (e.g., `StateEndPointConfig`, `StateTrajectoryConfig`).
 - `variable`: The variable parameter value (required for NonFixed systems, must be omitted for Fixed systems).
-- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+- `unsafe`: If `true`, bypass ODE solver retcode checking and return what was computed up to
+  an integration failure; if `false`, throw `SolverFailure` on integration failure, with the
+  call in its context and a suggestion to call the flow with `unsafe=true`.
 
 # Returns
 - The packaged solution (type varies by config type).
@@ -318,9 +327,104 @@ function _solve_flow(
     # build config-specific options
     opts = Integrators.build_options(int, config)
 
-    # integrate ode problem
-    return CommonSolve.solve(prob, int; options=opts, unsafe=unsafe)
+    # integrate ode problem; a failure names `unsafe=true` (issue #523)
+    return _with_unsafe_hint(config, unsafe) do
+        CommonSolve.solve(prob, int; options=opts, unsafe=unsafe)
+    end
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Run the integration `solve` of a flow call and, when it raises a
+[`CTBase.Exceptions.SolverFailure`](@extref) with `unsafe=false`, raise it again with the
+context of the flow call and a suggestion that names `unsafe=true` (issue #523).
+
+The integrator that raises the failure does not know it is called by a flow, so its message
+cannot mention the `unsafe` keyword of the flow call, which returns what was computed up to
+the failure instead of raising. With `unsafe=true`, `solve` is called as is. Any other
+exception is rethrown unchanged.
+
+# Arguments
+- `solve`: A function of no argument that integrates and returns the integration result.
+- `config`: The configuration of the call (a point or a trajectory configuration), or
+  `nothing` for a call without configuration; it names the call in the error.
+- `unsafe::Bool`: The `unsafe` keyword of the flow call.
+
+# Returns
+- The value of `solve()`.
+
+# Throws
+- [`CTBase.Exceptions.SolverFailure`](@extref): If `solve` raises one and `unsafe=false`, with
+  the same message and return code, see [`CTFlows.Flows._unsafe_failure`](@extref).
+
+See also: [`CTFlows.Flows._solve_flow`](@extref).
+"""
+function _with_unsafe_hint(solve, config, unsafe::Bool)
+    unsafe && return solve()
+    try
+        return solve()
+    catch e
+        e isa Exceptions.SolverFailure || rethrow()
+        throw(_unsafe_failure(e, config))
+    end
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+The failure `e` of the integration of a flow call, with the context of the call and a
+suggestion that names `unsafe=true`: the message and the return code are kept, the
+suggestion of `e` is followed by the one on `unsafe=true`, and the context of `e` is
+preceded by the call (`"point call of the flow (SciML solve)"`).
+
+# Arguments
+- `e::CTBase.Exceptions.SolverFailure`: The failure raised by the integrator.
+- `config`: The configuration of the call, or `nothing`.
+
+# Returns
+- `CTBase.Exceptions.SolverFailure`: The failure to raise from the flow call.
+
+# Example
+\`\`\`julia-repl
+julia> e = Exceptions.SolverFailure("ODE integration failed"; retcode="Unstable", context="SciML solve");
+
+julia> Flows._unsafe_failure(e, Configs.StateEndPointConfig(0.0, [1.0], 1.0)).context
+"point call of the flow (SciML solve)"
+\`\`\`
+
+See also: [`CTFlows.Flows._with_unsafe_hint`](@extref).
+"""
+function _unsafe_failure(e::Exceptions.SolverFailure, config)
+    hint = "To get $(_computed_until_failure(config)), call the flow with `unsafe=true`."
+    call = "$(_call_kind(config)) of the flow"
+    return Exceptions.SolverFailure(
+        e.msg;
+        retcode=e.retcode,
+        suggestion=isnothing(e.suggestion) ? hint : "$(e.suggestion) $(hint)",
+        context=isnothing(e.context) ? call : "$(call) ($(e.context))",
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+The name of a flow call in an error, from its configuration: `"point call"`,
+`"trajectory call"`, or `"call"` for a call without configuration.
+"""
+_call_kind(::Configs.AbstractEndPointConfig) = "point call"
+_call_kind(::Configs.AbstractTrajectoryConfig) = "trajectory call"
+_call_kind(::Any) = "call"
+
+"""
+$(TYPEDSIGNATURES)
+
+What a flow call returns with `unsafe=true` when the integration fails, from its
+configuration: the state reached for a point call, the trajectory otherwise.
+"""
+_computed_until_failure(::Configs.AbstractEndPointConfig) =
+    "the state reached at the failure"
+_computed_until_failure(::Any) = "the trajectory computed up to the failure"
 
 """
 $(TYPEDEF)
