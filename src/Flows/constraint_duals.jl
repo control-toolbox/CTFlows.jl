@@ -169,6 +169,13 @@ function _path_constraints_dual(d, x, p, v)
     return _PathDualFunction(d, x, p, v)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+The number of path constraints of the duals `d`, that is the length of the vector of path
+duals at a time; `0` for an unconstrained flow. `CTFlows.MultiPhase` adds the method of the
+piecewise duals of a multi-phase flow.
+"""
 _path_dual_dim(d::_PathDuals) = d.dim
 
 """
