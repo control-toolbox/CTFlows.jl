@@ -7,13 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🛠 Enhancements
+
+- **A `SolverFailure` from a flow call suggests `unsafe=true`**
+  ([#523](https://github.com/control-toolbox/CTFlows.jl/issues/523)). The integrator that
+  raises the failure does not know it is called by a flow, so its message did not mention the
+  `unsafe` keyword, which returns what was computed up to the failure instead of raising. A
+  point or trajectory call of a flow (`StateFlow`, `HamiltonianFlow`, `SciMLProblemFlow`)
+  with `unsafe=false` now raises the failure again with the same message and return code,
+  the call in its context (`point call of the flow (SciML solve)`) and, after the suggestion
+  of the integrator, the suggestion to call the flow with `unsafe=true`. For a multi-phase
+  flow, the context also names the phase that failed (`phase 2 of 3, …`).
+
+### 🧪 Testing
+
+- `test/suite/flows/test_solver_failure_hint.jl`: the rewrapped failure (message, return
+  code, context, suggestion) for the point and trajectory calls of the single-phase, problem
+  and multi-phase flows, and the calls with `unsafe=true`.
+
 ### 📚 Documentation
 
 - ct-conventions pinned at `v0.15.0` in `AGENTS.md`.
+- *Integrating*, section *Unsafe mode*: a blow-up example showing the error and the calls with
+  `unsafe=true`; *Multi-phase flows*: the phase in the context of a failure.
 
 ### ✅ Compatibility
 
-- **No breaking changes**: documentation only. See [BREAKING.md](BREAKING.md).
+- **No breaking changes**: the type, message and return code of the error are unchanged;
+  only its context and suggestion are longer. See [BREAKING.md](BREAKING.md).
 
 ## [0.18.4] - 2026-11-16
 
