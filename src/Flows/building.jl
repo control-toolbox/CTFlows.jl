@@ -161,6 +161,8 @@ Dispatches on the problem's [`CTBase.Traits.ControlDependence`](@extref) trait:
 - `label::AbstractString=""`: the label of the phase the flow integrates (e.g. `"bang"`),
   kept through concatenation and written on the plots; see [`CTFlows.Flows.label`](@extref).
   An action option: it is never passed to the strategies.
+- `p0=nothing`: the multiplier of the cost `p⁰` in `H = p·f + p⁰ℓ`; by default `-1` for a
+  minimisation and `+1` for a maximisation, `0` for the abnormal case (`SGN4`).
 - `kwargs...`: Keyword options passed to the backend and integrator strategies
   (same as `Flow(h::Data.AbstractHamiltonian; kwargs...)`).
 
@@ -191,10 +193,11 @@ See also: [`CTFlows.Flows.OptimalControlFlow`](@extref), [`CTFlows.Flows.Flow`](
 """
 function _flow_from_ocp(::Type{Traits.ControlFree}, ocp::CTModels.Models.Model; kwargs...)
     _reject_control_free_constraint(kwargs)
+    p0, kwargs = _pop_p0(kwargs)
     method, kw = _pop_method(kwargs)
     routed = _route_flow_options(Traits.WithAD, kw; method=method)
     components = _build_flow_components(Traits.WithAD, routed; method=method)
-    h = _ocp_hamiltonian(ocp)
+    h = _ocp_hamiltonian(ocp; p0)
     sys = Systems.build_system(h, components.backend)
     inner = build_flow(sys, components.integrator)
     state_sys = Systems.build_system(_ocp_state_vector_field(ocp))
@@ -585,15 +588,23 @@ Dispatches on the law's [`CTBase.Traits.feedback`](@extref) trait:
 # Path constraints
 
 With a `DynClosedLoop` law, the `constraint` and `multiplier` keywords (given together)
-augment the pseudo-Hamiltonian as `H = H̃ + μ·g`, with the constraint normalised as
-`g(t,x,u,v) ≥ 0` and `μ(t,x,p,v) ≥ 0` on a boundary arc. `constraint` is:
-- a raw function with the OCP's natural arity, or a [`CTBase.Data.PathConstraint`](@extref):
-  taken as `g`, as is;
-- the `Symbol` label of a `:path` constraint `lb ≤ c ≤ ub` of the OCP: `g = c - lb` for a
-  lower bound or an equality, `g = ub - c` for an upper bound;
-- `label => side`, with `side` `:lower` (`g = c - lb`) or `:upper` (`g = ub - c`) — or one
-  side per component — for a two-sided constraint, where `:label` alone throws;
-- a `Tuple` of the above, paired element-wise with a `Tuple` of multipliers.
+adjoin constraints to the pseudo-Hamiltonian. `constraint` is:
+- the `Symbol` label of a constraint of the OCP (a path constraint, a state box or a
+  control box), or a `Tuple` of labels paired element-wise with a `Tuple` of multipliers:
+  the multiplier `y` is the **dual of the solution** (ct-conventions `SGN1`–`SGN6`: `y ≥ 0`
+  on a one-sided row, the sign of `y` giving the active side of a two-sided or equality
+  row), and the duals of the arc are placed in the solution by label;
+- a raw function `g(t,x,u,v) ≥ 0` with the OCP's natural arity, or a
+  [`CTBase.Data.PathConstraint`](@extref), for a constraint outside the model: its
+  multiplier is `μ ≥ 0` and its duals are not placed in the solution.
+`label => side` is no longer accepted: the sign of `y` replaces the side.
+
+# Cost multiplier
+
+The keyword `p0` is the multiplier `p⁰` of the cost in `H̃ = p·f + p⁰ℓ`: `-1` for a
+minimisation and `+1` for a maximisation by default (the normal case), `0` for the abnormal
+case, any value of the sign of the criterion otherwise (`SGN4`). It is available on
+`Flow(ocp)` and `Flow(ocp, law)`; a `p0` whose sign contradicts the criterion throws.
 
 # Phase label
 
@@ -895,6 +906,7 @@ function _flow_from_ocp_control(
             context="Flow(ocp, law::ControlLaw) — control-dependence check",
         ),
     )
+    p0, kwargs = _pop_p0(kwargs)
     method, kw = _pop_method(kwargs)
     routed = _route_flow_options(
         Traits.WithAD, kw; method=method, action_defs=_flow_action_defs()
@@ -905,7 +917,7 @@ function _flow_from_ocp_control(
     mspec = _unwrap_option(get(routed.action, :multiplier, nothing), nothing)
     _check_convenience_arities(ocp, nothing, cspec, mspec)
     _validate_constraint_pair(cspec, mspec)
-    inner = _build_ocp_pseudo_flow(Val(ht), ocp, law, components, cspec, mspec)
+    inner = _build_ocp_pseudo_flow(Val(ht), ocp, law, components, cspec, mspec; p0)
     duals = _flow_duals(ocp, cspec, mspec)
     duals isa _UnlabelledPathDuals && _warn_unlabelled_constraint(ocp)
     return with_label(
@@ -986,11 +998,13 @@ and the multiplier.
 See also: [`CTFlows.Flows._resolve_constraint`](@extref), [`CTFlows.Flows._resolve_multiplier`](@extref),
 [`CTFlows.Flows._build_pseudo_flow`](@extref).
 """
-function _build_ocp_pseudo_flow(::Val{:total}, ocp, law, components, cspec, mspec)
+function _build_ocp_pseudo_flow(
+    ::Val{:total}, ocp, law, components, cspec, mspec; p0=nothing
+)
     cspec === nothing && return _build_pseudo_flow(
-        Val(:total), _ocp_pseudo_hamiltonian(ocp), law, components
+        Val(:total), _ocp_pseudo_hamiltonian(ocp; p0), law, components
     )
-    h = _constrained_pseudo_hamiltonian(ocp, cspec)
+    h = _constrained_pseudo_hamiltonian(ocp, cspec; p0)
     H = Data.ComposedConstrainedHamiltonian(h, law, _resolve_multiplier(ocp, mspec))
     sys = Systems.build_system(H, components.backend)
     return build_flow(sys, components.integrator)
@@ -1009,11 +1023,13 @@ See also: [`CTFlows.Flows._build_pseudo_flow`](@extref),
 [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref),
 [`CTFlows.Flows._resolve_constraint`](@extref), [`CTFlows.Flows._resolve_multiplier`](@extref).
 """
-function _build_ocp_pseudo_flow(::Val{:partial}, ocp, law, components, cspec, mspec)
+function _build_ocp_pseudo_flow(
+    ::Val{:partial}, ocp, law, components, cspec, mspec; p0=nothing
+)
     cspec === nothing && return _build_pseudo_flow(
-        Val(:partial), _ocp_pseudo_hamiltonian(ocp), law, components
+        Val(:partial), _ocp_pseudo_hamiltonian(ocp; p0), law, components
     )
-    h = _constrained_pseudo_hamiltonian(ocp, cspec)
+    h = _constrained_pseudo_hamiltonian(ocp, cspec; p0)
     μ = _resolve_multiplier(ocp, mspec)
     sys = Systems.build_system(h, law, μ, components.backend)
     return build_flow(sys, components.integrator)
@@ -1027,8 +1043,10 @@ error message and type match `Flow(h̃, law; hamiltonian_type=…)`.
 
 See also: [`CTFlows.Flows._build_pseudo_flow`](@extref).
 """
-function _build_ocp_pseudo_flow(::Val{ht}, ocp, law, components, cspec, mspec) where {ht}
-    return _build_pseudo_flow(Val(ht), _ocp_pseudo_hamiltonian(ocp), law, components)
+function _build_ocp_pseudo_flow(
+    ::Val{ht}, ocp, law, components, cspec, mspec; p0=nothing
+) where {ht}
+    return _build_pseudo_flow(Val(ht), _ocp_pseudo_hamiltonian(ocp; p0), law, components)
 end
 
 """

@@ -139,6 +139,20 @@ function _pop_method(kwargs)
 end
 
 """
+$(TYPEDSIGNATURES)
+
+Split the cost multiplier `p0` off a flow constructor's keyword arguments, giving
+`(p0, rest)` (`p0 = nothing` if absent): it is an option of the Hamiltonian of the OCP, not
+a strategy option, so it is popped before routing, like `method`.
+
+See also: [`CTFlows.Flows._pop_method`](@extref).
+"""
+function _pop_p0(kwargs)
+    nt = (; kwargs...)
+    return get(nt, :p0, nothing), Base.structdiff(nt, NamedTuple{(:p0,)})
+end
+
+"""
 $(TYPEDEF)
 
 Strategy family description for flow construction.
@@ -288,19 +302,21 @@ function _flow_action_defs()
             aliases=(),
             type=Any,
             default=nothing,
-            description="Path constraint g for a constrained pseudo-Hamiltonian flow: " *
-                        "a :path constraint label (Symbol), normalised as g ≥ 0 from its bounds, " *
-                        "or `label => :lower`/`:upper` for a two-sided one, a CTBase.Data.PathConstraint, " *
-                        "or a plain function with the OCP's natural arity. Paired with `multiplier`.",
+            description="Constraint(s) adjoined to the pseudo-Hamiltonian: the label of a " *
+                        "constraint of the OCP (path constraint, state box or control box), " *
+                        "a tuple of labels, or, outside the model, a CTBase.Data.PathConstraint " *
+                        "or a plain function g ≥ 0 with the OCP's natural arity. " *
+                        "Paired with `multiplier`.",
         ),
         Options.OptionDefinition(;
             name=:multiplier,
             aliases=(),
             type=Any,
             default=nothing,
-            description="Lagrange multiplier μ for the path constraint: a " *
-                        "CTBase.Data.Multiplier or a plain function μ with the OCP's natural " *
-                        "arity μ(x,p)/μ(t,x,p)/μ(x,p,v)/μ(t,x,p,v). Paired with `constraint`.",
+            description="Multiplier of the constraint(s): the dual of the solution for a " *
+                        "label (SGN1–SGN6), μ ≥ 0 for a function; a CTBase.Data.Multiplier " *
+                        "or a plain function with the OCP's natural arity " *
+                        "μ(x,p)/μ(t,x,p)/μ(x,p,v)/μ(t,x,p,v). Paired with `constraint`.",
         ),
     ]
 end

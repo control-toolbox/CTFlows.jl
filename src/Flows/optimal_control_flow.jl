@@ -12,13 +12,22 @@ const _CTM_NonAuton = CTModels.Components.NonAutonomous
 """
 $(TYPEDSIGNATURES)
 
+The keyword arguments `(; p0)` for the CTModels getters, or none when `p0` is `nothing`:
+the getter then uses its default, `p⁰ = -1` for a minimisation and `+1` for a maximisation
+(ct-conventions `SGN4`). `p0 = 0` is the abnormal case.
+"""
+_p0_kwargs(p0) = p0 === nothing ? (;) : (; p0)
+
+"""
+$(TYPEDSIGNATURES)
+
 The Hamiltonian of a control-free OCP, a `Data.Hamiltonian` with the uniform `(t, x, p, v)`
 interface: built by [`CTModels.Models.hamiltonian`](@extref) (control-toolbox/CTModels.jl#532).
 
 See also: [`CTFlows.Flows.OptimalControlFlow`](@extref), [`CTFlows.Flows.Flow`](@extref).
 """
-function _ocp_hamiltonian(ocp)
-    return CTModels.Models.hamiltonian(ocp)
+function _ocp_hamiltonian(ocp; p0=nothing)
+    return CTModels.Models.hamiltonian(ocp; _p0_kwargs(p0)...)
 end
 
 """
@@ -30,8 +39,8 @@ uniform `(t, x, p, u, v)` interface used by the pseudo-Hamiltonian AD pipeline: 
 
 See also: `CTFlows.Flows._ocp_hamiltonian`.
 """
-function _ocp_pseudo_hamiltonian(ocp)
-    return CTModels.Models.pseudo_hamiltonian(ocp)
+function _ocp_pseudo_hamiltonian(ocp; p0=nothing)
+    return CTModels.Models.pseudo_hamiltonian(ocp; _p0_kwargs(p0)...)
 end
 
 
@@ -437,10 +446,11 @@ specification:
 
 See also: [`CTFlows.Flows._is_labelled`](@extref).
 """
-function _constrained_pseudo_hamiltonian(ocp, cspec)
-    _is_labelled(cspec) &&
-        return CTModels.Models.pseudo_hamiltonian(ocp; constraints=_labels(cspec))
-    return _ocp_constrained_pseudo_hamiltonian(ocp, _resolve_constraint(ocp, cspec))
+function _constrained_pseudo_hamiltonian(ocp, cspec; p0=nothing)
+    _is_labelled(cspec) && return CTModels.Models.pseudo_hamiltonian(
+        ocp; constraints=_labels(cspec), _p0_kwargs(p0)...
+    )
+    return _ocp_constrained_pseudo_hamiltonian(ocp, _resolve_constraint(ocp, cspec); p0)
 end
 
 """
@@ -454,10 +464,10 @@ mode composes it with the law and the multiplier.
 See also: [`CTFlows.Flows._AdjoinedConstraint`](@extref),
 [`CTFlows.Flows._resolve_constraint`](@extref).
 """
-function _ocp_constrained_pseudo_hamiltonian(ocp, g)
+function _ocp_constrained_pseudo_hamiltonian(ocp, g; p0=nothing)
     TD = Traits.time_dependence(ocp)
     VD = Traits.variable_dependence(ocp)
-    h̃ = _ocp_pseudo_hamiltonian(ocp)
+    h̃ = _ocp_pseudo_hamiltonian(ocp; p0)
     raw = _AdjoinedConstraint{TD,VD,typeof(h̃),typeof(g)}(h̃, g)
     return Data.ConstrainedPseudoHamiltonian(raw, TD, VD)
 end
