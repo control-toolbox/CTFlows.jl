@@ -73,11 +73,17 @@ export VectorFieldSystem
 export HamiltonianVectorFieldSystem
 export HamiltonianSystem
 export PseudoHamiltonianSystem
+# The accessors are the generic functions of CTBase.Data, extended here for the systems.
+const hamiltonian = Data.hamiltonian
+const pseudo_hamiltonian = Data.pseudo_hamiltonian
+const control_law = Data.control_law
+const multiplier = Data.multiplier
+
 export PseudoHamiltonianVectorFieldSystem
 export ConstrainedPseudoHamiltonianSystem
 export build_system
 export hamiltonian, backend
-export pseudo_hamiltonian, control_law
+export pseudo_hamiltonian, control_law, multiplier
 export get_hamiltonian_gradient, get_variable_gradient
 export get_pseudo_hamiltonian_gradient, get_pseudo_variable_gradient
 export HamiltonianGradient, HamiltonianVariableGradient

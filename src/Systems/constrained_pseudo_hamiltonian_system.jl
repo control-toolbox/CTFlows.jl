@@ -86,7 +86,7 @@ arguments. The same object is returned in the `:total` mode, see
 
 See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref).
 """
-pseudo_hamiltonian(sys::ConstrainedPseudoHamiltonianSystem) = sys.h
+Data.pseudo_hamiltonian(sys::ConstrainedPseudoHamiltonianSystem) = sys.h
 
 """
 $(TYPEDSIGNATURES)
@@ -95,7 +95,7 @@ Return the control law `u(t,x,p,v)` of a `ConstrainedPseudoHamiltonianSystem`.
 
 See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref).
 """
-control_law(sys::ConstrainedPseudoHamiltonianSystem) = sys.law
+Data.control_law(sys::ConstrainedPseudoHamiltonianSystem) = sys.law
 
 """
 $(TYPEDSIGNATURES)
@@ -104,7 +104,7 @@ Return the multiplier `μ(t,x,p,v)` of a `ConstrainedPseudoHamiltonianSystem`.
 
 See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref).
 """
-multiplier(sys::ConstrainedPseudoHamiltonianSystem) = sys.μ
+Data.multiplier(sys::ConstrainedPseudoHamiltonianSystem) = sys.μ
 
 """
 $(TYPEDSIGNATURES)
@@ -125,7 +125,7 @@ The same object is returned in the `:total` mode.
 
 See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref), [`CTFlows.Systems.multiplier`](@extref).
 """
-function hamiltonian(sys::ConstrainedPseudoHamiltonianSystem)
+function Data.hamiltonian(sys::ConstrainedPseudoHamiltonianSystem)
     return Data.ComposedConstrainedHamiltonian(sys.h, sys.law, sys.μ)
 end
 

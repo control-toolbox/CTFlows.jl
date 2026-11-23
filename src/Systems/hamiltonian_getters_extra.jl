@@ -33,7 +33,7 @@ eliminated:
 
 See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Systems.control_law`](@extref).
 """
-function pseudo_hamiltonian(sys::HamiltonianSystem)
+function Data.pseudo_hamiltonian(sys::HamiltonianSystem)
     h = sys.h
     h isa Data.ComposedHamiltonian && return h.h̃
     h isa Data.ComposedConstrainedHamiltonian && return Data.pseudo_hamiltonian(h)
@@ -61,7 +61,7 @@ mode (wrapping a [`CTBase.Data.ComposedHamiltonian`](@extref) or a
 
 See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref).
 """
-function control_law(sys::HamiltonianSystem)
+function Data.control_law(sys::HamiltonianSystem)
     h = sys.h
     h isa Data.ComposedHamiltonian && return h.law
     h isa Data.ComposedConstrainedHamiltonian && return Data.control_law(h)
@@ -88,7 +88,7 @@ of a constrained flow (wrapping a [`CTBase.Data.ComposedConstrainedHamiltonian`]
 
 See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref).
 """
-function multiplier(sys::HamiltonianSystem)
+function Data.multiplier(sys::HamiltonianSystem)
     h = sys.h
     h isa Data.ComposedConstrainedHamiltonian && return Data.multiplier(h)
     return throw(

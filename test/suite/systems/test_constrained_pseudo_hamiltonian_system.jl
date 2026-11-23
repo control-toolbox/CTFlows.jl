@@ -30,6 +30,13 @@ function test_constrained_pseudo_hamiltonian_system()
         #   H(x,p,u,μ) = p(-x+u) + 0.5u² + μ·x, law u=-p, μ(x,p)=x
         # ====================================================================
 
+        Test.@testset "Unit: accessors are the CTBase.Data generic functions" begin
+            Test.@test Systems.hamiltonian === Data.hamiltonian
+            Test.@test Systems.pseudo_hamiltonian === Data.pseudo_hamiltonian
+            Test.@test Systems.control_law === Data.control_law
+            Test.@test Systems.multiplier === Data.multiplier
+        end
+
         Test.@testset "Unit: build_system, getters, hamiltonian()" begin
             H = Data.ConstrainedPseudoHamiltonian(cph_scalar)
             law = Data.DynClosedLoop((x, p) -> -p)
