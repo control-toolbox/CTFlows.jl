@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+- API reference: the internals of `src/Flows/constraint_duals.jl` (path duals of an
+  optimal control flow) are documented; the `@extref` links to `_path_duals`, `_PathDuals`,
+  `_UnlabelledPathDuals` and `_switching_path_duals` did not resolve. `_path_dual_dim` gets a
+  docstring.
 - ct-conventions pinned at `v0.15.0` in `AGENTS.md`.
 
 ### ✅ Compatibility

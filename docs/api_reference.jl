@@ -124,6 +124,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                 joinpath("Flows", "flow_routing.jl"),
                 joinpath("Flows", "ocp_readouts.jl"),
                 joinpath("Flows", "optimal_control_flow.jl"),
+                joinpath("Flows", "constraint_duals.jl"),
                 joinpath("Flows", "controlled_flow.jl"),
                 joinpath("Flows", "building.jl"),
                 joinpath("Flows", "calling.jl"),
