@@ -1,14 +1,15 @@
 """
-Unit tests for OCPHamiltonianFunction and _ocp_hamiltonian.
+Non-regression tests for _ocp_hamiltonian, the Hamiltonian of a control-free OCP built by
+CTModels (control-toolbox/CTModels.jl#532).
 
 Tests the four natural-arity call methods (Auton/Fixed, NonAuton/Fixed,
 Auton/NonFixed, NonAuton/NonFixed), criterion sign, lagrange === nothing branch,
-scalar vs vector inputs, and the _ocp_hamiltonian builder.
+scalar vs vector inputs, and the traits of the result.
 
 No AD extensions required — pure callable evaluation.
 """
 
-module TestOCPHamiltonianFunction
+module TestOCPHamiltonian
 
 using Test: Test
 using CTModels: CTModels
@@ -33,46 +34,33 @@ _dyn_nonauton_nf!(r, t, x, _, v) = (r[1]=t * v[1] * x[1]; nothing)
 _lagrange(_, x, _, _) = x[1]^2
 
 # =============================================================================
-# OCPHamiltonianFunction fixtures (module top-level)
+# Hamiltonian fixtures, built from control-free OCPs (module top-level)
 # =============================================================================
 
-const _AU = CTModels.Components.Autonomous
-const _NA = CTModels.Components.NonAutonomous
+function _cf_ocp(dyn!; autonomous=true, q=0, criterion=:min, lagrange=nothing)
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=autonomous)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, 1)
+    q > 0 && CTModels.Building.variable!(pre, q)
+    CTModels.Building.dynamics!(pre, dyn!)
+    if lagrange === nothing
+        CTModels.Building.objective!(pre, criterion; mayer=(x0, xf, v) -> xf[1])
+    else
+        CTModels.Building.objective!(pre, criterion; lagrange=lagrange)
+    end
+    return CTModels.Building.build(pre)
+end
 
-const H_AF_NL = Flows.OCPHamiltonianFunction{
-    _AU,Traits.Fixed,typeof(_dyn_auton_fixed!),Nothing
-}(
-    _dyn_auton_fixed!, nothing, -1.0, 1
+const H_AF_NL = Flows._ocp_hamiltonian(_cf_ocp(_dyn_auton_fixed!))
+const H_AF_LAG = Flows._ocp_hamiltonian(_cf_ocp(_dyn_auton_fixed!; lagrange=_lagrange))
+const H_AF_LAG_MAX = Flows._ocp_hamiltonian(
+    _cf_ocp(_dyn_auton_fixed!; criterion=:max, lagrange=_lagrange)
 )
-
-const H_AF_LAG = Flows.OCPHamiltonianFunction{
-    _AU,Traits.Fixed,typeof(_dyn_auton_fixed!),typeof(_lagrange)
-}(
-    _dyn_auton_fixed!, _lagrange, -1.0, 1
-)
-
-const H_AF_LAG_MAX = Flows.OCPHamiltonianFunction{
-    _AU,Traits.Fixed,typeof(_dyn_auton_fixed!),typeof(_lagrange)
-}(
-    _dyn_auton_fixed!, _lagrange, +1.0, 1
-)
-
-const H_NAF_NL = Flows.OCPHamiltonianFunction{
-    _NA,Traits.Fixed,typeof(_dyn_nonauton_fixed!),Nothing
-}(
-    _dyn_nonauton_fixed!, nothing, -1.0, 1
-)
-
-const H_ANF_NL = Flows.OCPHamiltonianFunction{
-    _AU,Traits.NonFixed,typeof(_dyn_auton_nf!),Nothing
-}(
-    _dyn_auton_nf!, nothing, -1.0, 1
-)
-
-const H_NANF_NL = Flows.OCPHamiltonianFunction{
-    _NA,Traits.NonFixed,typeof(_dyn_nonauton_nf!),Nothing
-}(
-    _dyn_nonauton_nf!, nothing, -1.0, 1
+const H_NAF_NL = Flows._ocp_hamiltonian(_cf_ocp(_dyn_nonauton_fixed!; autonomous=false))
+const H_ANF_NL = Flows._ocp_hamiltonian(_cf_ocp(_dyn_auton_nf!; q=1))
+const H_NANF_NL = Flows._ocp_hamiltonian(
+    _cf_ocp(_dyn_nonauton_nf!; autonomous=false, q=1)
 )
 
 # =============================================================================
@@ -217,14 +205,14 @@ function test_ocp_hamiltonian()
             Test.@test H_AF_LAG_MAX(x, p) ≈ +1.0 * x[1]^2
         end
 
-        # ── OCPHamiltonianFunction <: Function ────────────────────────────────────────
+        # ── the fixtures are Data.Hamiltonian ─────────────────────────────────
 
-        Test.@testset "Unit: OCPHamiltonianFunction isa Function" begin
-            Test.@test H_AF_NL isa Function
-            Test.@test H_AF_LAG isa Function
-            Test.@test H_NAF_NL isa Function
-            Test.@test H_ANF_NL isa Function
-            Test.@test H_NANF_NL isa Function
+        Test.@testset "Unit: the fixtures are Data.Hamiltonian" begin
+            Test.@test H_AF_NL isa Data.Hamiltonian
+            Test.@test H_AF_LAG isa Data.Hamiltonian
+            Test.@test H_NAF_NL isa Data.Hamiltonian
+            Test.@test H_ANF_NL isa Data.Hamiltonian
+            Test.@test H_NANF_NL isa Data.Hamiltonian
         end
 
         # ── _ocp_hamiltonian builder ──────────────────────────────────────────
@@ -262,4 +250,4 @@ end
 
 end # module
 
-test_ocp_hamiltonian() = TestOCPHamiltonianFunction.test_ocp_hamiltonian()
+test_ocp_hamiltonian() = TestOCPHamiltonian.test_ocp_hamiltonian()

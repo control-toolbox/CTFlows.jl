@@ -18,10 +18,14 @@
 """
 $(TYPEDSIGNATURES)
 
-Return the pseudo-Hamiltonian `H̃` underlying a `HamiltonianSystem`, when the system
-wraps a [`CTBase.Data.ComposedHamiltonian`](@extref) — i.e. it was built in the
-`:total` mode of an OCP-with-control (or pseudo-Hamiltonian + control law) flow. The
-control is *not* eliminated: `H̃(t, x, p, u, v)` keeps `u` as an independent argument.
+Return the pseudo-Hamiltonian underlying a `HamiltonianSystem` built in the `:total` mode
+of an OCP-with-control (or pseudo-Hamiltonian + control law) flow. The control is *not*
+eliminated:
+
+- the system wraps a [`CTBase.Data.ComposedHamiltonian`](@extref): `H̃(t, x, p, u, v)`;
+- the system wraps a [`CTBase.Data.ComposedConstrainedHamiltonian`](@extref) (constrained
+  flow): the constrained pseudo-Hamiltonian `H(t, x, p, u, μ, v)`, with the multiplier
+  explicit too — the same object as in the `:partial` mode.
 
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: if the system wraps a plain Hamiltonian with
@@ -32,6 +36,7 @@ See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Systems.control_la
 function pseudo_hamiltonian(sys::HamiltonianSystem)
     h = sys.h
     h isa Data.ComposedHamiltonian && return h.h̃
+    h isa Data.ComposedConstrainedHamiltonian && return Data.pseudo_hamiltonian(h)
     return throw(
         Exceptions.IncorrectArgument(
             "no pseudo-Hamiltonian available for this HamiltonianSystem";
@@ -47,7 +52,8 @@ end
 $(TYPEDSIGNATURES)
 
 Return the control law `u(t, x, p, v)` of a `HamiltonianSystem` built in the `:total`
-mode (wrapping a [`CTBase.Data.ComposedHamiltonian`](@extref)).
+mode (wrapping a [`CTBase.Data.ComposedHamiltonian`](@extref) or a
+[`CTBase.Data.ComposedConstrainedHamiltonian`](@extref)).
 
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: if the system wraps a plain Hamiltonian with
@@ -58,6 +64,7 @@ See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref).
 function control_law(sys::HamiltonianSystem)
     h = sys.h
     h isa Data.ComposedHamiltonian && return h.law
+    h isa Data.ComposedConstrainedHamiltonian && return Data.control_law(h)
     return throw(
         Exceptions.IncorrectArgument(
             "no control law available for this HamiltonianSystem";
@@ -65,6 +72,32 @@ function control_law(sys::HamiltonianSystem)
             expected="a HamiltonianSystem wrapping a ComposedHamiltonian (:total mode from a control law)",
             suggestion="Build the flow from an OCP (or pseudo-Hamiltonian) and a control law",
             context="control_law(sys::HamiltonianSystem)",
+        ),
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the multiplier `μ(t, x, p, v)` of a `HamiltonianSystem` built in the `:total` mode
+of a constrained flow (wrapping a [`CTBase.Data.ComposedConstrainedHamiltonian`](@extref))
+— the same object as in the `:partial` mode.
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: if the system is not a constrained flow.
+
+See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref).
+"""
+function multiplier(sys::HamiltonianSystem)
+    h = sys.h
+    h isa Data.ComposedConstrainedHamiltonian && return Data.multiplier(h)
+    return throw(
+        Exceptions.IncorrectArgument(
+            "no multiplier available for this HamiltonianSystem";
+            got="a HamiltonianSystem wrapping $(nameof(typeof(h)))",
+            expected="a HamiltonianSystem wrapping a ComposedConstrainedHamiltonian (constrained :total flow)",
+            suggestion="Build the flow from an OCP, a control law, a constraint and a multiplier",
+            context="multiplier(sys::HamiltonianSystem)",
         ),
     )
 end
@@ -292,10 +325,15 @@ The `ad_backend` keyword selects the AD backend (default: the system's own backe
 See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref), [`CTFlows.Systems.get_pseudo_variable_gradient`](@extref).
 """
 function get_pseudo_hamiltonian_gradient(
-    sys::Union{HamiltonianSystem,PseudoHamiltonianSystem};
+    sys::Union{
+        HamiltonianSystem,PseudoHamiltonianSystem,ConstrainedPseudoHamiltonianSystem
+    };
     ad_backend::Differentiation.AbstractADBackend=backend(sys),
 )
-    return PseudoHamiltonianGradient(pseudo_hamiltonian(sys), ad_backend)
+    return PseudoHamiltonianGradient(
+        _unconstrained(pseudo_hamiltonian(sys), :get_pseudo_hamiltonian_gradient),
+        ad_backend,
+    )
 end
 
 """
@@ -310,8 +348,45 @@ The `ad_backend` keyword selects the AD backend (default: the system's own backe
 See also: [`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@extref).
 """
 function get_pseudo_variable_gradient(
-    sys::Union{HamiltonianSystem,PseudoHamiltonianSystem};
+    sys::Union{
+        HamiltonianSystem,PseudoHamiltonianSystem,ConstrainedPseudoHamiltonianSystem
+    };
     ad_backend::Differentiation.AbstractADBackend=backend(sys),
 )
-    return PseudoHamiltonianVariableGradient(pseudo_hamiltonian(sys), ad_backend)
+    return PseudoHamiltonianVariableGradient(
+        _unconstrained(pseudo_hamiltonian(sys), :get_pseudo_variable_gradient), ad_backend
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the pseudo-Hamiltonian `h̃` unchanged, for the gradient getters of the
+pseudo-Hamiltonian `H̃(t, x, p, u, v)`.
+
+See also: [`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@extref).
+"""
+_unconstrained(h̃::Data.AbstractPseudoHamiltonian, ::Symbol) = h̃
+
+"""
+$(TYPEDSIGNATURES)
+
+Reject a constrained pseudo-Hamiltonian `H(t, x, p, u, μ, v)` in the gradient getters of
+the pseudo-Hamiltonian: the multiplier is an argument, so freeze it first.
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: always.
+
+See also: [`CTBase.Data.freeze_multiplier`](@extref).
+"""
+function _unconstrained(h::Data.AbstractConstrainedPseudoHamiltonian, getter::Symbol)
+    return throw(
+        Exceptions.IncorrectArgument(
+            "the pseudo-Hamiltonian of a constrained flow takes the multiplier as an argument";
+            got="a constrained pseudo-Hamiltonian H(t, x, p, u, μ, v)",
+            expected="a pseudo-Hamiltonian H̃(t, x, p, u, v)",
+            suggestion="Freeze the multiplier with CTBase.Data.freeze_multiplier(pseudo_hamiltonian(flow), μ) and differentiate the result",
+            context="$getter(flow) on a constrained flow",
+        ),
+    )
 end

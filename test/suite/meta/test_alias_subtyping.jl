@@ -60,8 +60,8 @@ function test_alias_subtyping()
         end
 
         Test.@testset "Systems — CTBase parent" begin
-            Test.@test Systems.FrozenConstrainedPseudoHamiltonian <:
-                Data.AbstractPseudoHamiltonian
+            Test.@test Systems.ConstrainedPseudoHamiltonianSystem <:
+                Systems.AbstractHamiltonianSystem
         end
     end
 end

@@ -969,28 +969,31 @@ Build the inner Hamiltonian flow of an OCP + control-law flow, dispatching on th
 `hamiltonian_type` and on the presence of a `constraint`/`multiplier` pair (already
 validated by [`CTFlows.Flows._validate_constraint_pair`](@extref)).
 
-- **`:total`** — bake the constraint into the pseudo-Hamiltonian
-  `H̃(t,x,p,u,v) + μ(t,x,p,v)·g(t,x,u,v)` (via
-  [`CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`](@extref)) and compose with the law;
-  AD differentiates through `H̃`, `μ`, `g` and the law (total derivative). Unconstrained →
-  the plain [`CTFlows.Flows._ocp_pseudo_hamiltonian`](@extref).
-- **`:partial`** — build a [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref)
-  carrying the base `H̃`, the law, `g` and `μ` separately; the RHS freezes the multiplier
-  value `μ` alongside the control `u` and differentiates only through `g`. Unconstrained →
-  a [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref).
+Both modes share the same objects: the constrained pseudo-Hamiltonian
+`H(t,x,p,u,μ,v) = H̃(t,x,p,u,v) + μ·g(t,x,u,v)`
+([`CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`](@extref)), the law and the
+multiplier.
+
+- **`:total`** — differentiate the [`CTBase.Data.ComposedConstrainedHamiltonian`](@extref)
+  `h(t,x,p,v) = H(t,x,p,u(t,x,p,v),μ(t,x,p,v),v)`: AD goes through `H`, the law and `μ`
+  (total derivative). Unconstrained → the plain
+  [`CTFlows.Flows._ocp_pseudo_hamiltonian`](@extref) composed with the law.
+- **`:partial`** — build a [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref):
+  the RHS freezes the control and the multiplier value, and differentiates
+  [`CTBase.Data.freeze_multiplier`](@extref)`(H, μ)` (the partial derivatives of the PMP).
+  Unconstrained → a [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref).
 
 See also: [`CTFlows.Flows._resolve_constraint`](@extref), [`CTFlows.Flows._resolve_multiplier`](@extref),
 [`CTFlows.Flows._build_pseudo_flow`](@extref).
 """
 function _build_ocp_pseudo_flow(::Val{:total}, ocp, law, components, cspec, mspec)
-    h̃ = if cspec === nothing
-        _ocp_pseudo_hamiltonian(ocp)
-    else
-        _ocp_constrained_pseudo_hamiltonian(
-            ocp, _resolve_constraint(ocp, cspec), _resolve_multiplier(ocp, mspec)
-        )
-    end
-    return _build_pseudo_flow(Val(:total), h̃, law, components)
+    cspec === nothing && return _build_pseudo_flow(
+        Val(:total), _ocp_pseudo_hamiltonian(ocp), law, components
+    )
+    h = _ocp_constrained_pseudo_hamiltonian(ocp, _resolve_constraint(ocp, cspec))
+    H = Data.ComposedConstrainedHamiltonian(h, law, _resolve_multiplier(ocp, mspec))
+    sys = Systems.build_system(H, components.backend)
+    return build_flow(sys, components.integrator)
 end
 
 """
@@ -999,19 +1002,20 @@ $(TYPEDSIGNATURES)
 Build the inner flow for the `:partial` mode from an OCP pseudo-Hamiltonian and a
 control law. When a constraint spec (`cspec`) is provided, resolve it together with the
 multiplier spec (`mspec`) and build a
-[`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref); otherwise delegate to
-[`CTFlows.Flows._build_pseudo_flow`](@extref).
+[`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref) on the constrained
+pseudo-Hamiltonian; otherwise delegate to [`CTFlows.Flows._build_pseudo_flow`](@extref).
 
 See also: [`CTFlows.Flows._build_pseudo_flow`](@extref),
 [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref),
 [`CTFlows.Flows._resolve_constraint`](@extref), [`CTFlows.Flows._resolve_multiplier`](@extref).
 """
 function _build_ocp_pseudo_flow(::Val{:partial}, ocp, law, components, cspec, mspec)
-    h̃ = _ocp_pseudo_hamiltonian(ocp)
-    cspec === nothing && return _build_pseudo_flow(Val(:partial), h̃, law, components)
-    g = _resolve_constraint(ocp, cspec)
+    cspec === nothing && return _build_pseudo_flow(
+        Val(:partial), _ocp_pseudo_hamiltonian(ocp), law, components
+    )
+    h = _ocp_constrained_pseudo_hamiltonian(ocp, _resolve_constraint(ocp, cspec))
     μ = _resolve_multiplier(ocp, mspec)
-    sys = Systems.build_system(h̃, law, g, μ, components.backend)
+    sys = Systems.build_system(h, law, μ, components.backend)
     return build_flow(sys, components.integrator)
 end
 

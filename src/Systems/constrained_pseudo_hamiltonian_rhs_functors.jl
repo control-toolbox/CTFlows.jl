@@ -1,79 +1,19 @@
 # =============================================================================
 # RHS Functors for ConstrainedPseudoHamiltonianSystem (constrained :partial mode)
 #
-# Mirror the PseudoHamiltonianSystem functors, but add the constraint term μ·g with
-# BOTH the control u AND the multiplier μ frozen at their feedback values. Per step:
+# Mirror the PseudoHamiltonianSystem functors on the constrained pseudo-Hamiltonian
+# H(t,x,p,u,μ,v), with BOTH the control u AND the multiplier μ frozen at their feedback
+# values. Per step:
 #
-#   u_ = law(t, x, p, v)          # frozen control  (already done by the :partial RHS)
-#   μ_ = μ(t, x, p, v)            # frozen multiplier VALUE (new)
+#   u_ = law(t, x, p, v)                    # frozen control
+#   μ_ = μ(t, x, p, v)                      # frozen multiplier VALUE
+#   h̃ = Data.freeze_multiplier(H, μ_)       # H̃(t,x,p,u,v) = H(t,x,p,u,μ_,v)
 #
-# are evaluated first, then held fixed while `pseudo_hamiltonian_gradient` (and
-# `pseudo_variable_gradient`) differentiate H̃ + μ_·g through (x, p, v): g is
-# differentiated, μ_ is a captured constant. This is the constrained `:partial` mode —
-# see .reports/constraints-and-duals/math.md ("Point clé"). Baking μ as a *function*
-# (the :total path, Flows.ConstrainedPseudoHamiltonianFunction) would instead
-# differentiate through μ, producing the spurious (∂μ/∂x)ᵀg term.
-# =============================================================================
-
-# =============================================================================
-# Frozen constrained pseudo-Hamiltonian
-# =============================================================================
-
-"""
-$(TYPEDEF)
-
-Constrained pseudo-Hamiltonian carrying a **frozen** multiplier value, used to compute
-the constrained `:partial`-mode gradients. Represents
-
-```
-H̃c(t, x, p, u, v) = H̃(t, x, p, u, v) + μ_ · g(t, x, u, v)
-```
-
-where `μ_` is a **numeric value** (already evaluated at the current point), so automatic
-differentiation through this functor differentiates `H̃` and `g` but treats `μ_` as a
-constant — the constrained `:partial` semantics (`μ` frozen alongside `u`, `g`
-differentiated). It subtypes [`CTBase.Data.AbstractPseudoHamiltonian`](@extref) so it is
-accepted by [`CTBase.Differentiation.pseudo_hamiltonian_gradient`](@extref) and
-[`CTBase.Differentiation.pseudo_variable_gradient`](@extref), which call it only through
-the uniform `(t, x, p, u, v)` signature.
-
-# Type Parameters
-- `TD`, `VD`: time- and variable-dependence traits, inherited from the base `H̃`.
-- `PH`: type of the base pseudo-Hamiltonian `H̃`.
-- `G`: type of the path constraint `g`.
-- `T`: type of the frozen multiplier value `μ_`.
-
-# Fields
-- `h̃::PH`: base pseudo-Hamiltonian, uniform call `H̃(t, x, p, u, v)`.
-- `g::G`: path constraint, uniform call `g(t, x, u, v)`.
-- `μ_::T`: frozen multiplier **value** (scalar or vector), captured as a constant.
-
-See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref),
-[`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@extref).
-"""
-struct FrozenConstrainedPseudoHamiltonian{
-    TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,PH,G,T
-} <: Data.AbstractPseudoHamiltonian{TD,VD}
-    h̃::PH
-    g::G
-    μ_::T
-end
-
-# Infer the (TD, VD) traits from the base pseudo-Hamiltonian.
-function FrozenConstrainedPseudoHamiltonian(
-    h̃::Data.PseudoHamiltonian{<:Function,TD,VD}, g, μ_
-) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
-    return FrozenConstrainedPseudoHamiltonian{TD,VD,typeof(h̃),typeof(g),typeof(μ_)}(
-        h̃, g, μ_
-    )
-end
-
-# Uniform (t, x, p, u, v) call — the only signature the gradient primitives use. The
-# base H̃ and the constraint g are differentiated through; μ_ is a captured constant.
-function (h::FrozenConstrainedPseudoHamiltonian)(t, x, p, u, v)
-    return h.h̃(t, x, p, u, v) + sum(h.μ_ .* h.g(t, x, u, v))
-end
-
+# then `pseudo_hamiltonian_gradient` (and `pseudo_variable_gradient`) differentiate h̃ at
+# fixed u_: the constraint is differentiated, μ_ is a captured constant. This is the
+# constrained `:partial` mode — see .reports/constraints-and-duals/math.md ("Point clé").
+# The `:total` mode (Data.ComposedConstrainedHamiltonian) differentiates through μ and
+# the law instead, adding (∂μ/∂x)ᵀg and (∂H/∂u)(∂u/∂x).
 # =============================================================================
 # Standard functors
 # =============================================================================
@@ -93,9 +33,8 @@ Evaluates the feedback control `u_ = law(t, x, p, v)` and the multiplier value
 with `g` differentiated and `μ_` frozen (constrained `:partial` mode).
 
 # Fields
-- `h̃::PH`: base pseudo-Hamiltonian `H̃(t, x, p, u, v)`.
+- `h::PH`: constrained pseudo-Hamiltonian `H(t, x, p, u, μ, v)`.
 - `law::L`: dynamic closed-loop control law `u(t, x, p, v)`.
-- `g::G`: path constraint `g(t, x, u, v)`.
 - `μ::M`: multiplier `μ(t, x, p, v)`.
 - `backend::B`: the AD backend.
 - `N::Int`: state dimension.
@@ -106,17 +45,15 @@ See also: [`CTFlows.Systems.ConstrainedPseudoHamOoPRHS`](@extref),
 [`CTFlows.Systems.ConstrainedPseudoHamIpAugRHS`](@extref), [`CTFlows.Systems.PseudoHamIpRHS`](@extref).
 """
 struct ConstrainedPseudoHamIpRHS{
-    PH<:Data.PseudoHamiltonian,
+    PH<:Data.ConstrainedPseudoHamiltonian,
     L<:Data.ControlLaw,
-    G,
-    M,
+    M<:Data.Multiplier,
     B<:Differentiation.AbstractADBackend,
     CX<:Union{typeof(_safe_only),typeof(identity)},
     CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractIPPseudoHamRHS
-    h̃::PH
+    h::PH
     law::L
-    g::G
     μ::M
     backend::B
     N::Int
@@ -130,7 +67,7 @@ function (f::ConstrainedPseudoHamIpRHS)(du, u, λ, t)
     cx, cp = f.cx(x), f.cp(p)
     u_ = f.law(t, cx, cp, v)          # frozen control
     μ_ = f.μ(t, cx, cp, v)            # frozen multiplier value
-    h̃c = FrozenConstrainedPseudoHamiltonian(f.h̃, f.g, μ_)
+    h̃c = Data.freeze_multiplier(f.h, μ_)
     ∂x, ∂p = Differentiation.pseudo_hamiltonian_gradient(f.backend, h̃c, t, cx, cp, u_, v)
     _ham_assign!(du, ∂p, -∂x, f.N)
     return nothing
@@ -144,9 +81,8 @@ see [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@extref) for the computation. 
 `vcat(∂p, -∂x)`.
 
 # Fields
-- `h̃::PH`: base pseudo-Hamiltonian `H̃(t, x, p, u, v)`.
+- `h::PH`: constrained pseudo-Hamiltonian `H(t, x, p, u, μ, v)`.
 - `law::L`: dynamic closed-loop control law `u(t, x, p, v)`.
-- `g::G`: path constraint `g(t, x, u, v)`.
 - `μ::M`: multiplier `μ(t, x, p, v)`.
 - `backend::B`: the AD backend.
 - `N::Int`: state dimension.
@@ -156,17 +92,15 @@ see [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@extref) for the computation. 
 See also: [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@extref).
 """
 struct ConstrainedPseudoHamOoPRHS{
-    PH<:Data.PseudoHamiltonian,
+    PH<:Data.ConstrainedPseudoHamiltonian,
     L<:Data.ControlLaw,
-    G,
-    M,
+    M<:Data.Multiplier,
     B<:Differentiation.AbstractADBackend,
     CX<:Union{typeof(_safe_only),typeof(identity)},
     CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractOoPPseudoHamRHS
-    h̃::PH
+    h::PH
     law::L
-    g::G
     μ::M
     backend::B
     N::Int
@@ -180,7 +114,7 @@ function (f::ConstrainedPseudoHamOoPRHS)(u, λ, t)
     cx, cp = f.cx(x), f.cp(p)
     u_ = f.law(t, cx, cp, v)
     μ_ = f.μ(t, cx, cp, v)
-    h̃c = FrozenConstrainedPseudoHamiltonian(f.h̃, f.g, μ_)
+    h̃c = Data.freeze_multiplier(f.h, μ_)
     ∂x, ∂p = Differentiation.pseudo_hamiltonian_gradient(f.backend, h̃c, t, cx, cp, u_, v)
     return vcat(∂p, -∂x)
 end
@@ -202,9 +136,8 @@ Extends [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@extref) with `ṗv = -∂
 `[x; p; pv]`; the `ṗv` block picks up `−μ_ᵀ ∂g/∂v` at frozen `μ`.
 
 # Fields
-- `h̃::PH`: base pseudo-Hamiltonian `H̃(t, x, p, u, v)`.
+- `h::PH`: constrained pseudo-Hamiltonian `H(t, x, p, u, μ, v)`.
 - `law::L`: dynamic closed-loop control law `u(t, x, p, v)`.
-- `g::G`: path constraint `g(t, x, u, v)`.
 - `μ::M`: multiplier `μ(t, x, p, v)`.
 - `backend::B`: the AD backend.
 - `n_x::Int`: state dimension.
@@ -216,17 +149,15 @@ See also: [`CTFlows.Systems.ConstrainedPseudoHamIpRHS`](@extref),
 [`CTFlows.Systems.PseudoHamIpAugRHS`](@extref).
 """
 struct ConstrainedPseudoHamIpAugRHS{
-    PH<:Data.PseudoHamiltonian,
+    PH<:Data.ConstrainedPseudoHamiltonian,
     L<:Data.ControlLaw,
-    G,
-    M,
+    M<:Data.Multiplier,
     B<:Differentiation.AbstractADBackend,
     CX<:Union{typeof(_safe_only),typeof(identity)},
     CP<:Union{typeof(_safe_only),typeof(identity)},
 } <: AbstractIPPseudoHamRHS
-    h̃::PH
+    h::PH
     law::L
-    g::G
     μ::M
     backend::B
     n_x::Int
@@ -242,7 +173,7 @@ function (f::ConstrainedPseudoHamIpAugRHS)(du, u, λ, t)
     cx, cp = f.cx(x), f.cp(p)
     u_ = f.law(t, cx, cp, v)
     μ_ = f.μ(t, cx, cp, v)
-    h̃c = FrozenConstrainedPseudoHamiltonian(f.h̃, f.g, μ_)
+    h̃c = Data.freeze_multiplier(f.h, μ_)
     ∂x, ∂p = Differentiation.pseudo_hamiltonian_gradient(f.backend, h̃c, t, cx, cp, u_, v)
     ∂pv = Differentiation.pseudo_variable_gradient(f.backend, h̃c, t, cx, cp, u_, v)
     _aug_assign!(du, ∂p, -∂x, -∂pv, f.n_x, f.n_v)

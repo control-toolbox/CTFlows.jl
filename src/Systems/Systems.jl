@@ -64,7 +64,6 @@ export AbstractHamRHS, AbstractIPHamRHS, AbstractOoPHamRHS
 export AbstractPseudoHamRHS, AbstractIPPseudoHamRHS, AbstractOoPPseudoHamRHS
 export PseudoHamIpRHS, PseudoHamOoPRHS, PseudoHamIpAugRHS
 export AbstractPseudoHVFRHS, AbstractIPPseudoHVFRHS, AbstractOoPPseudoHVFRHS
-export FrozenConstrainedPseudoHamiltonian
 export ConstrainedPseudoHamIpRHS, ConstrainedPseudoHamOoPRHS, ConstrainedPseudoHamIpAugRHS
 export get_ip_rhs
 export get_oop_rhs

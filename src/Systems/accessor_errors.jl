@@ -44,7 +44,7 @@ end
 
 function _accessor_hint(::ConstrainedPseudoHamiltonianSystem)
     return (
-        "a flow built from a pseudo-Hamiltonian, a control law and a path constraint",
+        "a constrained flow in the :partial mode, built from a constrained pseudo-Hamiltonian H(t, x, p, u, μ, v), a control law and a multiplier",
         "Use hamiltonian, pseudo_hamiltonian or control_law, and differentiate them with the backend of your choice",
     )
 end
