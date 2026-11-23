@@ -3,6 +3,34 @@
 This file lists breaking and near-breaking changes in CTFlows.jl since the last
 stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
+## Unreleased
+
+Breaking changes of the model-level Hamiltonians and of the dual convention
+([#531](https://github.com/control-toolbox/CTFlows.jl/issues/531),
+[CTModels#536](https://github.com/control-toolbox/CTModels.jl/issues/536)); `Flow` with the
+constrained pseudo-Hamiltonian has not been released through OptimalControl.
+
+- **The multiplier of a labelled constraint is the dual of the solution.** In
+  `Flow(ocp, law; constraint=:label, multiplier=y)`, `y` follows the dual convention
+  (`SGN1`–`SGN6`): `y ≥ 0` on a one-sided row, the sign of `y` giving the active side of a
+  two-sided or equality row. A state box or a control box is accepted by label, like a path
+  constraint. **Migration:** `label` alone, with `y = μ`, for a one-sided row; on a two-sided row
+  the former `label => :lower` becomes `label` with `y = -μ`, and `label => :upper` becomes
+  `label` with `y = μ`. `label => side` is removed and raises an `IncorrectArgument` that says so.
+  A constraint given as a function `g ≥ 0` keeps `μ ≥ 0`; its duals are not placed in the
+  solution.
+- **The solution carries the duals by label**: the adjoined labels give `y`, the other path
+  labels give `0`, the other boxes stay unknown.
+- **`get_pseudo_hamiltonian_gradient` and `get_pseudo_variable_gradient` on a constrained
+  flow** return gradients that take the multiplier as an argument, `(t, x, p, u, μ, v)`.
+  Before, they threw an error. `:total` and `:partial` return the same accessor objects.
+- **`Systems.hamiltonian`, `pseudo_hamiltonian`, `control_law` and `multiplier`** are the
+  generic functions of `CTBase.Data` (`Systems.f === Data.f`); code that called them on a
+  system is unchanged. `multiplier` is new in the `Systems` exports.
+- **New keyword `p0`** in `Flow(ocp)` and `Flow(ocp, law)`: no change without it.
+- **Requires CTBase 0.30.15 and CTModels 0.21.3** (the model-level Hamiltonian getters and
+  the constrained pseudo-Hamiltonian type).
+
 ## Non-breaking note (Unreleased)
 
 - **Documentation only**: the pin of ct-conventions. **No breaking change**; no migration required.

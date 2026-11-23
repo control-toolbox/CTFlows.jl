@@ -7,13 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ✨ New Features
+
+- `Flow(ocp)` and `Flow(ocp, law)` build their Hamiltonian from the CTModels getters
+  (`CTModels.Models.hamiltonian`, `pseudo_hamiltonian`), and take the cost multiplier `p0`
+  (abnormal case `p0 = 0`).
+- State and control boxes are accepted by label in `constraint=`; the multiplier is the dual
+  of the solution, and the solution carries the duals by label, also for multi-phase flows.
+- `get_pseudo_hamiltonian_gradient` and `get_pseudo_variable_gradient` on a constrained flow
+  return gradients taking the multiplier as an argument.
+
+### 🔄 Changed
+
+- `Systems.hamiltonian`, `pseudo_hamiltonian`, `control_law` and `multiplier` are the generic
+  functions of `CTBase.Data`.
+- The constrained pseudo-Hamiltonian is `CTBase.Data.ConstrainedPseudoHamiltonian`;
+  `:total` composes it into `ComposedConstrainedHamiltonian`, `:partial` freezes the
+  multiplier.
+
+### 🗑️ Removed
+
+- `label => side` in `constraint=` (the sign of the dual replaces the side).
+
 ### 📚 Documentation
 
+- Page on the cost multiplier `p0`; the constrained flow page follows the dual convention.
 - ct-conventions pinned at `v0.15.0` in `AGENTS.md`.
 
 ### ✅ Compatibility
 
-- **No breaking changes**: documentation only. See [BREAKING.md](BREAKING.md).
+- **Breaking, but not released through OptimalControl.** See [BREAKING.md](BREAKING.md).
 
 ## [0.18.4] - 2026-11-16
 
