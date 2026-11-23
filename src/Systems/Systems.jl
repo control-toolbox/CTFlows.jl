@@ -82,5 +82,6 @@ export get_hamiltonian_gradient, get_variable_gradient
 export get_pseudo_hamiltonian_gradient, get_pseudo_variable_gradient
 export HamiltonianGradient, HamiltonianVariableGradient
 export PseudoHamiltonianGradient, PseudoHamiltonianVariableGradient
+export ConstrainedPseudoHamiltonianGradient, ConstrainedPseudoHamiltonianVariableGradient
 
 end # module Systems

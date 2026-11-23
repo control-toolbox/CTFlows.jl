@@ -655,17 +655,19 @@ function test_ocp_control()
             Test.@test dxH ≈ -p0 + c atol = 1e-8
             Test.@test dpH ≈ -x0 + p0 atol = 1e-8
 
-            # (4) pseudo gradient at fixed (u, μ): ∂ₓH = -p+c, ∂ₚH = -x+u. The getter needs
-            # μ frozen first; freeze_multiplier gives the pseudo-Hamiltonian to differentiate.
-            Test.@test_throws Exceptions.IncorrectArgument Systems.get_pseudo_hamiltonian_gradient(
-                f
-            )
-            ∇H̃ = Systems.PseudoHamiltonianGradient(
-                Data.freeze_multiplier(H̃, c), Systems.backend(Flows.system(f))
-            )
-            dxH̃, dpH̃ = ∇H̃(0.0, x0, p0, u0, Float64[])
+            # (4) pseudo gradient at fixed (u, μ): ∂ₓH = -p+μ, ∂ₚH = -x+u — the multiplier
+            # is an argument, as for the pseudo-Hamiltonian itself
+            ∇H̃ = Systems.get_pseudo_hamiltonian_gradient(f)
+            Test.@test ∇H̃ isa Systems.ConstrainedPseudoHamiltonianGradient
+            dxH̃, dpH̃ = ∇H̃(0.0, x0, p0, u0, c, Float64[])
             Test.@test dxH̃ ≈ -p0 + c atol = 1e-8
             Test.@test dpH̃ ≈ -x0 + u0 atol = 1e-8
+            Test.@test all(∇H̃(x0, p0, u0, 2c) .≈ (-p0 + 2c, -x0 + u0))     # short form
+            # the same as differentiating freeze_multiplier(H, μ)
+            ∇F = Systems.PseudoHamiltonianGradient(
+                Data.freeze_multiplier(H̃, c), Systems.backend(Flows.system(f))
+            )
+            Test.@test all(∇F(x0, p0, u0) .≈ ∇H̃(x0, p0, u0, c))
 
             # (5) symplectic gradient X_H = (∂ₚH, -∂ₓH) = (ẋ, ṗ) = (-x+p, p-c), straight
             # from the vector-field getter — which now covers a flow built from an OCP and
@@ -704,6 +706,10 @@ function test_ocp_control()
                 Test.@test h(x0, p0) ≈ -p0 * x0 + 0.5 * p0^2 + (x0 + c) * x0 atol = 1e-10
                 Test.@test Systems.control_law(f) === law
                 Test.@test Systems.multiplier(Flows.system(f)) === μ
+                # the PMP partial derivatives at fixed (u, μ): ∂ₓH = -p+μ, ∂ₚH = -x+u
+                dxH, dpH = Systems.get_pseudo_hamiltonian_gradient(f)(x0, p0, u0, μ0)
+                Test.@test dxH ≈ -p0 + μ0 atol = 1e-8
+                Test.@test dpH ≈ -x0 + u0 atol = 1e-8
             end
         end
 

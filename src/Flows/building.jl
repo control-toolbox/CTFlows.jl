@@ -906,7 +906,7 @@ function _flow_from_ocp_control(
     _check_convenience_arities(ocp, nothing, cspec, mspec)
     _validate_constraint_pair(cspec, mspec)
     inner = _build_ocp_pseudo_flow(Val(ht), ocp, law, components, cspec, mspec)
-    duals = _path_duals(ocp, cspec, mspec)
+    duals = _flow_duals(ocp, cspec, mspec)
     duals isa _UnlabelledPathDuals && _warn_unlabelled_constraint(ocp)
     return with_label(
         OptimalControlFlow(inner, ocp, law; duals=duals), _routed_label(routed)
@@ -969,10 +969,10 @@ Build the inner Hamiltonian flow of an OCP + control-law flow, dispatching on th
 `hamiltonian_type` and on the presence of a `constraint`/`multiplier` pair (already
 validated by [`CTFlows.Flows._validate_constraint_pair`](@extref)).
 
-Both modes share the same objects: the constrained pseudo-Hamiltonian
-`H(t,x,p,u,μ,v) = H̃(t,x,p,u,v) + μ·g(t,x,u,v)`
-([`CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`](@extref)), the law and the
-multiplier.
+Both modes share the same objects: the constrained pseudo-Hamiltonian `H(t,x,p,u,μ,v)`
+([`CTFlows.Flows._constrained_pseudo_hamiltonian`](@extref): by label from CTModels, with
+`μ` the dual of the solution, or `H̃ + μ·g` for a constraint given as a function), the law
+and the multiplier.
 
 - **`:total`** — differentiate the [`CTBase.Data.ComposedConstrainedHamiltonian`](@extref)
   `h(t,x,p,v) = H(t,x,p,u(t,x,p,v),μ(t,x,p,v),v)`: AD goes through `H`, the law and `μ`
@@ -990,7 +990,7 @@ function _build_ocp_pseudo_flow(::Val{:total}, ocp, law, components, cspec, mspe
     cspec === nothing && return _build_pseudo_flow(
         Val(:total), _ocp_pseudo_hamiltonian(ocp), law, components
     )
-    h = _ocp_constrained_pseudo_hamiltonian(ocp, _resolve_constraint(ocp, cspec))
+    h = _constrained_pseudo_hamiltonian(ocp, cspec)
     H = Data.ComposedConstrainedHamiltonian(h, law, _resolve_multiplier(ocp, mspec))
     sys = Systems.build_system(H, components.backend)
     return build_flow(sys, components.integrator)
@@ -1013,7 +1013,7 @@ function _build_ocp_pseudo_flow(::Val{:partial}, ocp, law, components, cspec, ms
     cspec === nothing && return _build_pseudo_flow(
         Val(:partial), _ocp_pseudo_hamiltonian(ocp), law, components
     )
-    h = _ocp_constrained_pseudo_hamiltonian(ocp, _resolve_constraint(ocp, cspec))
+    h = _constrained_pseudo_hamiltonian(ocp, cspec)
     μ = _resolve_multiplier(ocp, mspec)
     sys = Systems.build_system(h, law, μ, components.backend)
     return build_flow(sys, components.integrator)

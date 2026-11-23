@@ -1,13 +1,13 @@
 """
-Constraint duals of the `Solution` of `Flow(ocp, law; constraint=:label, multiplier=μ)`
-(issue #472).
+Constraint duals of the `Solution` of `Flow(ocp, law; constraint=:label, multiplier=y)`
+(issue #472, control-toolbox/CTModels.jl#536).
 
-The flow adjoins `μ·g` to the pseudo-Hamiltonian, with `g ≥ 0` the path constraint `label`
-normalised on its active side and `μ ≥ 0`. The trajectory call rebuilds
-`dual(sol, ocp, :label)` from `μ`, in the convention of the direct solvers
-(control-toolbox/CTSolvers.jl#288): a row with a single finite bound has the dual `μ ≥ 0`,
-whatever the way it is written; an equality, or a row with two finite bounds, has the
-signed dual `−μ` on its lower side and `+μ` on its upper side.
+The multiplier `y` given to the flow is the dual of the solution, in the convention of the
+direct solvers (control-toolbox/CTSolvers.jl#288): a row with a single finite bound has a
+dual `y ≥ 0`, whatever the way it is written; an equality, or a row with two finite
+bounds, has a signed dual, `y < 0` on its lower bound and `y > 0` on its upper bound. The
+trajectory call places `y` in the solution, by label: path constraints, state boxes and
+control boxes.
 """
 module TestFlowDuals
 
@@ -81,6 +81,20 @@ const SPELLINGS = (
 )
 const P0_440 = -0.982237546583301
 
+"""Issue #440 with `x ≥ lb` written as a state box `:xbox`."""
+function _issue440_box()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=2.0)
+    CTModels.Building.state!(pre, 1)
+    CTModels.Building.control!(pre, 1)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=u; nothing))
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> x^2)
+    CTModels.Building.constraint!(pre, :state; rg=1:1, lb=[LB], ub=[Inf], label=:xbox)
+    CTModels.Building.constraint!(pre, :control; rg=1:1, lb=[-1.0], ub=[1.0], label=:ubox)
+    return CTModels.Building.build(pre)
+end
+
 """Issue #440 with the three arcs `u = -1`, boundary (`μ = 2x`), `u = +1`."""
 function _three_arcs(ocp; constraint=:xcon)
     f_minus = Flows.Flow(ocp, (x, p) -> -1; label="u = -1", OPTS...)
@@ -138,16 +152,21 @@ function test_flow_duals()
     Test.@testset "Flow duals (issue #472)" verbose = VERBOSE showtiming = SHOWTIMING begin
 
         # ====================================================================
-        # UNIT TESTS - the coefficient of μ on a row
+        # UNIT TESTS - the labels with a known dual
         # ====================================================================
 
-        Test.@testset "_dual_coefficient" begin
-            Test.@test Flows._dual_coefficient(0.0, Inf, 1) == 1.0     # c ≥ lb
-            Test.@test Flows._dual_coefficient(-Inf, 0.0, -1) == 1.0   # c ≤ ub
-            Test.@test Flows._dual_coefficient(0.3, 0.3, 1) == -1.0    # equality, lower
-            Test.@test Flows._dual_coefficient(0.3, 0.3, -1) == 1.0    # equality, upper
-            Test.@test Flows._dual_coefficient(0.0, 1.0, 1) == -1.0    # two-sided, lower
-            Test.@test Flows._dual_coefficient(0.0, 1.0, -1) == 1.0    # two-sided, upper
+        Test.@testset "_flow_duals: adjoined labels, then the other path labels" begin
+            ocp = _mixed()
+            d = Flows._flow_duals(ocp, nothing, nothing)
+            Test.@test Flows._dual_labels(d) == [:dummy, :mixed]       # zero duals
+            Test.@test Flows._dual_value(d, :dummy, 0.0, 1.0, 1.0, Float64[]) == [0.0, 0.0]
+            d = Flows._flow_duals(ocp, :mixed, _const(0.7))
+            Test.@test Flows._dual_labels(d) == [:mixed, :dummy]
+            Test.@test Flows._dual_value(d, :mixed, 0.0, 1.0, 1.0, Float64[]) == 0.7
+            d = Flows._flow_duals(ocp, (:u_box, :mixed), (_const(0.2), _const(0.7)))
+            Test.@test Flows._dual_labels(d) == [:u_box, :mixed, :dummy]  # :u_box adjoined
+            Test.@test Flows._flow_duals(ocp, (x, u) -> x + u, (x, p) -> 1.0) isa
+                Flows._UnlabelledPathDuals
         end
 
         # ====================================================================
@@ -174,14 +193,14 @@ function test_flow_duals()
             Test.@test CTModels.dual(sol, ocp, :dummy)(0.5) == [0.0, 0.0]
             Test.@test CTModels.path_constraints_dual(sol)(1.0) ≈ [0.0, 0.0, 1.0] atol =
                 1e-8
-            # a box label: not rebuilt by a flow, and the error says so
+            # a box label not given to the flow: not rebuilt, and the error says so
             err = try
                 CTModels.dual(sol, ocp, :u_box)
             catch e
                 e
             end
             Test.@test err isa Exceptions.PreconditionError
-            Test.@test occursin("path constraints only", err.suggestion)
+            Test.@test occursin("boxes not given to the flow", err.suggestion)
             Test.@test occursin("CTFlows.jl#495", err.suggestion)
             # an unknown label
             Test.@test_throws Exceptions.IncorrectArgument CTModels.dual(sol, ocp, :nope)
@@ -213,55 +232,74 @@ function test_flow_duals()
         end
 
         # ====================================================================
+        # INTEGRATION TESTS - box labels: the state box of issue #440
+        # ====================================================================
+
+        Test.@testset "three arcs with the state box: its dual in the solution" begin
+            ocp = _issue440_box()
+            sol = _three_arcs(ocp; constraint=:xbox)((0.0, 2.0), 1.0, P0_440)
+            d = CTModels.dual(sol, ocp, :xbox)
+            Test.@test d(0.5) == 0.0                             # not adjoined: 0
+            Test.@test d(1.2) ≈ 2LB atol = 1e-8                  # y = 2x on the boundary
+            Test.@test d(1.8) == 0.0
+            # the same dual as the path constraint x - lb ≥ 0 (SGN5)
+            o = _issue440(SPELLINGS[1][2:4]...)
+            dp = CTModels.dual(_three_arcs(o)((0.0, 2.0), 1.0, P0_440), o, :xcon)
+            for t in (0.5, 1.2, 1.8)
+                Test.@test d(t) ≈ dp(t) atol = 1e-10
+            end
+            # the control box, adjoined in no phase, stays unknown
+            Test.@test_throws Exceptions.PreconditionError CTModels.dual(sol, ocp, :ubox)
+        end
+
+        Test.@testset "a control box given to a single flow: its dual" begin
+            ocp = _issue440_box()
+            f = Flows.Flow(ocp, (x, p) -> 1; constraint=:ubox, multiplier=_const(0.4), OPTS...)
+            sol = f((0.0, 1.0), 1.0, 0.0)
+            Test.@test CTModels.dual(sol, ocp, :ubox)(0.5) ≈ 0.4
+            Test.@test_throws Exceptions.PreconditionError CTModels.dual(sol, ocp, :xbox)
+        end
+
+        # ====================================================================
         # INTEGRATION TESTS - sign of the dual on each kind of row
         # ====================================================================
 
-        Test.@testset "sign of the dual" begin
-            f(ocp, spec) = Flows.Flow(
-                ocp, (x, p) -> 0; constraint=spec, multiplier=_const(0.7), OPTS...
+        Test.@testset "the dual is the multiplier, with its sign" begin
+            f(ocp, y) = Flows.Flow(
+                ocp, (x, p) -> 0; constraint=:c, multiplier=_const(y), OPTS...
             )
-            # one finite bound: μ ≥ 0, either way
+            # one finite bound: y ≥ 0, either way
             o = _scalar(0.1, Inf)
-            Test.@test _dual(o, f(o, :c), :c)(0.5) ≈ 0.7
+            Test.@test _dual(o, f(o, 0.7), :c)(0.5) ≈ 0.7
             o = _scalar(-Inf, 0.9)
-            Test.@test _dual(o, f(o, :c), :c)(0.5) ≈ 0.7
-            # equality: -μ on the lower side (the default), +μ on the upper side
-            o = _scalar(0.5, 0.5)
-            Test.@test _dual(o, f(o, :c), :c)(0.5) ≈ -0.7
-            Test.@test _dual(o, f(o, :c => :upper), :c)(0.5) ≈ 0.7
-            # two finite bounds: the active side gives the sign
-            o = _scalar(0.0, 1.0)
-            Test.@test _dual(o, f(o, :c => :lower), :c)(0.5) ≈ -0.7
-            Test.@test _dual(o, f(o, :c => :upper), :c)(0.5) ≈ 0.7
+            Test.@test _dual(o, f(o, 0.7), :c)(0.5) ≈ 0.7
+            # equality and two finite bounds: y < 0 on the lower bound, y > 0 on the upper
+            for (lb, ub) in ((0.5, 0.5), (0.0, 1.0))
+                o = _scalar(lb, ub)
+                Test.@test _dual(o, f(o, -0.7), :c)(0.5) ≈ -0.7
+                Test.@test _dual(o, f(o, 0.7), :c)(0.5) ≈ 0.7
+            end
         end
 
         Test.@testset "vector constraint and tuple of constraints" begin
             ocp = _vector([0.0, -Inf], [1.0, 2.0])
             x0, p0 = [0.5, 0.5], [0.0, 0.0]
-            # :c, one side per component; the rows of :s stay 0
+            # :c, one dual per component; the rows of :s stay 0
             f = Flows.Flow(
-                ocp,
-                (x, p) -> 0;
-                constraint=:c => (:upper, :upper),
-                multiplier=_const([0.3, 0.4]),
-                OPTS...,
+                ocp, (x, p) -> 0; constraint=:c, multiplier=_const([0.3, 0.4]), OPTS...
             )
             sol = f((0.0, 1.0), x0, p0)
             Test.@test CTModels.dual(sol, ocp, :c)(0.5) ≈ [0.3, 0.4]   # two-sided, then one-sided
             Test.@test CTModels.dual(sol, ocp, :s)(0.5) == 0.0
             f = Flows.Flow(
-                ocp,
-                (x, p) -> 0;
-                constraint=:c => (:lower, :upper),
-                multiplier=_const([0.3, 0.4]),
-                OPTS...,
+                ocp, (x, p) -> 0; constraint=:c, multiplier=_const([-0.3, 0.4]), OPTS...
             )
             Test.@test CTModels.dual(f((0.0, 1.0), x0, p0), ocp, :c)(0.5) ≈ [-0.3, 0.4]
             # a tuple of labelled constraints
             f = Flows.Flow(
                 ocp,
                 (x, p) -> -1;
-                constraint=(:s, :c => (:upper, :upper)),
+                constraint=(:s, :c),
                 multiplier=(_const(0.2), _const([0.3, 0.4])),
                 OPTS...,
             )
@@ -277,11 +315,7 @@ function test_flow_duals()
                 ocp, (x, p) -> -1; constraint=:s, multiplier=_const(0.2), OPTS...
             )
             f2 = Flows.Flow(
-                ocp,
-                (x, p) -> 0;
-                constraint=:c => (:upper, :upper),
-                multiplier=_const([0.3, 0.0]),
-                OPTS...,
+                ocp, (x, p) -> 0; constraint=:c, multiplier=_const([0.3, 0.0]), OPTS...
             )
             sol = (f1 * (0.5, f2))((0.0, 1.0), [1.5, 0.5], [0.0, 0.0])
             ds, dc = CTModels.dual(sol, ocp, :s), CTModels.dual(sol, ocp, :c)
@@ -337,15 +371,14 @@ function test_flow_duals()
             Test.@test_logs Flows.Flow(
                 ocp, (x, p) -> -x; constraint=:mixed, multiplier=(x, p) -> p + 1, OPTS...
             )
-            # a tuple with one function: the duals cannot be placed either
-            f = Flows.Flow(
+            # a tuple mixing a label and a function is rejected
+            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
                 ocp,
                 (x, p) -> -x;
                 constraint=(:mixed, (x, u) -> x),
                 multiplier=((x, p) -> p + 1, _const(0.0)),
                 OPTS...,
             )
-            Test.@test !CTModels.Solutions.has_duals(f((0.0, 1.0), -1.0, P0_MIXED))
             # one unlabelled phase in a multi-phase flow: no dual for the whole solution
             o = _issue440(SPELLINGS[1][2:4]...)
             sol = _three_arcs(o; constraint=(x, u) -> x - LB)((0.0, 2.0), 1.0, P0_440)
@@ -359,9 +392,7 @@ function test_flow_duals()
             )
             g = Flows.with_label(f, "boundary")
             Test.@test g.duals === f.duals
-            Test.@test Flows._path_duals(ocp, nothing, nothing) isa Flows._PathDuals
-            Test.@test Flows._path_duals(ocp, (x, u) -> x, (x, p) -> p) isa
-                Flows._UnlabelledPathDuals
+            Test.@test Flows._flow_duals(ocp, nothing, nothing) isa Flows._FlowDuals
         end
     end
 end

@@ -4,8 +4,8 @@
 CurrentModule = CTFlows
 ```
 
-`Flow(ocp, law; constraint, multiplier)` augments the pseudo-Hamiltonian with a **path
-constraint** term, for OCPs whose Pontryagin's Maximum Principle carries a state or mixed
+`Flow(ocp, law; constraint, multiplier)` augments the pseudo-Hamiltonian with a
+**constraint** term, for OCPs whose Pontryagin's Maximum Principle carries a state or mixed
 constraint alongside the control. This chapter covers the API, the sign convention, the
 `hamiltonian_type` semantics for constrained flows (`:total` vs `:partial`, and *why* they
 agree on a constrained arc), and two worked examples.
@@ -68,22 +68,24 @@ xf, pf = f2(0.0, 1.0, 0.5, 1.0)
 xf, pf
 ```
 
-A labelled `:path` constraint from the OCP itself also resolves — pass its `Symbol` label
-as `constraint`. The model stores it as ``\mathrm{lb} \le c(t,x,u,v) \le \mathrm{ub}``;
-the flow normalises it as ``g \ge 0`` (see the sign convention below) from its bounds:
+A constraint of the OCP itself is given by its `Symbol` **label**: a path constraint, a
+**state box** or a **control box** (boundary constraints and variable boxes do not enter a
+flow). The model stores it as ``\mathrm{lb} \le c(t,x,u,v) \le \mathrm{ub}``, and the
+pseudo-Hamiltonian is built by `CTModels.Models.pseudo_hamiltonian(ocp; constraints=…)`,
+with the multiplier ``y`` in the **dual convention of the solution** (ct-conventions `SGN2`,
+`SGN3`, see [Constraint duals of a flow](#Constraint-duals-of-a-flow)): the term of each
+component is
 
-| Bounds stored in the model | `constraint=` | ``g`` |
-| --- | --- | --- |
-| lower only, ``c \ge \mathrm{lb}`` | `:label` | ``c - \mathrm{lb}`` |
-| upper only, ``c \le \mathrm{ub}`` | `:label` | ``\mathrm{ub} - c`` |
-| equality, ``c = \mathrm{lb}`` | `:label` | ``c - \mathrm{lb}`` |
-| two-sided, ``\mathrm{lb} < \mathrm{ub}`` | `:label => :lower` | ``c - \mathrm{lb}`` |
-| two-sided, ``\mathrm{lb} < \mathrm{ub}`` | `:label => :upper` | ``\mathrm{ub} - c`` |
+| Bounds stored in the model | Term adjoined to ``\tilde H`` | Sign of ``y`` |
+| :--- | :--- | :--- |
+| lower only, ``c \ge \mathrm{lb}`` | ``y\,(c - \mathrm{lb})`` | ``y \ge 0`` |
+| upper only, ``c \le \mathrm{ub}`` | ``y\,(\mathrm{ub} - c)`` | ``y \ge 0`` |
+| two bounds, or an equality | ``-y\,(c - b)``, ``b = \mathrm{ub}`` if ``y > 0``, ``\mathrm{lb}`` otherwise | ``y < 0`` on the lower bound, ``y > 0`` on the upper |
 
-So `x(t) - lb ≥ 0`, `x(t) ≥ lb` and `lb - x(t) ≤ 0` give the same flow. A two-sided
-constraint has no active side known from the model: `:label` alone throws an
-`IncorrectArgument`, and the side is given as a `Pair`. For a vector constraint, the side
-is one `Symbol` for every component, or a tuple with one `Symbol` per component. (A
+So `x(t) - lb ≥ 0`, `x(t) ≥ lb`, `lb - x(t) ≤ 0` and the state box `x(t) ≥ lb` give the
+same flow (`SGN5`). On a two-sided constraint, the sign of ``y`` carries the active side:
+the multiplier is the dual a direct solver returns, and can be passed to the flow as is.
+For a vector constraint, ``y`` has one component per component of the constraint. (A
 `Tuple` of labels is a set of constraints, see [Multiple constraints](#Multiple-constraints).)
 
 The same constraint ``x \ge 0.1``, declared in the model as `x ≥ 0.1` and as `0.1 - x ≤ 0`,
@@ -128,8 +130,9 @@ nothing                                                        # hide
 
 ## Sign convention
 
-`Flow(ocp, law; constraint, multiplier)` uses ``g \ge 0`` with ``H = \tilde{H} + \mu \cdot
-g``. This is the opposite sign from Pontryagin's Maximum Principle as usually stated with a
+A constraint given by its **label** uses the dual convention of the solution (table above).
+A constraint given as a **function** uses ``g \ge 0`` with ``H = \tilde{H} + \mu \cdot
+g`` — the convention of a lower bound at ``0``. This is the opposite sign from Pontryagin's Maximum Principle as usually stated with a
 constraint ``c(x) \le 0`` and multiplier ``\eta \le 0`` (Maurer's formulation): the two are
 related by
 
@@ -159,8 +162,9 @@ ft = Flows.Flow(ocp, law; constraint=(g1, g2), multiplier=(μ1, μ2), reltol=1e-
 nothing # hide
 ```
 
-Each `gᵢ`/`μᵢ` is resolved independently (raw functions, `:path` labels, or explicit
-carriers can be mixed within the tuple); the flow sums ``\sum_i \mu_i \cdot g_i``. Both
+Each `gᵢ`/`μᵢ` is resolved independently; the flow sums ``\sum_i \mu_i \cdot g_i``. A tuple
+of labels, `constraint=(:a, :b)`, adjoins those constraints of the model, each with its own
+multiplier, in the order given. Labels and functions cannot be mixed in one tuple. Both
 tuples must be given together, and both must have the same length — otherwise
 `Flow` throws a `CTBase.Exceptions.IncorrectArgument`.
 
@@ -171,13 +175,28 @@ tuples must be given together, and both must have the same length — otherwise
 The `hamiltonian_type` keyword (`:total` default, `:partial`) works as for unconstrained
 flows (see [Control laws](control_laws.md)), extended to the constraint term:
 
-- **`:total`**: compose ``\tilde{H}_c`` with the law into a
-  `CTBase.Data.ComposedHamiltonian` and differentiate **through** the law **and** the
+Both modes share the same constrained pseudo-Hamiltonian ``H(t,x,p,u,\mu,v)``, with the
+multiplier as an explicit argument (a `CTBase.Data.ConstrainedPseudoHamiltonian`):
+
+- **`:total`**: differentiate the `CTBase.Data.ComposedConstrainedHamiltonian`
+  ``h(t,x,p,v) = H(t,x,p,u(t,x,p,v),\mu(t,x,p,v),v)``, **through** the law **and** the
   multiplier (total derivative in ``x``, ``p``, ``v``).
 - **`:partial`**: freeze **both** the control ``u_\star = \gamma(t,x,p,v)`` **and** the
   multiplier ``\mu_\star = \mu(t,x,p,v)`` at their feedback values, then differentiate
-  ``\tilde{H} + \mu_\star^\top g`` at those fixed values — ``g`` is differentiated in
-  ``(x,p,v)``, ``\mu`` is not.
+  ``H(t,x,p,u_\star,\mu_\star,v)`` (`CTBase.Data.freeze_multiplier`) — the constraint is
+  differentiated in ``(x,p,v)``, ``\mu`` is not.
+
+The accessors return the same objects in both modes: `pseudo_hamiltonian(f)` is ``H``, with
+``u`` and ``\mu`` explicit; `hamiltonian(f)` is ``h``, including the constraint term; and
+`get_pseudo_hamiltonian_gradient(f)` gives the partial derivatives of the PMP at fixed
+``u`` and ``\mu``, called as `(t, x, p, u, μ, v)` or in the short form of the traits:
+
+```@example flows_constrained
+fc = Flows.Flow(ocp, law; constraint=(x, u) -> x, multiplier=(x, p) -> c, reltol=1e-10)
+H = CTFlows.Systems.pseudo_hamiltonian(fc)  # H(x, p, u, μ) = p(-x+u) - u²/2 + μx
+∇H = CTFlows.Systems.get_pseudo_hamiltonian_gradient(fc)  # at fixed (u, μ)
+H(1.0, 0.5, 0.2, c), ∇H(1.0, 0.5, 0.2, c)
+```
 
 ```@example flows_constrained
 ft_ = Flows.Flow(
@@ -241,9 +260,10 @@ plot(sol)
 
 ## Constraint duals of a flow
 
-The trajectory call of `Flow(ocp, law; constraint=:label, multiplier=μ)` returns a
-`CTModels.Solution` that carries the **duals of the path constraints** of the model,
-rebuilt from the multiplier ``\mu`` given to the flow. They are read as for a direct
+The trajectory call of `Flow(ocp, law; constraint=:label, multiplier=y)` returns a
+`CTModels.Solution` that carries the **duals of the constraints** given by label (path
+constraints, state boxes, control boxes): the multiplier ``y`` given to the flow is the
+dual. They are read as for a direct
 solve, with `dual(sol, ocp, :label)`, and they follow the same convention: the sign
 convention of the ecosystem,
 [ct-conventions `SGN1`–`SGN6`](https://github.com/control-toolbox/ct-conventions/blob/main/rules/signs.md)
@@ -256,32 +276,30 @@ The pseudo-Hamiltonian is **always maximised**, for a minimisation and for a
 maximisation:
 
 ```math
-H(t,x,p,u,v) = p \cdot f(t,x,u,v) + p^0\,\ell(t,x,u,v) + \mu \cdot g(t,x,u,v),
-\qquad g \ge 0, \quad \mu \ge 0,
+H(t,x,p,u,y,v) = p \cdot f(t,x,u,v) + p^0\,\ell(t,x,u,v) + \sum \text{terms of the table above},
 ```
 
 with ``p^0 = -1`` for `:min` and ``p^0 = +1`` for `:max` (normal case, `SGN4`). For `min ∫ℓ` and
 `max ∫(-ℓ)` the term ``p^0 \ell`` is the same, so the control, the costate ``p`` and the
-multipliers ``\mu`` are the same: only the criterion changes sign. This is the indirect
+multipliers ``y`` are the same: only the criterion changes sign. This is the indirect
 counterpart of the rule of the direct solvers, which return the multipliers of the
 equivalent minimisation.
 
-The dual of a constraint is ``\mu`` itself when the constraint has a single bound, however
-it is written: `x ≥ 0.1`, `x - 0.1 ≥ 0` and `0.1 - x ≤ 0` have the same dual ``\mu \ge 0``.
-An equality, or a constraint with two finite bounds, has a signed dual, as in the
-direct solvers (`SGN2`, `SGN3`):
+The dual of a constraint has a single sign when the constraint has a single bound, however
+it is written: `x ≥ 0.1`, `x - 0.1 ≥ 0`, `0.1 - x ≤ 0` and the state box `x ≥ 0.1` have the
+same dual ``y \ge 0``. An equality, or a constraint with two finite bounds, has a signed
+dual, as in the direct solvers (`SGN2`, `SGN3`):
 
-| Constraint in the model | `constraint=` | `dual(sol, ocp, :label)` |
-| --- | --- | --- |
-| single bound, ``c \ge \mathrm{lb}`` or ``c \le \mathrm{ub}`` | `:label` | ``\mu \ge 0`` |
-| equality, ``c = \mathrm{lb}`` | `:label` (lower side) | ``-\mu`` |
-| equality | `:label => :upper` | ``+\mu`` |
-| two-sided, ``\mathrm{lb} < \mathrm{ub}`` | `:label => :lower` | ``-\mu`` |
-| two-sided | `:label => :upper` | ``+\mu`` |
+| Constraint in the model | `dual(sol, ocp, :label)` |
+| :--- | :--- |
+| single bound, ``c \ge \mathrm{lb}`` or ``c \le \mathrm{ub}`` | ``y \ge 0`` |
+| equality, or two-sided, lower bound active | ``y < 0`` |
+| equality, or two-sided, upper bound active | ``y > 0`` |
 
-The rows of a label are taken from the model, so **the label is the key**: a constraint
-given as a function has no label, and its dual cannot be placed (see below). On an arc where
-a constraint is not adjoined to the flow, its dual is ``0``.
+In every case `dual(sol, ocp, :label)` is the multiplier ``y`` given to the flow. The rows of
+a label are taken from the model, so **the label is the key**: a constraint given as a
+function has no label, and its dual cannot be placed (see below). On an arc where a path
+constraint is not adjoined to the flow, its dual is ``0``.
 
 ### A closed form
 
@@ -359,10 +377,13 @@ plot(sol_440, :state, :control, :path, :dual)
   `MixedConstraint`, …) has no label: the solution carries **no dual**, and
   `dual(sol, ocp, :label)` throws a `PreconditionError` that says so. When the problem has
   path constraints, the flow warns once when it is built. Give the constraint by its label,
-  `constraint=:label` (or `:label => side`), to get its dual. In a multi-phase flow, one
+  `constraint=:label`, to get its dual. In a multi-phase flow, one
   unlabelled phase is enough to lose the duals of the whole solution.
-- The duals of the **boundary** constraints and of the **box** constraints (state, control,
-  variable) are not rebuilt by a flow: `dual(sol, ocp, :label)` throws a
+- A state or control **box** given to the flow by its label has its dual in the solution.
+  In a multi-phase flow, a state box adjoined in some phases has a zero dual in the others;
+  a control box is known only when every phase adjoins it.
+- The duals of the **boundary** constraints, of the **variable** boxes and of the boxes
+  **not given** to the flow are not rebuilt: `dual(sol, ocp, :label)` throws a
   `PreconditionError` for them. A zero would be wrong: a boundary constraint is always
   active, and a control box is active on a bang arc, where the law saturates the control.
   How to compute them is discussed in

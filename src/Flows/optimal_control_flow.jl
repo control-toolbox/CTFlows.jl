@@ -50,165 +50,56 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Resolve a `constraint` specification into a [`CTBase.Data.PathConstraint`](@extref).
-
-- `spec::Symbol` is a `:path` constraint **label**: resolved via
-  [`CTModels.Models.constraint`](@extref), which returns an out-of-place `c(t,x,u,v)` and
-  its bounds `lb ≤ c ≤ ub`. The constraint is normalised as `g ≥ 0` from the bounds:
-  `g = c - lb` for a lower bound, `g = ub - c` for an upper bound, `g = c - lb` for an
-  equality; a two-sided constraint needs the side (next item). Rejected with
-  [`CTBase.Exceptions.IncorrectArgument`](@extref) if the label is not a `:path`
-  constraint (e.g. `:boundary` or a box constraint). The functor is wrapped as a
-  **non-autonomous, non-fixed** [`CTBase.Data.MixedConstraint`](@extref) so its uniform
-  call `g(t,x,u,v)` forwards verbatim.
-- `spec::Pair` is `label => side`: the label as above, on the active `side` (`:lower` or
-  `:upper`, or one of them per component of a vector constraint).
-- `spec::CTBase.Data.PathConstraint` is used as-is.
-- `spec::Function` is a raw function with the OCP's natural arity (`(x,u)`, `(t,x,u)`,
-  `(x,u,v)` or `(t,x,u,v)`), wrapped in a [`CTBase.Data.MixedConstraint`](@extref) with the
-  OCP's time/variable dependence.
-- `spec::Tuple` is a non-empty tuple of simultaneous constraints, each resolved recursively
-  and wrapped in a [`CTFlows.Flows._CombinedConstraint`](@extref) (empty tuple rejected with
-  [`CTBase.Exceptions.IncorrectArgument`](@extref)).
-
-See also: [`CTFlows.Flows._resolve_multiplier`](@extref), `CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`.
-"""
-function _resolve_constraint(ocp, spec::Symbol)
-    return _resolve_labelled_constraint(ocp, spec, nothing)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Resolve a `:label => side` constraint spec: the `:path` constraint `label`, normalised as
-`g ≥ 0` on the given active `side` — `:lower` (`g = c - lb`) or `:upper` (`g = ub - c`).
-`side` is one `Symbol` for every component of the constraint, or a `Tuple`/`AbstractVector`
-with one `Symbol` per component.
+Whether a `constraint` specification gives the constraints by their **label**: a `Symbol`,
+or a tuple of `Symbol`s. Labelled constraints are adjoined by CTModels
+([`CTModels.Models.pseudo_hamiltonian`](@extref)`(ocp; constraints=labels)`), with the
+multiplier in the dual convention of the solution, and their duals are placed in the
+solution. A constraint given as a function (or a [`CTBase.Data.PathConstraint`](@extref))
+is adjoined here as `μ·g` with `g ≥ 0`, and has no dual in the solution.
 
 # Throws
-- [`CTBase.Exceptions.IncorrectArgument`](@extref): if `label` is not a `:path`
-  constraint, if a side is neither `:lower` nor `:upper`, if the bound of the given side
-  is infinite, or if the number of sides does not match the constraint dimension.
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): for a tuple mixing labels and
+  functions, or for the former `label => side` form.
 
-See also: [`CTFlows.Flows._resolve_constraint`](@extref).
+See also: [`CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`](@extref).
 """
-function _resolve_constraint(ocp, spec::Pair{Symbol})
-    return _resolve_labelled_constraint(ocp, first(spec), last(spec))
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Resolve the `:path` constraint `label` of `ocp` into a [`CTBase.Data.MixedConstraint`](@extref)
-normalised as `g ≥ 0`, from the function `c` and the bounds `lb ≤ c ≤ ub` stored in the
-model. `side` is `nothing` (inferred from the bounds), a `Symbol`, or one `Symbol` per
-component.
-
-# Throws
-- [`CTBase.Exceptions.IncorrectArgument`](@extref): if `label` is not a `:path` constraint,
-  or if the active side cannot be determined or is invalid (see
-  [`CTFlows.Flows._active_side`](@extref)).
-"""
-function _resolve_labelled_constraint(ocp, label::Symbol, side)
-    kind, c, lb, ub = CTModels.Models.constraint(ocp, label)
-    kind === :path || throw(
-        Exceptions.IncorrectArgument(
-            "constraint label :$label is not a path constraint";
-            got=":$kind constraint",
-            expected="a :path constraint label",
-            context="Flow(ocp, law; constraint=:$label) — label resolution",
-        ),
-    )
-    g = _bounded_constraint(label, c, lb, ub, side)
-    # The label functor is always the full uniform arity g(t,x,u,v); wrap it as a
-    # non-autonomous, non-fixed MixedConstraint so its uniform call forwards verbatim.
-    return Data.MixedConstraint(g; is_autonomous=false, is_variable=true)
-end
-
-"""
-$(TYPEDEF)
-
-A path constraint `lb ≤ c(t,x,u,v) ≤ ub` from the model, normalised as `g ≥ 0` on its
-active side: `g = sign · (c - bound)`, with `sign = 1` and `bound = lb` on the lower side,
-`sign = -1` and `bound = ub` on the upper side. Scalar fields for a one-dimensional
-constraint, vectors (one entry per component) otherwise.
-
-# Fields
-- `c::C`: the constraint function `c(t,x,u,v)` stored in the model.
-- `sign::S`: `1` (lower side) or `-1` (upper side), per component.
-- `bound::B`: the bound of the active side, per component.
-
-See also: [`CTFlows.Flows._resolve_constraint`](@extref).
-"""
-struct _BoundedConstraint{C,S,B} <: Function
-    c::C
-    sign::S
-    bound::B
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Uniform call: `g(t,x,u,v) = sign .* (c(t,x,u,v) .- bound)`.
-"""
-(g::_BoundedConstraint)(t, x, u, v) = g.sign .* (g.c(t, x, u, v) .- g.bound)
-
-"""
-$(TYPEDSIGNATURES)
-
-Build the [`CTFlows.Flows._BoundedConstraint`](@extref) of a scalar constraint.
-"""
-function _bounded_constraint(label, c, lb::Real, ub::Real, side)
-    s = _active_side(label, lb, ub, _single_side(label, side, 1, 1))
-    return s === :lower ? _BoundedConstraint(c, 1, lb) : _BoundedConstraint(c, -1, ub)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Build the [`CTFlows.Flows._BoundedConstraint`](@extref) of a vector constraint, one side
-per component.
-"""
-function _bounded_constraint(label, c, lb::AbstractVector, ub::AbstractVector, side)
-    n = length(lb)
-    sides = [
-        _active_side(label, lb[i], ub[i], _single_side(label, side, i, n)) for i in 1:n
-    ]
-    sign = [s === :lower ? 1 : -1 for s in sides]
-    bound = [s === :lower ? lb[i] : ub[i] for (i, s) in enumerate(sides)]
-    return _BoundedConstraint(c, sign, bound)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Return the side requested for component `i` (of `n`): `side` itself when it is `nothing`
-or a `Symbol`, its `i`-th entry when it gives one side per component.
-
-# Throws
-- [`CTBase.Exceptions.IncorrectArgument`](@extref): if the number of sides is not `n`.
-"""
-_single_side(label, side::Union{Nothing,Symbol}, i, n) = side
-
-function _single_side(label, side::Union{Tuple,AbstractVector}, i, n)
-    length(side) == n || throw(
-        Exceptions.IncorrectArgument(
-            "wrong number of sides for the constraint :$label";
-            got="$(length(side)) side(s)",
-            expected="one side for every component ($n), or a single Symbol",
-            context="Flow(ocp, law; constraint=:$label => side) — side selection",
-        ),
-    )
-    return side[i]
-end
-
-function _single_side(label, side, i, n)
+_is_labelled(::Symbol) = true
+function _is_labelled(spec::Tuple)
+    n = count(c -> c isa Symbol, spec)
+    n == 0 && return false
+    n == length(spec) && return true
     return throw(
         Exceptions.IncorrectArgument(
-            "unsupported side for the constraint :$label";
-            got="$(typeof(side))",
-            expected=":lower or :upper, or one of them per component",
-            context="Flow(ocp, law; constraint=:$label => side) — side selection",
+            "a tuple of constraints mixes labels and functions";
+            got="$(n) label(s) and $(length(spec) - n) other constraint(s)",
+            expected="only labels, or only functions",
+            suggestion="Give every constraint by its label (they all are constraints of the model), or every one as a function",
+            context="Flow(ocp, law; constraint=(…,)) — constraint resolution",
+        ),
+    )
+end
+_is_labelled(spec::Pair) = _side_removed(spec)
+_is_labelled(::Any) = false
+
+"""
+$(TYPEDSIGNATURES)
+
+Reject the former `label => side` form: the multiplier of a labelled constraint is now the
+dual of the solution, whose sign carries the active side of a two-sided or equality
+constraint (ct-conventions `SGN2`, `SGN3`).
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): always.
+"""
+function _side_removed(spec::Pair)
+    label = first(spec)
+    return throw(
+        Exceptions.IncorrectArgument(
+            "the active side of a constraint is no longer given with `label => side`";
+            got="constraint=$(repr(spec))",
+            expected="constraint=$(repr(label)), with the multiplier in the dual convention of the solution",
+            suggestion="Give constraint=$(repr(label)) and, as multiplier, the dual y of the solution: on a two-sided or equality constraint, y < 0 on the lower bound and y > 0 on the upper bound (so y = -μ for the former `$(repr(label)) => :lower`)",
+            context="Flow(ocp, law; constraint=…) — constraint resolution",
         ),
     )
 end
@@ -216,63 +107,11 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the active side, `:lower` or `:upper`, of one component `lb ≤ c ≤ ub` of the path
-constraint `label`. With `side === nothing` it is inferred from the bounds:
-
-- lower bound only: `:lower` (`g = c - lb`);
-- upper bound only: `:upper` (`g = ub - c`);
-- equality, `lb == ub`: `:lower` (`g = c - lb`; the multiplier has no sign).
-
-# Throws
-- [`CTBase.Exceptions.IncorrectArgument`](@extref): for a two-sided constraint with no
-  side given, for a constraint with no finite bound, for a side other than `:lower` or
-  `:upper`, or for a side whose bound is infinite.
+The labels of a labelled `constraint` specification, as a tuple.
 """
-function _active_side(label, lb, ub, side::Nothing)
-    lo, up = isfinite(lb), isfinite(ub)
-    lo && !up && return :lower
-    !lo && up && return :upper
-    lo && lb == ub && return :lower
-    lo && throw(
-        Exceptions.IncorrectArgument(
-            "two-sided path constraint :$label: the active side is not known";
-            got="$lb ≤ c ≤ $ub",
-            expected="the side active on the arc",
-            suggestion="Give it with constraint = :$label => :lower (g = c - lb) or :$label => :upper (g = ub - c)",
-            context="Flow(ocp, law; constraint=:$label) — side selection",
-        ),
-    )
-    return throw(
-        Exceptions.IncorrectArgument(
-            "path constraint :$label has no finite bound";
-            got="$lb ≤ c ≤ $ub",
-            expected="a finite lower or upper bound",
-            context="Flow(ocp, law; constraint=:$label) — side selection",
-        ),
-    )
-end
+_labels(spec::Symbol) = (spec,)
+_labels(spec::Tuple) = spec
 
-function _active_side(label, lb, ub, side::Symbol)
-    side in (:lower, :upper) || throw(
-        Exceptions.IncorrectArgument(
-            "unknown side :$side for the constraint :$label";
-            got=":$side",
-            expected=":lower or :upper",
-            context="Flow(ocp, law; constraint=:$label => :$side) — side selection",
-        ),
-    )
-    bound = side === :lower ? lb : ub
-    isfinite(bound) || throw(
-        Exceptions.IncorrectArgument(
-            "the constraint :$label has no $side bound";
-            got="$lb ≤ c ≤ $ub",
-            expected="a finite $side bound",
-            suggestion="Use the side whose bound is finite, or omit the side",
-            context="Flow(ocp, law; constraint=:$label => :$side) — side selection",
-        ),
-    )
-    return side
-end
 
 """
 $(TYPEDSIGNATURES)
@@ -353,8 +192,8 @@ end
 $(TYPEDSIGNATURES)
 
 Throw an [`CTBase.Exceptions.IncorrectArgument`](@extref) for an unsupported constraint
-spec type. Only `Symbol` (path label), `label => side`, `Function`, `Tuple`, and
-[`CTBase.Data.PathConstraint`](@extref) are accepted.
+spec type. Only a `Function`, a `Tuple` of them, or a [`CTBase.Data.PathConstraint`](@extref)
+reach this resolution; labels go to CTModels (see [`CTFlows.Flows._is_labelled`](@extref)).
 
 # Throws
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): when `spec` is not a supported type.
@@ -366,7 +205,7 @@ function _resolve_constraint(::Any, spec)
         Exceptions.IncorrectArgument(
             "unsupported constraint specification";
             got="$(typeof(spec))",
-            expected="a :path label (Symbol), a label => side Pair, a CTBase.Data.PathConstraint, or a Function",
+            expected="a constraint label (Symbol), a tuple of labels, a CTBase.Data.PathConstraint, a Function, or a tuple of them",
             context="Flow(ocp, law; constraint=…) — constraint resolution",
         ),
     )
@@ -582,6 +421,27 @@ problem is evaluated at `t = 0`.
     _adjoined_H(h, 0.0, x, p, u, μ, v)
 (h::_AdjoinedConstraint{_CTM_NonAuton,Traits.NonFixed})(t, x, p, u, μ, v) =
     _adjoined_H(h, t, x, p, u, μ, v)
+
+"""
+$(TYPEDSIGNATURES)
+
+The constrained pseudo-Hamiltonian `H(t,x,p,u,μ,v)` of a flow, from its `constraint`
+specification:
+
+- **labels** (a `Symbol` or a tuple of them; path constraints, state boxes and control
+  boxes): built by [`CTModels.Models.pseudo_hamiltonian`](@extref)`(ocp; constraints=labels)`,
+  with `μ` the dual of the solution (ct-conventions `SGN2`, `SGN3`), stacked in the order of
+  the labels;
+- **functions** (or [`CTBase.Data.PathConstraint`](@extref)s): `H̃ + μ·g` with `g ≥ 0` and
+  `μ ≥ 0`, see [`CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`](@extref).
+
+See also: [`CTFlows.Flows._is_labelled`](@extref).
+"""
+function _constrained_pseudo_hamiltonian(ocp, cspec)
+    _is_labelled(cspec) &&
+        return CTModels.Models.pseudo_hamiltonian(ocp; constraints=_labels(cspec))
+    return _ocp_constrained_pseudo_hamiltonian(ocp, _resolve_constraint(ocp, cspec))
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -968,7 +828,7 @@ rebuilds a full [`CTModels.Solutions.Solution`](@extref) from the problem.
   `CTBase.Data.ControlLaw` when the flow was built from an OCP and a control law).
 - `SF`: type of the inner control-free state flow (`Nothing` unless the OCP is
   control-free — see `state_flow`).
-- `D`: type of the path duals (see `duals`).
+- `D`: type of the constraint duals (see `duals`).
 
 # Fields
 - `flow::IF`: the inner Hamiltonian flow doing the integration.
@@ -979,9 +839,9 @@ rebuilds a full [`CTModels.Solutions.Solution`](@extref) from the problem.
   OCP (`Flow(ocp)`, no law); `nothing` otherwise. Backs the basic (no-costate) call
   arities `f(t0,x0,tf)` / `f((t0,tf),x0)` — see [`CTFlows.Flows._ocp_state_vector_field`](@extref).
 - `label::String`: the label of the phase (`""` for no label), see [`CTFlows.Flows.label`](@extref).
-- `duals::D`: the path duals of the flow, rebuilt along a trajectory from the multiplier
-  given to `Flow(ocp, law; constraint, multiplier)` (see
-  [`CTFlows.Flows._path_duals`](@extref)), or `nothing` for a control-free OCP.
+- `duals::D`: the constraint duals of the flow, by label, rebuilt along a trajectory from
+  the multiplier given to `Flow(ocp, law; constraint, multiplier)` (see
+  [`CTFlows.Flows._flow_duals`](@extref)), or `nothing` for a control-free OCP.
 
 See also: [`CTFlows.Flows.Flow`](@extref), [`CTModels.Solutions.Solution`](@extref).
 """
@@ -1300,7 +1160,7 @@ function _build_ocp_solution(
         successful=Integrators.successful(sol),
         control_interpolation=:linear,
         switching=switching,
-        path_constraints_dual=_path_constraints_dual(duals, x, p, v),
+        duals=_solution_duals(duals, x, p, v),
         infos=Dict{Symbol,Any}(:missing_duals => _missing_duals_note(duals)),
     )
 end
@@ -1314,8 +1174,8 @@ phase), and the left and right limits of the state, costate and control at every
 time. The control limits come from the law: the left limit from the law of the phase that
 ends (at the values before the jump), the right one from the law of the next phase (at the
 values after it), see [`CTFlows.Flows._right_ocp_control`](@extref). The limits of the duals
-of the path constraints come from the path `duals` in the same way, see
-[`CTFlows.Flows._switching_path_duals`](@extref).
+of the constraints, by label, come from the `duals` of the flow in the same way, see
+[`CTFlows.Flows._switching_duals`](@extref).
 
 Returns an [`CTModels.Solutions.EmptySwitchingModel`](@extref) when there is no switching
 time and no label.
@@ -1351,7 +1211,7 @@ function _ocp_switching_model(
         state=(_limit_rows(xl), _limit_rows(xr)),
         costate=(_limit_rows(pl), _limit_rows(pr)),
         control=control,
-        path_dual=_switching_path_duals(duals, taus, xl, xr, pl, pr, v),
+        duals=_switching_duals(duals, taus, xl, xr, pl, pr, v),
     )
 end
 
