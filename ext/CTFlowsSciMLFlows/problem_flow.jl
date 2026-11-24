@@ -98,7 +98,9 @@ the complete integration result with trajectory data.
 
 # Arguments
 - `f::SciMLProblemFlow`: The SciML problem flow to solve.
-- `unsafe=Flows.__unsafe()`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+- `unsafe=Flows.__unsafe()`: If `true`, bypass ODE solver retcode checking and return what was computed up to
+  an integration failure; if `false`, throw `SolverFailure` on integration failure, with the
+  call in its context and a suggestion to call the flow with `unsafe=true`.
 
 # Returns
 - `AbstractIntegrationResult`: The complete integration result with trajectory data.
@@ -107,7 +109,9 @@ See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@extref), [`CTFlows.Integrators
 """
 function (f::SciMLProblemFlow)(; unsafe=Flows.__unsafe())
     opts = Integrators.build_options(f.integrator, nothing)
-    return CommonSolve.solve(f.prob, f.integrator; options=opts, unsafe)
+    return Flows._with_unsafe_hint(nothing, unsafe) do
+        CommonSolve.solve(f.prob, f.integrator; options=opts, unsafe)
+    end
 end
 
 """
@@ -125,7 +129,9 @@ final state, not the full trajectory.
 - `x0`: Initial state vector.
 - `tf::Real`: Final time.
 - `variable=Flows.__variable()`: The variable parameter value (optional, passed to remake).
-- `unsafe=Flows.__unsafe()`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+- `unsafe=Flows.__unsafe()`: If `true`, bypass ODE solver retcode checking and return what was computed up to
+  an integration failure; if `false`, throw `SolverFailure` on integration failure, with the
+  call in its context and a suggestion to call the flow with `unsafe=true`.
 
 # Returns
 - The final state vector.
@@ -142,7 +148,9 @@ function (f::SciMLProblemFlow)(
     prob = SciMLBase.remake(f.prob; kw...)
     config = Configs.StateEndPointConfig(t0, x0, tf)
     opts = Integrators.build_options(f.integrator, config)
-    result = CommonSolve.solve(prob, f.integrator; options=opts, unsafe)
+    result = Flows._with_unsafe_hint(config, unsafe) do
+        CommonSolve.solve(prob, f.integrator; options=opts, unsafe)
+    end
     return Integrators.final_state(result)
 end
 
@@ -158,7 +166,9 @@ Builds a `StateTrajectoryConfig` internally and returns the complete solution.
 - `tspan::Configs.TimeSpec`: Time span `(t0, tf)`, or an output grid `(t0, t1, …, tf)` (see [`CTFlows.Configs.TimeSpec`](@extref)).
 - `x0`: Initial state vector.
 - `variable`: The variable parameter value (optional, passed to remake).
-- `unsafe`: If `true`, bypass ODE solver retcode checking; if `false`, throw `SolverFailure` on integration failure.
+- `unsafe`: If `true`, bypass ODE solver retcode checking and return what was computed up to
+  an integration failure; if `false`, throw `SolverFailure` on integration failure, with the
+  call in its context and a suggestion to call the flow with `unsafe=true`.
 - `grid`: Generated output grid from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)). Default `nothing`: unlike the other flows, a `SciMLProblemFlow` applies no default grid and exposes the raw SciML output (the problem's own `saveat`, or the solver steps).
 
 # Returns
@@ -189,7 +199,9 @@ function (f::SciMLProblemFlow)(
     end
     prob = SciMLBase.remake(f.prob; kw...)
     opts = Integrators.build_options(f.integrator, config)
-    result = CommonSolve.solve(prob, f.integrator; options=opts, unsafe)
+    result = Flows._with_unsafe_hint(config, unsafe) do
+        CommonSolve.solve(prob, f.integrator; options=opts, unsafe)
+    end
     curve = Trajectories._plotted_curve(t -> Integrators.evaluate_at(result, t))
     bounds = collect(Configs.tspan(config))
     return Trajectories.apply_generated_grid(

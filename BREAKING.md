@@ -33,6 +33,13 @@ constrained pseudo-Hamiltonian has not been released through OptimalControl.
 
 ## Non-breaking note (Unreleased)
 
+- **A `SolverFailure` from a flow call names the call and suggests `unsafe=true`**
+  ([#523](https://github.com/control-toolbox/CTFlows.jl/issues/523)): with `unsafe=false`,
+  the failure of the integration of a flow call is raised again with the call (and, for a
+  multi-phase flow, the phase) in its `context`, and its `suggestion` ends with the one to call
+  the flow with `unsafe=true`. **No breaking change**: the type, `msg` and `retcode` of the
+  error are unchanged; a code that compared its `context` or `suggestion` with the text of
+  the integrator should match a part of it. No migration required.
 - **Documentation only**: the pin of ct-conventions. **No breaking change**; no migration required.
 
 ## Non-breaking note (0.18.4)

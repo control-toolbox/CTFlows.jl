@@ -17,6 +17,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `get_pseudo_hamiltonian_gradient` and `get_pseudo_variable_gradient` on a constrained flow
   return gradients taking the multiplier as an argument.
 
+### 🛠 Enhancements
+
+- **A `SolverFailure` from a flow call suggests `unsafe=true`**
+  ([#523](https://github.com/control-toolbox/CTFlows.jl/issues/523)). The integrator that
+  raises the failure does not know it is called by a flow, so its message did not mention the
+  `unsafe` keyword, which returns what was computed up to the failure instead of raising. A
+  point or trajectory call of a flow (`StateFlow`, `HamiltonianFlow`, `SciMLProblemFlow`)
+  with `unsafe=false` now raises the failure again with the same message and return code,
+  the call in its context (`point call of the flow (SciML solve)`) and, after the suggestion
+  of the integrator, the suggestion to call the flow with `unsafe=true`. For a multi-phase
+  flow, the context also names the phase that failed (`phase 2 of 3, …`).
+
 ### 🔄 Changed
 
 - `Systems.hamiltonian`, `pseudo_hamiltonian`, `control_law` and `multiplier` are the generic
@@ -29,10 +41,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `label => side` in `constraint=` (the sign of the dual replaces the side).
 
+### 🧪 Testing
+
+- `test/suite/flows/test_solver_failure_hint.jl`: the rewrapped failure (message, return
+  code, context, suggestion) for the point and trajectory calls of the single-phase, problem
+  and multi-phase flows, and the calls with `unsafe=true`.
+
 ### 📚 Documentation
 
 - Page on the cost multiplier `p0`; the constrained flow page follows the dual convention.
+- API reference: the internals of `src/Flows/constraint_duals.jl` (duals of an optimal
+  control flow, by label) are documented, so their `@extref` links resolve.
 - ct-conventions pinned at `v0.15.0` in `AGENTS.md`.
+- *Integrating*, section *Unsafe mode*: a blow-up example showing the error and the calls with
+  `unsafe=true`; *Multi-phase flows*: the phase in the context of a failure.
 
 ### ✅ Compatibility
 

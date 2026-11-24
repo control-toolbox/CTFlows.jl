@@ -306,14 +306,35 @@ flow_rodas = Flows.Flow(vf; alg=Rodas4())
 ### Unsafe mode
 
 By default, a `CTBase.Exceptions.SolverFailure` is thrown if the ODE solver returns
-a non-success retcode. Pass `unsafe=true` to suppress this check:
+a non-success retcode. The solution of `ẋ = x²` from `x(0) = 1` is `x(t) = 1/(1 - t)`,
+which blows up at `t = 1`: integrating it up to `t = 2` fails. The error names the call
+(here a point call) and suggests the `unsafe` keyword:
 
 ```@example flows_integrating
-xf_unsafe = flow(0.0, [1.0, 0.0], 1.0; unsafe=true)
+blowup = Flows.Flow(Data.VectorField(x -> x .^ 2))
+try
+    blowup(0.0, [1.0], 2.0)
+catch e
+    showerror(stdout, e)
+end
+```
+
+Pass `unsafe=true` to suppress this check: the call returns what the solver computed up to
+the failure, here the state reached just before the blow-up, and the trajectory call returns
+the trajectory up to that time.
+
+```@example flows_integrating
+xf_unsafe = blowup(0.0, [1.0], 2.0; unsafe=true)
+```
+
+```@example flows_integrating
+traj_unsafe = blowup((0.0, 2.0), [1.0]; unsafe=true)
+Trajectories.time_grid(traj_unsafe)[end]   # close to the blow-up time t = 1
 ```
 
 Use `unsafe=true` inside shooting methods or optimisation loops where you want to
-handle failures gracefully instead of relying on exceptions.
+handle failures gracefully instead of relying on exceptions, or to see where the
+trajectory went.
 
 ---
 
