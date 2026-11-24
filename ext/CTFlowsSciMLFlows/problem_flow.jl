@@ -110,7 +110,7 @@ See also: [`CTFlowsSciMLFlows.SciMLProblemFlow`](@extref), [`CTFlows.Integrators
 function (f::SciMLProblemFlow)(; unsafe=Flows.__unsafe())
     opts = Integrators.build_options(f.integrator, nothing)
     return Flows._with_unsafe_hint(nothing, unsafe) do
-        CommonSolve.solve(f.prob, f.integrator; options=opts, unsafe)
+        return CommonSolve.solve(f.prob, f.integrator; options=opts, unsafe)
     end
 end
 
@@ -149,7 +149,7 @@ function (f::SciMLProblemFlow)(
     config = Configs.StateEndPointConfig(t0, x0, tf)
     opts = Integrators.build_options(f.integrator, config)
     result = Flows._with_unsafe_hint(config, unsafe) do
-        CommonSolve.solve(prob, f.integrator; options=opts, unsafe)
+        return CommonSolve.solve(prob, f.integrator; options=opts, unsafe)
     end
     return Integrators.final_state(result)
 end
@@ -200,7 +200,7 @@ function (f::SciMLProblemFlow)(
     prob = SciMLBase.remake(f.prob; kw...)
     opts = Integrators.build_options(f.integrator, config)
     result = Flows._with_unsafe_hint(config, unsafe) do
-        CommonSolve.solve(prob, f.integrator; options=opts, unsafe)
+        return CommonSolve.solve(prob, f.integrator; options=opts, unsafe)
     end
     curve = Trajectories._plotted_curve(t -> Integrators.evaluate_at(result, t))
     bounds = collect(Configs.tspan(config))
