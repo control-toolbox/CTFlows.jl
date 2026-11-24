@@ -329,7 +329,7 @@ function _solve_flow(
 
     # integrate ode problem; a failure names `unsafe=true` (issue #523)
     return _with_unsafe_hint(config, unsafe) do
-        CommonSolve.solve(prob, int; options=opts, unsafe=unsafe)
+        return CommonSolve.solve(prob, int; options=opts, unsafe=unsafe)
     end
 end
 
@@ -422,8 +422,9 @@ $(TYPEDSIGNATURES)
 What a flow call returns with `unsafe=true` when the integration fails, from its
 configuration: the state reached for a point call, the trajectory otherwise.
 """
-_computed_until_failure(::Configs.AbstractEndPointConfig) =
-    "the state reached at the failure"
+function _computed_until_failure(::Configs.AbstractEndPointConfig)
+    return "the state reached at the failure"
+end
 _computed_until_failure(::Any) = "the trajectory computed up to the failure"
 
 """
