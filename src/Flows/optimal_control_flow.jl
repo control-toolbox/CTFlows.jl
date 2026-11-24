@@ -278,19 +278,13 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Build a [`CTFlows.Flows._CombinedMultiplier`](@extref) with the joined traits of `parts`.
+Build a [`CTFlows.Flows._CombinedMultiplier`](@extref) with the joined traits of `parts`
+(see [`CTBase.Traits.join_time_dependence`](@extref) and
+[`CTBase.Traits.join_variable_dependence`](@extref)).
 """
 function _CombinedMultiplier(parts::Tuple)
-    TD = if all(μ -> Traits.time_dependence(μ) === Traits.Autonomous, parts)
-        Traits.Autonomous
-    else
-        Traits.NonAutonomous
-    end
-    VD = if all(μ -> Traits.variable_dependence(μ) === Traits.Fixed, parts)
-        Traits.Fixed
-    else
-        Traits.NonFixed
-    end
+    TD = Traits.join_time_dependence(map(Traits.time_dependence, parts)...)
+    VD = Traits.join_variable_dependence(map(Traits.variable_dependence, parts)...)
     return _CombinedMultiplier{TD,VD,typeof(parts)}(parts)
 end
 

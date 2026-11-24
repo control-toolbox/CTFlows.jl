@@ -14,7 +14,7 @@ GPUArraysCore = "46192b85-c4d5-4398-a991-12ede77f4527"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 
 [sources]
-CTBase = {url = "https://github.com/control-toolbox/CTBase.jl", rev = "feat/constrained-pseudo-hamiltonian"}
+CTBase = {url = "https://github.com/control-toolbox/CTBase.jl", rev = "main"}
 CTModels = {url = "https://github.com/control-toolbox/CTModels.jl", rev = "feat/532-model-hamiltonians"}
 
 [weakdeps]
