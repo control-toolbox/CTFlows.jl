@@ -18,11 +18,10 @@ SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [sources]
-CTBase = {url = "https://github.com/control-toolbox/CTBase.jl", rev = "main"}
 CTModels = {url = "https://github.com/control-toolbox/CTModels.jl", rev = "feat/532-model-hamiltonians"}
 
 [compat]
-CTBase = "0.30"
+CTBase = "0.30.15"
 CTModels = "0.21"
 CTSolvers = "0.7"
 CairoMakie = "0.15"
