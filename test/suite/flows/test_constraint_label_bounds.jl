@@ -97,6 +97,38 @@ _y0(spec::Tuple) = map(_ -> (x, p) -> 0.0, spec)
 
 const μ = (x, p) -> 2x
 
+# Batched states (control-toolbox/CTModels.jl#536, point 6): every function of the model is
+# written on the columns, so that it is valid for a vector state and for a matrix state, one
+# column per point; the law and the multipliers dispatch on the shape of the costate.
+const A_BATCH = [0.0 1.0; -1.0 0.0]
+const B_BATCH = [0.0, 1.0]
+_dyn_batch!(r, t, x, u, v) = (r .= A_BATCH * x .+ B_BATCH .* u; nothing)
+_lag_batch(t, x, u, v) = 0.5 * sum(abs2, u)
+_pc_batch!(r, t, x, u, v) = (r[1:1, :] .= x[1:1, :] .+ u; nothing)
+
+"""2-D model with a path constraint `:pc` (|x₁ + u| ≤ 1) and a state box `:vmax` (x₂ ≤ 1.2)."""
+function _ocp_batch()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, 2)
+    CTModels.Building.control!(pre, 1)
+    CTModels.Building.dynamics!(pre, _dyn_batch!)
+    CTModels.Building.objective!(pre, :min; lagrange=_lag_batch)
+    CTModels.Building.constraint!(pre, :path; f=_pc_batch!, lb=[-1.0], ub=[1.0], label=:pc)
+    CTModels.Building.constraint!(
+        pre, :state; rg=2:2, lb=[-Inf], ub=[1.2], label=:vmax
+    )
+    return CTModels.Building.build(pre)
+end
+
+_law_batch(x, p::AbstractVector) = p[2]
+_law_batch(x, p::AbstractMatrix) = p[2:2, :]
+_μ_pc_batch(x, p::AbstractVector) = 0.3 * x[1]
+_μ_pc_batch(x, p::AbstractMatrix) = 0.3 .* x[1:1, :]
+_μ_vmax_batch(x, p::AbstractVector) = 0.5 + p[1]^2
+_μ_vmax_batch(x, p::AbstractMatrix) = 0.5 .+ p[1:1, :] .^ 2
+
 function test_constraint_label_bounds()
     Test.@testset "constraint=:label bounds (issue #440)" verbose = VERBOSE showtiming =
         SHOWTIMING begin
@@ -216,6 +248,29 @@ function test_constraint_label_bounds()
             x2, p2 = f(0.9, LB, 0.0, 1.6)
             Test.@test x2 ≈ LB atol = ATOL
             Test.@test p2 ≈ 0.0 atol = ATOL
+        end
+
+        Test.@testset "batched (Matrix) state: one trajectory per column [$ht]" for ht in (
+            :total, :partial
+        )
+            f = Flows.Flow(
+                _ocp_batch(),
+                _law_batch;
+                constraint=(:pc, :vmax),
+                multiplier=(_μ_pc_batch, _μ_vmax_batch),
+                hamiltonian_type=ht,
+                _opts()...,
+            )
+            X0 = [0.2 -0.5 1.0; 0.1 0.4 -0.3]
+            P0 = [0.3 -0.2 0.6; -0.4 0.5 0.1]
+            Xf, Pf = f(0.0, X0, P0, 1.0)
+            Test.@test size(Xf) == size(X0)
+            Test.@test size(Pf) == size(P0)
+            for j in 1:3
+                xf, pf = f(0.0, X0[:, j], P0[:, j], 1.0)
+                Test.@test Xf[:, j] ≈ xf atol = 1e-7
+                Test.@test Pf[:, j] ≈ pf atol = 1e-7
+            end
         end
 
         Test.@testset "three arcs [$name]" for (name, f!, lb, ub) in SPELLINGS

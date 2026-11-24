@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🧪 Testing
 
+- `test/suite/flows/test_constraint_label_bounds.jl`: a constrained flow (a path constraint and a state box, by label) with a batched `Matrix` state gives, column by column, the flow of each point, in `:total` and `:partial` modes.
 - `test/suite/flows/test_solver_failure_hint.jl`: the rewrapped failure (message, return
   code, context, suggestion) for the point and trajectory calls of the single-phase, problem
   and multi-phase flows, and the calls with `unsafe=true`.
