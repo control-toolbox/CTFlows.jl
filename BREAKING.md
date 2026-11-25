@@ -3,7 +3,7 @@
 This file lists breaking and near-breaking changes in CTFlows.jl since the last
 stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
-## Unreleased
+## [0.19.0] - 2026-11-25
 
 Breaking changes of the model-level Hamiltonians and of the dual convention
 ([#531](https://github.com/control-toolbox/CTFlows.jl/issues/531),
@@ -49,6 +49,22 @@ changes are breaking by `REL1`: the next version is `0.19.0`.
   H(x, p, u, μ(x, p))      # H̃ + μ·g, in both modes
   H(x, p, u, 0.0)          # H̃ only (the term of the constraint vanishes at μ = 0)
   ```
+
+- **`Systems.FrozenConstrainedPseudoHamiltonian` is removed.** It is replaced by
+  `CTBase.Data.freeze_multiplier` applied to a `CTBase.Data.ConstrainedPseudoHamiltonian`: the
+  multiplier is frozen, so that the gradient primitives of `CTBase.Differentiation` take the
+  partial derivatives of the maximum principle. **Migration:**
+
+  ```julia
+  # Before
+  hc = Systems.FrozenConstrainedPseudoHamiltonian(h̃, g, μ_)    # H̃ + μ_·g, μ_ a value
+  hc(t, x, p, u, v)
+
+  # After (autonomous, fixed: use the natural arity of the traits of h̃)
+  H = Data.ConstrainedPseudoHamiltonian((x, p, u, μ) -> h̃(x, p, u) + sum(μ .* g(x, u)))
+  hc = Data.freeze_multiplier(H, μ_)
+  hc(t, x, p, u, v)                                           # same value, same derivatives
+  ```
 - **The solution carries the duals by label**: the adjoined labels give `y`, the other path
   labels give `0`, the other boxes stay unknown.
 - **`get_pseudo_hamiltonian_gradient` and `get_pseudo_variable_gradient` on a constrained
@@ -61,7 +77,7 @@ changes are breaking by `REL1`: the next version is `0.19.0`.
 - **Requires CTBase 0.30.15 and CTModels 0.21.3** (the model-level Hamiltonian getters and
   the constrained pseudo-Hamiltonian type).
 
-## Non-breaking note (Unreleased)
+## Non-breaking note (0.19.0)
 
 - **A `SolverFailure` from a flow call names the call and suggests `unsafe=true`**
   ([#523](https://github.com/control-toolbox/CTFlows.jl/issues/523)): with `unsafe=false`,

@@ -1,0 +1,56 @@
+# The request of the release of CTFlows v0.19.0, for the release workflow of CTActions.
+# Written by `release.jl facts`, completed by the agent after the human's validation, checked
+# by `release.jl request` and again by the workflow. The proposal is in .releases/v0.19.0.md.
+
+[release]
+package = "CTFlows"
+version = "0.19.0"
+kind = "stable"
+mode = "autonomous" # supervised or autonomous: the human's choice
+requested_by = "ocots" # the GitHub login of the person who validated the proposal
+reference = "0.18.4"
+base = "2b9533e3f7311631f60d3c5ddc31a05970f43258"
+
+[versions]
+ct_agents = "v0.5.0"
+ct_conventions = "v0.15.0"
+ctactions = "dc60661"
+
+[facts]
+expected_version = "0.19.0"
+breaking = true
+feature = true
+rel4 = true
+rel7 = 22
+jump = "none"
+labels = ["run breakage", "run ci github-runner", "run ci kkt-runner", "run documentation", "documentation push preview"]
+
+[[review]]
+id = "pr-529"
+what = "#529 [AUTO] JuliaFormatter.jl run — touches src; not cited in the changelog since `v0.18.4`"
+verdict = "not-user-facing"   # covered, added, not-user-facing
+note = "JuliaFormatter run: layout only, no behaviour change."
+
+[[review]]
+id = "pr-535"
+what = "#535 docs: document the path-dual internals in the API reference — touches docs, src; not cited in the changelog since `v0.18.4`"
+verdict = "covered"   # covered, added, not-user-facing
+note = "The documentation of the internals of src/Flows/constraint_duals.jl is in the Documentation section of [Unreleased]."
+
+[[review]]
+id = "export-FrozenConstrainedPseudoHamiltonian"
+what = "`FrozenConstrainedPseudoHamiltonian` is exported or public at `v0.18.4`, not any more: breaking, or renamed?"
+verdict = "added"   # covered, added, not-user-facing
+note = "Removed by #534 and replaced by CTBase.Data.freeze_multiplier; it was missing from the changelog. The release PR carries its entry and migration block in 💥 Breaking Changes and in BREAKING.md (CHG3), verified on an example: same value and same derivatives."
+
+[[review]]
+id = "compat-CTBase"
+what = "`[compat]` of `CTBase`: `0.30.13` → `0.30.15`"
+verdict = "covered"   # covered, added, not-user-facing
+note = "The move of the CTBase compat to 0.30.15 is in the Dependencies section of [Unreleased]."
+
+[[review]]
+id = "compat-CTModels"
+what = "`[compat]` of `CTModels`: `0.21` → `0.21.3`"
+verdict = "covered"   # covered, added, not-user-facing
+note = "The move of the CTModels compat to 0.21.3 is in the Dependencies section of [Unreleased]."
