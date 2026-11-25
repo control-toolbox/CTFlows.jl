@@ -3,7 +3,7 @@
 This file lists breaking and near-breaking changes in CTFlows.jl since the last
 stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
-## Unreleased
+## [0.19.0] - 2026-11-25
 
 Breaking changes of the model-level Hamiltonians and of the dual convention
 ([#531](https://github.com/control-toolbox/CTFlows.jl/issues/531),
@@ -77,7 +77,7 @@ changes are breaking by `REL1`: the next version is `0.19.0`.
 - **Requires CTBase 0.30.15 and CTModels 0.21.3** (the model-level Hamiltonian getters and
   the constrained pseudo-Hamiltonian type).
 
-## Non-breaking note (Unreleased)
+## Non-breaking note (0.19.0)
 
 - **A `SolverFailure` from a flow call names the call and suggests `unsafe=true`**
   ([#523](https://github.com/control-toolbox/CTFlows.jl/issues/523)): with `unsafe=false`,

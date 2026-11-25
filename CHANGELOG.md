@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-11-25
+
 ### 💥 Breaking Changes
 
 The changes below break code written for CTFlows 0.18.3 and 0.18.4, where `label => side` and
