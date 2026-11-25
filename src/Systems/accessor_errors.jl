@@ -99,7 +99,7 @@ Fallback: the system carries no scalar pseudo-Hamiltonian.
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: always, naming the accessor to use instead.
 
-See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Systems.control_law`](@extref).
+See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTBase.Data.control_law`](@extref).
 """
 function Data.pseudo_hamiltonian(sys::AbstractSystem)
     return _unavailable(:pseudo_hamiltonian, "pseudo-Hamiltonian", sys)

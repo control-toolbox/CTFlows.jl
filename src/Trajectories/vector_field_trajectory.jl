@@ -80,7 +80,7 @@ $(TYPEDSIGNATURES)
 
 Construct a `VectorFieldTrajectory` with no known initial state (`Core.NotProvided`,
 applying no shape coercion) — kept for callers that only carry `variable`, not `x0`
-(e.g. [`CTFlows.Trajectories.merge`](@extref) on legacy segments, or direct construction
+(e.g. [`CTSolvers.Integrators.merge`](@extref) on legacy segments, or direct construction
 from a raw integration result in tests).
 """
 function VectorFieldTrajectory(result::Integrators.AbstractIntegrationResult, variable)

@@ -27,7 +27,7 @@ julia> flow = Flows.StateFlow(system, integrator)
 julia> sol = flow(0.0, [1.0, 0.0], 1.0)
 \`\`\`
 
-See also: [`CTFlows.Configs.StateEndPointConfig`](@extref), [`CTFlows.Flows.call`](@extref).
+See also: [`CTFlows.Configs.StateEndPointConfig`](@extref), [`CTFlows.Flows._invoke_flow`](@extref).
 """
 function (f::AbstractStateFlow)(
     t0::Real, x0, tf::Real; variable=__variable(), unsafe=__unsafe()
@@ -130,7 +130,7 @@ julia> flow = Flows.StateFlow(system, integrator)
 julia> sol = flow((0.0, 1.0), [1.0, 0.0])
 \`\`\`
 
-See also: [`CTFlows.Configs.StateTrajectoryConfig`](@extref), [`CTFlows.Flows.call`](@extref).
+See also: [`CTFlows.Configs.StateTrajectoryConfig`](@extref), [`CTFlows.Flows._invoke_flow`](@extref).
 """
 function (f::AbstractStateFlow)(
     tspan::Configs.TimeSpec, x0; variable=__variable(), unsafe=__unsafe(), grid=__grid()
@@ -174,7 +174,7 @@ julia> flow = Flows.HamiltonianFlow(system, integrator)
 julia> sol = flow((0.0, 1.0), [1.0, 0.0], [0.5, 0.3])
 \`\`\`
 
-See also: [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@extref), [`CTFlows.Flows.call`](@extref).
+See also: [`CTFlows.Configs.HamiltonianTrajectoryConfig`](@extref), [`CTFlows.Flows._invoke_flow`](@extref).
 """
 function (f::AbstractHamiltonianFlow)(
     tspan::Configs.TimeSpec,

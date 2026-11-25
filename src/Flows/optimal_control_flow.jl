@@ -22,7 +22,7 @@ _p0_kwargs(p0) = p0 === nothing ? (;) : (; p0)
 $(TYPEDSIGNATURES)
 
 The Hamiltonian of a control-free OCP, a `Data.Hamiltonian` with the uniform `(t, x, p, v)`
-interface: built by [`CTModels.Models.hamiltonian`](@extref) (control-toolbox/CTModels.jl#532).
+interface: built by [`CTBase.Data.hamiltonian`](@extref) (control-toolbox/CTModels.jl#532).
 
 See also: [`CTFlows.Flows.OptimalControlFlow`](@extref), [`CTFlows.Flows.Flow`](@extref).
 """
@@ -35,7 +35,7 @@ $(TYPEDSIGNATURES)
 
 The pseudo-Hamiltonian of an OCP, a [`CTBase.Data.PseudoHamiltonian`](@extref) with the
 uniform `(t, x, p, u, v)` interface used by the pseudo-Hamiltonian AD pipeline: built by
-[`CTModels.Models.pseudo_hamiltonian`](@extref) (control-toolbox/CTModels.jl#532).
+[`CTBase.Data.pseudo_hamiltonian`](@extref) (control-toolbox/CTModels.jl#532).
 
 See also: `CTFlows.Flows._ocp_hamiltonian`.
 """
@@ -61,7 +61,7 @@ $(TYPEDSIGNATURES)
 
 Whether a `constraint` specification gives the constraints by their **label**: a `Symbol`,
 or a tuple of `Symbol`s. Labelled constraints are adjoined by CTModels
-([`CTModels.Models.pseudo_hamiltonian`](@extref)`(ocp; constraints=labels)`), with the
+([`CTBase.Data.pseudo_hamiltonian`](@extref)`(ocp; constraints=labels)`), with the
 multiplier in the dual convention of the solution, and their duals are placed in the
 solution. A constraint given as a function (or a [`CTBase.Data.PathConstraint`](@extref))
 is adjoined here as `μ·g` with `g ≥ 0`, and has no dual in the solution.
@@ -467,7 +467,7 @@ $(TYPEDEF)
 
 The constrained pseudo-Hamiltonian of a flow, with the multiplier as an explicit argument:
 `H(t,x,p,u,μ,v) = H̃(t,x,p,u,v) + μ·g(t,x,u,v)`, where `H̃` is the pseudo-Hamiltonian of
-the OCP ([`CTModels.Models.pseudo_hamiltonian`](@extref)) and `g` the constraint given to
+the OCP ([`CTBase.Data.pseudo_hamiltonian`](@extref)) and `g` the constraint given to
 the flow (uniform call `g(t,x,u,v)`). Wrapped in a
 [`CTBase.Data.ConstrainedPseudoHamiltonian`](@extref) by
 [`CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`](@extref).
@@ -526,7 +526,7 @@ The constrained pseudo-Hamiltonian `H(t,x,p,u,μ,v)` of a flow, from its `constr
 specification:
 
 - **labels** (a `Symbol` or a tuple of them; path constraints, state boxes and control
-  boxes): built by [`CTModels.Models.pseudo_hamiltonian`](@extref)`(ocp; constraints=labels)`,
+  boxes): built by [`CTBase.Data.pseudo_hamiltonian`](@extref)`(ocp; constraints=labels)`,
   with `μ` the dual of the solution (ct-conventions `SGN2`, `SGN3`), stacked in the order of
   the labels;
 - **functions** (or [`CTBase.Data.PathConstraint`](@extref)s): `H̃ + μ·g` with `g ≥ 0` and
