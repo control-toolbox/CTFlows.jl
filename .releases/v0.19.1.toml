@@ -1,0 +1,32 @@
+# The request of the release of CTFlows v0.19.1, for the release workflow of CTActions.
+# Written by `release.jl facts`, completed by the agent after the human's validation, checked
+# by `release.jl request` and again by the workflow. The proposal is in .releases/v0.19.1.md.
+
+[release]
+package = "CTFlows"
+version = "0.19.1"
+kind = "stable"
+mode = "autonomous"  # supervised or autonomous: the human's choice
+requested_by = "ocots"  # the GitHub login of the person who validated the proposal
+reference = "0.19.0"
+base = "83e7fc583748fd39b6d8a6f2709d6284a1f76ab9"
+
+[versions]
+ct_agents = "v0.5.0"
+ct_conventions = "v0.15.0"
+ctactions = "dc60661"
+
+[facts]
+expected_version = "0.19.1"
+breaking = false
+feature = false
+rel4 = true
+rel7 = 8
+jump = "none"
+labels = ["run breakage", "run ci github-runner", "run ci kkt-runner", "run documentation", "documentation push preview"]
+
+[[review]]
+id = "pr-539"
+what = "#539 docs: resolve every @extref link of the docstrings — touches src; not cited in the changelog since `v0.19.0`"
+verdict = "covered"   # covered, added, not-user-facing
+note = "The Documentation entry of [Unreleased] describes it (it cites the issue of the downstream documentation, not the PR number): the docstring links to control_law, hamiltonian, pseudo_hamiltonian, call and merge now resolve in the published inventories."
