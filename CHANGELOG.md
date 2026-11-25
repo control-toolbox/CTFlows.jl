@@ -43,8 +43,9 @@ A constraint given as a function `g ≥ 0` keeps `μ ≥ 0`. See [BREAKING.md](B
 #### The constrained pseudo-Hamiltonian of a flow takes the multiplier as an argument
 
 - **`Systems.pseudo_hamiltonian(f)`** of a constrained flow is a
-  `CTBase.Data.ConstrainedPseudoHamiltonian`, `H(x, p, u, μ)`, instead of a pseudo-Hamiltonian
-  `H(x, p, u)` with the multiplier law inside. `:total` composes it into a
+  `CTBase.Data.ConstrainedPseudoHamiltonian`, `H(x, p, u, μ)`, in both modes, instead of a
+  pseudo-Hamiltonian `H(x, p, u)`: with the multiplier law inside in `:total` mode, and
+  without the term of the constraint in `:partial` mode. `:total` composes it into a
   `CTBase.Data.ComposedConstrainedHamiltonian`, `:partial` freezes the multiplier.
 - **Why**: the partial and total derivatives of the maximum principle are those of one
   function, with the multiplier explicit, as the control.
@@ -54,11 +55,12 @@ A constraint given as a function `g ≥ 0` keeps `μ ≥ 0`. See [BREAKING.md](B
 ```julia
 # Before
 H = Systems.pseudo_hamiltonian(f)
-H(x, p, u)
+H(x, p, u)               # :total: H̃ + μ·g;  :partial: H̃ only
 
 # After
 H = Systems.pseudo_hamiltonian(f)
-H(x, p, u, μ(x, p))
+H(x, p, u, μ(x, p))      # H̃ + μ·g, in both modes
+H(x, p, u, 0.0)          # H̃ only (the term of the constraint vanishes at μ = 0)
 ```
 
 See [BREAKING.md](BREAKING.md).

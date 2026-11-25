@@ -35,17 +35,19 @@ changes are breaking by `REL1`: the next version is `0.19.0`.
 
 - **The constrained pseudo-Hamiltonian of a flow takes the multiplier as an argument.**
   `Systems.pseudo_hamiltonian(f)` of a constrained flow is a
-  `CTBase.Data.ConstrainedPseudoHamiltonian`, `H(x, p, u, μ)`, instead of a pseudo-Hamiltonian
-  `H(x, p, u)` with the multiplier law inside. **Migration:**
+  `CTBase.Data.ConstrainedPseudoHamiltonian`, `H(x, p, u, μ)`, in both modes, instead of a
+  pseudo-Hamiltonian `H(x, p, u)`: with the multiplier law inside in `:total` mode, and
+  without the term of the constraint in `:partial` mode. **Migration:**
 
   ```julia
   # Before
   H = Systems.pseudo_hamiltonian(f)
-  H(x, p, u)
+  H(x, p, u)               # :total: H̃ + μ·g;  :partial: H̃ only
 
   # After
   H = Systems.pseudo_hamiltonian(f)
-  H(x, p, u, μ(x, p))
+  H(x, p, u, μ(x, p))      # H̃ + μ·g, in both modes
+  H(x, p, u, 0.0)          # H̃ only (the term of the constraint vanishes at μ = 0)
   ```
 - **The solution carries the duals by label**: the adjoined labels give `y`, the other path
   labels give `0`, the other boxes stay unknown.
