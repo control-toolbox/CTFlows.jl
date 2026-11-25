@@ -68,7 +68,7 @@ function _evaluate_multiphase(mpf, config::Configs.AbstractEndPointConfig; varia
 
         current_state, t_reached = let t = current_t, state = current_state
             _in_phase(i, n_ph, unsafe) do
-                _evaluate_phase_reached(
+                return _evaluate_phase_reached(
                     get_flow(mpf, i),
                     t,
                     t_end,
@@ -176,7 +176,7 @@ function _evaluate_multiphase(
 
         segment_result = let t = current_t, state = current_state
             _in_phase(i, n_ph, unsafe) do
-                _evaluate_phase(
+                return _evaluate_phase(
                     get_flow(mpf, i),
                     t,
                     t_end,
