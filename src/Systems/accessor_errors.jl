@@ -44,7 +44,7 @@ end
 
 function _accessor_hint(::ConstrainedPseudoHamiltonianSystem)
     return (
-        "a flow built from a pseudo-Hamiltonian, a control law and a path constraint",
+        "a constrained flow in the :partial mode, built from a constrained pseudo-Hamiltonian H(t, x, p, u, μ, v), a control law and a multiplier",
         "Use hamiltonian, pseudo_hamiltonian or control_law, and differentiate them with the backend of your choice",
     )
 end
@@ -89,7 +89,7 @@ Fallback: the system carries no scalar Hamiltonian.
 
 See also: [`CTFlows.Systems.hamiltonian_vector_field`](@extref), [`CTFlows.Systems.vector_field`](@extref).
 """
-hamiltonian(sys::AbstractSystem) = _unavailable(:hamiltonian, "Hamiltonian", sys)
+Data.hamiltonian(sys::AbstractSystem) = _unavailable(:hamiltonian, "Hamiltonian", sys)
 
 """
 $(TYPEDSIGNATURES)
@@ -101,7 +101,7 @@ Fallback: the system carries no scalar pseudo-Hamiltonian.
 
 See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Systems.control_law`](@extref).
 """
-function pseudo_hamiltonian(sys::AbstractSystem)
+function Data.pseudo_hamiltonian(sys::AbstractSystem)
     return _unavailable(:pseudo_hamiltonian, "pseudo-Hamiltonian", sys)
 end
 
@@ -115,7 +115,7 @@ Fallback: the system carries no control law.
 
 See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref).
 """
-control_law(sys::AbstractSystem) = _unavailable(:control_law, "control law", sys)
+Data.control_law(sys::AbstractSystem) = _unavailable(:control_law, "control law", sys)
 
 """
 $(TYPEDSIGNATURES)
@@ -124,7 +124,7 @@ Return the control law `u(t, x, p, v)` of a `PseudoHamiltonianVectorFieldSystem`
 
 See also: [`CTFlows.Systems.PseudoHamiltonianVectorFieldSystem`](@extref).
 """
-control_law(sys::PseudoHamiltonianVectorFieldSystem) = sys.law
+Data.control_law(sys::PseudoHamiltonianVectorFieldSystem) = sys.law
 
 """
 $(TYPEDSIGNATURES)

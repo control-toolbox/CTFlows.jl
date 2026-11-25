@@ -15,6 +15,7 @@ trajectory calls return a full
 using CTFlows
 using CTModels
 using CTFlows: Flows
+using CTFlows: Systems
 using CTBase: Traits
 using OrdinaryDiffEqTsit5: OrdinaryDiffEqTsit5
 using DifferentiationInterface: DifferentiationInterface
@@ -84,6 +85,37 @@ pf   # ≈ exp(-λ)
 
 The `variable`, `variable_costate` and `unsafe` keywords work as for any
 Hamiltonian flow — see [Integrating](integrating.md).
+
+---
+
+## The cost multiplier `p0`
+
+`Flow(ocp)` and `Flow(ocp, law)` take the keyword `p0`, the multiplier ``p^0`` of the cost in
+the Hamiltonian ``H = p \cdot f + p^0\, \ell``. It is maximised (convention `SGN4`): by
+default ``p^0 = -1`` for a minimisation and ``+1`` for a maximisation (the normal case),
+and `p0 = 0` is the **abnormal** case, where the cost does not enter. Any value of the
+sign of the criterion is accepted; a value of the other sign throws an `IncorrectArgument`.
+The flows of an abnormal extremal are built with the same call:
+
+```@example flows_ocp
+pre_l = CTModels.Building.PreModel()
+CTModels.Building.time_dependence!(pre_l; autonomous=true)
+CTModels.Building.time!(pre_l; t0=0.0, tf=1.0)
+CTModels.Building.state!(pre_l, 1)
+CTModels.Building.dynamics!(pre_l, (r, t, x, u, v) -> (r[1] = -x; nothing))
+CTModels.Building.objective!(pre_l, :min; lagrange=(t, x, u, v) -> x^2 / 2)
+ocp_l = CTModels.Building.build(pre_l)
+
+f_normal = Flows.Flow(ocp_l; reltol=1e-10, abstol=1e-10)
+f_abnormal = Flows.Flow(ocp_l; p0=0, reltol=1e-10, abstol=1e-10)
+H_normal = Flows.system(f_normal) |> Systems.hamiltonian
+H_abnormal = Flows.system(f_abnormal) |> Systems.hamiltonian
+H_normal(0.0, 1.0, 2.0, nothing), H_abnormal(0.0, 1.0, 2.0, nothing)
+```
+
+On a flow with a control law, `p0` enters the pseudo-Hamiltonian in the same way, in both
+`hamiltonian_type` modes. The same value is given to the getters of the model,
+`CTModels.Models.pseudo_hamiltonian(ocp; p0)` and `CTModels.Models.hamiltonian(ocp; p0)`.
 
 ---
 

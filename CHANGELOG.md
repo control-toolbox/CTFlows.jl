@@ -7,6 +7,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 💥 Breaking Changes
+
+The changes below break code written for CTFlows 0.18.3 and 0.18.4, where `label => side` and
+the constrained pseudo-Hamiltonian of a flow were released: the next version is `0.19.0`
+(`REL1`). ([#531](https://github.com/control-toolbox/CTFlows.jl/issues/531),
+[CTModels#536](https://github.com/control-toolbox/CTModels.jl/issues/536))
+
+#### The multiplier of a labelled constraint is the dual of the solution; `label => side` is removed
+
+- **`Flow(ocp, law; constraint=:label, multiplier=y)`**: `y` follows the sign convention of
+  the duals of a solution (ct-conventions `SGN1`–`SGN6`). On a one-sided row `y ≥ 0`; on a
+  two-sided row or an equality, the sign of `y` gives the active side.
+- **`label => side` is removed** from `constraint=`: the sign of the dual replaces the side.
+  It raises an `IncorrectArgument` that says so.
+- **Why**: one convention for the multiplier of a flow and for the dual of a solution, so a
+  flow can be started from the duals of a direct solve, and its solution carries them back.
+
+**Migration**:
+
+```julia
+# Before
+Flow(ocp, law; constraint=:c, multiplier=μ)               # one-sided row
+Flow(ocp, law; constraint=:c => :lower, multiplier=μ)     # two-sided, lower side active
+Flow(ocp, law; constraint=:c => :upper, multiplier=μ)     # two-sided, upper side active
+
+# After
+Flow(ocp, law; constraint=:c, multiplier=μ)               # one-sided row: unchanged
+Flow(ocp, law; constraint=:c, multiplier=(x, p) -> -μ(x, p))
+Flow(ocp, law; constraint=:c, multiplier=μ)
+```
+
+A constraint given as a function `g ≥ 0` keeps `μ ≥ 0`. See [BREAKING.md](BREAKING.md).
+
+#### The constrained pseudo-Hamiltonian of a flow takes the multiplier as an argument
+
+- **`Systems.pseudo_hamiltonian(f)`** of a constrained flow is a
+  `CTBase.Data.ConstrainedPseudoHamiltonian`, `H(x, p, u, μ)`, in both modes, instead of a
+  pseudo-Hamiltonian `H(x, p, u)`: with the multiplier law inside in `:total` mode, and
+  without the term of the constraint in `:partial` mode. `:total` composes it into a
+  `CTBase.Data.ComposedConstrainedHamiltonian`, `:partial` freezes the multiplier.
+- **Why**: the partial and total derivatives of the maximum principle are those of one
+  function, with the multiplier explicit, as the control.
+
+**Migration**:
+
+```julia
+# Before
+H = Systems.pseudo_hamiltonian(f)
+H(x, p, u)               # :total: H̃ + μ·g;  :partial: H̃ only
+
+# After
+H = Systems.pseudo_hamiltonian(f)
+H(x, p, u, μ(x, p))      # H̃ + μ·g, in both modes
+H(x, p, u, 0.0)          # H̃ only (the term of the constraint vanishes at μ = 0)
+```
+
+See [BREAKING.md](BREAKING.md).
+
+### ✨ New Features
+
+- `Flow(ocp)` and `Flow(ocp, law)` build their Hamiltonian from the CTModels getters
+  (`CTModels.Models.hamiltonian`, `pseudo_hamiltonian`), and take the cost multiplier `p0`
+  (abnormal case `p0 = 0`).
+- State and control boxes are accepted by label in `constraint=`; the multiplier is the dual
+  of the solution, and the solution carries the duals by label, also for multi-phase flows.
+- `get_pseudo_hamiltonian_gradient` and `get_pseudo_variable_gradient` on a constrained flow
+  return gradients taking the multiplier as an argument.
+- `Systems.multiplier` is exported.
+
 ### 🛠 Enhancements
 
 - **A `SolverFailure` from a flow call suggests `unsafe=true`**
@@ -18,27 +87,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the call in its context (`point call of the flow (SciML solve)`) and, after the suggestion
   of the integrator, the suggestion to call the flow with `unsafe=true`. For a multi-phase
   flow, the context also names the phase that failed (`phase 2 of 3, …`).
+- **A multiplier of the wrong dimension is rejected, by label.** In `Flow(ocp, law;
+  constraint=(:a, :b), multiplier=(μa, μb))`, each multiplier is checked against the number
+  of rows of its constraint when it is evaluated, and the `IncorrectArgument` names its label.
+  Before, only the total number of components was checked, so a multiplier with too many
+  components and another with too few could cancel out.
+
+### 🔄 Refactoring
+
+- `Systems.hamiltonian`, `pseudo_hamiltonian`, `control_law` and `multiplier` are the generic
+  functions of `CTBase.Data` (`Systems.f === Data.f`); code that called them on a system is
+  unchanged.
 
 ### 🧪 Testing
 
+- `test/suite/flows/test_constraint_label_bounds.jl`: the dimension check of the multipliers
+  by label, and a constrained flow (a path constraint and a state box, by label) with a batched `Matrix` state gives, column by column, the flow of each point, in `:total` and `:partial` modes.
 - `test/suite/flows/test_solver_failure_hint.jl`: the rewrapped failure (message, return
   code, context, suggestion) for the point and trajectory calls of the single-phase, problem
   and multi-phase flows, and the calls with `unsafe=true`.
 
 ### 📚 Documentation
 
-- API reference: the internals of `src/Flows/constraint_duals.jl` (path duals of an
-  optimal control flow) are documented; the `@extref` links to `_path_duals`, `_PathDuals`,
-  `_UnlabelledPathDuals` and `_switching_path_duals` did not resolve. `_path_dual_dim` gets a
-  docstring.
+- Page on the cost multiplier `p0`; the constrained flow page follows the dual convention.
+- API reference: the internals of `src/Flows/constraint_duals.jl` (duals of an optimal
+  control flow, by label) are documented, so their `@extref` links resolve.
 - ct-conventions pinned at `v0.15.0` in `AGENTS.md`.
 - *Integrating*, section *Unsafe mode*: a blow-up example showing the error and the calls with
   `unsafe=true`; *Multi-phase flows*: the phase in the context of a failure.
 
+### 📦 Dependencies
+
+- The compat of `CTBase` moves to `0.30.15` and that of `CTModels` to `0.21.3`: the
+  model-level Hamiltonian getters and the constrained pseudo-Hamiltonian type.
+
 ### ✅ Compatibility
 
-- **No breaking changes**: the type, message and return code of the error are unchanged;
-  only its context and suggestion are longer. See [BREAKING.md](BREAKING.md).
+- **Breaking**: see 💥 Breaking Changes above and [BREAKING.md](BREAKING.md); the next
+  version is `0.19.0`.
 
 ## [0.18.4] - 2026-11-16
 

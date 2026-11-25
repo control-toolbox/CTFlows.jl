@@ -171,29 +171,27 @@ end
 $(TYPEDSIGNATURES)
 
 Build a [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref) from a
-pseudo-Hamiltonian `H̃(t,x,p,u,v)`, a dynamic closed-loop control law `u(t,x,p,v)`, a
-path constraint `g(t,x,u,v)`, a multiplier `μ(t,x,p,v)`, and an AD backend.
+constrained pseudo-Hamiltonian `H(t,x,p,u,μ,v)`, a dynamic closed-loop control law
+`u(t,x,p,v)`, a multiplier `μ(t,x,p,v)`, and an AD backend.
 
-The resulting system integrates the constrained Hamiltonian `H̃ + μ·g` in the `:partial`
-mode: both the control `u = u(t,x,p,v)` and the multiplier value `μ = μ(t,x,p,v)` are
-held fixed during differentiation (`g` is differentiated, `μ` is not).
+The resulting system integrates `H` in the `:partial` mode: both the control
+`u = u(t,x,p,v)` and the multiplier value `μ = μ(t,x,p,v)` are held fixed during
+differentiation (the constraint is differentiated, `μ` is not).
 
 # Arguments
-- `h̃::Data.PseudoHamiltonian`: the base pseudo-Hamiltonian.
+- `h::Data.ConstrainedPseudoHamiltonian`: the constrained pseudo-Hamiltonian.
 - `law::Data.ControlLaw`: the control law; must carry `DynClosedLoopFeedback`.
-- `g`: the path constraint (uniform call `g(t,x,u,v)`), e.g. a `CTBase.Data.PathConstraint`.
-- `μ`: the multiplier (uniform call `μ(t,x,p,v)`), e.g. a `CTBase.Data.Multiplier`.
+- `μ::Data.Multiplier`: the multiplier.
 - `backend::Differentiation.AbstractADBackend`: the AD backend.
 
 See also: [`CTFlows.Systems.ConstrainedPseudoHamiltonianSystem`](@extref),
 [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref).
 """
 function build_system(
-    h̃::Data.PseudoHamiltonian,
+    h::Data.ConstrainedPseudoHamiltonian,
     law::Data.ControlLaw{<:Function,Traits.DynClosedLoopFeedback},
-    g,
-    μ,
+    μ::Data.Multiplier,
     backend::Differentiation.AbstractADBackend,
 )
-    return ConstrainedPseudoHamiltonianSystem(h̃, law, g, μ, backend)
+    return ConstrainedPseudoHamiltonianSystem(h, law, μ, backend)
 end

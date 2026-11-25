@@ -18,10 +18,14 @@
 """
 $(TYPEDSIGNATURES)
 
-Return the pseudo-Hamiltonian `H̃` underlying a `HamiltonianSystem`, when the system
-wraps a [`CTBase.Data.ComposedHamiltonian`](@extref) — i.e. it was built in the
-`:total` mode of an OCP-with-control (or pseudo-Hamiltonian + control law) flow. The
-control is *not* eliminated: `H̃(t, x, p, u, v)` keeps `u` as an independent argument.
+Return the pseudo-Hamiltonian underlying a `HamiltonianSystem` built in the `:total` mode
+of an OCP-with-control (or pseudo-Hamiltonian + control law) flow. The control is *not*
+eliminated:
+
+- the system wraps a [`CTBase.Data.ComposedHamiltonian`](@extref): `H̃(t, x, p, u, v)`;
+- the system wraps a [`CTBase.Data.ComposedConstrainedHamiltonian`](@extref) (constrained
+  flow): the constrained pseudo-Hamiltonian `H(t, x, p, u, μ, v)`, with the multiplier
+  explicit too — the same object as in the `:partial` mode.
 
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: if the system wraps a plain Hamiltonian with
@@ -29,9 +33,10 @@ control is *not* eliminated: `H̃(t, x, p, u, v)` keeps `u` as an independent ar
 
 See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Systems.control_law`](@extref).
 """
-function pseudo_hamiltonian(sys::HamiltonianSystem)
+function Data.pseudo_hamiltonian(sys::HamiltonianSystem)
     h = sys.h
     h isa Data.ComposedHamiltonian && return h.h̃
+    h isa Data.ComposedConstrainedHamiltonian && return Data.pseudo_hamiltonian(h)
     return throw(
         Exceptions.IncorrectArgument(
             "no pseudo-Hamiltonian available for this HamiltonianSystem";
@@ -47,7 +52,8 @@ end
 $(TYPEDSIGNATURES)
 
 Return the control law `u(t, x, p, v)` of a `HamiltonianSystem` built in the `:total`
-mode (wrapping a [`CTBase.Data.ComposedHamiltonian`](@extref)).
+mode (wrapping a [`CTBase.Data.ComposedHamiltonian`](@extref) or a
+[`CTBase.Data.ComposedConstrainedHamiltonian`](@extref)).
 
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: if the system wraps a plain Hamiltonian with
@@ -55,9 +61,10 @@ mode (wrapping a [`CTBase.Data.ComposedHamiltonian`](@extref)).
 
 See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref).
 """
-function control_law(sys::HamiltonianSystem)
+function Data.control_law(sys::HamiltonianSystem)
     h = sys.h
     h isa Data.ComposedHamiltonian && return h.law
+    h isa Data.ComposedConstrainedHamiltonian && return Data.control_law(h)
     return throw(
         Exceptions.IncorrectArgument(
             "no control law available for this HamiltonianSystem";
@@ -65,6 +72,32 @@ function control_law(sys::HamiltonianSystem)
             expected="a HamiltonianSystem wrapping a ComposedHamiltonian (:total mode from a control law)",
             suggestion="Build the flow from an OCP (or pseudo-Hamiltonian) and a control law",
             context="control_law(sys::HamiltonianSystem)",
+        ),
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the multiplier `μ(t, x, p, v)` of a `HamiltonianSystem` built in the `:total` mode
+of a constrained flow (wrapping a [`CTBase.Data.ComposedConstrainedHamiltonian`](@extref))
+— the same object as in the `:partial` mode.
+
+# Throws
+- `CTBase.Exceptions.IncorrectArgument`: if the system is not a constrained flow.
+
+See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref).
+"""
+function Data.multiplier(sys::HamiltonianSystem)
+    h = sys.h
+    h isa Data.ComposedConstrainedHamiltonian && return Data.multiplier(h)
+    return throw(
+        Exceptions.IncorrectArgument(
+            "no multiplier available for this HamiltonianSystem";
+            got="a HamiltonianSystem wrapping $(nameof(typeof(h)))",
+            expected="a HamiltonianSystem wrapping a ComposedConstrainedHamiltonian (constrained :total flow)",
+            suggestion="Build the flow from an OCP, a control law, a constraint and a multiplier",
+            context="multiplier(sys::HamiltonianSystem)",
         ),
     )
 end
@@ -241,6 +274,91 @@ function (g::PseudoHamiltonianVariableGradient{
 end
 
 """
+$(TYPEDEF)
+
+Functor returning the gradient `(∂H/∂x, ∂H/∂p)` of a constrained pseudo-Hamiltonian
+`H(t, x, p, u, μ, v)`, evaluated as `(t, x, p, u, μ, v)` at **fixed control** `u` **and
+fixed multiplier** `μ` — the partial derivatives of the PMP, those integrated by the
+`:partial` mode — or in the short form the traits allow: `(x, p, u, μ)`,
+`(t, x, p, u, μ)` or `(x, p, u, μ, v)`. Non-negated. It differentiates
+[`CTBase.Data.freeze_multiplier`](@extref)`(H, μ)`.
+
+# Fields
+- `h::H`: the constrained pseudo-Hamiltonian to differentiate.
+- `backend::B`: the AD backend.
+
+See also: [`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@extref), [`CTFlows.Systems.PseudoHamiltonianGradient`](@extref).
+"""
+struct ConstrainedPseudoHamiltonianGradient{
+    H<:Data.ConstrainedPseudoHamiltonian,B<:Differentiation.AbstractADBackend
+}
+    h::H
+    backend::B
+end
+
+function (g::ConstrainedPseudoHamiltonianGradient)(t, x, p, u, μ, v)
+    h̃ = Data.freeze_multiplier(g.h, μ)
+    return Differentiation.pseudo_hamiltonian_gradient(g.backend, h̃, t, x, p, u, v)
+end
+
+# Short forms, as for the constrained pseudo-Hamiltonian itself.
+function (g::ConstrainedPseudoHamiltonianGradient{
+    <:Data.ConstrainedPseudoHamiltonian{<:Function,Traits.Autonomous,Traits.Fixed}
+})(
+    x, p, u, μ
+)
+    return g(0.0, x, p, u, μ, nothing)
+end
+function (g::ConstrainedPseudoHamiltonianGradient{
+    <:Data.ConstrainedPseudoHamiltonian{<:Function,Traits.NonAutonomous,Traits.Fixed}
+})(
+    t, x, p, u, μ
+)
+    return g(t, x, p, u, μ, nothing)
+end
+function (g::ConstrainedPseudoHamiltonianGradient{
+    <:Data.ConstrainedPseudoHamiltonian{<:Function,Traits.Autonomous,Traits.NonFixed}
+})(
+    x, p, u, μ, v
+)
+    return g(0.0, x, p, u, μ, v)
+end
+
+"""
+$(TYPEDEF)
+
+Functor returning the variable gradient `∂H/∂v` of a constrained pseudo-Hamiltonian
+`H(t, x, p, u, μ, v)`, evaluated as `(t, x, p, u, μ, v)` (or `(x, p, u, μ, v)` when
+autonomous) at **fixed control** `u` **and fixed multiplier** `μ`. Non-negated.
+
+# Fields
+- `h::H`: the constrained pseudo-Hamiltonian to differentiate.
+- `backend::B`: the AD backend.
+
+See also: [`CTFlows.Systems.get_pseudo_variable_gradient`](@extref), [`CTFlows.Systems.ConstrainedPseudoHamiltonianGradient`](@extref).
+"""
+struct ConstrainedPseudoHamiltonianVariableGradient{
+    H<:Data.ConstrainedPseudoHamiltonian,B<:Differentiation.AbstractADBackend
+}
+    h::H
+    backend::B
+end
+
+function (g::ConstrainedPseudoHamiltonianVariableGradient)(t, x, p, u, μ, v)
+    h̃ = Data.freeze_multiplier(g.h, μ)
+    return Differentiation.pseudo_variable_gradient(g.backend, h̃, t, x, p, u, v)
+end
+
+# Short form for an autonomous constrained pseudo-Hamiltonian (the variable gradient needs `v`).
+function (g::ConstrainedPseudoHamiltonianVariableGradient{
+    <:Data.ConstrainedPseudoHamiltonian{<:Function,Traits.Autonomous,Traits.NonFixed}
+})(
+    x, p, u, μ, v
+)
+    return g(0.0, x, p, u, μ, v)
+end
+
+"""
 $(TYPEDSIGNATURES)
 
 Return a [`CTFlows.Systems.HamiltonianGradient`](@extref) functor `(t, x, p, v) ->
@@ -282,36 +400,82 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return a [`CTFlows.Systems.PseudoHamiltonianGradient`](@extref) functor `(t, x, p, u, v) ->
-(∂H̃/∂x, ∂H̃/∂p)` for the pseudo-Hamiltonian, differentiated at **fixed control** `u`.
-Available for a `PseudoHamiltonianSystem` and for a `:total` `HamiltonianSystem`
-wrapping a `ComposedHamiltonian`.
+Return the gradient functor of the pseudo-Hamiltonian returned by
+[`CTFlows.Systems.pseudo_hamiltonian`](@extref)`(sys)`, differentiated at **fixed control**:
+
+- unconstrained flow: a [`CTFlows.Systems.PseudoHamiltonianGradient`](@extref)
+  `(t, x, p, u, v) -> (∂H̃/∂x, ∂H̃/∂p)`;
+- constrained flow (`:total` or `:partial`): a
+  [`CTFlows.Systems.ConstrainedPseudoHamiltonianGradient`](@extref)
+  `(t, x, p, u, μ, v) -> (∂H/∂x, ∂H/∂p)`, at fixed `u` **and** `μ` — the partial
+  derivatives of the PMP, the same in both modes.
+
+Available for a `PseudoHamiltonianSystem`, a `ConstrainedPseudoHamiltonianSystem`, and a
+`:total` `HamiltonianSystem` built from a control law.
 
 The `ad_backend` keyword selects the AD backend (default: the system's own backend).
 
 See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref), [`CTFlows.Systems.get_pseudo_variable_gradient`](@extref).
 """
 function get_pseudo_hamiltonian_gradient(
-    sys::Union{HamiltonianSystem,PseudoHamiltonianSystem};
+    sys::Union{
+        HamiltonianSystem,PseudoHamiltonianSystem,ConstrainedPseudoHamiltonianSystem
+    };
     ad_backend::Differentiation.AbstractADBackend=backend(sys),
 )
-    return PseudoHamiltonianGradient(pseudo_hamiltonian(sys), ad_backend)
+    return _pseudo_gradient(pseudo_hamiltonian(sys), ad_backend)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Return a [`CTFlows.Systems.PseudoHamiltonianVariableGradient`](@extref) functor
-`(t, x, p, u, v) -> ∂H̃/∂v` for the pseudo-Hamiltonian, differentiated at **fixed
-control** `u`.
+Return the variable-gradient functor of the pseudo-Hamiltonian returned by
+[`CTFlows.Systems.pseudo_hamiltonian`](@extref)`(sys)`, at **fixed control**: a
+[`CTFlows.Systems.PseudoHamiltonianVariableGradient`](@extref) `(t, x, p, u, v) -> ∂H̃/∂v`,
+or, on a constrained flow, a
+[`CTFlows.Systems.ConstrainedPseudoHamiltonianVariableGradient`](@extref)
+`(t, x, p, u, μ, v) -> ∂H/∂v` at fixed `u` and `μ`.
 
 The `ad_backend` keyword selects the AD backend (default: the system's own backend).
 
 See also: [`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@extref).
 """
 function get_pseudo_variable_gradient(
-    sys::Union{HamiltonianSystem,PseudoHamiltonianSystem};
+    sys::Union{
+        HamiltonianSystem,PseudoHamiltonianSystem,ConstrainedPseudoHamiltonianSystem
+    };
     ad_backend::Differentiation.AbstractADBackend=backend(sys),
 )
-    return PseudoHamiltonianVariableGradient(pseudo_hamiltonian(sys), ad_backend)
+    return _pseudo_variable_gradient(pseudo_hamiltonian(sys), ad_backend)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+The gradient functor of the pseudo-Hamiltonian `h`: a
+[`CTFlows.Systems.PseudoHamiltonianGradient`](@extref) for `H̃(t, x, p, u, v)`, a
+[`CTFlows.Systems.ConstrainedPseudoHamiltonianGradient`](@extref) for a constrained
+`H(t, x, p, u, μ, v)` (multiplier explicit, as returned by `pseudo_hamiltonian(sys)` on a
+constrained flow).
+
+See also: [`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@extref).
+"""
+_pseudo_gradient(h̃::Data.AbstractPseudoHamiltonian, b) = PseudoHamiltonianGradient(h̃, b)
+function _pseudo_gradient(h::Data.ConstrainedPseudoHamiltonian, b)
+    return ConstrainedPseudoHamiltonianGradient(h, b)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+The variable-gradient functor of the pseudo-Hamiltonian `h`, unconstrained or constrained;
+see [`CTFlows.Systems._pseudo_gradient`](@extref).
+
+See also: [`CTFlows.Systems.get_pseudo_variable_gradient`](@extref).
+"""
+function _pseudo_variable_gradient(h̃::Data.AbstractPseudoHamiltonian, b)
+    return PseudoHamiltonianVariableGradient(h̃, b)
+end
+function _pseudo_variable_gradient(h::Data.ConstrainedPseudoHamiltonian, b)
+    return ConstrainedPseudoHamiltonianVariableGradient(h, b)
 end

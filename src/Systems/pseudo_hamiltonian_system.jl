@@ -62,7 +62,7 @@ Return the pseudo-Hamiltonian `H̃` of a `PseudoHamiltonianSystem`.
 
 See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref), [`CTFlows.Systems.control_law`](@extref).
 """
-pseudo_hamiltonian(sys::PseudoHamiltonianSystem) = sys.h̃
+Data.pseudo_hamiltonian(sys::PseudoHamiltonianSystem) = sys.h̃
 
 """
 $(TYPEDSIGNATURES)
@@ -71,7 +71,7 @@ Return the control law `u(t,x,p,v)` of a `PseudoHamiltonianSystem`.
 
 See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref), [`CTFlows.Systems.pseudo_hamiltonian`](@extref).
 """
-control_law(sys::PseudoHamiltonianSystem) = sys.law
+Data.control_law(sys::PseudoHamiltonianSystem) = sys.law
 
 """
 $(TYPEDSIGNATURES)
@@ -91,7 +91,7 @@ obtained by eliminating the control with the feedback law. Built on the fly.
 
 See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref), [`CTFlows.Systems.HamiltonianSystem`](@extref).
 """
-function hamiltonian(sys::PseudoHamiltonianSystem)
+function Data.hamiltonian(sys::PseudoHamiltonianSystem)
     return Data.ComposedHamiltonian(sys.h̃, sys.law)
 end
 

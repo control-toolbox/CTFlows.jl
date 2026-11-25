@@ -4,6 +4,7 @@ using Test: Test
 using CTBase: Data
 using CTBase: Traits
 using CTBase: Differentiation
+using CTBase: Exceptions
 using CTFlows: Systems
 using ADTypes: ADTypes
 using DifferentiationInterface: DifferentiationInterface
@@ -11,6 +12,10 @@ using ForwardDiff: ForwardDiff
 
 const VERBOSE = isdefined(Main, :TestData) ? Main.TestData.VERBOSE : true
 const SHOWTIMING = isdefined(Main, :TestData) ? Main.TestData.SHOWTIMING : true
+
+# Constrained pseudo-Hamiltonians H(x, p, u, μ[, v]) of the tests.
+cph_scalar(x, p, u, μ) = p * (-x + u) + 0.5 * u^2 + μ * x
+cph_variable(x, p, u, μ, v) = p * (v * (-x) + u) + 0.5 * u^2 + μ * x * v
 
 function _backend()
     return Differentiation.DifferentiationInterface(; ad_backend=ADTypes.AutoForwardDiff())
@@ -21,71 +26,63 @@ function test_constrained_pseudo_hamiltonian_system()
         SHOWTIMING begin
 
         # ====================================================================
-        # UNIT — construction, getters, hamiltonian() returns the base composed H
+        # UNIT — construction, getters; the same objects as the :total mode
+        #   H(x,p,u,μ) = p(-x+u) + 0.5u² + μ·x, law u=-p, μ(x,p)=x
         # ====================================================================
 
+        Test.@testset "Unit: accessors are the CTBase.Data generic functions" begin
+            Test.@test Systems.hamiltonian === Data.hamiltonian
+            Test.@test Systems.pseudo_hamiltonian === Data.pseudo_hamiltonian
+            Test.@test Systems.control_law === Data.control_law
+            Test.@test Systems.multiplier === Data.multiplier
+        end
+
         Test.@testset "Unit: build_system, getters, hamiltonian()" begin
-            h̃ = Data.PseudoHamiltonian((x, p, u) -> p * (-x + u) + 0.5 * u^2)
+            H = Data.ConstrainedPseudoHamiltonian(cph_scalar)
             law = Data.DynClosedLoop((x, p) -> -p)
-            g = Data.StateConstraint(x -> x)
             μ = Data.Multiplier((x, p) -> x)
             be = _backend()
-            sys = Systems.build_system(h̃, law, g, μ, be)
+            sys = Systems.build_system(H, law, μ, be)
 
             Test.@test sys isa Systems.ConstrainedPseudoHamiltonianSystem
             Test.@test sys isa Systems.AbstractHamiltonianSystem
-            Test.@test Systems.pseudo_hamiltonian(sys) === h̃    # base H̃ (no μ·g)
+            Test.@test Systems.pseudo_hamiltonian(sys) === H     # μ explicit
             Test.@test Systems.control_law(sys) === law
-            Test.@test Systems.constraint(sys) === g
             Test.@test Systems.multiplier(sys) === μ
             Test.@test Systems.backend(sys) === be
 
-            H = Systems.hamiltonian(sys)                        # base composed (no μ·g)
-            Test.@test H isa Data.ComposedHamiltonian
-            Test.@test H(2.0, 3.0) ≈ -3.0 * 2.0 - 0.5 * 3.0^2 atol = 1e-12
-        end
-
-        # ====================================================================
-        # UNIT — FrozenConstrainedPseudoHamiltonian value + frozen-μ differentiation
-        # ====================================================================
-
-        Test.@testset "Unit: FrozenConstrainedPseudoHamiltonian value" begin
-            h̃ = Data.PseudoHamiltonian((x, p, u) -> p * (-x + u) + 0.5 * u^2)
-            g = Data.StateConstraint(x -> x)
-            h̃c = Systems.FrozenConstrainedPseudoHamiltonian(h̃, g, 1.0)   # μ_ = 1
-            Test.@test h̃c isa Data.AbstractPseudoHamiltonian
-            Test.@test Traits.time_dependence(h̃c) === Traits.Autonomous
-            Test.@test Traits.variable_dependence(h̃c) === Traits.Fixed
-            # H̃c(t,x,p,u,v) = p(-x+u) + 0.5u² + μ_·x
-            Test.@test h̃c(0.0, 2.0, 3.0, -1.0, nothing) ≈
-                3.0 * (-2.0 - 1.0) + 0.5 * 1.0 + 1.0 * 2.0 atol = 1e-12
+            h = Systems.hamiltonian(sys)                         # with the μ·g term
+            Test.@test h isa Data.ComposedConstrainedHamiltonian
+            Test.@test Data.pseudo_hamiltonian(h) === H
+            Test.@test Data.control_law(h) === law
+            Test.@test Data.multiplier(h) === μ
+            # x=2, p=3: u=-3, μ=2 ⇒ 3(-2-3) + 4.5 + 2·2
+            Test.@test h(2.0, 3.0) ≈ 3.0 * (-5.0) + 4.5 + 4.0 atol = 1e-12
         end
 
         # ====================================================================
         # UNIT — RHS functors compute the frozen-(u, μ) constrained flow
-        #   h̃(x,p,u)=p(-x+u)+0.5u², law u=-p, g(x)=x, μ(x,p)=x  (state-dependent)
-        #   at x=1, p=2: u_=-2, μ_=1(frozen) ⇒
-        #     ∂ₓ[H̃+μ_·g] = -p + μ_ = -1,  ∂ₚ[H̃+μ_·g] = -x+u_ = -3
+        #   at x=1, p=2: u_=-2, μ_=1 (frozen) ⇒
+        #     ∂ₓH = -p + μ_ = -1,  ∂ₚH = -x + u_ = -3
         #     du = [∂p; -∂x] = [-3; 1]
         #   (a :total flow, differentiating through μ=x, would instead give -∂x = 0)
         # ====================================================================
 
         Test.@testset "Unit: ConstrainedPseudoHamIpRHS / OoPRHS (scalar, frozen μ)" begin
-            h̃ = Data.PseudoHamiltonian((x, p, u) -> p * (-x + u) + 0.5 * u^2)
+            H = Data.ConstrainedPseudoHamiltonian(cph_scalar)
             law = Data.DynClosedLoop((x, p) -> -p)
-            g = Data.StateConstraint(x -> x)
             μ = Data.Multiplier((x, p) -> x)
             be = _backend()
 
             ip = Systems.ConstrainedPseudoHamIpRHS(
-                h̃, law, g, μ, be, 1, Systems._safe_only, Systems._safe_only
+                H, law, μ, be, 1, Systems._safe_only, Systems._safe_only
             )
             du = zeros(2)
             ip(du, [1.0, 2.0], Systems.ODEParameters(nothing), 0.0)
             Test.@test du ≈ [-3.0, 1.0] atol = 1e-10
 
             oop = Systems.ConstrainedPseudoHamOoPRHS(
-                h̃, law, g, μ, be, 1, Systems._safe_only, Systems._safe_only
+                H, law, μ, be, 1, Systems._safe_only, Systems._safe_only
             )
             Test.@test oop([1.0, 2.0], Systems.ODEParameters(nothing), 0.0) ≈ [-3.0, 1.0] atol =
                 1e-10
@@ -93,30 +90,53 @@ function test_constrained_pseudo_hamiltonian_system()
 
         # ====================================================================
         # UNIT — variable-costate trait + augmented RHS (NonFixed)
-        #   h̃(x,p,u,v)=p(v*(-x)+u)+0.5u², law u=p, g(x,v)=x*v, μ≡c
-        #   at x=1,p=2,v=0.5,c=0.3: u_=2, μ_=0.3(frozen)
-        #     ∂ᵥ[H̃+μ_·(x*v)] = p*(-x) + μ_*x = 2*(-1)+0.3*1 = -1.7 ⇒ ṗv = 1.7
+        #   H(x,p,u,μ,v) = p(v(-x)+u) + 0.5u² + μ·x·v, law u=p, μ≡c
+        #   at x=1, p=2, v=0.5, c=0.3: u_=2, μ_=0.3 (frozen)
+        #     ∂ᵥH = p(-x) + μ_·x = -1.7 ⇒ ṗv = 1.7
         # ====================================================================
 
         Test.@testset "Unit: variable_costate_trait + augmented RHS (NonFixed)" begin
-            h̃ = Data.PseudoHamiltonian(
-                (x, p, u, v) -> p * (v * (-x) + u) + 0.5 * u^2; is_variable=true
-            )
+            H = Data.ConstrainedPseudoHamiltonian(cph_variable; is_variable=true)
             law = Data.DynClosedLoop((x, p, v) -> p; is_variable=true)
-            g = Data.StateConstraint((x, v) -> x * v; is_variable=true)
             c = 0.3
             μ = Data.Multiplier((x, p) -> c)
             be = _backend()
-            sys = Systems.build_system(h̃, law, g, μ, be)
+            sys = Systems.build_system(H, law, μ, be)
             Test.@test Traits.variable_costate_trait(sys) === Traits.SupportsVariableCostate
 
             aug = Systems.ConstrainedPseudoHamIpAugRHS(
-                h̃, law, g, μ, be, 1, 1, Systems._safe_only, Systems._safe_only
+                H, law, μ, be, 1, 1, Systems._safe_only, Systems._safe_only
             )
             du = zeros(3)
             aug(du, [1.0, 2.0, 0.0], Systems.ODEParameters(0.5), 0.0)
-            # ṗv = -∂ᵥ[H̃+μ_·g] = -(-1.7) = 1.7
             Test.@test du[3] ≈ 1.7 atol = 1e-10
+        end
+
+        # ====================================================================
+        # ERROR — the pseudo-Hamiltonian gradient getters need μ frozen first
+        # ====================================================================
+
+        Test.@testset "Unit: pseudo-Hamiltonian gradient getters, μ as an argument" begin
+            H = Data.ConstrainedPseudoHamiltonian(cph_scalar)
+            law = Data.DynClosedLoop((x, p) -> -p)
+            μ = Data.Multiplier((x, p) -> x)
+            sys = Systems.build_system(H, law, μ, _backend())
+            ∇ = Systems.get_pseudo_hamiltonian_gradient(sys)
+            Test.@test ∇ isa Systems.ConstrainedPseudoHamiltonianGradient
+            # H = p(-x+u) + 0.5u² + μx ⇒ ∂ₓH = -p + μ, ∂ₚH = -x + u
+            Test.@test all(∇(1.0, 2.0, -0.5, 0.3) .≈ (-2.0 + 0.3, -1.0 - 0.5))
+            Test.@test all(∇(0.0, 1.0, 2.0, -0.5, 0.3, nothing) .≈ (-1.7, -1.5))
+        end
+
+        Test.@testset "Unit: variable gradient getter, μ as an argument (NonFixed)" begin
+            H = Data.ConstrainedPseudoHamiltonian(cph_variable; is_variable=true)
+            law = Data.DynClosedLoop((x, p, v) -> p; is_variable=true)
+            μ = Data.Multiplier((x, p) -> 0.3)
+            sys = Systems.build_system(H, law, μ, _backend())
+            ∇v = Systems.get_pseudo_variable_gradient(sys)
+            Test.@test ∇v isa Systems.ConstrainedPseudoHamiltonianVariableGradient
+            # H = p(v(-x)+u) + 0.5u² + μxv ⇒ ∂ᵥH = -px + μx = -1.7 at x=1, p=2, μ=0.3
+            Test.@test first(∇v(1.0, 2.0, 2.0, 0.3, 0.5)) ≈ -1.7 atol = 1e-10
         end
 
         # ====================================================================
@@ -124,11 +144,10 @@ function test_constrained_pseudo_hamiltonian_system()
         # ====================================================================
 
         Test.@testset "Unit: show" begin
-            h̃ = Data.PseudoHamiltonian((x, p, u) -> p * (-x + u) + 0.5 * u^2)
+            H = Data.ConstrainedPseudoHamiltonian(cph_scalar)
             law = Data.DynClosedLoop((x, p) -> -p)
-            g = Data.StateConstraint(x -> x)
             μ = Data.Multiplier((x, p) -> x)
-            sys = Systems.build_system(h̃, law, g, μ, _backend())
+            sys = Systems.build_system(H, law, μ, _backend())
             s = sprint(show, sys)
             Test.@test occursin("ConstrainedPseudoHamiltonianSystem", s)
         end

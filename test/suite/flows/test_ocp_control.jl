@@ -622,8 +622,8 @@ function test_ocp_control()
         # Recover the (pseudo-)Hamiltonians and their gradients from the flow and check
         # them against hand-derived closed forms, freezing exactly what is computed.
         #   OCP_LQR + g(x)=x + μ≡c + law u=p ⇒
-        #     H̃_c(t,x,p,u,v) = p(-x+u) - 0.5u² + c·x            (control explicit)
-        #     H(x,p)         = H̃_c(x,p,p)   = -p x + 0.5 p² + c x
+        #     H(t,x,p,u,μ,v) = p(-x+u) - 0.5u² + μ·x            (control and μ explicit)
+        #     h(x,p)         = H(x,p,p,c)   = -p x + 0.5 p² + c x
         #     ∂ₓH = -p + c,  ∂ₚH = -x + p,  X_H = (∂ₚH,-∂ₓH) = (-x+p, p-c)
 
         Test.@testset "Constrained: Hamiltonian getters vs analytic derivatives" begin
@@ -638,14 +638,15 @@ function test_ocp_control()
             H = Systems.hamiltonian(f)
             Test.@test H(x0, p0) ≈ -p0 * x0 + 0.5 * p0^2 + c * x0 atol = 1e-10
 
-            # (2) pseudo-Hamiltonian H̃_c(t,x,p,u,v) = p(-x+u) - 0.5u² + c x
+            # (2) constrained pseudo-Hamiltonian H(t,x,p,u,μ,v) = p(-x+u) - 0.5u² + μ x
             H̃ = Systems.pseudo_hamiltonian(f)
-            Test.@test H̃(0.0, x0, p0, u0, Float64[]) ≈ p0 * (-x0 + u0) - 0.5 * u0^2 + c * x0 atol =
-                1e-10
+            Test.@test H̃ isa Data.ConstrainedPseudoHamiltonian
+            Test.@test H̃(0.0, x0, p0, u0, c, Float64[]) ≈
+                p0 * (-x0 + u0) - 0.5 * u0^2 + c * x0 atol = 1e-10
             # the +μ·g term is exactly c·x: difference from the unconstrained H̃
             fu = Flows.Flow(OCP_LQR, law; _opts()...)
             H̃u = Systems.pseudo_hamiltonian(fu)
-            Test.@test H̃(0.0, x0, p0, u0, Float64[]) - H̃u(0.0, x0, p0, u0, Float64[]) ≈
+            Test.@test H̃(0.0, x0, p0, u0, c, Float64[]) - H̃u(0.0, x0, p0, u0, Float64[]) ≈
                 c * x0 atol = 1e-10
 
             # (3) total gradient ∇H = (∂ₓH, ∂ₚH) = (-p+c, -x+p) — chain-rule through law
@@ -654,11 +655,19 @@ function test_ocp_control()
             Test.@test dxH ≈ -p0 + c atol = 1e-8
             Test.@test dpH ≈ -x0 + p0 atol = 1e-8
 
-            # (4) pseudo gradient at fixed u: ∂ₓH̃_c = -p+c, ∂ₚH̃_c = -x+u
+            # (4) pseudo gradient at fixed (u, μ): ∂ₓH = -p+μ, ∂ₚH = -x+u — the multiplier
+            # is an argument, as for the pseudo-Hamiltonian itself
             ∇H̃ = Systems.get_pseudo_hamiltonian_gradient(f)
-            dxH̃, dpH̃ = ∇H̃(0.0, x0, p0, u0, Float64[])
+            Test.@test ∇H̃ isa Systems.ConstrainedPseudoHamiltonianGradient
+            dxH̃, dpH̃ = ∇H̃(0.0, x0, p0, u0, c, Float64[])
             Test.@test dxH̃ ≈ -p0 + c atol = 1e-8
             Test.@test dpH̃ ≈ -x0 + u0 atol = 1e-8
+            Test.@test all(∇H̃(x0, p0, u0, 2c) .≈ (-p0 + 2c, -x0 + u0))     # short form
+            # the same as differentiating freeze_multiplier(H, μ)
+            ∇F = Systems.PseudoHamiltonianGradient(
+                Data.freeze_multiplier(H̃, c), Systems.backend(Flows.system(f))
+            )
+            Test.@test all(∇F(x0, p0, u0) .≈ ∇H̃(x0, p0, u0, c))
 
             # (5) symplectic gradient X_H = (∂ₚH, -∂ₓH) = (ẋ, ṗ) = (-x+p, p-c), straight
             # from the vector-field getter — which now covers a flow built from an OCP and
@@ -670,6 +679,52 @@ function test_ocp_control()
             Test.@test ṗ ≈ p0 - c atol = 1e-8      # ṗ = -∂ₓH
             # vector_field(f) is the same object on a Hamiltonian flow
             Test.@test Systems.vector_field(f)(x0, p0) == X_H(x0, p0)
+        end
+
+        # Both modes expose the same objects (CTModels.jl#536): the constrained
+        # pseudo-Hamiltonian with μ explicit, the law, the multiplier, and h with μ·g.
+        #   OCP_LQR + g(x)=x + μ(x,p)=x+c + law u=p ⇒ h(x,p) = -p x + 0.5 p² + (x+c) x
+        Test.@testset "Constrained: :total and :partial accessors return the same objects" begin
+            c = 0.3
+            g = Data.StateConstraint(x -> x)
+            μ = Data.Multiplier((x, p) -> x + c)
+            law = Data.DynClosedLoop((x, p) -> p)
+            ft = Flows.Flow(
+                OCP_LQR, law; constraint=g, multiplier=μ, hamiltonian_type=:total, _opts()...
+            )
+            fp = Flows.Flow(
+                OCP_LQR, law; constraint=g, multiplier=μ, hamiltonian_type=:partial, _opts()...
+            )
+            x0, p0, u0, μ0 = 0.7, 0.4, -0.2, 1.1
+            for f in (ft, fp)
+                H̃ = Systems.pseudo_hamiltonian(f)
+                Test.@test H̃ isa Data.ConstrainedPseudoHamiltonian
+                Test.@test H̃(0.0, x0, p0, u0, μ0, Float64[]) ≈
+                    p0 * (-x0 + u0) - 0.5 * u0^2 + μ0 * x0 atol = 1e-10
+                h = Systems.hamiltonian(f)
+                Test.@test h isa Data.ComposedConstrainedHamiltonian
+                Test.@test h(x0, p0) ≈ -p0 * x0 + 0.5 * p0^2 + (x0 + c) * x0 atol = 1e-10
+                Test.@test Systems.control_law(f) === law
+                Test.@test Systems.multiplier(Flows.system(f)) === μ
+                # the PMP partial derivatives at fixed (u, μ): ∂ₓH = -p+μ, ∂ₚH = -x+u
+                dxH, dpH = Systems.get_pseudo_hamiltonian_gradient(f)(x0, p0, u0, μ0)
+                Test.@test dxH ≈ -p0 + μ0 atol = 1e-8
+                Test.@test dpH ≈ -x0 + u0 atol = 1e-8
+            end
+        end
+
+        # A tuple of multipliers keeps the traits of its parts: autonomous, fixed here, so
+        # h is called h(x, p).
+        Test.@testset "Constrained: tuple of constraints and multipliers keeps the traits" begin
+            g = (Data.StateConstraint(x -> x), Data.StateConstraint(x -> 2x))
+            μ = (Data.Multiplier((x, p) -> 0.1), Data.Multiplier((x, p) -> 0.2))
+            law = Data.DynClosedLoop((x, p) -> p)
+            f = Flows.Flow(OCP_LQR, law; constraint=g, multiplier=μ, _opts()...)
+            x0, p0 = 0.7, 0.4
+            h = Systems.hamiltonian(f)
+            Test.@test Traits.is_autonomous(h)
+            Test.@test !Traits.is_variable(h)
+            Test.@test h(x0, p0) ≈ -p0 * x0 + 0.5 * p0^2 + 0.1 * x0 + 0.2 * 2x0 atol = 1e-10
         end
 
         # NonFixed constrained: ∂H/∂v carries no constraint term here (μ const, g=x are

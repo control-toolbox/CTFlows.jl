@@ -3,6 +3,64 @@
 This file lists breaking and near-breaking changes in CTFlows.jl since the last
 stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
+## Unreleased
+
+Breaking changes of the model-level Hamiltonians and of the dual convention
+([#531](https://github.com/control-toolbox/CTFlows.jl/issues/531),
+[CTModels#536](https://github.com/control-toolbox/CTModels.jl/issues/536)). `label => side`
+and the constrained pseudo-Hamiltonian of a flow were released in 0.18.3 and 0.18.4, so these
+changes are breaking by `REL1`: the next version is `0.19.0`.
+
+- **The multiplier of a labelled constraint is the dual of the solution.** In
+  `Flow(ocp, law; constraint=:label, multiplier=y)`, `y` follows the dual convention
+  (`SGN1`–`SGN6`): `y ≥ 0` on a one-sided row, the sign of `y` giving the active side of a
+  two-sided or equality row. A state box or a control box is accepted by label, like a path
+  constraint. **Migration:** `label` alone, with `y = μ`, for a one-sided row; on a two-sided row
+  the former `label => :lower` becomes `label` with `y = -μ`, and `label => :upper` becomes
+  `label` with `y = μ`. `label => side` is removed and raises an `IncorrectArgument` that says so.
+  A constraint given as a function `g ≥ 0` keeps `μ ≥ 0`; its duals are not placed in the
+  solution.
+
+  ```julia
+  # Before
+  Flow(ocp, law; constraint=:c, multiplier=μ)               # one-sided row
+  Flow(ocp, law; constraint=:c => :lower, multiplier=μ)     # two-sided, lower side active
+  Flow(ocp, law; constraint=:c => :upper, multiplier=μ)     # two-sided, upper side active
+
+  # After
+  Flow(ocp, law; constraint=:c, multiplier=μ)               # one-sided row: unchanged
+  Flow(ocp, law; constraint=:c, multiplier=(x, p) -> -μ(x, p))
+  Flow(ocp, law; constraint=:c, multiplier=μ)
+  ```
+
+- **The constrained pseudo-Hamiltonian of a flow takes the multiplier as an argument.**
+  `Systems.pseudo_hamiltonian(f)` of a constrained flow is a
+  `CTBase.Data.ConstrainedPseudoHamiltonian`, `H(x, p, u, μ)`, in both modes, instead of a
+  pseudo-Hamiltonian `H(x, p, u)`: with the multiplier law inside in `:total` mode, and
+  without the term of the constraint in `:partial` mode. **Migration:**
+
+  ```julia
+  # Before
+  H = Systems.pseudo_hamiltonian(f)
+  H(x, p, u)               # :total: H̃ + μ·g;  :partial: H̃ only
+
+  # After
+  H = Systems.pseudo_hamiltonian(f)
+  H(x, p, u, μ(x, p))      # H̃ + μ·g, in both modes
+  H(x, p, u, 0.0)          # H̃ only (the term of the constraint vanishes at μ = 0)
+  ```
+- **The solution carries the duals by label**: the adjoined labels give `y`, the other path
+  labels give `0`, the other boxes stay unknown.
+- **`get_pseudo_hamiltonian_gradient` and `get_pseudo_variable_gradient` on a constrained
+  flow** return gradients that take the multiplier as an argument, `(t, x, p, u, μ, v)`.
+  Before, they threw an error. `:total` and `:partial` return the same accessor objects.
+- **`Systems.hamiltonian`, `pseudo_hamiltonian`, `control_law` and `multiplier`** are the
+  generic functions of `CTBase.Data` (`Systems.f === Data.f`); code that called them on a
+  system is unchanged. `multiplier` is new in the `Systems` exports.
+- **New keyword `p0`** in `Flow(ocp)` and `Flow(ocp, law)`: no change without it.
+- **Requires CTBase 0.30.15 and CTModels 0.21.3** (the model-level Hamiltonian getters and
+  the constrained pseudo-Hamiltonian type).
+
 ## Non-breaking note (Unreleased)
 
 - **A `SolverFailure` from a flow call names the call and suggests `unsafe=true`**

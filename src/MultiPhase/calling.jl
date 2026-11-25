@@ -441,7 +441,7 @@ function _reconstruct_ocp_solution(mpf, merged, variable, grid=nothing, bounds=n
     plaw = _PiecewiseControlLaw(map(p -> p.law, phases), get_switching_times(mpf))
     integ = Flows.integrator(phases[1])
     merged = Flows._regrid_hamiltonian(merged, grid, plaw, variable, bounds)
-    duals = _piecewise_path_duals(map(p -> p.duals, phases), get_switching_times(mpf))
+    duals = _piecewise_duals(ocp, map(p -> p.duals, phases), get_switching_times(mpf))
     switching = Flows._ocp_switching_model(
         merged, plaw, variable, get_labels(mpf); duals=duals
     )
@@ -453,53 +453,77 @@ end
 """
 $(TYPEDEF)
 
-Path duals of a multi-phase OCP flow: the path duals of each phase, selected by time as the
+Constraint duals of a multi-phase OCP flow: the duals of each phase, selected by time as the
 [`CTFlows.MultiPhase._PiecewiseControlLaw`](@extref) selects the law (at a switching time,
-the phase that ends there).
+the phase that ends there). A label adjoined in some phases only has a zero dual in the
+others, except a control box (a saturated control has a nonzero box dual that a phase
+without the box does not compute): a control box is known only when every phase adjoins it.
 
 # Fields
-- `duals::D`: tuple of the per-phase [`CTFlows.Flows._PathDuals`](@extref).
+- `duals::D`: tuple of the per-phase [`CTFlows.Flows._FlowDuals`](@extref).
 - `switches::S`: the `n-1` sorted switching times.
+- `labels::Vector{Symbol}`: the labels with a known dual.
+- `dims::Dict{Symbol,Int}`: the number of rows (or components) of each label.
 """
-struct _PiecewisePathDuals{D<:Tuple,S}
+struct _PiecewiseDuals{D<:Tuple,S}
     duals::D
     switches::S
+    labels::Vector{Symbol}
+    dims::Dict{Symbol,Int}
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Combine the path duals of the phases: `nothing` if a phase has none (control-free OCP),
+Combine the duals of the phases: `nothing` if a phase has none (control-free OCP),
 [`CTFlows.Flows._UnlabelledPathDuals`](@extref) if a phase has a constraint without a
 label (its duals cannot be placed, so neither can those of the whole solution), a
-[`CTFlows.MultiPhase._PiecewisePathDuals`](@extref) otherwise.
+[`CTFlows.MultiPhase._PiecewiseDuals`](@extref) otherwise.
 """
-function _piecewise_path_duals(duals::Tuple, switches)
+function _piecewise_duals(ocp, duals::Tuple, switches)
     any(isnothing, duals) && return nothing
     any(d -> d isa Flows._UnlabelledPathDuals, duals) && return Flows._UnlabelledPathDuals()
-    return _PiecewisePathDuals(duals, switches)
+    dims = merge(map(d -> d.dims, duals)...)
+    labels = Symbol[]
+    for d in duals, l in d.labels
+        l in labels && continue
+        kind = Flows._constraint_kind(ocp, l)
+        kind === :control && !all(e -> l in e.labels, duals) && continue
+        push!(labels, l)
+    end
+    return _PiecewiseDuals(duals, switches, labels, dims)
+end
+
+Flows._dual_labels(pd::_PiecewiseDuals) = pd.labels
+
+"""
+$(TYPEDSIGNATURES)
+
+Dual of the phase `d` for `label`: its value when the phase knows it, zero otherwise.
+"""
+function _phase_dual(pd::_PiecewiseDuals, d, label::Symbol, t, x, p, v)
+    label in d.labels || return Flows._zero_dual(pd.dims[label])
+    return Flows._dual_value(d, label, t, x, p, v)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Value of the path duals at time `t`: those of the phase active at `t`.
+Dual of `label` at time `t`: that of the phase active at `t`.
 """
-function Flows._path_dual_value(pd::_PiecewisePathDuals, t, x, p, v)
+function Flows._dual_value(pd::_PiecewiseDuals, label::Symbol, t, x, p, v)
     i = clamp(searchsortedfirst(pd.switches, t), 1, length(pd.duals))
-    return Flows._path_dual_value(pd.duals[i], t, x, p, v)
+    return _phase_dual(pd, pd.duals[i], label, t, x, p, v)
 end
-
-Flows._path_dual_dim(pd::_PiecewisePathDuals) = Flows._path_dual_dim(first(pd.duals))
 
 """
 $(TYPEDSIGNATURES)
 
-Path duals just after the `i`-th switching time: those of the next phase, at the state `x`
-and costate `p` after the jump.
+Dual of `label` just after the `i`-th switching time: that of the next phase, at the state
+`x` and costate `p` after the jump.
 """
-function Flows._right_path_dual(pd::_PiecewisePathDuals, i::Integer, t, x, p, v)
-    return Flows._path_dual_value(pd.duals[i + 1], t, x, p, v)
+function Flows._right_dual_value(pd::_PiecewiseDuals, label::Symbol, i::Integer, t, x, p, v)
+    return _phase_dual(pd, pd.duals[i + 1], label, t, x, p, v)
 end
 
 """

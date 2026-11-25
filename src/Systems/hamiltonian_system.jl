@@ -69,7 +69,7 @@ Return the Hamiltonian function from a HamiltonianSystem.
 
 See also: [`CTFlows.Systems.HamiltonianSystem`](@extref), [`CTFlows.Systems.backend`](@extref).
 """
-function hamiltonian(sys::HamiltonianSystem)
+function Data.hamiltonian(sys::HamiltonianSystem)
     return sys.h
 end
 

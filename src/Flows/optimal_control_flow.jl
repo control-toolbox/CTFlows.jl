@@ -1,303 +1,56 @@
 # =============================================================================
-# OCPHamiltonianFunctionFunction, OptimalControlFlow, and solution builder
-# =============================================================================
-
-# =============================================================================
-# OCPHamiltonianFunction — OCP Hamiltonian H(t,x,p,v) = p·f(t,x,∅,v) + sp0·ℓ(t,x,∅,v)
+# OCP Hamiltonians, OptimalControlFlow, and solution builder
 #
-# TD/VD are compile-time parameters so dispatch selects the right natural-arity
-# method without runtime branches.  A single _ocp_H core does the work; the state
-# (and variable) are passed to the dynamics as received — scalar for 1-D, vector for
-# n-D — per the "1-D = scalar" convention (CTModels stores the dynamics verbatim and
-# imposes no shape). The derivative buffer r is always a length-n_x vector.
-#
-# sp0 = s·p⁰ where p⁰=-1: sp0=-1 for :min, sp0=+1 for :max.
+# The pseudo-Hamiltonian H̃(t,x,p,u,v) = p·f + p⁰ℓ and the Hamiltonian of a control-free
+# problem are built by CTModels (control-toolbox/CTModels.jl#532). This file adds the
+# constraints given to a flow (μ·g) and the controlled vector field of the state flow.
 # =============================================================================
 
-"""
-$(TYPEDEF)
-
-Internal callable representing the Hamiltonian of a control-free optimal control problem.
-
-Computes `H(t,x,p,v) = p·f(t,x,∅,v) + sp0·ℓ(t,x,∅,v)` where `sp0 = s·p⁰` with `p⁰=-1`
-(`sp0=-1` for `:min`, `sp0=+1` for `:max`). The time-dependence (`TD`) and
-variable-dependence (`VD`) traits are compile-time parameters so that dispatch
-selects the correct natural-arity call signature without runtime branches.
-
-# Type Parameters
-- `TD`: time-dependence trait (`Autonomous` or `NonAutonomous`).
-- `VD`: variable-dependence trait (`Fixed` or `NonFixed`).
-- `DF`: type of the in-place dynamics function.
-- `LF`: type of the Lagrange cost function (or `Nothing`).
-
-# Fields
-- `dynamics!::DF`: in-place dynamics `f!(r, t, x, u, v)` from the OCP.
-- `lagrange::LF`: Lagrange cost `ℓ(t, x, u, v)` or `nothing` if absent.
-- `sp0::Float64`: sign-weighted multiplier `s·p⁰`.
-- `n::Int`: state dimension.
-
-See also: [`CTFlows.Flows.OptimalControlFlow`](@extref), `CTFlows.Flows._ocp_H`, `CTFlows.Flows._ocp_hamiltonian`.
-"""
-struct OCPHamiltonianFunction{
-    TD<:Traits.TimeDependence,
-    VD<:Traits.VariableDependence,
-    DF<:Function,
-    LF<:Union{Function,Nothing},
-} <: Function
-    dynamics!::DF
-    lagrange::LF
-    sp0::Float64
-    n::Int
-end
-
-"""
-Const aliases for `CTModels.Components.Autonomous` / `NonAutonomous`, keeping method
-signatures concise in the call-operator dispatch below.
-"""
 const _CTM_Auton = CTModels.Components.Autonomous
 const _CTM_NonAuton = CTModels.Components.NonAutonomous
 
 """
 $(TYPEDSIGNATURES)
 
-Core computation of the OCP Hamiltonian value `H(t,x,p,v)`.
-
-Passes `x` (and the variable `v`) to the in-place dynamics **as received** — a scalar
-for a 1-dimensional quantity, a vector otherwise (the ecosystem "1-D = scalar"
-convention) — and accumulates `p·f + sp0·ℓ`. The derivative buffer `r` is always a
-length-`n_x` vector. When `v === nothing` the variable is an empty vector (used by
-`Fixed`-trait call paths).
-
-See also: [`CTFlows.Flows.OCPHamiltonianFunction`](@extref).
+The keyword arguments `(; p0)` for the CTModels getters, or none when `p0` is `nothing`:
+the getter then uses its default, `p⁰ = -1` for a minimisation and `+1` for a maximisation
+(ct-conventions `SGN4`). `p0 = 0` is the abnormal case.
 """
-function _ocp_H(h::OCPHamiltonianFunction, t, x, p, v)
-    if v === nothing
-        T = eltype(x)
-        u = Systems._buffer_like(x, T, 0)  # empty control (control-free) and variable (Fixed)
-        r = Systems._buffer_like(x, T, h.n)
-        h.dynamics!(r, t, x, u, u)       # x passed as-is (scalar for 1-D per convention)
-        val = sum(p .* r)
-        h.lagrange === nothing || (val += h.sp0 * h.lagrange(t, x, u, u))
-    else
-        T = Base.promote_op(*, eltype(x), eltype(v))
-        u = Systems._buffer_like(x, T, 0)  # empty control (control-free)
-        r = Systems._buffer_like(x, T, h.n)
-        h.dynamics!(r, t, x, u, v)       # x, v passed as-is
-        val = sum(p .* r)
-        h.lagrange === nothing || (val += h.sp0 * h.lagrange(t, x, u, v))
-    end
-    return val
+_p0_kwargs(p0) = p0 === nothing ? (;) : (; p0)
+
+"""
+$(TYPEDSIGNATURES)
+
+The Hamiltonian of a control-free OCP, a `Data.Hamiltonian` with the uniform `(t, x, p, v)`
+interface: built by [`CTModels.Models.hamiltonian`](@extref) (control-toolbox/CTModels.jl#532).
+
+See also: [`CTFlows.Flows.OptimalControlFlow`](@extref), [`CTFlows.Flows.Flow`](@extref).
+"""
+function _ocp_hamiltonian(ocp; p0=nothing)
+    return CTModels.Models.hamiltonian(ocp; _p0_kwargs(p0)...)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Call operators for [`CTFlows.Flows.OCPHamiltonianFunction`](@extref), dispatching on the
-`(TD, VD)` trait pair for the correct arity:
+The pseudo-Hamiltonian of an OCP, a [`CTBase.Data.PseudoHamiltonian`](@extref) with the
+uniform `(t, x, p, u, v)` interface used by the pseudo-Hamiltonian AD pipeline: built by
+[`CTModels.Models.pseudo_hamiltonian`](@extref) (control-toolbox/CTModels.jl#532).
 
-| `TD` / `VD` | Call signature | Effective call |
-|---|---|---|
-| `Auton` / `Fixed` | `H(x, p)` | `_ocp_H(h, 0, x, p, ∅)` |
-| `NonAuton` / `Fixed` | `H(t, x, p)` | `_ocp_H(h, t, x, p, ∅)` |
-| `Auton` / `NonFixed` | `H(x, p, v)` | `_ocp_H(h, 0, x, p, v)` |
-| `NonAuton` / `NonFixed` | `H(t, x, p, v)` | `_ocp_H(h, t, x, p, v)` |
-
-See also: [`CTFlows.Flows.OCPHamiltonianFunction`](@extref), [`CTFlows.Flows._ocp_H`](@extref).
+See also: `CTFlows.Flows._ocp_hamiltonian`.
 """
-function (h::OCPHamiltonianFunction{_CTM_Auton,Traits.Fixed,DF,LF})(
-    x, p
-) where {DF<:Function,LF<:Union{Function,Nothing}}
-    return _ocp_H(h, 0.0, x, p, nothing)
+function _ocp_pseudo_hamiltonian(ocp; p0=nothing)
+    return CTModels.Models.pseudo_hamiltonian(ocp; _p0_kwargs(p0)...)
 end
 
-function (h::OCPHamiltonianFunction{_CTM_NonAuton,Traits.Fixed,DF,LF})(
-    t, x, p
-) where {DF<:Function,LF<:Union{Function,Nothing}}
-    return _ocp_H(h, t, x, p, nothing)
-end
-
-function (h::OCPHamiltonianFunction{_CTM_Auton,Traits.NonFixed,DF,LF})(
-    x, p, v
-) where {DF<:Function,LF<:Union{Function,Nothing}}
-    return _ocp_H(h, 0.0, x, p, v)
-end
-
-function (h::OCPHamiltonianFunction{_CTM_NonAuton,Traits.NonFixed,DF,LF})(
-    t, x, p, v
-) where {DF<:Function,LF<:Union{Function,Nothing}}
-    return _ocp_H(h, t, x, p, v)
-end
 
 # =============================================================================
-# _ocp_hamiltonian — builds an OCPHamiltonianFunction wrapped in Data.Hamiltonian
-# =============================================================================
-
-"""
-$(TYPEDSIGNATURES)
-
-Build an `OCPHamiltonianFunction` from a control-free OCP and wrap it in a
-`Data.Hamiltonian`.
-
-Extracts the state dimension, dynamics, criterion sign, Lagrange cost, and
-time/variable-dependence traits from the OCP, then constructs a typed
-`OCPHamiltonianFunction` and wraps it so the downstream AD pipeline receives a
-uniform `(t, x, p, v)` interface.
-
-See also: [`CTFlows.Flows.OCPHamiltonianFunction`](@extref), [`CTFlows.Flows.OptimalControlFlow`](@extref), [`CTFlows.Flows.Flow`](@extref).
-"""
-function _ocp_hamiltonian(ocp)
-    n = CTModels.Models.state_dimension(ocp)
-    dyn! = CTModels.Models.dynamics(ocp)
-    sp0 = CTModels.Components.criterion(ocp) === :min ? -1.0 : 1.0   # s*p⁰, p⁰=-1
-    lag = if CTModels.Components.has_lagrange_cost(ocp)
-        CTModels.Components.lagrange(ocp)
-    else
-        nothing
-    end
-    TD = Traits.time_dependence(ocp)       # Traits.Autonomous or NonAutonomous
-    VD = Traits.variable_dependence(ocp)   # Traits.Fixed or Traits.NonFixed
-    h_raw = OCPHamiltonianFunction{TD,VD,typeof(dyn!),typeof(lag)}(dyn!, lag, sp0, n)
-    return Data.Hamiltonian(h_raw, TD, VD)   # typed ctor → uniform (t,x,p,v) interface for AD
-end
-
-# =============================================================================
-# OCPPseudoHamiltonianFunction — OCP pseudo-Hamiltonian
-#   H̃(t,x,p,u,v) = p·f(t,x,u,v) + sp0·ℓ(t,x,u,v)
+# Constrained pseudo-Hamiltonian: H(t,x,p,u,μ,v) = H̃(t,x,p,u,v) + μ·g(t,x,u,v)
 #
-# Same pattern as OCPHamiltonianFunction, but the control u is an explicit argument
-# (not eliminated). Used for both the :total path (composed with a control law via
-# Data.ComposedHamiltonian) and the :partial path (PseudoHamiltonianSystem).
-# =============================================================================
-
-"""
-$(TYPEDEF)
-
-Internal callable representing the pseudo-Hamiltonian of an optimal control problem:
-`H̃(t,x,p,u,v) = p·f(t,x,u,v) + sp0·ℓ(t,x,u,v)` with `sp0 = s·p⁰` (`p⁰=-1`). Unlike
-[`CTFlows.Flows.OCPHamiltonianFunction`](@extref), the control `u` is an explicit argument.
-
-# Type Parameters
-- `TD`, `VD`: time- and variable-dependence traits (compile-time dispatch on arity).
-- `DF`: type of the in-place dynamics function.
-- `LF`: type of the Lagrange cost function (or `Nothing`).
-
-# Fields
-- `dynamics!::DF`: in-place dynamics `f!(r, t, x, u, v)` from the OCP.
-- `lagrange::LF`: Lagrange cost `ℓ(t, x, u, v)` or `nothing`.
-- `sp0::Float64`: sign-weighted multiplier `s·p⁰`.
-- `n::Int`: state dimension.
-
-See also: [`CTFlows.Flows.OCPHamiltonianFunction`](@extref), `CTFlows.Flows._ocp_pseudo_hamiltonian`,
-[`CTBase.Data.PseudoHamiltonian`](@extref).
-"""
-struct OCPPseudoHamiltonianFunction{
-    TD<:Traits.TimeDependence,
-    VD<:Traits.VariableDependence,
-    DF<:Function,
-    LF<:Union{Function,Nothing},
-} <: Function
-    dynamics!::DF
-    lagrange::LF
-    sp0::Float64
-    n::Int
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Core computation of the OCP pseudo-Hamiltonian value `H̃(t,x,p,u,v)`. Passes `x`, `u`
-(and the variable `v`) to the in-place dynamics **as received** — scalar for a
-1-dimensional quantity, vector otherwise ("1-D = scalar" convention) — and accumulates
-`p·f + sp0·ℓ`. The derivative buffer `r` is always a length-`n_x` vector.
-
-See also: [`CTFlows.Flows.OCPPseudoHamiltonianFunction`](@extref).
-"""
-function _ocp_pseudo_H(h::OCPPseudoHamiltonianFunction, t, x, p, u, v)
-    if v === nothing
-        T = Base.promote_op(*, eltype(x), eltype(u))
-        vv = Systems._buffer_like(x, T, 0)   # empty variable for Fixed problems
-    else
-        T = Base.promote_op(*, Base.promote_op(*, eltype(x), eltype(u)), eltype(v))
-        vv = v
-    end
-    r = Systems._buffer_like(x, T, h.n)   # in-place derivative buffer (always length n_x)
-    h.dynamics!(r, t, x, u, vv)    # x, u, v passed as-is (scalar for 1-D per convention)
-    val = sum(p .* r)             # p·f — sum handles scalar p (1-D) or vector p (n-D)
-    h.lagrange === nothing || (val += h.sp0 * h.lagrange(t, x, u, vv))
-    return val
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Call operators for [`CTFlows.Flows.OCPPseudoHamiltonianFunction`](@extref), dispatching on
-the `(TD, VD)` trait pair for the correct arity:
-
-| `TD` / `VD` | Call signature | Effective call |
-|---|---|---|
-| `Auton` / `Fixed` | `H̃(x, p, u)` | `_ocp_pseudo_H(h, 0, x, p, u, ∅)` |
-| `NonAuton` / `Fixed` | `H̃(t, x, p, u)` | `_ocp_pseudo_H(h, t, x, p, u, ∅)` |
-| `Auton` / `NonFixed` | `H̃(x, p, u, v)` | `_ocp_pseudo_H(h, 0, x, p, u, v)` |
-| `NonAuton` / `NonFixed` | `H̃(t, x, p, u, v)` | `_ocp_pseudo_H(h, t, x, p, u, v)` |
-
-See also: [`CTFlows.Flows.OCPPseudoHamiltonianFunction`](@extref),
-[`CTFlows.Flows._ocp_pseudo_H`](@extref).
-"""
-function (h::OCPPseudoHamiltonianFunction{_CTM_Auton,Traits.Fixed,DF,LF})(
-    x, p, u
-) where {DF<:Function,LF<:Union{Function,Nothing}}
-    return _ocp_pseudo_H(h, 0.0, x, p, u, nothing)
-end
-
-function (h::OCPPseudoHamiltonianFunction{_CTM_NonAuton,Traits.Fixed,DF,LF})(
-    t, x, p, u
-) where {DF<:Function,LF<:Union{Function,Nothing}}
-    return _ocp_pseudo_H(h, t, x, p, u, nothing)
-end
-
-function (h::OCPPseudoHamiltonianFunction{_CTM_Auton,Traits.NonFixed,DF,LF})(
-    x, p, u, v
-) where {DF<:Function,LF<:Union{Function,Nothing}}
-    return _ocp_pseudo_H(h, 0.0, x, p, u, v)
-end
-
-function (h::OCPPseudoHamiltonianFunction{_CTM_NonAuton,Traits.NonFixed,DF,LF})(
-    t, x, p, u, v
-) where {DF<:Function,LF<:Union{Function,Nothing}}
-    return _ocp_pseudo_H(h, t, x, p, u, v)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Build an [`CTFlows.Flows.OCPPseudoHamiltonianFunction`](@extref) from an OCP and wrap it in a
-[`CTBase.Data.PseudoHamiltonian`](@extref), giving the uniform `(t,x,p,u,v)` interface
-used by the pseudo-Hamiltonian AD pipeline.
-
-See also: [`CTFlows.Flows.OCPPseudoHamiltonianFunction`](@extref), `CTFlows.Flows._ocp_hamiltonian`.
-"""
-function _ocp_pseudo_hamiltonian(ocp)
-    n = CTModels.Models.state_dimension(ocp)
-    dyn! = CTModels.Models.dynamics(ocp)
-    sp0 = CTModels.Components.criterion(ocp) === :min ? -1.0 : 1.0
-    lag = if CTModels.Components.has_lagrange_cost(ocp)
-        CTModels.Components.lagrange(ocp)
-    else
-        nothing
-    end
-    TD = Traits.time_dependence(ocp)
-    VD = Traits.variable_dependence(ocp)
-    h_raw = OCPPseudoHamiltonianFunction{TD,VD,typeof(dyn!),typeof(lag)}(dyn!, lag, sp0, n)
-    return Data.PseudoHamiltonian(h_raw, TD, VD)
-end
-
-# =============================================================================
-# Constrained pseudo-Hamiltonian: H(t,x,p,u,v) = H̃(t,x,p,u,v) + μ(t,x,p,v)·g(t,x,u,v)
-#
-# Wraps an OCPPseudoHamiltonianFunction with a path constraint g and a multiplier μ.
-# Used only for the :total differentiation mode: the whole functor is composed with the
-# control law via Data.ComposedHamiltonian, so AD differentiates through H̃, μ, g and the
-# law (total derivative). For :partial, μ must be frozen in the RHS functor (PR 4).
+# The constraint g given to the flow is adjoined to the OCP pseudo-Hamiltonian H̃ with
+# the multiplier μ as an explicit argument, as a CTBase.Data.ConstrainedPseudoHamiltonian.
+# Both modes share it: :partial freezes μ (Data.freeze_multiplier), :total composes it
+# with the law and the multiplier feedback (Data.ComposedConstrainedHamiltonian).
 #
 # The constraint g is called uniformly as g(t,x,u,v) and the multiplier μ as μ(t,x,p,v);
 # both carriers ignore the arguments their traits do not use.
@@ -306,165 +59,56 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Resolve a `constraint` specification into a [`CTBase.Data.PathConstraint`](@extref).
-
-- `spec::Symbol` is a `:path` constraint **label**: resolved via
-  [`CTModels.Models.constraint`](@extref), which returns an out-of-place `c(t,x,u,v)` and
-  its bounds `lb ≤ c ≤ ub`. The constraint is normalised as `g ≥ 0` from the bounds:
-  `g = c - lb` for a lower bound, `g = ub - c` for an upper bound, `g = c - lb` for an
-  equality; a two-sided constraint needs the side (next item). Rejected with
-  [`CTBase.Exceptions.IncorrectArgument`](@extref) if the label is not a `:path`
-  constraint (e.g. `:boundary` or a box constraint). The functor is wrapped as a
-  **non-autonomous, non-fixed** [`CTBase.Data.MixedConstraint`](@extref) so its uniform
-  call `g(t,x,u,v)` forwards verbatim.
-- `spec::Pair` is `label => side`: the label as above, on the active `side` (`:lower` or
-  `:upper`, or one of them per component of a vector constraint).
-- `spec::CTBase.Data.PathConstraint` is used as-is.
-- `spec::Function` is a raw function with the OCP's natural arity (`(x,u)`, `(t,x,u)`,
-  `(x,u,v)` or `(t,x,u,v)`), wrapped in a [`CTBase.Data.MixedConstraint`](@extref) with the
-  OCP's time/variable dependence.
-- `spec::Tuple` is a non-empty tuple of simultaneous constraints, each resolved recursively
-  and wrapped in a [`CTFlows.Flows._CombinedConstraint`](@extref) (empty tuple rejected with
-  [`CTBase.Exceptions.IncorrectArgument`](@extref)).
-
-See also: [`CTFlows.Flows._resolve_multiplier`](@extref), `CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`.
-"""
-function _resolve_constraint(ocp, spec::Symbol)
-    return _resolve_labelled_constraint(ocp, spec, nothing)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Resolve a `:label => side` constraint spec: the `:path` constraint `label`, normalised as
-`g ≥ 0` on the given active `side` — `:lower` (`g = c - lb`) or `:upper` (`g = ub - c`).
-`side` is one `Symbol` for every component of the constraint, or a `Tuple`/`AbstractVector`
-with one `Symbol` per component.
+Whether a `constraint` specification gives the constraints by their **label**: a `Symbol`,
+or a tuple of `Symbol`s. Labelled constraints are adjoined by CTModels
+([`CTModels.Models.pseudo_hamiltonian`](@extref)`(ocp; constraints=labels)`), with the
+multiplier in the dual convention of the solution, and their duals are placed in the
+solution. A constraint given as a function (or a [`CTBase.Data.PathConstraint`](@extref))
+is adjoined here as `μ·g` with `g ≥ 0`, and has no dual in the solution.
 
 # Throws
-- [`CTBase.Exceptions.IncorrectArgument`](@extref): if `label` is not a `:path`
-  constraint, if a side is neither `:lower` nor `:upper`, if the bound of the given side
-  is infinite, or if the number of sides does not match the constraint dimension.
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): for a tuple mixing labels and
+  functions, or for the former `label => side` form.
 
-See also: [`CTFlows.Flows._resolve_constraint`](@extref).
+See also: [`CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`](@extref).
 """
-function _resolve_constraint(ocp, spec::Pair{Symbol})
-    return _resolve_labelled_constraint(ocp, first(spec), last(spec))
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Resolve the `:path` constraint `label` of `ocp` into a [`CTBase.Data.MixedConstraint`](@extref)
-normalised as `g ≥ 0`, from the function `c` and the bounds `lb ≤ c ≤ ub` stored in the
-model. `side` is `nothing` (inferred from the bounds), a `Symbol`, or one `Symbol` per
-component.
-
-# Throws
-- [`CTBase.Exceptions.IncorrectArgument`](@extref): if `label` is not a `:path` constraint,
-  or if the active side cannot be determined or is invalid (see
-  [`CTFlows.Flows._active_side`](@extref)).
-"""
-function _resolve_labelled_constraint(ocp, label::Symbol, side)
-    kind, c, lb, ub = CTModels.Models.constraint(ocp, label)
-    kind === :path || throw(
-        Exceptions.IncorrectArgument(
-            "constraint label :$label is not a path constraint";
-            got=":$kind constraint",
-            expected="a :path constraint label",
-            context="Flow(ocp, law; constraint=:$label) — label resolution",
-        ),
-    )
-    g = _bounded_constraint(label, c, lb, ub, side)
-    # The label functor is always the full uniform arity g(t,x,u,v); wrap it as a
-    # non-autonomous, non-fixed MixedConstraint so its uniform call forwards verbatim.
-    return Data.MixedConstraint(g; is_autonomous=false, is_variable=true)
-end
-
-"""
-$(TYPEDEF)
-
-A path constraint `lb ≤ c(t,x,u,v) ≤ ub` from the model, normalised as `g ≥ 0` on its
-active side: `g = sign · (c - bound)`, with `sign = 1` and `bound = lb` on the lower side,
-`sign = -1` and `bound = ub` on the upper side. Scalar fields for a one-dimensional
-constraint, vectors (one entry per component) otherwise.
-
-# Fields
-- `c::C`: the constraint function `c(t,x,u,v)` stored in the model.
-- `sign::S`: `1` (lower side) or `-1` (upper side), per component.
-- `bound::B`: the bound of the active side, per component.
-
-See also: [`CTFlows.Flows._resolve_constraint`](@extref).
-"""
-struct _BoundedConstraint{C,S,B} <: Function
-    c::C
-    sign::S
-    bound::B
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Uniform call: `g(t,x,u,v) = sign .* (c(t,x,u,v) .- bound)`.
-"""
-(g::_BoundedConstraint)(t, x, u, v) = g.sign .* (g.c(t, x, u, v) .- g.bound)
-
-"""
-$(TYPEDSIGNATURES)
-
-Build the [`CTFlows.Flows._BoundedConstraint`](@extref) of a scalar constraint.
-"""
-function _bounded_constraint(label, c, lb::Real, ub::Real, side)
-    s = _active_side(label, lb, ub, _single_side(label, side, 1, 1))
-    return s === :lower ? _BoundedConstraint(c, 1, lb) : _BoundedConstraint(c, -1, ub)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Build the [`CTFlows.Flows._BoundedConstraint`](@extref) of a vector constraint, one side
-per component.
-"""
-function _bounded_constraint(label, c, lb::AbstractVector, ub::AbstractVector, side)
-    n = length(lb)
-    sides = [
-        _active_side(label, lb[i], ub[i], _single_side(label, side, i, n)) for i in 1:n
-    ]
-    sign = [s === :lower ? 1 : -1 for s in sides]
-    bound = [s === :lower ? lb[i] : ub[i] for (i, s) in enumerate(sides)]
-    return _BoundedConstraint(c, sign, bound)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Return the side requested for component `i` (of `n`): `side` itself when it is `nothing`
-or a `Symbol`, its `i`-th entry when it gives one side per component.
-
-# Throws
-- [`CTBase.Exceptions.IncorrectArgument`](@extref): if the number of sides is not `n`.
-"""
-_single_side(label, side::Union{Nothing,Symbol}, i, n) = side
-
-function _single_side(label, side::Union{Tuple,AbstractVector}, i, n)
-    length(side) == n || throw(
-        Exceptions.IncorrectArgument(
-            "wrong number of sides for the constraint :$label";
-            got="$(length(side)) side(s)",
-            expected="one side for every component ($n), or a single Symbol",
-            context="Flow(ocp, law; constraint=:$label => side) — side selection",
-        ),
-    )
-    return side[i]
-end
-
-function _single_side(label, side, i, n)
+_is_labelled(::Symbol) = true
+function _is_labelled(spec::Tuple)
+    n = count(c -> c isa Symbol, spec)
+    n == 0 && return false
+    n == length(spec) && return true
     return throw(
         Exceptions.IncorrectArgument(
-            "unsupported side for the constraint :$label";
-            got="$(typeof(side))",
-            expected=":lower or :upper, or one of them per component",
-            context="Flow(ocp, law; constraint=:$label => side) — side selection",
+            "a tuple of constraints mixes labels and functions";
+            got="$(n) label(s) and $(length(spec) - n) other constraint(s)",
+            expected="only labels, or only functions",
+            suggestion="Give every constraint by its label (they all are constraints of the model), or every one as a function",
+            context="Flow(ocp, law; constraint=(…,)) — constraint resolution",
+        ),
+    )
+end
+_is_labelled(spec::Pair) = _side_removed(spec)
+_is_labelled(::Any) = false
+
+"""
+$(TYPEDSIGNATURES)
+
+Reject the former `label => side` form: the multiplier of a labelled constraint is now the
+dual of the solution, whose sign carries the active side of a two-sided or equality
+constraint (ct-conventions `SGN2`, `SGN3`).
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): always.
+"""
+function _side_removed(spec::Pair)
+    label = first(spec)
+    return throw(
+        Exceptions.IncorrectArgument(
+            "the active side of a constraint is no longer given with `label => side`";
+            got="constraint=$(repr(spec))",
+            expected="constraint=$(repr(label)), with the multiplier in the dual convention of the solution",
+            suggestion="Give constraint=$(repr(label)) and, as multiplier, the dual y of the solution: on a two-sided or equality constraint, y < 0 on the lower bound and y > 0 on the upper bound (so y = -μ for the former `$(repr(label)) => :lower`)",
+            context="Flow(ocp, law; constraint=…) — constraint resolution",
         ),
     )
 end
@@ -472,63 +116,11 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the active side, `:lower` or `:upper`, of one component `lb ≤ c ≤ ub` of the path
-constraint `label`. With `side === nothing` it is inferred from the bounds:
-
-- lower bound only: `:lower` (`g = c - lb`);
-- upper bound only: `:upper` (`g = ub - c`);
-- equality, `lb == ub`: `:lower` (`g = c - lb`; the multiplier has no sign).
-
-# Throws
-- [`CTBase.Exceptions.IncorrectArgument`](@extref): for a two-sided constraint with no
-  side given, for a constraint with no finite bound, for a side other than `:lower` or
-  `:upper`, or for a side whose bound is infinite.
+The labels of a labelled `constraint` specification, as a tuple.
 """
-function _active_side(label, lb, ub, side::Nothing)
-    lo, up = isfinite(lb), isfinite(ub)
-    lo && !up && return :lower
-    !lo && up && return :upper
-    lo && lb == ub && return :lower
-    lo && throw(
-        Exceptions.IncorrectArgument(
-            "two-sided path constraint :$label: the active side is not known";
-            got="$lb ≤ c ≤ $ub",
-            expected="the side active on the arc",
-            suggestion="Give it with constraint = :$label => :lower (g = c - lb) or :$label => :upper (g = ub - c)",
-            context="Flow(ocp, law; constraint=:$label) — side selection",
-        ),
-    )
-    return throw(
-        Exceptions.IncorrectArgument(
-            "path constraint :$label has no finite bound";
-            got="$lb ≤ c ≤ $ub",
-            expected="a finite lower or upper bound",
-            context="Flow(ocp, law; constraint=:$label) — side selection",
-        ),
-    )
-end
+_labels(spec::Symbol) = (spec,)
+_labels(spec::Tuple) = spec
 
-function _active_side(label, lb, ub, side::Symbol)
-    side in (:lower, :upper) || throw(
-        Exceptions.IncorrectArgument(
-            "unknown side :$side for the constraint :$label";
-            got=":$side",
-            expected=":lower or :upper",
-            context="Flow(ocp, law; constraint=:$label => :$side) — side selection",
-        ),
-    )
-    bound = side === :lower ? lb : ub
-    isfinite(bound) || throw(
-        Exceptions.IncorrectArgument(
-            "the constraint :$label has no $side bound";
-            got="$lb ≤ c ≤ $ub",
-            expected="a finite $side bound",
-            suggestion="Use the side whose bound is finite, or omit the side",
-            context="Flow(ocp, law; constraint=:$label => :$side) — side selection",
-        ),
-    )
-    return side
-end
 
 """
 $(TYPEDSIGNATURES)
@@ -609,8 +201,8 @@ end
 $(TYPEDSIGNATURES)
 
 Throw an [`CTBase.Exceptions.IncorrectArgument`](@extref) for an unsupported constraint
-spec type. Only `Symbol` (path label), `label => side`, `Function`, `Tuple`, and
-[`CTBase.Data.PathConstraint`](@extref) are accepted.
+spec type. Only a `Function`, a `Tuple` of them, or a [`CTBase.Data.PathConstraint`](@extref)
+reach this resolution; labels go to CTModels (see [`CTFlows.Flows._is_labelled`](@extref)).
 
 # Throws
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): when `spec` is not a supported type.
@@ -622,7 +214,7 @@ function _resolve_constraint(::Any, spec)
         Exceptions.IncorrectArgument(
             "unsupported constraint specification";
             got="$(typeof(spec))",
-            expected="a :path label (Symbol), a label => side Pair, a CTBase.Data.PathConstraint, or a Function",
+            expected="a constraint label (Symbol), a tuple of labels, a CTBase.Data.PathConstraint, a Function, or a tuple of them",
             context="Flow(ocp, law; constraint=…) — constraint resolution",
         ),
     )
@@ -663,41 +255,158 @@ end
 $(TYPEDEF)
 
 Carrier for a tuple of multipliers, paired element-wise with a
-[`CTFlows.Flows._CombinedConstraint`](@extref). Its uniform call concatenates the per-multiplier
-values `μᵢ(t,x,p,v)` in the same order, so `sum(μ .* g)` = `Σᵢ μᵢ·gᵢ`.
+[`CTFlows.Flows._CombinedConstraint`](@extref). Its value concatenates the per-multiplier
+values `μᵢ(t,x,p,v)` in the same order, so `sum(μ .* g)` = `Σᵢ μᵢ·gᵢ`. The traits are
+those of the parts joined: non-autonomous if one part is, variable-dependent if one
+part is; the natural calls follow them.
 
 # Type Parameters
+- `TD`, `VD`: joined time- and variable-dependence traits.
 - `M <: Tuple`: type of the tuple of resolved per-multiplier carriers.
 
 # Fields
 - `parts::M`: the resolved per-multiplier carriers (each a [`CTBase.Data.Multiplier`](@extref)).
+- `labels::Vector{Symbol}`: the label of each constraint, for error messages; `Symbol("")`
+  for a constraint given as a function.
+- `dims::Vector{Int}`: the number of components of each constraint, checked against the value
+  of its multiplier; `0` when it is not known (a constraint given as a function), then not
+  checked.
 
 See also: [`CTFlows.Flows._resolve_multiplier`](@extref), [`CTFlows.Flows._CombinedConstraint`](@extref).
 """
-struct _CombinedMultiplier{M<:Tuple}
+struct _CombinedMultiplier{
+    TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,M<:Tuple
+} <: Function
     parts::M
+    labels::Vector{Symbol}
+    dims::Vector{Int}
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Uniform call: concatenate (`vcat`) the per-multiplier values `μᵢ(t,x,p,v)` in tuple order.
+Build a [`CTFlows.Flows._CombinedMultiplier`](@extref) with the joined traits of `parts`
+(see [`CTBase.Traits.join_time_dependence`](@extref) and
+[`CTBase.Traits.join_variable_dependence`](@extref)).
 """
-(m::_CombinedMultiplier)(t, x, p, v) = reduce(vcat, map(μ -> μ(t, x, p, v), m.parts))
+function _CombinedMultiplier(
+    parts::Tuple,
+    labels::Vector{Symbol}=fill(Symbol(""), length(parts)),
+    dims::Vector{Int}=zeros(Int, length(parts)),
+)
+    TD = Traits.join_time_dependence(map(Traits.time_dependence, parts)...)
+    VD = Traits.join_variable_dependence(map(Traits.variable_dependence, parts)...)
+    return _CombinedMultiplier{TD,VD,typeof(parts)}(parts, labels, dims)
+end
 
 """
 $(TYPEDSIGNATURES)
 
-Resolve a `Tuple` of multiplier specs into a [`CTFlows.Flows._CombinedMultiplier`](@extref),
-rejecting an empty tuple with [`CTBase.Exceptions.IncorrectArgument`](@extref).
+The number of components of the value of a multiplier: `1` for a number, its length for a
+vector, its number of rows for a batched value (a `Matrix`, one column per point).
+"""
+_multiplier_rows(y::Number) = 1
+_multiplier_rows(y::AbstractMatrix) = size(y, 1)
+_multiplier_rows(y) = length(y)
+
+"""
+$(TYPEDSIGNATURES)
+
+Value of the `k`-th multiplier of a [`CTFlows.Flows._CombinedMultiplier`](@extref), checked
+against the dimension of its constraint when it is known: a number or one component for a
+one-dimensional constraint, `d` components otherwise.
 
 # Throws
-- [`CTBase.Exceptions.IncorrectArgument`](@extref): when `spec` is an empty tuple.
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if the multiplier does not have the
+  dimension of its constraint.
+"""
+function _checked_multiplier_part(m::_CombinedMultiplier, k::Int, y)
+    d = m.dims[k]
+    d == 0 && return y
+    ok = d == 1 ? _multiplier_rows(y) == 1 : (!(y isa Number) && _multiplier_rows(y) == d)
+    ok || throw(
+        Exceptions.IncorrectArgument(
+            "the multiplier of :$(m.labels[k]) does not have the dimension of its constraint";
+            got="a value with $(_multiplier_rows(y)) component(s)",
+            expected="$d component(s) (a number if 1)",
+            suggestion="Return the $d multiplier(s) of :$(m.labels[k]), in the order of its rows, whatever the other multipliers return",
+            context="Flow(ocp, law; constraint, multiplier) — multiplier of :$(m.labels[k])",
+        ),
+    )
+    return y
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+The joined traits `(TD, VD)` of a [`CTFlows.Flows._CombinedMultiplier`](@extref).
+"""
+_traits(::_CombinedMultiplier{TD,VD}) where {TD,VD} = (TD, VD)
+
+"""
+$(TYPEDSIGNATURES)
+
+Value: concatenate (`vcat`) the per-multiplier values `μᵢ(t,x,p,v)` in tuple order, each
+checked against the dimension of its constraint (see
+[`CTFlows.Flows._checked_multiplier_part`](@extref)).
+"""
+function _combined_value(m::_CombinedMultiplier, t, x, p, v)
+    ks = ntuple(identity, length(m.parts))
+    values = map((μ, k) -> _checked_multiplier_part(m, k, μ(t, x, p, v)), m.parts, ks)
+    return reduce(vcat, values)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Natural calls of a [`CTFlows.Flows._CombinedMultiplier`](@extref), one per pair of traits:
+`(x, p)`, `(t, x, p)`, `(x, p, v)`, `(t, x, p, v)`. A missing time is `0.0`, a missing
+variable an empty vector.
+"""
+(m::_CombinedMultiplier{Traits.Autonomous,Traits.Fixed})(x, p) =
+    _combined_value(m, 0.0, x, p, Float64[])
+(m::_CombinedMultiplier{Traits.NonAutonomous,Traits.Fixed})(t, x, p) =
+    _combined_value(m, t, x, p, Float64[])
+(m::_CombinedMultiplier{Traits.Autonomous,Traits.NonFixed})(x, p, v) =
+    _combined_value(m, 0.0, x, p, v)
+(m::_CombinedMultiplier{Traits.NonAutonomous,Traits.NonFixed})(t, x, p, v) =
+    _combined_value(m, t, x, p, v)
+
+"""
+$(TYPEDSIGNATURES)
+
+Resolve a `Tuple` of multiplier specs without a constraint spec: no dimension check of the
+multipliers. See [`CTFlows.Flows._resolve_multiplier`](@extref)`(ocp, spec, cspec)`.
+"""
+_resolve_multiplier(ocp, spec::Tuple) = _resolve_multiplier(ocp, spec, nothing)
+
+"""
+$(TYPEDSIGNATURES)
+
+Resolve a multiplier spec knowing the `constraint` spec it is paired with: only a `Tuple`
+uses it, to check each multiplier against the dimension of its constraint. Any other spec is
+resolved as by [`CTFlows.Flows._resolve_multiplier`](@extref)`(ocp, spec)`.
+"""
+_resolve_multiplier(ocp, spec, cspec) = _resolve_multiplier(ocp, spec)
+
+"""
+$(TYPEDSIGNATURES)
+
+Resolve a `Tuple` of multiplier specs into a [`CTBase.Data.Multiplier`](@extref) wrapping a
+[`CTFlows.Flows._CombinedMultiplier`](@extref), with the joined traits; rejects an empty
+tuple with [`CTBase.Exceptions.IncorrectArgument`](@extref). When the constraint spec `cspec`
+is a tuple of the same length, the value of each multiplier is checked against the dimension
+of its constraint given by its label (see
+[`CTFlows.Flows._checked_multiplier_part`](@extref)).
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): when `spec` is an empty tuple, and, at
+  the call, when a multiplier does not have the dimension of its constraint.
 
 See also: [`CTFlows.Flows._resolve_multiplier`](@extref),
 [`CTFlows.Flows._CombinedMultiplier`](@extref).
 """
-function _resolve_multiplier(ocp, spec::Tuple)
+function _resolve_multiplier(ocp, spec::Tuple, cspec)
     isempty(spec) && throw(
         Exceptions.IncorrectArgument(
             "empty multiplier tuple";
@@ -706,7 +415,29 @@ function _resolve_multiplier(ocp, spec::Tuple)
             context="Flow(ocp, law; multiplier=(…,)) — multiplier resolution",
         ),
     )
-    return _CombinedMultiplier(map(s -> _resolve_multiplier(ocp, s), spec))
+    parts = map(s -> _resolve_multiplier(ocp, s), spec)
+    labels, dims = _constraint_labels_dims(ocp, cspec, length(spec))
+    m = _CombinedMultiplier(parts, labels, dims)
+    return Data.Multiplier(m, _traits(m)...)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+The labels and the numbers of rows of the `n` constraints of the spec `cspec`, paired
+element-wise with a tuple of `n` multipliers: those of a constraint given by its label, and
+`Symbol("")` and `0` (unknown, not checked) for a constraint given as a function, or when
+`cspec` is not a tuple of `n` constraints.
+"""
+function _constraint_labels_dims(ocp, cspec, n::Int)
+    unknown = (fill(Symbol(""), n), zeros(Int, n))
+    (cspec isa Tuple && length(cspec) == n) || return unknown
+    labels = Symbol[c isa Symbol ? c : Symbol("") for c in cspec]
+    dims = Int[
+        c isa Symbol ? length(last(CTModels.Models.constraint_rows(ocp, c))) : 0 for
+        c in cspec
+    ]
+    return (labels, dims)
 end
 
 """
@@ -734,120 +465,99 @@ end
 """
 $(TYPEDEF)
 
-Internal callable representing the **constrained** pseudo-Hamiltonian of an OCP:
-`H(t,x,p,u,v) = H̃(t,x,p,u,v) + μ(t,x,p,v)·g(t,x,u,v)`, where `H̃` is an
-[`CTFlows.Flows.OCPPseudoHamiltonianFunction`](@extref), `g` a [`CTBase.Data.PathConstraint`](@extref)
-(uniform call `g(t,x,u,v)`) and `μ` a [`CTBase.Data.Multiplier`](@extref) (uniform call
-`μ(t,x,p,v)`).
-
-Used for the `:total` differentiation mode only: the whole functor is composed with the
-control law via [`CTBase.Data.ComposedHamiltonian`](@extref), so AD differentiates through
-`H̃`, `μ`, `g` and the law (total derivative). The `(TD, VD)` traits drive natural-arity
-dispatch exactly as for [`CTFlows.Flows.OCPPseudoHamiltonianFunction`](@extref).
+The constrained pseudo-Hamiltonian of a flow, with the multiplier as an explicit argument:
+`H(t,x,p,u,μ,v) = H̃(t,x,p,u,v) + μ·g(t,x,u,v)`, where `H̃` is the pseudo-Hamiltonian of
+the OCP ([`CTModels.Models.pseudo_hamiltonian`](@extref)) and `g` the constraint given to
+the flow (uniform call `g(t,x,u,v)`). Wrapped in a
+[`CTBase.Data.ConstrainedPseudoHamiltonian`](@extref) by
+[`CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`](@extref).
 
 # Type Parameters
-- `TD`, `VD`: time- and variable-dependence traits (compile-time dispatch on arity).
-- `H`: type of the base pseudo-Hamiltonian functor.
-- `G`: type of the path-constraint carrier.
-- `M`: type of the multiplier carrier.
+- `TD`, `VD`: time- and variable-dependence traits of the OCP (natural-arity dispatch).
+- `H`: type of the pseudo-Hamiltonian `H̃`.
+- `G`: type of the constraint carrier.
 
 # Fields
-- `h̃::H`: base pseudo-Hamiltonian `H̃(t,x,p,u,v)`.
-- `g::G`: path constraint `g(t,x,u,v)`.
-- `μ::M`: multiplier `μ(t,x,p,v)`.
+- `h̃::H`: pseudo-Hamiltonian `H̃`, called uniformly as `H̃(t,x,p,u,v)`.
+- `g::G`: constraint `g(t,x,u,v)`.
 
-See also: [`CTFlows.Flows.OCPPseudoHamiltonianFunction`](@extref), `CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`.
+See also: [`CTFlows.Flows._resolve_constraint`](@extref).
 """
-struct ConstrainedPseudoHamiltonianFunction{
-    TD<:Traits.TimeDependence,
-    VD<:Traits.VariableDependence,
-    H<:OCPPseudoHamiltonianFunction,
-    G,
-    M,
-} <: Function
+struct _AdjoinedConstraint{TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,H,G} <:
+       Function
     h̃::H
     g::G
-    μ::M
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Core computation of the constrained pseudo-Hamiltonian value
-`H̃(t,x,p,u,v) + μ(t,x,p,v)·g(t,x,u,v)`. The pairing `μ·g` uses `sum(μ .* g)` so it
-handles both scalar (1-D) and vector constraints (matching the `p·f` idiom in
-[`CTFlows.Flows._ocp_pseudo_H`](@extref)). When `v === nothing` (Fixed problems) an empty
-variable vector is forwarded to `μ`/`g`; their Fixed-trait uniform calls ignore it.
+Value `H̃(t,x,p,u,v) + μ·g(t,x,u,v)`. The pairing `μ·g` uses `sum(μ .* g)`, for a scalar
+or a vector constraint. When `v === nothing` (Fixed problems) an empty variable vector is
+forwarded; the Fixed-trait uniform calls ignore it.
 
-See also: [`CTFlows.Flows.ConstrainedPseudoHamiltonianFunction`](@extref).
+See also: [`CTFlows.Flows._AdjoinedConstraint`](@extref).
 """
-function _constrained_pseudo_H(h::ConstrainedPseudoHamiltonianFunction, t, x, p, u, v)
-    base = _ocp_pseudo_H(h.h̃, t, x, p, u, v)
+function _adjoined_H(h::_AdjoinedConstraint, t, x, p, u, μ, v)
     vv = v === nothing ? Float64[] : v
-    return base + sum(h.μ(t, x, p, vv) .* h.g(t, x, u, vv))
+    return h.h̃(t, x, p, u, vv) + sum(μ .* h.g(t, x, u, vv))
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Call operators for [`CTFlows.Flows.ConstrainedPseudoHamiltonianFunction`](@extref),
-dispatching on the `(TD, VD)` trait pair for the correct arity:
-
-| `TD` / `VD` | Call signature | Effective call |
-|---|---|---|
-| `Auton` / `Fixed` | `H(x, p, u)` | `_constrained_pseudo_H(h, 0, x, p, u, ∅)` |
-| `NonAuton` / `Fixed` | `H(t, x, p, u)` | `_constrained_pseudo_H(h, t, x, p, u, ∅)` |
-| `Auton` / `NonFixed` | `H(x, p, u, v)` | `_constrained_pseudo_H(h, 0, x, p, u, v)` |
-| `NonAuton` / `NonFixed` | `H(t, x, p, u, v)` | `_constrained_pseudo_H(h, t, x, p, u, v)` |
-
-See also: [`CTFlows.Flows.ConstrainedPseudoHamiltonianFunction`](@extref),
-[`CTFlows.Flows._constrained_pseudo_H`](@extref).
+Natural calls of a [`CTFlows.Flows._AdjoinedConstraint`](@extref), one per pair of traits:
+`(x, p, u, μ)`, `(t, x, p, u, μ)`, `(x, p, u, μ, v)`, `(t, x, p, u, μ, v)`. An autonomous
+problem is evaluated at `t = 0`.
 """
-function (h::ConstrainedPseudoHamiltonianFunction{_CTM_Auton,Traits.Fixed})(x, p, u)
-    return _constrained_pseudo_H(h, 0.0, x, p, u, nothing)
-end
+(h::_AdjoinedConstraint{_CTM_Auton,Traits.Fixed})(x, p, u, μ) =
+    _adjoined_H(h, 0.0, x, p, u, μ, nothing)
+(h::_AdjoinedConstraint{_CTM_NonAuton,Traits.Fixed})(t, x, p, u, μ) =
+    _adjoined_H(h, t, x, p, u, μ, nothing)
+(h::_AdjoinedConstraint{_CTM_Auton,Traits.NonFixed})(x, p, u, μ, v) =
+    _adjoined_H(h, 0.0, x, p, u, μ, v)
+(h::_AdjoinedConstraint{_CTM_NonAuton,Traits.NonFixed})(t, x, p, u, μ, v) =
+    _adjoined_H(h, t, x, p, u, μ, v)
 
-function (h::ConstrainedPseudoHamiltonianFunction{_CTM_NonAuton,Traits.Fixed})(t, x, p, u)
-    return _constrained_pseudo_H(h, t, x, p, u, nothing)
-end
+"""
+$(TYPEDSIGNATURES)
 
-function (h::ConstrainedPseudoHamiltonianFunction{_CTM_Auton,Traits.NonFixed})(x, p, u, v)
-    return _constrained_pseudo_H(h, 0.0, x, p, u, v)
-end
+The constrained pseudo-Hamiltonian `H(t,x,p,u,μ,v)` of a flow, from its `constraint`
+specification:
 
-function (h::ConstrainedPseudoHamiltonianFunction{_CTM_NonAuton,Traits.NonFixed})(
-    t, x, p, u, v
-)
-    return _constrained_pseudo_H(h, t, x, p, u, v)
+- **labels** (a `Symbol` or a tuple of them; path constraints, state boxes and control
+  boxes): built by [`CTModels.Models.pseudo_hamiltonian`](@extref)`(ocp; constraints=labels)`,
+  with `μ` the dual of the solution (ct-conventions `SGN2`, `SGN3`), stacked in the order of
+  the labels;
+- **functions** (or [`CTBase.Data.PathConstraint`](@extref)s): `H̃ + μ·g` with `g ≥ 0` and
+  `μ ≥ 0`, see [`CTFlows.Flows._ocp_constrained_pseudo_hamiltonian`](@extref).
+
+See also: [`CTFlows.Flows._is_labelled`](@extref).
+"""
+function _constrained_pseudo_hamiltonian(ocp, cspec; p0=nothing)
+    _is_labelled(cspec) && return CTModels.Models.pseudo_hamiltonian(
+        ocp; constraints=_labels(cspec), _p0_kwargs(p0)...
+    )
+    return _ocp_constrained_pseudo_hamiltonian(ocp, _resolve_constraint(ocp, cspec); p0)
 end
 
 """
 $(TYPEDSIGNATURES)
 
-Build a [`CTFlows.Flows.ConstrainedPseudoHamiltonianFunction`](@extref) from an OCP, a
-resolved path constraint `g` and a resolved multiplier `μ`, wrapped in a
-[`CTBase.Data.PseudoHamiltonian`](@extref) so it flows into the `:total` pipeline exactly
-like the unconstrained [`CTFlows.Flows._ocp_pseudo_hamiltonian`](@extref).
+The constrained pseudo-Hamiltonian `H(t,x,p,u,μ,v) = H̃(t,x,p,u,v) + μ·g(t,x,u,v)` of an
+OCP and a resolved constraint `g`, as a [`CTBase.Data.ConstrainedPseudoHamiltonian`](@extref)
+with the traits of the OCP. The `:partial` mode freezes the multiplier in it; the `:total`
+mode composes it with the law and the multiplier.
 
-See also: [`CTFlows.Flows.ConstrainedPseudoHamiltonianFunction`](@extref),
-[`CTFlows.Flows._resolve_constraint`](@extref), [`CTFlows.Flows._resolve_multiplier`](@extref).
+See also: [`CTFlows.Flows._AdjoinedConstraint`](@extref),
+[`CTFlows.Flows._resolve_constraint`](@extref).
 """
-function _ocp_constrained_pseudo_hamiltonian(ocp, g, μ)
-    n = CTModels.Models.state_dimension(ocp)
-    dyn! = CTModels.Models.dynamics(ocp)
-    sp0 = CTModels.Components.criterion(ocp) === :min ? -1.0 : 1.0
-    lag = if CTModels.Components.has_lagrange_cost(ocp)
-        CTModels.Components.lagrange(ocp)
-    else
-        nothing
-    end
+function _ocp_constrained_pseudo_hamiltonian(ocp, g; p0=nothing)
     TD = Traits.time_dependence(ocp)
     VD = Traits.variable_dependence(ocp)
-    h̃_raw = OCPPseudoHamiltonianFunction{TD,VD,typeof(dyn!),typeof(lag)}(dyn!, lag, sp0, n)
-    raw = ConstrainedPseudoHamiltonianFunction{TD,VD,typeof(h̃_raw),typeof(g),typeof(μ)}(
-        h̃_raw, g, μ
-    )
-    return Data.PseudoHamiltonian(raw, TD, VD)
+    h̃ = _ocp_pseudo_hamiltonian(ocp; p0)
+    raw = _AdjoinedConstraint{TD,VD,typeof(h̃),typeof(g)}(h̃, g)
+    return Data.ConstrainedPseudoHamiltonian(raw, TD, VD)
 end
 
 # =============================================================================
@@ -1216,7 +926,7 @@ rebuilds a full [`CTModels.Solutions.Solution`](@extref) from the problem.
   `CTBase.Data.ControlLaw` when the flow was built from an OCP and a control law).
 - `SF`: type of the inner control-free state flow (`Nothing` unless the OCP is
   control-free — see `state_flow`).
-- `D`: type of the path duals (see `duals`).
+- `D`: type of the constraint duals (see `duals`).
 
 # Fields
 - `flow::IF`: the inner Hamiltonian flow doing the integration.
@@ -1227,9 +937,9 @@ rebuilds a full [`CTModels.Solutions.Solution`](@extref) from the problem.
   OCP (`Flow(ocp)`, no law); `nothing` otherwise. Backs the basic (no-costate) call
   arities `f(t0,x0,tf)` / `f((t0,tf),x0)` — see [`CTFlows.Flows._ocp_state_vector_field`](@extref).
 - `label::String`: the label of the phase (`""` for no label), see [`CTFlows.Flows.label`](@extref).
-- `duals::D`: the path duals of the flow, rebuilt along a trajectory from the multiplier
-  given to `Flow(ocp, law; constraint, multiplier)` (see
-  [`CTFlows.Flows._path_duals`](@extref)), or `nothing` for a control-free OCP.
+- `duals::D`: the constraint duals of the flow, by label, rebuilt along a trajectory from
+  the multiplier given to `Flow(ocp, law; constraint, multiplier)` (see
+  [`CTFlows.Flows._flow_duals`](@extref)), or `nothing` for a control-free OCP.
 
 See also: [`CTFlows.Flows.Flow`](@extref), [`CTModels.Solutions.Solution`](@extref).
 """
@@ -1548,7 +1258,7 @@ function _build_ocp_solution(
         successful=Integrators.successful(sol),
         control_interpolation=:linear,
         switching=switching,
-        path_constraints_dual=_path_constraints_dual(duals, x, p, v),
+        duals=_solution_duals(duals, x, p, v),
         infos=Dict{Symbol,Any}(:missing_duals => _missing_duals_note(duals)),
     )
 end
@@ -1562,8 +1272,8 @@ phase), and the left and right limits of the state, costate and control at every
 time. The control limits come from the law: the left limit from the law of the phase that
 ends (at the values before the jump), the right one from the law of the next phase (at the
 values after it), see [`CTFlows.Flows._right_ocp_control`](@extref). The limits of the duals
-of the path constraints come from the path `duals` in the same way, see
-[`CTFlows.Flows._switching_path_duals`](@extref).
+of the constraints, by label, come from the `duals` of the flow in the same way, see
+[`CTFlows.Flows._switching_duals`](@extref).
 
 Returns an [`CTModels.Solutions.EmptySwitchingModel`](@extref) when there is no switching
 time and no label.
@@ -1599,7 +1309,7 @@ function _ocp_switching_model(
         state=(_limit_rows(xl), _limit_rows(xr)),
         costate=(_limit_rows(pl), _limit_rows(pr)),
         control=control,
-        path_dual=_switching_path_duals(duals, taus, xl, xr, pl, pr, v),
+        duals=_switching_duals(duals, taus, xl, xr, pl, pr, v),
     )
 end
 
