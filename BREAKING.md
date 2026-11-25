@@ -79,8 +79,8 @@ changes are breaking by `REL1`: the next version is `0.19.0`.
 
 ## Non-breaking note (Unreleased)
 
-- **Documentation only**: the docstrings link `control_law` to `CTBase.Data.control_law`.
-  **No breaking change**; no migration required.
+- **Documentation only**: the `@extref` links of the docstrings resolve in the published
+  inventories. **No breaking change**; no migration required.
 
 ## Non-breaking note (0.19.0)
 

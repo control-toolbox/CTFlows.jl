@@ -9,10 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
-- **Docstrings link `control_law` to its owner, `CTBase.Data.control_law`**: since 0.19.0,
-  `CTFlows.Systems.control_law` is an alias of the `CTBase.Data` function and is no longer
-  in the inventory of the CTFlows documentation, so the links of six docstrings could not
-  be resolved by the documentations that include them, such as OptimalControl's
+- **Every `@extref` link of the docstrings resolves in the published inventories**:
+  fifteen links of the docstrings pointed to names missing from the inventories of the
+  documentations, so a documentation that includes them, such as OptimalControl's, could
+  not be built. `control_law`, `hamiltonian` and `pseudo_hamiltonian` now link to their
+  owner, `CTBase.Data` (since 0.19.0, `CTFlows.Systems.control_law` is an alias, and the
+  methods on a model are those of `CTBase.Data`, not of `CTModels.Models`); the flow calls
+  link to `CTFlows.Flows._invoke_flow` (there is no `CTFlows.Flows.call`); and `merge` to
+  `CTSolvers.Integrators.merge`
   ([OptimalControl#1085](https://github.com/control-toolbox/OptimalControl.jl/issues/1085)).
 
 ### ✅ Compatibility
