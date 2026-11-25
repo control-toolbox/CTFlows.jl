@@ -77,7 +77,7 @@ changes are breaking by `REL1`: the next version is `0.19.0`.
 - **Requires CTBase 0.30.15 and CTModels 0.21.3** (the model-level Hamiltonian getters and
   the constrained pseudo-Hamiltonian type).
 
-## Non-breaking note (Unreleased)
+## Non-breaking note (0.19.1)
 
 - **Documentation only**: the `@extref` links of the docstrings resolve in the published
   inventories. **No breaking change**; no migration required.
