@@ -60,7 +60,7 @@ $(TYPEDSIGNATURES)
 
 Return the pseudo-Hamiltonian `H̃` of a `PseudoHamiltonianSystem`.
 
-See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref), [`CTFlows.Systems.control_law`](@extref).
+See also: [`CTFlows.Systems.PseudoHamiltonianSystem`](@extref), [`CTBase.Data.control_law`](@extref).
 """
 Data.pseudo_hamiltonian(sys::PseudoHamiltonianSystem) = sys.h̃
 

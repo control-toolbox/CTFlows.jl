@@ -90,7 +90,7 @@ $(TYPEDSIGNATURES)
 Return the control law of a controlled state flow — the open-loop or closed-loop law it
 was built with, e.g. `Flow(ocp, OpenLoop(u))` or `Flow(fc, law)`.
 
-See also: [`CTFlows.Systems.control_law`](@extref), [`CTFlows.Systems.vector_field`](@extref).
+See also: [`CTBase.Data.control_law`](@extref), [`CTFlows.Systems.vector_field`](@extref).
 """
 Systems.control_law(F::ControlledFlow) = F.law
 

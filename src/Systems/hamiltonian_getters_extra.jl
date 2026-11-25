@@ -31,7 +31,7 @@ eliminated:
 - `CTBase.Exceptions.IncorrectArgument`: if the system wraps a plain Hamiltonian with
   no associated control law (no pseudo-Hamiltonian to recover).
 
-See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Systems.control_law`](@extref).
+See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTBase.Data.control_law`](@extref).
 """
 function Data.pseudo_hamiltonian(sys::HamiltonianSystem)
     h = sys.h

@@ -77,6 +77,11 @@ changes are breaking by `REL1`: the next version is `0.19.0`.
 - **Requires CTBase 0.30.15 and CTModels 0.21.3** (the model-level Hamiltonian getters and
   the constrained pseudo-Hamiltonian type).
 
+## Non-breaking note (Unreleased)
+
+- **Documentation only**: the docstrings link `control_law` to `CTBase.Data.control_law`.
+  **No breaking change**; no migration required.
+
 ## Non-breaking note (0.19.0)
 
 - **A `SolverFailure` from a flow call names the call and suggests `unsafe=true`**

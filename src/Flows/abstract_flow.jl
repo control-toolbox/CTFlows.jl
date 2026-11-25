@@ -351,7 +351,7 @@ control law, in either the `:partial` or the `:total` mode. Delegates to
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: for a flow that carries no control law.
 
-See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Systems.control_law`](@extref).
+See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTBase.Data.control_law`](@extref).
 """
 function Systems.pseudo_hamiltonian(f::AbstractFlow)
     return Systems.pseudo_hamiltonian(system(f))
@@ -361,7 +361,7 @@ end
 $(TYPEDSIGNATURES)
 
 Return the control law `u(t, x, p, v)` carried by a Hamiltonian flow built from a
-control law. Delegates to [`CTFlows.Systems.control_law`](@extref).
+control law. Delegates to [`CTBase.Data.control_law`](@extref).
 
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: for a flow that carries no control law.

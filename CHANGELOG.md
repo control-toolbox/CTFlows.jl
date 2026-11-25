@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 📚 Documentation
+
+- **Docstrings link `control_law` to its owner, `CTBase.Data.control_law`**: since 0.19.0,
+  `CTFlows.Systems.control_law` is an alias of the `CTBase.Data` function and is no longer
+  in the inventory of the CTFlows documentation, so the links of six docstrings could not
+  be resolved by the documentations that include them, such as OptimalControl's
+  ([OptimalControl#1085](https://github.com/control-toolbox/OptimalControl.jl/issues/1085)).
+
+### ✅ Compatibility
+
+- **Non-breaking**: documentation only; see [BREAKING.md](BREAKING.md).
+
 ## [0.19.0] - 2026-11-25
 
 ### 💥 Breaking Changes
