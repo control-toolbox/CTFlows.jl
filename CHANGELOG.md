@@ -65,6 +65,30 @@ H(x, p, u, 0.0)          # H̃ only (the term of the constraint vanishes at μ =
 
 See [BREAKING.md](BREAKING.md).
 
+#### `Systems.FrozenConstrainedPseudoHamiltonian` is removed
+
+- **`Systems.FrozenConstrainedPseudoHamiltonian`** (exported) is removed. It is replaced by
+  `CTBase.Data.freeze_multiplier`, applied to a `CTBase.Data.ConstrainedPseudoHamiltonian`: the
+  multiplier is frozen, so that the gradient primitives of `CTBase.Differentiation` take the
+  partial derivatives of the maximum principle.
+- **Why**: the constrained pseudo-Hamiltonian, with the multiplier as an explicit argument, is
+  a type of `CTBase.Data`, shared by CTModels and CTFlows.
+
+**Migration**:
+
+```julia
+# Before
+hc = Systems.FrozenConstrainedPseudoHamiltonian(h̃, g, μ_)    # H̃ + μ_·g, μ_ a value
+hc(t, x, p, u, v)
+
+# After (autonomous, fixed: use the natural arity of the traits of h̃)
+H = Data.ConstrainedPseudoHamiltonian((x, p, u, μ) -> h̃(x, p, u) + sum(μ .* g(x, u)))
+hc = Data.freeze_multiplier(H, μ_)
+hc(t, x, p, u, v)                                           # same value, same derivatives
+```
+
+See [BREAKING.md](BREAKING.md).
+
 ### ✨ New Features
 
 - `Flow(ocp)` and `Flow(ocp, law)` build their Hamiltonian from the CTModels getters
