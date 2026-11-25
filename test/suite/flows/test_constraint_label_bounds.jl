@@ -97,6 +97,29 @@ _y0(spec::Tuple) = map(_ -> (x, p) -> 0.0, spec)
 
 const μ = (x, p) -> 2x
 
+"""2-D state, a path constraint `:a` of one row (x₁ ≥ 0.1) and a path constraint `:b` of two rows (x ≥ 0)."""
+function _ocp_dims()
+    pre = CTModels.Building.PreModel()
+    CTModels.Building.time_dependence!(pre; autonomous=true)
+    CTModels.Building.time!(pre; t0=0.0, tf=1.0)
+    CTModels.Building.state!(pre, 2)
+    CTModels.Building.control!(pre, 1)
+    CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=x[2]; r[2]=u; nothing))
+    CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> 0.5 * u^2)
+    CTModels.Building.constraint!(
+        pre, :path; f=(r, t, x, u, v) -> (r[1]=x[1]; nothing), lb=[0.1], ub=[Inf], label=:a
+    )
+    CTModels.Building.constraint!(
+        pre,
+        :path;
+        f=(r, t, x, u, v) -> (r.=x; nothing),
+        lb=[0.0, 0.0],
+        ub=[Inf, Inf],
+        label=:b,
+    )
+    return CTModels.Building.build(pre)
+end
+
 # Batched states (control-toolbox/CTModels.jl#536, point 6): every function of the model is
 # written on the columns, so that it is valid for a vector state and for a matrix state, one
 # column per point; the law and the multipliers dispatch on the shape of the costate.
@@ -177,6 +200,64 @@ function test_constraint_label_bounds()
                 ((r, t, x, u, v) -> (r[1]=x; nothing), 0.0, 0.9, :box),
             )
             Test.@test _term(ocp, (:lo, :box), 0.5, [2.0, 3.0]) ≈ 2.0 * 0.4 + 3.0 * 0.4
+        end
+
+        Test.@testset "multipliers of a tuple of labels: the dimension of each is checked" begin
+            ocp = _ocp_dims()
+            x, p = [0.5, 0.2], [0.3, -0.1]
+            μ1, μ2 = (x, p) -> 2.0, (x, p) -> [1.0, 3.0]
+            m = Flows._resolve_multiplier(ocp, (μ1, μ2), (:a, :b))
+            Test.@test m(x, p) == [2.0, 1.0, 3.0]
+            # the total has the right number of components (3), each part does not: the
+            # check is per label, so the swap is caught
+            bad1, bad2 = (x, p) -> [2.0, 1.0], (x, p) -> 3.0
+            mbad = Flows._resolve_multiplier(ocp, (bad1, bad2), (:a, :b))
+            err = try
+                mbad(x, p)
+            catch e
+                e
+            end
+            Test.@test err isa Exceptions.IncorrectArgument
+            Test.@test occursin(":a", err.msg)
+            Test.@test occursin("2 component", err.got)
+            Test.@test occursin("1 component", err.expected)
+            err = try
+                Flows._resolve_multiplier(ocp, (μ1, (x, p) -> 3.0), (:a, :b))(x, p)
+            catch e
+                e
+            end
+            Test.@test err isa Exceptions.IncorrectArgument
+            Test.@test occursin(":b", err.msg)
+            # a one-component multiplier may be a vector of length 1
+            Test.@test Flows._resolve_multiplier(ocp, ((x, p) -> [2.0], μ2), (:a, :b))(
+                x, p
+            ) == [2.0, 1.0, 3.0]
+            # without the constraint spec, or for a constraint given as a function, that
+            # part is not checked
+            Test.@test Flows._resolve_multiplier(ocp, (bad1, bad2))(x, p) == [2.0, 1.0, 3.0]
+            Test.@test Flows._resolve_multiplier(ocp, (bad1, μ2), (x -> x, :b))(x, p) ==
+                [2.0, 1.0, 1.0, 3.0]
+        end
+
+        Test.@testset "wrong multiplier dimension for a label is rejected [$ht]" for ht in
+                                                                                       (
+            :total, :partial
+        )
+            f = Flows.Flow(
+                _ocp_dims(),
+                (x, p) -> 0.0;
+                constraint=(:a, :b),
+                multiplier=((x, p) -> [2.0, 1.0], (x, p) -> 3.0),
+                hamiltonian_type=ht,
+                _opts()...,
+            )
+            err = try
+                f(0.0, [0.5, 0.2], [0.3, -0.1], 0.5)
+            catch e
+                e
+            end
+            Test.@test err isa Exceptions.IncorrectArgument
+            Test.@test occursin(":a", err.msg)
         end
 
         Test.@testset "Error: the former label => side" begin

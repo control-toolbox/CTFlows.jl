@@ -168,6 +168,12 @@ multiplier, in the order given. Labels and functions cannot be mixed in one tupl
 tuples must be given together, and both must have the same length — otherwise
 `Flow` throws a `CTBase.Exceptions.IncorrectArgument`.
 
+For a tuple of labels, each multiplier is also checked against the number of rows of its
+constraint when it is evaluated: a number for a one-row constraint, a vector of ``d``
+components for a ``d``-row one. A multiplier of the wrong dimension throws an
+`IncorrectArgument` that names its label, even when the other multipliers make the total
+number of components right.
+
 ---
 
 ## `hamiltonian_type` for constrained flows

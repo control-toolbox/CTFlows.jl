@@ -7,8 +7,9 @@ stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
 Breaking changes of the model-level Hamiltonians and of the dual convention
 ([#531](https://github.com/control-toolbox/CTFlows.jl/issues/531),
-[CTModels#536](https://github.com/control-toolbox/CTModels.jl/issues/536)); `Flow` with the
-constrained pseudo-Hamiltonian has not been released through OptimalControl.
+[CTModels#536](https://github.com/control-toolbox/CTModels.jl/issues/536)). `label => side`
+and the constrained pseudo-Hamiltonian of a flow were released in 0.18.3 and 0.18.4, so these
+changes are breaking by `REL1`: the next version is `0.19.0`.
 
 - **The multiplier of a labelled constraint is the dual of the solution.** In
   `Flow(ocp, law; constraint=:label, multiplier=y)`, `y` follows the dual convention
@@ -19,6 +20,33 @@ constrained pseudo-Hamiltonian has not been released through OptimalControl.
   `label` with `y = μ`. `label => side` is removed and raises an `IncorrectArgument` that says so.
   A constraint given as a function `g ≥ 0` keeps `μ ≥ 0`; its duals are not placed in the
   solution.
+
+  ```julia
+  # Before
+  Flow(ocp, law; constraint=:c, multiplier=μ)               # one-sided row
+  Flow(ocp, law; constraint=:c => :lower, multiplier=μ)     # two-sided, lower side active
+  Flow(ocp, law; constraint=:c => :upper, multiplier=μ)     # two-sided, upper side active
+
+  # After
+  Flow(ocp, law; constraint=:c, multiplier=μ)               # one-sided row: unchanged
+  Flow(ocp, law; constraint=:c, multiplier=(x, p) -> -μ(x, p))
+  Flow(ocp, law; constraint=:c, multiplier=μ)
+  ```
+
+- **The constrained pseudo-Hamiltonian of a flow takes the multiplier as an argument.**
+  `Systems.pseudo_hamiltonian(f)` of a constrained flow is a
+  `CTBase.Data.ConstrainedPseudoHamiltonian`, `H(x, p, u, μ)`, instead of a pseudo-Hamiltonian
+  `H(x, p, u)` with the multiplier law inside. **Migration:**
+
+  ```julia
+  # Before
+  H = Systems.pseudo_hamiltonian(f)
+  H(x, p, u)
+
+  # After
+  H = Systems.pseudo_hamiltonian(f)
+  H(x, p, u, μ(x, p))
+  ```
 - **The solution carries the duals by label**: the adjoined labels give `y`, the other path
   labels give `0`, the other boxes stay unknown.
 - **`get_pseudo_hamiltonian_gradient` and `get_pseudo_variable_gradient` on a constrained

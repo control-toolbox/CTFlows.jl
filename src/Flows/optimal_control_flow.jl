@@ -266,6 +266,11 @@ part is; the natural calls follow them.
 
 # Fields
 - `parts::M`: the resolved per-multiplier carriers (each a [`CTBase.Data.Multiplier`](@extref)).
+- `labels::Vector{Symbol}`: the label of each constraint, for error messages; `Symbol("")`
+  for a constraint given as a function.
+- `dims::Vector{Int}`: the number of components of each constraint, checked against the value
+  of its multiplier; `0` when it is not known (a constraint given as a function), then not
+  checked.
 
 See also: [`CTFlows.Flows._resolve_multiplier`](@extref), [`CTFlows.Flows._CombinedConstraint`](@extref).
 """
@@ -273,6 +278,8 @@ struct _CombinedMultiplier{
     TD<:Traits.TimeDependence,VD<:Traits.VariableDependence,M<:Tuple
 } <: Function
     parts::M
+    labels::Vector{Symbol}
+    dims::Vector{Int}
 end
 
 """
@@ -282,10 +289,51 @@ Build a [`CTFlows.Flows._CombinedMultiplier`](@extref) with the joined traits of
 (see [`CTBase.Traits.join_time_dependence`](@extref) and
 [`CTBase.Traits.join_variable_dependence`](@extref)).
 """
-function _CombinedMultiplier(parts::Tuple)
+function _CombinedMultiplier(
+    parts::Tuple,
+    labels::Vector{Symbol}=fill(Symbol(""), length(parts)),
+    dims::Vector{Int}=zeros(Int, length(parts)),
+)
     TD = Traits.join_time_dependence(map(Traits.time_dependence, parts)...)
     VD = Traits.join_variable_dependence(map(Traits.variable_dependence, parts)...)
-    return _CombinedMultiplier{TD,VD,typeof(parts)}(parts)
+    return _CombinedMultiplier{TD,VD,typeof(parts)}(parts, labels, dims)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+The number of components of the value of a multiplier: `1` for a number, its length for a
+vector, its number of rows for a batched value (a `Matrix`, one column per point).
+"""
+_multiplier_rows(y::Number) = 1
+_multiplier_rows(y::AbstractMatrix) = size(y, 1)
+_multiplier_rows(y) = length(y)
+
+"""
+$(TYPEDSIGNATURES)
+
+Value of the `k`-th multiplier of a [`CTFlows.Flows._CombinedMultiplier`](@extref), checked
+against the dimension of its constraint when it is known: a number or one component for a
+one-dimensional constraint, `d` components otherwise.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if the multiplier does not have the
+  dimension of its constraint.
+"""
+function _checked_multiplier_part(m::_CombinedMultiplier, k::Int, y)
+    d = m.dims[k]
+    d == 0 && return y
+    ok = d == 1 ? _multiplier_rows(y) == 1 : (!(y isa Number) && _multiplier_rows(y) == d)
+    ok || throw(
+        Exceptions.IncorrectArgument(
+            "the multiplier of :$(m.labels[k]) does not have the dimension of its constraint";
+            got="a value with $(_multiplier_rows(y)) component(s)",
+            expected="$d component(s) (a number if 1)",
+            suggestion="Return the $d multiplier(s) of :$(m.labels[k]), in the order of its rows, whatever the other multipliers return",
+            context="Flow(ocp, law; constraint, multiplier) — multiplier of :$(m.labels[k])",
+        ),
+    )
+    return y
 end
 
 """
@@ -298,10 +346,14 @@ _traits(::_CombinedMultiplier{TD,VD}) where {TD,VD} = (TD, VD)
 """
 $(TYPEDSIGNATURES)
 
-Value: concatenate (`vcat`) the per-multiplier values `μᵢ(t,x,p,v)` in tuple order.
+Value: concatenate (`vcat`) the per-multiplier values `μᵢ(t,x,p,v)` in tuple order, each
+checked against the dimension of its constraint (see
+[`CTFlows.Flows._checked_multiplier_part`](@extref)).
 """
 function _combined_value(m::_CombinedMultiplier, t, x, p, v)
-    return reduce(vcat, map(μ -> μ(t, x, p, v), m.parts))
+    ks = ntuple(identity, length(m.parts))
+    values = map((μ, k) -> _checked_multiplier_part(m, k, μ(t, x, p, v)), m.parts, ks)
+    return reduce(vcat, values)
 end
 
 """
@@ -323,17 +375,38 @@ variable an empty vector.
 """
 $(TYPEDSIGNATURES)
 
+Resolve a `Tuple` of multiplier specs without a constraint spec: no dimension check of the
+multipliers. See [`CTFlows.Flows._resolve_multiplier`](@extref)`(ocp, spec, cspec)`.
+"""
+_resolve_multiplier(ocp, spec::Tuple) = _resolve_multiplier(ocp, spec, nothing)
+
+"""
+$(TYPEDSIGNATURES)
+
+Resolve a multiplier spec knowing the `constraint` spec it is paired with: only a `Tuple`
+uses it, to check each multiplier against the dimension of its constraint. Any other spec is
+resolved as by [`CTFlows.Flows._resolve_multiplier`](@extref)`(ocp, spec)`.
+"""
+_resolve_multiplier(ocp, spec, cspec) = _resolve_multiplier(ocp, spec)
+
+"""
+$(TYPEDSIGNATURES)
+
 Resolve a `Tuple` of multiplier specs into a [`CTBase.Data.Multiplier`](@extref) wrapping a
 [`CTFlows.Flows._CombinedMultiplier`](@extref), with the joined traits; rejects an empty
-tuple with [`CTBase.Exceptions.IncorrectArgument`](@extref).
+tuple with [`CTBase.Exceptions.IncorrectArgument`](@extref). When the constraint spec `cspec`
+is a tuple of the same length, the value of each multiplier is checked against the dimension
+of its constraint given by its label (see
+[`CTFlows.Flows._checked_multiplier_part`](@extref)).
 
 # Throws
-- [`CTBase.Exceptions.IncorrectArgument`](@extref): when `spec` is an empty tuple.
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): when `spec` is an empty tuple, and, at
+  the call, when a multiplier does not have the dimension of its constraint.
 
 See also: [`CTFlows.Flows._resolve_multiplier`](@extref),
 [`CTFlows.Flows._CombinedMultiplier`](@extref).
 """
-function _resolve_multiplier(ocp, spec::Tuple)
+function _resolve_multiplier(ocp, spec::Tuple, cspec)
     isempty(spec) && throw(
         Exceptions.IncorrectArgument(
             "empty multiplier tuple";
@@ -342,8 +415,29 @@ function _resolve_multiplier(ocp, spec::Tuple)
             context="Flow(ocp, law; multiplier=(…,)) — multiplier resolution",
         ),
     )
-    m = _CombinedMultiplier(map(s -> _resolve_multiplier(ocp, s), spec))
+    parts = map(s -> _resolve_multiplier(ocp, s), spec)
+    labels, dims = _constraint_labels_dims(ocp, cspec, length(spec))
+    m = _CombinedMultiplier(parts, labels, dims)
     return Data.Multiplier(m, _traits(m)...)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+The labels and the numbers of rows of the `n` constraints of the spec `cspec`, paired
+element-wise with a tuple of `n` multipliers: those of a constraint given by its label, and
+`Symbol("")` and `0` (unknown, not checked) for a constraint given as a function, or when
+`cspec` is not a tuple of `n` constraints.
+"""
+function _constraint_labels_dims(ocp, cspec, n::Int)
+    unknown = (fill(Symbol(""), n), zeros(Int, n))
+    (cspec isa Tuple && length(cspec) == n) || return unknown
+    labels = Symbol[c isa Symbol ? c : Symbol("") for c in cspec]
+    dims = Int[
+        c isa Symbol ? length(last(CTModels.Models.constraint_rows(ocp, c))) : 0 for
+        c in cspec
+    ]
+    return (labels, dims)
 end
 
 """

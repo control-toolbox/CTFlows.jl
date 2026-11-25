@@ -1005,7 +1005,7 @@ function _build_ocp_pseudo_flow(
         Val(:total), _ocp_pseudo_hamiltonian(ocp; p0), law, components
     )
     h = _constrained_pseudo_hamiltonian(ocp, cspec; p0)
-    H = Data.ComposedConstrainedHamiltonian(h, law, _resolve_multiplier(ocp, mspec))
+    H = Data.ComposedConstrainedHamiltonian(h, law, _resolve_multiplier(ocp, mspec, cspec))
     sys = Systems.build_system(H, components.backend)
     return build_flow(sys, components.integrator)
 end
@@ -1030,7 +1030,7 @@ function _build_ocp_pseudo_flow(
         Val(:partial), _ocp_pseudo_hamiltonian(ocp; p0), law, components
     )
     h = _constrained_pseudo_hamiltonian(ocp, cspec; p0)
-    μ = _resolve_multiplier(ocp, mspec)
+    μ = _resolve_multiplier(ocp, mspec, cspec)
     sys = Systems.build_system(h, law, μ, components.backend)
     return build_flow(sys, components.integrator)
 end

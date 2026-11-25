@@ -13,9 +13,6 @@ DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 GPUArraysCore = "46192b85-c4d5-4398-a991-12ede77f4527"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 
-[sources]
-CTModels = {url = "https://github.com/control-toolbox/CTModels.jl", rev = "feat/532-model-hamiltonians"}
-
 [weakdeps]
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
@@ -34,7 +31,7 @@ ADTypes = "1"
 Aqua = "0.8"
 CTBase = "0.30.15"
 CTLie = "0.3"
-CTModels = "0.21"
+CTModels = "0.21.3"
 CTSolvers = "0.7"
 CUDA = "6"
 CairoMakie = "0.15"
