@@ -31,7 +31,12 @@ function _ocp()
     CTModels.Building.dynamics!(pre, (r, t, x, u, v) -> (r[1]=u; nothing))
     CTModels.Building.objective!(pre, :min; lagrange=(t, x, u, v) -> x^2)
     CTModels.Building.constraint!(
-        pre, :path; f=(r, t, x, u, v) -> (r[1]=x - 0.1; nothing), lb=0.0, ub=Inf, label=:xcon
+        pre,
+        :path;
+        f=(r, t, x, u, v) -> (r[1]=x - 0.1; nothing),
+        lb=0.0,
+        ub=Inf,
+        label=:xcon,
     )
     CTModels.Building.constraint!(pre, :control; rg=1:1, lb=[-1.0], ub=[1.0], label=:ubox)
     return CTModels.Building.build(pre)
@@ -79,7 +84,8 @@ function test_flow_multipliers()
                 ((:a, :b), (MU_X, MU_U))
             Test.@test Flows._multiplier_specs([:a => MU_X, :b => MU_U]) ==
                 ((:a, :b), (MU_X, MU_U))
-            Test.@test Flows._multiplier_specs((; a=MU_X, b=MU_U)) == ((:a, :b), (MU_X, MU_U))
+            Test.@test Flows._multiplier_specs((; a=MU_X, b=MU_U)) ==
+                ((:a, :b), (MU_X, MU_U))
             cs, ms = Flows._multiplier_specs(Dict(:a => MU_X, :b => MU_U))
             Test.@test Set(zip(cs, ms)) == Set([(:a, MU_X), (:b, MU_U)])
         end
@@ -87,12 +93,12 @@ function test_flow_multipliers()
         Test.@testset "Unit: not pairs, or a constraint twice" begin
             Test.@test_throws Exceptions.IncorrectArgument Flows._multiplier_specs(:a)
             Test.@test_throws Exceptions.IncorrectArgument Flows._multiplier_specs(μ)
-            Test.@test_throws Exceptions.IncorrectArgument Flows._multiplier_specs(
-                (:a => μ, :b)
-            )
-            Test.@test_throws Exceptions.IncorrectArgument Flows._multiplier_specs(
-                (:a => μ, :a => μ)
-            )
+            Test.@test_throws Exceptions.IncorrectArgument Flows._multiplier_specs((
+                :a => μ, :b
+            ))
+            Test.@test_throws Exceptions.IncorrectArgument Flows._multiplier_specs((
+                :a => μ, :a => μ
+            ))
             err = try
                 Flows._multiplier_specs((:a => μ, :b))
             catch e
@@ -118,7 +124,9 @@ function test_flow_multipliers()
                 Test.@test all(_point(Flows.Flow(ocp, LAW; multipliers=m, OPTS...)) .≈ ref)
             end
             # an explicit law takes the same keyword
-            fl = Flows.Flow(ocp, Data.DynClosedLoop(LAW); multipliers=:xcon => MU_X, OPTS...)
+            fl = Flows.Flow(
+                ocp, Data.DynClosedLoop(LAW); multipliers=:xcon => MU_X, OPTS...
+            )
             Test.@test all(_point(fl) .≈ ref)
         end
 
@@ -139,7 +147,8 @@ function test_flow_multipliers()
             # the same value of `multipliers` given to the flow and to the Hamiltonian of
             # the problem gives the same Hamiltonian
             x, p = 0.7, -0.4
-            for m in (:xcon => MU_X, (:xcon => MU_X, :ubox => MU_U), (; xcon=MU_X, ubox=MU_U))
+            for m in
+                (:xcon => MU_X, (:xcon => MU_X, :ubox => MU_U), (; xcon=MU_X, ubox=MU_U))
                 f = Flows.Flow(ocp, LAW; multipliers=m, OPTS...)
                 h = CTModels.Models.hamiltonian(ocp, LAW; multipliers=m)
                 Test.@test Data.hamiltonian(f)(x, p) ≈ h(x, p)
@@ -161,7 +170,11 @@ function test_flow_multipliers()
         # ====================================================================
 
         Test.@testset "Error: the removed keywords give the rewrite" begin
-            for kw in ((; constraint=:xcon, multiplier=MU_X), (; constraint=:xcon), (; multiplier=MU_X))
+            for kw in (
+                (; constraint=:xcon, multiplier=MU_X),
+                (; constraint=:xcon),
+                (; multiplier=MU_X),
+            )
                 err = try
                     Flows.Flow(ocp, LAW; kw..., OPTS...)
                 catch e

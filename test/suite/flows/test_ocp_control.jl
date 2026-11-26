@@ -568,9 +568,7 @@ function test_ocp_control()
         Test.@testset "Constrained: :path label resolution matches" begin
             c = 0.3
             law = Data.DynClosedLoop((x, p) -> p)
-            f = Flows.Flow(
-                OCP_LQR_C, law; multipliers=:g => ((x, p) -> c), _opts()...
-            )
+            f = Flows.Flow(OCP_LQR_C, law; multipliers=:g => ((x, p) -> c), _opts()...)
             # :g is x ≤ 0, normalised as g = 0 - x ≥ 0 (issue #440): μ·g = (-c)·x
             t0, tf, x0, p0 = 0.0, 1.0, 1.0, 0.5
             xt, pt = f(t0, x0, p0, tf)
@@ -775,11 +773,7 @@ function test_ocp_control()
             μ = Data.Multiplier((x, p) -> c)
             law = Data.DynClosedLoop((x, p) -> p)   # stationary for H̃
             f = Flows.Flow(
-                OCP_LQR,
-                law;
-                multipliers=g => μ,
-                hamiltonian_type=:partial,
-                _opts()...,
+                OCP_LQR, law; multipliers=g => μ, hamiltonian_type=:partial, _opts()...
             )
             t0, tf, x0, p0 = 0.0, 1.0, 1.0, 0.5
             xt, pt = f(t0, x0, p0, tf)
@@ -795,18 +789,10 @@ function test_ocp_control()
             μ = Data.Multiplier((x, p) -> c)
             law = Data.DynClosedLoop((x, p) -> p)   # stationary for H̃
             ft = Flows.Flow(
-                OCP_LQR,
-                law;
-                multipliers=g => μ,
-                hamiltonian_type=:total,
-                _opts()...,
+                OCP_LQR, law; multipliers=g => μ, hamiltonian_type=:total, _opts()...
             )
             fp = Flows.Flow(
-                OCP_LQR,
-                law;
-                multipliers=g => μ,
-                hamiltonian_type=:partial,
-                _opts()...,
+                OCP_LQR, law; multipliers=g => μ, hamiltonian_type=:partial, _opts()...
             )
             t0, tf, x0, p0 = 0.0, 1.0, 1.0, 0.5
             # constant μ + stationary law ⇒ the two RHS are mathematically identical
@@ -822,18 +808,10 @@ function test_ocp_control()
             μ = Data.Multiplier((x, p) -> x)          # state-dependent
             law = Data.DynClosedLoop((x, p) -> p)
             fp = Flows.Flow(
-                OCP_LQR,
-                law;
-                multipliers=g => μ,
-                hamiltonian_type=:partial,
-                _opts()...,
+                OCP_LQR, law; multipliers=g => μ, hamiltonian_type=:partial, _opts()...
             )
             ft = Flows.Flow(
-                OCP_LQR,
-                law;
-                multipliers=g => μ,
-                hamiltonian_type=:total,
-                _opts()...,
+                OCP_LQR, law; multipliers=g => μ, hamiltonian_type=:total, _opts()...
             )
             t0, tf, x0, p0 = 0.0, 0.5, 1.0, 0.5
             xp, pp = fp(t0, x0, p0, tf)
@@ -854,11 +832,7 @@ function test_ocp_control()
             μ = Data.Multiplier((x, p) -> c)
             law = Data.DynClosedLoop((x, p, v) -> p; is_variable=true)   # stationary
             fp = Flows.Flow(
-                OCP_VAR,
-                law;
-                multipliers=g => μ,
-                hamiltonian_type=:partial,
-                _opts()...,
+                OCP_VAR, law; multipliers=g => μ, hamiltonian_type=:partial, _opts()...
             )
             t0, tf, x0, p0, v = 0.0, 1.0, 1.0, 0.5, 0.5
             _, _, pvf = fp(t0, x0, p0, tf; variable=v, variable_costate=true)
@@ -882,11 +856,7 @@ function test_ocp_control()
             μ = Data.Multiplier((x, p) -> c)
             law = Data.DynClosedLoop((x, p, v) -> p; is_variable=true)
             ft = Flows.Flow(
-                OCP_VAR,
-                law;
-                multipliers=g => μ,
-                hamiltonian_type=:total,
-                _opts()...,
+                OCP_VAR, law; multipliers=g => μ, hamiltonian_type=:total, _opts()...
             )
             t0, tf, x0, p0, v = 0.0, 1.0, 1.0, 0.5, 0.5
             _, _, pvt = ft(t0, x0, p0, tf; variable=v, variable_costate=true)
@@ -905,11 +875,7 @@ function test_ocp_control()
             μ = Data.Multiplier((x, p) -> c)
             law = Data.DynClosedLoop((x, p, v) -> p; is_variable=true)
             f = Flows.Flow(
-                OCP_VAR,
-                law;
-                multipliers=g => μ,
-                hamiltonian_type=:partial,
-                _opts()...,
+                OCP_VAR, law; multipliers=g => μ, hamiltonian_type=:partial, _opts()...
             )
             xt, pt = f(0.0, 1.0, 0.5, 1.0; variable=0.5)
             Test.@test isfinite(xt) && isfinite(pt)
@@ -1110,10 +1076,7 @@ function test_ocp_control()
         Test.@testset "DynClosedLoop, constrained: Matrix (batch) now succeeds (issue #358)" begin
             law = Data.DynClosedLoop((x, p) -> p)
             f = Flows.Flow(
-                OCP_CTRL_2D,
-                law;
-                multipliers=((x, u) -> 1.0) => ((x, p) -> 0.3),
-                _opts()...,
+                OCP_CTRL_2D, law; multipliers=((x, u) -> 1.0) => ((x, p) -> 0.3), _opts()...
             )
             t0, tf = 0.0, 1.0
             X0 = [1.0 2.0; 2.0 1.0]

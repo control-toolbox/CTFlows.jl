@@ -882,7 +882,9 @@ See also: [`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.Cont
 """
 function Flow(ocp::CTModels.Models.Model, u::Function; kwargs...)
     _reject_removed_constraint_keywords(kwargs)
-    _check_convenience_arities(ocp, u, _multiplier_specs(get(kwargs, :multipliers, nothing))...)
+    _check_convenience_arities(
+        ocp, u, _multiplier_specs(get(kwargs, :multipliers, nothing))...
+    )
     law = Data.DynClosedLoop(
         u; is_autonomous=Traits.is_autonomous(ocp), is_variable=Traits.is_variable(ocp)
     )

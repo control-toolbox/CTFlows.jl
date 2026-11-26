@@ -125,9 +125,9 @@ end
 # column per point; the law and the multipliers dispatch on the shape of the costate.
 const A_BATCH = [0.0 1.0; -1.0 0.0]
 const B_BATCH = [0.0, 1.0]
-_dyn_batch!(r, t, x, u, v) = (r .= A_BATCH * x .+ B_BATCH .* u; nothing)
+_dyn_batch!(r, t, x, u, v) = (r.=A_BATCH * x .+ B_BATCH .* u; nothing)
 _lag_batch(t, x, u, v) = 0.5 * sum(abs2, u)
-_pc_batch!(r, t, x, u, v) = (r[1:1, :] .= x[1:1, :] .+ u; nothing)
+_pc_batch!(r, t, x, u, v) = (r[1:1, :].=x[1:1, :] .+ u; nothing)
 
 """2-D model with a path constraint `:pc` (|x₁ + u| ≤ 1) and a state box `:vmax` (x₂ ≤ 1.2)."""
 function _ocp_batch()
@@ -139,9 +139,7 @@ function _ocp_batch()
     CTModels.Building.dynamics!(pre, _dyn_batch!)
     CTModels.Building.objective!(pre, :min; lagrange=_lag_batch)
     CTModels.Building.constraint!(pre, :path; f=_pc_batch!, lb=[-1.0], ub=[1.0], label=:pc)
-    CTModels.Building.constraint!(
-        pre, :state; rg=2:2, lb=[-Inf], ub=[1.2], label=:vmax
-    )
+    CTModels.Building.constraint!(pre, :state; rg=2:2, lb=[-Inf], ub=[1.2], label=:vmax)
     return CTModels.Building.build(pre)
 end
 
@@ -239,8 +237,7 @@ function test_constraint_label_bounds()
                 [2.0, 1.0, 1.0, 3.0]
         end
 
-        Test.@testset "wrong multiplier dimension for a label is rejected [$ht]" for ht in
-                                                                                       (
+        Test.@testset "wrong multiplier dimension for a label is rejected [$ht]" for ht in (
             :total, :partial
         )
             f = Flows.Flow(
@@ -276,10 +273,7 @@ function test_constraint_label_bounds()
         Test.@testset "Error: a tuple mixing labels and functions" begin
             ocp = _ocp(((r, t, x, u, v) -> (r[1]=x; nothing), LB, Inf, :xcon))
             Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
-                ocp,
-                (x, p) -> 0.0;
-                multipliers=(:xcon => μ, ((x, u) -> x) => μ),
-                _opts()...,
+                ocp, (x, p) -> 0.0; multipliers=(:xcon => μ, ((x, u) -> x) => μ), _opts()...
             )
         end
 
@@ -292,11 +286,7 @@ function test_constraint_label_bounds()
 
             ocp = _ocp((f!, lb, ub, :xcon))
             f_sym = Flows.Flow(
-                ocp,
-                (x, p) -> 0;
-                multipliers=:xcon => μ,
-                hamiltonian_type=ht,
-                _opts()...,
+                ocp, (x, p) -> 0; multipliers=:xcon => μ, hamiltonian_type=ht, _opts()...
             )
             f_fun = Flows.Flow(
                 ocp,
@@ -351,9 +341,7 @@ function test_constraint_label_bounds()
         Test.@testset "three arcs [$name]" for (name, f!, lb, ub) in SPELLINGS
             ocp = _ocp((f!, lb, ub, :xcon))
             f_minus = Flows.Flow(ocp, (x, p) -> -1; _opts()...)
-            f_bound = Flows.Flow(
-                ocp, (x, p) -> 0; multipliers=:xcon => μ, _opts()...
-            )
+            f_bound = Flows.Flow(ocp, (x, p) -> 0; multipliers=:xcon => μ, _opts()...)
             f_plus = Flows.Flow(ocp, (x, p) -> 1; _opts()...)
             φ = f_minus * (0.9, f_bound) * (1.6, f_plus)
             xf, pf = φ(0.0, 1.0, -0.982237546583301, 2.0)

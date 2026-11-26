@@ -263,9 +263,7 @@ function test_flow_duals()
         # ====================================================================
 
         Test.@testset "the dual is the multiplier, with its sign" begin
-            f(ocp, y) = Flows.Flow(
-                ocp, (x, p) -> 0; multipliers=:c => _const(y), OPTS...
-            )
+            f(ocp, y) = Flows.Flow(ocp, (x, p) -> 0; multipliers=:c => _const(y), OPTS...)
             # one finite bound: y ≥ 0, either way
             o = _scalar(0.1, Inf)
             Test.@test _dual(o, f(o, 0.7), :c)(0.5) ≈ 0.7
@@ -283,15 +281,11 @@ function test_flow_duals()
             ocp = _vector([0.0, -Inf], [1.0, 2.0])
             x0, p0 = [0.5, 0.5], [0.0, 0.0]
             # :c, one dual per component; the rows of :s stay 0
-            f = Flows.Flow(
-                ocp, (x, p) -> 0; multipliers=:c => _const([0.3, 0.4]), OPTS...
-            )
+            f = Flows.Flow(ocp, (x, p) -> 0; multipliers=:c => _const([0.3, 0.4]), OPTS...)
             sol = f((0.0, 1.0), x0, p0)
             Test.@test CTModels.dual(sol, ocp, :c)(0.5) ≈ [0.3, 0.4]   # two-sided, then one-sided
             Test.@test CTModels.dual(sol, ocp, :s)(0.5) == 0.0
-            f = Flows.Flow(
-                ocp, (x, p) -> 0; multipliers=:c => _const([-0.3, 0.4]), OPTS...
-            )
+            f = Flows.Flow(ocp, (x, p) -> 0; multipliers=:c => _const([-0.3, 0.4]), OPTS...)
             Test.@test CTModels.dual(f((0.0, 1.0), x0, p0), ocp, :c)(0.5) ≈ [-0.3, 0.4]
             # a tuple of labelled constraints
             f = Flows.Flow(
@@ -308,12 +302,8 @@ function test_flow_duals()
         Test.@testset "two phases, one constraint active on each" begin
             ocp = _vector([0.0, -Inf], [1.0, 2.0])
             # phase 1: u ≥ -1 active (:s); phase 2: x₁ ≤ 1 active (:c, first row)
-            f1 = Flows.Flow(
-                ocp, (x, p) -> -1; multipliers=:s => _const(0.2), OPTS...
-            )
-            f2 = Flows.Flow(
-                ocp, (x, p) -> 0; multipliers=:c => _const([0.3, 0.0]), OPTS...
-            )
+            f1 = Flows.Flow(ocp, (x, p) -> -1; multipliers=:s => _const(0.2), OPTS...)
+            f2 = Flows.Flow(ocp, (x, p) -> 0; multipliers=:c => _const([0.3, 0.0]), OPTS...)
             sol = (f1 * (0.5, f2))((0.0, 1.0), [1.5, 0.5], [0.0, 0.0])
             ds, dc = CTModels.dual(sol, ocp, :s), CTModels.dual(sol, ocp, :c)
             Test.@test ds(0.25) ≈ 0.2
