@@ -136,6 +136,13 @@ See [BREAKING.md](BREAKING.md).
 
 - **`flows/constrained.md`**: the same exact initial costate in the example of issue #440.
 
+### 📦 Dependencies
+
+- **`CTSolvers` compat `0.7.1`** (was `0.7`): `reverse` of an integration result
+  ([CTSolvers#355](https://github.com/control-toolbox/CTSolvers.jl/issues/355)), which every
+  trajectory call uses to return its trajectory in increasing time
+  ([#547](https://github.com/control-toolbox/CTFlows.jl/issues/547)).
+
 ### ✅ Compatibility
 
 - **Breaking**: see 💥 Breaking Changes above and [BREAKING.md](BREAKING.md).
