@@ -3,6 +3,11 @@
 This file lists breaking and near-breaking changes in CTFlows.jl since the last
 stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
+## Non-breaking note (Unreleased)
+
+- **Tests and documentation only**: the three-arc example of issue #440 starts from the exact
+  initial costate `p(0) = -0.99`. No API change, no migration required.
+
 ## [0.19.0] - 2026-11-25
 
 Breaking changes of the model-level Hamiltonians and of the dual convention
