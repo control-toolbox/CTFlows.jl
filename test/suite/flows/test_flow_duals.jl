@@ -257,7 +257,9 @@ function test_flow_duals()
 
         Test.@testset "a control box given to a single flow: its dual" begin
             ocp = _issue440_box()
-            f = Flows.Flow(ocp, (x, p) -> 1; constraint=:ubox, multiplier=_const(0.4), OPTS...)
+            f = Flows.Flow(
+                ocp, (x, p) -> 1; constraint=:ubox, multiplier=_const(0.4), OPTS...
+            )
             sol = f((0.0, 1.0), 1.0, 0.0)
             Test.@test CTModels.dual(sol, ocp, :ubox)(0.5) ≈ 0.4
             Test.@test_throws Exceptions.PreconditionError CTModels.dual(sol, ocp, :xbox)
@@ -268,9 +270,8 @@ function test_flow_duals()
         # ====================================================================
 
         Test.@testset "the dual is the multiplier, with its sign" begin
-            f(ocp, y) = Flows.Flow(
-                ocp, (x, p) -> 0; constraint=:c, multiplier=_const(y), OPTS...
-            )
+            f(ocp, y) =
+                Flows.Flow(ocp, (x, p) -> 0; constraint=:c, multiplier=_const(y), OPTS...)
             # one finite bound: y ≥ 0, either way
             o = _scalar(0.1, Inf)
             Test.@test _dual(o, f(o, 0.7), :c)(0.5) ≈ 0.7
