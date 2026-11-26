@@ -3,6 +3,25 @@
 This file lists breaking and near-breaking changes in CTFlows.jl since the last
 stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
+## Unreleased
+
+- **The accessors of a flow have no `get_` prefix, and a flow and its solution share the
+  switching functions** ([#544](https://github.com/control-toolbox/CTFlows.jl/issues/544)).
+  The gradient accessors and `get_flows`, `get_jumps` lose the prefix (`phase_flows` for the
+  flows); `get_switching_times` and `get_labels` become `switching_times` and `phase_labels`,
+  the functions of `CTModels.Solutions`; the indexed forms `get_flow`, `get_switching_time`,
+  `get_jump` are removed. The old names throw a `PreconditionError` that names the replacement.
+
+  ```julia
+  # Before
+  Systems.get_hamiltonian_gradient(f)
+  MultiPhase.get_switching_times(f), MultiPhase.get_labels(f), MultiPhase.get_flow(f, 1)
+
+  # After
+  Systems.hamiltonian_gradient(f)
+  MultiPhase.switching_times(f), MultiPhase.phase_labels(f), MultiPhase.phase_flows(f)[1]
+  ```
+
 ## [0.19.0] - 2026-11-25
 
 Breaking changes of the model-level Hamiltonians and of the dual convention

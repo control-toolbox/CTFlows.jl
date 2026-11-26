@@ -223,15 +223,15 @@ Systems.hamiltonian(hflow_v)          # the callable H(t, x, p, v)
 
 ```@example flows_integrating
 # functor: (t, x, p, v) -> (∂H/∂x, ∂H/∂p)
-Systems.get_hamiltonian_gradient(hflow_v)
+Systems.hamiltonian_gradient(hflow_v)
 ```
 
 ```@example flows_integrating
-Systems.get_variable_gradient(hflow_v)    # functor: (t, x, p, v) -> ∂H/∂v
+Systems.variable_gradient(hflow_v)    # functor: (t, x, p, v) -> ∂H/∂v
 ```
 
-`Systems.pseudo_hamiltonian`, `Systems.control_law`, `Systems.get_pseudo_hamiltonian_gradient`
-and `Systems.get_pseudo_variable_gradient` are available on flows built from a
+`Systems.pseudo_hamiltonian`, `Systems.control_law`, `Systems.pseudo_hamiltonian_gradient`
+and `Systems.pseudo_variable_gradient` are available on flows built from a
 pseudo-Hamiltonian (or an OCP) and a control law — see [Control laws](control_laws.md).
 Like the Hamiltonian, the gradient functors also take the short form allowed by the
 flow's time and variable dependence: `(x, p)` for an autonomous flow with no variable,

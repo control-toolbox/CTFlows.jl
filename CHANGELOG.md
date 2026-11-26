@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 💥 Breaking Changes
+
+#### The accessors of a flow have no `get_` prefix; a flow and its solution share the switching functions
+
+- **Renamed**: `get_hamiltonian_gradient`, `get_variable_gradient`,
+  `get_pseudo_hamiltonian_gradient`, `get_pseudo_variable_gradient` become
+  `hamiltonian_gradient`, `variable_gradient`, `pseudo_hamiltonian_gradient`,
+  `pseudo_variable_gradient` (`CTFlows.Systems`); `get_flows`, `get_jumps` become
+  `phase_flows`, `jumps` (`CTFlows.MultiPhase`).
+- **One function per notion**: `get_switching_times(f)` and `get_labels(f)` become
+  `switching_times(f)` and `phase_labels(f)`, which are the functions
+  `CTModels.Solutions.switching_times` and `phase_labels`: the same names read a flow, its
+  trajectory and a `Solution`. `CTFlows.Trajectories.switching_times`, `phase_labels`,
+  `left_limit` and `right_limit` are now those of `CTModels.Solutions` too, so they read the
+  trajectory of a state flow when called through CTModels or OptimalControl (a `MethodError`
+  before); `has_switching` reads it as well.
+- **Removed**: the indexed forms `get_flow(f, i)`, `get_switching_time(f, i)`, `get_jump(f, i)`;
+  index the plural ones instead.
+- Every old name throws a `PreconditionError` that names its replacement.
+- **Why**: the accessors of the same flow were `hamiltonian(f)` but `get_hamiltonian_gradient(f)`,
+  and its switching times `get_switching_times(f)` but `switching_times(sol)` on its solution
+  ([#544](https://github.com/control-toolbox/CTFlows.jl/issues/544)).
+
+**Migration**:
+
+```julia
+# Before
+Systems.get_hamiltonian_gradient(f)
+MultiPhase.get_switching_times(f), MultiPhase.get_labels(f)
+MultiPhase.get_flows(f), MultiPhase.get_jumps(f)
+MultiPhase.get_flow(f, 1), MultiPhase.get_switching_time(f, 1), MultiPhase.get_jump(f, 1)
+
+# After
+Systems.hamiltonian_gradient(f)
+MultiPhase.switching_times(f), MultiPhase.phase_labels(f)
+MultiPhase.phase_flows(f), MultiPhase.jumps(f)
+MultiPhase.phase_flows(f)[1], MultiPhase.switching_times(f)[1], MultiPhase.jumps(f)[1]
+```
+
+See [BREAKING.md](BREAKING.md).
+
+### ✨ New Features
+
+- **`n_phases(f)` on a single flow** returns `1`, as `phase_flows(f)` returns a 1-tuple.
+
+### ✅ Compatibility
+
+- **Breaking**: see 💥 Breaking Changes above and [BREAKING.md](BREAKING.md).
+
 ## [0.19.1] - 2026-11-25
 
 ### 📚 Documentation

@@ -166,131 +166,75 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return the number of phases in a multi-phase flow.
+Return the number of phases of a flow: `1` for a single flow, the number of concatenated
+flows for a multi-phase flow.
 
 # Arguments
-- `mpf::MultiPhaseFlow`: The multi-phase flow.
+- `f`: a flow, single-phase or multi-phase.
 
 # Returns
-- `Int`: Number of phases.
+- `Int`: the number of phases.
 
-See also: [`CTFlows.MultiPhase.get_flow`](@extref), [`CTFlows.MultiPhase.get_switching_time`](@extref).
+See also: [`CTFlows.MultiPhase.phase_flows`](@extref), [`CTFlows.MultiPhase.switching_times`](@extref).
 """
-function n_phases(mpf::MultiPhaseFlow)
-    return length(mpf.flows)
-end
+n_phases(mpf::MultiPhaseFlow)::Int = length(mpf.flows)
+n_phases(::Flows.AbstractFlow)::Int = 1
 
 """
 $(TYPEDSIGNATURES)
 
-Return the flow for a specific phase.
+Return the flows of the phases of a flow, in order: a 1-tuple for a single flow, the
+concatenated flows for a multi-phase flow. The flow of phase `i` is `phase_flows(f)[i]`.
 
 # Arguments
-- `mpf::MultiPhaseFlow`: The multi-phase flow.
-- `i::Int`: Phase index (1-based).
+- `f`: a flow, single-phase or multi-phase.
 
 # Returns
-- `AbstractFlow`: The flow for phase `i`.
+- `Tuple`: the flows of the phases.
 
-See also: [`CTFlows.MultiPhase.n_phases`](@extref), [`CTFlows.MultiPhase.get_switching_time`](@extref).
+See also: [`CTFlows.MultiPhase.n_phases`](@extref), [`CTFlows.MultiPhase.switching_times`](@extref),
+[`CTFlows.MultiPhase.jumps`](@extref).
 """
-function get_flow(mpf::MultiPhaseFlow, i::Int)
-    return mpf.flows[i]
-end
+phase_flows(f::Flows.AbstractFlow) = (f,)
+phase_flows(mpf::MultiPhaseFlow) = mpf.flows
 
 """
 $(TYPEDSIGNATURES)
 
-Return the switching time at a specific phase boundary.
+Return the switching times of a flow: empty for a single flow; for a multi-phase flow, the
+time between phase `i` and phase `i + 1` is `switching_times(f)[i]`.
+
+This is a method of [`CTModels.Solutions.switching_times`](@extref), the function that reads
+the switching times of a solution: the same name for a flow and for what it returns. The
+times keep their type (a `ForwardDiff.Dual` while a shooting function is differentiated).
 
 # Arguments
-- `mpf::MultiPhaseFlow`: The multi-phase flow.
-- `i::Int`: Phase index (1-based). Returns the switching time between phase `i` and `i+1`.
+- `f`: a flow, single-phase or multi-phase.
 
 # Returns
-- `Real`: The switching time.
+- `AbstractVector{<:Real}`: the switching times.
 
-See also: [`CTFlows.MultiPhase.n_phases`](@extref), [`CTFlows.MultiPhase.get_flow`](@extref).
+See also: [`CTFlows.MultiPhase.n_phases`](@extref), [`CTFlows.MultiPhase.jumps`](@extref).
 """
-function get_switching_time(mpf::MultiPhaseFlow, i::Int)
-    return mpf.switching_times[i]
-end
+switching_times(::Flows.AbstractFlow) = Real[]
+switching_times(mpf::MultiPhaseFlow) = mpf.switching_times
 
 """
 $(TYPEDSIGNATURES)
 
-Return the jump function at a specific phase boundary.
+Return the jumps of a flow: empty for a single flow; for a multi-phase flow, the jump applied
+at the switching time after phase `i` is `jumps(f)[i]` (`nothing` for no jump).
 
 # Arguments
-- `mpf::MultiPhaseFlow`: The multi-phase flow.
-- `i::Int`: Phase index (1-based). Returns the jump applied after phase `i`.
+- `f`: a flow, single-phase or multi-phase.
 
 # Returns
-- `Union{Nothing, Function, Tuple}`: The jump function, or `nothing` if no jump is defined.
+- `AbstractVector`: the jumps.
 
-See also: [`CTFlows.MultiPhase.n_phases`](@extref), [`CTFlows.MultiPhase.get_flow`](@extref).
+See also: [`CTFlows.MultiPhase.switching_times`](@extref), [`CTFlows.MultiPhase.phase_flows`](@extref).
 """
-function get_jump(mpf::MultiPhaseFlow, i::Int)
-    return mpf.jumps[i]
-end
-
-# ==============================================================================
-# Helper methods for concatenation (abstract flow interface)
-# ==============================================================================
-
-"""
-$(TYPEDSIGNATURES)
-
-Get the flows from a single-phase flow as a 1-tuple.
-"""
-function get_flows(f::Flows.AbstractFlow)
-    return (f,)
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Get the switching times from a single-phase flow (empty vector).
-"""
-function get_switching_times(::Flows.AbstractFlow)
-    return Real[]
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Get the jumps from a single-phase flow (empty vector).
-"""
-function get_jumps(::Flows.AbstractFlow)
-    return Any[]
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Get the flows tuple from a multi-phase flow.
-"""
-function get_flows(mpf::MultiPhaseFlow)
-    return mpf.flows
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Get the switching times from a multi-phase flow.
-"""
-function get_switching_times(mpf::MultiPhaseFlow)
-    return mpf.switching_times
-end
-
-"""
-$(TYPEDSIGNATURES)
-
-Get the jumps from a multi-phase flow.
-"""
-function get_jumps(mpf::MultiPhaseFlow)
-    return mpf.jumps
-end
+jumps(::Flows.AbstractFlow) = Any[]
+jumps(mpf::MultiPhaseFlow) = mpf.jumps
 
 """
 $(TYPEDSIGNATURES)
@@ -299,25 +243,22 @@ Return the labels of the phases of a flow, one per phase (`""` for a phase with 
 given with `Flow(...; label="bang")`. Concatenation keeps the phases' flows, so their labels
 are kept in order.
 
+This is a method of [`CTModels.Solutions.phase_labels`](@extref), the function that reads the
+labels of the phases of a solution.
+
 # Example
 \`\`\`julia
 using CTFlows: Flows, MultiPhase
 
 f1 = Flows.Flow(ocp, u_max; label="bang+")
 f2 = Flows.Flow(ocp, u_min; label="bang-")
-MultiPhase.get_labels(f1 * (0.5, f2))   # ["bang+", "bang-"]
+MultiPhase.phase_labels(f1 * (0.5, f2))   # ["bang+", "bang-"]
 \`\`\`
 
-See also: [`CTFlows.Flows.label`](@extref), [`CTFlows.MultiPhase.get_flows`](@extref).
+See also: [`CTFlows.Flows.label`](@extref), [`CTFlows.MultiPhase.phase_flows`](@extref).
 """
-get_labels(f::Flows.AbstractFlow)::Vector{String} = String[Flows.label(f)]
-
-"""
-$(TYPEDSIGNATURES)
-
-Return the labels of the phases of a multi-phase flow, one per phase.
-"""
-get_labels(mpf::MultiPhaseFlow)::Vector{String} = String[Flows.label(f) for f in mpf.flows]
+phase_labels(f::Flows.AbstractFlow)::Vector{String} = String[Flows.label(f)]
+phase_labels(mpf::MultiPhaseFlow)::Vector{String} = String[Flows.label(f) for f in mpf.flows]
 
 # ==============================================================================
 # Base.show
@@ -397,7 +338,7 @@ function Base.show(io::IO, ::MIME"text/plain", mpf::MultiPhaseFlow)
         )
     end
     Display.print_field(io, "switching_times", mpf.switching_times; fmt=fmt)
-    labels = get_labels(mpf)
+    labels = phase_labels(mpf)
     if any(!isempty, labels)
         Display.print_field(io, "labels", Trajectories._phase_sequence(labels); fmt=fmt)
     end

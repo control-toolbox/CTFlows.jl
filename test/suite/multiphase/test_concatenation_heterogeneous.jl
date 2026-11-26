@@ -65,8 +65,8 @@ function test_concatenation_heterogeneous()
         # UNIT TESTS — Tuple structure
         # ====================================================================
 
-        Test.@testset "get_flows returns 1-tuple for single-phase" begin
-            result = MultiPhase.get_flows(flowA)
+        Test.@testset "phase_flows returns 1-tuple for single-phase" begin
+            result = MultiPhase.phase_flows(flowA)
             Test.@test result isa Tuple
             Test.@test length(result) == 1
             Test.@test result[1] === flowA

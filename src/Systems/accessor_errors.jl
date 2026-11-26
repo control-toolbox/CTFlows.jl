@@ -159,10 +159,10 @@ Fallback: no AD-backed Hamiltonian to differentiate.
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: always, naming the accessor to use instead.
 
-See also: [`CTFlows.Systems.get_hamiltonian_gradient`](@extref).
+See also: [`CTFlows.Systems.hamiltonian_gradient`](@extref).
 """
-function get_hamiltonian_gradient(sys::AbstractSystem; kwargs...)
-    return _unavailable(:get_hamiltonian_gradient, "Hamiltonian gradient", sys)
+function hamiltonian_gradient(sys::AbstractSystem; kwargs...)
+    return _unavailable(:hamiltonian_gradient, "Hamiltonian gradient", sys)
 end
 
 """
@@ -173,10 +173,10 @@ Fallback: no AD-backed Hamiltonian to differentiate.
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: always, naming the accessor to use instead.
 
-See also: [`CTFlows.Systems.get_variable_gradient`](@extref).
+See also: [`CTFlows.Systems.variable_gradient`](@extref).
 """
-function get_variable_gradient(sys::AbstractSystem; kwargs...)
-    return _unavailable(:get_variable_gradient, "Hamiltonian variable gradient", sys)
+function variable_gradient(sys::AbstractSystem; kwargs...)
+    return _unavailable(:variable_gradient, "Hamiltonian variable gradient", sys)
 end
 
 """
@@ -187,11 +187,11 @@ Fallback: no AD-backed pseudo-Hamiltonian to differentiate.
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: always, naming the accessor to use instead.
 
-See also: [`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@extref).
+See also: [`CTFlows.Systems.pseudo_hamiltonian_gradient`](@extref).
 """
-function get_pseudo_hamiltonian_gradient(sys::AbstractSystem; kwargs...)
+function pseudo_hamiltonian_gradient(sys::AbstractSystem; kwargs...)
     return _unavailable(
-        :get_pseudo_hamiltonian_gradient, "pseudo-Hamiltonian gradient", sys
+        :pseudo_hamiltonian_gradient, "pseudo-Hamiltonian gradient", sys
     )
 end
 
@@ -203,10 +203,10 @@ Fallback: no AD-backed pseudo-Hamiltonian to differentiate.
 # Throws
 - `CTBase.Exceptions.IncorrectArgument`: always, naming the accessor to use instead.
 
-See also: [`CTFlows.Systems.get_pseudo_variable_gradient`](@extref).
+See also: [`CTFlows.Systems.pseudo_variable_gradient`](@extref).
 """
-function get_pseudo_variable_gradient(sys::AbstractSystem; kwargs...)
+function pseudo_variable_gradient(sys::AbstractSystem; kwargs...)
     return _unavailable(
-        :get_pseudo_variable_gradient, "pseudo-Hamiltonian variable gradient", sys
+        :pseudo_variable_gradient, "pseudo-Hamiltonian variable gradient", sys
     )
 end
