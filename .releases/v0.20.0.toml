@@ -1,0 +1,38 @@
+# The request of the release of CTFlows v0.20.0, for the release workflow of CTActions.
+# Written by `release.jl facts`, completed by the agent after the human's validation, checked
+# by `release.jl request` and again by the workflow. The proposal is in .releases/v0.20.0.md.
+
+[release]
+package = "CTFlows"
+version = "0.20.0"
+kind = "stable"
+mode = "autonomous" # supervised or autonomous: the human's choice
+requested_by = "ocots" # the GitHub login of the person who validated the proposal
+reference = "0.19.1"
+base = "2355859b3fdd9e147bf003c1ba22eb5ff0415e25"
+
+[versions]
+ct_agents = "v0.5.0"
+ct_conventions = "v0.15.0"
+ctactions = "dc60661"
+
+[facts]
+expected_version = "0.20.0"
+breaking = true
+feature = true
+rel4 = true
+rel7 = 30
+jump = "none"
+labels = ["run breakage", "run ci github-runner", "run ci kkt-runner", "run documentation", "documentation push preview"]
+
+[[review]]
+id = "pr-542"
+what = "#542 [AUTO] JuliaFormatter.jl run — touches src; not cited in the changelog since `v0.19.1`"
+verdict = "not-user-facing"   # covered, added, not-user-facing
+note = "Automatic JuliaFormatter run: formatting only, no behaviour change."
+
+[[review]]
+id = "compat-CTSolvers"
+what = "`[compat]` of `CTSolvers`: `0.7` → `0.7.1`"
+verdict = "covered"   # covered, added, not-user-facing
+note = "The CTSolvers compat bump to 0.7.1 is in the Dependencies section of 0.20.0."
