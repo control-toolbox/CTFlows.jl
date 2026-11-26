@@ -75,30 +75,30 @@ function test_concatenation()
             sf = _state_flow()
             hf = _ham_flow()
 
-            Test.@testset "get_flows" begin
-                Test.@test MultiPhase.get_flows(sf) == (sf,)
-                Test.@test length(MultiPhase.get_flows(sf)) == 1
-                Test.@test MultiPhase.get_flows(hf) == (hf,)
-                Test.@test length(MultiPhase.get_flows(hf)) == 1
+            Test.@testset "phase_flows" begin
+                Test.@test MultiPhase.phase_flows(sf) == (sf,)
+                Test.@test length(MultiPhase.phase_flows(sf)) == 1
+                Test.@test MultiPhase.phase_flows(hf) == (hf,)
+                Test.@test length(MultiPhase.phase_flows(hf)) == 1
                 # type stability
-                Test.@inferred MultiPhase.get_flows(sf)
-                Test.@inferred MultiPhase.get_flows(hf)
+                Test.@inferred MultiPhase.phase_flows(sf)
+                Test.@inferred MultiPhase.phase_flows(hf)
             end
 
-            Test.@testset "get_switching_times" begin
-                Test.@test MultiPhase.get_switching_times(sf) == Real[]
-                Test.@test isempty(MultiPhase.get_switching_times(sf))
-                Test.@test MultiPhase.get_switching_times(hf) == Real[]
-                Test.@inferred MultiPhase.get_switching_times(sf)
-                Test.@inferred MultiPhase.get_switching_times(hf)
+            Test.@testset "switching_times" begin
+                Test.@test MultiPhase.switching_times(sf) == Real[]
+                Test.@test isempty(MultiPhase.switching_times(sf))
+                Test.@test MultiPhase.switching_times(hf) == Real[]
+                Test.@inferred MultiPhase.switching_times(sf)
+                Test.@inferred MultiPhase.switching_times(hf)
             end
 
-            Test.@testset "get_jumps" begin
-                Test.@test MultiPhase.get_jumps(sf) == Any[]
-                Test.@test isempty(MultiPhase.get_jumps(sf))
-                Test.@test MultiPhase.get_jumps(hf) == Any[]
-                Test.@inferred MultiPhase.get_jumps(sf)
-                Test.@inferred MultiPhase.get_jumps(hf)
+            Test.@testset "jumps" begin
+                Test.@test MultiPhase.jumps(sf) == Any[]
+                Test.@test isempty(MultiPhase.jumps(sf))
+                Test.@test MultiPhase.jumps(hf) == Any[]
+                Test.@inferred MultiPhase.jumps(sf)
+                Test.@inferred MultiPhase.jumps(hf)
             end
         end
 
@@ -109,27 +109,27 @@ function test_concatenation()
             mpstate = _mpstate(3)   # 3 phases, switches [1.0, 2.0], jumps [nothing, nothing]
             mpham = _mpham(3)
 
-            Test.@testset "get_flows" begin
-                Test.@test length(MultiPhase.get_flows(mpstate)) == 3
-                Test.@test MultiPhase.get_flows(mpstate) === mpstate.flows
-                Test.@test length(MultiPhase.get_flows(mpham)) == 3
-                Test.@test MultiPhase.get_flows(mpham) === mpham.flows
-                Test.@inferred MultiPhase.get_flows(mpstate)
-                Test.@inferred MultiPhase.get_flows(mpham)
+            Test.@testset "phase_flows" begin
+                Test.@test length(MultiPhase.phase_flows(mpstate)) == 3
+                Test.@test MultiPhase.phase_flows(mpstate) === mpstate.flows
+                Test.@test length(MultiPhase.phase_flows(mpham)) == 3
+                Test.@test MultiPhase.phase_flows(mpham) === mpham.flows
+                Test.@inferred MultiPhase.phase_flows(mpstate)
+                Test.@inferred MultiPhase.phase_flows(mpham)
             end
 
-            Test.@testset "get_switching_times" begin
-                switching_times = MultiPhase.get_switching_times(mpstate)
+            Test.@testset "switching_times" begin
+                switching_times = MultiPhase.switching_times(mpstate)
                 Test.@test switching_times == [1.0, 2.0]
                 Test.@test switching_times isa Vector{Float64}
                 Test.@test switching_times === mpstate.switching_times
-                Test.@inferred MultiPhase.get_switching_times(mpstate)
+                Test.@inferred MultiPhase.switching_times(mpstate)
             end
 
-            Test.@testset "get_jumps" begin
-                Test.@test MultiPhase.get_jumps(mpstate) == [nothing, nothing]
-                Test.@test MultiPhase.get_jumps(mpstate) === mpstate.jumps
-                Test.@inferred MultiPhase.get_jumps(mpstate)
+            Test.@testset "jumps" begin
+                Test.@test MultiPhase.jumps(mpstate) == [nothing, nothing]
+                Test.@test MultiPhase.jumps(mpstate) === mpstate.jumps
+                Test.@inferred MultiPhase.jumps(mpstate)
             end
         end
 
@@ -254,15 +254,15 @@ function test_concatenation()
                 mpf = f1 * (t_s, mpf2)
 
                 expected_flows = [
-                    MultiPhase.get_flows(f1)..., MultiPhase.get_flows(mpf2)...
+                    MultiPhase.phase_flows(f1)..., MultiPhase.phase_flows(mpf2)...
                 ]
                 expected_times = [
-                    MultiPhase.get_switching_times(f1)...,
+                    MultiPhase.switching_times(f1)...,
                     t_s,
-                    MultiPhase.get_switching_times(mpf2)...,
+                    MultiPhase.switching_times(mpf2)...,
                 ]
                 expected_jumps = [
-                    MultiPhase.get_jumps(f1)..., nothing, MultiPhase.get_jumps(mpf2)...
+                    MultiPhase.jumps(f1)..., nothing, MultiPhase.jumps(mpf2)...
                 ]
 
                 Test.@test length(mpf.flows) == length(expected_flows)
@@ -422,15 +422,15 @@ function test_concatenation()
                 mpf = f1 * (t_s, mpf2)
 
                 expected_flows = [
-                    MultiPhase.get_flows(f1)..., MultiPhase.get_flows(mpf2)...
+                    MultiPhase.phase_flows(f1)..., MultiPhase.phase_flows(mpf2)...
                 ]
                 expected_times = [
-                    MultiPhase.get_switching_times(f1)...,
+                    MultiPhase.switching_times(f1)...,
                     t_s,
-                    MultiPhase.get_switching_times(mpf2)...,
+                    MultiPhase.switching_times(mpf2)...,
                 ]
                 expected_jumps = [
-                    MultiPhase.get_jumps(f1)..., nothing, MultiPhase.get_jumps(mpf2)...
+                    MultiPhase.jumps(f1)..., nothing, MultiPhase.jumps(mpf2)...
                 ]
 
                 Test.@test length(mpf.flows) == length(expected_flows)
@@ -528,9 +528,10 @@ function test_concatenation()
                 :get_flow,
                 :get_switching_time,
                 :get_jump,
-                :get_flows,
-                :get_switching_times,
-                :get_jumps,
+                :phase_flows,
+                :switching_times,
+                :jumps,
+                :phase_labels,
             )
                 Test.@test sym in names(MultiPhase)
             end

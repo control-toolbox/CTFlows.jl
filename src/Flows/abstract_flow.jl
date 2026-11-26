@@ -376,13 +376,13 @@ end
 $(TYPEDSIGNATURES)
 
 Return a callable `(t, x, p, v) -> (∂H/∂x, ∂H/∂p)` for the true Hamiltonian of a
-Hamiltonian flow. Delegates to [`CTFlows.Systems.get_hamiltonian_gradient`](@extref); the
+Hamiltonian flow. Delegates to [`CTFlows.Systems.hamiltonian_gradient`](@extref); the
 `ad_backend` keyword (default: the system's backend) selects the AD backend.
 
-See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Systems.get_variable_gradient`](@extref).
+See also: [`CTFlows.Systems.hamiltonian`](@extref), [`CTFlows.Systems.variable_gradient`](@extref).
 """
-function Systems.get_hamiltonian_gradient(f::AbstractFlow; kwargs...)
-    return Systems.get_hamiltonian_gradient(system(f); kwargs...)
+function Systems.hamiltonian_gradient(f::AbstractFlow; kwargs...)
+    return Systems.hamiltonian_gradient(system(f); kwargs...)
 end
 
 """
@@ -390,13 +390,13 @@ $(TYPEDSIGNATURES)
 
 Return a callable `(t, x, p, v) -> ∂H/∂v` for the true Hamiltonian of a Hamiltonian
 flow — the quantity (before negation) driving `ṗv = -∂H/∂v`. Delegates to
-[`CTFlows.Systems.get_variable_gradient`](@extref); the `ad_backend` keyword (default: the
+[`CTFlows.Systems.variable_gradient`](@extref); the `ad_backend` keyword (default: the
 system's backend) selects the AD backend.
 
-See also: [`CTFlows.Systems.get_hamiltonian_gradient`](@extref).
+See also: [`CTFlows.Systems.hamiltonian_gradient`](@extref).
 """
-function Systems.get_variable_gradient(f::AbstractFlow; kwargs...)
-    return Systems.get_variable_gradient(system(f); kwargs...)
+function Systems.variable_gradient(f::AbstractFlow; kwargs...)
+    return Systems.variable_gradient(system(f); kwargs...)
 end
 
 """
@@ -404,13 +404,13 @@ $(TYPEDSIGNATURES)
 
 Return a callable `(t, x, p, u, v) -> (∂H̃/∂x, ∂H̃/∂p)` for the pseudo-Hamiltonian of a
 Hamiltonian flow (differentiated at fixed control), when available. Delegates to
-[`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@extref); the `ad_backend` keyword
+[`CTFlows.Systems.pseudo_hamiltonian_gradient`](@extref); the `ad_backend` keyword
 (default: the system's backend) selects the AD backend.
 
-See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref), [`CTFlows.Systems.get_pseudo_variable_gradient`](@extref).
+See also: [`CTFlows.Systems.pseudo_hamiltonian`](@extref), [`CTFlows.Systems.pseudo_variable_gradient`](@extref).
 """
-function Systems.get_pseudo_hamiltonian_gradient(f::AbstractFlow; kwargs...)
-    return Systems.get_pseudo_hamiltonian_gradient(system(f); kwargs...)
+function Systems.pseudo_hamiltonian_gradient(f::AbstractFlow; kwargs...)
+    return Systems.pseudo_hamiltonian_gradient(system(f); kwargs...)
 end
 
 """
@@ -418,13 +418,13 @@ $(TYPEDSIGNATURES)
 
 Return a callable `(t, x, p, u, v) -> ∂H̃/∂v` for the pseudo-Hamiltonian of a
 Hamiltonian flow (differentiated at fixed control), when available. Delegates to
-[`CTFlows.Systems.get_pseudo_variable_gradient`](@extref); the `ad_backend` keyword
+[`CTFlows.Systems.pseudo_variable_gradient`](@extref); the `ad_backend` keyword
 (default: the system's backend) selects the AD backend.
 
-See also: [`CTFlows.Systems.get_pseudo_hamiltonian_gradient`](@extref).
+See also: [`CTFlows.Systems.pseudo_hamiltonian_gradient`](@extref).
 """
-function Systems.get_pseudo_variable_gradient(f::AbstractFlow; kwargs...)
-    return Systems.get_pseudo_variable_gradient(system(f); kwargs...)
+function Systems.pseudo_variable_gradient(f::AbstractFlow; kwargs...)
+    return Systems.pseudo_variable_gradient(system(f); kwargs...)
 end
 
 """

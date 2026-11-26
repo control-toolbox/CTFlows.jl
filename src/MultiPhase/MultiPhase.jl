@@ -26,6 +26,12 @@ using ..Integrators: Integrators
 using ..Flows: Flows
 using ..Trajectories: Trajectories
 
+# The switching times and the phase labels of a flow are read with the functions that read
+# them on a solution (`CTModels.Solutions`, re-homed in `Trajectories`): the same name for a
+# flow and for what it returns (control-toolbox/CTFlows.jl#544).
+const switching_times = Trajectories.switching_times
+const phase_labels = Trajectories.phase_labels
+
 # ==============================================================================
 # Include files
 # ==============================================================================
@@ -33,13 +39,16 @@ using ..Trajectories: Trajectories
 include(joinpath(@__DIR__, "multiphase_flow.jl"))
 include(joinpath(@__DIR__, "concatenation.jl"))
 include(joinpath(@__DIR__, "calling.jl"))
+include(joinpath(@__DIR__, "removed.jl"))
 
 # ==============================================================================
 # Module exports
 # ==============================================================================
 
 export MultiPhaseFlow, MultiPhaseStateFlow, MultiPhaseHamiltonianFlow, AnyMultiPhaseFlow
-export n_phases, get_flow, get_switching_time, get_jump
+export n_phases, phase_flows, switching_times, jumps, phase_labels
+# removed names, kept to say what replaces them (#544)
+export get_flow, get_switching_time, get_jump
 export get_flows, get_switching_times, get_jumps, get_labels
 
 end # module MultiPhase

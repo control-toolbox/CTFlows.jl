@@ -51,6 +51,7 @@ include(joinpath(@__DIR__, "building.jl"))
 include(joinpath(@__DIR__, "hamiltonian_getter.jl"))
 include(joinpath(@__DIR__, "hamiltonian_getters_extra.jl"))
 include(joinpath(@__DIR__, "accessor_errors.jl"))
+include(joinpath(@__DIR__, "removed.jl"))
 
 # ==============================================================================
 # Module exports
@@ -84,6 +85,9 @@ export ConstrainedPseudoHamiltonianSystem
 export build_system
 export hamiltonian, backend
 export pseudo_hamiltonian, control_law, multiplier
+export hamiltonian_gradient, variable_gradient
+export pseudo_hamiltonian_gradient, pseudo_variable_gradient
+# removed names, kept to say what replaces them (#544)
 export get_hamiltonian_gradient, get_variable_gradient
 export get_pseudo_hamiltonian_gradient, get_pseudo_variable_gradient
 export HamiltonianGradient, HamiltonianVariableGradient

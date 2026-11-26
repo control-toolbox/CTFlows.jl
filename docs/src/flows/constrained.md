@@ -202,13 +202,13 @@ multiplier as an explicit argument (a `CTBase.Data.ConstrainedPseudoHamiltonian`
 
 The accessors return the same objects in both modes: `pseudo_hamiltonian(f)` is ``H``, with
 ``u`` and ``\mu`` explicit; `hamiltonian(f)` is ``h``, including the constraint term; and
-`get_pseudo_hamiltonian_gradient(f)` gives the partial derivatives of the PMP at fixed
+`pseudo_hamiltonian_gradient(f)` gives the partial derivatives of the PMP at fixed
 ``u`` and ``\mu``, called as `(t, x, p, u, μ, v)` or in the short form of the traits:
 
 ```@example flows_constrained
 fc = Flows.Flow(ocp, law; multipliers=((x, u) -> x) => ((x, p) -> c), reltol=1e-10)
 H = CTFlows.Systems.pseudo_hamiltonian(fc)  # H(x, p, u, μ) = p(-x+u) - u²/2 + μx
-∇H = CTFlows.Systems.get_pseudo_hamiltonian_gradient(fc)  # at fixed (u, μ)
+∇H = CTFlows.Systems.pseudo_hamiltonian_gradient(fc)  # at fixed (u, μ)
 H(1.0, 0.5, 0.2, c), ∇H(1.0, 0.5, 0.2, c)
 ```
 

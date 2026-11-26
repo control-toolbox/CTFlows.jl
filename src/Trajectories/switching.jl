@@ -40,6 +40,19 @@ phase_labels(sol::StateFlowTrajectory)::Vector{String} = phase_labels(sol.traj)
 """
 $(TYPEDSIGNATURES)
 
+Whether a trajectory has switching times: `true` for the trajectory of a multi-phase flow.
+
+See also: [`CTFlows.Trajectories.switching_times`](@extref).
+"""
+function has_switching(
+    sol::Union{VectorFieldTrajectory,HamiltonianVectorFieldTrajectory,StateFlowTrajectory}
+)::Bool
+    return !isempty(switching_times(sol))
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Return a copy of a trajectory with the phase labels `labels`, one per phase (the
 integration result is shared). Labels that are all empty are dropped, so that an
 unlabelled trajectory keeps no label.

@@ -234,7 +234,7 @@ Return the label of the phase a flow integrates, given with `Flow(...; label="ba
 `""` for no label. A flow type that holds no label has none.
 
 The labels of the phases of a multi-phase flow are read with
-[`CTFlows.MultiPhase.get_labels`](@extref).
+[`CTFlows.MultiPhase.phase_labels`](@extref).
 
 See also: [`CTFlows.Flows.with_label`](@extref).
 """

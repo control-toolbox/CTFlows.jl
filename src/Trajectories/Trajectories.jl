@@ -32,6 +32,7 @@ using CTBase: Data
 using CTBase: Exceptions
 using CTBase: Traits
 using CTModels: Components
+using CTModels: Solutions
 using RecipesBase: RecipesBase, plot
 
 # `Components.state`/`control`/`costate`/`objective`/`time_grid` are re-homed here
@@ -43,6 +44,15 @@ const control = Components.control
 const costate = Components.costate
 const objective = Components.objective
 const time_grid = Components.time_grid
+
+# The switching structure is read with the functions of `CTModels.Solutions`, re-homed here
+# the same way: a trajectory and a `Solution` answer to the same `switching_times`,
+# `phase_labels`, `has_switching`, `left_limit` and `right_limit` (control-toolbox/CTFlows.jl#544).
+const switching_times = Solutions.switching_times
+const phase_labels = Solutions.phase_labels
+const has_switching = Solutions.has_switching
+const left_limit = Solutions.left_limit
+const right_limit = Solutions.right_limit
 
 # ==============================================================================
 # Internal submodule imports
@@ -76,6 +86,6 @@ export state, time_grid
 export costate
 export control, objective
 export build_trajectory
-export switching_times, phase_labels, with_labels, left_limit, right_limit
+export switching_times, phase_labels, has_switching, with_labels, left_limit, right_limit
 
 end # module Trajectories
