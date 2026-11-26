@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🧪 Testing
+
+- **The three-arc tests of issue #440 start from the exact initial costate** `p(0) = -0.99`
+  (`p` vanishes at the entry `t₁ = 0.9`), instead of `-0.982237546583301`, the costate of a
+  direct solve on a coarse grid. The final costate is checked against its exact value, `0.24`,
+  and the costate is checked to vanish on the boundary arc.
+
+### 📚 Documentation
+
+- **`flows/constrained.md`**: the same exact initial costate in the example of issue #440.
+
+### ✅ Compatibility
+
+- **No breaking changes**: tests and documentation only; see [BREAKING.md](BREAKING.md).
+
 ## [0.19.1] - 2026-11-25
 
 ### 📚 Documentation

@@ -362,9 +362,16 @@ function test_constraint_label_bounds()
             )
             f_plus = Flows.Flow(ocp, (x, p) -> 1; _opts()...)
             φ = f_minus * (0.9, f_bound) * (1.6, f_plus)
-            xf, pf = φ(0.0, 1.0, -0.982237546583301, 2.0)
+            # exact costate: p(0) = -0.99 makes p vanish at the entry t₁ = 0.9; it stays 0 on
+            # the arc (ṗ = 2x - μ = 0), then ṗ = 2x with x = 0.1 + (t - 1.6), so p(2) = 0.24
+            p0 = -0.99
+            xf, pf = φ(0.0, 1.0, p0, 2.0)
             Test.@test xf ≈ 0.5 atol = 1e-8
-            Test.@test pf ≈ 0.2478 atol = 1e-4
+            Test.@test pf ≈ 0.24 atol = 1e-8
+            p = CTModels.costate(φ((0.0, 2.0), 1.0, p0))
+            Test.@test p(0.9) ≈ 0 atol = 1e-8
+            Test.@test p(1.2) ≈ 0 atol = 1e-8
+            Test.@test p(1.6) ≈ 0 atol = 1e-8
         end
     end
 end
