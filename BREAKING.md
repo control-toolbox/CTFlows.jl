@@ -20,6 +20,20 @@ stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
   # After
   Systems.hamiltonian_gradient(f)
   MultiPhase.switching_times(f), MultiPhase.phase_labels(f), MultiPhase.phase_flows(f)[1]
+- **`Flow(ocp, law; multipliers=:label => μ)` replaces `constraint=` and `multiplier=`**
+  ([#543](https://github.com/control-toolbox/CTFlows.jl/issues/543)). A constraint and its
+  multiplier are given together, as a pair, with the containers of
+  `CTModels.Models.hamiltonian(ocp, u; multipliers)` (a `Pair`, a tuple or vector of pairs, a
+  `NamedTuple`, a `Dict`). The old keywords raise an `IncorrectArgument` with the rewrite.
+
+  ```julia
+  # Before
+  Flow(ocp, u; constraint=:c, multiplier=μ)
+  Flow(ocp, u; constraint=(:a, :b), multiplier=(μa, μb))
+
+  # After
+  Flow(ocp, u; multipliers=:c => μ)
+  Flow(ocp, u; multipliers=(:a => μa, :b => μb))
   ```
 
 ## [0.19.0] - 2026-11-25

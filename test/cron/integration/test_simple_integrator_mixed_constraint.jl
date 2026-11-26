@@ -67,8 +67,7 @@ function test_simple_integrator_mixed_constraint()
             f = Flows.Flow(
                 ocp,
                 (x, p) -> -x[1];
-                constraint=(x, u) -> x[1] + u[1],
-                multiplier=(x, p) -> -1.0 - p[1],
+                multipliers=((x, u) -> x[1] + u[1]) => ((x, p) -> -1.0 - p[1]),
                 hamiltonian_type=ht,
                 alg=Tsit5(),
                 reltol=1e-12,

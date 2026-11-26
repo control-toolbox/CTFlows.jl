@@ -76,8 +76,7 @@ function test_double_integrator_state_first_order()
             f_boundary = Flows.Flow(
                 ocp,
                 (x, p) -> 0.0;
-                constraint=(x, u) -> _V_MAX - x[2],
-                multiplier=(x, p) -> p[1],
+                multipliers=((x, u) -> _V_MAX - x[2]) => ((x, p) -> p[1]),
                 hamiltonian_type=ht,
                 alg=Tsit5(),
                 reltol=1e-12,
