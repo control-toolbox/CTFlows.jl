@@ -155,7 +155,8 @@ function test_generated_grids()
         Test.@testset "backward [$label]" for (label, spec) in SPECS
             f = Flows.Flow(Data.VectorField(x -> [x[2], -x[1]]); _tol()...)
             traj = f((1.0, 0.0), [cos(1.0), -sin(1.0)]; grid=spec)
-            _check_grid(Integrators.times(traj), N, [1.0, 0.0])
+            # a backward trajectory is returned in increasing time (issue #547)
+            _check_grid(Integrators.times(traj), N, [0.0, 1.0])
             Test.@test traj(0.0) ≈ [1.0, 0.0] atol = TOL
         end
 

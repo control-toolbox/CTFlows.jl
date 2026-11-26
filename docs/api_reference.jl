@@ -96,6 +96,7 @@ function generate_api_reference(src_dir::String, ext_dir::String)
                 joinpath("Trajectories", "hamiltonian_vector_field_trajectory.jl"),
                 joinpath("Trajectories", "state_flow_trajectory.jl"),
                 joinpath("Trajectories", "switching.jl"),
+                joinpath("Trajectories", "direction.jl"),
                 joinpath("Trajectories", "grids.jl"),
                 joinpath("Trajectories", "building.jl"),
             ),

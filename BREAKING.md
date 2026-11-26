@@ -5,6 +5,19 @@ stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
 ## Unreleased
 
+- **A trajectory integrated backward is returned in increasing time**
+  ([#547](https://github.com/control-toolbox/CTFlows.jl/issues/547)), single-phase or
+  multi-phase, and the objective of a backward OCP-flow trajectory is the cost of the arc over
+  `[tf, t0]` (it had the wrong sign, and the Mayer term swapped arguments).
+
+  ```julia
+  # Before
+  times(flow((1.0, 0.0), x1))   # [1.0, …, 0.0]
+
+  # After
+  times(flow((1.0, 0.0), x1))   # [0.0, …, 1.0]
+  ```
+
 - **The accessors of a flow have no `get_` prefix, and a flow and its solution share the
   switching functions** ([#544](https://github.com/control-toolbox/CTFlows.jl/issues/544)).
   The gradient accessors and `get_flows`, `get_jumps` lose the prefix (`phase_flows` for the

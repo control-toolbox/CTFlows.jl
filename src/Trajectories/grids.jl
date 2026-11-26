@@ -265,30 +265,36 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Clamp `bounds` to the time actually reached by the solver, `steps[end]`, when an early
-termination (a `terminate!` callback, a blow-up with `unsafe=true`) stops the integration
-before `bounds[end]` (issue #524).
+Clamp `bounds` to the span actually covered by the solver steps, on both sides.
 
-The direction of integration is read from `bounds` (forward if `bounds[end] ≥ bounds[1]`).
-The bounds strictly before the stop time are kept, which preserves the switching times of a
-multi-phase integration, and the stop time closes the list. When the solver reaches
-`bounds[end]` the same vector `bounds` is returned.
+An early termination (a `terminate!` callback, a blow-up with `unsafe=true`) stops the
+integration before `bounds[end]` (issue #524): the stop time closes the list. A trajectory
+integrated backward and stopped early, then read in increasing time (issue #547), starts
+after `bounds[1]`: the first step opens the list. The bounds strictly inside the covered span
+are kept, which preserves the switching times of a multi-phase integration. When the steps
+cover `[bounds[1], bounds[end]]`, the same vector `bounds` is returned.
+
+The direction is read from `bounds` (increasing if `bounds[end] ≥ bounds[1]`); `steps` are in
+the same direction.
 
 # Arguments
 - `bounds::AbstractVector`: the requested times `[t0, …, tf]`, one interval per phase.
-- `steps::AbstractVector`: the distinct primal times of the solver, from `bounds[1]`, in the
-  direction of integration (at least two).
+- `steps::AbstractVector`: the distinct primal times of the solver, in the direction of
+  `bounds` (at least two).
 
 # Returns
-- `AbstractVector`: `bounds` itself, or the bounds up to the stop time, ending at it.
+- `AbstractVector`: `bounds` itself, or the bounds clamped to the covered span.
 
 See also: [`CTFlows.Trajectories.apply_generated_grid`](@extref)
 """
 function _effective_bounds(bounds::AbstractVector, steps::AbstractVector)
-    t_end = steps[end]
-    forward = bounds[end] >= bounds[1]
-    reached = forward ? t_end >= bounds[end] : t_end <= bounds[end]
-    reached && return bounds
-    kept = filter(b -> forward ? b < t_end : b > t_end, @view bounds[(begin + 1):end])
-    return [bounds[begin]; kept; t_end]
+    forward = bounds[end] >= bounds[begin]
+    before(a, b) = forward ? a < b : a > b
+    t_start = before(bounds[begin], steps[begin]) ? steps[begin] : bounds[begin]
+    t_end = before(steps[end], bounds[end]) ? steps[end] : bounds[end]
+    (t_start == bounds[begin] && t_end == bounds[end]) && return bounds
+    kept = filter(
+        b -> before(t_start, b) && before(b, t_end), @view bounds[(begin + 1):(end - 1)]
+    )
+    return [t_start; kept; t_end]
 end

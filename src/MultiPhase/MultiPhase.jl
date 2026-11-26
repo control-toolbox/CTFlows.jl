@@ -10,6 +10,7 @@ module MultiPhase
 
 # 1. External-package imports (qualified, pollution-free)
 using DocStringExtensions: TYPEDEF, TYPEDSIGNATURES
+using CTBase: Core
 using CTBase: Exceptions
 using CTBase: Strategies
 using CTBase: Options

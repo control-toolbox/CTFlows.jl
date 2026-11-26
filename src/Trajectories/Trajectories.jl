@@ -72,6 +72,7 @@ include(joinpath(@__DIR__, "hamiltonian_vector_field_trajectory.jl"))
 include(joinpath(@__DIR__, "state_flow_trajectory.jl"))
 include(joinpath(@__DIR__, "switching.jl"))
 include(joinpath(@__DIR__, "grids.jl"))
+include(joinpath(@__DIR__, "direction.jl"))
 include(joinpath(@__DIR__, "building.jl"))
 
 # ==============================================================================
@@ -85,7 +86,7 @@ export StateProjection, CostateProjection
 export state, time_grid
 export costate
 export control, objective
-export build_trajectory
+export build_trajectory, in_increasing_time
 export switching_times, phase_labels, has_switching, with_labels, left_limit, right_limit
 
 end # module Trajectories

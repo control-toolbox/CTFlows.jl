@@ -388,7 +388,8 @@ function test_saveat_precision()
             f = Flows.Flow(Data.VectorField(x -> [x[2], -x[1]]); _tol()...)
             x1 = [cos(1.0), -sin(1.0)]
             traj = f([1.0, 0.6, 0.2, 0.0], x1)
-            Test.@test Integrators.times(traj) == [1.0, 0.6, 0.2, 0.0]
+            # a backward trajectory is returned in increasing time (issue #547)
+            Test.@test Integrators.times(traj) == [0.0, 0.2, 0.6, 1.0]
             Test.@test traj(0.0) ≈ [1.0, 0.0] atol = TOL
             Test.@test traj(0.4) ≈ [cos(0.4), -sin(0.4)] atol = TOL
         end

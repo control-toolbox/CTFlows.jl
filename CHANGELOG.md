@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 💥 Breaking Changes
 
+#### A trajectory integrated backward is returned in increasing time
+
+- **A backward trajectory (`t0 > tf`) is returned in increasing time**, single-phase or
+  multi-phase: its time grid increases from `tf` to `t0`, as for a forward call over the same
+  interval ([#547](https://github.com/control-toolbox/CTFlows.jl/issues/547)). It was returned
+  in integration order (a decreasing grid).
+- **The objective of a backward trajectory of an OCP flow is the cost of the arc** over
+  `[tf, t0]`, Mayer term `g(x(tf), x(t0))` in its order. It was computed with the bounds
+  swapped: the Lagrange integral with the wrong sign, the Mayer term with swapped arguments.
+- **Why**: one convention for every trajectory, whatever the direction of integration, so
+  that the `Solution`, the switching structure, the duals and the plots read the same.
+
+**Migration**:
+
+```julia
+# Before
+traj = flow((1.0, 0.0), x1)
+times(traj)            # [1.0, …, 0.0]
+
+# After
+traj = flow((1.0, 0.0), x1)
+times(traj)            # [0.0, …, 1.0]; state(traj)(t) is unchanged
+```
+
+See [BREAKING.md](BREAKING.md).
+
 #### The accessors of a flow have no `get_` prefix; a flow and its solution share the switching functions
 
 - **Renamed**: `get_hamiltonian_gradient`, `get_variable_gradient`,
@@ -50,7 +76,30 @@ See [BREAKING.md](BREAKING.md).
 
 ### ✨ New Features
 
+- **A multi-phase flow integrates any horizon**
+  ([#547](https://github.com/control-toolbox/CTFlows.jl/issues/547)): the horizon may start
+  after the first switching time, end before the last one, lie in a single phase, or be
+  backward. Only the phases met are integrated, each on its part of the horizon; a jump is
+  applied at a switching time strictly inside the horizon, and inverted on a backward one (an
+  additive jump is subtracted; a jump given as a function cannot be crossed backward). At a
+  bound equal to a switching time, the value is the one on the side of the horizon. Point and
+  trajectory calls, state and Hamiltonian flows, flows of an OCP and controlled flows.
+- **`variable_costate=true` on the point call of a Hamiltonian multi-phase flow**: the costate
+  of the variable is carried through the phases.
+- **`Trajectories.in_increasing_time(traj)`**: a trajectory in increasing time.
 - **`n_phases(f)` on a single flow** returns `1`, as `phase_flows(f)` returns a 1-tuple.
+
+### 🐛 Bug Fixes
+
+- **A multi-phase flow returned a wrong value, silently, when its horizon did not contain the
+  switching times in order** ([#547](https://github.com/control-toolbox/CTFlows.jl/issues/547)):
+  the phases were taken in the order of the concatenation, each up to its switching time,
+  whatever `t0` and `tf`, so a phase could be integrated backward, or on the wrong interval.
+- **The derivative with respect to a switching time was wrong** (#547): under ForwardDiff, the
+  end of a phase is a `Dual`, and `0.8 >= Dual(0.8, 1.0)` is `false`, so the phase was taken
+  as stopped early and the next phases were skipped — the value was right, its derivative was
+  not. A shooting function differentiated with respect to a switching time now has the right
+  Jacobian. The trajectory call, which threw a `MethodError` in this case, works too.
 
 ### ✅ Compatibility
 

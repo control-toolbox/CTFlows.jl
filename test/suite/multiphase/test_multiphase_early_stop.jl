@@ -95,28 +95,33 @@ function test_multiphase_early_stop()
             Test.@test MultiPhase._reached_end(ForwardDiff.Dual(1.0, 1.0), 0.0, 1.0)
         end
 
-        # ── UNIT: _truncate ─────────────────────────────────────────────────
-        Test.@testset "_truncate: the first phases, switching times and jumps" begin
+        # ── UNIT: _sub ──────────────────────────────────────────────────────
+        Test.@testset "_sub: consecutive phases, switching times and jumps" begin
             f = _decay()
             mpf = f * (0.3, [1.0], f) * (0.6, [2.0], f)
             Test.@test MultiPhase.n_phases(mpf) == 3
-            Test.@test MultiPhase._truncate(mpf, 3) === mpf
-            t2 = MultiPhase._truncate(mpf, 2)
+            Test.@test MultiPhase._sub(mpf, 1:3) === mpf
+            t2 = MultiPhase._sub(mpf, 1:2)
             Test.@test MultiPhase.n_phases(t2) == 2
             Test.@test MultiPhase.switching_times(t2) == [0.3]
             Test.@test MultiPhase.jumps(t2)[1] == [1.0]
-            t1 = MultiPhase._truncate(mpf, 1)
+            t1 = MultiPhase._sub(mpf, 1:1)
             Test.@test MultiPhase.n_phases(t1) == 1
             Test.@test isempty(MultiPhase.switching_times(t1))
+            # the last phases: the switching times and jumps between them
+            t23 = MultiPhase._sub(mpf, 2:3)
+            Test.@test MultiPhase.n_phases(t23) == 2
+            Test.@test MultiPhase.switching_times(t23) == [0.6]
+            Test.@test MultiPhase.jumps(t23)[1] == [2.0]
+            Test.@test isempty(MultiPhase.switching_times(MultiPhase._sub(mpf, 2:2)))
         end
 
-        Test.@testset "_truncate keeps the kind of the flow" begin
+        Test.@testset "_sub keeps the kind of the flow" begin
             h = _osc()
             hmpf = h * (0.3, h) * (0.6, h)
-            Test.@test MultiPhase._truncate(hmpf, 2) isa
-                MultiPhase.MultiPhaseHamiltonianFlow
+            Test.@test MultiPhase._sub(hmpf, 2:3) isa MultiPhase.MultiPhaseHamiltonianFlow
             f = _decay()
-            Test.@test MultiPhase._truncate(f * (0.3, f) * (0.6, f), 2) isa
+            Test.@test MultiPhase._sub(f * (0.3, f) * (0.6, f), 1:2) isa
                 MultiPhase.MultiPhaseStateFlow
         end
 
@@ -199,23 +204,26 @@ function test_multiphase_early_stop()
         end
 
         Test.@testset "backward integration" begin
-            # x(1) = 1, backward: x(t) = e^{1-t}, reaching 1.5 at t = 1 - log(1.5) ≈ 0.595 > 0.5
-            mpf = _decay_stopping(1.5) * (0.5, _decay())
+            # x(1) = 1, backward: x(t) = e^{1-t}, reaching 1.5 at t = 1 - log(1.5) ≈ 0.595 > 0.5.
+            # Backward from t = 1, the first phase integrated is the one holding t = 1: the second.
+            mpf = _decay() * (0.5, _decay_stopping(1.5))
+            # the trajectory is returned in increasing time: from the stop to t0 = 1
             traj = mpf((1.0, 0.0), [1.0]; grid=nothing)
             T = Integrators.times(traj)
-            Test.@test first(T) == 1.0
-            Test.@test last(T) ≈ 1 - log(1.5) atol = TOL
+            Test.@test issorted(T)
+            Test.@test last(T) == 1.0
+            Test.@test first(T) ≈ 1 - log(1.5) atol = TOL
             Test.@test all(>(0.5), T)
-            Test.@test only(traj(last(T))) ≈ 1.5 atol = TOL
+            Test.@test only(traj(first(T))) ≈ 1.5 atol = TOL
         end
 
         Test.@testset "backward integration: default grid ends at the stop" begin
-            mpf = _decay_stopping(1.5) * (0.5, _decay())
+            mpf = _decay() * (0.5, _decay_stopping(1.5))
             T = Integrators.times(mpf((1.0, 0.0), [1.0]))
             Test.@test length(T) == NDEFAULT
-            Test.@test first(T) == 1.0
-            Test.@test last(T) ≈ 1 - log(1.5) atol = TOL
-            Test.@test issorted(T; rev=true)
+            Test.@test last(T) == 1.0
+            Test.@test first(T) ≈ 1 - log(1.5) atol = TOL
+            Test.@test issorted(T)
         end
 
         Test.@testset "phase labels follow the phases that were integrated" begin
@@ -298,7 +306,8 @@ function test_multiphase_early_stop()
         end
 
         Test.@testset "point call: backward" begin
-            mpf = _decay_stopping(1.5) * (0.5, _decay())
+            # backward from t = 1: the second phase first, stopped at t = 1 - log(1.5) > 0.5
+            mpf = _decay() * (0.5, _decay_stopping(1.5))
             Test.@test only(mpf(1.0, [1.0], 0.0)) ≈ 1.5 atol = TOL
         end
 
