@@ -190,9 +190,7 @@ Fallback: no AD-backed pseudo-Hamiltonian to differentiate.
 See also: [`CTFlows.Systems.pseudo_hamiltonian_gradient`](@extref).
 """
 function pseudo_hamiltonian_gradient(sys::AbstractSystem; kwargs...)
-    return _unavailable(
-        :pseudo_hamiltonian_gradient, "pseudo-Hamiltonian gradient", sys
-    )
+    return _unavailable(:pseudo_hamiltonian_gradient, "pseudo-Hamiltonian gradient", sys)
 end
 
 """

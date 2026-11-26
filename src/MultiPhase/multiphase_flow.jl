@@ -258,7 +258,8 @@ MultiPhase.phase_labels(f1 * (0.5, f2))   # ["bang+", "bang-"]
 See also: [`CTFlows.Flows.label`](@extref), [`CTFlows.MultiPhase.phase_flows`](@extref).
 """
 phase_labels(f::Flows.AbstractFlow)::Vector{String} = String[Flows.label(f)]
-phase_labels(mpf::MultiPhaseFlow)::Vector{String} = String[Flows.label(f) for f in mpf.flows]
+phase_labels(mpf::MultiPhaseFlow)::Vector{String} =
+    String[Flows.label(f) for f in mpf.flows]
 
 # ==============================================================================
 # Base.show

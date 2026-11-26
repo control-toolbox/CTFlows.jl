@@ -148,10 +148,18 @@ function test_accessor_names()
             f = _plus() * (0.5, _minus())
             for (old, call, new) in (
                 (:get_flow, () -> MultiPhase.get_flow(f, 1), "phase_flows(f)[i]"),
-                (:get_switching_time, () -> MultiPhase.get_switching_time(f, 1), "switching_times(f)[i]"),
+                (
+                    :get_switching_time,
+                    () -> MultiPhase.get_switching_time(f, 1),
+                    "switching_times(f)[i]",
+                ),
                 (:get_jump, () -> MultiPhase.get_jump(f, 1), "jumps(f)[i]"),
                 (:get_flows, () -> MultiPhase.get_flows(f), "phase_flows(f)"),
-                (:get_switching_times, () -> MultiPhase.get_switching_times(f), "switching_times(f)"),
+                (
+                    :get_switching_times,
+                    () -> MultiPhase.get_switching_times(f),
+                    "switching_times(f)",
+                ),
                 (:get_jumps, () -> MultiPhase.get_jumps(f), "jumps(f)"),
                 (:get_labels, () -> MultiPhase.get_labels(f), "phase_labels(f)"),
             )

@@ -31,8 +31,9 @@ $(TYPEDSIGNATURES)
 Removed: use [`CTFlows.Systems.hamiltonian_gradient`](@extref). Throws a
 `CTBase.Exceptions.PreconditionError`.
 """
-get_hamiltonian_gradient(args...; kwargs...) =
-    _removed_gradient(:get_hamiltonian_gradient, :hamiltonian_gradient)
+function get_hamiltonian_gradient(args...; kwargs...)
+    return _removed_gradient(:get_hamiltonian_gradient, :hamiltonian_gradient)
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -40,8 +41,9 @@ $(TYPEDSIGNATURES)
 Removed: use [`CTFlows.Systems.variable_gradient`](@extref). Throws a
 `CTBase.Exceptions.PreconditionError`.
 """
-get_variable_gradient(args...; kwargs...) =
-    _removed_gradient(:get_variable_gradient, :variable_gradient)
+function get_variable_gradient(args...; kwargs...)
+    return _removed_gradient(:get_variable_gradient, :variable_gradient)
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -49,8 +51,9 @@ $(TYPEDSIGNATURES)
 Removed: use [`CTFlows.Systems.pseudo_hamiltonian_gradient`](@extref). Throws a
 `CTBase.Exceptions.PreconditionError`.
 """
-get_pseudo_hamiltonian_gradient(args...; kwargs...) =
-    _removed_gradient(:get_pseudo_hamiltonian_gradient, :pseudo_hamiltonian_gradient)
+function get_pseudo_hamiltonian_gradient(args...; kwargs...)
+    return _removed_gradient(:get_pseudo_hamiltonian_gradient, :pseudo_hamiltonian_gradient)
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -58,5 +61,6 @@ $(TYPEDSIGNATURES)
 Removed: use [`CTFlows.Systems.pseudo_variable_gradient`](@extref). Throws a
 `CTBase.Exceptions.PreconditionError`.
 """
-get_pseudo_variable_gradient(args...; kwargs...) =
-    _removed_gradient(:get_pseudo_variable_gradient, :pseudo_variable_gradient)
+function get_pseudo_variable_gradient(args...; kwargs...)
+    return _removed_gradient(:get_pseudo_variable_gradient, :pseudo_variable_gradient)
+end

@@ -133,8 +133,7 @@ function test_multiphase_flow()
                 result = MultiPhase.switching_times(flow)
                 Test.@test result isa Vector{Real}
                 Test.@test length(result) == 0
-                Test.@test Test.@inferred(MultiPhase.switching_times(flow)) isa
-                    Vector{Real}
+                Test.@test Test.@inferred(MultiPhase.switching_times(flow)) isa Vector{Real}
             end
 
             Test.@testset "jumps returns empty Any vector" begin

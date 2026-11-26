@@ -38,8 +38,9 @@ $(TYPEDSIGNATURES)
 
 Removed: use `switching_times(f)[i]`. Throws a `CTBase.Exceptions.PreconditionError`.
 """
-get_switching_time(args...) =
-    _removed_accessor("get_switching_time(f, i)", "switching_times(f)[i]")
+function get_switching_time(args...)
+    return _removed_accessor("get_switching_time(f, i)", "switching_times(f)[i]")
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -60,7 +61,9 @@ $(TYPEDSIGNATURES)
 
 Removed: use `switching_times(f)`. Throws a `CTBase.Exceptions.PreconditionError`.
 """
-get_switching_times(args...) = _removed_accessor("get_switching_times(f)", "switching_times(f)")
+function get_switching_times(args...)
+    return _removed_accessor("get_switching_times(f)", "switching_times(f)")
+end
 
 """
 $(TYPEDSIGNATURES)
