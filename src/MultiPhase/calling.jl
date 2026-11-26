@@ -39,10 +39,76 @@ end
 """
 $(TYPEDSIGNATURES)
 
+The phases of a multi-phase flow met by the horizon from `t0` to `tf`, in the order of the
+integration (issue #547).
+
+The phase `k` holds on `[t_{k-1}, t_k]`, with the switching times `t_1 < … < t_{n-1}`; the
+first phase extends to `-∞` and the last one to `+∞`. Every phase that meets the horizon is
+integrated on its intersection with it, in increasing time when `t0 ≤ tf` and in decreasing
+time when `t0 > tf`. A switching time is **crossed** only when it lies strictly inside the
+horizon; at a bound of the horizon equal to a switching time, the phase on the side of the
+horizon is used, and no jump is applied: `φ(tᵢ, x, tf)` starts the phase `i + 1` from `x`, and
+`φ(t0, x, tᵢ)` ends the phase `i` at `tᵢ`.
+
+# Arguments
+- `switches`: the switching times `t_1 < … < t_{n-1}`.
+- `t0`, `tf`: the horizon.
+
+# Returns
+- `Vector{Tuple{Int,Any,Any,Int}}`: one `(k, a, b, c)` per phase, in integration order: the
+  phase `k` is integrated from `a` to `b`, after crossing the switching time `t_c` (`c = 0`
+  for the first phase, which crosses none).
+"""
+function _phase_plan(switches, t0, tf)
+    if t0 <= tf
+        k0 = searchsortedlast(switches, t0) + 1
+        kf = max(searchsortedfirst(switches, tf), k0)
+        return [
+            (
+                k,
+                k == k0 ? t0 : switches[k - 1],
+                k == kf ? tf : switches[k],
+                k == k0 ? 0 : k - 1,
+            ) for k in k0:kf
+        ]
+    else
+        k0 = searchsortedfirst(switches, t0)
+        kf = min(searchsortedlast(switches, tf) + 1, k0)
+        return [
+            (
+                k,
+                k == k0 ? t0 : switches[k],
+                k == kf ? tf : switches[k - 1],
+                k == k0 ? 0 : k,
+            ) for k in k0:-1:kf
+        ]
+    end
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Cross the switching time `t_c` of `mpf` with the state `state`: apply its jump in the forward
+direction, its inverse in the backward one (see
+[`CTFlows.MultiPhase._apply_inverse_jump`](@extref)).
+"""
+function _cross(mpf::MultiPhaseFlow, c::Int, state, forward::Bool)
+    isnothing(jumps(mpf)[c]) && return state
+    return forward ? _apply_jump(mpf, c, state) : _apply_inverse_jump(mpf, c, state)
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Evaluate a multi-phase flow for a point configuration, returning only the final state.
 
-Iterates through all phases sequentially, applying jumps at switching times. A phase that
-stops before its switching time (a `terminate!` callback, a failure with `unsafe=true`) ends
+The horizon `[t0, tf]` may be anywhere: it may start after the first switching time, end
+before the last one, lie in a single phase, or be backward (`t0 > tf`). The phases met by the
+horizon are integrated in the order of the integration, each on its intersection with the
+horizon, and the jumps of the switching times strictly inside the horizon are applied — their
+inverse on a backward horizon. See [`CTFlows.MultiPhase._phase_plan`](@extref).
+
+A phase that stops before its end (a `terminate!` callback, a failure with `unsafe=true`) ends
 the flow: the following phases are not integrated, no jump is applied, and the state at the
 stop time is returned, as the point call of a single flow does (issue #526).
 
@@ -53,47 +119,97 @@ stop time is returned, as the point call of a single flow does (issue #526).
 - `unsafe`: If true, bypass ODE solver retcode checking.
 
 # Returns
-- Final state after all phases.
+- The state at `tf` (or at the stop time).
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if a backward horizon crosses a jump
+  given as a function, which has no inverse.
 
 See also: [`CTFlows.MultiPhase._evaluate_phase`](@extref), [`CTFlows.MultiPhase._apply_jump`](@extref).
 """
 function _evaluate_multiphase(mpf, config::Configs.AbstractEndPointConfig; variable, unsafe)
     t0, tf = Configs.tspan(config)
-    current_state = _extract_initial_state(config)
-    current_t = t0
+    state = _extract_initial_state(config)
     n_ph = n_phases(mpf)
-
-    for i in 1:n_ph
-        t_end = (i < n_ph) ? switching_times(mpf)[i] : tf
-
-        current_state, t_reached = let t = current_t, state = current_state
-            _in_phase(i, n_ph, unsafe) do
+    for (k, a, b, c) in _phase_plan(switching_times(mpf), t0, tf)
+        c > 0 && (state = _cross(mpf, c, state, t0 <= tf))
+        state, t_reached = let s = state
+            _in_phase(k, n_ph, unsafe) do
                 return _evaluate_phase_reached(
-                    phase_flows(mpf)[i],
-                    t,
-                    t_end,
-                    state,
+                    phase_flows(mpf)[k],
+                    a,
+                    b,
+                    s,
                     config;
                     variable=variable,
                     unsafe=unsafe,
                 )
             end
         end
+        # a phase stopped before its end ends the flow, with no jump
+        _reached_end(t_reached, a, b) || break
+    end
+    return _format_final_output(mpf, state)
+end
 
-        # a phase stopped before its switching time ends the flow, with no jump
-        _reached_end(t_reached, current_t, t_end) || break
+"""
+$(TYPEDSIGNATURES)
 
-        current_t = t_end
+Point call of a multi-phase Hamiltonian flow with `variable_costate=true`: the phases met by
+the horizon are integrated as in [`CTFlows.MultiPhase._evaluate_multiphase`](@extref), each
+with the costate of the variable, `ṗv = -∂H/∂v`, carried from one phase to the next from
+`pv(t0) = 0`. The jumps act on the state and the costate only.
 
-        if i < n_ph
-            jump = jumps(mpf)[i]
-            if !isnothing(jump)
-                current_state = _apply_jump(mpf, i, current_state)
+# Returns
+- `(xf, pf, pvf)` at `tf`, or at the stop time of a phase stopped early.
+
+# Throws
+- `CTBase.Exceptions.PreconditionError`: if a phase does not support the costate of the
+  variable, or if `variable` is not given (as for a single flow).
+"""
+function _evaluate_multiphase_variable_costate(mpf, config; variable, unsafe)
+    t0, tf = Configs.tspan(config)
+    x, p = _extract_initial_state(config)
+    n_ph = n_phases(mpf)
+    plan = _phase_plan(switching_times(mpf), t0, tf)
+    # the checks of a single flow: every phase supports it, and the variable is given
+    for (k, a, b, _) in plan
+        raw = _raw_flow(phase_flows(mpf)[k])
+        Traits.variable_costate_trait(raw) === Traits.SupportsVariableCostate ||
+            return Flows._invoke_flow_variable_costate(
+                raw,
+                Configs.HamiltonianEndPointConfig(a, x, p, b);
+                variable=variable,
+                unsafe=unsafe,
+            )
+    end
+    variable isa Core.NotProvidedType && return Flows._invoke_flow_variable_costate(
+        _raw_flow(phase_flows(mpf)[first(plan)[1]]),
+        config;
+        variable=variable,
+        unsafe=unsafe,
+    )
+    # pv(t0) = 0, built as for a single flow (device-resident when x is)
+    n_v = length(variable)
+    pv = Systems._coerce_state(variable)(
+        x isa AbstractArray ? fill!(similar(x, n_v), 0) : zeros(eltype(x), n_v)
+    )
+    for (k, a, b, c) in plan
+        c > 0 && ((x, p) = _cross(mpf, c, (x, p), t0 <= tf))
+        raw = _raw_flow(phase_flows(mpf)[k])
+        (x, p, pv), t_reached = let x = x, p = p, pv = pv
+            _in_phase(k, n_ph, unsafe) do
+                return Flows._invoke_flow(
+                    Flows._timed(raw),
+                    Configs.AugmentedHamiltonianEndPointConfig(a, x, p, pv, b);
+                    variable=variable,
+                    unsafe=unsafe,
+                )
             end
         end
+        _reached_end(t_reached, a, b) || break
     end
-
-    return _format_final_output(mpf, current_state)
+    return (x, p, pv)
 end
 
 """
@@ -144,9 +260,16 @@ $(TYPEDSIGNATURES)
 
 Evaluate a multi-phase flow for a trajectory configuration, returning the full trajectory.
 
-Iterates through all phases sequentially, collecting segment results and applying jumps at switching times.
-A phase that stops before its switching time (a `terminate!` callback, a failure with `unsafe=true`)
-ends the flow (issue #526): the following phases are not integrated, no jump is applied, and the
+The phases met by the horizon are integrated as for the point call (see
+[`CTFlows.MultiPhase._phase_plan`](@extref)): the horizon may start after the first switching
+time, end before the last one, or be backward. The trajectory is returned **in increasing
+time** whatever the direction of integration: its switching times are those strictly inside
+the horizon, in increasing order, its phase labels those of the phases met, in increasing
+time, and it is left-continuous at a switching time (the value at `tᵢ` is the one before the
+jump, in increasing time). See [`CTFlows.Trajectories.in_increasing_time`](@extref).
+
+A phase that stops before its end (a `terminate!` callback, a failure with `unsafe=true`) ends
+the flow (issue #526): the following phases are not integrated, no jump is applied, and the
 trajectory, its labels, its switching times and its output grid stop at the stop time.
 
 # Arguments
@@ -156,7 +279,11 @@ trajectory, its labels, its switching times and its output grid stop at the stop
 - `unsafe`: If true, bypass ODE solver retcode checking.
 
 # Returns
-- Merged trajectory solution after all phases.
+- The merged trajectory over the phases met, in increasing time.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if a backward horizon crosses a jump
+  given as a function, which has no inverse.
 
 See also: [`CTSolvers.Integrators.merge`](@extref), [`CTFlows.MultiPhase._evaluate_phase`](@extref), [`CTFlows.MultiPhase._apply_jump`](@extref).
 """
@@ -164,57 +291,51 @@ function _evaluate_multiphase(
     mpf, config::Configs.AbstractTrajectoryConfig; variable, unsafe
 )
     t0, tf = Configs.tspan(config)
-    current_state = _extract_initial_state(config)
-    current_t = t0
+    forward = t0 <= tf
+    state = _extract_initial_state(config)
     n_ph = n_phases(mpf)
-
     results = nothing
-    n_done = 0
+    met = Int[]
 
-    for i in 1:n_ph
-        t_end = (i < n_ph) ? switching_times(mpf)[i] : tf
-
-        segment_result = let t = current_t, state = current_state
-            _in_phase(i, n_ph, unsafe) do
+    for (k, a, b, c) in _phase_plan(switching_times(mpf), t0, tf)
+        c > 0 && (state = _cross(mpf, c, state, forward))
+        segment = let s = state
+            _in_phase(k, n_ph, unsafe) do
                 return _evaluate_phase(
-                    phase_flows(mpf)[i],
-                    t,
-                    t_end,
-                    state,
+                    phase_flows(mpf)[k],
+                    a,
+                    b,
+                    s,
                     config;
                     variable=variable,
                     unsafe=unsafe,
                 )
             end
         end
-        results = isnothing(results) ? [segment_result] : push!(results, segment_result)
-        n_done = i
-
-        # a phase stopped before its switching time ends the flow, with no jump
-        _reached_end(Integrators.times(segment_result)[end], current_t, t_end) || break
-
-        current_state = _extract_final_state(mpf, segment_result, current_state)
-        current_t = t_end
-
-        if i < n_ph
-            jump = jumps(mpf)[i]
-            if !isnothing(jump)
-                current_state = _apply_jump(mpf, i, current_state)
-            end
-        end
+        # `vcat`, not `push!`: under ForwardDiff the phases may have different types (a
+        # switching time differentiated makes the next phases start from a `Dual`)
+        results = isnothing(results) ? [segment] : [results; segment]
+        push!(met, k)
+        # a phase stopped before its end ends the flow, with no jump
+        _reached_end(Integrators.times(segment)[end], a, b) || break
+        state = _extract_final_state(mpf, segment, state)
     end
 
-    # the flow of the phases integrated: the switching times and labels of the others do not exist
-    mpf = _truncate(mpf, n_done)
-    merged = Integrators.merge(results)
+    # the flow of the phases met, in increasing time: the others do not exist here
+    mpf = _sub(mpf, minimum(met):maximum(met))
+    # merged in integration order, then read in increasing time
+    merged = Trajectories.in_increasing_time(Integrators.merge(results))
     # the phase labels of the flows, when at least one phase is labelled
     labels = phase_labels(mpf)
     any(!isempty, labels) && (merged = Trajectories.with_labels(merged, labels))
     grid = Configs.output_grid(config)
-    # a grid of times is returned exactly (no switching time added); a generated grid is
-    # built on the merged trajectory, over the phases
-    grid isa AbstractVector && (merged = Integrators.regrid(merged, grid))
-    bounds = vcat(t0, [switching_times(mpf)[i] for i in 1:(n_phases(mpf) - 1)], tf)
+    # a grid of times is returned exactly (no switching time added), in increasing time; a
+    # generated grid is built on the merged trajectory, over the phases
+    grid isa AbstractVector && (merged = Integrators.regrid(merged, sort(collect(grid))))
+    lo, hi = minmax(t0, tf)
+    # the bounds of the generated output grid, as primal values: the grid is an output, not
+    # a differentiable quantity (a switching time differentiated by ForwardDiff is a `Dual`)
+    bounds = Integrators.deepvalue.(vcat(lo, switching_times(mpf), hi))
     return _finalize_multiphase_trajectory(mpf, merged, variable, grid, bounds)
 end
 
@@ -679,7 +800,12 @@ function _evaluate_phase(
     unsafe,
 )
     times = _phase_times(t0, tf, Configs.output_grid(config))
-    return _raw_flow(flow)(times, x; variable=variable, unsafe=unsafe, grid=nothing)
+    # the phase in integration order (not the public call, which returns increasing time),
+    # with the checks of the public call (a grid of times and `saveat` are exclusive)
+    raw = _raw_flow(flow)
+    phase_config = Configs.StateTrajectoryConfig(times, x; grid=nothing)
+    Flows._check_output_grid(raw, phase_config)
+    return Flows._invoke_flow(raw, phase_config; variable=variable, unsafe=unsafe)
 end
 
 """
@@ -750,7 +876,12 @@ function _evaluate_phase(
 )
     x, p = state_tuple
     times = _phase_times(t0, tf, Configs.output_grid(config))
-    return _raw_flow(flow)(times, x, p; variable=variable, unsafe=unsafe, grid=nothing)
+    # the phase in integration order (not the public call, which returns increasing time),
+    # with the checks of the public call (a grid of times and `saveat` are exclusive)
+    raw = _raw_flow(flow)
+    phase_config = Configs.HamiltonianTrajectoryConfig(times, x, p; grid=nothing)
+    Flows._check_output_grid(raw, phase_config)
+    return Flows._invoke_flow(raw, phase_config; variable=variable, unsafe=unsafe)
 end
 
 """
@@ -760,34 +891,38 @@ Whether a phase integrated from `t_start` reached its end `t_end`, given the las
 `t_reached` of its integration, in the direction of integration. A phase stopped before
 `t_end` (a `terminate!` callback, a failure with `unsafe=true`) has not.
 
-See also: [`CTFlows.MultiPhase._truncate`](@extref).
+See also: [`CTFlows.MultiPhase._sub`](@extref).
 """
 function _reached_end(t_reached, t_start, t_end)
+    # primal values on every side: a switching time differentiated by ForwardDiff is a
+    # `Dual`, and `0.8 >= Dual(0.8, 1.0)` is `false` — the phase would be taken as stopped
+    # early, and the next phases skipped (issue #547)
     t = Integrators.deepvalue(t_reached)
-    return t_start <= t_end ? t >= t_end : t <= t_end
+    t0, tf = Integrators.deepvalue(t_start), Integrators.deepvalue(t_end)
+    return t0 <= tf ? t >= tf : t <= tf
 end
 
 """
 $(TYPEDSIGNATURES)
 
-The multi-phase flow made of the first `n` phases of `mpf`, with their switching times and
-jumps: the flow that is actually integrated when the phase `n` stops before its switching
-time. It is `mpf` itself when `n` is the number of phases.
+The multi-phase flow made of the phases `r` of `mpf` (a range of consecutive phases), with the
+switching times and jumps between them: the flow of the phases met by a horizon, or integrated
+before an early stop. It is `mpf` itself when `r` covers every phase.
 
 # Arguments
 - `mpf::MultiPhaseFlow`: The multi-phase flow.
-- `n::Int`: The number of phases kept, `1 ≤ n ≤ n_phases(mpf)`.
+- `r::UnitRange{Int}`: The phases kept, `1 ≤ first(r) ≤ last(r) ≤ n_phases(mpf)`.
 
 # Returns
-- `MultiPhaseFlow`: the flow of the first `n` phases.
+- `MultiPhaseFlow`: the flow of the phases `r`.
 
-See also: [`CTFlows.MultiPhase._reached_end`](@extref).
+See also: [`CTFlows.MultiPhase._phase_plan`](@extref).
 """
-function _truncate(mpf::MultiPhaseFlow, n::Int)
-    n == n_phases(mpf) && return mpf
-    flows = mpf.flows[1:n]
-    times = mpf.switching_times[1:(n - 1)]
-    js = mpf.jumps[1:(n - 1)]
+function _sub(mpf::MultiPhaseFlow, r::UnitRange{Int})
+    r == 1:n_phases(mpf) && return mpf
+    flows = mpf.flows[r]
+    times = mpf.switching_times[first(r):(last(r) - 1)]
+    js = mpf.jumps[first(r):(last(r) - 1)]
     return if mpf isa MultiPhaseStateFlow
         MultiPhaseStateFlow(flows, times, js)
     else
@@ -1202,6 +1337,78 @@ function _apply_hamiltonian_jump(state_tuple::Tuple, jump)
     return (x, p .+ jump)
 end
 
+# ==============================================================================
+# Inverse jumps — a backward horizon crosses a switching time in the other direction
+# ==============================================================================
+
+"""
+$(TYPEDSIGNATURES)
+
+Throw the error of a jump given as a function, crossed by a backward horizon: its inverse is
+not known.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): always.
+"""
+function _no_inverse_jump(i)
+    return throw(
+        Exceptions.IncorrectArgument(
+            "a jump given as a function cannot be crossed backward";
+            got="the jump at the switching time number $i is a function",
+            expected="an additive jump (a vector or a number, inverted by subtraction) or no jump",
+            suggestion="Give the jump as a vector, or integrate forward through this " *
+                       "switching time; a backward horizon applies the inverse of every jump " *
+                       "it crosses",
+            context="multi-phase flow on a backward horizon (t0 > tf) — inverse jump",
+        ),
+    )
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Undo an additive jump on a single component: `v .- j`.
+
+See also: [`CTFlows.MultiPhase._apply_component_jump`](@extref).
+"""
+_inverse_component_jump(v, j, i) = v .- j
+_inverse_component_jump(v, ::Nothing, i) = v
+_inverse_component_jump(v, ::Function, i) = _no_inverse_jump(i)
+
+"""
+$(TYPEDSIGNATURES)
+
+Apply the inverse of the jump at the `i`-th switching time of `mpf`, for a backward horizon
+that crosses it: the state before the jump, in increasing time, from the state after it.
+
+An additive jump (a vector or a number, on the state, or on the costate of a Hamiltonian flow)
+is undone by subtraction, and `nothing` leaves the component unchanged. A jump given as a
+function has no known inverse: crossing it backward throws.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if the jump, or one of its components, is
+  a function.
+
+See also: [`CTFlows.MultiPhase._apply_jump`](@extref).
+"""
+function _apply_inverse_jump(mpf::MultiPhaseFlow, i, state)
+    return _apply_inverse_jump(Traits.dynamics_trait(mpf), jumps(mpf)[i], i, state)
+end
+function _apply_inverse_jump(::Type{Traits.StateDynamics}, jump, i, state)
+    return _inverse_component_jump(state, jump, i)
+end
+function _apply_inverse_jump(::Type{Traits.HamiltonianDynamics}, jump::Tuple, i, state)
+    x, p = state
+    return (_inverse_component_jump(x, jump[1], i), _inverse_component_jump(p, jump[2], i))
+end
+function _apply_inverse_jump(::Type{Traits.HamiltonianDynamics}, ::Function, i, state)
+    return _no_inverse_jump(i)
+end
+function _apply_inverse_jump(::Type{Traits.HamiltonianDynamics}, jump, i, state)
+    x, p = state
+    return (x, p .- jump)
+end
+
 """
 $(TYPEDSIGNATURES)
 
@@ -1269,6 +1476,22 @@ Convenience call for `MultiPhaseStateFlow` with point configuration.
 
 Builds a `StateEndPointConfig` internally and evaluates the multi-phase flow.
 
+# Horizon
+
+The horizon may be anywhere with respect to the switching times `t_1 < … < t_{n-1}` (issue
+#547): it may start after the first one, end before the last one, lie in a single phase, or
+be **backward** (`t0 > tf`). Only the phases met by the horizon are integrated, each on its
+intersection with it; the phase `k` holds on `[t_{k-1}, t_k]`, the first one extending to
+`-∞` and the last one to `+∞`.
+
+- A jump is applied only at a switching time **strictly inside** the horizon. At a bound equal
+  to a switching time `tᵢ`, the given and the returned values are those on the side of the
+  horizon: `mpf(tᵢ, x, tf)` starts the phase `i + 1` from `x`, with no jump.
+- On a backward horizon, the jumps crossed are **inverted**: an additive jump (a vector or a
+  number) is subtracted, and a jump given as a function, whose inverse is not known, throws an
+  `IncorrectArgument`.
+- So `mpf(tf, mpf(t0, x0, tf), t0)` gives `x0` back, up to the integration tolerances.
+
 # Arguments
 - `mpf::MultiPhaseStateFlow`: The multi-phase state flow to evaluate.
 - `t0::Real`: Initial time.
@@ -1306,7 +1529,29 @@ $(TYPEDSIGNATURES)
 Convenience call for `MultiPhaseStateFlow` with trajectory configuration.
 
 Builds a `StateTrajectoryConfig` internally and evaluates the multi-phase flow,
-returning a merged trajectory from all phases.
+returning a merged trajectory over the phases met by the horizon.
+
+# Horizon
+
+The horizon may be anywhere with respect to the switching times `t_1 < … < t_{n-1}` (issue
+#547): it may start after the first one, end before the last one, lie in a single phase, or
+be **backward** (`t0 > tf`). Only the phases met by the horizon are integrated, each on its
+intersection with it; the phase `k` holds on `[t_{k-1}, t_k]`, the first one extending to
+`-∞` and the last one to `+∞`.
+
+- A jump is applied only at a switching time **strictly inside** the horizon. At a bound equal
+  to a switching time `tᵢ`, the given and the returned values are those on the side of the
+  horizon: `mpf(tᵢ, x, tf)` starts the phase `i + 1` from `x`, with no jump.
+- On a backward horizon, the jumps crossed are **inverted**: an additive jump (a vector or a
+  number) is subtracted, and a jump given as a function, whose inverse is not known, throws an
+  `IncorrectArgument`.
+- So `mpf(tf, mpf(t0, x0, tf), t0)` gives `x0` back, up to the integration tolerances.
+
+The trajectory is returned **in increasing time**, whatever the direction of integration: an
+increasing time grid, the switching times strictly inside the horizon in increasing order, the
+labels of the phases met in increasing time, and left continuity at a switching time (the
+value at `tᵢ` is the one before the jump, in increasing time). For phases built from an OCP,
+the objective is the cost of the arc over `[min(t0, tf), max(t0, tf)]`.
 
 # Arguments
 - `mpf::MultiPhaseStateFlow`: The multi-phase state flow to evaluate.
@@ -1351,6 +1596,22 @@ Convenience call for `MultiPhaseHamiltonianFlow` with point configuration.
 
 Builds a `HamiltonianEndPointConfig` internally and evaluates the multi-phase flow.
 
+# Horizon
+
+The horizon may be anywhere with respect to the switching times `t_1 < … < t_{n-1}` (issue
+#547): it may start after the first one, end before the last one, lie in a single phase, or
+be **backward** (`t0 > tf`). Only the phases met by the horizon are integrated, each on its
+intersection with it; the phase `k` holds on `[t_{k-1}, t_k]`, the first one extending to
+`-∞` and the last one to `+∞`.
+
+- A jump is applied only at a switching time **strictly inside** the horizon. At a bound equal
+  to a switching time `tᵢ`, the given and the returned values are those on the side of the
+  horizon: `mpf(tᵢ, x, tf)` starts the phase `i + 1` from `x`, with no jump.
+- On a backward horizon, the jumps crossed are **inverted**: an additive jump (a vector or a
+  number) is subtracted, and a jump given as a function, whose inverse is not known, throws an
+  `IncorrectArgument`.
+- So `mpf(tf, mpf(t0, x0, tf), t0)` gives `x0` back, up to the integration tolerances.
+
 # Arguments
 - `mpf::MultiPhaseHamiltonianFlow`: The multi-phase Hamiltonian flow to evaluate.
 - `t0::Real`: Initial time.
@@ -1361,9 +1622,12 @@ Builds a `HamiltonianEndPointConfig` internally and evaluates the multi-phase fl
 - `unsafe`: If `true`, bypass ODE solver retcode checking and return what was computed up to
   an integration failure; if `false`, throw `SolverFailure` on integration failure, with the
   call in its context and a suggestion to call the flow with `unsafe=true`.
+- `variable_costate`: If `true`, also integrate the costate of the variable,
+  `ṗv = -∂H/∂v` from `pv(t0) = 0`, through every phase met (the jumps do not act on it), and
+  return `(xf, pf, pvf)`. Every phase must support it, as for a single flow.
 
 # Returns
-- The final state and costate after sequential integration through all phases.
+- `(xf, pf)` at `tf` (or at the stop time), or `(xf, pf, pvf)` with `variable_costate=true`.
 
 # Example
 \`\`\`julia
@@ -1376,9 +1640,17 @@ sol = mpf(0.0, [1.0, 0.0], [0.5, 0.3], 3.0)
 See also: [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@extref), [`CTFlows.Configs.HamiltonianEndPointConfig`](@extref).
 """
 function (mpf::MultiPhaseFlow{TD,VD,Traits.HamiltonianDynamics})(
-    t0::Real, x0, p0, tf::Real; variable=Flows.__variable(), unsafe=Flows.__unsafe()
+    t0::Real,
+    x0,
+    p0,
+    tf::Real;
+    variable=Flows.__variable(),
+    unsafe=Flows.__unsafe(),
+    variable_costate::Bool=Flows.__variable_costate(),
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     config = Configs.HamiltonianEndPointConfig(t0, x0, p0, tf)
+    variable_costate &&
+        return _evaluate_multiphase_variable_costate(mpf, config; variable, unsafe)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end
 
@@ -1388,7 +1660,32 @@ $(TYPEDSIGNATURES)
 Convenience call for `MultiPhaseHamiltonianFlow` with trajectory configuration.
 
 Builds a `HamiltonianTrajectoryConfig` internally and evaluates the multi-phase flow,
-returning a merged trajectory from all phases.
+returning a merged trajectory over the phases met by the horizon.
+
+# Horizon
+
+The horizon may be anywhere with respect to the switching times `t_1 < … < t_{n-1}` (issue
+#547): it may start after the first one, end before the last one, lie in a single phase, or
+be **backward** (`t0 > tf`). Only the phases met by the horizon are integrated, each on its
+intersection with it; the phase `k` holds on `[t_{k-1}, t_k]`, the first one extending to
+`-∞` and the last one to `+∞`.
+
+- A jump is applied only at a switching time **strictly inside** the horizon. At a bound equal
+  to a switching time `tᵢ`, the given and the returned values are those on the side of the
+  horizon: `mpf(tᵢ, x, tf)` starts the phase `i + 1` from `x`, with no jump.
+- On a backward horizon, the jumps crossed are **inverted**: an additive jump (a vector or a
+  number) is subtracted, and a jump given as a function, whose inverse is not known, throws an
+  `IncorrectArgument`.
+- So `mpf(tf, mpf(t0, x0, tf), t0)` gives `x0` back, up to the integration tolerances.
+
+The trajectory is returned **in increasing time**, whatever the direction of integration: an
+increasing time grid, the switching times strictly inside the horizon in increasing order, the
+labels of the phases met in increasing time, and left continuity at a switching time (the
+value at `tᵢ` is the one before the jump, in increasing time). For phases built from an OCP,
+the objective is the cost of the arc over `[min(t0, tf), max(t0, tf)]`.
+
+`variable_costate=true` is not supported on a trajectory call, as for a single flow: it throws
+a `PreconditionError`.
 
 # Arguments
 - `mpf::MultiPhaseHamiltonianFlow`: The multi-phase Hamiltonian flow to evaluate.
@@ -1420,10 +1717,15 @@ function (mpf::MultiPhaseFlow{TD,VD,Traits.HamiltonianDynamics})(
     p0;
     variable=Flows.__variable(),
     unsafe=Flows.__unsafe(),
+    variable_costate::Bool=Flows.__variable_costate(),
     grid=Flows.__grid(),
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
     grid = Flows._default_grid(grid, tspan, phase_flows(mpf)...)
     config = Configs.HamiltonianTrajectoryConfig(tspan, x0, p0; grid=grid)
+    # as for a single flow: the costate of the variable is a point-call output only
+    variable_costate && return Flows._invoke_flow_variable_costate(
+        _raw_flow(first(phase_flows(mpf))), config; variable=variable, unsafe=unsafe
+    )
     _check_phase_grids(mpf, config)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
 end

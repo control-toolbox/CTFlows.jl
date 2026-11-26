@@ -131,8 +131,9 @@ function test_default_grid_calls()
         end
 
         Test.@testset "backward integration" begin
+            # a backward trajectory is returned in increasing time (issue #547)
             traj = _plain_s()((1.0, 0.0), [cos(1.0), -sin(1.0)])
-            _check_default(Integrators.times(traj), [1.0, 0.0])
+            _check_default(Integrators.times(traj), [0.0, 1.0])
             Test.@test traj(0.0) ≈ [1.0, 0.0] atol = TOL
         end
 
@@ -395,11 +396,12 @@ function test_default_grid_calls()
             cb = ContinuousCallback((u, t, int) -> u[1] - 0.8, terminate!)
             f = Flows.Flow(Data.VectorField(x -> [x[2], -x[1]]); callback=cb, _tol()...)
             traj = f((1.0, 0.0), [cos(1.0), -sin(1.0)])
+            # in increasing time (issue #547): from the stop time up to the initial time
             T = Integrators.times(traj)
             Test.@test length(T) == NDEFAULT
-            Test.@test issorted(T; rev=true)
-            Test.@test first(T) == 1.0
-            Test.@test last(T) ≈ acos(0.8) atol = TOL
+            Test.@test issorted(T)
+            Test.@test last(T) == 1.0
+            Test.@test first(T) ≈ acos(0.8) atol = TOL
         end
 
         Test.@testset "terminating callback, plain Hamiltonian flow" begin

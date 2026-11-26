@@ -143,6 +143,71 @@ xf = mpf(0.0, x0, 2.0)
 sol = mpf((0.0, 2.0), x0)
 ```
 
+### The horizon of a call
+
+The horizon `[t0, tf]` of a call can be anywhere with respect to the switching times: it may
+start after the first one, end before the last one, lie inside a single phase, or be
+**backward** (`t0 > tf`). The flow integrates only the phases the horizon meets, each on its
+part of the horizon:
+
+- the phase `k` holds on `[tₖ₋₁, tₖ]`; the first phase extends to `-∞` and the last one to
+  `+∞`, so a horizon before the first switching time, or after the last one, uses the first,
+  or the last, phase;
+- a **jump** is applied only at a switching time **strictly inside** the horizon;
+- at a bound of the horizon equal to a switching time `tᵢ`, the given and the returned values
+  are **those on the side of the horizon**: `mpf(tᵢ, x, tf)` starts the phase `i + 1` from
+  `x`, with no jump, and `mpf(t0, x, tᵢ)` returns the end of the phase `i`, before the jump;
+- on a **backward** horizon, the jumps crossed are **inverted**: an additive jump (a vector or
+  a number) is subtracted; a jump given as a function has no known inverse, so crossing it
+  backward throws an `IncorrectArgument`;
+- so `mpf(tf, mpf(t0, x0, tf), t0)` gives `x0` back, up to the integration tolerances.
+
+With two phases that do not commute, `ẋ = 1` on `[0, 1]` then `ẋ = x`, and a jump `+10` at
+`t = 1`: from `x(0) = 1`, `x(t) = 1 + t` before the switch and `x(t) = 12 e^{t-1}` after it.
+
+```@example flows_multiphase
+one_ = Flows.Flow(Data.VectorField(x -> 1.0); reltol=1e-10, abstol=1e-10)
+lin = Flows.Flow(Data.VectorField(x -> x); reltol=1e-10, abstol=1e-10)
+φ = one_ * (1.0, 10.0, lin)
+xf = φ(0.0, 1.0, 2.0)         # 12e: the whole horizon, the jump crossed
+```
+
+```@example flows_multiphase
+φ(0.0, 1.0, 0.5), φ(1.5, 12exp(0.5), 2.0)   # a horizon in one phase only
+```
+
+```@example flows_multiphase
+φ(0.0, 1.0, 1.0), φ(1.0, 12.0, 2.0)         # a bound on the switching time: no jump
+```
+
+```@example flows_multiphase
+φ(2.0, xf, 0.0)               # backward: the jump is subtracted, x(0) = 1 again
+```
+
+A **trajectory** is returned in increasing time, whatever the direction of integration: its
+time grid increases, its switching times are those strictly inside the horizon, in increasing
+order, its labels those of the phases met, and it is left-continuous at a switching time (the
+value at `tᵢ` is the one before the jump, in increasing time). A backward trajectory is the
+same trajectory as the forward one over the same interval:
+
+```@example flows_multiphase
+traj = φ((2.0, 0.0), xf)      # integrated backward from x(2)
+Trajectories.time_grid(traj)[[1, end]], Trajectories.switching_times(traj)
+```
+
+```@example flows_multiphase
+Trajectories.left_limit(traj, :state, 1), Trajectories.right_limit(traj, :state, 1)
+```
+
+The same holds for the flows of an optimal control problem: the `Solution` of a backward
+trajectory has an increasing time grid, and its objective is the cost of the arc over
+`[min(t0, tf), max(t0, tf)]`, Mayer term included, as for the forward call.
+
+The point call of a Hamiltonian multi-phase flow takes `variable_costate=true`, as a single
+flow does: the costate of the variable is carried from one phase to the next (the jumps do not
+act on it), and the call returns `(xf, pf, pvf)`. The derivatives with respect to the
+switching times (a shooting function differentiated by ForwardDiff) go through every call.
+
 ### A phase that stops early
 
 A switching time says that the right-hand side changes at that time. If a phase does not

@@ -108,6 +108,10 @@ Convenience call for `StateFlow` with trajectory configuration.
 
 Builds a `StateTrajectoryConfig` internally and calls the flow with it.
 
+The span may be backward (`t0 > tf`): the flow is integrated backward from `x0` at `t0`, and
+the trajectory is returned **in increasing time** (see
+[`CTFlows.Trajectories.in_increasing_time`](@extref)).
+
 # Arguments
 - `f::StateFlow`: The state flow to integrate.
 - `tspan::Configs.TimeSpec`: Time span `(t0, tf)`, or an output grid `(t0, t1, …, tf)` (see [`CTFlows.Configs.TimeSpec`](@extref)).
@@ -139,9 +143,10 @@ function (f::AbstractStateFlow)(
     _check_output_grid(f, config)
     traj = _invoke_flow(f, config; variable=variable, unsafe=unsafe)
     bounds = collect(Configs.tspan(config))
-    return _regrid_state(
+    traj = _regrid_state(
         traj, Configs.output_grid(config), nothing, nothing, identity, bounds
     )
+    return Trajectories.in_increasing_time(traj)
 end
 
 """
@@ -150,6 +155,10 @@ $(TYPEDSIGNATURES)
 Convenience call for `HamiltonianFlow` with trajectory configuration.
 
 Builds a `HamiltonianTrajectoryConfig` internally and calls the flow with it.
+
+The span may be backward (`t0 > tf`): the flow is integrated backward from `(x0, p0)` at
+`t0`, and the trajectory is returned **in increasing time** (see
+[`CTFlows.Trajectories.in_increasing_time`](@extref)).
 
 # Arguments
 - `f::HamiltonianFlow`: The Hamiltonian flow to integrate.
@@ -193,7 +202,8 @@ function (f::AbstractHamiltonianFlow)(
         return _invoke_flow_variable_costate(f, config; variable=variable, unsafe=unsafe)
     traj = _invoke_flow(f, config; variable=variable, unsafe=unsafe)
     bounds = collect(Configs.tspan(config))
-    return _regrid_hamiltonian(traj, Configs.output_grid(config), nothing, nothing, bounds)
+    traj = _regrid_hamiltonian(traj, Configs.output_grid(config), nothing, nothing, bounds)
+    return Trajectories.in_increasing_time(traj)
 end
 
 """

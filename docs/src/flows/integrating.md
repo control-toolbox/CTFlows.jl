@@ -63,6 +63,24 @@ sol = flow((0.0, 1.0), x0)
 hsol = hflow((0.0, 1.0), x0, p0)
 ```
 
+### Backward integration
+
+A flow integrates backward when `t0 > tf`: from `x0` given at `t0`, down to `tf`. The point
+call returns the state at `tf`. The trajectory call returns the trajectory **in increasing
+time**, whatever the direction of integration — the same trajectory as a forward call over
+the same interval would give: its time grid increases from `tf` to `t0`, and, for a flow of an
+optimal control problem, the objective is the cost of the arc over `[tf, t0]`, Mayer term
+included (see [`CTFlows.Trajectories.in_increasing_time`](@ref)).
+
+```@example flows_integrating
+bsol = flow((1.0, 0.0), flow(0.0, x0, 1.0))      # backward from x(1)
+Trajectories.time_grid(bsol)[[1, end]], Trajectories.state(bsol)(0.0)
+```
+
+The trajectory is read in the other direction with the same interpolant, without integrating
+again. For a multi-phase flow, see
+[the horizon of a call](multiphase.md#The-horizon-of-a-call).
+
 ### Output grid and accuracy
 
 A trajectory is returned on a **time grid** (`Integrators.times(sol)`) but can be

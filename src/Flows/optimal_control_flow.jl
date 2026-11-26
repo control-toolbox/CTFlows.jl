@@ -1065,6 +1065,14 @@ Trajectory call for [`CTFlows.Flows.OptimalControlFlow`](@extref): integrate the
 Hamiltonian flow over `tspan` and build a full [`CTModels.Solutions.Solution`](@extref)
 via [`CTFlows.Flows._build_ocp_solution`](@extref).
 
+# Backward span
+
+`tspan` may be backward (`t0 > tf`): the flow is integrated backward from the given initial
+condition at `t0`. The result describes the arc over `[tf, t0]` **in increasing time**, as a
+forward integration over the same interval would: increasing time grid, and the objective
+is the cost of the arc, Mayer term `g(x(tf), x(t0))` and Lagrange integral over `[tf, t0]`
+(issue #547).
+
 # Keyword arguments
 - `grid`: Output grid generated from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)). Default: an [`CTFlows.Configs.AutomaticGrid`](@extref) (`AdaptiveGrid(250)` when the integration is dense and the solver returns fewer than 250 times), unless `saveat` or a grid of times already shapes the output; `grid=nothing` keeps the solver steps.
   The grid is generated once, by this call, over the inner trajectory (the inner flow is
@@ -1104,7 +1112,7 @@ function (F::OptimalControlFlow)(
     )
     spec = _call_grid_spec(tspan, grid, F)
     sol = F.flow(tspan, x0, p0; variable, variable_costate, unsafe, grid=nothing)   # HamiltonianVectorFieldTrajectory
-    sol = _regrid_hamiltonian(sol, spec, F.law, variable, collect(float.(tspan)))
+    sol = _regrid_hamiltonian(sol, spec, F.law, variable, sort(collect(float.(tspan))))
     switching = _ocp_switching_model(sol, F.law, variable, [label(F)]; duals=F.duals)
     return _build_ocp_solution(
         F.ocp, sol, variable, integrator(F.flow), F.law; switching=switching, duals=F.duals
@@ -1164,6 +1172,14 @@ Integrates the inner control-free state flow and builds a
 [`CTFlows.Trajectories.StateFlowTrajectory`](@extref) (`law = nothing`: state and objective,
 no control, no costate — `control`/`costate` throw a `PreconditionError`).
 
+# Backward span
+
+`tspan` may be backward (`t0 > tf`): the flow is integrated backward from the given initial
+condition at `t0`. The result describes the arc over `[tf, t0]` **in increasing time**, as a
+forward integration over the same interval would: increasing time grid, and the objective
+is the cost of the arc, Mayer term `g(x(tf), x(t0))` and Lagrange integral over `[tf, t0]`
+(issue #547).
+
 # Keyword arguments
 - `grid`: Output grid generated from the span: an integer `n`, `UniformGrid(n)` or `AdaptiveGrid(n)` (see [`CTFlows.Configs.AbstractGrid`](@extref)). Default: an [`CTFlows.Configs.AutomaticGrid`](@extref) (`AdaptiveGrid(250)` when the integration is dense and the solver returns fewer than 250 times), unless `saveat` or a grid of times already shapes the output; `grid=nothing` keeps the solver steps.
   The grid is generated once, by this call (the inner flow is called with `grid=nothing`).
@@ -1185,7 +1201,9 @@ function (F::OptimalControlFlow)(
     spec = _call_grid_spec(tspan, grid, sf)
     traj = sf(tspan, x0; variable, unsafe, grid=nothing)   # VectorFieldTrajectory
     coerce = _flow_state_coerce(F.ocp, x0)   # precomputed once (only / identity)
-    traj = _regrid_state(traj, spec, nothing, variable, coerce, collect(float.(tspan)))
+    traj = _regrid_state(
+        traj, spec, nothing, variable, coerce, sort(collect(float.(tspan)))
+    )
     obj = _state_flow_objective(F.ocp, traj, nothing, variable, integrator(sf), coerce)
     traj = Trajectories.with_labels(traj, [label(F)])
     return Trajectories.StateFlowTrajectory(traj, nothing, variable, obj, coerce, F.ocp)

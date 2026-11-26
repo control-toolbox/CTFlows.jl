@@ -3,10 +3,20 @@
 This file lists breaking and near-breaking changes in CTFlows.jl since the last
 stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
-## Non-breaking note (Unreleased)
+## Unreleased
 
-- **Tests and documentation only**: the three-arc example of issue #440 starts from the exact
-  initial costate `p(0) = -0.99`. No API change, no migration required.
+- **A trajectory integrated backward is returned in increasing time**
+  ([#547](https://github.com/control-toolbox/CTFlows.jl/issues/547)), single-phase or
+  multi-phase, and the objective of a backward OCP-flow trajectory is the cost of the arc over
+  `[tf, t0]` (it had the wrong sign, and the Mayer term swapped arguments).
+
+  ```julia
+  # Before
+  times(flow((1.0, 0.0), x1))   # [1.0, …, 0.0]
+
+  # After
+  times(flow((1.0, 0.0), x1))   # [0.0, …, 1.0]
+  ```
 
 - **The accessors of a flow have no `get_` prefix, and a flow and its solution share the
   switching functions** ([#544](https://github.com/control-toolbox/CTFlows.jl/issues/544)).
@@ -40,6 +50,9 @@ stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
   Flow(ocp, u; multipliers=:c => μ)
   Flow(ocp, u; multipliers=(:a => μa, :b => μb))
   ```
+
+- **Not breaking**: tests and documentation only, the three-arc example of issue #440 starts from
+  the exact initial costate `p(0) = -0.99`. No API change, no migration required.
 
 ## [0.19.0] - 2026-11-25
 
