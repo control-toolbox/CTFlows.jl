@@ -43,7 +43,6 @@ function _ocp_pseudo_hamiltonian(ocp; p0=nothing)
     return CTModels.Models.pseudo_hamiltonian(ocp; _p0_kwargs(p0)...)
 end
 
-
 # =============================================================================
 # Constrained pseudo-Hamiltonian: H(t,x,p,u,μ,v) = H̃(t,x,p,u,v) + μ·g(t,x,u,v)
 #
@@ -120,7 +119,6 @@ The labels of a labelled `constraint` specification, as a tuple.
 """
 _labels(spec::Symbol) = (spec,)
 _labels(spec::Tuple) = spec
-
 
 """
 $(TYPEDSIGNATURES)
@@ -363,14 +361,18 @@ Natural calls of a [`CTFlows.Flows._CombinedMultiplier`](@extref), one per pair 
 `(x, p)`, `(t, x, p)`, `(x, p, v)`, `(t, x, p, v)`. A missing time is `0.0`, a missing
 variable an empty vector.
 """
-(m::_CombinedMultiplier{Traits.Autonomous,Traits.Fixed})(x, p) =
-    _combined_value(m, 0.0, x, p, Float64[])
-(m::_CombinedMultiplier{Traits.NonAutonomous,Traits.Fixed})(t, x, p) =
-    _combined_value(m, t, x, p, Float64[])
-(m::_CombinedMultiplier{Traits.Autonomous,Traits.NonFixed})(x, p, v) =
-    _combined_value(m, 0.0, x, p, v)
-(m::_CombinedMultiplier{Traits.NonAutonomous,Traits.NonFixed})(t, x, p, v) =
-    _combined_value(m, t, x, p, v)
+function (m::_CombinedMultiplier{Traits.Autonomous,Traits.Fixed})(x, p)
+    return _combined_value(m, 0.0, x, p, Float64[])
+end
+function (m::_CombinedMultiplier{Traits.NonAutonomous,Traits.Fixed})(t, x, p)
+    return _combined_value(m, t, x, p, Float64[])
+end
+function (m::_CombinedMultiplier{Traits.Autonomous,Traits.NonFixed})(x, p, v)
+    return _combined_value(m, 0.0, x, p, v)
+end
+function (m::_CombinedMultiplier{Traits.NonAutonomous,Traits.NonFixed})(t, x, p, v)
+    return _combined_value(m, t, x, p, v)
+end
 
 """
 $(TYPEDSIGNATURES)
@@ -510,14 +512,18 @@ Natural calls of a [`CTFlows.Flows._AdjoinedConstraint`](@extref), one per pair 
 `(x, p, u, μ)`, `(t, x, p, u, μ)`, `(x, p, u, μ, v)`, `(t, x, p, u, μ, v)`. An autonomous
 problem is evaluated at `t = 0`.
 """
-(h::_AdjoinedConstraint{_CTM_Auton,Traits.Fixed})(x, p, u, μ) =
-    _adjoined_H(h, 0.0, x, p, u, μ, nothing)
-(h::_AdjoinedConstraint{_CTM_NonAuton,Traits.Fixed})(t, x, p, u, μ) =
-    _adjoined_H(h, t, x, p, u, μ, nothing)
-(h::_AdjoinedConstraint{_CTM_Auton,Traits.NonFixed})(x, p, u, μ, v) =
-    _adjoined_H(h, 0.0, x, p, u, μ, v)
-(h::_AdjoinedConstraint{_CTM_NonAuton,Traits.NonFixed})(t, x, p, u, μ, v) =
-    _adjoined_H(h, t, x, p, u, μ, v)
+function (h::_AdjoinedConstraint{_CTM_Auton,Traits.Fixed})(x, p, u, μ)
+    return _adjoined_H(h, 0.0, x, p, u, μ, nothing)
+end
+function (h::_AdjoinedConstraint{_CTM_NonAuton,Traits.Fixed})(t, x, p, u, μ)
+    return _adjoined_H(h, t, x, p, u, μ, nothing)
+end
+function (h::_AdjoinedConstraint{_CTM_Auton,Traits.NonFixed})(x, p, u, μ, v)
+    return _adjoined_H(h, 0.0, x, p, u, μ, v)
+end
+function (h::_AdjoinedConstraint{_CTM_NonAuton,Traits.NonFixed})(t, x, p, u, μ, v)
+    return _adjoined_H(h, t, x, p, u, μ, v)
+end
 
 """
 $(TYPEDSIGNATURES)
