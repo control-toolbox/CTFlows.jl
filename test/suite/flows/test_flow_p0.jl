@@ -120,8 +120,7 @@ function test_flow_p0()
                     ocpc,
                     U_LAW;
                     p0=0,
-                    constraint=:ubox,
-                    multiplier=(x, p) -> 0.0,
+                    multipliers=:ubox => ((x, p) -> 0.0),
                     hamiltonian_type=ht,
                     _opts()...,
                 )

@@ -115,8 +115,7 @@ const CASES = (
         ad -> Flows.Flow(
             OCP_U,
             LAW;
-            constraint=(x, u) -> sum(u),
-            multiplier=(x, p) -> 0.3,
+            multipliers=((x, u) -> sum(u)) => ((x, p) -> 0.3),
             ad_backend=ad,
             TOL...,
         )(

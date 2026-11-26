@@ -51,19 +51,18 @@ law = Data.DynClosedLoop((x, p) -> p)   # u = p (from ∂H̃/∂u = p - u = 0)
 c = 0.3
 f = Flows.Flow(
     ocp, law;
-    constraint=Data.StateConstraint(x -> x),
-    multiplier=Data.Multiplier((x, p) -> c),
+    multipliers=Data.StateConstraint(x -> x) => Data.Multiplier((x, p) -> c),
     reltol=1e-10,
 )
 nothing # hide
 ```
 
-A raw `Function` is accepted directly for `constraint`/`multiplier` (wrapped in a
+A raw `Function` is accepted directly as the constraint or the multiplier of a pair (wrapped in a
 `MixedConstraint`/`Multiplier` with the OCP's own time/variable dependence, just like
 `Flow(ocp, u::Function)` — see [Control laws](control_laws.md)):
 
 ```@example flows_constrained
-f2 = Flows.Flow(ocp, law; constraint=(x, u) -> x, multiplier=(x, p) -> c, reltol=1e-10)
+f2 = Flows.Flow(ocp, law; multipliers=((x, u) -> x) => ((x, p) -> c), reltol=1e-10)
 xf, pf = f2(0.0, 1.0, 0.5, 1.0)
 xf, pf
 ```
@@ -113,9 +112,9 @@ end
 ocp_lower = ocp_with((r, t, x, u, v) -> (r[1] = x; nothing), 0.1, Inf)
 ocp_upper = ocp_with((r, t, x, u, v) -> (r[1] = 0.1 - x; nothing), -Inf, 0.0)
 μ(x, p) = c
-f_lower = Flows.Flow(ocp_lower, law; constraint=:xcon, multiplier=μ)
-f_upper = Flows.Flow(ocp_upper, law; constraint=:xcon, multiplier=μ)
-f_fun = Flows.Flow(ocp, law; constraint=(x, u) -> x - 0.1, multiplier=μ)
+f_lower = Flows.Flow(ocp_lower, law; multipliers=:xcon => μ)
+f_upper = Flows.Flow(ocp_upper, law; multipliers=:xcon => μ)
+f_fun = Flows.Flow(ocp, law; multipliers=((x, u) -> x - 0.1) => μ)
 f_lower(0.0, 1.0, 0.5, 1.0), f_upper(0.0, 1.0, 0.5, 1.0), f_fun(0.0, 1.0, 0.5, 1.0)
 ```
 
@@ -158,17 +157,26 @@ g1(x, u) = x
 g2(x, u) = 1.0 - x
 μ1(x, p) = 0.4
 μ2(x, p) = 0.1
-ft = Flows.Flow(ocp, law; constraint=(g1, g2), multiplier=(μ1, μ2), reltol=1e-10)
+ft = Flows.Flow(ocp, law; multipliers=(g1 => μ1, g2 => μ2), reltol=1e-10)
 nothing # hide
 ```
 
-Each `gᵢ`/`μᵢ` is resolved independently; the flow sums ``\sum_i \mu_i \cdot g_i``. A tuple
-of labels, `constraint=(:a, :b)`, adjoins those constraints of the model, each with its own
-multiplier, in the order given. Labels and functions cannot be mixed in one tuple. Both
-tuples must be given together, and both must have the same length — otherwise
-`Flow` throws a `CTBase.Exceptions.IncorrectArgument`.
+Each `gᵢ`/`μᵢ` is resolved independently; the flow sums ``\sum_i \mu_i \cdot g_i``. Pairs of
+labels, `multipliers=(:a => μa, :b => μb)`, adjoin those constraints of the model, each with
+its own multiplier, in the order given; a `NamedTuple` `(; a=μa, b=μb)`, a `Dict` or a vector
+of pairs do the same, as for `CTModels.Models.hamiltonian(ocp, u; multipliers)`. Labels and
+functions cannot be mixed in one call, and a constraint is given once — otherwise `Flow`
+throws a `CTBase.Exceptions.IncorrectArgument`.
 
-For a tuple of labels, each multiplier is also checked against the number of rows of its
+!!! note "One keyword"
+
+    A constraint and its multiplier always go together, so they are given as one pair. The
+    keywords `constraint=` and `multiplier=` of earlier versions are rejected, with the
+    rewrite in the error: `constraint=:a, multiplier=μ` becomes `multipliers=:a => μ`.
+    An anonymous function in a pair is written in parentheses,
+    `multipliers=((x, u) -> x) => ((x, p) -> 0.3)`.
+
+For several labels, each multiplier is also checked against the number of rows of its
 constraint when it is evaluated: a number for a one-row constraint, a vector of ``d``
 components for a ``d``-row one. A multiplier of the wrong dimension throws an
 `IncorrectArgument` that names its label, even when the other multipliers make the total
@@ -198,7 +206,7 @@ The accessors return the same objects in both modes: `pseudo_hamiltonian(f)` is 
 ``u`` and ``\mu``, called as `(t, x, p, u, μ, v)` or in the short form of the traits:
 
 ```@example flows_constrained
-fc = Flows.Flow(ocp, law; constraint=(x, u) -> x, multiplier=(x, p) -> c, reltol=1e-10)
+fc = Flows.Flow(ocp, law; multipliers=((x, u) -> x) => ((x, p) -> c), reltol=1e-10)
 H = CTFlows.Systems.pseudo_hamiltonian(fc)  # H(x, p, u, μ) = p(-x+u) - u²/2 + μx
 ∇H = CTFlows.Systems.get_pseudo_hamiltonian_gradient(fc)  # at fixed (u, μ)
 H(1.0, 0.5, 0.2, c), ∇H(1.0, 0.5, 0.2, c)
@@ -206,12 +214,14 @@ H(1.0, 0.5, 0.2, c), ∇H(1.0, 0.5, 0.2, c)
 
 ```@example flows_constrained
 ft_ = Flows.Flow(
-    ocp, law; constraint=Data.StateConstraint(x -> x),
-    multiplier=Data.Multiplier((x, p) -> c), hamiltonian_type=:total, reltol=1e-10,
+    ocp, law;
+    multipliers=Data.StateConstraint(x -> x) => Data.Multiplier((x, p) -> c),
+    hamiltonian_type=:total, reltol=1e-10,
 )
 fp_ = Flows.Flow(
-    ocp, law; constraint=Data.StateConstraint(x -> x),
-    multiplier=Data.Multiplier((x, p) -> c), hamiltonian_type=:partial, reltol=1e-10,
+    ocp, law;
+    multipliers=Data.StateConstraint(x -> x) => Data.Multiplier((x, p) -> c),
+    hamiltonian_type=:partial, reltol=1e-10,
 )
 x0, p0, tf = 1.0, 0.5, 1.0
 ft_(0.0, x0, p0, tf), fp_(0.0, x0, p0, tf)   # constant μ, stationary law ⇒ agree
@@ -266,7 +276,7 @@ plot(sol)
 
 ## Constraint duals of a flow
 
-The trajectory call of `Flow(ocp, law; constraint=:label, multiplier=y)` returns a
+The trajectory call of `Flow(ocp, law; multipliers=:label => y)` returns a
 `CTModels.Solution` that carries the **duals of the constraints** given by label (path
 constraints, state boxes, control boxes): the multiplier ``y`` given to the flow is the
 dual. They are read as for a direct
@@ -328,7 +338,7 @@ CTModels.Building.constraint!(
 ocp_mixed = CTModels.Building.build(pre)
 
 f_mixed = Flows.Flow(
-    ocp_mixed, (x, p) -> -x; constraint=:mixed, multiplier=(x, p) -> p + 1,
+    ocp_mixed, (x, p) -> -x; multipliers=:mixed => ((x, p) -> p + 1),
     reltol=1e-10, abstol=1e-10,
 )
 sol_mixed = f_mixed((0.0, 1.0), -1.0, exp(-1) - 1)
@@ -363,7 +373,7 @@ ocp_440 = CTModels.Building.build(pre)
 opts = (; reltol=1e-10, abstol=1e-10)
 f_minus = Flows.Flow(ocp_440, (x, p) -> -1; label="u = -1", opts...)
 f_bound = Flows.Flow(
-    ocp_440, (x, p) -> 0; constraint=:xmin, multiplier=(x, p) -> 2x, label="boundary",
+    ocp_440, (x, p) -> 0; multipliers=:xmin => ((x, p) -> 2x), label="boundary",
     opts...,
 )
 f_plus = Flows.Flow(ocp_440, (x, p) -> 1; label="u = +1", opts...)
@@ -383,7 +393,7 @@ plot(sol_440, :state, :control, :path, :dual)
   `MixedConstraint`, …) has no label: the solution carries **no dual**, and
   `dual(sol, ocp, :label)` throws a `PreconditionError` that says so. When the problem has
   path constraints, the flow warns once when it is built. Give the constraint by its label,
-  `constraint=:label`, to get its dual. In a multi-phase flow, one
+  `multipliers=:label => y`, to get its dual. In a multi-phase flow, one
   unlabelled phase is enough to lose the duals of the whole solution.
 - A state or control **box** given to the flow by its label has its dual in the solution.
   In a multi-phase flow, a state box adjoined in some phases has a zero dual in the others;
