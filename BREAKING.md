@@ -3,7 +3,7 @@
 This file lists breaking and near-breaking changes in CTFlows.jl since the last
 stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
-## Unreleased
+## [0.20.0] - 2026-11-26
 
 - **A trajectory integrated backward is returned in increasing time**
   ([#547](https://github.com/control-toolbox/CTFlows.jl/issues/547)), single-phase or
