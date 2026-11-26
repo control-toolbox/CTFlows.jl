@@ -378,7 +378,7 @@ f_bound = Flows.Flow(
 )
 f_plus = Flows.Flow(ocp_440, (x, p) -> 1; label="u = +1", opts...)
 φ = f_minus * (0.9, f_bound) * (1.6, f_plus)
-sol_440 = φ((0.0, 2.0), 1.0, -0.982237546583301)
+sol_440 = φ((0.0, 2.0), 1.0, -0.99)   # p(0) = -∫₀^0.9 2(1 - t) dt: p vanishes at the entry
 d = CTModels.dual(sol_440, ocp_440, :xmin)
 d(0.5), d(1.2), d(1.8)
 ```

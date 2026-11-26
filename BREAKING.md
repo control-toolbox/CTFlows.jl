@@ -3,7 +3,10 @@
 This file lists breaking and near-breaking changes in CTFlows.jl since the last
 stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
 
-## Unreleased
+## Non-breaking note (Unreleased)
+
+- **Tests and documentation only**: the three-arc example of issue #440 starts from the exact
+  initial costate `p(0) = -0.99`. No API change, no migration required.
 
 - **The accessors of a flow have no `get_` prefix, and a flow and its solution share the
   switching functions** ([#544](https://github.com/control-toolbox/CTFlows.jl/issues/544)).
@@ -20,6 +23,8 @@ stable baseline, [0.8.23](CHANGELOG.md#0823---2026-04-06).
   # After
   Systems.hamiltonian_gradient(f)
   MultiPhase.switching_times(f), MultiPhase.phase_labels(f), MultiPhase.phase_flows(f)[1]
+  ```
+  
 - **`Flow(ocp, law; multipliers=:label => μ)` replaces `constraint=` and `multiplier=`**
   ([#543](https://github.com/control-toolbox/CTFlows.jl/issues/543)). A constraint and its
   multiplier are given together, as a pair, with the containers of

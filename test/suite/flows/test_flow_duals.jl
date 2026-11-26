@@ -79,7 +79,10 @@ const SPELLINGS = (
     ("x ≥ lb", (r, t, x, u, v) -> (r[1]=x; nothing), LB, Inf),
     ("lb - x ≤ 0", (r, t, x, u, v) -> (r[1]=LB - x; nothing), -Inf, 0.0),
 )
-const P0_440 = -0.982237546583301
+# The exact initial costate: p vanishes at the entry t₁ = 0.9, and ṗ = 2x = 2(1 - t) before it,
+# so p(0) = -∫₀^0.9 2(1 - t) dt = -0.99 (the former -0.982237546583301 was the costate of a
+# direct solve on a coarse grid).
+const P0_440 = -0.99
 
 """Issue #440 with `x ≥ lb` written as a state box `:xbox`."""
 function _issue440_box()
