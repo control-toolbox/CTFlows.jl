@@ -690,10 +690,20 @@ function test_ocp_control()
             μ = Data.Multiplier((x, p) -> x + c)
             law = Data.DynClosedLoop((x, p) -> p)
             ft = Flows.Flow(
-                OCP_LQR, law; constraint=g, multiplier=μ, hamiltonian_type=:total, _opts()...
+                OCP_LQR,
+                law;
+                constraint=g,
+                multiplier=μ,
+                hamiltonian_type=:total,
+                _opts()...,
             )
             fp = Flows.Flow(
-                OCP_LQR, law; constraint=g, multiplier=μ, hamiltonian_type=:partial, _opts()...
+                OCP_LQR,
+                law;
+                constraint=g,
+                multiplier=μ,
+                hamiltonian_type=:partial,
+                _opts()...,
             )
             x0, p0, u0, μ0 = 0.7, 0.4, -0.2, 1.1
             for f in (ft, fp)

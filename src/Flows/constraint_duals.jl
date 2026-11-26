@@ -143,7 +143,9 @@ Dual of the constraint `label` just after the `i`-th switching time `t`, from th
 and costate `p` after the jump. A single flow has one set of duals; `CTFlows.MultiPhase`
 adds the method of the piecewise duals of a multi-phase flow (those of the next phase).
 """
-_right_dual_value(d, label::Symbol, ::Integer, t, x, p, v) = _dual_value(d, label, t, x, p, v)
+function _right_dual_value(d, label::Symbol, ::Integer, t, x, p, v)
+    return _dual_value(d, label, t, x, p, v)
+end
 
 """
 $(TYPEDEF)

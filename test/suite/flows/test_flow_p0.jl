@@ -58,13 +58,19 @@ function test_flow_p0()
         end
 
         Test.@testset "Unit: builders forward p0 to the getters" begin
-            Test.@test Flows._ocp_pseudo_hamiltonian(ocp; p0=0)(0.0, 1.0, 2.0, 3.0, nothing) ==
-                CTModels.Models.pseudo_hamiltonian(ocp; p0=0)(0.0, 1.0, 2.0, 3.0, nothing)
+            Test.@test Flows._ocp_pseudo_hamiltonian(ocp; p0=0)(
+                0.0, 1.0, 2.0, 3.0, nothing
+            ) == CTModels.Models.pseudo_hamiltonian(ocp; p0=0)(
+                0.0, 1.0, 2.0, 3.0, nothing
+            )
             Test.@test Flows._ocp_pseudo_hamiltonian(ocp)(0.0, 1.0, 2.0, 3.0, nothing) ==
                 CTModels.Models.pseudo_hamiltonian(ocp)(0.0, 1.0, 2.0, 3.0, nothing)
             # p·f + p⁰ℓ at x=1, p=2, u=3: abnormal 2(-1+3), normal 2(-1+3) - 4.5
-            Test.@test Flows._ocp_pseudo_hamiltonian(ocp; p0=0)(0.0, 1.0, 2.0, 3.0, nothing) ≈ 4.0
-            Test.@test Flows._ocp_pseudo_hamiltonian(ocp)(0.0, 1.0, 2.0, 3.0, nothing) ≈ -0.5
+            Test.@test Flows._ocp_pseudo_hamiltonian(ocp; p0=0)(
+                0.0, 1.0, 2.0, 3.0, nothing
+            ) ≈ 4.0
+            Test.@test Flows._ocp_pseudo_hamiltonian(ocp)(0.0, 1.0, 2.0, 3.0, nothing) ≈
+                -0.5
         end
 
         Test.@testset "Integration: p0 = default is the normal case (both modes)" begin
@@ -111,8 +117,13 @@ function test_flow_p0()
             ocpc = CTModels.Building.build(pre)
             for ht in (:total, :partial)
                 f = Flows.Flow(
-                    ocpc, U_LAW;
-                    p0=0, constraint=:ubox, multiplier=(x, p) -> 0.0, hamiltonian_type=ht, _opts()...,
+                    ocpc,
+                    U_LAW;
+                    p0=0,
+                    constraint=:ubox,
+                    multiplier=(x, p) -> 0.0,
+                    hamiltonian_type=ht,
+                    _opts()...,
                 )
                 sys = Flows.system(f)
                 h = Systems.pseudo_hamiltonian(sys)

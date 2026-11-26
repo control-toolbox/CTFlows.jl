@@ -59,9 +59,7 @@ const H_AF_LAG_MAX = Flows._ocp_hamiltonian(
 )
 const H_NAF_NL = Flows._ocp_hamiltonian(_cf_ocp(_dyn_nonauton_fixed!; autonomous=false))
 const H_ANF_NL = Flows._ocp_hamiltonian(_cf_ocp(_dyn_auton_nf!; q=1))
-const H_NANF_NL = Flows._ocp_hamiltonian(
-    _cf_ocp(_dyn_nonauton_nf!; autonomous=false, q=1)
-)
+const H_NANF_NL = Flows._ocp_hamiltonian(_cf_ocp(_dyn_nonauton_nf!; autonomous=false, q=1))
 
 # =============================================================================
 # OCP fixtures for _ocp_hamiltonian
