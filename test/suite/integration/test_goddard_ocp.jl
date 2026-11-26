@@ -118,7 +118,7 @@ function test_goddard_ocp()
             φ0 = Flows.Flow(ocp, u0law; hamiltonian_type=ht)
             φ1 = Flows.Flow(ocp, u1law; hamiltonian_type=ht)
             φs = Flows.Flow(ocp, uslaw; hamiltonian_type=ht)
-            φb = Flows.Flow(ocp, ublaw; constraint=gc, multiplier=μc, hamiltonian_type=ht)
+            φb = Flows.Flow(ocp, ublaw; multipliers=gc => μc, hamiltonian_type=ht)
             return φ0, φ1, φs, φb
         end
 
@@ -204,7 +204,7 @@ function test_goddard_ocp()
 
                 Test.@testset "1-tuple constraint/multiplier ≡ scalar form (boundary arc)" begin
                     φb_tuple = Flows.Flow(
-                        ocp, ublaw; constraint=(gc,), multiplier=(μc,), hamiltonian_type=ht
+                        ocp, ublaw; multipliers=(gc => μc,), hamiltonian_type=ht
                     )
                     x3t, p3t = φb_tuple(t2_sol, x2r, p2r, t3_sol; variable=tf_sol)
                     Test.@test x3t ≈ x3r atol = 1e-10

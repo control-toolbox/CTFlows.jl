@@ -82,7 +82,7 @@ function _is_labelled(spec::Tuple)
             got="$(n) label(s) and $(length(spec) - n) other constraint(s)",
             expected="only labels, or only functions",
             suggestion="Give every constraint by its label (they all are constraints of the model), or every one as a function",
-            context="Flow(ocp, law; constraint=(…,)) — constraint resolution",
+            context="Flow(ocp, law; multipliers=(…,)) — constraint resolution",
         ),
     )
 end
@@ -104,10 +104,10 @@ function _side_removed(spec::Pair)
     return throw(
         Exceptions.IncorrectArgument(
             "the active side of a constraint is no longer given with `label => side`";
-            got="constraint=$(repr(spec))",
-            expected="constraint=$(repr(label)), with the multiplier in the dual convention of the solution",
-            suggestion="Give constraint=$(repr(label)) and, as multiplier, the dual y of the solution: on a two-sided or equality constraint, y < 0 on the lower bound and y > 0 on the upper bound (so y = -μ for the former `$(repr(label)) => :lower`)",
-            context="Flow(ocp, law; constraint=…) — constraint resolution",
+            got="constraint $(repr(spec))",
+            expected="multipliers=$(repr(label)) => y, with the multiplier y in the dual convention of the solution",
+            suggestion="Give multipliers=$(repr(label)) => y, with y the dual of the solution: on a two-sided or equality constraint, y < 0 on the lower bound and y > 0 on the upper bound (so y = -μ for the former `$(repr(label)) => :lower`)",
+            context="Flow(ocp, law; multipliers=…) — constraint resolution",
         ),
     )
 end
@@ -189,7 +189,7 @@ function _resolve_constraint(ocp, spec::Tuple)
             "empty constraint tuple";
             got="()",
             expected="a non-empty tuple of constraints",
-            context="Flow(ocp, law; constraint=(…,)) — constraint resolution",
+            context="Flow(ocp, law; multipliers=(…,)) — constraint resolution",
         ),
     )
     return _CombinedConstraint(map(s -> _resolve_constraint(ocp, s), spec))
@@ -213,7 +213,7 @@ function _resolve_constraint(::Any, spec)
             "unsupported constraint specification";
             got="$(typeof(spec))",
             expected="a constraint label (Symbol), a tuple of labels, a CTBase.Data.PathConstraint, a Function, or a tuple of them",
-            context="Flow(ocp, law; constraint=…) — constraint resolution",
+            context="Flow(ocp, law; multipliers=…) — constraint resolution",
         ),
     )
 end
@@ -414,7 +414,7 @@ function _resolve_multiplier(ocp, spec::Tuple, cspec)
             "empty multiplier tuple";
             got="()",
             expected="a non-empty tuple of multipliers",
-            context="Flow(ocp, law; multiplier=(…,)) — multiplier resolution",
+            context="Flow(ocp, law; multipliers=(…,)) — multiplier resolution",
         ),
     )
     parts = map(s -> _resolve_multiplier(ocp, s), spec)
@@ -459,7 +459,7 @@ function _resolve_multiplier(::Any, spec)
             "unsupported multiplier specification";
             got="$(typeof(spec))",
             expected="a CTBase.Data.Multiplier or a Function",
-            context="Flow(ocp, law; multiplier=…) — multiplier resolution",
+            context="Flow(ocp, law; multipliers=…) — multiplier resolution",
         ),
     )
 end

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🧪 Testing
+
+- **The three-arc tests of issue #440 start from the exact initial costate** `p(0) = -0.99`
+  (`p` vanishes at the entry `t₁ = 0.9`), instead of `-0.982237546583301`, the costate of a
+  direct solve on a coarse grid. The final costate is checked against its exact value, `0.24`,
+  and the costate is checked to vanish on the boundary arc.
+
+### 📚 Documentation
+
+- **`flows/constrained.md`**: the same exact initial costate in the example of issue #440.
+
+### ✅ Compatibility
+
+- **No breaking changes**: tests and documentation only; see [BREAKING.md](BREAKING.md).
+
 ### 💥 Breaking Changes
 
 #### A trajectory integrated backward is returned in increasing time
@@ -56,6 +71,20 @@ See [BREAKING.md](BREAKING.md).
   and its switching times `get_switching_times(f)` but `switching_times(sol)` on its solution
   ([#544](https://github.com/control-toolbox/CTFlows.jl/issues/544)).
 
+#### `Flow(ocp, law; multipliers=:label => μ)` replaces `constraint=` and `multiplier=`
+
+- **The constraints of an arc and their multipliers are given with one keyword**,
+  `multipliers`, as `constraint => multiplier` pairs: a `Pair`, a tuple or a vector of pairs, a
+  `NamedTuple` or a `Dict`, the shapes `CTModels.Models.hamiltonian(ocp, u; multipliers)`
+  already takes. The constraint of a pair is what `constraint=` took (a label, a function, a
+  `PathConstraint`), the multiplier what `multiplier=` took.
+- **`constraint=` and `multiplier=` are removed**: they raise an `IncorrectArgument` whose
+  suggestion gives the rewrite.
+- **Why**: the same arc was written `hamiltonian(ocp, u; multipliers=:c => μ)` for its
+  Hamiltonian and `Flow(ocp, u; constraint=:c, multiplier=μ)` for its flow; with two tuples,
+  a constraint and its multiplier were matched only by their position
+  ([#543](https://github.com/control-toolbox/CTFlows.jl/issues/543)).
+
 **Migration**:
 
 ```julia
@@ -70,6 +99,16 @@ Systems.hamiltonian_gradient(f)
 MultiPhase.switching_times(f), MultiPhase.phase_labels(f)
 MultiPhase.phase_flows(f), MultiPhase.jumps(f)
 MultiPhase.phase_flows(f)[1], MultiPhase.switching_times(f)[1], MultiPhase.jumps(f)[1]
+
+# Before
+Flow(ocp, u; constraint=:c, multiplier=μ)
+Flow(ocp, u; constraint=(:a, :b), multiplier=(μa, μb))
+Flow(ocp, u; constraint=(x, u) -> x - 0.1, multiplier=(x, p) -> 2x)
+
+# After
+Flow(ocp, u; multipliers=:c => μ)
+Flow(ocp, u; multipliers=(:a => μa, :b => μb))        # or (; a=μa, b=μb)
+Flow(ocp, u; multipliers=((x, u) -> x - 0.1) => ((x, p) -> 2x))
 ```
 
 See [BREAKING.md](BREAKING.md).

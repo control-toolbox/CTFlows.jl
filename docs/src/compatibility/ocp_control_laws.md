@@ -110,9 +110,9 @@ f2_total(0.0, [1.0 2.0; 3.0 4.0], [0.5 0.3; 0.2 0.1], 1.0)
 
 ---
 
-## `DynClosedLoop`, constrained — does adding `constraint=`/`multiplier=` keep working?
+## `DynClosedLoop`, constrained — does adding `multipliers=` keep working?
 
-Using a **constant** `constraint=(x,u)->1.0` and `multiplier=(x,p)->0.3`: the product
+Using a **constant** constraint `(x,u)->1.0` with the multiplier `(x,p)->0.3`: the product
 ``\mu\cdot g \equiv 0.3`` is a pure constant added to ``\tilde H_c``, so it contributes
 nothing to ``\partial\tilde H_c/\partial x`` or ``\partial\tilde H_c/\partial p`` — the
 dynamics, and hence the analytic reference above, are **unchanged**. This isolates "does the
@@ -121,10 +121,10 @@ constrained-flow tests), and directly answers the question this table exists to 
 
 ```@example ocp_laws_compat
 f1c_total = Flows.Flow(
-    ocp1, law; constraint=(x, u) -> 1.0, multiplier=(x, p) -> 0.3, reltol=1e-8
+    ocp1, law; multipliers=((x, u) -> 1.0) => ((x, p) -> 0.3), reltol=1e-8
 )
 f2c_total = Flows.Flow(
-    ocp2, law; constraint=(x, u) -> 1.0, multiplier=(x, p) -> 0.3, reltol=1e-8
+    ocp2, law; multipliers=((x, u) -> 1.0) => ((x, p) -> 0.3), reltol=1e-8
 )
 ```
 
@@ -208,7 +208,7 @@ fcl2(0.0, [1.0 2.0; 3.0 4.0], 1.0)
 
 - [Control laws](../flows/control_laws.md) — the guide page this reference expands on
   (`DynClosedLoop`/`OpenLoop`/`ClosedLoop`, `hamiltonian_type`, the convenience constructor).
-- [Constrained flows](../flows/constrained.md) — the `constraint=`/`multiplier=` API this
+- [Constrained flows](../flows/constrained.md) — the `multipliers=` API this
   page's constrained table exercises.
 - [`Flow(ocp)` compatibility](ocp_free.md) — the control-free counterpart, and the source of
   notes (a)/(c) reused verbatim here.
