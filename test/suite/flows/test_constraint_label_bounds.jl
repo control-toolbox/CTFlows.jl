@@ -1,5 +1,5 @@
 """
-`Flow(ocp, law; constraint=:label, multiplier=y)` adjoins the constraint from its bounds,
+`Flow(ocp, law; multipliers=:label => y)` adjoins the constraint from its bounds,
 with `y` the dual of the solution (issue #440, control-toolbox/CTModels.jl#536).
 
 The model stores `lb ≤ c(t,x,u,v) ≤ ub`; the term adjoined to the pseudo-Hamiltonian is, in
@@ -87,7 +87,7 @@ end
 # The term adjoined for the labels `spec` with the dual `y`, at the state `x`: the
 # constrained pseudo-Hamiltonian of the flow at p = 0, u = 0, minus its value at y = 0.
 function _term(ocp, spec, x, y)
-    f = Flows.Flow(ocp, (x, p) -> 0.0; constraint=spec, multiplier=_y0(spec), _opts()...)
+    f = Flows.Flow(ocp, (x, p) -> 0.0; multipliers=spec => _y0(spec), _opts()...)
     H = Systems.pseudo_hamiltonian(f)
     p0 = zero(x)
     return H(x, p0, 0.0, y) - H(x, p0, 0.0, zero(y))
@@ -153,7 +153,7 @@ _μ_vmax_batch(x, p::AbstractVector) = 0.5 + p[1]^2
 _μ_vmax_batch(x, p::AbstractMatrix) = 0.5 .+ p[1:1, :] .^ 2
 
 function test_constraint_label_bounds()
-    Test.@testset "constraint=:label bounds (issue #440)" verbose = VERBOSE showtiming =
+    Test.@testset "multipliers=:label => y bounds (issue #440)" verbose = VERBOSE showtiming =
         SHOWTIMING begin
 
         # ====================================================================
@@ -246,8 +246,7 @@ function test_constraint_label_bounds()
             f = Flows.Flow(
                 _ocp_dims(),
                 (x, p) -> 0.0;
-                constraint=(:a, :b),
-                multiplier=((x, p) -> [2.0, 1.0], (x, p) -> 3.0),
+                multipliers=(:a => ((x, p) -> [2.0, 1.0]), :b => ((x, p) -> 3.0)),
                 hamiltonian_type=ht,
                 _opts()...,
             )
@@ -264,10 +263,10 @@ function test_constraint_label_bounds()
             ocp = _ocp(((r, t, x, u, v) -> (r[1]=x; nothing), 0.1, 0.9, :box))
             spec = :box => :lower
             Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
-                ocp, (x, p) -> 0.0; constraint=spec, multiplier=μ, _opts()...
+                ocp, (x, p) -> 0.0; multipliers=spec => μ, _opts()...
             )
             err = try
-                Flows.Flow(ocp, (x, p) -> 0.0; constraint=spec, multiplier=μ, _opts()...)
+                Flows.Flow(ocp, (x, p) -> 0.0; multipliers=spec => μ, _opts()...)
             catch e
                 e
             end
@@ -279,8 +278,7 @@ function test_constraint_label_bounds()
             Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
                 ocp,
                 (x, p) -> 0.0;
-                constraint=(:xcon, (x, u) -> x),
-                multiplier=(μ, μ),
+                multipliers=(:xcon => μ, ((x, u) -> x) => μ),
                 _opts()...,
             )
         end
@@ -296,16 +294,14 @@ function test_constraint_label_bounds()
             f_sym = Flows.Flow(
                 ocp,
                 (x, p) -> 0;
-                constraint=:xcon,
-                multiplier=μ,
+                multipliers=:xcon => μ,
                 hamiltonian_type=ht,
                 _opts()...,
             )
             f_fun = Flows.Flow(
                 ocp,
                 (x, p) -> 0;
-                constraint=(x, u) -> x - LB,
-                multiplier=μ,
+                multipliers=((x, u) -> x - LB) => μ,
                 hamiltonian_type=ht,
                 _opts()...,
             )
@@ -321,8 +317,7 @@ function test_constraint_label_bounds()
             f = Flows.Flow(
                 _ocp_box(),
                 (x, p) -> 0;
-                constraint=:xbox,
-                multiplier=μ,
+                multipliers=:xbox => μ,
                 hamiltonian_type=ht,
                 _opts()...,
             )
@@ -337,8 +332,7 @@ function test_constraint_label_bounds()
             f = Flows.Flow(
                 _ocp_batch(),
                 _law_batch;
-                constraint=(:pc, :vmax),
-                multiplier=(_μ_pc_batch, _μ_vmax_batch),
+                multipliers=(:pc => _μ_pc_batch, :vmax => _μ_vmax_batch),
                 hamiltonian_type=ht,
                 _opts()...,
             )
@@ -358,7 +352,7 @@ function test_constraint_label_bounds()
             ocp = _ocp((f!, lb, ub, :xcon))
             f_minus = Flows.Flow(ocp, (x, p) -> -1; _opts()...)
             f_bound = Flows.Flow(
-                ocp, (x, p) -> 0; constraint=:xcon, multiplier=μ, _opts()...
+                ocp, (x, p) -> 0; multipliers=:xcon => μ, _opts()...
             )
             f_plus = Flows.Flow(ocp, (x, p) -> 1; _opts()...)
             φ = f_minus * (0.9, f_bound) * (1.6, f_plus)

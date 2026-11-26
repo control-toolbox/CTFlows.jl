@@ -49,7 +49,7 @@ for every cell.
 | `Flow(::ODEFunction)` | ✓ | ✓ | ✓ | same as `Flow(VectorField)` |
 | `Flow(::ODEProblem)` | ✓ | ✓ | ✓ | no shape coercion; in-place problem + immutable state: SciML error |
 | `Flow(ocp)` | ✓ | ✗ | ✗ | the state dimension is fixed by the OCP |
-| `Flow(ocp, DynClosedLoop)` | ✓ | ✗ | ✗ | same with `constraint=`/`multiplier=`; `:total` = `:partial` for a stationary law |
+| `Flow(ocp, DynClosedLoop)` | ✓ | ✗ | ✗ | same with `multipliers=`; `:total` = `:partial` for a stationary law |
 | `Flow(ocp, OpenLoop/ClosedLoop)` | ✓ | ✓ | point call only | the trajectory call computes the objective, which is not `Dual`-transparent |
 | `Flow(h̃, law)` | ✓ | ✗ | ✗ | `DynClosedLoop` only |
 | `Flow(h̃vf, law)` | ✓ | ✓ | ✓ | `DynClosedLoop` only; in-place + immutable: warns |

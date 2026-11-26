@@ -94,7 +94,7 @@ function test_convenience_arity()
             bad_g = (x, u, v) -> x  # arity 3, OCP_LQR expects 2
             μ = (x, p) -> 0.7
             try
-                Flows.Flow(OCP_LQR, u; constraint=bad_g, multiplier=μ, _opts()...)
+                Flows.Flow(OCP_LQR, u; multipliers=bad_g => μ, _opts()...)
                 Test.@test false
             catch err
                 Test.@test err isa Exceptions.IncorrectArgument
@@ -113,7 +113,7 @@ function test_convenience_arity()
             g = (x, u) -> x
             bad_μ = (t, x, p) -> 0.7  # arity 3, OCP_LQR expects 2
             try
-                Flows.Flow(OCP_LQR, u; constraint=g, multiplier=bad_μ, _opts()...)
+                Flows.Flow(OCP_LQR, u; multipliers=g => bad_μ, _opts()...)
                 Test.@test false
             catch err
                 Test.@test err isa Exceptions.IncorrectArgument
@@ -133,7 +133,7 @@ function test_convenience_arity()
             bad_g = (t, x, u) -> x    # arity 3, expected 2
             bad_μ = (x, p, v) -> 0.7  # arity 3, expected 2
             try
-                Flows.Flow(OCP_LQR, bad_u; constraint=bad_g, multiplier=bad_μ, _opts()...)
+                Flows.Flow(OCP_LQR, bad_u; multipliers=bad_g => bad_μ, _opts()...)
                 Test.@test false
             catch err
                 Test.@test err isa Exceptions.IncorrectArgument
@@ -152,7 +152,7 @@ function test_convenience_arity()
             μ1 = (x, p) -> 0.5
             μ2 = (x, p) -> 0.5
             try
-                Flows.Flow(OCP_LQR, u; constraint=(g1, g2), multiplier=(μ1, μ2), _opts()...)
+                Flows.Flow(OCP_LQR, u; multipliers=(g1 => μ1, g2 => μ2), _opts()...)
                 Test.@test false
             catch err
                 Test.@test err isa Exceptions.IncorrectArgument
@@ -170,7 +170,7 @@ function test_convenience_arity()
             u = (x, p) -> p
             g = (x, u) -> x
             μ = (x, p) -> 0.7
-            f = Flows.Flow(OCP_LQR, u; constraint=g, multiplier=μ, _opts()...)
+            f = Flows.Flow(OCP_LQR, u; multipliers=g => μ, _opts()...)
             xf, pf = f(0.0, 1.0, 0.5, 1.0)
             Test.@test xf isa Number
             Test.@test pf isa Number
@@ -215,14 +215,13 @@ function test_convenience_arity()
             catch err
                 Test.@test err isa Exceptions.PreconditionError
                 Test.@test occursin("Flow(ocp, u)", err.suggestion)
-                Test.@test occursin("constraint=", err.suggestion)
-                Test.@test occursin("multiplier=", err.suggestion)
+                Test.@test occursin("multipliers=", err.suggestion)
                 Test.@test !occursin("takes no positional argument", err.suggestion)
             end
         end
 
         # ====================================================================
-        # explicit law: only constraint/multiplier are checked, never the law itself
+        # explicit law: only the constraints and multipliers are checked, never the law itself
         # ====================================================================
 
         Test.@testset "explicit law with divergent traits: law arity itself is not checked" begin
@@ -237,7 +236,7 @@ function test_convenience_arity()
             bad_g = (t, x, u, v) -> x  # arity 4, OCP_LQR expects 2
             μ = (x, p) -> 0.7
             try
-                Flows.Flow(OCP_LQR, law; constraint=bad_g, multiplier=μ, _opts()...)
+                Flows.Flow(OCP_LQR, law; multipliers=bad_g => μ, _opts()...)
                 Test.@test false
             catch err
                 Test.@test err isa Exceptions.IncorrectArgument

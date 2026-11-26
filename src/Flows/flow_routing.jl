@@ -281,8 +281,8 @@ end
 $(TYPEDSIGNATURES)
 
 Return the action-level option definitions for control flows: `hamiltonian_type`
-(`:total` or `:partial`), and the paired `constraint` / `multiplier` options that turn
-the flow into a constrained pseudo-Hamiltonian flow. All three are routed as first-class
+(`:total` or `:partial`), and `multipliers`, the `constraint => multiplier` pairs that turn
+the flow into a constrained pseudo-Hamiltonian flow. Both are routed as first-class
 action options so they are accepted only where meaningful (the control-law flow
 constructors) and rejected as unknown options elsewhere.
 
@@ -298,25 +298,19 @@ function _flow_action_defs()
             description="Hamiltonian type for DynClosedLoop flows: :total or :partial",
         ),
         Options.OptionDefinition(;
-            name=:constraint,
+            name=:multipliers,
             aliases=(),
             type=Any,
             default=nothing,
-            description="Constraint(s) adjoined to the pseudo-Hamiltonian: the label of a " *
-                        "constraint of the OCP (path constraint, state box or control box), " *
-                        "a tuple of labels, or, outside the model, a CTBase.Data.PathConstraint " *
-                        "or a plain function g ≥ 0 with the OCP's natural arity. " *
-                        "Paired with `multiplier`.",
-        ),
-        Options.OptionDefinition(;
-            name=:multiplier,
-            aliases=(),
-            type=Any,
-            default=nothing,
-            description="Multiplier of the constraint(s): the dual of the solution for a " *
-                        "label (SGN1–SGN6), μ ≥ 0 for a function; a CTBase.Data.Multiplier " *
-                        "or a plain function with the OCP's natural arity " *
-                        "μ(x,p)/μ(t,x,p)/μ(x,p,v)/μ(t,x,p,v). Paired with `constraint`.",
+            description="Constraints adjoined to the pseudo-Hamiltonian, with their " *
+                        "multipliers in feedback form, as `constraint => multiplier` pairs " *
+                        "(a Pair, a tuple or vector of pairs, a NamedTuple or a Dict). The " *
+                        "constraint is the label of a constraint of the OCP (path constraint, " *
+                        "state box or control box), or, outside the model, a " *
+                        "CTBase.Data.PathConstraint or a plain function g ≥ 0 with the OCP's " *
+                        "natural arity. The multiplier is a CTBase.Data.Multiplier or a plain " *
+                        "function μ(x,p)/μ(t,x,p)/μ(x,p,v)/μ(t,x,p,v): the dual of the solution " *
+                        "for a label (SGN1–SGN6), μ ≥ 0 for a function.",
         ),
     ]
 end

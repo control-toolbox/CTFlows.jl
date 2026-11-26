@@ -1,5 +1,5 @@
 """
-Constraint duals of the `Solution` of `Flow(ocp, law; constraint=:label, multiplier=y)`
+Constraint duals of the `Solution` of `Flow(ocp, law; multipliers=:label => y)`
 (issue #472, control-toolbox/CTModels.jl#536).
 
 The multiplier `y` given to the flow is the dual of the solution, in the convention of the
@@ -101,8 +101,7 @@ function _three_arcs(ocp; constraint=:xcon)
     f_bound = Flows.Flow(
         ocp,
         (x, p) -> 0;
-        constraint=constraint,
-        multiplier=(x, p) -> 2x,
+        multipliers=constraint => ((x, p) -> 2x),
         label="boundary",
         OPTS...,
     )
@@ -178,8 +177,7 @@ function test_flow_duals()
             f = Flows.Flow(
                 ocp,
                 (x, p) -> -x;
-                constraint=:mixed,
-                multiplier=(x, p) -> p + 1,
+                multipliers=:mixed => ((x, p) -> p + 1),
                 hamiltonian_type=ht,
                 OPTS...,
             )
@@ -254,7 +252,7 @@ function test_flow_duals()
 
         Test.@testset "a control box given to a single flow: its dual" begin
             ocp = _issue440_box()
-            f = Flows.Flow(ocp, (x, p) -> 1; constraint=:ubox, multiplier=_const(0.4), OPTS...)
+            f = Flows.Flow(ocp, (x, p) -> 1; multipliers=:ubox => _const(0.4), OPTS...)
             sol = f((0.0, 1.0), 1.0, 0.0)
             Test.@test CTModels.dual(sol, ocp, :ubox)(0.5) ≈ 0.4
             Test.@test_throws Exceptions.PreconditionError CTModels.dual(sol, ocp, :xbox)
@@ -266,7 +264,7 @@ function test_flow_duals()
 
         Test.@testset "the dual is the multiplier, with its sign" begin
             f(ocp, y) = Flows.Flow(
-                ocp, (x, p) -> 0; constraint=:c, multiplier=_const(y), OPTS...
+                ocp, (x, p) -> 0; multipliers=:c => _const(y), OPTS...
             )
             # one finite bound: y ≥ 0, either way
             o = _scalar(0.1, Inf)
@@ -286,21 +284,20 @@ function test_flow_duals()
             x0, p0 = [0.5, 0.5], [0.0, 0.0]
             # :c, one dual per component; the rows of :s stay 0
             f = Flows.Flow(
-                ocp, (x, p) -> 0; constraint=:c, multiplier=_const([0.3, 0.4]), OPTS...
+                ocp, (x, p) -> 0; multipliers=:c => _const([0.3, 0.4]), OPTS...
             )
             sol = f((0.0, 1.0), x0, p0)
             Test.@test CTModels.dual(sol, ocp, :c)(0.5) ≈ [0.3, 0.4]   # two-sided, then one-sided
             Test.@test CTModels.dual(sol, ocp, :s)(0.5) == 0.0
             f = Flows.Flow(
-                ocp, (x, p) -> 0; constraint=:c, multiplier=_const([-0.3, 0.4]), OPTS...
+                ocp, (x, p) -> 0; multipliers=:c => _const([-0.3, 0.4]), OPTS...
             )
             Test.@test CTModels.dual(f((0.0, 1.0), x0, p0), ocp, :c)(0.5) ≈ [-0.3, 0.4]
             # a tuple of labelled constraints
             f = Flows.Flow(
                 ocp,
                 (x, p) -> -1;
-                constraint=(:s, :c),
-                multiplier=(_const(0.2), _const([0.3, 0.4])),
+                multipliers=(:s => _const(0.2), :c => _const([0.3, 0.4])),
                 OPTS...,
             )
             sol = f((0.0, 1.0), x0, p0)
@@ -312,10 +309,10 @@ function test_flow_duals()
             ocp = _vector([0.0, -Inf], [1.0, 2.0])
             # phase 1: u ≥ -1 active (:s); phase 2: x₁ ≤ 1 active (:c, first row)
             f1 = Flows.Flow(
-                ocp, (x, p) -> -1; constraint=:s, multiplier=_const(0.2), OPTS...
+                ocp, (x, p) -> -1; multipliers=:s => _const(0.2), OPTS...
             )
             f2 = Flows.Flow(
-                ocp, (x, p) -> 0; constraint=:c, multiplier=_const([0.3, 0.0]), OPTS...
+                ocp, (x, p) -> 0; multipliers=:c => _const([0.3, 0.0]), OPTS...
             )
             sol = (f1 * (0.5, f2))((0.0, 1.0), [1.5, 0.5], [0.0, 0.0])
             ds, dc = CTModels.dual(sol, ocp, :s), CTModels.dual(sol, ocp, :c)
@@ -345,8 +342,7 @@ function test_flow_duals()
             f = Flows.Flow(
                 ocp,
                 (x, p) -> -x;
-                constraint=(x, u) -> x + u,
-                multiplier=(x, p) -> -1 - p,
+                multipliers=((x, u) -> x + u) => ((x, p) -> -1 - p),
                 OPTS...,
             )
             sol = f((0.0, 1.0), -1.0, P0_MIXED)
@@ -358,25 +354,23 @@ function test_flow_duals()
                 e
             end
             Test.@test occursin("has no label", err.suggestion)
-            Test.@test occursin("constraint=:label", err.suggestion)
+            Test.@test occursin("multipliers=:label => y", err.suggestion)
             # the flow warns when it is built, and names the labels of the problem
-            Test.@test_logs (:warn, r"constraint=:dummy.*:dummy, :mixed") Flows.Flow(
+            Test.@test_logs (:warn, r"multipliers=:dummy => y.*:dummy, :mixed") Flows.Flow(
                 ocp,
                 (x, p) -> -x;
-                constraint=(x, u) -> x + u,
-                multiplier=(x, p) -> -1 - p,
+                multipliers=((x, u) -> x + u) => ((x, p) -> -1 - p),
                 OPTS...,
             )
             # no warning for a labelled constraint, nor for a problem with no path constraint
             Test.@test_logs Flows.Flow(
-                ocp, (x, p) -> -x; constraint=:mixed, multiplier=(x, p) -> p + 1, OPTS...
+                ocp, (x, p) -> -x; multipliers=:mixed => ((x, p) -> p + 1), OPTS...
             )
             # a tuple mixing a label and a function is rejected
             Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
                 ocp,
                 (x, p) -> -x;
-                constraint=(:mixed, (x, u) -> x),
-                multiplier=((x, p) -> p + 1, _const(0.0)),
+                multipliers=(:mixed => ((x, p) -> p + 1), ((x, u) -> x) => _const(0.0)),
                 OPTS...,
             )
             # one unlabelled phase in a multi-phase flow: no dual for the whole solution
@@ -388,7 +382,7 @@ function test_flow_duals()
         Test.@testset "the flow keeps its duals through with_label" begin
             ocp = _mixed()
             f = Flows.Flow(
-                ocp, (x, p) -> -x; constraint=:mixed, multiplier=(x, p) -> p + 1, OPTS...
+                ocp, (x, p) -> -x; multipliers=:mixed => ((x, p) -> p + 1), OPTS...
             )
             g = Flows.with_label(f, "boundary")
             Test.@test g.duals === f.duals

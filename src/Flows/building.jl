@@ -192,6 +192,7 @@ backend, and wraps the resulting flow together with the OCP reference.
 See also: [`CTFlows.Flows.OptimalControlFlow`](@extref), [`CTFlows.Flows.Flow`](@extref), `CTFlows.Flows._ocp_hamiltonian`.
 """
 function _flow_from_ocp(::Type{Traits.ControlFree}, ocp::CTModels.Models.Model; kwargs...)
+    _reject_removed_constraint_keywords(kwargs)
     _reject_control_free_constraint(kwargs)
     p0, kwargs = _pop_p0(kwargs)
     method, kw = _pop_method(kwargs)
@@ -209,7 +210,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Reject a `constraint` / `multiplier` keyword on a **control-free** `Flow(ocp)`.
+Reject a `multipliers` keyword on a **control-free** `Flow(ocp)`.
 
 Constrained flows are only defined for the with-control case `Flow(ocp, law; …)`, where
 the constraint term `μ·g` enters the pseudo-Hamiltonian `H̃ + μ·g` alongside the control.
@@ -220,14 +221,14 @@ no well-defined place in the control-free OCP Hamiltonian flow. Throws
 See also: [`CTFlows.Flows.Flow`](@extref).
 """
 function _reject_control_free_constraint(kwargs)
-    (haskey(kwargs, :constraint) || haskey(kwargs, :multiplier)) && throw(
+    haskey(kwargs, :multipliers) && throw(
         Exceptions.PreconditionError(
             "constrained flows are not supported for control-free problems";
-            reason="a `constraint`/`multiplier` pair augments the pseudo-Hamiltonian " *
+            reason="a `constraint => multiplier` pair augments the pseudo-Hamiltonian " *
                    "H̃ + μ·g with the control; a control-free Flow(ocp) has no control " *
                    "law and no pseudo-Hamiltonian to carry the constraint term",
-            suggestion="use Flow(ocp, law; constraint=…, multiplier=…) with a control law",
-            context="Flow(ocp; constraint=…, multiplier=…) — control-free constraint guard",
+            suggestion="use Flow(ocp, law; multipliers=:label => μ) with a control law",
+            context="Flow(ocp; multipliers=…) — control-free constraint guard",
         ),
     )
     return nothing
@@ -587,17 +588,28 @@ Dispatches on the law's [`CTBase.Traits.feedback`](@extref) trait:
 
 # Path constraints
 
-With a `DynClosedLoop` law, the `constraint` and `multiplier` keywords (given together)
-adjoin constraints to the pseudo-Hamiltonian. `constraint` is:
+With a `DynClosedLoop` law, the keyword `multipliers` adjoins constraints to the
+pseudo-Hamiltonian, each with its multiplier in feedback form, as `constraint => multiplier`
+pairs: a `Pair`, a tuple or a vector of pairs, a `NamedTuple` (labels only) or a `Dict`,
+the shapes [`CTBase.Data.hamiltonian`](@extref)`(ocp, u; multipliers)` accepts. The
+constraint of a pair is:
 - the `Symbol` label of a constraint of the OCP (a path constraint, a state box or a
-  control box), or a `Tuple` of labels paired element-wise with a `Tuple` of multipliers:
-  the multiplier `y` is the **dual of the solution** (ct-conventions `SGN1`–`SGN6`: `y ≥ 0`
-  on a one-sided row, the sign of `y` giving the active side of a two-sided or equality
-  row), and the duals of the arc are placed in the solution by label;
+  control box): the multiplier `y` is the **dual of the solution** (ct-conventions
+  `SGN1`–`SGN6`: `y ≥ 0` on a one-sided row, the sign of `y` giving the active side of a
+  two-sided or equality row), and the duals of the arc are placed in the solution by label;
 - a raw function `g(t,x,u,v) ≥ 0` with the OCP's natural arity, or a
   [`CTBase.Data.PathConstraint`](@extref), for a constraint outside the model: its
   multiplier is `μ ≥ 0` and its duals are not placed in the solution.
-`label => side` is no longer accepted: the sign of `y` replaces the side.
+
+The multiplier is a [`CTBase.Data.Multiplier`](@extref) or a raw function `μ(t,x,p,v)` with
+the OCP's natural arity, with the dimension of its constraint. Labels and functions are not
+mixed in one call.
+
+```julia
+Flow(ocp, u; multipliers=:x_con => (x, p) -> 2x)
+Flow(ocp, u; multipliers=(:a => μa, :b => μb))
+Flow(ocp, u; multipliers=((x, u) -> x - 0.1) => (x, p) -> 2x)
+```
 
 # Cost multiplier
 
@@ -620,13 +632,17 @@ passed to them.
 - [`CTBase.Exceptions.PreconditionError`](@extref): if a `DynClosedLoop` law is passed
   to the state-flow path (should not happen via this constructor).
 - [`CTBase.Exceptions.IncorrectArgument`](@extref): if `hamiltonian_type` is invalid.
-- [`CTBase.Exceptions.IncorrectArgument`](@extref): if a constraint label is not a `:path`
-  constraint, or is two-sided with no side given.
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if `multipliers` is not made of
+  `constraint => multiplier` pairs, gives a constraint twice, mixes labels and functions,
+  or names a label that is not a path constraint or a box of the OCP.
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if the removed keywords `constraint` or
+  `multiplier` are given.
 
 See also: [`CTFlows.Flows.Flow`](@extref), [`CTFlows.Flows.OptimalControlFlow`](@extref),
 [`CTFlows.Flows.ControlledFlow`](@extref).
 """
 function Flow(ocp::CTModels.Models.Model, law::Data.ControlLaw; kwargs...)
+    _reject_removed_constraint_keywords(kwargs)
     return _flow_from_ocp_control(Traits.feedback(law), ocp, law; kwargs...)
 end
 
@@ -786,21 +802,23 @@ _spec_arity_issues!(issues, ocp, spec, label, second, kind) = nothing
 $(TYPEDSIGNATURES)
 
 Check the arities of the raw functions passed to an OCP convenience constructor — the
-control law `u`, and (if given as raw `Function`s) the `constraint`/`multiplier` specs —
+control law `u`, and (if given as raw `Function`s) the constraints and multipliers of the
+`multipliers` pairs —
 against the OCP's time/variable dependence.
 
 Collects every mismatch (a function with a single method and a wrong arity) into one
 [`CTBase.Exceptions.IncorrectArgument`](@extref), naming the expected natural syntax for
 each and suggesting the explicit constructors as an escape hatch. Functions with more than
-one method are skipped (arity cannot be determined); `Tuple` constraint/multiplier specs
+one method are skipped (arity cannot be determined); several constraints and multipliers
 are checked element-wise; `nothing` is skipped (no spec given).
 
 # Arguments
 - `ocp::CTModels.Models.Model`: the OCP.
 - `u`: the control-law spec (`nothing` or a raw `Function`).
-- `cspec`: the `constraint` spec (`nothing`, `Symbol`, `label => side`, `Function`, `Tuple`, or
+- `cspec`: the constraints of the `multipliers` pairs, from
+  [`CTFlows.Flows._multiplier_specs`](@extref) (`nothing`, `Symbol`, `Function`, `Tuple`, or
   `CTBase.Data.PathConstraint`).
-- `mspec`: the `multiplier` spec (`nothing`, `Function`, `Tuple`, or `CTBase.Data.Multiplier`).
+- `mspec`: their multipliers (`nothing`, `Function`, `Tuple`, or `CTBase.Data.Multiplier`).
 
 A control-free OCP is skipped entirely (no throw): a control law's arity is only
 meaningful relative to an OCP that actually has a control, and a control-free OCP is
@@ -829,7 +847,7 @@ function _check_convenience_arities(ocp, u, cspec, mspec)
                        "for the constraint, Data.Multiplier for the multiplier — with the time/variable " *
                        "dependence you intend; this check only runs when the raw function has a single " *
                        "method (skipped if ambiguous, e.g. multiple dispatch or default arguments)",
-            context="Flow(ocp, u::Function; constraint=…, multiplier=…) — convenience arity check",
+            context="Flow(ocp, u::Function; multipliers=…) — convenience arity check",
         ),
     )
 end
@@ -850,21 +868,21 @@ time-varying feedback on an autonomous OCP), build the
 [`CTBase.Data.DynClosedLoop`](@extref) explicitly and call
 [`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.ControlLaw)`](@extref).
 
-If `u` (and, when given as raw `Function`s, the `constraint`/`multiplier` keyword specs)
-has a single method, its arity is checked against the OCP's time/variable dependence —
+If `u` (and, when given as raw `Function`s, the constraints and multipliers of the
+`multipliers` pairs) has a single method, its arity is checked against the OCP's
+time/variable dependence —
 see [`CTFlows.Flows._check_convenience_arities`](@extref).
 
 # Throws
-- [`CTBase.Exceptions.IncorrectArgument`](@extref): if `u`, `constraint`, or `multiplier`
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if `u`, a constraint or a multiplier
   has a single method and a mismatched arity.
 
 See also: [`CTFlows.Flows.Flow(ocp::CTModels.Models.Model, law::CTBase.Data.ControlLaw)`](@extref),
 [`CTFlows.Flows._check_convenience_arities`](@extref).
 """
 function Flow(ocp::CTModels.Models.Model, u::Function; kwargs...)
-    _check_convenience_arities(
-        ocp, u, get(kwargs, :constraint, nothing), get(kwargs, :multiplier, nothing)
-    )
+    _reject_removed_constraint_keywords(kwargs)
+    _check_convenience_arities(ocp, u, _multiplier_specs(get(kwargs, :multipliers, nothing))...)
     law = Data.DynClosedLoop(
         u; is_autonomous=Traits.is_autonomous(ocp), is_variable=Traits.is_variable(ocp)
     )
@@ -877,8 +895,8 @@ $(TYPEDSIGNATURES)
 Build an [`CTFlows.Flows.OptimalControlFlow`](@extref) from the OCP pseudo-Hamiltonian and
 a `DynClosedLoop` law, dispatching on the `hamiltonian_type` action option.
 
-If `constraint`/`multiplier` are given as raw `Function`s with a single method, their
-arity is checked against the OCP's time/variable dependence — see
+If the constraints or multipliers of `multipliers` are raw `Function`s with a single
+method, their arity is checked against the OCP's time/variable dependence — see
 [`CTFlows.Flows._check_convenience_arities`](@extref). `law` itself is not checked here: it
 may have been built explicitly with traits that deliberately differ from the OCP's (the
 arity of a raw `u` is only checked in
@@ -886,8 +904,9 @@ arity of a raw `u` is only checked in
 law itself from the OCP's traits).
 
 # Throws
-- [`CTBase.Exceptions.IncorrectArgument`](@extref): if `constraint` or `multiplier` has a
-  single method and a mismatched arity.
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if a constraint or a multiplier has a
+  single method and a mismatched arity, or if `multipliers` is malformed (see
+  [`CTFlows.Flows._multiplier_specs`](@extref)).
 
 See also: [`CTFlows.Flows._build_pseudo_flow`](@extref), [`CTFlows.Flows._ocp_pseudo_hamiltonian`](@extref),
 [`CTFlows.Flows._check_convenience_arities`](@extref).
@@ -913,10 +932,10 @@ function _flow_from_ocp_control(
     )
     components = _build_flow_components(Traits.WithAD, routed; method=method)
     ht = _unwrap_option(get(routed.action, :hamiltonian_type, nothing), :total)
-    cspec = _unwrap_option(get(routed.action, :constraint, nothing), nothing)
-    mspec = _unwrap_option(get(routed.action, :multiplier, nothing), nothing)
+    cspec, mspec = _multiplier_specs(
+        _unwrap_option(get(routed.action, :multipliers, nothing), nothing)
+    )
     _check_convenience_arities(ocp, nothing, cspec, mspec)
-    _validate_constraint_pair(cspec, mspec)
     inner = _build_ocp_pseudo_flow(Val(ht), ocp, law, components, cspec, mspec; p0)
     duals = _flow_duals(ocp, cspec, mspec)
     duals isa _UnlabelledPathDuals && _warn_unlabelled_constraint(ocp)
@@ -928,58 +947,112 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Validate the `constraint`/`multiplier` pairing: they must be given **together** (both or
-neither), and for multiple constraints both must be tuples of equal length (element `i` of
-`constraint` pairs with element `i` of `multiplier`).
+Reject the keywords `constraint` and `multiplier`, replaced by `multipliers`
+(control-toolbox/CTFlows.jl#543): a constraint and its multiplier are given together, as a
+`constraint => multiplier` pair, the shape of [`CTBase.Data.hamiltonian`](@extref)`(ocp, u;
+multipliers)`.
 
 # Throws
-- [`CTBase.Exceptions.IncorrectArgument`](@extref): if exactly one of the two is given; if one
-  is a tuple and the other is not; or if the two tuples have different lengths.
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if `kwargs` has a `constraint` or a
+  `multiplier` key, with the rewrite to `multipliers` in the suggestion.
 
-See also: [`CTFlows.Flows._build_ocp_pseudo_flow`](@extref), [`CTFlows.Flows._CombinedConstraint`](@extref).
+See also: [`CTFlows.Flows._multiplier_specs`](@extref).
 """
-function _validate_constraint_pair(cspec, mspec)
-    (cspec === nothing) == (mspec === nothing) || throw(
+function _reject_removed_constraint_keywords(kwargs)
+    removed = filter(k -> haskey(kwargs, k), (:constraint, :multiplier))
+    isempty(removed) && return nothing
+    c = haskey(kwargs, :constraint) ? repr(kwargs[:constraint]) : "c"
+    return throw(
         Exceptions.IncorrectArgument(
-            "`constraint` and `multiplier` must be given together";
-            got=cspec === nothing ? "only `multiplier`" : "only `constraint`",
-            expected="both `constraint` and `multiplier`, or neither",
-            context="Flow(ocp, law; constraint=…, multiplier=…) — pairing check",
+            "the keywords `constraint` and `multiplier` are replaced by `multipliers`";
+            got=join(("`$k`" for k in removed), " and "),
+            expected="multipliers=constraint => multiplier",
+            suggestion="Give each constraint with its multiplier as a pair: " *
+                       "multipliers=$c => μ, or multipliers=(:a => μa, :b => μb) for " *
+                       "several constraints",
+            context="Flow(ocp, law; multipliers=…) — removed keywords",
         ),
     )
-    # Multiple constraints: if either side is a tuple, both must be tuples of equal length
-    # (element `i` of `constraint` pairs with element `i` of `multiplier`).
-    if cspec isa Tuple || mspec isa Tuple
-        (cspec isa Tuple && mspec isa Tuple) || throw(
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Split the value of the keyword `multipliers` into the constraints and the multipliers the
+flow builders take, `(cspec, mspec)`: `(nothing, nothing)` for no constraint, the constraint
+and the multiplier of a single pair, or two tuples, element `i` of one paired with element
+`i` of the other, for several pairs.
+
+# Arguments
+- `multipliers`: `nothing`, an empty collection, a `Pair` `constraint => multiplier`, a
+  `Tuple` or an `AbstractVector` of such pairs, a `NamedTuple` (`label = multiplier`) or an
+  `AbstractDict`.
+
+# Returns
+- `Tuple{Any,Any}`: `(cspec, mspec)`.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): if `multipliers` (or one of its
+  elements) is not a pair, or if a constraint is given twice.
+
+See also: [`CTFlows.Flows._reject_removed_constraint_keywords`](@extref),
+[`CTFlows.Flows._build_ocp_pseudo_flow`](@extref).
+"""
+_multiplier_specs(::Nothing) = (nothing, nothing)
+_multiplier_specs(pr::Pair) = (first(pr), last(pr))
+_multiplier_specs(m::NamedTuple) = _multiplier_specs(Tuple(k => v for (k, v) in pairs(m)))
+_multiplier_specs(m::AbstractDict) = _multiplier_specs(Tuple(collect(pairs(m))))
+_multiplier_specs(m::AbstractVector) = _multiplier_specs(Tuple(m))
+function _multiplier_specs(m::Tuple)
+    isempty(m) && return (nothing, nothing)
+    for (i, pr) in enumerate(m)
+        pr isa Pair || _not_a_pair(pr, " (element $i)")
+    end
+    length(m) == 1 && return _multiplier_specs(only(m))
+    cs = Tuple(first(pr) for pr in m)
+    for (i, c) in enumerate(cs)
+        any(isequal(c), cs[1:(i - 1)]) && throw(
             Exceptions.IncorrectArgument(
-                "`constraint` and `multiplier` must both be tuples for multiple constraints";
-                got=if cspec isa Tuple
-                    "tuple `constraint`, non-tuple `multiplier`"
-                else
-                    "non-tuple `constraint`, tuple `multiplier`"
-                end,
-                expected="both `constraint` and `multiplier` given as tuples",
-                context="Flow(ocp, law; constraint=(…,), multiplier=(…,)) — pairing check",
-            ),
-        )
-        length(cspec) == length(mspec) || throw(
-            Exceptions.IncorrectArgument(
-                "`constraint` and `multiplier` tuples must have the same length";
-                got="$(length(cspec)) constraints, $(length(mspec)) multipliers",
-                expected="matched tuple lengths",
-                context="Flow(ocp, law; constraint=(…,), multiplier=(…,)) — pairing check",
+                "a constraint is given twice in `multipliers`";
+                got=repr(c),
+                expected="each constraint once, with its multiplier",
+                context="Flow(ocp, law; multipliers=…) — constraint/multiplier pairs",
             ),
         )
     end
-    return nothing
+    return (cs, Tuple(last(pr) for pr in m))
+end
+_multiplier_specs(m) = _not_a_pair(m, "")
+
+"""
+$(TYPEDSIGNATURES)
+
+Throw the error of a `multipliers` value (or of one of its elements, named by `where`) that
+is not a `constraint => multiplier` pair.
+
+# Throws
+- [`CTBase.Exceptions.IncorrectArgument`](@extref): always.
+"""
+function _not_a_pair(x, where::AbstractString)
+    return throw(
+        Exceptions.IncorrectArgument(
+            "`multipliers` takes `constraint => multiplier` pairs";
+            got="$(repr(x))$where",
+            expected="a Pair, a tuple or vector of pairs, a NamedTuple or a Dict",
+            suggestion="Write multipliers=:label => μ, or multipliers=(:a => μa, :b => μb); " *
+                       "wrap an anonymous function in parentheses, as in " *
+                       "multipliers=((x, u) -> x) => ((x, p) -> 2x)",
+            context="Flow(ocp, law; multipliers=…) — constraint/multiplier pairs",
+        ),
+    )
 end
 
 """
 $(TYPEDSIGNATURES)
 
 Build the inner Hamiltonian flow of an OCP + control-law flow, dispatching on the
-`hamiltonian_type` and on the presence of a `constraint`/`multiplier` pair (already
-validated by [`CTFlows.Flows._validate_constraint_pair`](@extref)).
+`hamiltonian_type` and on the presence of constraints (the `(cspec, mspec)` of
+[`CTFlows.Flows._multiplier_specs`](@extref)).
 
 Both modes share the same objects: the constrained pseudo-Hamiltonian `H(t,x,p,u,μ,v)`
 ([`CTFlows.Flows._constrained_pseudo_hamiltonian`](@extref): by label from CTModels, with
@@ -1110,7 +1183,7 @@ function Flow(::CTModels.Models.Model, ::Any, args...; kwargs...)
             "Flow(ocp, …) with extra positional arguments is not supported";
             reason="passing a control law, state constraint or multiplier as a positional " *
                    "argument is not handled by the OCP flow constructor",
-            suggestion="Flow(ocp, u) takes the control law positionally; pass constraint/multiplier as keywords: Flow(ocp, u; constraint=g, multiplier=μ)",
+            suggestion="Flow(ocp, u) takes the control law positionally; pass the constraints and their multipliers as a keyword: Flow(ocp, u; multipliers=g => μ)",
             context="Flow(ocp::CTModels.Models.Model) — positional-argument guard",
         ),
     )

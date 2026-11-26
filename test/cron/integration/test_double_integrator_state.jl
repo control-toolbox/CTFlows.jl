@@ -155,8 +155,7 @@ function test_double_integrator_state()
             fc = Flows.Flow(
                 ocp,
                 (x, p) -> 0.0;
-                constraint=(x, u) -> a - x[1],
-                multiplier=(x, p) -> 0.0,
+                multipliers=((x, u) -> a - x[1]) => ((x, p) -> 0.0),
                 hamiltonian_type=ht,
                 alg=Tsit5(),
                 reltol=1e-12,

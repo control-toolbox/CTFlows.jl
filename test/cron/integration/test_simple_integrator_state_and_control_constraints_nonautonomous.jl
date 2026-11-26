@@ -90,8 +90,7 @@ function test_simple_integrator_state_and_control_constraints_nonautonomous()
             fc = Flows.Flow(
                 ocp,
                 (t, x, p) -> -2.0 * (t - 2.0);
-                constraint=(t, x, u) -> g(t, x),
-                multiplier=(t, x, p) -> -_ALPHA * p[1],
+                multipliers=((t, x, u) -> g(t, x)) => ((t, x, p) -> -_ALPHA * p[1]),
                 hamiltonian_type=ht,
                 alg=Tsit5(),
                 reltol=1e-12,
