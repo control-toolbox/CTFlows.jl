@@ -1,7 +1,7 @@
 # =============================================================================
 # Constraint duals of an OCP flow (issue #472, control-toolbox/CTModels.jl#536)
 #
-# `Flow(ocp, law; constraint=:label, multiplier=y)` adjoins the constraint `label` (a path
+# `Flow(ocp, law; multipliers=:label => y)` adjoins the constraint `label` (a path
 # constraint, a state box or a control box) to the pseudo-Hamiltonian through CTModels,
 # with the multiplier `y` in the dual convention of the solution (ct-conventions SGN1–SGN6,
 # the convention of the direct solvers, control-toolbox/CTSolvers.jl#288):
@@ -205,7 +205,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Warn (once per session) that a constraint given to `Flow(ocp, law; constraint=…)` as a
+Warn (once per session) that a constraint given to `Flow(ocp, law; multipliers=…)` as a
 function, while the problem has labelled constraints, leaves the solution of the flow
 without duals: `dual(sol, ocp, :label)` will throw. The fix is to give the constraint by its
 label.
@@ -215,9 +215,9 @@ function _warn_unlabelled_constraint(ocp)
     isempty(path) && return nothing
     labels = first.(path)
     l = first(labels)
-    @warn "A constraint given to Flow(ocp, law; constraint=…) as a function has no " *
+    @warn "A constraint given to Flow(ocp, law; multipliers=…) as a function has no " *
         "label: the solution will carry no constraint dual, and dual(sol, ocp, :label) " *
-        "will throw. Give it by its label to get its dual, e.g. constraint=:$l, with the " *
+        "will throw. Give it by its label to get its dual, e.g. multipliers=:$l => y, with the " *
         "multiplier in the dual convention of the solution. Path constraints of the " *
         "problem: $(join(":" .* string.(labels), ", "))." maxlog = 1
     return nothing
@@ -234,7 +234,7 @@ function _missing_duals_note(::_UnlabelledPathDuals)::String
     return "This solution comes from a CTFlows flow with a constraint given as a function: " *
            "it has no label, so its multiplier cannot be placed in the model, and the " *
            "solution carries no dual. Give the constraints by their label: " *
-           "Flow(ocp, law; constraint=:label, multiplier=y), with y the dual."
+           "Flow(ocp, law; multipliers=:label => y), with y the dual."
 end
 function _missing_duals_note(::Nothing)::String
     return "This solution comes from a CTFlows flow of a control-free problem, which " *
@@ -242,7 +242,7 @@ function _missing_duals_note(::Nothing)::String
 end
 function _missing_duals_note(::Any)::String
     return "This solution comes from a CTFlows flow, which rebuilds the duals of the " *
-           "constraints given with constraint=:label (path constraints, state and control " *
+           "constraints given by their label in multipliers=:label => y (path constraints, state and control " *
            "boxes) and the zero duals of the other path constraints. The duals of the " *
            "boundary constraints, of the variable boxes and of the boxes not given to the " *
            "flow are not computed (see control-toolbox/CTFlows.jl#495)."

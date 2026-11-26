@@ -106,14 +106,14 @@ function test_scimlbase_flow_constructors()
             # multi-phase SciML flows keep and show the phase sequence
             g = ODEFunction((du, u, p, t) -> du .= u)
             mf = Flows.Flow(f; label="bang") * (0.5, Flows.Flow(g; label="singular"))
-            Test.@test MultiPhase.get_labels(mf) == ["bang", "singular"]
+            Test.@test MultiPhase.phase_labels(mf) == ["bang", "singular"]
             Test.@test occursin(
                 "labels: bang → singular", sprint(show, MIME"text/plain"(), mf)
             )
             traj = mf((0.0, 1.0), [1.0]; variable=nothing)
             Test.@test Trajectories.phase_labels(traj) == ["bang", "singular"]
             mp = pf * (0.5, Flows.Flow(ODEProblem(g, [1.0], (0.0, 1.0)); label="singular"))
-            Test.@test MultiPhase.get_labels(mp) == ["decay", "singular"]
+            Test.@test MultiPhase.phase_labels(mp) == ["decay", "singular"]
             Test.@test occursin(
                 "labels: decay → singular", sprint(show, MIME"text/plain"(), mp)
             )

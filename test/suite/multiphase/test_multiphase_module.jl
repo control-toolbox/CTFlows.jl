@@ -39,9 +39,10 @@ const EXPORTED_FUNCTIONS = (
     :get_flow,
     :get_switching_time,
     :get_jump,
-    :get_flows,
-    :get_switching_times,
-    :get_jumps,
+    :phase_flows,
+    :switching_times,
+    :jumps,
+    :phase_labels,
 )
 
 # Note: MultiPhase module has no private symbols (after filtering Julia internals)

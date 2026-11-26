@@ -103,33 +103,28 @@ function test_flow_routing()
         # ACTION OPTIONS — constraint / multiplier
         # ====================================================================
 
-        Test.@testset "Unit: _flow_action_defs includes constraint/multiplier" begin
+        Test.@testset "Unit: _flow_action_defs includes multipliers" begin
             names = [d.name for d in Flows._flow_action_defs()]
             Test.@test :hamiltonian_type in names
-            Test.@test :constraint in names
-            Test.@test :multiplier in names
+            Test.@test :multipliers in names
+            Test.@test !(:constraint in names)
+            Test.@test !(:multiplier in names)
         end
 
-        Test.@testset "Unit: constraint/multiplier route as action options" begin
+        Test.@testset "Unit: multipliers routes as an action option" begin
             routed = Flows._route_flow_options(
-                (; constraint=:g, multiplier=1.0); action_defs=Flows._flow_action_defs()
+                (; multipliers=:g => 1.0); action_defs=Flows._flow_action_defs()
             )
             Test.@test haskey(routed, :action)
             Test.@test Flows._unwrap_option(
-                get(routed.action, :constraint, nothing), nothing
-            ) === :g
-            Test.@test Flows._unwrap_option(
-                get(routed.action, :multiplier, nothing), nothing
-            ) == 1.0
+                get(routed.action, :multipliers, nothing), nothing
+            ) == (:g => 1.0)
         end
 
-        Test.@testset "Error: constraint/multiplier rejected on Flow(h)" begin
-            # Flow(h) routes without action_defs ⇒ these are unknown options.
+        Test.@testset "Error: multipliers rejected on Flow(h)" begin
+            # Flow(h) routes without action_defs ⇒ an unknown option.
             Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
-                _TEST_H; constraint=:g
-            )
-            Test.@test_throws Exceptions.IncorrectArgument Flows.Flow(
-                _TEST_H; multiplier=1.0
+                _TEST_H; multipliers=:g => 1.0
             )
         end
 

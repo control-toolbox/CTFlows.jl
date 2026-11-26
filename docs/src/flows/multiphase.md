@@ -174,17 +174,18 @@ flow with `unsafe=true` to get what was computed up to the failure.
 ## Inspecting a multi-phase flow
 
 ```@example flows_multiphase
-MultiPhase.n_phases(mpf)                 # number of phases
-MultiPhase.get_flow(mpf, 1)              # flow for phase 1
-MultiPhase.get_switching_time(mpf, 1)    # switching time after phase 1
-MultiPhase.get_jump(mpf, 1)              # jump at that switching time (nothing here)
+MultiPhase.n_phases(mpf)             # number of phases
+MultiPhase.phase_flows(mpf)[1]       # flow for phase 1
+MultiPhase.switching_times(mpf)[1]   # switching time after phase 1
+MultiPhase.jumps(mpf)[1]             # jump at that switching time (nothing here)
 nothing # hide
 ```
 
 ```@example flows_multiphase
-MultiPhase.get_flows(mpf)                # tuple of all phase flows
-MultiPhase.get_switching_times(mpf)      # all switching times
-MultiPhase.get_jumps(mpf)                # all jump functions
+MultiPhase.phase_flows(mpf)          # tuple of all phase flows
+MultiPhase.switching_times(mpf)      # all switching times
+MultiPhase.jumps(mpf)                # all jump functions
+MultiPhase.phase_labels(mpf)         # the labels of the phases
 nothing # hide
 ```
 
@@ -200,7 +201,7 @@ labels, in order:
 fa = Flows.Flow(vf; reltol=1e-8, label="decay")
 fb = Flows.Flow(Data.VectorField(f_dyn2); reltol=1e-8, label="fast decay")
 mpf_lab = fa * (1.0, fb)
-MultiPhase.get_labels(mpf_lab)
+MultiPhase.phase_labels(mpf_lab)
 ```
 
 A flow with no label has the label `""`. The labels are stored in the trajectory
@@ -422,7 +423,7 @@ plot(hsol_sx)   # state jumps, costate continuous
 ## See also
 
 - [`CTFlows.MultiPhase.MultiPhaseStateFlow`](@ref), [`CTFlows.MultiPhase.MultiPhaseHamiltonianFlow`](@ref), [`CTFlows.MultiPhase.AnyMultiPhaseFlow`](@ref) — multi-phase flow types.
-- [`CTFlows.MultiPhase.n_phases`](@ref), [`CTFlows.MultiPhase.get_flow`](@ref), [`CTFlows.MultiPhase.get_switching_time`](@ref), [`CTFlows.MultiPhase.get_jump`](@ref) — phase accessors.
-- [`CTFlows.MultiPhase.get_flows`](@ref), [`CTFlows.MultiPhase.get_switching_times`](@ref), [`CTFlows.MultiPhase.get_jumps`](@ref), [`CTFlows.MultiPhase.get_labels`](@ref) — bulk accessors.
+- [`CTFlows.MultiPhase.n_phases`](@ref), [`CTFlows.MultiPhase.phase_flows`](@ref), [`CTFlows.MultiPhase.switching_times`](@ref), [`CTFlows.MultiPhase.jumps`](@ref), [`CTFlows.MultiPhase.phase_labels`](@ref) — phase accessors.
+- [`CTFlows.MultiPhase.phase_flows`](@ref), [`CTFlows.MultiPhase.switching_times`](@ref), [`CTFlows.MultiPhase.jumps`](@ref), [`CTFlows.MultiPhase.phase_labels`](@ref) — bulk accessors.
 - [`CTFlows.Flows.label`](@ref) — the label of a flow.
 - [`CTFlows.Trajectories.switching_times`](@ref), [`CTFlows.Trajectories.phase_labels`](@ref), [`CTFlows.Trajectories.left_limit`](@ref), [`CTFlows.Trajectories.right_limit`](@ref) — the switching structure of a trajectory.

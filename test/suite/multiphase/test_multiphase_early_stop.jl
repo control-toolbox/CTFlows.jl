@@ -103,11 +103,11 @@ function test_multiphase_early_stop()
             Test.@test MultiPhase._truncate(mpf, 3) === mpf
             t2 = MultiPhase._truncate(mpf, 2)
             Test.@test MultiPhase.n_phases(t2) == 2
-            Test.@test MultiPhase.get_switching_times(t2) == [0.3]
-            Test.@test MultiPhase.get_jump(t2, 1) == [1.0]
+            Test.@test MultiPhase.switching_times(t2) == [0.3]
+            Test.@test MultiPhase.jumps(t2)[1] == [1.0]
             t1 = MultiPhase._truncate(mpf, 1)
             Test.@test MultiPhase.n_phases(t1) == 1
-            Test.@test isempty(MultiPhase.get_switching_times(t1))
+            Test.@test isempty(MultiPhase.switching_times(t1))
         end
 
         Test.@testset "_truncate keeps the kind of the flow" begin

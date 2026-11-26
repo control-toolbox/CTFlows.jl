@@ -121,7 +121,7 @@ function test_constrained_pseudo_hamiltonian_system()
             law = Data.DynClosedLoop((x, p) -> -p)
             μ = Data.Multiplier((x, p) -> x)
             sys = Systems.build_system(H, law, μ, _backend())
-            ∇ = Systems.get_pseudo_hamiltonian_gradient(sys)
+            ∇ = Systems.pseudo_hamiltonian_gradient(sys)
             Test.@test ∇ isa Systems.ConstrainedPseudoHamiltonianGradient
             # H = p(-x+u) + 0.5u² + μx ⇒ ∂ₓH = -p + μ, ∂ₚH = -x + u
             Test.@test all(∇(1.0, 2.0, -0.5, 0.3) .≈ (-2.0 + 0.3, -1.0 - 0.5))
@@ -133,7 +133,7 @@ function test_constrained_pseudo_hamiltonian_system()
             law = Data.DynClosedLoop((x, p, v) -> p; is_variable=true)
             μ = Data.Multiplier((x, p) -> 0.3)
             sys = Systems.build_system(H, law, μ, _backend())
-            ∇v = Systems.get_pseudo_variable_gradient(sys)
+            ∇v = Systems.pseudo_variable_gradient(sys)
             Test.@test ∇v isa Systems.ConstrainedPseudoHamiltonianVariableGradient
             # H = p(v(-x)+u) + 0.5u² + μxv ⇒ ∂ᵥH = -px + μx = -1.7 at x=1, p=2, μ=0.3
             Test.@test first(∇v(1.0, 2.0, 2.0, 0.3, 0.5)) ≈ -1.7 atol = 1e-10

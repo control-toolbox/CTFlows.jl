@@ -45,10 +45,10 @@ const ACCESSORS = (
     Systems.vector_field,
     Systems.pseudo_hamiltonian,
     Systems.control_law,
-    Systems.get_hamiltonian_gradient,
-    Systems.get_variable_gradient,
-    Systems.get_pseudo_hamiltonian_gradient,
-    Systems.get_pseudo_variable_gradient,
+    Systems.hamiltonian_gradient,
+    Systems.variable_gradient,
+    Systems.pseudo_hamiltonian_gradient,
+    Systems.pseudo_variable_gradient,
 )
 
 const ALL = Set(ACCESSORS)
@@ -56,8 +56,8 @@ const HAM = Set((
     Systems.hamiltonian,
     Systems.hamiltonian_vector_field,
     Systems.vector_field,
-    Systems.get_hamiltonian_gradient,
-    Systems.get_variable_gradient,
+    Systems.hamiltonian_gradient,
+    Systems.variable_gradient,
 ))
 const STATE = Set((Systems.vector_field,))
 
@@ -199,7 +199,7 @@ function test_flow_accessors()
         # ====================================================================
 
         Test.@testset "issue #438 reproducer" begin
-            g = Systems.get_hamiltonian_gradient(
+            g = Systems.hamiltonian_gradient(
                 Flows.Flow(OCP, Data.DynClosedLoop((x, p) -> p[2]))
             )
             x, p = [1.0, 2.0], [12.0, 6.0]
@@ -214,10 +214,10 @@ function test_flow_accessors()
                 Data.PseudoHamiltonian(h̃; is_autonomous=aut, is_variable=var),
                 Data.DynClosedLoop(u; is_autonomous=aut, is_variable=var),
             )
-            g = Systems.get_hamiltonian_gradient(f)
-            gv = Systems.get_variable_gradient(f)
-            gp = Systems.get_pseudo_hamiltonian_gradient(f)
-            gpv = Systems.get_pseudo_variable_gradient(f)
+            g = Systems.hamiltonian_gradient(f)
+            gv = Systems.variable_gradient(f)
+            gp = Systems.pseudo_hamiltonian_gradient(f)
+            gpv = Systems.pseudo_variable_gradient(f)
             v = var ? V : nothing
             full, fullp = g(T, X, P, v), gp(T, X, P, U, v)
             if aut && !var

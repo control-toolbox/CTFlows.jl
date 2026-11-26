@@ -183,13 +183,13 @@ function test_switching_structure()
         end
 
         Test.@testset "labels: concatenation keeps them in order" begin
-            Test.@test MultiPhase.get_labels(_decay(; label="a")) == ["a"]
+            Test.@test MultiPhase.phase_labels(_decay(; label="a")) == ["a"]
             mp = _decay(; label="a") * (0.3, _decay()) * (0.6, _decay(; label="c"))
-            Test.@test MultiPhase.get_labels(mp) == ["a", "", "c"]
+            Test.@test MultiPhase.phase_labels(mp) == ["a", "", "c"]
             # nested multi-phase flows
             left = _decay(; label="a") * (0.2, _decay(; label="b"))
             right = _decay(; label="c") * (0.8, _decay(; label="d"))
-            Test.@test MultiPhase.get_labels(left * (0.5, right)) == ["a", "b", "c", "d"]
+            Test.@test MultiPhase.phase_labels(left * (0.5, right)) == ["a", "b", "c", "d"]
             # display: a labels row, an unlabelled phase as ·
             s = sprint(show, MIME"text/plain"(), mp)
             Test.@test occursin("labels: a → · → c", s)

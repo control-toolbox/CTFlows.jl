@@ -64,12 +64,12 @@ function _evaluate_multiphase(mpf, config::Configs.AbstractEndPointConfig; varia
     n_ph = n_phases(mpf)
 
     for i in 1:n_ph
-        t_end = (i < n_ph) ? get_switching_time(mpf, i) : tf
+        t_end = (i < n_ph) ? switching_times(mpf)[i] : tf
 
         current_state, t_reached = let t = current_t, state = current_state
             _in_phase(i, n_ph, unsafe) do
                 return _evaluate_phase_reached(
-                    get_flow(mpf, i),
+                    phase_flows(mpf)[i],
                     t,
                     t_end,
                     state,
@@ -86,7 +86,7 @@ function _evaluate_multiphase(mpf, config::Configs.AbstractEndPointConfig; varia
         current_t = t_end
 
         if i < n_ph
-            jump = get_jump(mpf, i)
+            jump = jumps(mpf)[i]
             if !isnothing(jump)
                 current_state = _apply_jump(mpf, i, current_state)
             end
@@ -172,12 +172,12 @@ function _evaluate_multiphase(
     n_done = 0
 
     for i in 1:n_ph
-        t_end = (i < n_ph) ? get_switching_time(mpf, i) : tf
+        t_end = (i < n_ph) ? switching_times(mpf)[i] : tf
 
         segment_result = let t = current_t, state = current_state
             _in_phase(i, n_ph, unsafe) do
                 return _evaluate_phase(
-                    get_flow(mpf, i),
+                    phase_flows(mpf)[i],
                     t,
                     t_end,
                     state,
@@ -197,7 +197,7 @@ function _evaluate_multiphase(
         current_t = t_end
 
         if i < n_ph
-            jump = get_jump(mpf, i)
+            jump = jumps(mpf)[i]
             if !isnothing(jump)
                 current_state = _apply_jump(mpf, i, current_state)
             end
@@ -208,13 +208,13 @@ function _evaluate_multiphase(
     mpf = _truncate(mpf, n_done)
     merged = Integrators.merge(results)
     # the phase labels of the flows, when at least one phase is labelled
-    labels = get_labels(mpf)
+    labels = phase_labels(mpf)
     any(!isempty, labels) && (merged = Trajectories.with_labels(merged, labels))
     grid = Configs.output_grid(config)
     # a grid of times is returned exactly (no switching time added); a generated grid is
     # built on the merged trajectory, over the phases
     grid isa AbstractVector && (merged = Integrators.regrid(merged, grid))
-    bounds = vcat(t0, [get_switching_time(mpf, i) for i in 1:(n_phases(mpf) - 1)], tf)
+    bounds = vcat(t0, [switching_times(mpf)[i] for i in 1:(n_phases(mpf) - 1)], tf)
     return _finalize_multiphase_trajectory(mpf, merged, variable, grid, bounds)
 end
 
@@ -358,7 +358,7 @@ See also: [`CTFlows.MultiPhase._evaluate_multiphase`](@extref).
 function _finalize_multiphase_trajectory(
     mpf::MultiPhaseFlow, merged, variable, grid=nothing, bounds=nothing
 )
-    phases = get_flows(mpf)
+    phases = phase_flows(mpf)
     isempty(phases) && return merged
     if all(p -> p isa Flows.OptimalControlFlow, phases)
         return _reconstruct_ocp_solution(mpf, merged, variable, grid, bounds)
@@ -436,14 +436,14 @@ over the per-phase laws.
 See also: [`CTFlows.MultiPhase._reconstruct_controlled_trajectory`](@extref), `CTFlows.Flows._build_ocp_solution`.
 """
 function _reconstruct_ocp_solution(mpf, merged, variable, grid=nothing, bounds=nothing)
-    phases = get_flows(mpf)
+    phases = phase_flows(mpf)
     ocp = _shared_ocp(phases)
-    plaw = _PiecewiseControlLaw(map(p -> p.law, phases), get_switching_times(mpf))
+    plaw = _PiecewiseControlLaw(map(p -> p.law, phases), switching_times(mpf))
     integ = Flows.integrator(phases[1])
     merged = Flows._regrid_hamiltonian(merged, grid, plaw, variable, bounds)
-    duals = _piecewise_duals(ocp, map(p -> p.duals, phases), get_switching_times(mpf))
+    duals = _piecewise_duals(ocp, map(p -> p.duals, phases), switching_times(mpf))
     switching = Flows._ocp_switching_model(
-        merged, plaw, variable, get_labels(mpf); duals=duals
+        merged, plaw, variable, phase_labels(mpf); duals=duals
     )
     return Flows._build_ocp_solution(
         ocp, merged, variable, integ, plaw; switching=switching, duals=duals
@@ -559,9 +559,9 @@ See also: [`CTFlows.MultiPhase._reconstruct_ocp_solution`](@extref), `CTFlows.Fl
 function _reconstruct_controlled_trajectory(
     mpf, merged, variable, grid=nothing, bounds=nothing
 )
-    phases = get_flows(mpf)
+    phases = phase_flows(mpf)
     ocp = _shared_ocp(phases)
-    plaw = _PiecewiseControlLaw(map(p -> p.law, phases), get_switching_times(mpf))
+    plaw = _PiecewiseControlLaw(map(p -> p.law, phases), switching_times(mpf))
     integ = Flows.integrator(phases[1])
     coerce = Flows._dim_coerce(length(Integrators.final_state(merged)))
     merged = Flows._regrid_state(merged, grid, plaw, variable, coerce, bounds)
@@ -787,11 +787,11 @@ function _truncate(mpf::MultiPhaseFlow, n::Int)
     n == n_phases(mpf) && return mpf
     flows = mpf.flows[1:n]
     times = mpf.switching_times[1:(n - 1)]
-    jumps = mpf.jumps[1:(n - 1)]
+    js = mpf.jumps[1:(n - 1)]
     return if mpf isa MultiPhaseStateFlow
-        MultiPhaseStateFlow(flows, times, jumps)
+        MultiPhaseStateFlow(flows, times, js)
     else
-        MultiPhaseHamiltonianFlow(flows, times, jumps)
+        MultiPhaseHamiltonianFlow(flows, times, js)
     end
 end
 
@@ -1078,7 +1078,7 @@ Apply a jump to the state for state flows.
 # Returns
 - State after applying the jump.
 
-See also: [`CTFlows.MultiPhase.get_jump`](@extref).
+See also: [`CTFlows.MultiPhase.jumps`](@extref).
 """
 function _apply_jump(mpf::MultiPhaseFlow, i, state)
     return _apply_jump(Traits.dynamics_trait(mpf), mpf, i, state)
@@ -1105,7 +1105,7 @@ additive offsets (`j` a vector/scalar), callables (`j(state)`), and `nothing`
 (identity).
 """
 function _apply_jump(::Type{Traits.StateDynamics}, mpf, i, state)
-    return _apply_component_jump(state, get_jump(mpf, i))
+    return _apply_component_jump(state, jumps(mpf)[i])
 end
 
 """
@@ -1126,7 +1126,7 @@ Apply a jump to the state and costate for Hamiltonian dynamics.
 This is an internal dispatch method for the `_apply_jump` function.
 """
 function _apply_jump(::Type{Traits.HamiltonianDynamics}, mpf, i, state_tuple)
-    return _apply_hamiltonian_jump(state_tuple, get_jump(mpf, i))
+    return _apply_hamiltonian_jump(state_tuple, jumps(mpf)[i])
 end
 
 """
@@ -1338,7 +1338,7 @@ function (mpf::MultiPhaseFlow{TD,VD,Traits.StateDynamics})(
     unsafe=Flows.__unsafe(),
     grid=Flows.__grid(),
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
-    grid = Flows._default_grid(grid, tspan, get_flows(mpf)...)
+    grid = Flows._default_grid(grid, tspan, phase_flows(mpf)...)
     config = Configs.StateTrajectoryConfig(tspan, x0; grid=grid)
     _check_phase_grids(mpf, config)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
@@ -1422,7 +1422,7 @@ function (mpf::MultiPhaseFlow{TD,VD,Traits.HamiltonianDynamics})(
     unsafe=Flows.__unsafe(),
     grid=Flows.__grid(),
 ) where {TD<:Traits.TimeDependence,VD<:Traits.VariableDependence}
-    grid = Flows._default_grid(grid, tspan, get_flows(mpf)...)
+    grid = Flows._default_grid(grid, tspan, phase_flows(mpf)...)
     config = Configs.HamiltonianTrajectoryConfig(tspan, x0, p0; grid=grid)
     _check_phase_grids(mpf, config)
     return _evaluate_multiphase(mpf, config; variable=variable, unsafe=unsafe)
@@ -1436,6 +1436,6 @@ checked by each phase flow on its sub-grid.
 """
 function _check_phase_grids(mpf::MultiPhaseFlow, config)
     Configs.output_grid(config) isa Configs.AbstractGrid || return nothing
-    foreach(f -> Flows._reject_saveat(Flows.integrator(f)), get_flows(mpf))
+    foreach(f -> Flows._reject_saveat(Flows.integrator(f)), phase_flows(mpf))
     return nothing
 end
